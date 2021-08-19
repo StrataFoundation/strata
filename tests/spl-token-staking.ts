@@ -1,8 +1,8 @@
-import * as anchor from '@project-serum/anchor';
+import * as anchor from '@wum.bo/anchor';
 import { SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Account, PublicKey, SystemProgram, Transaction, TransactionInstruction, Signer } from '@solana/web3.js';
 import { createMint, createMintInstructions, createTokenAccount, token } from "@project-serum/common"
 import { TOKEN_PROGRAM_ID, Token, ASSOCIATED_TOKEN_PROGRAM_ID, AccountInfo as TokenAccountInfo, u64 } from '@solana/spl-token';
-import { BN, Provider, Program } from '@project-serum/anchor';
+import { BN, Provider, Program } from '@wum.bo/anchor';
 import { expect } from "chai";
 import { TokenStakingV0, PeriodUnit, SplTokenStaking } from "@wum.bo/spl-token-staking";
 import { SplTokenStakingProgram } from '../packages/spl-token-staking/src';

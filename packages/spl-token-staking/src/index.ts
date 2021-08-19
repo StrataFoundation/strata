@@ -1,9 +1,9 @@
-import * as anchor from '@project-serum/anchor';
+import * as anchor from '@wum.bo/anchor';
 import { SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Account, PublicKey, SystemProgram, Transaction, TransactionInstruction, Signer } from '@solana/web3.js';
-import { createMintInstructions } from "@project-serum/common"
+import { createMintInstructions } from "@project-serum/common";
 import BN from "bn.js"
-import { Program } from '@project-serum/anchor';
-import { SplTokenStakingProgram } from './generated/spl-token-staking';
+import { Program } from '@wum.bo/anchor';
+import { SplTokenStakingIDL } from './generated/spl-token-staking';
 import { TOKEN_PROGRAM_ID, Token, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 export * from "./generated/spl-token-staking";
@@ -33,9 +33,9 @@ interface InstructionResult<A> {
 }
 
 export class SplTokenStaking {
-  program: SplTokenStakingProgram;
+  program: Program<SplTokenStakingIDL>;
 
-  constructor(program: SplTokenStakingProgram) {
+  constructor(program: Program<SplTokenStakingIDL>) {
     this.program = program;
   }
 

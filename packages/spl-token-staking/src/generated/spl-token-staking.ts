@@ -1,35 +1,5 @@
-import { PublicKey, AccountInfo } from "@solana/web3.js";
-import { ProgramAccount , Address, Program, AccountNamespace, AccountClient } from "@project-serum/anchor";
-import BN from "bn.js";
-
-export interface InitializeTokenStakingV0Args {
-  periodUnit: PeriodUnit;
-  period: number;
-  rewardPercentPerPeriodPerLockupPeriod: number;
-  bumpSeed: number;
-  targetMintAuthorityBumpSeed: number;
-}
-  
-
-export interface StakeV0Args {
-  
-  voucherNumber: number;
-  baseAmount: BN;
-  lockupPeriods: BN;
-  bumpSeed: number;
-  holdingBumpSeed: number;
-  holdingAuthorityBumpSeed: number;
-}
-  
-
-export interface Bumps {
-  
-  voucherNumber: number;
-  bumpSeed: number;
-  targetMintAuthorityBumpSeed: number;
-}
-  
-
+export type SplTokenStakingIDL = {"version":"0.0.0","name":"spl_token_staking","instructions":[{"name":"initializeTokenStakingV0","accounts":[{"name":"payer","isMut":true,"isSigner":true},{"name":"tokenStaking","isMut":true,"isSigner":false},{"name":"baseMint","isMut":false,"isSigner":false},{"name":"targetMint","isMut":false,"isSigner":false},{"name":"authority","isMut":false,"isSigner":false},{"name":"systemProgram","isMut":false,"isSigner":false},{"name":"rent","isMut":false,"isSigner":false},{"name":"clock","isMut":false,"isSigner":false}],"args":[{"name":"args","type":{"defined":"InitializeTokenStakingV0Args"}}]},{"name":"stakeV0","accounts":[{"name":"payer","isMut":false,"isSigner":true},{"name":"tokenStaking","isMut":false,"isSigner":false},{"name":"stakingVoucher","isMut":true,"isSigner":false},{"name":"baseMint","isMut":false,"isSigner":false},{"name":"purchaseAccount","isMut":true,"isSigner":false},{"name":"owner","isMut":false,"isSigner":true},{"name":"baseHolding","isMut":true,"isSigner":false},{"name":"baseHoldingAuthority","isMut":false,"isSigner":false},{"name":"tokenProgram","isMut":false,"isSigner":false},{"name":"systemProgram","isMut":false,"isSigner":false},{"name":"rent","isMut":false,"isSigner":false},{"name":"clock","isMut":false,"isSigner":false}],"args":[{"name":"args","type":{"defined":"StakeV0Args"}}]}],"accounts":[{"name":"tokenStakingV0","type":{"kind":"struct","fields":[{"name":"authority","type":"publicKey"},{"name":"baseMint","type":"publicKey"},{"name":"targetMint","type":"publicKey"},{"name":"periodUnit","type":{"defined":"PeriodUnit"}},{"name":"period","type":"u32"},{"name":"rewardPercentPerPeriodPerLockupPeriod","type":"u32"},{"name":"totalBaseAmountStaked","type":"u64"},{"name":"targetAmountPerPeriod","type":"u64"},{"name":"targetAmountUnredeemed","type":"u64"},{"name":"lastCalculatedTimestamp","type":"i64"},{"name":"createdTimestamp","type":"i64"},{"name":"voucherNumber","type":"u16"},{"name":"bumpSeed","type":"u8"},{"name":"targetMintAuthorityBumpSeed","type":"u8"},{"name":"bumps","type":{"defined":"Bumps"}}]}},{"name":"stakingVoucherV0","type":{"kind":"struct","fields":[{"name":"tokenStaking","type":"publicKey"},{"name":"stakingVoucher","type":"publicKey"},{"name":"owner","type":"publicKey"},{"name":"baseAmount","type":"u64"},{"name":"createdTimestamp","type":"i64"},{"name":"lastWithdrawnTimestamp","type":"i64"},{"name":"lockupPeriods","type":"u64"},{"name":"voucherNumber","type":"u16"},{"name":"bumpSeed","type":"u8"}]}}],"types":[{"name":"InitializeTokenStakingV0Args","type":{"kind":"struct","fields":[{"name":"periodUnit","type":{"defined":"PeriodUnit"}},{"name":"period","type":"u32"},{"name":"rewardPercentPerPeriodPerLockupPeriod","type":"u32"},{"name":"bumpSeed","type":"u8"},{"name":"targetMintAuthorityBumpSeed","type":"u8"}]}},{"name":"StakeV0Args","type":{"kind":"struct","fields":[{"name":"voucherNumber","type":"u16"},{"name":"baseAmount","type":"u64"},{"name":"lockupPeriods","type":"u64"},{"name":"bumpSeed","type":"u8"},{"name":"holdingBumpSeed","type":"u8"},{"name":"holdingAuthorityBumpSeed","type":"u8"}]}},{"name":"Bumps","type":{"kind":"struct","fields":[{"name":"voucherNumber","type":"u16"},{"name":"bumpSeed","type":"u8"},{"name":"targetMintAuthorityBumpSeed","type":"u8"}]}},{"name":"PeriodUnit","type":{"kind":"enum","variants":[{"name":"SECOND"},{"name":"MINUTE"},{"name":"HOUR"},{"name":"DAY"},{"name":"YEAR"}]}}],"errors":[{"code":300,"name":"NoMintAuthority","msg":"Target mint must have an authority"},{"code":301,"name":"InvalidMintAuthority","msg":"Target mint must have an authority that is a pda of this program"},{"code":302,"name":"StakingAlreadyInitialized","msg":"Staking is already initialized"},{"code":303,"name":"InvalidStakingVoucherPDA","msg":"Invalid pda for staking voucher, should be [stake-voucher, owner, token staking, voucher number]"}],"metadata":{"address":"EcSWBQLB6C9VcVxqPTHsWbf87yzNGshupULR96YeKVc4"}};
+          
 export type PeriodUnit = Record<string, Record<string, any>>
 export const PeriodUnit = {
   SECOND: { second: {} },
@@ -39,81 +9,5 @@ export const PeriodUnit = {
   YEAR: { year: {} }
 }
     
-export interface TokenStakingV0 {
-  periodUnit: PeriodUnit;
-  bumps: Bumps;
-  authority: PublicKey;
-  baseMint: PublicKey;
-  targetMint: PublicKey;
-  period: number;
-  rewardPercentPerPeriodPerLockupPeriod: number;
-  totalBaseAmountStaked: BN;
-  targetAmountPerPeriod: BN;
-  targetAmountUnredeemed: BN;
-  lastCalculatedTimestamp: BN;
-  createdTimestamp: BN;
-  voucherNumber: number;
-  bumpSeed: number;
-  targetMintAuthorityBumpSeed: number;
-}
-  
 
-export interface StakingVoucherV0 {
-  
-  tokenStaking: PublicKey;
-  stakingVoucher: PublicKey;
-  owner: PublicKey;
-  baseAmount: BN;
-  createdTimestamp: BN;
-  lastWithdrawnTimestamp: BN;
-  lockupPeriods: BN;
-  voucherNumber: number;
-  bumpSeed: number;
-}
-  
-
-export class TokenStakingV0AccountClient extends AccountClient {
-  override async fetch(address: Address): Promise<TokenStakingV0> {
-    return (await this.fetch(address)) as TokenStakingV0;
-  }
-
-  parse(accountInfo: AccountInfo<Buffer>): TokenStakingV0 {
-    return this.coder.accounts.decode("TokenStakingV0", accountInfo.data);
-  }
-
-  override async all(filter?: Buffer): Promise<ProgramAccount<TokenStakingV0>[]> {
-    return (await this.all(filter)).map(programAccount => ({
-      ...programAccount,
-      account: programAccount.account as TokenStakingV0
-    }))
-  }
-}
-  
-
-export class StakingVoucherV0AccountClient extends AccountClient {
-  override async fetch(address: Address): Promise<StakingVoucherV0> {
-    return (await this.fetch(address)) as StakingVoucherV0;
-  }
-
-  parse(accountInfo: AccountInfo<Buffer>): StakingVoucherV0 {
-    return this.coder.accounts.decode("StakingVoucherV0", accountInfo.data);
-  }
-
-  override async all(filter?: Buffer): Promise<ProgramAccount<StakingVoucherV0>[]> {
-    return (await this.all(filter)).map(programAccount => ({
-      ...programAccount,
-      account: programAccount.account as StakingVoucherV0
-    }))
-  }
-}
-  
-
-export interface SplTokenStakingAccountNamespace  extends AccountNamespace {
-  tokenStakingV0: TokenStakingV0AccountClient;
-  stakingVoucherV0: StakingVoucherV0AccountClient
-}
-
-export interface SplTokenStakingProgram extends Program {
-  account: SplTokenStakingAccountNamespace
-}
   
