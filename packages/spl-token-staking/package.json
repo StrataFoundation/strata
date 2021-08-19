@@ -1,0 +1,31 @@
+{
+  "name": "@wum.bo/spl-token-staking",
+  "version": "1.0.0",
+  "description": "Interface to the spl-token-staking smart contract",
+  "repository": {
+      "type": "git",
+      "url": "https://github.com/ChewingGlassFund/wumbo"
+  },
+  "main": "dist/lib/index.js",
+  "types": "dist/lib/index.d.ts",
+  "exports": {
+      ".": "./dist/lib/index.js"
+  },
+  "files": [
+      "dist/lib/**/*"
+  ],
+  "scripts": {
+      "build": "tsc --project tsconfig.json",
+      "watch": "tsc --watch --project tsconfig.json",
+      "style": "prettier --write \"src/**/*.{ts,tsx}\""
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+      "prettier": "2.3.1",
+      "style-loader": "^2.0.0",
+      "ts-loader": "^9.2.3",
+      "typescript": "^4.3.4"
+  },
+  "peerDependencies": {}
+}
