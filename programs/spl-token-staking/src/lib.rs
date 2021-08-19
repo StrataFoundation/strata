@@ -12,7 +12,7 @@ static TARGET_MINT_AUTHORITY_PREFIX: &str = "target-authority";
 pub mod spl_token_staking {
     use std::borrow::{Borrow, BorrowMut};
 
-    use anchor_lang::solana_program::program::invoke_signed;
+    use anchor_lang::{Key, solana_program::program::invoke_signed};
     use anchor_spl::token::InitializeAccount;
 
     use super::*;
@@ -67,6 +67,9 @@ pub mod spl_token_staking {
       data.lockup_periods = args.lockup_periods;
       data.voucher_number = args.voucher_number;
       data.bump_seed = args.bump_seed;
+      data.base_holding = ctx.accounts.base_holding.to_account_info().key();
+      data.owner = ctx.accounts.owner.to_account_info().key();
+      data.token_staking = ctx.accounts.token_staking.to_account_info().key();
 
       Ok(())
     }
@@ -227,7 +230,7 @@ pub struct TokenStakingV0 {
 #[derive(Default)]
 pub struct StakingVoucherV0 {
   pub token_staking: Pubkey,
-  pub staking_voucher: Pubkey,
+  pub base_holding: Pubkey,
   pub owner: Pubkey,
   pub base_amount: u64,
   pub created_timestamp: i64,
