@@ -114,6 +114,8 @@ describe('spl-token-staking', () => {
       await sleep(5000)
       await tokenStakingProgram.collect({ tokenStaking, stakingVoucher });
       expect(await tokenStakingProgram.getTotalTargetSupplyFromKey(tokenStaking)).to.equal(4);
+      await tokenStakingProgram.unstake({ tokenStaking, stakingVoucher });
+      expect(await tokenStakingProgram.getTotalTargetSupplyFromKey(tokenStaking)).to.equal(4);
     })
   })
 });
