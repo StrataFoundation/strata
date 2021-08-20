@@ -25,6 +25,16 @@ ${idlDef.accounts.map(enumToTs).filter(Boolean).join("\n\n")}
   `
 }
 
+function accountToTs(idlName, account) {
+  return `export type ${capitalizeFirstLetter(account.name)} = IdlAccounts<${idlName}>["${account.name}"]`
+}
+
+function allAccountsToTs(idlName, idlDef) {
+  return `
+${idlDef.accounts.map(a => accountToTs(idlName, a)).filter(Boolean).join("\n\n")}
+  `
+}
+
 function capitalizeFirstLetter(str) {
   return str[0].toUpperCase() + str.slice(1);
 }
@@ -44,9 +54,14 @@ function capitalizeFirstLetter(str) {
           for (let account of idlJson.accounts) {
             account.name = camelcase(account.name);
           }
+          const idlName = `${capitalizeFirstLetter(camelcase(name))}IDL`
 
-          const fileContents = `export type ${capitalizeFirstLetter(camelcase(name))}IDL = ${JSON.stringify(idlJson)};
-          ${allEnumsToTs(idlJson)}`;
+          const fileContents = `export type ${idlName} = ${JSON.stringify(idlJson)};
+import { IdlAccounts } from '@wum.bo/anchor';
+${allEnumsToTs(idlJson)}
+${allAccountsToTs(idlName, idlJson)}
+          `
+
           writeFile(`./packages/${name}/src/generated/${name}.ts`, fileContents);
         }
         await generate()

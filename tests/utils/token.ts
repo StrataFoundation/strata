@@ -1,12 +1,18 @@
 import { Provider } from "@wum.bo/anchor";
 import { PublicKey, Transaction} from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, Token, ASSOCIATED_TOKEN_PROGRAM_ID, AccountInfo as TokenAccountInfo, u64 } from '@solana/spl-token';
+import { expect } from "chai";
 
 export class TokenUtils {
   provider: Provider;
 
   constructor(provider: Provider) {
     this.provider = provider;
+  }
+
+  async expectBalance(account: PublicKey, balance: number) {
+    const actual = await this.provider.connection.getTokenAccountBalance(account);
+    expect(actual.value.uiAmount).to.equal(balance);
   }
 
   async createAtaAndMint(
