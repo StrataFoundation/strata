@@ -1,0 +1,10 @@
+[registry]
+url = "https://anchor.projectserum.com"
+
+[provider]
+cluster = "localnet"
+wallet = "/Users/nprince/.config/solana/id.json"
+
+[scripts]
+test = "npm run test"
+env = "echo $ANCHOR_PROVIDER_URL"
