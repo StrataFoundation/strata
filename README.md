@@ -30,7 +30,7 @@ Someone could have done something nefarious _before_ it got to token bonding. In
   * **PDAs** - You can only have a PDA of a value that is being initialized by the program. PDAs are useful for quick hash lookups. 
   * **Safety** You can guarentee the object fits the spec of your program and is not nefarious
 
-##3 Detriments of Initializing
+### Detriments of Initializing
 
 You cannot do anything that requires authority on the account without having to pass through your contract.
 
