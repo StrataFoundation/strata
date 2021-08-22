@@ -15,14 +15,16 @@
         "dist/lib/**/*"
     ],
     "scripts": {
-        "build": "tsc --project tsconfig.json",
-        "watch": "tsc --watch --project tsconfig.json",
+        "build": "yarn run copy-files && tsc --project tsconfig.json",
+        "copy-files": "copyfiles -u 1 src/**/*.js dist/lib",
+        "watch": "yarn run copy-files && tsc --watch --project tsconfig.json",
         "style": "prettier --write \"src/**/*.{ts,tsx}\""
     },
     "dependencies": {
         "@project-serum/common": "^0.0.1-beta.3",
         "@solana/web3.js": "^1.24.1",
-        "bn.js": "^5.2.0"
+        "bn.js": "^5.2.0",
+        "copyfiles": "^2.4.1"
     },
     "devDependencies": {
         "prettier": "2.3.1",
