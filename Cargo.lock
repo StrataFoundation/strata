@@ -1312,6 +1312,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "spl-wumbo"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "proptest",
+ "spl-associated-token-account",
+ "spl-token",
+ "uint",
+ "zeroize",
+]
+
+[[package]]
 name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
