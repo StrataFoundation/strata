@@ -1,7 +1,6 @@
 use anchor_lang::{prelude::*, solana_program::system_program};
 use anchor_spl::token::{self, InitializeAccount, TokenAccount, Mint, Transfer, MintTo};
-use anchor_lang::solana_program::program_pack::Pack;
-use std::convert::TryInto;
+use spl_token::state::AccountState;
 
 pub mod precise_number;
 pub mod uint;
@@ -13,21 +12,19 @@ static TARGET_MINT_AUTHORITY_PREFIX: &str = "target-authority";
 
 #[program]
 pub mod spl_token_bonding {
+    use std::borrow::BorrowMut;
+
     use anchor_lang::{Key};
     use anchor_spl::token::Burn;
 
     use super::*;
 
-    pub fn create_log_curve_v0(
-      ctx: Context<InitializeLogCurveV0>,
-      args: InitializeLogCurveV0Args
+    pub fn create_curve_v0(
+      ctx: Context<InitializeCurveV0>,
+      args: Curves
     ) -> ProgramResult {
       let curve = &mut ctx.accounts.curve;
-      curve.curve = Curves::LogCurveV0 {
-        g: args.g,
-        c: args.c,
-        taylor_iterations: args.taylor_iterations
-      };
+      curve.curve = args;
 
       Ok(())
     }
@@ -36,22 +33,32 @@ pub mod spl_token_bonding {
       ctx: Context<InitializeTokenBondingV0>,
       args: InitializeTokenBondingV0Args
     ) -> ProgramResult {
-      let bonding = &mut ctx.accounts.token_bonding;
-
-      let mint_pda = Pubkey::create_program_address(
+      let (mint_pda, target_mint_authority_bump_seed) = Pubkey::find_program_address(
         &[
           TARGET_MINT_AUTHORITY_PREFIX.as_bytes(), 
-          ctx.accounts.target_mint.to_account_info().key.as_ref(),
-          &[args.target_mint_authority_bump_seed]
+          ctx.accounts.target_mint.to_account_info().key.as_ref()
         ], 
         ctx.program_id
-      )?;
+      );
       let target_mint = &ctx.accounts.target_mint;
       if mint_pda != target_mint.mint_authority.ok_or::<ProgramError>(ErrorCode::NoMintAuthority.into())?
-       || (target_mint.freeze_authority.is_some() && mint_pda != target_mint.freeze_authority.ok_or::<ProgramError>(ErrorCode::NoMintAuthority.into())?)  {
+       || (target_mint.freeze_authority.is_some() && mint_pda != target_mint.freeze_authority.ok_or::<ProgramError>(ErrorCode::NoMintAuthority.into())?)
+       || target_mint_authority_bump_seed != args.target_mint_authority_bump_seed  {
         return Err(ErrorCode::InvalidMintAuthority.into());
       }
 
+      let (base_storage_authority_pda, base_storage_authority_bump_seed) = Pubkey::find_program_address(
+        &[b"storage-authority", ctx.accounts.token_bonding.to_account_info().key.as_ref()], 
+        ctx.program_id
+      );
+
+      if args.base_storage_authority.is_some() && 
+        (args.base_storage_authority_bump_seed.unwrap() != base_storage_authority_bump_seed 
+          || args.base_storage_authority.unwrap() != base_storage_authority_pda) {
+        return Err(ErrorCode::InvalidBaseStorageAuthority.into())
+      }
+
+      let bonding = &mut ctx.accounts.token_bonding;
       bonding.base_mint = *ctx.accounts.base_mint.to_account_info().key;
       bonding.target_mint = *ctx.accounts.target_mint.to_account_info().key;
       bonding.authority = args.token_bonding_authority;
@@ -63,8 +70,8 @@ pub mod spl_token_bonding {
       bonding.curve = *ctx.accounts.curve.to_account_info().key;
       bonding.mint_cap = args.mint_cap;
       bonding.buy_frozen = args.buy_frozen;
+      bonding.sell_frozen = args.base_storage_authority.is_none();
       bonding.bump_seed = args.bump_seed;
-      bonding.base_storage_bump_seed = args.base_storage_bump_seed;
       bonding.base_storage_authority_bump_seed = args.base_storage_authority_bump_seed;
       bonding.target_mint_authority_bump_seed = args.target_mint_authority_bump_seed;
 
@@ -93,7 +100,7 @@ pub mod spl_token_bonding {
       let curve = &ctx.accounts.curve;
       let amount_prec = precise_supply_amt(amount, target_mint);
       let target_supply = precise_supply(target_mint);
-      
+
       let price_prec = curve.curve.price(
         &target_supply,
         &amount_prec,
@@ -187,7 +194,7 @@ Transfer {
         ),
         amount - target_royalties
       )?;
-      
+
       Ok(())
     }
 
@@ -199,6 +206,10 @@ Transfer {
       let curve = &ctx.accounts.curve;
       let amount_prec = precise_supply_amt(amount, target_mint);
       let target_supply = precise_supply(target_mint);
+
+      if token_bonding.sell_frozen {
+        return Err(ErrorCode::SellDisabled.into());
+      }
 
       let reclaimed_prec = curve.curve.price(
         &target_supply.checked_sub(&amount_prec).ok_or::<ProgramError>(ErrorCode::MintSupplyToLow.into())?,
@@ -238,7 +249,7 @@ Transfer {
           authority: base_storage_authority.clone()
         },
         &[
-          &[b"storage-authority", base_storage_account.key.as_ref(), &[token_bonding.base_storage_authority_bump_seed]]
+          &[b"storage-authority", token_bonding.to_account_info().key.as_ref(), &[token_bonding.base_storage_authority_bump_seed.unwrap()]]
         ]
       ), reclaimed)?;
 
@@ -281,13 +292,6 @@ fn to_lamports(amt: &PreciseNumber, mint: &CpiAccount<Mint>) -> u64 {
 
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct InitializeLogCurveV0Args {
-  g: u128,
-  c: u128,
-  taylor_iterations: u16
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct InitializeTokenBondingV0Args {
   /// Percentage of purchases that go to the founder
   /// Percentage Value is (founder_reward_percentage / u32.MAX_VALUE) * 100
@@ -296,11 +300,11 @@ pub struct InitializeTokenBondingV0Args {
   // The maximum number of target tokens that can be minted.
   pub mint_cap: Option<u64>,
   pub token_bonding_authority: Option<Pubkey>,
+  pub base_storage_authority: Option<Pubkey>,
   pub buy_frozen: bool,
   pub bump_seed: u8,
-  pub base_storage_bump_seed: u8,
-  pub base_storage_authority_bump_seed: u8,
-  pub target_mint_authority_bump_seed: u8
+  pub target_mint_authority_bump_seed: u8,
+  pub base_storage_authority_bump_seed: Option<u8>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
@@ -313,7 +317,7 @@ pub struct UpdateTokenBondingV0Args {
   pub buy_frozen: bool
 }
 
-pub fn get_curve_seed(args: &InitializeLogCurveV0Args) -> Vec<u8> {
+pub fn get_curve_seed(args: &CurveV0) -> Vec<u8> {
   let mut buffer: Vec<u8> = Vec::new();
   args.serialize(&mut buffer).unwrap();
 
@@ -340,8 +344,8 @@ pub struct SellV0Args {
 }
 
 #[derive(Accounts)]
-#[instruction(args: InitializeLogCurveV0Args)]
-pub struct InitializeLogCurveV0<'info> {
+#[instruction(args: Curves)]
+pub struct InitializeCurveV0<'info> {
   #[account(mut, signer)]
   pub payer: AccountInfo<'info>,
   #[account(
@@ -378,20 +382,13 @@ pub struct InitializeTokenBondingV0<'info> {
   )]
   pub target_mint: CpiAccount<'info, Mint>,
   #[account(
-    init,
-    seeds = [b"base-storage", token_bonding.to_account_info().key.as_ref()],
-    space = TokenAccount::LEN,
-    token = base_mint,
-    authority = base_storage_authority,
-    payer = payer,
-    bump = args.base_storage_bump_seed
+    constraint = base_storage.mint == *base_mint.to_account_info().key,
+    constraint = args.base_storage_authority.is_none() || base_storage.owner == args.base_storage_authority.unwrap(),
+    constraint = base_storage.delegate.is_none(),
+    constraint = base_storage.close_authority.is_none(),
+    constraint = base_storage.state == AccountState::Initialized
   )]
   pub base_storage: CpiAccount<'info, TokenAccount>,
-  #[account(
-    seeds = [b"storage-authority", base_storage.to_account_info().key.as_ref()],
-    bump = args.base_storage_authority_bump_seed
-  )]
-  pub base_storage_authority: AccountInfo<'info>,
 
   #[account(
     constraint = base_royalties.mint == *base_mint.to_account_info().key,
@@ -484,8 +481,8 @@ pub struct SellV0<'info> {
   pub base_storage: CpiAccount<'info, TokenAccount>,
 
   #[account(
-    seeds = [b"storage-authority", base_storage.to_account_info().key.as_ref()],
-    bump = token_bonding.base_storage_authority_bump_seed
+    seeds = [b"storage-authority", token_bonding.to_account_info().key.as_ref()],
+    bump = token_bonding.base_storage_authority_bump_seed.ok_or::<ProgramError>(ErrorCode::SellDisabled.into())?
   )]
   pub base_storage_authority: AccountInfo<'info>,
 
@@ -503,13 +500,26 @@ pub struct SellV0<'info> {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub enum Curves {
+  // All u128s are fixed precision decimal with 12 decimal places. So 1 would be 1_000_000_000_000. 1.5 is 1_500_000_000_000
+
   /// c * log(1 + (g * x))
   LogCurveV0 {
-    // Fixed precision decimal with 12 decimal places. So 1 would be 1_000_000_000_000. 1.5 is 1_500_000_000_000
     g: u128,
-    // Fixed precision decimal with 12 decimal places. So 1 would be 1_000_000_000_000. 1.5 is 1_500_000_000_000
     c: u128,
     taylor_iterations: u16,
+  },
+  FixedPriceCurveV0 {
+    price: u128
+  },
+  // mx + b
+  ConstantProductCurveV0 {
+    b: u128,
+    m: u128,
+  },
+  // a*ln(b)(b^x). Adding the ln(b) so the integral doesn't need a logarithm. 
+  ExponentialCurveV0 {
+    a: u128,
+    b: u128
   }
 }
 
@@ -561,6 +571,35 @@ impl Curve for Curves {
             *taylor_iterations
         )
       }
+      Self::FixedPriceCurveV0 { price } => {
+        amount.checked_mul(&PreciseNumber{ value: InnerUint::from(*price) })
+      }
+      Self::ConstantProductCurveV0 { m, b} => {
+        // Integrate from supply to supply + amount -- bx + mx^2/2. 
+        // b(supply + amount) + m(supply + amount)^2/2 - (b(supply) + m(supply)^2)/2)
+        let m_prec = PreciseNumber { value: InnerUint::from(*m) };
+        let b_prec = PreciseNumber { value: InnerUint::from(*b) };
+        let supply_plus_amount = target_supply.checked_add(&amount)?;
+        let two = PreciseNumber::new(2)?;
+
+        b_prec.checked_mul(&supply_plus_amount)?.checked_add(
+          &m_prec.checked_mul(&supply_plus_amount.checked_pow(2)?)?.checked_div(&two)?
+        )?.checked_sub(
+          &b_prec.checked_mul(&target_supply)?.checked_add(
+            &m_prec.checked_mul(&target_supply.checked_pow(2)?)?.checked_div(&two)?
+          )?
+        )
+      }
+      Self::ExponentialCurveV0 { a, b } => {
+        // Integrate from supply to supply + amount -- ab^x + C
+        // a*(b^(supply + amount) - b^(supply)))
+        let a_prec = PreciseNumber { value: InnerUint::from(*a) };
+        let b_prec = PreciseNumber { value: InnerUint::from(*b) };
+        a_prec.checked_mul(
+          &b_prec.checked_pow(target_supply.checked_add(&amount)?.to_imprecise()?)?
+            .checked_sub(&b_prec.checked_pow(target_supply.to_imprecise()?)?)?
+        )
+      }
     }
   }
 }
@@ -583,12 +622,13 @@ pub struct TokenBondingV0 {
   pub curve: Pubkey,
   pub mint_cap: Option<u64>,
   pub buy_frozen: bool,
+  pub sell_frozen: bool,
   
   // Needed to derive the PDA of this instance
   pub bump_seed: u8,
   pub base_storage_bump_seed: u8,
-  pub base_storage_authority_bump_seed: u8,
-  pub target_mint_authority_bump_seed: u8
+  pub target_mint_authority_bump_seed: u8,
+  pub base_storage_authority_bump_seed: Option<u8>,
 }
 
 
@@ -599,6 +639,9 @@ pub enum ErrorCode {
 
   #[msg("Target mint must have an authority that is a pda of this program")]
   InvalidMintAuthority,
+
+  #[msg("Invalid base storage authority pda or seed did not match canonical seed for base storage authority")]
+  InvalidBaseStorageAuthority,
 
   #[msg("Token bonding does not have an authority")]
   NoAuthority,
@@ -613,5 +656,8 @@ pub enum ErrorCode {
   PriceToLow,
 
   #[msg("Cannot sell more than the target mint currently has in supply")]
-  MintSupplyToLow
+  MintSupplyToLow,
+
+  #[msg("Sell is not enabled on this bonding curve")]
+  SellDisabled
 }

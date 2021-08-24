@@ -3,20 +3,15 @@ import { SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Account, PublicKey, SystemProg
 import { getMintInfo, createMintInstructions, createTokenAccountInstrs, connection } from "@project-serum/common";
 import BN, { max } from "bn.js"
 import { Program, IdlTypes, TypesCoder } from '@wum.bo/anchor';
-import { SplTokenBondingIDL, TokenBondingV0, SplTokenBondingIDLJson} from './generated/spl-token-bonding';
+import { SplTokenBondingIDL, TokenBondingV0, SplTokenBondingIDLJson, CurveV0} from './generated/spl-token-bonding';
 import { AccountLayout, NATIVE_MINT, MintInfo, TOKEN_PROGRAM_ID, Token, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { amountAsNum, asDecimal, LogCurveV0, startFinishLogCurve, supplyAsNum, targetToBaseLogCurve } from './pricing';
+import { amountAsNum, asDecimal, Curve, LogCurveV0, fromCurve, supplyAsNum } from './curves';
 import { token } from '@wum.bo/anchor/dist/utils';
 
 export * from "./generated/spl-token-bonding";
 
-type InitializeLogCurveV0Args = IdlTypes<SplTokenBondingIDL>["InitializeLogCurveV0Args"];
-
-
-interface InitializeLogCurveArgs {
-  g: BN,
-  c: BN,
-  taylorIterations: number,
+interface InitializeCurveArgs {
+  curve: CurveV0,
   payer?: PublicKey
 }
 
@@ -31,6 +26,7 @@ interface CreateTokenBondingArgs {
   targetRoyalties?: PublicKey; // If not provided, create an Associated Token Account with targetRoyaltiesOwner
   targetRoyaltiesOwner?: PublicKey, // If target royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
   authority?: PublicKey;
+  baseStorage?: PublicKey; // Base storage account. If provided, will create a bonding curve with Sell disabled, and all proceeds will go to this account. 
   baseRoyaltyPercentage: number;
   targetRoyaltyPercentage: number;
   mintCap?: BN;
@@ -106,38 +102,28 @@ export class SplTokenBonding {
     return this.provider.send(tx, signers);
   }
 
-  async initializeLogCurveInstructions({
+  async initializeCurveInstructions({
     payer = this.wallet.publicKey,
-    g,
-    c,
-    taylorIterations
-  }: InitializeLogCurveArgs): Promise<InstructionResult<{ curve: PublicKey}>> {
-    const args: InitializeLogCurveV0Args = {
-      g,
-      c,
-      taylorIterations
-    }
-
+    curve
+  }: InitializeCurveArgs): Promise<InstructionResult<{ curve: PublicKey}>> {
     const curveKeypair = anchor.web3.Keypair.generate();
-    const curve = curveKeypair.publicKey
-
     return {
       output: {
-        curve
+        curve: curveKeypair.publicKey
       },
       signers: [curveKeypair],
       instructions: [
         SystemProgram.createAccount({
           fromPubkey: payer,
-          newAccountPubkey: curve,
+          newAccountPubkey: curveKeypair.publicKey,
           space: 500,
           lamports: await this.provider.connection.getMinimumBalanceForRentExemption(500),
           programId: this.programId
         }),
-        await this.instruction.createLogCurveV0(args, {
+        await this.instruction.createCurveV0(curve, {
           accounts: {
             payer,
-            curve,
+            curve: curveKeypair.publicKey,
             systemProgram: SystemProgram.programId,
             rent: SYSVAR_RENT_PUBKEY
           }
@@ -146,8 +132,8 @@ export class SplTokenBonding {
     }
   }
 
-  async initializeLogCurve(args: InitializeLogCurveArgs): Promise<PublicKey> {
-    const { output: { curve }, instructions, signers } = await this.initializeLogCurveInstructions(args);
+  async initializeCurve(args: InitializeCurveArgs): Promise<PublicKey> {
+    const { output: { curve }, instructions, signers } = await this.initializeCurveInstructions(args);
     if (instructions.length == 0) {
       return curve;
     }
@@ -163,6 +149,7 @@ export class SplTokenBonding {
     baseMint,
     targetMint,
     baseRoyalties,
+    baseStorage,
     baseRoyaltiesOwner = this.wallet.publicKey,
     targetRoyalties,
     targetRoyaltiesOwner = this.wallet.publicKey,
@@ -217,19 +204,39 @@ export class SplTokenBonding {
       ], programId
     )
 
-    const [baseStorage, baseStorageBumpSeed] = await PublicKey.findProgramAddress(
-      [
-        Buffer.from("base-storage", "utf-8"),
-        tokenBonding.toBuffer()
-      ], programId
-    )
+    let baseStorageAuthority: PublicKey | null = null;
+    let baseStorageAuthorityBumpSeed: number | null = null;
+    // This is a buy/sell bonding curve. Create the program owned base storage account
+    if (!baseStorage) {
+      const [baseStorageAuthorityRes, baseStorageAuthorityBumpSeedRes] = await PublicKey.findProgramAddress(
+        [
+          Buffer.from("storage-authority", "utf-8"),
+          tokenBonding.toBuffer()
+        ], programId
+      );
+      baseStorageAuthority = baseStorageAuthorityRes;
+      baseStorageAuthorityBumpSeed = baseStorageAuthorityBumpSeedRes;
 
-    const [baseStorageAuthority, baseStorageAuthorityBumpSeed] = await PublicKey.findProgramAddress(
-      [
-        Buffer.from("storage-authority", "utf-8"),
-        baseStorage.toBuffer()
-      ], programId
-    )
+      const baseStorageKeypair = anchor.web3.Keypair.generate();
+      signers.push(baseStorageKeypair);
+      baseStorage = baseStorageKeypair.publicKey;
+
+      instructions.push(
+        SystemProgram.createAccount({
+          fromPubkey: payer,
+          newAccountPubkey: baseStorage!,
+          space: AccountLayout.span,
+          programId: TOKEN_PROGRAM_ID,
+          lamports: await this.provider.connection.getMinimumBalanceForRentExemption(AccountLayout.span),
+        }),
+        Token.createInitAccountInstruction(
+          TOKEN_PROGRAM_ID,
+          baseMint,
+          baseStorage,
+          baseStorageAuthority,
+        )
+      );
+    }
 
     if (!targetRoyalties) {
       targetRoyalties = await Token.getAssociatedTokenAddress(
@@ -280,7 +287,7 @@ export class SplTokenBonding {
         mintCap,
         tokenBondingAuthority: authority,
         bumpSeed,
-        baseStorageBumpSeed,
+        baseStorageAuthority,
         baseStorageAuthorityBumpSeed,
         targetMintAuthorityBumpSeed,
         buyFrozen
@@ -293,7 +300,6 @@ export class SplTokenBonding {
           baseMint: baseMint,
           targetMint: targetMint,
           baseStorage,
-          baseStorageAuthority,
           baseRoyalties,
           targetRoyalties,
           tokenProgram: TOKEN_PROGRAM_ID,
@@ -408,9 +414,10 @@ export class SplTokenBonding {
   }: BuyV0Args): Promise<InstructionResult<null>> {
     const tokenBondingAcct = await this.account.tokenBondingV0.fetch(tokenBonding);
     // @ts-ignore
-    const curve = await this.getLogCurve(tokenBondingAcct.curve)
     const targetMint = await getMintInfo(this.provider, tokenBondingAcct.targetMint);
     const baseMint = await getMintInfo(this.provider, tokenBondingAcct.baseMint);
+    // @ts-ignore
+    const curve = await this.getCurve(tokenBondingAcct.curve, baseMint, targetMint)
     const targetMintAuthority = await PublicKey.createProgramAddress(
       [
         Buffer.from("target-authority", "utf-8"),
@@ -446,11 +453,9 @@ export class SplTokenBonding {
 
     const desiredTargetAmountNum = amountAsNum(desiredTargetAmount, targetMint);
     const neededAmount = desiredTargetAmountNum * (1 / (1 - asDecimal(tokenBondingAcct.targetRoyaltyPercentage)));
-    const logCurveAmount = (targetToBaseLogCurve(curve, targetMint, tokenBondingAcct.baseRoyaltyPercentage, tokenBondingAcct.targetRoyaltyPercentage)(
-      neededAmount
-    ))
+    const curveAmount = curve.buyTargetAmount(neededAmount, tokenBondingAcct.baseRoyaltyPercentage, tokenBondingAcct.targetRoyaltyPercentage);
     const maxPrice = Math.ceil(
-      logCurveAmount * (1 + slippage) * Math.pow(10, baseMint.decimals)
+      curveAmount * (1 + slippage) * Math.pow(10, baseMint.decimals)
     )
 
     let lastInstructions = [];
@@ -526,15 +531,21 @@ export class SplTokenBonding {
     slippage
   }: SellV0Args): Promise<InstructionResult<null>> {
     const tokenBondingAcct = await this.account.tokenBondingV0.fetch(tokenBonding);
+    if (tokenBondingAcct.sellFrozen) {
+      throw new Error("Sell is frozen on this bonding curve")
+    }
+
     // @ts-ignore
-    const curve = await this.getLogCurve(tokenBondingAcct.curve)
     const targetMint = await getMintInfo(this.provider, tokenBondingAcct.targetMint);
+    const baseMint = await getMintInfo(this.provider, tokenBondingAcct.baseMint);
+    // @ts-ignore
+    const curve = await this.getCurve(tokenBondingAcct.curve, baseMint, targetMint)
 
     const baseStorageAuthority = await PublicKey.createProgramAddress(
       [
         Buffer.from("storage-authority", "utf-8"),
-        tokenBondingAcct.baseStorage.toBuffer(),
-        new BN(tokenBondingAcct.baseStorageAuthorityBumpSeed).toBuffer()
+        tokenBonding.toBuffer(),
+        new BN(tokenBondingAcct.baseStorageAuthorityBumpSeed as number).toBuffer()
       ], this.programId
     )
 
@@ -589,8 +600,9 @@ export class SplTokenBonding {
       }
     }
 
+
     const targetAmountNum = amountAsNum(targetAmount, targetMint);
-    const reclaimedAmount = startFinishLogCurve(curve)(supplyAsNum(targetMint) - targetAmountNum, targetAmountNum);
+    const reclaimedAmount = curve.sellTargetAmount(targetAmountNum);
     const minPrice = Math.ceil(
       reclaimedAmount * (1 - slippage) * Math.pow(10, targetMint.decimals)
     )
@@ -630,8 +642,9 @@ export class SplTokenBonding {
     await this.sendInstructions(instructions, signers);
   }
 
-  async getLogCurve(key: PublicKey): Promise<LogCurveV0> {
+  async getCurve(key: PublicKey, baseMint: MintInfo, targetMint: MintInfo): Promise<Curve> {
+    const curve = await this.account.curveV0.fetch(key);
     // @ts-ignore
-    return (await this.account.curveV0.fetch(key)).curve.logCurveV0 as LogCurveV0;
+    return fromCurve(curve, baseMint, targetMint)
   }
 }
