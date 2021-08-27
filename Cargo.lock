@@ -1320,6 +1320,8 @@ dependencies = [
  "proptest",
  "spl-associated-token-account",
  "spl-token",
+ "spl-token-bonding",
+ "spl-token-staking",
  "uint",
  "zeroize",
 ]

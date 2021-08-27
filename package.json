@@ -10,6 +10,8 @@
   "type": "module",
   "author": "Wum.bo Inc.",
   "devDependencies": {
+    "@types/chai": "^4.2.21",
+    "@types/chai-as-promised": "^7.1.4",
     "@types/mocha": "^9.0.0",
     "@wum.bo/anchor": "^0.11.1",
     "@wum.bo/spl-token-staking": "^1.0.0",
