@@ -14,7 +14,6 @@ pub mod spl_wumbo {
     ) -> ProgramResult {
         let wumbo = &mut ctx.accounts.wumbo;
 
-        wumbo.wumbo_authority = *ctx.accounts.wumbo_authority.to_account_info().ke
         wumbo.wumbo_mint = *ctx.accounts.wumbo_mint.to_account_info().key;
         wumbo.base_curve = *ctx.accounts.base_curve.to_account_info().key;
         wumbo.name_program_id = *ctx.accounts.name_program_id.to_account_info().key;
@@ -50,15 +49,15 @@ pub struct InitializeSocialTokenV0Args {
 #[instruction(args: InitializeWumboV0Args)]
 pub struct InitializeWumboV0<'info> {
     #[account(signer)]
-    pub wumbo_authority: AccountInfo<'info>,
+    pub payer: AccountInfo<'info>,
     pub wumbo_mint: CpiAccount<'info, Mint>,
     pub base_curve: CpiAccount<'info, CurveV0>,
     pub name_program_id: AccountInfo<'info>,
     #[account(
         init,
-        seeds = [b"wumbo", wumbo_authority.key().as_ref()],
+        seeds = [b"wumbo", wumbo_mint.to_account_info().key.as_ref()],
         bump = args.wumbo_bump_seed,
-        payer = wumbo_authority,
+        payer = payer,
         space = 1000,
     )]
     pub wumbo: ProgramAccount<'info, WumboV0>,
@@ -86,7 +85,6 @@ pub struct InitializeSocialTokenV0<'info> {
 #[account]
 #[derive(Default)]
 pub struct WumboV0 {
-    pub wumbo_authority: Pubkey,
     pub wumbo_mint: Pubkey,
     pub base_curve: Pubkey,
     pub name_program_id: Pubkey,
