@@ -4,12 +4,15 @@ import { createMint } from "@project-serum/common";
 import { NATIVE_MINT } from "@solana/spl-token";
 import { BN } from "@wum.bo/anchor";
 import { expect, use } from "chai";
-import { TokenUtils } from "./utils/token";
 import ChaiAsPromised from "chai-as-promised";
 
 import { SplWumbo, WumboV0 } from "../packages/spl-wumbo";
 import { SplTokenBonding, TokenBondingV0 } from "../packages/spl-token-bonding/dist/lib";
-import { SplTokenStaking, TokenStakingV0 } from "../packages/spl-token-staking/dist/lib";
+import {
+  PeriodUnit,
+  SplTokenStaking,
+  TokenStakingV0,
+} from "../packages/spl-token-staking/dist/lib";
 
 use(ChaiAsPromised);
 
@@ -73,7 +76,57 @@ describe("spl-wumbo", () => {
   });
 
   describe("Unclaimed social token", () => {
-    it("Creates the social token", async () => {});
+    let socialTokenBonding: PublicKey;
+    let socialTokenBondingAcct: TokenBondingV0;
+    let socialTokenStaking: PublicKey;
+    let socialTokenStakingAcct: TokenStakingV0;
+    let name = anchor.web3.Keypair.generate();
+    let nameOwner = anchor.web3.Keypair.generate();
+    let tokenRef: PublicKey;
+    let reverseTokenRef: PublicKey;
+
+    it("Creates the social token", async () => {
+      socialTokenBonding = await tokenBondingProgram.createTokenBonding({
+        curve: baseCurve,
+        baseMint: tokenBondingAcct.targetMint,
+        targetMintDecimals: 2,
+        authority: wumboProgram.wallet.publicKey,
+        baseRoyaltyPercentage: percent(5),
+        targetRoyaltyPercentage: percent(0),
+        mintCap: new BN(1000),
+      });
+
+      socialTokenBondingAcct = (await tokenBondingProgram.account.tokenBondingV0.fetch(
+        socialTokenBonding
+      )) as TokenBondingV0;
+
+      socialTokenStaking = await tokenStakingProgram.createTokenStaking({
+        authority: wumboProgram.wallet.publicKey,
+        baseMint: tokenBondingAcct.targetMint,
+        periodUnit: PeriodUnit.SECOND,
+        period: 5,
+        targetMintDecimals: 2,
+        rewardPercentPerPeriodPerLockupPeriod: 4294967295, // 100%
+      });
+
+      socialTokenStakingAcct = (await tokenStakingProgram.account.tokenStakingV0.fetch(
+        socialTokenStaking
+      )) as any; // TODO should be (as TokenStakingV0) casting does not like it
+
+      let { tokenRef: _tr, reverseTokenRef: _rtr } = await wumboProgram.createSocialToken({
+        wumboInstance: wumbo,
+        tokenBonding: socialTokenBonding,
+        tokenStaking: socialTokenStaking,
+        name: name.publicKey,
+        nameOwner: nameOwner.publicKey,
+      });
+
+      tokenRef = _tr;
+      reverseTokenRef = _rtr;
+
+      expect(tokenRef).to.exist;
+      expect(reverseTokenRef).to.exist;
+    });
   });
 
   describe("Claimed social token", () => {
