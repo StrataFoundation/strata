@@ -1,4 +1,5 @@
 import * as anchor from "@wum.bo/anchor";
+import BN from "bn.js";
 import {
   PublicKey,
   Signer,
@@ -7,22 +8,29 @@ import {
   Transaction,
   TransactionInstruction,
 } from "@solana/web3.js";
-import { createMintInstructions } from "@project-serum/common";
-import BN, { max } from "bn.js";
-import { Program, IdlTypes } from "@wum.bo/anchor";
-import { SplWumboIDL, SplWumboIDLJson, WumboV0 } from "./generated/spl-wumbo";
+import { NAME_PROGRAM_ID } from "@solana/spl-name-service";
+import { Program } from "@wum.bo/anchor";
+import { SplWumboIDL } from "./generated/spl-wumbo";
 
 export * from "./generated/spl-wumbo";
 
+const METADATA_UPDATE_PREFIX = "metadata-upate";
+const WUMBO_PREFIX = "wumbo";
+const UNCLAIMED_REF_PREFIX = "unclaimed-ref";
+const CLAIMED_REF_PREFIX = "claimed-ref";
+const BONDING_PREFIX = "bonding";
+const FOUNDER_REWARDS_PREFIX = "founder-rewards";
+const REVERSE_TOKEN_REF_PREFIX = "reverse-token-ref";
+
 interface CreateWumboArgs {
   payer?: PublicKey;
-  wumboMint: PublicKey;
-  baseCurve: PublicKey;
+  tokenMint: PublicKey;
+  tokenCurve: PublicKey;
 }
 
 interface CreateSocialTokenArgs {
   payer?: PublicKey;
-  wumboInstance: PublicKey;
+  wumbo: PublicKey;
   tokenBonding: PublicKey;
   tokenStaking: PublicKey;
   name: PublicKey;
@@ -34,9 +42,6 @@ interface InstructionResult<A> {
   signers: Signer[];
   output: A;
 }
-
-const NAME_PROGRAM_ID_STR = "namesLPneVptA9Z5rqUDD9tMTWEJwofgaYwp8cawRkX";
-const TOKEN_METADATA_PROGRAM_ID_STR = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s";
 
 export class SplWumbo {
   program: Program<SplWumboIDL>;
@@ -76,30 +81,30 @@ export class SplWumbo {
   }
 
   async createWumboInstructions({
+    tokenMint,
+    tokenCurve,
     payer = this.wallet.publicKey,
-    wumboMint,
-    baseCurve,
-  }: CreateWumboArgs): Promise<InstructionResult<{ wumboInstance: PublicKey }>> {
+  }: CreateWumboArgs): Promise<InstructionResult<{ wumbo: PublicKey }>> {
     const programId = this.programId;
     const provider = this.provider;
 
-    const [wumboInstance, wumboInstanceBumpSeed] = await PublicKey.findProgramAddress(
-      [Buffer.from("wumbo", "utf-8"), wumboMint.toBuffer()],
+    const [wumbo, bump] = await PublicKey.findProgramAddress(
+      [Buffer.from(WUMBO_PREFIX, "utf-8"), tokenMint.toBuffer()],
       programId
     );
 
     return {
-      output: { wumboInstance },
+      output: { wumbo },
       instructions: [
-        await this.instruction.initializeWumboV0(
-          { wumboInstanceBumpSeed },
+        await this.instruction.initializeWumbo(
+          { bump },
           {
             accounts: {
+              wumbo,
+              tokenMint,
+              tokenCurve,
+              nameServiceProgram: NAME_PROGRAM_ID,
               payer,
-              wumboMint,
-              baseCurve,
-              nameProgramId: new PublicKey(NAME_PROGRAM_ID_STR),
-              wumboInstance,
               systemProgram: SystemProgram.programId,
               rent: SYSVAR_RENT_PUBKEY,
             },
@@ -112,72 +117,80 @@ export class SplWumbo {
 
   async createWumbo(args: CreateWumboArgs): Promise<PublicKey> {
     const {
-      output: { wumboInstance },
+      output: { wumbo },
       instructions,
       signers,
     } = await this.createWumboInstructions(args);
     await this.sendInstructions(instructions, signers);
 
-    return wumboInstance;
+    return wumbo;
   }
 
   async createSocialTokenInstructions({
     payer = this.wallet.publicKey,
-    wumboInstance,
+    wumbo,
     tokenBonding,
     tokenStaking,
     name,
-    nameOwner,
+    nameOwner = anchor.web3.PublicKey.default,
   }: CreateSocialTokenArgs): Promise<
     InstructionResult<{
       tokenRef: PublicKey;
       reverseTokenRef: PublicKey;
+      founderRewardsAccount: PublicKey;
     }>
   > {
-    const programId = this.programId;
-    const provider = this.provider;
+    let tokenRefPrefix;
+    let tokenRefSeed;
 
-    const [tokenRef, tokenRefBumpSeed] = await PublicKey.findProgramAddress(
-      [
-        Buffer.from("token-ref", "utf-8"),
-        wumboInstance.toBuffer(),
-        tokenBonding.toBuffer(),
-        tokenStaking.toBuffer(),
-      ],
-      programId
+    if (nameOwner != this.wallet.publicKey) {
+      tokenRefPrefix = CLAIMED_REF_PREFIX;
+      tokenRefSeed = nameOwner.toBuffer();
+    } else {
+      tokenRefPrefix = UNCLAIMED_REF_PREFIX;
+      tokenRefSeed = name.toBuffer();
+    }
+
+    const [tokenRef, tokenRefBump] = await PublicKey.findProgramAddress(
+      [Buffer.from(tokenRefPrefix, "utf-8"), wumbo.toBuffer(), tokenRefSeed],
+      this.programId
     );
 
-    const [reverseTokenRef, reverseTokenRefBumpSeed] = await PublicKey.findProgramAddress(
-      [
-        Buffer.from("reverse-token-ref", "utf-8"),
-        wumboInstance.toBuffer(),
-        tokenBonding.toBuffer(),
-        tokenStaking.toBuffer(),
-      ],
-      programId
+    const [reverseTokenRef, reverseTokenRefBump] = await PublicKey.findProgramAddress(
+      [Buffer.from(REVERSE_TOKEN_REF_PREFIX, "utf-8"), wumbo.toBuffer(), tokenBonding.toBuffer()],
+      this.programId
+    );
+
+    const [founderRewardsAccount] = await PublicKey.findProgramAddress(
+      [Buffer.from(FOUNDER_REWARDS_PREFIX, "utf-8"), tokenRef.toBuffer()],
+      this.programId
     );
 
     return {
       output: {
         tokenRef,
         reverseTokenRef,
+        founderRewardsAccount,
       },
       instructions: [
         this.instruction.initializeSocialTokenV0(
           {
-            tokenRefBumpSeed,
-            reverseTokenRefBumpSeed,
-            nameOwner,
+            tokenRefPrefix,
+            tokenRefSeed,
+            tokenRefBump,
+            reverseTokenRefBump,
           },
           {
             accounts: {
-              payer,
-              wumboInstance,
+              wumbo,
               tokenRef,
               reverseTokenRef,
               tokenBonding,
               tokenStaking,
+              founderRewardsAccount,
               name,
+              nameOwner,
+              payer,
               systemProgram: SystemProgram.programId,
               rent: SYSVAR_RENT_PUBKEY,
             },
@@ -188,16 +201,18 @@ export class SplWumbo {
     };
   }
 
-  async createSocialToken(
-    args: CreateSocialTokenArgs
-  ): Promise<{ tokenRef: PublicKey; reverseTokenRef: PublicKey }> {
+  async createSocialToken(args: CreateSocialTokenArgs): Promise<{
+    tokenRef: PublicKey;
+    reverseTokenRef: PublicKey;
+    founderRewardsAccount: PublicKey;
+  }> {
     const {
-      output: { tokenRef, reverseTokenRef },
+      output: { tokenRef, reverseTokenRef, founderRewardsAccount },
       instructions,
       signers,
     } = await this.createSocialTokenInstructions(args);
     await this.sendInstructions(instructions, signers);
 
-    return { tokenRef, reverseTokenRef };
+    return { tokenRef, reverseTokenRef, founderRewardsAccount };
   }
 }

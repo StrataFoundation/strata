@@ -17,12 +17,14 @@ default = []
 [dependencies]
 anchor-lang = "0.13.2"
 anchor-spl = "0.13.2"
-spl-associated-token-account = { version = "1.0.3",  features = [ "no-entrypoint" ] }
 uint = "0.9"
-spl-token = "3.2.0"
 zeroize = "=1.3.0"
-spl-token-bonding = { path = '../spl-token-bonding', features = ["cpi"] }
-spl-token-staking = { path = '../spl-token-staking', features = ["cpi"] }
+spl-token = "3.2.0"
+spl-associated-token-account = { version = "1.0.3",  features = [ "no-entrypoint" ] }
+# spl-name-service = { version = "0.1.0", git = "https://github.com/solana-labs/solana-program-library.git", features = [ "no-entrypoint" ] }
+spl-token-metadata = { version = "0.0.1", features = [ "no-entrypoint" ] }
+spl-token-bonding = { path = '../spl-token-bonding', features = ["no-entrypoint"] }
+spl-token-staking = { path = '../spl-token-staking', features = ["no-entrypoint"] }
 
 [dev-dependencies]
 proptest = "1.0.0"

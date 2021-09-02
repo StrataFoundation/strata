@@ -6,7 +6,7 @@ import { BN } from "@wum.bo/anchor";
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
 
-import { SplWumbo, WumboV0 } from "../packages/spl-wumbo";
+import { SplWumbo, Wumbo } from "../packages/spl-wumbo";
 import { SplTokenBonding, TokenBondingV0 } from "../packages/spl-token-bonding/dist/lib";
 import {
   PeriodUnit,
@@ -40,7 +40,7 @@ describe("spl-wumbo", () => {
   let tokenBonding: PublicKey;
   let tokenBondingAcct: TokenBondingV0;
   let wumbo: PublicKey;
-  let wumboAcct: WumboV0;
+  let wumboAcct: Wumbo;
 
   it("Initializes Wumbo", async () => {
     baseCurve = await tokenBondingProgram.initializeLogCurve({
@@ -64,18 +64,18 @@ describe("spl-wumbo", () => {
     )) as TokenBondingV0;
 
     wumbo = await wumboProgram.createWumbo({
-      wumboMint: tokenBondingAcct.targetMint,
-      baseCurve: tokenBondingAcct.curve,
+      tokenMint: tokenBondingAcct.targetMint,
+      tokenCurve: tokenBondingAcct.curve,
     });
 
-    wumboAcct = (await wumboProgram.account.wumboV0.fetch(wumbo)) as WumboV0;
+    wumboAcct = (await wumboProgram.account.wumbo.fetch(wumbo)) as Wumbo;
 
     expect(wumbo).to.exist;
-    expect(wumboAcct.wumboMint.toString()).to.eq(tokenBondingAcct.targetMint.toString());
-    expect(wumboAcct.baseCurve.toString()).to.eq(tokenBondingAcct.curve.toString());
+    expect(wumboAcct.tokenMint.toString()).to.eq(tokenBondingAcct.targetMint.toString());
+    expect(wumboAcct.tokenCurve.toString()).to.eq(tokenBondingAcct.curve.toString());
   });
 
-  describe("Unclaimed social token", () => {
+  describe("Social token", () => {
     let socialTokenBonding: PublicKey;
     let socialTokenBondingAcct: TokenBondingV0;
     let socialTokenStaking: PublicKey;
@@ -85,14 +85,14 @@ describe("spl-wumbo", () => {
     let tokenRef: PublicKey;
     let reverseTokenRef: PublicKey;
 
-    it("Creates the social token", async () => {
+    before(async () => {
       socialTokenBonding = await tokenBondingProgram.createTokenBonding({
+        authority: wumbo,
         curve: baseCurve,
         baseMint: tokenBondingAcct.targetMint,
         targetMintDecimals: 2,
-        authority: wumboProgram.wallet.publicKey,
-        baseRoyaltyPercentage: percent(5),
-        targetRoyaltyPercentage: percent(0),
+        baseRoyaltyPercentage: percent(0),
+        targetRoyaltyPercentage: percent(5),
         mintCap: new BN(1000),
       });
 
@@ -101,7 +101,7 @@ describe("spl-wumbo", () => {
       )) as TokenBondingV0;
 
       socialTokenStaking = await tokenStakingProgram.createTokenStaking({
-        authority: wumboProgram.wallet.publicKey,
+        authority: wumbo,
         baseMint: tokenBondingAcct.targetMint,
         periodUnit: PeriodUnit.SECOND,
         period: 5,
@@ -112,24 +112,22 @@ describe("spl-wumbo", () => {
       socialTokenStakingAcct = (await tokenStakingProgram.account.tokenStakingV0.fetch(
         socialTokenStaking
       )) as any; // TODO should be (as TokenStakingV0) casting does not like it
+    });
 
-      let { tokenRef: _tr, reverseTokenRef: _rtr } = await wumboProgram.createSocialToken({
-        wumboInstance: wumbo,
-        tokenBonding: socialTokenBonding,
-        tokenStaking: socialTokenStaking,
-        name: name.publicKey,
-        nameOwner: nameOwner.publicKey,
-      });
-
-      tokenRef = _tr;
-      reverseTokenRef = _rtr;
+    it("Creates a unclaimed social token", async () => {
+      let { tokenRef, reverseTokenRef, founderRewardsAccount } =
+        await wumboProgram.createSocialToken({
+          wumbo,
+          tokenBonding: socialTokenBonding,
+          tokenStaking: socialTokenStaking,
+          name: name.publicKey,
+        });
 
       expect(tokenRef).to.exist;
-      expect(reverseTokenRef).to.exist;
     });
-  });
 
-  describe("Claimed social token", () => {
-    it("Creates the social token", async () => {});
+    it("Creates a claimed social token", () => {
+      expect(false).to.eq(true);
+    });
   });
 });
