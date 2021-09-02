@@ -23,6 +23,9 @@ const sleep = (ts: number) =>
 
 const percent = (percent: number): number => Math.floor((percent / 100) * 4294967295); // unit32 max value
 
+const NAME_PID = new PublicKey("namesLPneVptA9Z5rqUDD9tMTWEJwofgaYwp8cawRkX");
+const METADATA_PID = new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
+
 describe("spl-wumbo", () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.Provider.local());

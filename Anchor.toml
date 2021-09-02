@@ -1,10 +1,29 @@
-[registry]
-url = "https://anchor.projectserum.com"
-
 [provider]
 cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
+[registry]
+url = "https://anchor.projectserum.com"
+
 [scripts]
-test = "npm run test"
+#
+# Testing.
+#
 env = "echo $ANCHOR_PROVIDER_URL"
+test = "npm run test"
+test-with-build = "anchor run build && anchor test --skip-build"
+#
+# Build the program and all CPI dependencies.
+#
+build = "anchor run build-deps && anchor build"
+build-deps = "anchor run build-name-service && anchor run build-metadata"
+build-name-service = "cd deps/solana-program-library && pwd && cargo build-bpf && cd ../../"
+build-metadata = "cd deps/metaplex/rust && pwd && cargo build-bpf && cd ../../../"
+
+[[test.genesis]]
+address = "namesLPneVptA9Z5rqUDD9tMTWEJwofgaYwp8cawRkX"
+program = "./deps/solana-program-library/target/deploy/spl_name_service.so"
+
+[[test.genesis]]
+address = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+program = "./deps/metaplex/rust/target/deploy/spl_metadata.so"

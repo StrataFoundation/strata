@@ -15,12 +15,7 @@ import { SplWumboIDL } from "./generated/spl-wumbo";
 export * from "./generated/spl-wumbo";
 
 const METADATA_UPDATE_PREFIX = "metadata-upate";
-const WUMBO_PREFIX = "wumbo";
-const UNCLAIMED_REF_PREFIX = "unclaimed-ref";
-const CLAIMED_REF_PREFIX = "claimed-ref";
 const BONDING_PREFIX = "bonding";
-const FOUNDER_REWARDS_PREFIX = "founder-rewards";
-const REVERSE_TOKEN_REF_PREFIX = "reverse-token-ref";
 
 interface CreateWumboArgs {
   payer?: PublicKey;
@@ -89,7 +84,7 @@ export class SplWumbo {
     const provider = this.provider;
 
     const [wumbo, bump] = await PublicKey.findProgramAddress(
-      [Buffer.from(WUMBO_PREFIX, "utf-8"), tokenMint.toBuffer()],
+      [Buffer.from("wumbo", "utf-8"), tokenMint.toBuffer()],
       programId
     );
 
@@ -144,10 +139,10 @@ export class SplWumbo {
     let tokenRefSeed;
 
     if (nameOwner != this.wallet.publicKey) {
-      tokenRefPrefix = CLAIMED_REF_PREFIX;
+      tokenRefPrefix = "claimed-ref";
       tokenRefSeed = nameOwner.toBuffer();
     } else {
-      tokenRefPrefix = UNCLAIMED_REF_PREFIX;
+      tokenRefPrefix = "unclaimed-ref";
       tokenRefSeed = name.toBuffer();
     }
 
@@ -157,12 +152,12 @@ export class SplWumbo {
     );
 
     const [reverseTokenRef, reverseTokenRefBump] = await PublicKey.findProgramAddress(
-      [Buffer.from(REVERSE_TOKEN_REF_PREFIX, "utf-8"), wumbo.toBuffer(), tokenBonding.toBuffer()],
+      [Buffer.from("reverse-token-ref", "utf-8"), wumbo.toBuffer(), tokenBonding.toBuffer()],
       this.programId
     );
 
     const [founderRewardsAccount] = await PublicKey.findProgramAddress(
-      [Buffer.from(FOUNDER_REWARDS_PREFIX, "utf-8"), tokenRef.toBuffer()],
+      [Buffer.from("founder-rewards", "utf-8"), tokenRef.toBuffer()],
       this.programId
     );
 

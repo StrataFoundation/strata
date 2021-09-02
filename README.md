@@ -1,5 +1,20 @@
 # wumbo-programs
 
+## Install Submodules
+
+Pull the deps
+
+```
+git submodule init
+git submodule update
+```
+
+## Build the deps
+
+```
+anchor run build-deps
+```
+
 ## TODO
 
 We should probably eventually change from @wum.bo/anchor, which is using code from https://github.com/project-serum/anchor/pull/537.
