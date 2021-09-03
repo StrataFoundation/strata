@@ -25,7 +25,7 @@
   "scripts": {
     "idl": "node app/idlToTs",
     "watch": "concurrently --kill-others \"lerna run --parallel watch\" \"yarn run idl\"",
-    "test": "env ANCHOR_PROVIDER_URL=$ANCHOR_PROVIDER_URL ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+    "test": "env ANCHOR_PROVIDER_URL=$ANCHOR_PROVIDER_URL ts-mocha -p ./tsconfig.json -t 1000000 \"tests/**/*.ts\""
   },
   "dependencies": {
     "@project-serum/common": "^0.0.1-beta.3",

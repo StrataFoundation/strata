@@ -101,6 +101,10 @@ pub mod spl_token_bonding {
       let amount_prec = precise_supply_amt(amount, target_mint);
       let target_supply = precise_supply(target_mint);
 
+      if token_bonding.go_live_unix_time > ctx.accounts.clock.unix_timestamp {
+        return Err(ErrorCode::NotLiveYet.into());
+      }
+
       let price_prec = curve.curve.price(
         &target_supply,
         &amount_prec,
@@ -207,6 +211,10 @@ Transfer {
       let amount_prec = precise_supply_amt(amount, target_mint);
       let target_supply = precise_supply(target_mint);
 
+      if token_bonding.go_live_unix_time > ctx.accounts.clock.unix_timestamp {
+        return Err(ErrorCode::NotLiveYet.into());
+      }
+
       if token_bonding.sell_frozen {
         return Err(ErrorCode::SellDisabled.into());
       }
@@ -297,6 +305,7 @@ pub struct InitializeTokenBondingV0Args {
   /// Percentage Value is (founder_reward_percentage / u32.MAX_VALUE) * 100
   pub base_royalty_percentage: u32,
   pub target_royalty_percentage: u32,
+  pub go_live_unix_time: i64,
   // The maximum number of target tokens that can be minted.
   pub mint_cap: Option<u64>,
   pub token_bonding_authority: Option<Pubkey>,
@@ -461,6 +470,7 @@ pub struct BuyV0<'info> {
   pub destination: CpiAccount<'info, TokenAccount>,
   #[account(address = *base_mint.to_account_info().owner)]
   pub token_program: AccountInfo<'info>,
+  pub clock: Sysvar<'info, Clock>,
 }
 
 #[derive(Accounts)]
@@ -496,6 +506,7 @@ pub struct SellV0<'info> {
 
   #[account(address = *base_mint.to_account_info().owner)]
   pub token_program: AccountInfo<'info>,
+  pub clock: Sysvar<'info, Clock>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
@@ -621,6 +632,7 @@ pub struct TokenBondingV0 {
   /// The bonding curve to use 
   pub curve: Pubkey,
   pub mint_cap: Option<u64>,
+  pub go_live_unix_time: i64,
   pub buy_frozen: bool,
   pub sell_frozen: bool,
   
@@ -659,5 +671,8 @@ pub enum ErrorCode {
   MintSupplyToLow,
 
   #[msg("Sell is not enabled on this bonding curve")]
-  SellDisabled
+  SellDisabled,
+
+  #[msg("This bonding curve is not live yet")]
+  NotLiveYet
 }
