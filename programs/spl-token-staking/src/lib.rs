@@ -192,7 +192,8 @@ pub mod spl_token_staking {
       recalculate(staking, unix_timestamp);
 
       if last_period != this_period {
-        let rewards_due: u64 = (this_period - last_period) * get_rewards_per_period(voucher, staking)?;
+        // Subtract 1 to force having staked for at least one full period
+        let rewards_due: u64 = (this_period - last_period - 1) * get_rewards_per_period(voucher, staking)?;
         staking.target_amount_unredeemed -= rewards_due;
         token::mint_to(
           CpiContext::new_with_signer(
@@ -224,7 +225,8 @@ pub mod spl_token_staking {
       let current_period = get_period(unix_timestamp, staking.created_timestamp, &staking.period_unit, staking.period);
       let staking_start_period = get_period(voucher.created_timestamp, staking.created_timestamp, &staking.period_unit, staking.period);
 
-      if (current_period - staking_start_period) < voucher.lockup_periods {
+      // Add one to the start period, since they didn't start at the exact start
+      if (current_period - staking_start_period + 1) < voucher.lockup_periods {
         return Err(ErrorCode::LockupNotPassed.into());
       }
 

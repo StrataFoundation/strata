@@ -1,5 +1,5 @@
 import * as anchor from '@project-serum/anchor';
-import { SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Account, PublicKey, SystemProgram, Transaction, TransactionInstruction, Signer } from '@solana/web3.js';
+import { Connection, SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Account, PublicKey, SystemProgram, Transaction, TransactionInstruction, Signer } from '@solana/web3.js';
 import { createMint, createMintInstructions, createTokenAccount, token } from "@project-serum/common"
 import { TOKEN_PROGRAM_ID, Token, ASSOCIATED_TOKEN_PROGRAM_ID, AccountInfo as TokenAccountInfo, u64 } from '@solana/spl-token';
 import { BN, Provider, Program } from '@wum.bo/anchor';
@@ -7,16 +7,11 @@ import { expect, use } from "chai";
 import { PeriodUnit, SplTokenStaking, StakingVoucherV0 } from "@wum.bo/spl-token-staking";
 import { TokenUtils } from './utils/token';
 import ChaiAsPromised from "chai-as-promised";
-
+import { waitForUnixTime } from './utils/clock';
 import { Idl } from '@wum.bo/anchor/dist/idl';
+import { TokenStakingV0 } from '../packages/spl-token-staking/src';
 
 use(ChaiAsPromised);
-
-async function sleep(ts: number) {
-  return new Promise((resolve) => {
-   setTimeout(resolve, ts);
-  })
-}
 
 describe('spl-token-staking', () => {
   // Configure the client to use the local cluster.
@@ -25,6 +20,7 @@ describe('spl-token-staking', () => {
   const tokenUtils = new TokenUtils(program.provider);
 
   let tokenStaking: PublicKey;
+  let tokenStakingAcct: TokenStakingV0;
   let tokenStakingProgram = new SplTokenStaking(program);
   let baseMint: PublicKey;
 
@@ -38,7 +34,12 @@ describe('spl-token-staking', () => {
       targetMintDecimals: 2,
       rewardPercentPerPeriodPerLockupPeriod: 4294967295 // 100%
     })
+    tokenStakingAcct = await tokenStakingProgram.account.tokenStakingV0.fetch(tokenStaking) as any;
   })
+
+  async function waitForPeriod(period: number) {
+    await waitForUnixTime(program.provider.connection, BigInt(tokenStakingAcct.createdTimestamp.toNumber() + tokenStakingAcct.period * period)) // Sleep past remainder of first period, into second
+  }
 
   it('Initializes a stake instance and a stake', async () => {
     const tokenStakingAccount = await tokenStakingProgram.account.tokenStakingV0.fetch(tokenStaking)
@@ -70,11 +71,11 @@ describe('spl-token-staking', () => {
     })
 
     it('Allows collecting after the reward interval', async () => {
-      await sleep(4000)
+      await waitForPeriod(2);
       const destination = await tokenStakingProgram.collect({ tokenStaking, stakingVoucher });
       await tokenUtils.expectBalance(destination, 0.02)
 
-      await sleep(5000)
+      await waitForPeriod(4);
       await tokenStakingProgram.collect({ tokenStaking, stakingVoucher });
       await tokenUtils.expectBalance(destination, 0.04)
     })
@@ -84,20 +85,20 @@ describe('spl-token-staking', () => {
     })
 
     it('Does not allow unstaking before collect', async () => {
-      await sleep(5000);
+      await waitForPeriod(2);
       expect(tokenStakingProgram.unstake({ tokenStaking, stakingVoucher })).to.eventually.throw(/0x132/)
     })
 
 
     it("Should allow unstaking after lockup", async () => {
-      await sleep(5000);
+      await waitForPeriod(2);
       await tokenStakingProgram.collect({ tokenStaking, stakingVoucher });
       await tokenStakingProgram.unstake({ tokenStaking, stakingVoucher });
       await tokenUtils.expectBalance(baseMintAcct, 1);
     })
 
     it("Is possible to unstake then restake in the same slot", async () => {
-      await sleep(5000);
+      await waitForPeriod(2);
       await tokenStakingProgram.collect({ tokenStaking, stakingVoucher });
       await tokenStakingProgram.unstake({ tokenStaking, stakingVoucher });
       await tokenStakingProgram.stake({
@@ -109,13 +110,13 @@ describe('spl-token-staking', () => {
     })
 
     it ('Keeps track of total supply', async () => {
-      await sleep(4000);
-      expect(await tokenStakingProgram.getTotalTargetSupplyFromKey(tokenStaking)).to.equal(2);
-      await sleep(5000)
+      await waitForPeriod(2);
+      expect(await tokenStakingProgram.getTotalTargetSupplyFromKey(tokenStaking)).to.equal(4);
+      await waitForPeriod(3);
       await tokenStakingProgram.collect({ tokenStaking, stakingVoucher });
-      expect(await tokenStakingProgram.getTotalTargetSupplyFromKey(tokenStaking)).to.equal(4);
+      expect(await tokenStakingProgram.getTotalTargetSupplyFromKey(tokenStaking)).to.equal(6);
       await tokenStakingProgram.unstake({ tokenStaking, stakingVoucher });
-      expect(await tokenStakingProgram.getTotalTargetSupplyFromKey(tokenStaking)).to.equal(4);
+      expect(await tokenStakingProgram.getTotalTargetSupplyFromKey(tokenStaking)).to.equal(6);
     })
   })
 });
