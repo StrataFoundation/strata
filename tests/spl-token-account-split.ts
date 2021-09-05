@@ -61,7 +61,7 @@ describe('spl-token-account-split', () => {
   }
 
   it('Allows taking a share of the pot based on total supply', async () => {
-    await waitForPeriod(2)
+    await waitForPeriod(1)
     const destination = await tokenStakingProgram.collect({ tokenStaking, stakingVoucher });
     await tokenUtils.expectBalance(destination, 0.02)
     await tokenSplitProgram.collectTokens({
@@ -69,8 +69,7 @@ describe('spl-token-account-split', () => {
       stakingRewardsAmount: new BN(1)
     })
     await tokenUtils.expectBalance(destination, 0.01)
-    // We redeemed 0.01. We've claimed 0.02. The current period has 0.2 locked up, unredeemed.
-    // 0.01/0.04 * 1000 = 250
-    await tokenUtils.expectAtaBalance(tokenSplitProgram.provider.wallet.publicKey, splitMint, 250)
+    // We redeemed 0.01. We've claimed 0.02.
+    await tokenUtils.expectAtaBalance(tokenSplitProgram.provider.wallet.publicKey, splitMint, 500)
   })
 });

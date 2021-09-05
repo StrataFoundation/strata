@@ -71,11 +71,11 @@ describe('spl-token-staking', () => {
     })
 
     it('Allows collecting after the reward interval', async () => {
-      await waitForPeriod(2);
+      await waitForPeriod(1);
       const destination = await tokenStakingProgram.collect({ tokenStaking, stakingVoucher });
       await tokenUtils.expectBalance(destination, 0.02)
 
-      await waitForPeriod(4);
+      await waitForPeriod(2);
       await tokenStakingProgram.collect({ tokenStaking, stakingVoucher });
       await tokenUtils.expectBalance(destination, 0.04)
     })
@@ -85,20 +85,20 @@ describe('spl-token-staking', () => {
     })
 
     it('Does not allow unstaking before collect', async () => {
-      await waitForPeriod(2);
+      await waitForPeriod(1);
       expect(tokenStakingProgram.unstake({ tokenStaking, stakingVoucher })).to.eventually.throw(/0x132/)
     })
 
 
     it("Should allow unstaking after lockup", async () => {
-      await waitForPeriod(2);
+      await waitForPeriod(1);
       await tokenStakingProgram.collect({ tokenStaking, stakingVoucher });
       await tokenStakingProgram.unstake({ tokenStaking, stakingVoucher });
       await tokenUtils.expectBalance(baseMintAcct, 1);
     })
 
     it("Is possible to unstake then restake in the same slot", async () => {
-      await waitForPeriod(2);
+      await waitForPeriod(1);
       await tokenStakingProgram.collect({ tokenStaking, stakingVoucher });
       await tokenStakingProgram.unstake({ tokenStaking, stakingVoucher });
       await tokenStakingProgram.stake({
@@ -110,13 +110,14 @@ describe('spl-token-staking', () => {
     })
 
     it ('Keeps track of total supply', async () => {
+      expect(await tokenStakingProgram.getTotalTargetSupplyFromKey(tokenStaking)).to.equal(0);
+      await waitForPeriod(1);
+      expect(await tokenStakingProgram.getTotalTargetSupplyFromKey(tokenStaking)).to.equal(2);
       await waitForPeriod(2);
-      expect(await tokenStakingProgram.getTotalTargetSupplyFromKey(tokenStaking)).to.equal(4);
-      await waitForPeriod(3);
       await tokenStakingProgram.collect({ tokenStaking, stakingVoucher });
-      expect(await tokenStakingProgram.getTotalTargetSupplyFromKey(tokenStaking)).to.equal(6);
+      expect(await tokenStakingProgram.getTotalTargetSupplyFromKey(tokenStaking)).to.equal(4);
       await tokenStakingProgram.unstake({ tokenStaking, stakingVoucher });
-      expect(await tokenStakingProgram.getTotalTargetSupplyFromKey(tokenStaking)).to.equal(6);
+      expect(await tokenStakingProgram.getTotalTargetSupplyFromKey(tokenStaking)).to.equal(4);
     })
   })
 });

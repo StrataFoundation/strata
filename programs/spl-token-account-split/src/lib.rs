@@ -51,7 +51,7 @@ use super::*;
     }), args.staking_rewards_amount)?;
 
     let last_period = get_staking_period(&staking);
-    let this_period = get_period(ctx.accounts.clock.unix_timestamp, staking.created_timestamp, &staking.period_unit, staking.period);
+    let this_period = get_period(ctx.accounts.clock.unix_timestamp, staking.created_timestamp, &staking.period_unit, staking.period, true);
     let total_staking_reward_supply = target_mint.supply + (this_period - last_period) * staking.target_amount_per_period + staking.target_amount_unredeemed;
     // (staking_rewards_amount / total_supply) * token_account_balance
     let numerator: u128 = args.staking_rewards_amount as u128 * ctx.accounts.token_account.amount as u128;
