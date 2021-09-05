@@ -126,7 +126,7 @@ pub mod spl_token_staking {
       token_staking.target_mint_authority_bump_seed = args.target_mint_authority_bump_seed;
       token_staking.base_mint = *ctx.accounts.base_mint.to_account_info().key;
       token_staking.target_mint = *ctx.accounts.target_mint.to_account_info().key;
-      token_staking.authority = *ctx.accounts.authority.to_account_info().key;
+      token_staking.authority = args.authority;
 
       Ok(())
     }
@@ -273,6 +273,7 @@ pub struct InitializeTokenStakingV0Args {
   period: u32,
   // reward_percent_per_period on each contract is derived from lockup_periods * reward_percent_per_period_per_lockup_period
   reward_percent_per_period_per_lockup_period: u32, // Percent, as taken by this value / u32.MAX_VALUEÒ
+  authority: Option<Pubkey>,
   bump_seed: u8,
   target_mint_authority_bump_seed: u8
 }
@@ -311,8 +312,6 @@ pub struct InitializeTokenStakingV0<'info> {
     constraint = *target_mint.to_account_info().owner == *base_mint.to_account_info().owner
   )]
   pub target_mint: CpiAccount<'info, Mint>,
-  #[account()]
-  pub authority: AccountInfo<'info>,
   #[account(address = system_program::ID)]
   pub system_program: AccountInfo<'info>,
   pub rent: Sysvar<'info, Rent>,
@@ -466,10 +465,10 @@ impl Default for PeriodUnit {
 #[account]
 #[derive(Default)]
 pub struct TokenStakingV0 {
-  pub authority: Pubkey,
   pub base_mint: Pubkey,
   pub target_mint: Pubkey,
   pub period_unit: PeriodUnit,
+  pub authority: Option<Pubkey>,
   pub period: u32,
   // reward_percent_per_period on each contract is derived from lockup_periods * reward_percent_per_period_per_lockup_period
   pub reward_percent_per_period_per_lockup_period: u32, // Percent, as taken by this value / u32.MAX_VALUE

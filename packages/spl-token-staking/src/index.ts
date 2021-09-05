@@ -107,7 +107,7 @@ export class SplTokenStaking {
   }
 
   async createTokenStakingInstructions({
-    authority = this.wallet.publicKey,
+    authority,
     payer = this.wallet.publicKey,
     baseMint,
     periodUnit,
@@ -151,14 +151,14 @@ export class SplTokenStaking {
             period,
             rewardPercentPerPeriodPerLockupPeriod,
             bumpSeed,
-            targetMintAuthorityBumpSeed
+            targetMintAuthorityBumpSeed,
+            authority
           },
           {
             accounts: {
               payer: payer,
               baseMint: baseMint,
               targetMint: targetMintKeypair.publicKey,
-              authority,
               tokenStaking,
               systemProgram: SystemProgram.programId,
               rent: SYSVAR_RENT_PUBKEY,
