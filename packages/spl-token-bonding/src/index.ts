@@ -12,7 +12,7 @@ export * from "./generated/spl-token-bonding";
 
 interface InitializeCurveArgs {
   curve: CurveV0,
-  payer?: PublicKey
+  payer?: PublicKey,
 }
 
 interface CreateTokenBondingArgs {
@@ -30,6 +30,7 @@ interface CreateTokenBondingArgs {
   baseRoyaltyPercentage: number;
   targetRoyaltyPercentage: number;
   mintCap?: BN;
+  goLiveDate?: Date
   buyFrozen?: boolean;
 }
 
@@ -156,6 +157,7 @@ export class SplTokenBonding {
     baseRoyaltyPercentage,
     targetRoyaltyPercentage,
     mintCap,
+    goLiveDate = new Date(),
     targetMintDecimals,
     buyFrozen = false
   }: CreateTokenBondingArgs): Promise<InstructionResult<{ tokenBonding: PublicKey }>> {
@@ -282,6 +284,7 @@ export class SplTokenBonding {
 
     instructions.push(await this.instruction.initializeTokenBondingV0(
       {
+        goLiveUnixTime: new BN(Math.floor((goLiveDate.valueOf() / 1000))),
         baseRoyaltyPercentage,
         targetRoyaltyPercentage,
         mintCap,
@@ -502,7 +505,8 @@ export class SplTokenBonding {
         source,
         sourceAuthority,
         destination,
-        tokenProgram: TOKEN_PROGRAM_ID
+        tokenProgram: TOKEN_PROGRAM_ID,
+        clock: SYSVAR_CLOCK_PUBKEY
       }
     }
     instructions.push(
@@ -622,7 +626,8 @@ export class SplTokenBonding {
         source,
         sourceAuthority,
         destination,
-        tokenProgram: TOKEN_PROGRAM_ID
+        tokenProgram: TOKEN_PROGRAM_ID,
+        clock: SYSVAR_CLOCK_PUBKEY
       }
     }
     instructions.push(

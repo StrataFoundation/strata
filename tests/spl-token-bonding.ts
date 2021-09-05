@@ -1,13 +1,13 @@
-import * as anchor from '@wum.bo/anchor';
-import { PublicKey, Connection } from '@solana/web3.js';
+import * as anchor from '@project-serum/anchor';
+import { PublicKey } from '@solana/web3.js';
 import { createMint } from "@project-serum/common"
 import { NATIVE_MINT, AccountInfo as TokenAccountInfo, u64 } from '@solana/spl-token';
-import { BN , InstructionCoder } from '@wum.bo/anchor';
+import { BN } from '@wum.bo/anchor';
 import { expect, use } from "chai";
 import { TokenUtils } from './utils/token';
 import ChaiAsPromised from "chai-as-promised";
 
-import { SplTokenBonding, TokenBondingV0, SplTokenBondingIDLJson } from '../packages/spl-token-bonding/src';
+import { SplTokenBonding, TokenBondingV0 } from '../packages/spl-token-bonding/src';
 
 use(ChaiAsPromised);
 
@@ -22,6 +22,7 @@ function percent(percent: number): number {
 }
 
 describe('spl-token-bonding', () => {
+  // Configure the client to use the local cluster.
   anchor.setProvider(anchor.Provider.env());
   
   const program = anchor.workspace.SplTokenBonding;
