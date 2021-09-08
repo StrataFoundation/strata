@@ -1,10 +1,19 @@
-import * as anchor from '@wum.bo/anchor';
-import { SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Account, PublicKey, SystemProgram, Transaction, TransactionInstruction, Signer } from '@solana/web3.js';
+import * as anchor from "@wum.bo/anchor";
+import {
+  SYSVAR_CLOCK_PUBKEY,
+  SYSVAR_RENT_PUBKEY,
+  Account,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+  TransactionInstruction,
+  Signer,
+} from "@solana/web3.js";
 import { getMintInfo, createMintInstructions } from "@project-serum/common";
-import BN from "bn.js"
-import { Program } from '@wum.bo/anchor';
-import { SplTokenStakingIDL, TokenStakingV0 } from './generated/spl-token-staking';
-import { MintInfo, TOKEN_PROGRAM_ID, Token, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import BN from "bn.js";
+import { Program } from "@wum.bo/anchor";
+import { PeriodUnit, SplTokenStakingIDL, TokenStakingV0 } from "./generated/spl-token-staking";
+import { MintInfo, TOKEN_PROGRAM_ID, Token, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 export * from "./generated/spl-token-staking";
 
@@ -39,9 +48,9 @@ interface CollectArgs {
 }
 
 interface InstructionResult<A> {
-  instructions: TransactionInstruction[],
-  signers: Signer[],
-  output: A
+  instructions: TransactionInstruction[];
+  signers: Signer[];
+  output: A;
 }
 
 export class SplTokenStaking {
@@ -68,29 +77,49 @@ export class SplTokenStaking {
   }
 
   get wallet() {
-    return this.provider.wallet
+    return this.provider.wallet;
   }
 
   get account() {
-    return this.program.account
+    return this.program.account;
+  }
+
+  get defaults(): {
+    periodUnit: PeriodUnit;
+    period: number;
+    targetMintDecimals: number;
+    rewardPercentPerPeriodPerLockupPeriod: number;
+  } {
+    return {
+      periodUnit: PeriodUnit.SECOND,
+      period: 5,
+      targetMintDecimals: 9,
+      rewardPercentPerPeriodPerLockupPeriod: 4294967295, // 100%
+    };
   }
 
   static PERIOD_MULTIPLIERS: Record<string, number> = {
     second: 1,
-    minute: 60, 
+    minute: 60,
     hour: 60 * 60,
     day: 60 * 60 * 24,
-    year: 60 * 60 * 24 * 365
-  }
+    year: 60 * 60 * 24 * 365,
+  };
 
   getPeriod(staking: TokenStakingV0, unixTs: number): number {
-    const multiplier = staking.period * SplTokenStaking.PERIOD_MULTIPLIERS[Object.keys(staking.periodUnit)[0]];
-    return Math.floor((unixTs - staking.createdTimestamp.toNumber()) / multiplier)
+    const multiplier =
+      staking.period * SplTokenStaking.PERIOD_MULTIPLIERS[Object.keys(staking.periodUnit)[0]];
+    return Math.floor((unixTs - staking.createdTimestamp.toNumber()) / multiplier);
   }
 
   getTotalTargetSupply(targetMint: MintInfo, staking: TokenStakingV0): number {
-    return targetMint.supply.toNumber() + staking.targetAmountUnredeemed.toNumber() + staking.targetAmountPerPeriod.toNumber()
-      * (this.getPeriod(staking, Date.now() / 1000) - this.getPeriod(staking, staking.lastCalculatedTimestamp.toNumber()));
+    return (
+      targetMint.supply.toNumber() +
+      staking.targetAmountUnredeemed.toNumber() +
+      staking.targetAmountPerPeriod.toNumber() *
+        (this.getPeriod(staking, Date.now() / 1000) -
+          this.getPeriod(staking, staking.lastCalculatedTimestamp.toNumber()))
+    );
   }
 
   async getTotalTargetSupplyFromKey(tokenStaking: PublicKey): Promise<number> {
@@ -113,25 +142,25 @@ export class SplTokenStaking {
     periodUnit,
     period,
     rewardPercentPerPeriodPerLockupPeriod,
-    targetMintDecimals
+    targetMintDecimals,
   }: CreateTokenStakingArgs): Promise<InstructionResult<{ tokenStaking: PublicKey }>> {
     const programId = this.programId;
     const provider = this.provider;
     const targetMintKeypair = anchor.web3.Keypair.generate();
-    const [targetMintAuthorityRes, targetMintAuthorityBumpSeed] = await PublicKey.findProgramAddress(
-      [
-        Buffer.from("target-authority", "utf-8"),
-        targetMintKeypair.publicKey.toBuffer()
-      ], programId
-    )
+    const [targetMintAuthorityRes, targetMintAuthorityBumpSeed] =
+      await PublicKey.findProgramAddress(
+        [Buffer.from("target-authority", "utf-8"), targetMintKeypair.publicKey.toBuffer()],
+        programId
+      );
     const targetMintAuthority = targetMintAuthorityRes;
     const [tokenStaking, bumpSeed] = await PublicKey.findProgramAddress(
       [
         Buffer.from("token-staking", "utf-8"),
         baseMint.toBuffer(),
-        targetMintKeypair.publicKey.toBuffer()
-      ], programId
-    )
+        targetMintKeypair.publicKey.toBuffer(),
+      ],
+      programId
+    );
     const tokenInstructions = await createMintInstructions(
       provider,
       targetMintAuthority,
@@ -152,7 +181,7 @@ export class SplTokenStaking {
             rewardPercentPerPeriodPerLockupPeriod,
             bumpSeed,
             targetMintAuthorityBumpSeed,
-            authority
+            authority,
           },
           {
             accounts: {
@@ -162,16 +191,21 @@ export class SplTokenStaking {
               tokenStaking,
               systemProgram: SystemProgram.programId,
               rent: SYSVAR_RENT_PUBKEY,
-              clock: SYSVAR_CLOCK_PUBKEY
-            }
-          })
+              clock: SYSVAR_CLOCK_PUBKEY,
+            },
+          }
+        ),
       ],
-      signers: [targetMintKeypair]
-    }
+      signers: [targetMintKeypair],
+    };
   }
 
   async createTokenStaking(args: CreateTokenStakingArgs): Promise<PublicKey> {
-    const { output: { tokenStaking }, instructions, signers } = await this.createTokenStakingInstructions(args);
+    const {
+      output: { tokenStaking },
+      instructions,
+      signers,
+    } = await this.createTokenStakingInstructions(args);
     await this.sendInstructions(instructions, signers);
     return tokenStaking;
   }
@@ -182,106 +216,106 @@ export class SplTokenStaking {
     voucherNumber,
     lockupPeriods,
     owner = this.wallet.publicKey,
-    payer = this.wallet.publicKey
+    payer = this.wallet.publicKey,
   }: StakeArgs): Promise<InstructionResult<{ stakingVoucher: PublicKey }>> {
     const tokenStakingAccount = await this.program.account.tokenStakingV0.fetch(tokenStaking);
     let voucherNumberToUse = voucherNumber || 0;
     const getVoucher: () => Promise<[PublicKey, Number]> = () => {
       const pad = Buffer.alloc(2);
-      new BN(0, 16, 'le').toBuffer().copy(pad)
+      new BN(0, 16, "le").toBuffer().copy(pad);
       return PublicKey.findProgramAddress(
-        [
-          Buffer.from("stake-voucher", "utf-8"),
-          owner.toBuffer(),
-          tokenStaking.toBuffer(),
-          pad
-        ], this.programId
-      )
-    }
+        [Buffer.from("stake-voucher", "utf-8"), owner.toBuffer(), tokenStaking.toBuffer(), pad],
+        this.programId
+      );
+    };
     const getVoucherAccount = async () => {
       return this.provider.connection.getAccountInfo((await getVoucher())[0]);
-    }
+    };
     if (!voucherNumber) {
       // Find an empty voucher account
-      while(await getVoucherAccount()) {
+      while (await getVoucherAccount()) {
         voucherNumberToUse++;
       }
     } else {
       voucherNumberToUse = voucherNumber;
     }
-  
+
     const [stakingVoucher, bumpSeed] = await getVoucher();
     const [baseHolding, holdingBumpSeed] = await PublicKey.findProgramAddress(
-      [
-        Buffer.from("holding", "utf-8"),
-        stakingVoucher.toBuffer(),
-      ], this.programId
-    )
+      [Buffer.from("holding", "utf-8"), stakingVoucher.toBuffer()],
+      this.programId
+    );
     const [baseHoldingAuthority, holdingAuthorityBumpSeed] = await PublicKey.findProgramAddress(
-      [
-        Buffer.from("holding-authority", "utf-8"),
-        baseHolding.toBuffer()
-      ], this.programId
-    )
-    const ataBumpSeed = (await PublicKey.findProgramAddress(
-      [
-        owner.toBuffer(),
-        TOKEN_PROGRAM_ID.toBuffer(),
-        tokenStakingAccount.targetMint.toBuffer()
-      ],
-      ASSOCIATED_TOKEN_PROGRAM_ID
-    ))[1]
+      [Buffer.from("holding-authority", "utf-8"), baseHolding.toBuffer()],
+      this.programId
+    );
+    const ataBumpSeed = (
+      await PublicKey.findProgramAddress(
+        [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), tokenStakingAccount.targetMint.toBuffer()],
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      )
+    )[1];
     const purchaseAccount = await Token.getAssociatedTokenAddress(
       ASSOCIATED_TOKEN_PROGRAM_ID,
       TOKEN_PROGRAM_ID,
       tokenStakingAccount.baseMint,
       owner
-    )
-  
-    const instructions = [await this.instruction.stakeV0(
-      {
-        voucherNumber: voucherNumberToUse,
-        baseAmount: amount,
-        lockupPeriods,
-        bumpSeed,
-        holdingAuthorityBumpSeed,
-        holdingBumpSeed,
-        ataBumpSeed
-      },
-      {
-        accounts: {
-          payer,
-          baseMint: tokenStakingAccount.baseMint,
-          tokenStaking: tokenStaking,
-          owner,
-          stakingVoucher,
-          baseHoldingAuthority,
-          baseHolding,
-          purchaseAccount,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          systemProgram: SystemProgram.programId,
-          rent: SYSVAR_RENT_PUBKEY,
-          clock: SYSVAR_CLOCK_PUBKEY
+    );
+
+    const instructions = [
+      await this.instruction.stakeV0(
+        {
+          voucherNumber: voucherNumberToUse,
+          baseAmount: amount,
+          lockupPeriods,
+          bumpSeed,
+          holdingAuthorityBumpSeed,
+          holdingBumpSeed,
+          ataBumpSeed,
+        },
+        {
+          accounts: {
+            payer,
+            baseMint: tokenStakingAccount.baseMint,
+            tokenStaking: tokenStaking,
+            owner,
+            stakingVoucher,
+            baseHoldingAuthority,
+            baseHolding,
+            purchaseAccount,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+            rent: SYSVAR_RENT_PUBKEY,
+            clock: SYSVAR_CLOCK_PUBKEY,
+          },
         }
-      }
-    )]
+      ),
+    ];
 
     return {
       instructions,
       signers: [],
       output: {
-        stakingVoucher
-      }
-    }
+        stakingVoucher,
+      },
+    };
   }
 
   async stake(args: StakeArgs): Promise<PublicKey> {
-    const { output: { stakingVoucher }, instructions, signers } = await this.stakeInstructions(args);
+    const {
+      output: { stakingVoucher },
+      instructions,
+      signers,
+    } = await this.stakeInstructions(args);
     await this.sendInstructions(instructions, signers);
     return stakingVoucher;
   }
 
-  async collectInstructions({ tokenStaking, stakingVoucher, payer = this.wallet.publicKey }: CollectArgs): Promise<InstructionResult<{ destination: PublicKey }>> {
+  async collectInstructions({
+    tokenStaking,
+    stakingVoucher,
+    payer = this.wallet.publicKey,
+  }: CollectArgs): Promise<InstructionResult<{ destination: PublicKey }>> {
     const staking = await this.account.tokenStakingV0.fetch(tokenStaking);
     const voucher = await this.account.stakingVoucherV0.fetch(stakingVoucher);
     const destination = await Token.getAssociatedTokenAddress(
@@ -294,53 +328,65 @@ export class SplTokenStaking {
 
     const instructions = [];
     if (!destinationAcct) {
-      instructions.push(Token.createAssociatedTokenAccountInstruction(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        staking.targetMint,
-        destination,
-        voucher.owner,
-        payer
-      ))
+      instructions.push(
+        Token.createAssociatedTokenAccountInstruction(
+          ASSOCIATED_TOKEN_PROGRAM_ID,
+          TOKEN_PROGRAM_ID,
+          staking.targetMint,
+          destination,
+          voucher.owner,
+          payer
+        )
+      );
     }
 
     const mintAuthority = await PublicKey.createProgramAddress(
       [
         Buffer.from("target-authority", "utf-8"),
         staking.targetMint.toBuffer(),
-        new BN(staking.targetMintAuthorityBumpSeed).toBuffer()
-      ], this.programId
-    )
+        new BN(staking.targetMintAuthorityBumpSeed).toBuffer(),
+      ],
+      this.programId
+    );
 
-    instructions.push(await this.instruction.collectRewardsV0({
-      accounts: {
-        tokenStaking,
-        stakingVoucher,
-        destination,
-        targetMint: staking.targetMint,
-        mintAuthority,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        clock: SYSVAR_CLOCK_PUBKEY
-      }
-    }))
+    instructions.push(
+      await this.instruction.collectRewardsV0({
+        accounts: {
+          tokenStaking,
+          stakingVoucher,
+          destination,
+          targetMint: staking.targetMint,
+          mintAuthority,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          clock: SYSVAR_CLOCK_PUBKEY,
+        },
+      })
+    );
 
     return {
       instructions,
       signers: [],
       output: {
-        destination
-      }
-    }
+        destination,
+      },
+    };
   }
 
   async collect(args: CollectArgs): Promise<PublicKey> {
-    const { output: { destination }, instructions, signers } = await this.collectInstructions(args);
+    const {
+      output: { destination },
+      instructions,
+      signers,
+    } = await this.collectInstructions(args);
     await this.sendInstructions(instructions, signers);
 
-    return destination
+    return destination;
   }
 
-  async unstakeInstructions({ tokenStaking, stakingVoucher }: UnstakeArgs): Promise<InstructionResult<null>> {
+  async unstakeInstructions({
+    tokenStaking,
+    stakingVoucher,
+  }: UnstakeArgs): Promise<InstructionResult<null>> {
     const staking = await this.account.tokenStakingV0.fetch(tokenStaking);
     const voucher = await this.account.stakingVoucherV0.fetch(stakingVoucher);
     const destination = await Token.getAssociatedTokenAddress(
@@ -354,34 +400,38 @@ export class SplTokenStaking {
       [
         Buffer.from("holding", "utf-8"),
         stakingVoucher.toBuffer(),
-        new BN(voucher.holdingBumpSeed).toBuffer()
-      ], this.programId
-    )
+        new BN(voucher.holdingBumpSeed).toBuffer(),
+      ],
+      this.programId
+    );
     const baseHoldingAuthority = await PublicKey.createProgramAddress(
       [
         Buffer.from("holding-authority", "utf-8"),
         baseHolding.toBuffer(),
-        new BN(voucher.holdingAuthorityBumpSeed).toBuffer()
-      ], this.programId
-    )
+        new BN(voucher.holdingAuthorityBumpSeed).toBuffer(),
+      ],
+      this.programId
+    );
 
     return {
       signers: [],
       output: null,
-      instructions: [await this.instruction.unstakeV0({
-        accounts: {
-          tokenStaking,
-          stakingVoucher,
-          owner: voucher.owner,
-          destination,
-          baseHolding,
-          baseHoldingAuthority,
-          clock: SYSVAR_CLOCK_PUBKEY,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          systemProgram: SystemProgram.programId
-        }
-      })]
-    }
+      instructions: [
+        await this.instruction.unstakeV0({
+          accounts: {
+            tokenStaking,
+            stakingVoucher,
+            owner: voucher.owner,
+            destination,
+            baseHolding,
+            baseHoldingAuthority,
+            clock: SYSVAR_CLOCK_PUBKEY,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          },
+        }),
+      ],
+    };
   }
 
   async unstake(args: UnstakeArgs): Promise<void> {

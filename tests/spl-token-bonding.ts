@@ -77,6 +77,7 @@ describe("spl-token-bonding", () => {
         targetRoyaltyPercentage: percent(10),
         mintCap: new BN(1000), // 10.0
       });
+
       tokenBondingAcct = (await tokenBondingProgram.account.tokenBondingV0.fetch(
         tokenBonding
       )) as TokenBondingV0;

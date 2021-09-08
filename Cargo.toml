@@ -3,5 +3,6 @@ members = [
   "programs/*"
 ]
 exclude = [
-  "deps/*"
+  "deps/solana-program-library",
+  "deps/metaplex"
 ]

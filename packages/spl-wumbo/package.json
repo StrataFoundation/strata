@@ -1,37 +1,39 @@
 {
-    "name": "@wum.bo/spl-wumbo",
-    "version": "1.0.0",
-    "description": "Interface to the spl-wumbo smart contract",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/ChewingGlassFund/wumbo-programs"
-    },
-    "main": "dist/lib/index.js",
-    "types": "dist/lib/index.d.ts",
-    "exports": {
-        ".": "./dist/lib/index.js"
-    },
-    "files": [
-        "dist/lib/**/*"
-    ],
-    "scripts": {
-        "build": "yarn run copy-files && tsc --project tsconfig.json",
-        "copy-files": "copyfiles -u 1 src/**/*.js dist/lib",
-        "watch": "yarn run copy-files && tsc --watch --project tsconfig.json",
-        "style": "prettier --write \"src/**/*.{ts,tsx}\""
-    },
-    "dependencies": {
-        "@bonfida/spl-name-service": "^0.1.14",
-        "@project-serum/common": "^0.0.1-beta.3",
-        "@solana/web3.js": "^1.24.1",
-        "bn.js": "^5.2.0",
-        "copyfiles": "^2.4.1"
-    },
-    "devDependencies": {
-        "prettier": "2.3.1",
-        "style-loader": "^2.0.0",
-        "ts-loader": "^9.2.3",
-        "typescript": "^4.3.4"
-    },
-    "peerDependencies": {}
+  "name": "@wum.bo/spl-wumbo",
+  "version": "1.0.0",
+  "description": "Interface to the spl-wumbo smart contract",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ChewingGlassFund/wumbo-programs"
+  },
+  "main": "dist/lib/index.js",
+  "types": "dist/lib/index.d.ts",
+  "exports": {
+    ".": "./dist/lib/index.js"
+  },
+  "files": [
+    "dist/lib/**/*"
+  ],
+  "scripts": {
+    "build": "yarn run copy-files && tsc --project tsconfig.json",
+    "copy-files": "copyfiles -u 1 src/**/*.js dist/lib",
+    "watch": "yarn run copy-files && tsc --watch --project tsconfig.json",
+    "style": "prettier --write \"src/**/*.{ts,tsx}\""
+  },
+  "dependencies": {
+    "@wum.bo/spl-token-bonding": "1.0.0",
+    "@wum.bo/spl-token-staking": "1.0.0",
+    "@bonfida/spl-name-service": "^0.1.14",
+    "@project-serum/common": "^0.0.1-beta.3",
+    "@solana/web3.js": "^1.24.1",
+    "bn.js": "^5.2.0",
+    "copyfiles": "^2.4.1"
+  },
+  "devDependencies": {
+    "prettier": "2.3.1",
+    "style-loader": "^2.0.0",
+    "ts-loader": "^9.2.3",
+    "typescript": "^4.3.4"
+  },
+  "peerDependencies": {}
 }

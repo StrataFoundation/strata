@@ -26,4 +26,4 @@ program = "./deps/solana-program-library/target/deploy/spl_name_service.so"
 
 [[test.genesis]]
 address = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
-program = "./deps/metaplex/rust/target/deploy/spl_metadata.so"
+program = "./deps/metaplex/rust/target/deploy/spl_token_metadata.so"
