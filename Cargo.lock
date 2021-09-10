@@ -1310,7 +1310,46 @@ dependencies = [
 ]
 
 [[package]]
+name = "spl-token-metadata"
+version = "0.0.1"
+dependencies = [
+ "arrayref",
+ "borsh",
+ "num-derive",
+ "num-traits",
+ "solana-program",
+ "spl-token",
+ "spl-token-vault",
+ "thiserror",
+]
+
+[[package]]
 name = "spl-token-staking"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "proptest",
+ "spl-associated-token-account",
+ "spl-token",
+ "uint",
+ "zeroize",
+]
+
+[[package]]
+name = "spl-token-vault"
+version = "0.0.1"
+dependencies = [
+ "borsh",
+ "num-derive",
+ "num-traits",
+ "solana-program",
+ "spl-token",
+ "thiserror",
+]
+
+[[package]]
+name = "spl-wumbo"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",
