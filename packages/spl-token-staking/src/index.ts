@@ -224,7 +224,7 @@ export class SplTokenStaking {
     let voucherNumberToUse = voucherNumber || 0;
     const getVoucher: () => Promise<[PublicKey, Number]> = () => {
       const pad = Buffer.alloc(2);
-      new BN(0, 16, "le").toBuffer().copy(pad);
+      new BN(voucherNumberToUse, 16, 'le').toBuffer().copy(pad)
       return PublicKey.findProgramAddress(
         [Buffer.from("stake-voucher", "utf-8"), owner.toBuffer(), tokenStaking.toBuffer(), pad],
         this.programId

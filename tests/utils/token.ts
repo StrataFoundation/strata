@@ -57,6 +57,25 @@ export class TokenUtils {
     return newAccount
   }
 
+  async mintTo(
+    mint: PublicKey,
+    amount: number,
+    destination: PublicKey
+  ): Promise<void> {
+    const mintTx = new Transaction();
+    mintTx.add(
+      Token.createMintToInstruction(
+        TOKEN_PROGRAM_ID,
+        mint,
+        destination,
+        this.provider.wallet.publicKey,
+        [],
+        amount
+      )
+    )
+    await this.provider.send(mintTx);
+  }
+
   async createAtaAndMint(
     provider: Provider,
     mint: PublicKey,
