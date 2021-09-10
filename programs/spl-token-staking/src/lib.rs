@@ -13,7 +13,7 @@ use crate::precise_number::PreciseNumber;
 
 static TARGET_MINT_AUTHORITY_PREFIX: &str = "target-authority";
 
-pub fn get_period(unix_timestamp: i64, created_timestamp: i64, period_unit: &PeriodUnit, period: u32) -> u64 {
+pub fn get_period(unix_timestamp: i64, created_timestamp: i64, period_unit: &PeriodUnit, period: u32, floor: bool) -> u64 {
   let diff = (unix_timestamp - created_timestamp) as u64;
   let period_multiplier = match period_unit {
     PeriodUnit::SECOND => 1 * period,
@@ -23,11 +23,15 @@ pub fn get_period(unix_timestamp: i64, created_timestamp: i64, period_unit: &Per
     PeriodUnit::YEAR => 60 * 60 * 24 * 365 * period // Not exactly a year with leaps, but works for this purpose
   } as u64;
 
-  return diff / period_multiplier;
+  if floor {
+    diff / period_multiplier
+  } else {
+    diff / period_multiplier +  u64::from(diff % period_multiplier != 0)
+  }
 }
 
 pub fn get_staking_period(staking_data: &TokenStakingV0) -> u64 {
-  get_period(staking_data.last_calculated_timestamp, staking_data.created_timestamp, &staking_data.period_unit, staking_data.period)
+  get_period(staking_data.last_calculated_timestamp, staking_data.created_timestamp, &staking_data.period_unit, staking_data.period, true)
 }
 
 pub fn recalculate(staking_data: &mut TokenStakingV0, unix_timestamp: i64) {
@@ -184,8 +188,8 @@ pub mod spl_token_staking {
       let voucher = &mut ctx.accounts.staking_voucher;
       let staking = &mut ctx.accounts.token_staking;
       let unix_timestamp = ctx.accounts.clock.unix_timestamp;
-      let last_period = get_period(voucher.last_collected_timestamp, staking.created_timestamp, &staking.period_unit, staking.period);
-      let this_period = get_period(unix_timestamp, staking.created_timestamp, &staking.period_unit, staking.period);
+      let last_period = get_period(voucher.last_collected_timestamp, staking.created_timestamp, &staking.period_unit, staking.period, true);
+      let this_period = get_period(unix_timestamp, staking.created_timestamp, &staking.period_unit, staking.period, false);
 
       voucher.last_collected_timestamp = unix_timestamp;
 
@@ -221,15 +225,16 @@ pub mod spl_token_staking {
       let staking = &mut ctx.accounts.token_staking;
       let unix_timestamp = ctx.accounts.clock.unix_timestamp;
 
-      let current_period = get_period(unix_timestamp, staking.created_timestamp, &staking.period_unit, staking.period);
-      let staking_start_period = get_period(voucher.created_timestamp, staking.created_timestamp, &staking.period_unit, staking.period);
+      let current_period = get_period(unix_timestamp, staking.created_timestamp, &staking.period_unit, staking.period, true);
+      let staking_start_period = get_period(voucher.created_timestamp, staking.created_timestamp, &staking.period_unit, staking.period, false);
 
-      if (current_period - staking_start_period) < voucher.lockup_periods {
+      // Add one to the start period, since they didn't start at the exact start
+      if (current_period - staking_start_period + 1) < voucher.lockup_periods {
         return Err(ErrorCode::LockupNotPassed.into());
       }
 
-      let last_period = get_period(voucher.last_collected_timestamp, staking.created_timestamp, &staking.period_unit, staking.period);
-      let this_period = get_period(unix_timestamp, staking.created_timestamp, &staking.period_unit, staking.period);
+      let last_period = get_period(voucher.last_collected_timestamp, staking.created_timestamp, &staking.period_unit, staking.period, true);
+      let this_period = get_period(unix_timestamp, staking.created_timestamp, &staking.period_unit, staking.period, true);
       if this_period != last_period {
         return Err(ErrorCode::CollectBeforeUnstake.into())
       }
