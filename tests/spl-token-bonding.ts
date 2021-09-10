@@ -1,36 +1,13 @@
 import * as anchor from "@project-serum/anchor";
-import {
-  SYSVAR_CLOCK_PUBKEY,
-  SYSVAR_RENT_PUBKEY,
-  Account,
-  PublicKey,
-  SystemProgram,
-  Transaction,
-  TransactionInstruction,
-  Signer,
-} from "@solana/web3.js";
-import {
-  createMint,
-  createMintInstructions,
-  createTokenAccount,
-  token,
-} from "@project-serum/common";
-import {
-  NATIVE_MINT,
-  Token,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  AccountInfo as TokenAccountInfo,
-  u64,
-} from "@solana/spl-token";
-import { BN, Provider, Program } from "@wum.bo/anchor";
+import { PublicKey } from "@solana/web3.js";
+import { createMint } from "@project-serum/common";
+import { NATIVE_MINT, AccountInfo as TokenAccountInfo, u64 } from "@solana/spl-token";
+import { BN } from "@wum.bo/anchor";
 import { expect, use } from "chai";
-import { PeriodUnit, SplTokenStaking, StakingVoucherV0 } from "@wum.bo/spl-token-staking";
 import { TokenUtils } from "./utils/token";
 import ChaiAsPromised from "chai-as-promised";
 
-import { Idl } from "@wum.bo/anchor/dist/idl";
 import { SplTokenBonding, TokenBondingV0 } from "../packages/spl-token-bonding/src";
-import { percent } from "../packages/spl-utils/src";
 
 use(ChaiAsPromised);
 
@@ -38,6 +15,10 @@ async function sleep(ts: number) {
   return new Promise((resolve) => {
     setTimeout(resolve, ts);
   });
+}
+
+function percent(percent: number): number {
+  return Math.floor((percent / 100) * 4294967295); // uint32 max value
 }
 
 describe("spl-token-bonding", () => {
@@ -57,24 +38,28 @@ describe("spl-token-bonding", () => {
     const INITIAL_BALANCE = 1000;
     const DECIMALS = 2;
     beforeEach(async () => {
-      baseMint = await createMint(program.provider, tokenBondingProgram.wallet.publicKey, DECIMALS);
+      baseMint = await createMint(program.provider, me, DECIMALS);
       await tokenUtils.createAtaAndMint(program.provider, baseMint, INITIAL_BALANCE);
-      curve = await tokenBondingProgram.initializeLogCurve({
-        c: new BN(1000000000000), // 1
-        g: new BN(100000000000), // 0.1
-        taylorIterations: 15,
+      curve = await tokenBondingProgram.initializeCurve({
+        curve: {
+          // @ts-ignore
+          logCurveV0: {
+            c: new BN(1000000000000), // 1
+            g: new BN(100000000000), // 0.1
+            taylorIterations: 15,
+          },
+        },
       });
 
       tokenBonding = await tokenBondingProgram.createTokenBonding({
         curve,
         baseMint,
         targetMintDecimals: DECIMALS,
-        authority: tokenBondingProgram.wallet.publicKey,
+        authority: me,
         baseRoyaltyPercentage: percent(5),
         targetRoyaltyPercentage: percent(10),
         mintCap: new BN(1000), // 10.0
       });
-
       tokenBondingAcct = (await tokenBondingProgram.account.tokenBondingV0.fetch(
         tokenBonding
       )) as TokenBondingV0;
@@ -98,9 +83,7 @@ describe("spl-token-bonding", () => {
       // @ts-ignore
       expect(tokenBondingNow.curve.toBase58()).to.equal(curve.toBase58());
       // @ts-ignore
-      expect(tokenBondingNow.authority.toBase58()).to.equal(
-        tokenBondingProgram.wallet.publicKey.toBase58()
-      );
+      expect(tokenBondingNow.authority.toBase58()).to.equal(me.toBase58());
 
       await tokenBondingProgram.updateTokenBonding({
         tokenBonding,
@@ -174,6 +157,85 @@ describe("spl-token-bonding", () => {
     });
   });
 
+  describe("marketplace", () => {
+    async function create(c: any): Promise<{ tokenBonding: PublicKey; baseMint: PublicKey }> {
+      const baseMint = await createMint(program.provider, me, 2);
+      await tokenUtils.createAtaAndMint(program.provider, baseMint, 100_00);
+      const curve = await tokenBondingProgram.initializeCurve({
+        curve: c,
+      });
+
+      const tokenBonding = await tokenBondingProgram.createTokenBonding({
+        curve,
+        baseMint,
+        targetMintDecimals: 2,
+        authority: me,
+        baseRoyaltyPercentage: percent(0),
+        targetRoyaltyPercentage: percent(0),
+        mintCap: new BN(10000),
+      });
+
+      return {
+        tokenBonding,
+        baseMint,
+      };
+    }
+
+    it("allows a doubling mechanic", async () => {
+      const { tokenBonding, baseMint } = await create({
+        // @ts-ignore
+        exponentialCurveV0: {
+          a: new BN(10_000000000000),
+          b: new BN(2_000000000000),
+        },
+      });
+      await tokenBondingProgram.buyV0({
+        tokenBonding,
+        desiredTargetAmount: new BN(100),
+        slippage: 0.05,
+      });
+      await tokenUtils.expectAtaBalance(me, baseMint, 90);
+
+      await tokenBondingProgram.buyV0({
+        tokenBonding,
+        desiredTargetAmount: new BN(200),
+        slippage: 0.05,
+      });
+      await tokenUtils.expectAtaBalance(me, baseMint, 30);
+    });
+
+    it("allows a fixed price", async () => {
+      const { tokenBonding, baseMint } = await create({
+        // @ts-ignore
+        fixedPriceCurveV0: {
+          price: new BN(5_000000000000),
+        },
+      });
+      await tokenBondingProgram.buyV0({
+        tokenBonding,
+        desiredTargetAmount: new BN(100),
+        slippage: 0.05,
+      });
+      await tokenUtils.expectAtaBalance(me, baseMint, 95);
+    });
+
+    it("allows a constant product price", async () => {
+      const { tokenBonding, baseMint } = await create({
+        // @ts-ignore
+        constantProductCurveV0: {
+          b: new BN(7_500000000000),
+          m: new BN(5_000000000000),
+        },
+      });
+      await tokenBondingProgram.buyV0({
+        tokenBonding,
+        desiredTargetAmount: new BN(100),
+        slippage: 0.05,
+      });
+      await tokenUtils.expectAtaBalance(me, baseMint, 90);
+    });
+  });
+
   describe("with sol base mint", async () => {
     const baseMint: PublicKey = NATIVE_MINT;
     let curve: PublicKey;
@@ -181,17 +243,22 @@ describe("spl-token-bonding", () => {
     let tokenBondingAcct: TokenBondingV0;
     const DECIMALS = 2;
     beforeEach(async () => {
-      curve = await tokenBondingProgram.initializeLogCurve({
-        c: new BN(1000000000000), // 1
-        g: new BN(100000000000), // 0.1
-        taylorIterations: 15,
+      curve = await tokenBondingProgram.initializeCurve({
+        curve: {
+          // @ts-ignore
+          logCurveV0: {
+            c: new BN(1000000000000), // 1
+            g: new BN(100000000000), // 0.1
+            taylorIterations: 15,
+          },
+        },
       });
 
       tokenBonding = await tokenBondingProgram.createTokenBonding({
         curve,
         baseMint,
         targetMintDecimals: DECIMALS,
-        authority: tokenBondingProgram.wallet.publicKey,
+        authority: me,
         baseRoyaltyPercentage: percent(5),
         targetRoyaltyPercentage: percent(10),
         mintCap: new BN(1000), // 10.0

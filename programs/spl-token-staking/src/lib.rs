@@ -117,42 +117,33 @@ pub mod spl_token_staking {
         ctx: Context<InitializeTokenStakingV0>,
         args: InitializeTokenStakingV0Args,
     ) -> ProgramResult {
-        let mint_pda = Pubkey::create_program_address(
-            &[
-                TARGET_MINT_AUTHORITY_PREFIX.as_bytes(),
-                ctx.accounts.target_mint.to_account_info().key.as_ref(),
-                &[args.target_mint_authority_bump_seed],
-            ],
-            ctx.program_id,
-        )?;
-        let target_mint = &ctx.accounts.target_mint;
-        if mint_pda
-            != target_mint
-                .mint_authority
-                .ok_or::<ProgramError>(ErrorCode::NoMintAuthority.into())?
-            || (target_mint.freeze_authority.is_some()
-                && mint_pda
-                    != target_mint
-                        .freeze_authority
-                        .ok_or::<ProgramError>(ErrorCode::NoMintAuthority.into())?)
-        {
-            return Err(ErrorCode::InvalidMintAuthority.into());
-        }
+      let mint_pda = Pubkey::create_program_address(
+        &[
+          TARGET_MINT_AUTHORITY_PREFIX.as_bytes(), 
+          ctx.accounts.target_mint.to_account_info().key.as_ref(),
+          &[args.target_mint_authority_bump_seed]
+        ], 
+        ctx.program_id
+      )?;
+      let target_mint = &ctx.accounts.target_mint;
+      if mint_pda != target_mint.mint_authority.ok_or::<ProgramError>(ErrorCode::NoMintAuthority.into())?
+       || (target_mint.freeze_authority.is_some() && mint_pda != target_mint.freeze_authority.ok_or::<ProgramError>(ErrorCode::NoMintAuthority.into())?)  {
+        return Err(ErrorCode::InvalidMintAuthority.into());
+      }
 
-        let token_staking = &mut ctx.accounts.token_staking;
-        token_staking.period = args.period;
-        token_staking.period_unit = args.period_unit;
-        token_staking.reward_percent_per_period_per_lockup_period =
-            args.reward_percent_per_period_per_lockup_period;
-        token_staking.bump_seed = args.bump_seed;
-        token_staking.created_timestamp = ctx.accounts.clock.unix_timestamp;
-        token_staking.last_calculated_timestamp = ctx.accounts.clock.unix_timestamp;
-        token_staking.target_mint_authority_bump_seed = args.target_mint_authority_bump_seed;
-        token_staking.base_mint = *ctx.accounts.base_mint.to_account_info().key;
-        token_staking.target_mint = *ctx.accounts.target_mint.to_account_info().key;
-        token_staking.authority = args.authority;
+      let token_staking = &mut ctx.accounts.token_staking;
+      token_staking.period = args.period;
+      token_staking.period_unit = args.period_unit;
+      token_staking.reward_percent_per_period_per_lockup_period = args.reward_percent_per_period_per_lockup_period;
+      token_staking.bump_seed = args.bump_seed;
+      token_staking.created_timestamp = ctx.accounts.clock.unix_timestamp;
+      token_staking.last_calculated_timestamp = ctx.accounts.clock.unix_timestamp;
+      token_staking.target_mint_authority_bump_seed = args.target_mint_authority_bump_seed;
+      token_staking.base_mint = *ctx.accounts.base_mint.to_account_info().key;
+      token_staking.target_mint = *ctx.accounts.target_mint.to_account_info().key;
+      token_staking.authority = args.authority;
 
-        Ok(())
+      Ok(())
     }
 
     pub fn stake_v0(ctx: Context<StakeV0>, args: StakeV0Args) -> ProgramResult {
@@ -339,13 +330,13 @@ pub mod spl_token_staking {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct InitializeTokenStakingV0Args {
-    period_unit: PeriodUnit,
-    period: u32,
-    // reward_percent_per_period on each contract is derived from lockup_periods * reward_percent_per_period_per_lockup_period
-    reward_percent_per_period_per_lockup_period: u32, // Percent, as taken by this value / u32.MAX_VALUEÒ
-    authority: Option<Pubkey>,
-    bump_seed: u8,
-    target_mint_authority_bump_seed: u8,
+  period_unit: PeriodUnit,
+  period: u32,
+  // reward_percent_per_period on each contract is derived from lockup_periods * reward_percent_per_period_per_lockup_period
+  reward_percent_per_period_per_lockup_period: u32, // Percent, as taken by this value / u32.MAX_VALUEÒ
+  authority: Option<Pubkey>,
+  bump_seed: u8,
+  target_mint_authority_bump_seed: u8
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
@@ -381,11 +372,11 @@ pub struct InitializeTokenStakingV0<'info> {
     #[account(
     constraint = *target_mint.to_account_info().owner == *base_mint.to_account_info().owner
   )]
-    pub target_mint: CpiAccount<'info, Mint>,
-    #[account(address = system_program::ID)]
-    pub system_program: AccountInfo<'info>,
-    pub rent: Sysvar<'info, Rent>,
-    pub clock: Sysvar<'info, Clock>,
+  pub target_mint: CpiAccount<'info, Mint>,
+  #[account(address = system_program::ID)]
+  pub system_program: AccountInfo<'info>,
+  pub rent: Sysvar<'info, Rent>,
+  pub clock: Sysvar<'info, Clock>,
 }
 
 #[derive(Accounts)]
@@ -532,25 +523,25 @@ impl Default for PeriodUnit {
 #[account]
 #[derive(Default)]
 pub struct TokenStakingV0 {
-    pub base_mint: Pubkey,
-    pub target_mint: Pubkey,
-    pub period_unit: PeriodUnit,
-    pub authority: Option<Pubkey>,
-    pub period: u32,
-    // reward_percent_per_period on each contract is derived from lockup_periods * reward_percent_per_period_per_lockup_period
-    pub reward_percent_per_period_per_lockup_period: u32, // Percent, as taken by this value / u32.MAX_VALUE
+  pub base_mint: Pubkey,
+  pub target_mint: Pubkey,
+  pub period_unit: PeriodUnit,
+  pub authority: Option<Pubkey>,
+  pub period: u32,
+  // reward_percent_per_period on each contract is derived from lockup_periods * reward_percent_per_period_per_lockup_period
+  pub reward_percent_per_period_per_lockup_period: u32, // Percent, as taken by this value / u32.MAX_VALUE
 
-    // Calculated values, used to calculate the total target supply included unwithdrawn rewards
-    pub total_base_amount_staked: u64, // Useful to have, not necessary.
-    pub target_amount_per_period: u64,
-    pub target_amount_unredeemed: u64,
-    pub last_calculated_timestamp: i64,
-    pub created_timestamp: i64,
+  // Calculated values, used to calculate the total target supply included unwithdrawn rewards
+  pub total_base_amount_staked: u64, // Useful to have, not necessary.
+  pub target_amount_per_period: u64,
+  pub target_amount_unredeemed: u64,
+  pub last_calculated_timestamp: i64,
+  pub created_timestamp: i64,
 
-    // Needed to derive the PDA of this instance
-    pub voucher_number: u16,
-    pub bump_seed: u8,
-    pub target_mint_authority_bump_seed: u8,
+  // Needed to derive the PDA of this instance
+  pub voucher_number: u16,
+  pub bump_seed: u8,
+  pub target_mint_authority_bump_seed: u8
 }
 
 #[account]
