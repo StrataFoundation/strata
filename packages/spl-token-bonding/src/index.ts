@@ -40,6 +40,7 @@ import {
   supplyAsNum,
   targetToBaseLogCurve,
 } from "./pricing";
+import { percent } from "@wum.bo/spl-utils";
 
 export * from "./generated/spl-token-bonding";
 
@@ -143,8 +144,8 @@ export class SplTokenBonding {
     buyFrozen: boolean;
   } {
     return {
-      baseRoyaltyPercentage: 5,
-      targetRoyaltyPercentage: 10,
+      baseRoyaltyPercentage: percent(0),
+      targetRoyaltyPercentage: percent(10),
       targetMintDecimals: 9,
       mintCap: null,
       buyFrozen: false,
@@ -226,7 +227,9 @@ export class SplTokenBonding {
     mintCap,
     targetMintDecimals,
     buyFrozen = false,
-  }: CreateTokenBondingArgs): Promise<InstructionResult<{ tokenBonding: PublicKey }>> {
+  }: CreateTokenBondingArgs): Promise<
+    InstructionResult<{ tokenBonding: PublicKey; tokenBondingBumpSeed: number }>
+  > {
     if (!targetMint) {
       if (targetRoyalties) {
         throw new Error("Cannot define target royalties if mint is not defined");
@@ -361,6 +364,7 @@ export class SplTokenBonding {
     return {
       output: {
         tokenBonding,
+        tokenBondingBumpSeed: bumpSeed,
       },
       instructions,
       signers,

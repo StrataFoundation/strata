@@ -30,6 +30,7 @@ import ChaiAsPromised from "chai-as-promised";
 
 import { Idl } from "@wum.bo/anchor/dist/idl";
 import { SplTokenBonding, TokenBondingV0 } from "../packages/spl-token-bonding/src";
+import { percent } from "../packages/spl-utils/src";
 
 use(ChaiAsPromised);
 
@@ -37,10 +38,6 @@ async function sleep(ts: number) {
   return new Promise((resolve) => {
     setTimeout(resolve, ts);
   });
-}
-
-function percent(percent: number): number {
-  return Math.floor((percent / 100) * 4294967295); // uint32 max value
 }
 
 describe("spl-token-bonding", () => {

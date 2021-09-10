@@ -1,7 +1,7 @@
 {
-  "name": "@wum.bo/spl-wumbo",
+  "name": "@wum.bo/spl-utils",
   "version": "1.0.0",
-  "description": "Interface to the spl-wumbo smart contract",
+  "description": "Utils shared across spl suite",
   "repository": {
     "type": "git",
     "url": "https://github.com/ChewingGlassFund/wumbo-programs"
@@ -20,17 +20,7 @@
     "watch": "yarn run copy-files && tsc --watch --project tsconfig.json",
     "style": "prettier --write \"src/**/*.{ts,tsx}\""
   },
-  "dependencies": {
-    "@wum.bo/spl-utils": "1.0.0",
-    "@wum.bo/spl-token-bonding": "1.0.0",
-    "@wum.bo/spl-token-staking": "1.0.0",
-    "@wum.bo/metaplex-oyster-common": "0.0.2",
-    "@bonfida/spl-name-service": "^0.1.14",
-    "@project-serum/common": "^0.0.1-beta.3",
-    "@solana/web3.js": "^1.24.1",
-    "bn.js": "^5.2.0",
-    "copyfiles": "^2.4.1"
-  },
+  "dependencies": {},
   "devDependencies": {
     "prettier": "2.3.1",
     "style-loader": "^2.0.0",

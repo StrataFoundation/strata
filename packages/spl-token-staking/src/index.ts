@@ -2,7 +2,6 @@ import * as anchor from "@wum.bo/anchor";
 import {
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
-  Account,
   PublicKey,
   SystemProgram,
   Transaction,
@@ -143,7 +142,9 @@ export class SplTokenStaking {
     period,
     rewardPercentPerPeriodPerLockupPeriod,
     targetMintDecimals,
-  }: CreateTokenStakingArgs): Promise<InstructionResult<{ tokenStaking: PublicKey }>> {
+  }: CreateTokenStakingArgs): Promise<
+    InstructionResult<{ tokenStaking: PublicKey; tokenStakingBumpSeed: number }>
+  > {
     const programId = this.programId;
     const provider = this.provider;
     const targetMintKeypair = anchor.web3.Keypair.generate();
@@ -171,6 +172,7 @@ export class SplTokenStaking {
     return {
       output: {
         tokenStaking,
+        tokenStakingBumpSeed: bumpSeed,
       },
       instructions: [
         ...tokenInstructions,

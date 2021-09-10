@@ -1,14 +1,11 @@
 import * as anchor from "@project-serum/anchor";
 import { PublicKey } from "@solana/web3.js";
-import { createMint } from "@project-serum/common";
-import { NATIVE_MINT } from "@solana/spl-token";
-import { BN } from "@wum.bo/anchor";
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
-import { SplWumbo, Wumbo } from "../packages/spl-wumbo";
-import { SplTokenBonding, TokenBondingV0 } from "../packages/spl-token-bonding/dist/lib";
-import { PeriodUnit, SplTokenStaking } from "../packages/spl-token-staking/dist/lib";
-import { publicKey } from "../deps/metaplex/js/packages/common/src/utils/layout";
+import { SplWumbo } from "../packages/spl-wumbo";
+import { SplTokenBonding } from "../packages/spl-token-bonding";
+import { PeriodUnit, SplTokenStaking } from "../packages/spl-token-staking";
+import { percent } from "../packages/spl-utils/src";
 
 use(ChaiAsPromised);
 
@@ -17,16 +14,51 @@ describe("spl-wumbo", () => {
   anchor.setProvider(anchor.Provider.local());
   const program = anchor.workspace.SplWumbo;
 
-  const tokenBondingProgram = new SplTokenBonding(anchor.workspace.SplTokenBonding);
-  const tokenStakingProgram = new SplTokenStaking(anchor.workspace.SplTokenStaking);
-  const wumboProgram = new SplWumbo(program, tokenBondingProgram, tokenStakingProgram);
+  const splTokenBondingProgram = new SplTokenBonding(anchor.workspace.SplTokenBonding);
+  const splTokenStakingProgram = new SplTokenStaking(anchor.workspace.SplTokenStaking);
+  const wumboProgram = new SplWumbo({
+    program,
+    splTokenBondingProgram,
+    splTokenStakingProgram,
+    splNameServiceNameClass: anchor.web3.Keypair.generate().publicKey, // TODO: fix this
+    splNameServiceNameParent: new anchor.web3.PublicKey("WumboTwitterTdl"),
+  });
+
+  let wumbo: PublicKey;
 
   it("Initializes Wumbo with sane defaults", async () => {
-    let wumbo = await wumboProgram.createWumbo();
+    wumbo = await wumboProgram.createWumbo();
     let wumboAcct = await wumboProgram.account.wumbo.fetch(wumbo);
 
-    expect(wumboAcct).to.exist;
+    expect(wumboAcct.tokenMetadataDefaults).to.eql({
+      symbol: "UN",
+      name: "UNCLAIMED",
+      arweaveUri: "testtest", // TODO: get proper arweaveUri
+    });
+
+    expect({
+      ...wumboAcct.tokenBondingDefaults,
+      curve: wumboAcct.tokenBondingDefaults.curve.toString(),
+    }).to.eql({
+      curve: wumboAcct.curve.toString(),
+      baseRoyaltyPercentage: percent(0),
+      targetRoyaltyPercentage: percent(10),
+      targetMintDecimals: 9,
+      buyFrozen: false,
+    });
+
+    expect(wumboAcct.tokenStakingDefaults).to.eql({
+      periodUnit: PeriodUnit.SECOND,
+      period: 5,
+      targetMintDecimals: 9,
+      rewardPercentPerPeriodPerLockupPeriod: 4294967295, // 100%
+    });
   });
+
+  describe("Unclaied Social Token", () => {
+    it("Creates a unclaimed social token", async () => {});
+  });
+
   /* describe("Unclaimed Token", () => {
   *   let socialTokenBonding: PublicKey;
   *   let socialTokenStaking: PublicKey;

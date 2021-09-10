@@ -1,7 +1,8 @@
 import * as anchor from "@wum.bo/anchor";
 import { Program, BN } from "@wum.bo/anchor";
+import { createMetadata } from "@wum.bo/metaplex-oyster-common";
 import { createMintInstructions } from "@project-serum/common";
-import { NATIVE_MINT } from "@solana/spl-token";
+import { NATIVE_MINT, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import {
   PublicKey,
   Signer,
@@ -14,6 +15,7 @@ import { SplWumboIDL } from "./generated/spl-wumbo";
 import { SplTokenBonding } from "@wum.bo/spl-token-bonding";
 import { SplTokenStaking } from "@wum.bo/spl-token-staking";
 import { getHashedName, getNameAccountKey, NameRegistryState } from "@solana/spl-name-service";
+import { percent } from "@wum.bo/spl-utils";
 
 export * from "./generated/spl-wumbo";
 
@@ -24,11 +26,9 @@ interface CreateWumboArgs {
 
 interface CreateSocialTokenArgs {
   payer?: PublicKey;
+  authority?: PublicKey;
   wumbo: PublicKey;
-  tokenBonding: PublicKey;
-  tokenStaking: PublicKey;
-  name: string;
-  nameOwner?: PublicKey;
+  socialHandle: string;
 }
 
 interface InstructionResult<A> {
@@ -37,22 +37,25 @@ interface InstructionResult<A> {
   output: A;
 }
 
-// TODO
-// add nameParent
-// add nameClass
 export class SplWumbo {
   program: Program<SplWumboIDL>;
   splTokenBondingProgram: SplTokenBonding;
   splTokenStakingProgram: SplTokenStaking;
+  splNameServiceNameClass: PublicKey;
+  splNameServiceNameParent: PublicKey;
 
-  constructor(
-    program: Program<SplWumboIDL>,
-    splTokenBondingProgram: SplTokenBonding,
-    splTokenStakingProgram: SplTokenStaking
-  ) {
-    this.program = program;
-    this.splTokenBondingProgram = splTokenBondingProgram;
-    this.splTokenStakingProgram = splTokenStakingProgram;
+  constructor(opts: {
+    program: Program<SplWumboIDL>;
+    splTokenBondingProgram: SplTokenBonding;
+    splTokenStakingProgram: SplTokenStaking;
+    splNameServiceNameClass: PublicKey;
+    splNameServiceNameParent: PublicKey;
+  }) {
+    this.program = opts.program;
+    this.splTokenBondingProgram = opts.splTokenBondingProgram;
+    this.splTokenStakingProgram = opts.splTokenStakingProgram;
+    this.splNameServiceNameClass = opts.splNameServiceNameClass;
+    this.splNameServiceNameParent = opts.splNameServiceNameParent;
   }
 
   get provider() {
@@ -77,10 +80,6 @@ export class SplWumbo {
 
   get account() {
     return this.program.account;
-  }
-
-  percent(percent: number): number {
-    return Math.floor((percent / 100) * 4294967295); // unit32 max value
   }
 
   sendInstructions(instructions: TransactionInstruction[], signers: Signer[]): Promise<string> {
@@ -132,8 +131,8 @@ export class SplWumbo {
         authority,
         baseMint: NATIVE_MINT,
         targetMint: wumboMint,
-        baseRoyaltyPercentage: this.percent(0),
-        targetRoyaltyPercentage: this.percent(20),
+        baseRoyaltyPercentage: percent(0),
+        targetRoyaltyPercentage: percent(20),
         mintCap: new BN(10), // TODO get proper mintcap
       });
     signers.push(...tokenBondingSigners);
@@ -149,18 +148,18 @@ export class SplWumbo {
       await this.instruction.initializeWumbo(
         {
           bump: wumboBump,
-          metadataDefaults: {
+          tokenMetadataDefaults: {
             symbol: "UN",
             name: "UNCLAIMED",
-            arweaveUri: "asdfasfasdfe", //TODO: get arweaveUri
+            arweaveUri: "testtest", // TODO: get proper arweaveUri
+            sellerFeeBasisPoints: 0,
+            creators: null,
           },
           tokenBondingDefaults: {
             curve,
             ...this.splTokenBondingProgram.defaults,
           },
-          tokenStakingDefaults: {
-            ...this.splTokenStakingProgram.defaults,
-          },
+          tokenStakingDefaults: this.splTokenStakingProgram.defaults,
         },
         {
           accounts: {
@@ -195,10 +194,9 @@ export class SplWumbo {
 
   async createSocialTokenInstructions({
     payer = this.wallet.publicKey,
+    authority = this.wallet.publicKey, // TODO: Set proper authority
     wumbo,
-    tokenBonding,
-    tokenStaking,
-    name,
+    socialHandle,
   }: CreateSocialTokenArgs): Promise<
     InstructionResult<{
       tokenRef: PublicKey;
@@ -208,92 +206,208 @@ export class SplWumbo {
   > {
     const programId = this.programId;
     const provider = this.provider;
-    const hashedName = await getHashedName(name);
-
-    // create tokenBonding and tokenStaking with defaults
-
-    const nameKey = await getNameAccountKey(hashedName); // TODO what is nameClass and nameParent here?
-    // nameClass = verifier = wallet that is verifying
-    // nameClass = gatekeeper BonfidaWallet
-    // inDev = ourwallet
-    // nameParent = Parent name requires verifying it
-    // nameParent = tld "WumboTwitterTdl" dev "Twitter", prod;
-    let nameOwner, nameExists: boolean, tokenRefPrefix: string, tokenRefSeed: Buffer;
+    const instructions: TransactionInstruction[] = [];
+    const signers: Signer[] = [];
+    const hashedSocialHandle = await getHashedName(socialHandle);
+    let nameOwner, nameExists: boolean, tokenRefSeed;
 
     // fetch name entry and check owner
     // if owner of name entry === pubKey
     // claimed or unclaimed;
-    try {
-      const nameRegistryState = await NameRegistryState.retrieve(provider.connection, nameKey);
-
-      if (nameRegistryState.owner.toBase58() !== payer.toBase58()) {
-        throw new Error("Only the owner of this name can create a claimed coin");
-      }
-
-      nameOwner = nameRegistryState.owner;
-      tokenRefPrefix = "claimed-ref";
-      tokenRefSeed = nameRegistryState.owner.toBuffer();
-      nameExists = true;
-    } catch (e) {
-      console.log("Creating an unclaimed coin, could not find name registry state", e);
-      tokenRefPrefix = "unclaimed-ref";
-      tokenRefSeed = nameKey.toBuffer();
-      nameExists = false;
-    }
-
-    const [tokenRef, tokenRefBump] = await PublicKey.findProgramAddress(
-      [Buffer.from(tokenRefPrefix, "utf-8"), wumbo.toBuffer(), tokenRefSeed],
-      programId
+    const nameKey = await getNameAccountKey(
+      hashedSocialHandle,
+      this.splNameServiceNameClass,
+      this.splNameServiceNameParent
     );
 
-    const [reverseTokenRefBonding, reverseTokenRefBondingBump] = await PublicKey.findProgramAddress(
-      [Buffer.from("reverse-token-ref", "utf-8"), wumbo.toBuffer(), tokenBonding.toBuffer()],
-      programId
-    );
+    // TODO: make this actually work
+    tokenRefSeed = nameKey.toBuffer();
 
-    const [reverseTokenRefStaking, reverseTokenRefStakingBump] = await PublicKey.findProgramAddress(
-      [Buffer.from("reverse-token-ref", "utf-8"), wumbo.toBuffer(), tokenStaking.toBuffer()],
-      programId
-    );
+    /* try {
+  *   const nameRegistryState = await NameRegistryState.retrieve(provider.connection, nameKey);
 
-    // socialToken should be update authority on metadata
-    return {
-      output: {
-        tokenRef,
-        reverseTokenRefBonding,
-        reverseTokenRefStaking,
+  *   if (nameRegistryState.owner.toBase58() !== payer.toBase58()) {
+  *     throw new Error("Only the owner of this name can create a claimed coin");
+  *   }
+
+  *   nameOwner = nameRegistryState.owner;
+  *   tokenRefSeed = nameRegistryState.owner.toBuffer();
+  *   nameExists = true;
+  * } catch (e) {
+  *   console.log("Creating an unclaimed coin, could not find name registry state", e);
+  *   tokenRefSeed = nameKey.toBuffer();
+  *   nameExists = false;
+  * } */
+
+    const wumboAcct = await this.program.account.wumbo.fetch(wumbo);
+
+    // create mint with me as auth
+    console.log("Creating social token mint...");
+    const targetMintKeypair = anchor.web3.Keypair.generate();
+    signers.push(targetMintKeypair);
+    const targetMint = targetMintKeypair.publicKey;
+
+    instructions.push(...(await createMintInstructions(provider, authority, targetMint, 9)));
+
+    // create metadata with me as auth
+    console.log("Creating social token metadata...");
+    const tokenMetadata = await createMetadata(
+      {
+        symbol: wumboAcct.tokenMetadataDefaults.symbol as string,
+        name: wumboAcct.tokenMetadataDefaults.name as string,
+        uri: wumboAcct.tokenMetadataDefaults.arweaveUri as string,
+        sellerFeeBasisPoints: 0,
+        creators: null,
       },
-      instructions: [
-        // targetMint
-        // metadata
-        // bonding
-        // staking
-        this.instruction.initializeSocialTokenV0(
-          {
-            tokenRefPrefix,
-            tokenRefSeed,
-            tokenRefBump,
-            reverseTokenRefBondingBump,
-            reverseTokenRefStakingBump,
+      authority.toString(),
+      targetMint.toString(),
+      authority.toString(),
+      instructions,
+      payer.toString()
+    );
+
+    console.log("Creating all authorities...");
+    const [tokenMetadataUpdateAuthority, tokenMetadataUpdateAuthorityBumpSeed] =
+      await PublicKey.findProgramAddress(
+        [Buffer.from("metadata-update", "utf-8"), wumbo.toBuffer()],
+        programId
+      );
+
+    const [targetMintAuthority, _] = await PublicKey.findProgramAddress(
+      [Buffer.from("target-authority", "utf-8"), wumbo.toBuffer()],
+      this.splTokenBondingProgram.programId
+    );
+
+    const [tokenBondingAuthority, tokenBondingAuthorityBumpSeed] =
+      await PublicKey.findProgramAddress(
+        [Buffer.from("token-bonding", "utf-8"), wumbo.toBuffer()],
+        programId
+      );
+
+    const [tokenStakingAuthority, tokenStakingAuthorityBumpSeed] =
+      await PublicKey.findProgramAddress(
+        [Buffer.from("token-staking", "utf-8"), wumbo.toBuffer()],
+        programId
+      );
+
+    console.log("Swapping authority on target mint...");
+    instructions.push(
+      Token.createSetAuthorityInstruction(
+        TOKEN_PROGRAM_ID,
+        targetMint,
+        targetMintAuthority,
+        "AccountOwner",
+        authority,
+        []
+      )
+    );
+
+    console.log("Swapping authority on token metadata...");
+    instructions.push(
+      Token.createSetAuthorityInstruction(
+        TOKEN_PROGRAM_ID,
+        new PublicKey(tokenMetadata),
+        tokenMetadataUpdateAuthority,
+        "AccountOwner",
+        authority,
+        []
+      )
+    );
+
+    console.log("Creating social token bonding...");
+    const {
+      output: { tokenBonding, tokenBondingBumpSeed },
+      instructions: tokenBondingInstructions,
+      signers: tokenBondingSigners,
+    } = await this.splTokenBondingProgram.createTokenBondingInstructions({
+      curve: wumboAcct.tokenBondingDefaults.curve,
+      authority: tokenBondingAuthority,
+      baseMint: wumboAcct.mint,
+      targetMint: targetMint,
+      baseRoyaltyPercentage: wumboAcct.tokenBondingDefaults.baseRoyaltyPercentage,
+      targetRoyaltyPercentage: wumboAcct.tokenBondingDefaults.targetRoyaltyPercentage,
+      targetMintDecimals: wumboAcct.tokenBondingDefaults.targetMintDecimals,
+      mintCap: undefined,
+      buyFrozen: !!wumboAcct.tokenBondingDefaults.buyFrozen,
+    });
+    signers.push(...tokenBondingSigners);
+    instructions.push(...tokenBondingInstructions);
+
+    console.log("Creating social token staking...");
+    const {
+      output: { tokenStaking, tokenStakingBumpSeed },
+      instructions: tokenStakingInstructions,
+      signers: tokenStakingSigners,
+    } = await this.splTokenStakingProgram.createTokenStakingInstructions({
+      authority: tokenStakingAuthority,
+      baseMint: targetMint,
+      periodUnit: wumboAcct.tokenStakingDefaults.periodUnit,
+      period: wumboAcct.tokenStakingDefaults.period,
+      targetMintDecimals: wumboAcct.tokenStakingDefaults.targetMintDecimals,
+      rewardPercentPerPeriodPerLockupPeriod:
+        wumboAcct.tokenStakingDefaults.rewardPercentPerPeriodPerLockupPeriod,
+    });
+    signers.push(...tokenStakingSigners);
+    instructions.push(...tokenStakingInstructions);
+
+    console.log("Creating token ref PDAs...");
+    const [tokenRef, tokenRefBumpSeed] = await PublicKey.findProgramAddress(
+      [Buffer.from("token-ref", "utf-8"), wumbo.toBuffer(), nameKey.toBuffer()],
+      programId
+    );
+
+    const [reverseTokenRefBonding, reverseTokenRefBondingBumpSeed] =
+      await PublicKey.findProgramAddress(
+        [Buffer.from("reverse-token-ref", "utf-8"), wumbo.toBuffer(), tokenBonding.toBuffer()],
+        programId
+      );
+
+    const [reverseTokenRefStaking, reverseTokenRefStakingBumpSeed] =
+      await PublicKey.findProgramAddress(
+        [Buffer.from("reverse-token-ref", "utf-8"), wumbo.toBuffer(), tokenStaking.toBuffer()],
+        programId
+      );
+
+    instructions.push(
+      await this.instruction.initializeSocialTokenV0(
+        {
+          tokenRefSeed: nameKey,
+          wumboBumpSeed: wumboAcct.bumpSeed,
+          tokenBondingBumpSeed,
+          tokenBondingAuthorityBumpSeed,
+          tokenStakingBumpSeed,
+          tokenStakingAuthorityBumpSeed,
+          tokenRefBumpSeed,
+          reverseTokenRefBondingBumpSeed,
+          reverseTokenRefStakingBumpSeed,
+          tokenMetadataUpdateAuthorityBumpSeed,
+        },
+        {
+          accounts: {
+            wumbo,
+            tokenMetadata,
+            tokenMetadataUpdateAuthority,
+            tokenBonding,
+            tokenBondingAuthority,
+            tokenStaking,
+            tokenStakingAuthority,
+            tokenRef,
+            reverseTokenRefBonding,
+            reverseTokenRefStaking,
+            name: nameKey,
+            nameOwner: anchor.web3.PublicKey.default,
+            payer,
+            systemProgram: SystemProgram.programId,
+            rent: SYSVAR_RENT_PUBKEY,
           },
-          {
-            accounts: {
-              wumbo,
-              tokenBonding,
-              tokenStaking,
-              name: nameKey,
-              nameOwner: nameExists ? (nameOwner as PublicKey) : anchor.web3.PublicKey.default,
-              tokenRef,
-              reverseTokenRefBonding,
-              reverseTokenRefStaking,
-              payer,
-              systemProgram: SystemProgram.programId,
-              rent: SYSVAR_RENT_PUBKEY,
-            },
-          }
-        ),
-      ],
-      signers: [],
+        }
+      )
+    );
+
+    return {
+      output: { tokenRef, reverseTokenRefBonding, reverseTokenRefStaking },
+      instructions,
+      signers,
     };
   }
 
