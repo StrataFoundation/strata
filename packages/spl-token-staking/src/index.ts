@@ -143,7 +143,7 @@ export class SplTokenStaking {
     rewardPercentPerPeriodPerLockupPeriod,
     targetMintDecimals,
   }: CreateTokenStakingArgs): Promise<
-    InstructionResult<{ tokenStaking: PublicKey; tokenStakingBumpSeed: number }>
+    InstructionResult<{ tokenStaking: PublicKey; tokenStakingBumpSeed: number; targetMint: PublicKey }>
   > {
     const programId = this.programId;
     const provider = this.provider;
@@ -171,6 +171,7 @@ export class SplTokenStaking {
 
     return {
       output: {
+        targetMint: targetMintKeypair.publicKey,
         tokenStaking,
         tokenStakingBumpSeed: bumpSeed,
       },

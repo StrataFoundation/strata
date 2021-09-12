@@ -10,6 +10,8 @@ use precise_number::{PreciseNumber, InnerUint, one};
 
 static TARGET_MINT_AUTHORITY_PREFIX: &str = "target-authority";
 
+declare_id!("CJMw4wALbZJswJCxLsYUj2ExGCaEgMAp8JSGjodbxAF4");
+
 #[program]
 pub mod spl_token_bonding {
     use std::borrow::BorrowMut;
@@ -282,17 +284,17 @@ fn get_percent(percent: u32) -> Result<PreciseNumber> {
   Ok(percent_prec.checked_div(&max_u32).or_arith_error()?)
 }
 
-fn precise_supply(mint: &CpiAccount<Mint>) -> PreciseNumber {
+fn precise_supply(mint: &Account<Mint>) -> PreciseNumber {
   precise_supply_amt(mint.supply, mint)
 }
 
-fn precise_supply_amt(amt: u64, mint: &CpiAccount<Mint>) -> PreciseNumber {
+fn precise_supply_amt(amt: u64, mint: &Account<Mint>) -> PreciseNumber {
   PreciseNumber {
       value: InnerUint::from((amt as u128) * 10_u128.pow(12_u32 - mint.decimals as u32))
   }
 }
 
-fn to_lamports(amt: &PreciseNumber, mint: &CpiAccount<Mint>) -> u64 {
+fn to_lamports(amt: &PreciseNumber, mint: &Account<Mint>) -> u64 {
   amt.checked_mul(
       &PreciseNumber::new(10_u128).unwrap().checked_pow(mint.decimals as u128).unwrap()
   ).unwrap().ceiling().unwrap().to_imprecise().unwrap() as u64
@@ -358,9 +360,9 @@ pub struct InitializeCurveV0<'info> {
   #[account(mut, signer)]
   pub payer: AccountInfo<'info>,
   #[account(
-    init
+    zero
   )]
-  pub curve: ProgramAccount<'info, CurveV0>,
+  pub curve: Account<'info, CurveV0>,
   #[account(address = system_program::ID)]
   pub system_program: AccountInfo<'info>,
   pub rent: Sysvar<'info, Rent>,
@@ -371,25 +373,25 @@ pub struct InitializeCurveV0<'info> {
 pub struct InitializeTokenBondingV0<'info> {
   #[account(mut, signer)]
   pub payer: AccountInfo<'info>,
-  pub curve: ProgramAccount<'info, CurveV0>,
+  pub curve: Box<Account<'info, CurveV0>>,
   #[account(
     init,
     seeds = [b"token-bonding", target_mint.to_account_info().key.as_ref()],
     bump = args.bump_seed,
     payer = payer,
-    space = 1000
+    space = 512
   )]
-  pub token_bonding: ProgramAccount<'info, TokenBondingV0>,
+  pub token_bonding: Box<Account<'info, TokenBondingV0>>,
   #[account(
     constraint = *base_mint.to_account_info().owner == token::ID
   )]
-  pub base_mint: CpiAccount<'info, Mint>,
+  pub base_mint: Box<Account<'info, Mint>>,
   #[account(
     constraint = target_mint.supply == 0,
     constraint = target_mint.is_initialized,
     constraint = *target_mint.to_account_info().owner == *base_mint.to_account_info().owner
   )]
-  pub target_mint: CpiAccount<'info, Mint>,
+  pub target_mint: Box<Account<'info, Mint>>,
   #[account(
     constraint = base_storage.mint == *base_mint.to_account_info().key,
     constraint = args.base_storage_authority.is_none() || base_storage.owner == args.base_storage_authority.unwrap(),
@@ -397,19 +399,17 @@ pub struct InitializeTokenBondingV0<'info> {
     constraint = base_storage.close_authority.is_none(),
     constraint = base_storage.state == AccountState::Initialized
   )]
-  pub base_storage: CpiAccount<'info, TokenAccount>,
+  pub base_storage: Box<Account<'info, TokenAccount>>,
 
   #[account(
-    constraint = base_royalties.mint == *base_mint.to_account_info().key,
-    constraint = *base_royalties.to_account_info().owner == *base_mint.to_account_info().owner
+    constraint = base_royalties.mint == *base_mint.to_account_info().key
   )]
-  pub base_royalties: CpiAccount<'info, TokenAccount>,
+  pub base_royalties: Box<Account<'info, TokenAccount>>,
 
   #[account(
-    constraint = target_royalties.mint == *target_mint.to_account_info().key,
-    constraint = *target_royalties.to_account_info().owner == token::ID,
+    constraint = target_royalties.mint == *target_mint.to_account_info().key
   )] // Will init for you, since target mint doesn't exist yet.
-  pub target_royalties: CpiAccount<'info, TokenAccount>,
+  pub target_royalties: Box<Account<'info, TokenAccount>>,
 
   #[account(address = *base_mint.to_account_info().owner)]
   pub token_program: AccountInfo<'info>,
@@ -425,7 +425,7 @@ pub struct UpdateTokenBondingV0<'info> {
     mut,
     constraint = token_bonding.authority.ok_or::<ProgramError>(ErrorCode::NoAuthority.into())? == *authority.to_account_info().key
   )]
-  pub token_bonding: ProgramAccount<'info, TokenBondingV0>,
+  pub token_bonding: Account<'info, TokenBondingV0>,
   #[account(signer)]
   pub authority: AccountInfo<'info>
 }
@@ -440,13 +440,13 @@ pub struct BuyV0<'info> {
     has_one = target_royalties,
     has_one = curve
   )]
-  pub token_bonding: ProgramAccount<'info, TokenBondingV0>,
+  pub token_bonding: Box<Account<'info, TokenBondingV0>>,
   #[account()]
-  pub curve: ProgramAccount<'info, CurveV0>,
+  pub curve: Box<Account<'info, CurveV0>>,
   #[account()]
-  pub base_mint: CpiAccount<'info, Mint>,
+  pub base_mint: Box<Account<'info, Mint>>,
   #[account(mut)]
-  pub target_mint: CpiAccount<'info, Mint>,
+  pub target_mint: Box<Account<'info, Mint>>,
   #[account(
     seeds = [
       TARGET_MINT_AUTHORITY_PREFIX.as_bytes(), 
@@ -456,18 +456,18 @@ pub struct BuyV0<'info> {
   )]
   pub target_mint_authority: AccountInfo<'info>,
   #[account(mut)]
-  pub base_storage: CpiAccount<'info, TokenAccount>,
+  pub base_storage: Box<Account<'info, TokenAccount>>,
   #[account(mut)]
-  pub base_royalties: CpiAccount<'info, TokenAccount>,
+  pub base_royalties: Box<Account<'info, TokenAccount>>,
   #[account(mut)]
-  pub target_royalties: CpiAccount<'info, TokenAccount>,
+  pub target_royalties: Box<Account<'info, TokenAccount>>,
 
   #[account(mut)]
-  pub source: CpiAccount<'info, TokenAccount>,
+  pub source: Box<Account<'info, TokenAccount>>,
   #[account(signer)]
   pub source_authority: AccountInfo<'info>,
   #[account(mut)]
-  pub destination: CpiAccount<'info, TokenAccount>,
+  pub destination: Box<Account<'info, TokenAccount>>,
   #[account(address = *base_mint.to_account_info().owner)]
   pub token_program: AccountInfo<'info>,
   pub clock: Sysvar<'info, Clock>,
@@ -480,15 +480,15 @@ pub struct SellV0<'info> {
     has_one = base_storage,
     has_one = curve
   )]
-  pub token_bonding: ProgramAccount<'info, TokenBondingV0>,
+  pub token_bonding: Box<Account<'info, TokenBondingV0>>,
   #[account()]
-  pub curve: ProgramAccount<'info, CurveV0>,
+  pub curve: Box<Account<'info, CurveV0>>,
   #[account()]
-  pub base_mint: CpiAccount<'info, Mint>,
+  pub base_mint: Box<Account<'info, Mint>>,
   #[account(mut)]
-  pub target_mint: CpiAccount<'info, Mint>,
+  pub target_mint: Box<Account<'info, Mint>>,
   #[account(mut)]
-  pub base_storage: CpiAccount<'info, TokenAccount>,
+  pub base_storage: Box<Account<'info, TokenAccount>>,
 
   #[account(
     seeds = [b"storage-authority", token_bonding.to_account_info().key.as_ref()],
@@ -497,12 +497,12 @@ pub struct SellV0<'info> {
   pub base_storage_authority: AccountInfo<'info>,
 
   #[account(mut)]
-  pub source: CpiAccount<'info, TokenAccount>,
+  pub source: Box<Account<'info, TokenAccount>>,
   #[account(signer)]
   pub source_authority: AccountInfo<'info>,
 
   #[account(mut)]
-  pub destination: CpiAccount<'info, TokenAccount>,
+  pub destination: Box<Account<'info, TokenAccount>>,
 
   #[account(address = *base_mint.to_account_info().owner)]
   pub token_program: AccountInfo<'info>,

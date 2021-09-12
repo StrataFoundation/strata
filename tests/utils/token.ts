@@ -88,15 +88,17 @@ export class TokenUtils {
       provider.wallet.publicKey
     )
     const mintTx = new Transaction();
-    mintTx.add(
-      Token.createAssociatedTokenAccountInstruction(
+    if (!await provider.connection.getAccountInfo(ata)) {
+      mintTx.add(Token.createAssociatedTokenAccountInstruction(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         mint,
         ata,
         provider.wallet.publicKey,
         provider.wallet.publicKey
-      ),
+      ))
+    }
+    mintTx.add(
       Token.createMintToInstruction(
         TOKEN_PROGRAM_ID,
         mint,

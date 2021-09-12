@@ -57,7 +57,7 @@ function capitalizeFirstLetter(str) {
           const idlName = `${capitalizeFirstLetter(camelcase(name))}IDL`
 
           const fileContents = `import { IdlAccounts, Idl } from '@wum.bo/anchor';
-export const ${idlName}Json: Idl = ${JSON.stringify(idlJson)};
+export const ${idlName}Json: Idl & { metadata?: { address: string } } = ${JSON.stringify(idlJson)};
 export type ${idlName} = ${JSON.stringify(idlJson)};
 ${allEnumsToTs(idlJson)}
 ${allAccountsToTs(idlName, idlJson)}

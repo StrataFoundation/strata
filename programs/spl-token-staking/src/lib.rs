@@ -11,25 +11,39 @@ use crate::precise_number::PreciseNumber;
 
 static TARGET_MINT_AUTHORITY_PREFIX: &str = "target-authority";
 
-pub fn get_period(unix_timestamp: i64, created_timestamp: i64, period_unit: &PeriodUnit, period: u32, floor: bool) -> u64 {
-  let diff = (unix_timestamp - created_timestamp) as u64;
-  let period_multiplier = match period_unit {
-    PeriodUnit::SECOND => 1 * period,
-    PeriodUnit::MINUTE => 60 * period,
-    PeriodUnit::HOUR => 60 * 60 * period,
-    PeriodUnit::DAY => 60 * 60 * 24 * period,
-    PeriodUnit::YEAR => 60 * 60 * 24 * 365 * period // Not exactly a year with leaps, but works for this purpose
-  } as u64;
+declare_id!("GEFM3nvcHypYtEZMxLrjuAUKwQjLuRcx1YaWXqa85WCm");
 
-  if floor {
-    diff / period_multiplier
-  } else {
-    diff / period_multiplier +  u64::from(diff % period_multiplier != 0)
-  }
+pub fn get_period(
+    unix_timestamp: i64,
+    created_timestamp: i64,
+    period_unit: &PeriodUnit,
+    period: u32,
+    floor: bool,
+) -> u64 {
+    let diff = (unix_timestamp - created_timestamp) as u64;
+    let period_multiplier = match period_unit {
+        PeriodUnit::SECOND => 1 * period,
+        PeriodUnit::MINUTE => 60 * period,
+        PeriodUnit::HOUR => 60 * 60 * period,
+        PeriodUnit::DAY => 60 * 60 * 24 * period,
+        PeriodUnit::YEAR => 60 * 60 * 24 * 365 * period, // Not exactly a year with leaps, but works for this purpose
+    } as u64;
+
+    if floor {
+        diff / period_multiplier
+    } else {
+        diff / period_multiplier + u64::from(diff % period_multiplier != 0)
+    }
 }
 
 pub fn get_staking_period(staking_data: &TokenStakingV0) -> u64 {
-  get_period(staking_data.last_calculated_timestamp, staking_data.created_timestamp, &staking_data.period_unit, staking_data.period, true)
+    get_period(
+        staking_data.last_calculated_timestamp,
+        staking_data.created_timestamp,
+        &staking_data.period_unit,
+        staking_data.period,
+        true,
+    )
 }
 
 pub fn recalculate(staking_data: &mut TokenStakingV0, unix_timestamp: i64) {
@@ -111,33 +125,42 @@ pub mod spl_token_staking {
         ctx: Context<InitializeTokenStakingV0>,
         args: InitializeTokenStakingV0Args,
     ) -> ProgramResult {
-      let mint_pda = Pubkey::create_program_address(
-        &[
-          TARGET_MINT_AUTHORITY_PREFIX.as_bytes(), 
-          ctx.accounts.target_mint.to_account_info().key.as_ref(),
-          &[args.target_mint_authority_bump_seed]
-        ], 
-        ctx.program_id
-      )?;
-      let target_mint = &ctx.accounts.target_mint;
-      if mint_pda != target_mint.mint_authority.ok_or::<ProgramError>(ErrorCode::NoMintAuthority.into())?
-       || (target_mint.freeze_authority.is_some() && mint_pda != target_mint.freeze_authority.ok_or::<ProgramError>(ErrorCode::NoMintAuthority.into())?)  {
-        return Err(ErrorCode::InvalidMintAuthority.into());
-      }
+        let mint_pda = Pubkey::create_program_address(
+            &[
+                TARGET_MINT_AUTHORITY_PREFIX.as_bytes(),
+                ctx.accounts.target_mint.to_account_info().key.as_ref(),
+                &[args.target_mint_authority_bump_seed],
+            ],
+            ctx.program_id,
+        )?;
+        let target_mint = &ctx.accounts.target_mint;
+        if mint_pda
+            != target_mint
+                .mint_authority
+                .ok_or::<ProgramError>(ErrorCode::NoMintAuthority.into())?
+            || (target_mint.freeze_authority.is_some()
+                && mint_pda
+                    != target_mint
+                        .freeze_authority
+                        .ok_or::<ProgramError>(ErrorCode::NoMintAuthority.into())?)
+        {
+            return Err(ErrorCode::InvalidMintAuthority.into());
+        }
 
-      let token_staking = &mut ctx.accounts.token_staking;
-      token_staking.period = args.period;
-      token_staking.period_unit = args.period_unit;
-      token_staking.reward_percent_per_period_per_lockup_period = args.reward_percent_per_period_per_lockup_period;
-      token_staking.bump_seed = args.bump_seed;
-      token_staking.created_timestamp = ctx.accounts.clock.unix_timestamp;
-      token_staking.last_calculated_timestamp = ctx.accounts.clock.unix_timestamp;
-      token_staking.target_mint_authority_bump_seed = args.target_mint_authority_bump_seed;
-      token_staking.base_mint = *ctx.accounts.base_mint.to_account_info().key;
-      token_staking.target_mint = *ctx.accounts.target_mint.to_account_info().key;
-      token_staking.authority = args.authority;
+        let token_staking = &mut ctx.accounts.token_staking;
+        token_staking.period = args.period;
+        token_staking.period_unit = args.period_unit;
+        token_staking.reward_percent_per_period_per_lockup_period =
+            args.reward_percent_per_period_per_lockup_period;
+        token_staking.bump_seed = args.bump_seed;
+        token_staking.created_timestamp = ctx.accounts.clock.unix_timestamp;
+        token_staking.last_calculated_timestamp = ctx.accounts.clock.unix_timestamp;
+        token_staking.target_mint_authority_bump_seed = args.target_mint_authority_bump_seed;
+        token_staking.base_mint = *ctx.accounts.base_mint.to_account_info().key;
+        token_staking.target_mint = *ctx.accounts.target_mint.to_account_info().key;
+        token_staking.authority = args.authority;
 
-      Ok(())
+        Ok(())
     }
 
     pub fn stake_v0(ctx: Context<StakeV0>, args: StakeV0Args) -> ProgramResult {
@@ -189,91 +212,141 @@ pub mod spl_token_staking {
         Ok(())
     }
 
-    pub fn collect_rewards_v0(
-      ctx: Context<CollectRewardsV0>
-    ) -> ProgramResult {
-      let voucher = &mut ctx.accounts.staking_voucher;
-      let staking = &mut ctx.accounts.token_staking;
-      let unix_timestamp = ctx.accounts.clock.unix_timestamp;
-      let last_period = get_period(voucher.last_collected_timestamp, staking.created_timestamp, &staking.period_unit, staking.period, true);
-      let this_period = get_period(unix_timestamp, staking.created_timestamp, &staking.period_unit, staking.period, false);
+    pub fn collect_rewards_v0(ctx: Context<CollectRewardsV0>) -> ProgramResult {
+        let voucher = &mut ctx.accounts.staking_voucher;
+        let staking = &mut ctx.accounts.token_staking;
+        let unix_timestamp = ctx.accounts.clock.unix_timestamp;
+        let last_period = get_period(
+            voucher.last_collected_timestamp,
+            staking.created_timestamp,
+            &staking.period_unit,
+            staking.period,
+            true,
+        );
+        let this_period = get_period(
+            unix_timestamp,
+            staking.created_timestamp,
+            &staking.period_unit,
+            staking.period,
+            false,
+        );
 
-      voucher.last_collected_timestamp = unix_timestamp;
+        voucher.last_collected_timestamp = unix_timestamp;
 
-      recalculate(staking, unix_timestamp);
+        recalculate(staking, unix_timestamp);
 
-      if last_period != this_period {
-        let rewards_due: u64 = (this_period - last_period) * get_rewards_per_period(voucher, staking)?;
-        staking.target_amount_unredeemed -= rewards_due;
-        token::mint_to(
-          CpiContext::new_with_signer(
-            ctx.accounts.token_program.to_account_info().clone(), 
-    MintTo {
-              mint: ctx.accounts.target_mint.to_account_info().clone(),
-              to: ctx.accounts.destination.to_account_info().clone(),
-              authority: ctx.accounts.mint_authority.to_account_info().clone()
-            },
-&[&[
-              TARGET_MINT_AUTHORITY_PREFIX.as_bytes(), 
-              ctx.accounts.target_mint.to_account_info().key.as_ref(),
-              &[staking.target_mint_authority_bump_seed]
-            ]]
-          ),
-  rewards_due
-        )?;
-      }
+        if last_period != this_period {
+            let rewards_due: u64 =
+                (this_period - last_period) * get_rewards_per_period(voucher, staking)?;
+            staking.target_amount_unredeemed -= rewards_due;
+            token::mint_to(
+                CpiContext::new_with_signer(
+                    ctx.accounts.token_program.to_account_info().clone(),
+                    MintTo {
+                        mint: ctx.accounts.target_mint.to_account_info().clone(),
+                        to: ctx.accounts.destination.to_account_info().clone(),
+                        authority: ctx.accounts.mint_authority.to_account_info().clone(),
+                    },
+                    &[&[
+                        TARGET_MINT_AUTHORITY_PREFIX.as_bytes(),
+                        ctx.accounts.target_mint.to_account_info().key.as_ref(),
+                        &[staking.target_mint_authority_bump_seed],
+                    ]],
+                ),
+                rewards_due,
+            )?;
+        }
 
-      Ok(())
+        Ok(())
     }
 
     pub fn unstake_v0(ctx: Context<UnstakeV0>) -> ProgramResult {
-      let voucher = &mut ctx.accounts.staking_voucher;
-      let base_holding = ctx.accounts.base_holding.to_account_info();
-      let staking = &mut ctx.accounts.token_staking;
-      let unix_timestamp = ctx.accounts.clock.unix_timestamp;
+        let voucher = &mut ctx.accounts.staking_voucher;
+        let base_holding = ctx.accounts.base_holding.to_account_info();
+        let staking = &mut ctx.accounts.token_staking;
+        let unix_timestamp = ctx.accounts.clock.unix_timestamp;
 
-      let current_period = get_period(unix_timestamp, staking.created_timestamp, &staking.period_unit, staking.period, true);
-      let staking_start_period = get_period(voucher.created_timestamp, staking.created_timestamp, &staking.period_unit, staking.period, false);
+        let current_period = get_period(
+            unix_timestamp,
+            staking.created_timestamp,
+            &staking.period_unit,
+            staking.period,
+            true,
+        );
+        let staking_start_period = get_period(
+            voucher.created_timestamp,
+            staking.created_timestamp,
+            &staking.period_unit,
+            staking.period,
+            false,
+        );
 
-      // Add one to the start period, since they didn't start at the exact start
-      if (current_period - staking_start_period + 1) < voucher.lockup_periods {
-        return Err(ErrorCode::LockupNotPassed.into());
-      }
+        // Add one to the start period, since they didn't start at the exact start
+        if (current_period - staking_start_period + 1) < voucher.lockup_periods {
+            return Err(ErrorCode::LockupNotPassed.into());
+        }
 
-      let last_period = get_period(voucher.last_collected_timestamp, staking.created_timestamp, &staking.period_unit, staking.period, true);
-      let this_period = get_period(unix_timestamp, staking.created_timestamp, &staking.period_unit, staking.period, true);
-      if this_period != last_period {
-        return Err(ErrorCode::CollectBeforeUnstake.into())
-      }
+        let last_period = get_period(
+            voucher.last_collected_timestamp,
+            staking.created_timestamp,
+            &staking.period_unit,
+            staking.period,
+            true,
+        );
+        let this_period = get_period(
+            unix_timestamp,
+            staking.created_timestamp,
+            &staking.period_unit,
+            staking.period,
+            true,
+        );
+        if this_period != last_period {
+            return Err(ErrorCode::CollectBeforeUnstake.into());
+        }
 
-      recalculate(staking, unix_timestamp);
-      let rewards_per_period: u64 = get_rewards_per_period(voucher, staking)?;
-      staking.target_amount_per_period -= rewards_per_period;
+        recalculate(staking, unix_timestamp);
+        let rewards_per_period: u64 = get_rewards_per_period(voucher, staking)?;
+        staking.target_amount_per_period -= rewards_per_period;
 
-       // Transfer them their holding
-      token::transfer(CpiContext::new_with_signer(
-        ctx.accounts.token_program.clone(), 
-Transfer {
-          from: base_holding.clone(),
-          to: ctx.accounts.destination.to_account_info().clone(),
-          authority: ctx.accounts.base_holding_authority.to_account_info().clone()
-        }, 
-&[
-          &[b"holding-authority", base_holding.key.as_ref(), &[voucher.holding_authority_bump_seed]]
-        ]
-      ), voucher.base_amount)?;
+        // Transfer them their holding
+        token::transfer(
+            CpiContext::new_with_signer(
+                ctx.accounts.token_program.clone(),
+                Transfer {
+                    from: base_holding.clone(),
+                    to: ctx.accounts.destination.to_account_info().clone(),
+                    authority: ctx
+                        .accounts
+                        .base_holding_authority
+                        .to_account_info()
+                        .clone(),
+                },
+                &[&[
+                    b"holding-authority",
+                    base_holding.key.as_ref(),
+                    &[voucher.holding_authority_bump_seed],
+                ]],
+            ),
+            voucher.base_amount,
+        )?;
 
-      close_token_account(CpiContext::new_with_signer(
-        ctx.accounts.token_program.clone(), 
-        CloseTokenAccount {
-          from: base_holding.clone(),
-          to: ctx.accounts.owner.to_account_info().clone(),
-          authority: ctx.accounts.base_holding_authority.to_account_info().clone()
-        }, 
-&[
-          &[b"holding-authority", base_holding.key.as_ref(), &[voucher.holding_authority_bump_seed]]
-        ]
-      ))?;
+        close_token_account(CpiContext::new_with_signer(
+            ctx.accounts.token_program.clone(),
+            CloseTokenAccount {
+                from: base_holding.clone(),
+                to: ctx.accounts.owner.to_account_info().clone(),
+                authority: ctx
+                    .accounts
+                    .base_holding_authority
+                    .to_account_info()
+                    .clone(),
+            },
+            &[&[
+                b"holding-authority",
+                base_holding.key.as_ref(),
+                &[voucher.holding_authority_bump_seed],
+            ]],
+        ))?;
 
         close_token_account(CpiContext::new_with_signer(
             ctx.accounts.token_program.clone(),
@@ -299,13 +372,13 @@ Transfer {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct InitializeTokenStakingV0Args {
-  period_unit: PeriodUnit,
-  period: u32,
-  // reward_percent_per_period on each contract is derived from lockup_periods * reward_percent_per_period_per_lockup_period
-  reward_percent_per_period_per_lockup_period: u32, // Percent, as taken by this value / u32.MAX_VALUEÒ
-  authority: Option<Pubkey>,
-  bump_seed: u8,
-  target_mint_authority_bump_seed: u8
+    period_unit: PeriodUnit,
+    period: u32,
+    // reward_percent_per_period on each contract is derived from lockup_periods * reward_percent_per_period_per_lockup_period
+    reward_percent_per_period_per_lockup_period: u32, // Percent, as taken by this value / u32.MAX_VALUEÒ
+    authority: Option<Pubkey>,
+    bump_seed: u8,
+    target_mint_authority_bump_seed: u8,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
@@ -331,21 +404,21 @@ pub struct InitializeTokenStakingV0<'info> {
     seeds = [b"token-staking", base_mint.to_account_info().key.as_ref(), target_mint.to_account_info().key.as_ref()],
     bump = args.bump_seed,
     payer = payer,
-    space = 1000
+    space = 512
   )]
-    pub token_staking: ProgramAccount<'info, TokenStakingV0>,
+    pub token_staking: Account<'info, TokenStakingV0>,
     #[account(
     constraint = *base_mint.to_account_info().owner == token::ID
   )]
-    pub base_mint: CpiAccount<'info, Mint>,
+    pub base_mint: Account<'info, Mint>,
     #[account(
     constraint = *target_mint.to_account_info().owner == *base_mint.to_account_info().owner
   )]
-  pub target_mint: CpiAccount<'info, Mint>,
-  #[account(address = system_program::ID)]
-  pub system_program: AccountInfo<'info>,
-  pub rent: Sysvar<'info, Rent>,
-  pub clock: Sysvar<'info, Clock>,
+    pub target_mint: Account<'info, Mint>,
+    #[account(address = system_program::ID)]
+    pub system_program: AccountInfo<'info>,
+    pub rent: Sysvar<'info, Rent>,
+    pub clock: Sysvar<'info, Clock>,
 }
 
 #[derive(Accounts)]
@@ -357,7 +430,7 @@ pub struct StakeV0<'info> {
     mut,
     has_one = base_mint
   )]
-    pub token_staking: ProgramAccount<'info, TokenStakingV0>,
+    pub token_staking: Account<'info, TokenStakingV0>,
     #[account(
     init,
     seeds = [
@@ -368,29 +441,28 @@ pub struct StakeV0<'info> {
     ],
     bump = args.bump_seed,
     payer = payer,
-    space = 1000
+    space = 512
   )]
-    pub staking_voucher: ProgramAccount<'info, StakingVoucherV0>,
+    pub staking_voucher: Account<'info, StakingVoucherV0>,
     #[account()]
-    pub base_mint: CpiAccount<'info, Mint>,
+    pub base_mint: Account<'info, Mint>,
     #[account(
     mut,
     constraint = purchase_account.mint == *base_mint.to_account_info().key,
     constraint = purchase_account.owner == *owner.to_account_info().key,
   )]
-    pub purchase_account: CpiAccount<'info, TokenAccount>,
+    pub purchase_account: Account<'info, TokenAccount>,
     #[account(signer)]
     pub owner: AccountInfo<'info>,
     #[account(
     init,
     seeds = [b"holding", staking_voucher.to_account_info().key.as_ref()],
-    space = TokenAccount::LEN,
-    token = base_mint,
-    authority = base_holding_authority,
+    token::mint = base_mint,
+    token::authority = base_holding_authority,
     payer = payer,
     bump = args.holding_bump_seed
   )]
-    pub base_holding: CpiAccount<'info, TokenAccount>,
+    pub base_holding: Box<Account<'info, TokenAccount>>,
     #[account(
     seeds = [b"holding-authority", base_holding.to_account_info().key.as_ref()],
     bump = args.holding_authority_bump_seed
@@ -411,12 +483,12 @@ pub struct CollectRewardsV0<'info> {
     mut,
     has_one = target_mint
   )]
-    pub token_staking: ProgramAccount<'info, TokenStakingV0>,
+    pub token_staking: Account<'info, TokenStakingV0>,
     #[account(
     mut,
     has_one = token_staking
   )]
-    pub staking_voucher: ProgramAccount<'info, StakingVoucherV0>,
+    pub staking_voucher: Account<'info, StakingVoucherV0>,
     #[account(
     mut,
     address = Pubkey::create_program_address(
@@ -424,12 +496,12 @@ pub struct CollectRewardsV0<'info> {
       &spl_associated_token_account::ID
     )?
   )]
-    pub destination: CpiAccount<'info, TokenAccount>,
+    pub destination: Account<'info, TokenAccount>,
     #[account(
     mut,
     constraint = target_mint.mint_authority.map(|a| a == *mint_authority.to_account_info().key).unwrap_or(false),
   )]
-    pub target_mint: CpiAccount<'info, Mint>,
+    pub target_mint: Account<'info, Mint>,
     #[account()]
     pub mint_authority: AccountInfo<'info>,
     #[account(address = *target_mint.to_account_info().owner)]
@@ -440,27 +512,27 @@ pub struct CollectRewardsV0<'info> {
 #[derive(Accounts)]
 pub struct UnstakeV0<'info> {
     #[account(mut)]
-    pub token_staking: ProgramAccount<'info, TokenStakingV0>,
+    pub token_staking: Account<'info, TokenStakingV0>,
     #[account(
     mut,
     has_one = token_staking,
     has_one = owner,
     close = owner
   )]
-    pub staking_voucher: ProgramAccount<'info, StakingVoucherV0>,
+    pub staking_voucher: Account<'info, StakingVoucherV0>,
     #[account(mut, signer)]
     pub owner: AccountInfo<'info>,
     #[account(
     mut,
     constraint = destination.mint == token_staking.base_mint
   )]
-    pub destination: CpiAccount<'info, TokenAccount>,
+    pub destination: Account<'info, TokenAccount>,
     #[account(
     mut,
     seeds = [b"holding", staking_voucher.to_account_info().key.as_ref()],
     bump = staking_voucher.holding_bump_seed
   )]
-    pub base_holding: CpiAccount<'info, TokenAccount>,
+    pub base_holding: Account<'info, TokenAccount>,
     #[account(
     seeds = [b"holding-authority", base_holding.to_account_info().key.as_ref()],
     bump = staking_voucher.holding_authority_bump_seed
@@ -492,25 +564,25 @@ impl Default for PeriodUnit {
 #[account]
 #[derive(Default)]
 pub struct TokenStakingV0 {
-  pub base_mint: Pubkey,
-  pub target_mint: Pubkey,
-  pub period_unit: PeriodUnit,
-  pub authority: Option<Pubkey>,
-  pub period: u32,
-  // reward_percent_per_period on each contract is derived from lockup_periods * reward_percent_per_period_per_lockup_period
-  pub reward_percent_per_period_per_lockup_period: u32, // Percent, as taken by this value / u32.MAX_VALUE
+    pub base_mint: Pubkey,
+    pub target_mint: Pubkey,
+    pub period_unit: PeriodUnit,
+    pub authority: Option<Pubkey>,
+    pub period: u32,
+    // reward_percent_per_period on each contract is derived from lockup_periods * reward_percent_per_period_per_lockup_period
+    pub reward_percent_per_period_per_lockup_period: u32, // Percent, as taken by this value / u32.MAX_VALUE
 
-  // Calculated values, used to calculate the total target supply included unwithdrawn rewards
-  pub total_base_amount_staked: u64, // Useful to have, not necessary.
-  pub target_amount_per_period: u64,
-  pub target_amount_unredeemed: u64,
-  pub last_calculated_timestamp: i64,
-  pub created_timestamp: i64,
+    // Calculated values, used to calculate the total target supply included unwithdrawn rewards
+    pub total_base_amount_staked: u64, // Useful to have, not necessary.
+    pub target_amount_per_period: u64,
+    pub target_amount_unredeemed: u64,
+    pub last_calculated_timestamp: i64,
+    pub created_timestamp: i64,
 
-  // Needed to derive the PDA of this instance
-  pub voucher_number: u16,
-  pub bump_seed: u8,
-  pub target_mint_authority_bump_seed: u8
+    // Needed to derive the PDA of this instance
+    pub voucher_number: u16,
+    pub bump_seed: u8,
+    pub target_mint_authority_bump_seed: u8,
 }
 
 #[account]

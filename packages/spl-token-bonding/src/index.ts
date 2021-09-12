@@ -192,7 +192,7 @@ export class SplTokenBonding {
     goLiveDate = new Date(),
     targetMintDecimals,
     buyFrozen = false,
-  }: CreateTokenBondingArgs): Promise<InstructionResult<{ tokenBonding: PublicKey }>> {
+  }: CreateTokenBondingArgs): Promise<InstructionResult<{ tokenBonding: PublicKey, targetMint: PublicKey }>> {
     if (!targetMint) {
       if (targetRoyalties) {
         throw new Error("Cannot define target royalties if mint is not defined");
@@ -352,6 +352,7 @@ export class SplTokenBonding {
     return {
       output: {
         tokenBonding,
+        targetMint
       },
       instructions,
       signers,

@@ -5,9 +5,12 @@ use spl_token::state::AccountState;
 
 static TOKEN_ACCOUNT_AUTHORITY_PREFIX: &str = "token-account-authority";
 
+declare_id!("5DbtwvnZnsAkRWc6q5u4FJ4NLc3cmALV637ybjP4wKzE");
+
 #[program]
 pub mod spl_token_account_split {
   use std::convert::TryInto;
+
 
 use super::*;
   pub fn initialize_token_account_split_v0(
@@ -105,17 +108,17 @@ pub struct InitializeTokenAccountSplitV0<'info> {
     ],
     bump = args.bump_seed,
     payer = payer,
-    space = 1000
+    space = 512
   )]
-  pub token_account_split: ProgramAccount<'info, TokenAccountSplitV0>,
+  pub token_account_split: Account<'info, TokenAccountSplitV0>,
   #[account(
-    constraint = token_account.delegate.is_none(),
-    constraint = token_account.close_authority.is_none(),
-    constraint = token_account.state == AccountState::Initialized
+    constraint = token_account.delegate.is_none() && 
+                 token_account.close_authority.is_none() && 
+                 token_account.state == AccountState::Initialized
   )]
-  pub token_account: CpiAccount<'info, TokenAccount>,
+  pub token_account: Account<'info, TokenAccount>,
   #[account()]
-  pub token_staking: CpiAccount<'info, TokenStakingV0>,
+  pub token_staking: Account<'info, TokenStakingV0>,
   #[account(address = system_program::ID)]
   pub system_program: AccountInfo<'info>,
   pub rent: Sysvar<'info, Rent>,
@@ -130,9 +133,9 @@ pub struct CollectTokensV0<'info> {
     has_one = token_account,
     has_one = token_staking
   )]
-  pub token_account_split: ProgramAccount<'info, TokenAccountSplitV0>,
+  pub token_account_split: Box<Account<'info, TokenAccountSplitV0>>,
   #[account(mut)]
-  pub token_account: CpiAccount<'info, TokenAccount>,
+  pub token_account: Box<Account<'info, TokenAccount>>,
   #[account(
     seeds = [TOKEN_ACCOUNT_AUTHORITY_PREFIX.as_bytes(), token_account.to_account_info().key.as_ref()],
     bump = token_account_split.token_account_authority_bump_seed,
@@ -141,15 +144,15 @@ pub struct CollectTokensV0<'info> {
   #[account(
     has_one = target_mint
   )]
-  pub token_staking: CpiAccount<'info, TokenStakingV0>,
+  pub token_staking: Box<Account<'info, TokenStakingV0>>,
   #[account(mut)]
-  pub target_mint: CpiAccount<'info, Mint>,
+  pub target_mint: Account<'info, Mint>,
   #[account(mut)]
-  pub staking_rewards_source: CpiAccount<'info, TokenAccount>,
+  pub staking_rewards_source: Account<'info, TokenAccount>,
   #[account(signer)]
   pub staking_rewards_authority: AccountInfo<'info>,
   #[account(mut)]
-  pub destination: CpiAccount<'info, TokenAccount>,
+  pub destination: Account<'info, TokenAccount>,
   #[account()]
   pub token_program: AccountInfo<'info>,
   pub clock: Sysvar<'info, Clock>,

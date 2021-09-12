@@ -6,6 +6,7 @@ import { SplWumbo } from "../packages/spl-wumbo";
 import { SplTokenBonding } from "../packages/spl-token-bonding";
 import { PeriodUnit, SplTokenStaking } from "../packages/spl-token-staking";
 import { percent } from "../packages/spl-utils/src";
+import { SplTokenAccountSplit } from "../packages/spl-token-account-split/src";
 
 use(ChaiAsPromised);
 
@@ -16,10 +17,12 @@ describe("spl-wumbo", () => {
 
   const splTokenBondingProgram = new SplTokenBonding(anchor.workspace.SplTokenBonding);
   const splTokenStakingProgram = new SplTokenStaking(anchor.workspace.SplTokenStaking);
+  const splTokenAccountSplitProgram = new SplTokenAccountSplit(anchor.workspace.SplTokenAccountSplit, splTokenStakingProgram);
   const wumboProgram = new SplWumbo({
     program,
     splTokenBondingProgram,
     splTokenStakingProgram,
+    splTokenAccountSplitProgram,
     splNameServiceNameClass: anchor.web3.Keypair.generate().publicKey, // TODO: fix this
     splNameServiceNameParent: new anchor.web3.PublicKey("WumboTwitterTdl"),
   });
@@ -32,7 +35,6 @@ describe("spl-wumbo", () => {
 
     expect(wumboAcct.tokenMetadataDefaults).to.eql({
       symbol: "UN",
-      name: "UNCLAIMED",
       arweaveUri: "testtest", // TODO: get proper arweaveUri
     });
 

@@ -7,9 +7,21 @@ use {
         instruction::{update_metadata_accounts},
         state::{MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH}
     },
+    spl_name_service::state::NameRecordHeader,
     spl_token_bonding::{CurveV0, TokenBondingV0},
     spl_token_staking::{TokenStakingV0},
+    spl_token_account_split::{TokenAccountSplitV0},
+    sha2::Sha256
 };
+
+pub mod token_metadata;
+
+use sha2::{Digest, digest::generic_array::{GenericArray, typenum::{UInt, UTerm, bit::{B0, B1}}}};
+use spl_token_staking::PeriodUnit;
+
+use crate::token_metadata::{Metadata};
+
+declare_id!("Bn6owcizWtLgeKcVyXVgUgTvbLezCVz9Q7oPdZu5bC1H");
 
 #[program]
 pub mod spl_wumbo {
@@ -21,8 +33,8 @@ pub mod spl_wumbo {
     ) -> ProgramResult {
         let wumbo = &mut ctx.accounts.wumbo;
 
-        wumbo.mint = *ctx.accounts.mint.to_account_info().key;
-        wumbo.curve = *ctx.accounts.curve.to_account_info().key;
+        wumbo.mint = ctx.accounts.mint.key();
+        wumbo.curve = ctx.accounts.curve.key();
         wumbo.token_metadata_defaults = args.token_metadata_defaults;
         wumbo.token_bonding_defaults = args.token_bonding_defaults;
         wumbo.token_staking_defaults = args.token_staking_defaults;
@@ -36,46 +48,26 @@ pub mod spl_wumbo {
         args: InitializeSocialTokenV0Args,
     ) -> ProgramResult {
         let token_ref = &mut ctx.accounts.token_ref;
-        let reverse_token_ref_bonding = &mut ctx.accounts.reverse_token_ref_bonding;
-        let reverse_token_ref_staking = &mut ctx.accounts.reverse_token_ref_staking;
+        let reverse_token_ref = &mut ctx.accounts.reverse_token_ref;
 
-        // if (
-        //     args.token_ref_seed != (*ctx.accounts.name.to_account_info().key).to_bytes() &&
-        //     args.token_ref_seed != (*ctx.accounts.name_owner.to_account_info().key).to_bytes()
-        // ) || (
-        //     args.token_ref_seed == (*ctx.accounts.name_owner.to_account_info().key).to_bytes() &&
-        //     *ctx.accounts.name_owner.to_account_info().key == Pubkey::default()
-        // ) {
-        //     return Err(ErrorCode::InvalidTokenRefSeed.into());
-        // }
+        let owner = ctx.accounts.owner.key();
+        let name = ctx.accounts.name.key();
+        let owner_opt = if owner == Pubkey::default() { None } else { Some(owner) };
+        let name_opt = if name == Pubkey::default() { None } else { Some(name) };
 
-        // if name_owner != default pub key
-        // decode name record and make sure ===
-
-        token_ref.wumbo = *ctx.accounts.wumbo.to_account_info().key;
-        token_ref.token_bonding = *ctx.accounts.token_bonding.to_account_info().key;
-        token_ref.token_staking = *ctx.accounts.token_staking.to_account_info().key;
+        token_ref.wumbo = ctx.accounts.wumbo.key();
+        token_ref.token_bonding = ctx.accounts.token_bonding.key();
+        token_ref.token_staking = ctx.accounts.token_staking.key();
         token_ref.bump_seed = args.token_ref_bump_seed;
+        token_ref.owner = owner_opt;
+        token_ref.name = name_opt;
 
-        reverse_token_ref_bonding.wumbo = *ctx.accounts.wumbo.to_account_info().key;
-        reverse_token_ref_bonding.token_bonding = *ctx.accounts.token_bonding.to_account_info().key;
-        reverse_token_ref_bonding.token_staking = *ctx.accounts.token_staking.to_account_info().key;
-        reverse_token_ref_bonding.bump_seed = args.reverse_token_ref_bonding_bump_seed;
-
-        reverse_token_ref_staking.wumbo = *ctx.accounts.wumbo.to_account_info().key;
-        reverse_token_ref_staking.token_bonding = *ctx.accounts.token_bonding.to_account_info().key;
-        reverse_token_ref_staking.token_staking = *ctx.accounts.token_staking.to_account_info().key;
-        reverse_token_ref_staking.bump_seed = args.reverse_token_ref_staking_bump_seed;
-
-        // if (*ctx.accounts.name_owner.to_account_info().key != Pubkey::default()) {
-        //     token_ref.owner = Some(*ctx.accounts.name_owner.to_account_info().key);
-        //     reverse_token_ref_bonding.owner = Some(*ctx.accounts.name_owner.to_account_info().key);
-        //     reverse_token_ref_staking.owner = Some(*ctx.accounts.name_owner.to_account_info().key);
-        // } else {
-        //     token_ref.name = Some(*ctx.accounts.name.to_account_info().key);
-        //     reverse_token_ref_bonding.name = Some(*ctx.accounts.name.to_account_info().key);
-        //     reverse_token_ref_staking.name = Some(*ctx.accounts.name.to_account_info().key);
-        // }
+        reverse_token_ref.wumbo = ctx.accounts.wumbo.key();
+        reverse_token_ref.token_bonding = ctx.accounts.token_bonding.key();
+        reverse_token_ref.token_staking = ctx.accounts.token_staking.key();
+        reverse_token_ref.bump_seed = args.reverse_token_ref_bump_seed;
+        reverse_token_ref.owner = owner_opt;
+        reverse_token_ref.name = name_opt;
 
         Ok(())
     }
@@ -102,7 +94,6 @@ pub struct InitializeWumboArgs {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct TokenMetadataDefaults {
     pub symbol: String,
-    pub name: String,
     pub arweave_uri: String,
 }
 
@@ -126,26 +117,25 @@ pub struct TokenStakingDefaults {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct InitializeSocialTokenV0Args {
-    pub token_ref_seed: Pubkey,
-
     pub wumbo_bump_seed: u8,
-    pub token_bonding_bump_seed: u8,
     pub token_bonding_authority_bump_seed: u8,
-    pub token_staking_bump_seed: u8,
     pub token_staking_authority_bump_seed: u8,
     pub token_ref_bump_seed: u8,
-    pub reverse_token_ref_bonding_bump_seed: u8,
-    pub reverse_token_ref_staking_bump_seed: u8,
+    pub reverse_token_ref_bump_seed: u8,
     pub token_metadata_update_authority_bump_seed: u8,
 }
 
 #[derive(Accounts)]
 #[instruction(args: InitializeWumboArgs)]
 pub struct InitializeWumbo<'info> {
-    #[account(init, seeds = [b"wumbo", mint.to_account_info().key.as_ref()], payer=payer, bump=args.bump_seed, space=1000)]
-    wumbo: ProgramAccount<'info, Wumbo>,
-    mint: CpiAccount<'info, Mint>,
-    curve: CpiAccount<'info, CurveV0>,
+    #[account(init, seeds = [b"wumbo", mint.key().as_ref()], payer=payer, bump=args.bump_seed, space=1000)]
+    wumbo: Account<'info, Wumbo>,
+    #[account(
+      constraint = *mint.to_account_info().owner == spl_token::id()
+    )]
+    mint: Account<'info, Mint>,
+    #[account(constraint = curve.key() == args.token_bonding_defaults.curve)]
+    curve: Account<'info, CurveV0>,
 
     #[account(mut, signer)]
     payer: AccountInfo<'info>,
@@ -154,68 +144,124 @@ pub struct InitializeWumbo<'info> {
     rent: Sysvar<'info, Rent>,
 }
 
+fn verify_authority(authority: Option<Pubkey>, seeds: &[&[u8]], bump: u8) -> Result<bool> {
+  let (key, canonical_bump) = Pubkey::find_program_address(seeds, &self::id());
+
+  if bump != canonical_bump {
+    return Err(ErrorCode::InvalidBump.into());
+  }
+
+  if key != authority.ok_or::<ProgramError>(ErrorCode::NoAuthority.into())? {
+    return Err(ErrorCode::InvalidAuthority.into());
+  }
+
+  Ok(true)
+}
+
+fn verify_name(name: &AccountInfo, expected: &String) -> Result<bool> {
+  let mut hasher = Sha256::default();
+  hasher.update(expected.as_bytes());
+  let data = hasher.finalize();
+  let name_header = NameRecordHeader::unpack_from_slice(name.try_borrow_data()?.as_ref())?;
+
+  let (address, _) = Pubkey::find_program_address(&[
+    data.as_ref(),
+    name_header.class.as_ref(),
+    name_header.parent_name.as_ref()
+  ], &spl_name_service::ID);
+
+  Ok(*name.key == address)
+}
+
 #[derive(Accounts)]
 #[instruction(args: InitializeSocialTokenV0Args)]
 pub struct InitializeSocialTokenV0<'info> {
-    #[account(seeds = [b"wumbo", wumbo.mint.as_ref(), &[wumbo.bump_seed]])]
-    wumbo: ProgramAccount<'info, Wumbo>,
-    token_metadata: ProgramAccount<'info, Metadata>,
-    token_metadata_update_authority: AccountInfo<'info>,
+    #[account(seeds = [b"wumbo", wumbo.mint.as_ref()], bump = wumbo.bump_seed)]
+    wumbo: Box<Account<'info, Wumbo>>,
     #[account(
-        constraint = token_bonding.authority.ok_or::<ProgramError>(ErrorCode::NoBondingAuthority.into())? == *wumbo.to_account_info().key,
-        constraint = token_bonding.curve == wumbo.curve,
+      has_one = target_mint,
+      constraint = verify_authority(token_bonding.authority, &[b"token-bonding-authority", token_ref.key().as_ref()], args.token_bonding_authority_bump_seed)?,
+      constraint = token_bonding.curve == wumbo.token_bonding_defaults.curve && 
+                    token_bonding.base_royalty_percentage == wumbo.token_bonding_defaults.base_royalty_percentage &&
+                    token_bonding.target_royalty_percentage == wumbo.token_bonding_defaults.target_royalty_percentage &&
+                    token_bonding.buy_frozen == wumbo.token_bonding_defaults.buy_frozen
     )]
-    token_bonding: CpiAccount<'info, TokenBondingV0>,
-    token_bonding_authority: AccountInfo<'info>,
+    token_bonding: Box<Account<'info, TokenBondingV0>>,
+    // Bonding base mint
     #[account(
-        constraint = token_staking.authority.ok_or::<ProgramError>(ErrorCode::NoStakingAuthority.into())? == *wumbo.to_account_info().key,
-        constraint = token_staking.base_mint == token_bonding.base_mint,
+      constraint = target_mint.decimals == wumbo.token_bonding_defaults.target_mint_decimals
     )]
-    token_staking: CpiAccount<'info, TokenStakingV0>,
-    token_staking_authority: AccountInfo<'info>,
+    target_mint: Box<Account<'info, Mint>>,
+    #[account(
+      constraint = token_staking.target_mint == staking_target_mint.key(),
+      has_one = target_mint,
+      constraint = verify_authority(token_staking.authority, &[b"token-staking-authority", token_ref.key().as_ref()], args.token_staking_authority_bump_seed)?,
+      constraint = token_staking.base_mint == token_bonding.base_mint,
+      constraint = token_staking.period_unit == wumbo.token_staking_defaults.period_unit &&
+                   token_staking.reward_percent_per_period_per_lockup_period == wumbo.token_staking_defaults.reward_percent_per_period_per_lockup_period &&
+                   token_staking.period == wumbo.token_staking_defaults.period
+                   
+    )]
+    token_staking: Box<Account<'info, TokenStakingV0>>,
+    // Staking target mint (cred)
+    #[account(
+      constraint = staking_target_mint.decimals == wumbo.token_staking_defaults.target_mint_decimals
+    )]
+    staking_target_mint: Box<Account<'info, Mint>>,
+    #[account(
+      has_one = token_staking,
+      constraint = token_account_split.token_account == token_bonding.base_royalties,
+      constraint = token_account_split.token_staking == token_staking.key(),
+    )]
+    token_account_split: Box<Account<'info, TokenAccountSplitV0>>,
     #[account(
         init,
         seeds = [
             b"token-ref",
-            wumbo.to_account_info().key.as_ref(),
-            &args.token_ref_seed.as_ref() // public key that is either wallet or nameRegistryState.owner
+            wumbo.key().as_ref(),
+            (if name.key() == Pubkey::default() { owner.key() } else { name.key() }).as_ref()
         ],
         bump = args.token_ref_bump_seed,
         payer = payer,
-        space = 1000
+        space = 512
     )]
-    token_ref: ProgramAccount<'info, TokenRefV0>,
+    token_ref: Box<Account<'info, TokenRefV0>>,
     #[account(
         init,
         seeds = [
             b"reverse-token-ref",
-            wumbo.to_account_info().key.as_ref(),
-            token_bonding.to_account_info().key.as_ref()
+            wumbo.key().as_ref(),
+            token_bonding.target_mint.as_ref()
         ],
-        bump = args.reverse_token_ref_bonding_bump_seed,
+        bump = args.reverse_token_ref_bump_seed,
         payer = payer,
-        space = 1000
+        space = 512
     )]
-    reverse_token_ref_bonding: ProgramAccount<'info, TokenRefV0>,
+    reverse_token_ref: Box<Account<'info, TokenRefV0>>,
     #[account(
-        init,
-        seeds = [
-            b"reverse-token-ref",
-            wumbo.to_account_info().key.as_ref(),
-            token_staking.to_account_info().key.as_ref()
-        ],
-        bump = args.reverse_token_ref_staking_bump_seed,
-        payer = payer,
-        space = 1000
+      // Deserialize name account checked in token metadata constraint
+      constraint = (*name.to_account_info().owner == spl_name_service::ID) || 
+                  name.key() == Pubkey::default(),
     )]
-    reverse_token_ref_staking: ProgramAccount<'info, TokenRefV0>,
     name: AccountInfo<'info>,
-    // if creating a claimed token need to verify name * nameOwner match update
-    // nameOwner == signer
+    // if creating a claimed token just need the owner.
     #[account(
-        constraint = name_owner.is_signer || *name_owner.to_account_info().key == Pubkey::default(),
+        constraint = owner.is_signer || owner.key() == Pubkey::default(),
     )]
-    name_owner: AccountInfo<'info>,
+    owner: AccountInfo<'info>,
+
+    #[account(
+      constraint = name.key() == Pubkey::default() || (
+        verify_name(&name, &token_metadata.data.name)? &&
+        token_metadata.data.uri == wumbo.token_metadata_defaults.symbol &&
+        token_metadata.data.uri == wumbo.token_metadata_defaults.arweave_uri &&
+        token_metadata.data.creators.is_none() &&
+        token_metadata.data.seller_fee_basis_points == 0
+      ),
+      constraint = verify_authority(Some(token_metadata.update_authority), &[b"token-metadata-authority", wumbo.key().as_ref()], args.token_metadata_update_authority_bump_seed)?,
+      constraint = token_metadata.is_mutable,
+    )]
+    token_metadata: Box<Account<'info, Metadata>>,
 
     #[account(mut, signer)]
     payer: AccountInfo<'info>,
@@ -238,17 +284,6 @@ pub struct Wumbo {
 
 #[account]
 #[derive(Default)]
-pub struct Metadata {
-    pub uuid: String,
-    /// The symbol for the asset
-    pub symbol: String,
-    /// Royalty basis points that goes to creators in secondary sales (0-10000)
-    pub seller_fee_basis_points: u16,
-    pub creators: Vec<Creator>
-}
-
-#[account]
-#[derive(Default)]
 pub struct TokenRefV0 {
     pub wumbo: Pubkey,
     pub token_bonding: Pubkey,
@@ -258,35 +293,25 @@ pub struct TokenRefV0 {
     pub is_claimed: bool,
 
     pub bump_seed: u8,
-    pub wumbo_bump_seed: u8,
-    pub token_bonding_bump_seed: u8,
-    pub token_staking_bump_seed: u8,
 }
 
-// Unfortunate duplication so that IDL picks it up.
-#[repr(C)]
-#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
-pub enum PeriodUnit {
-    SECOND,
-    MINUTE,
-    HOUR,
-    DAY,
-    YEAR,
-}
 
-impl Default for PeriodUnit {
-    fn default() -> Self {
-        PeriodUnit::HOUR
-    }
-}
+// // Unfortunate duplication so that IDL picks it up.
+// #[repr(C)]
+// #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
+// pub enum PeriodUnit {
+//     SECOND,
+//     MINUTE,
+//     HOUR,
+//     DAY,
+//     YEAR,
+// }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
-pub struct Creator {
-    pub address: Pubkey,
-    pub verified: bool,
-    // In percentages, NOT basis points ;) Watch out!
-    pub share: u8,
-}
+// impl Default for PeriodUnit {
+//     fn default() -> Self {
+//         PeriodUnit::HOUR
+//     }
+// }
 
 #[error]
 pub enum ErrorCode {
@@ -296,8 +321,8 @@ pub enum ErrorCode {
     #[msg("Invalid token ref seed")]
     InvalidTokenRefSeed,
 
-    #[msg("Token bonding does not have an authority")]
-    NoBondingAuthority,
+    #[msg("Provided account does not have an authority")]
+    NoAuthority,
 
     #[msg("Token bonding does not have an authority")]
     NoStakingAuthority,
@@ -307,4 +332,13 @@ pub enum ErrorCode {
 
     #[msg("Account does not have correct owner!")]
     IncorrectOwner,
+
+    #[msg("The bump provided did not match the canonical bump")]
+    InvalidBump,
+
+    #[msg("Invalid authority passed")]
+    InvalidAuthority,
+
+    #[msg("The provided name owner is not the owner of the name record")]
+    InvalidNameOwner
 }

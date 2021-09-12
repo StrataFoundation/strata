@@ -246,7 +246,7 @@ export class SplTokenAccountSplit {
     }
   }
 
-  async collectTokens(args: CreateTokenAccountSplitArgs): Promise<void> {
+  async collectTokens(args: CollectTokenArgs): Promise<void> {
     const { instructions, signers } = await this.collectTokensInstructions(args);
     await this.sendInstructions(instructions, signers);
   }
