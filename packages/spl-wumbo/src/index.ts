@@ -529,9 +529,15 @@ export class SplWumbo {
       instructions,
       signers,
     } = await this.createSocialTokenInstructions(args);
-    await promiseAllInOrder(instructions.map((instructions, index) => () =>
-      this.sendInstructions(instructions, signers[index])
-    ));
+    const txs = instructions.map((instructions, index) => {
+      const tx = new Transaction();
+      tx.add(...instructions);
+      return {
+        tx,
+        signers: signers[index]
+      }
+    });
+    await this.provider.sendAll(txs)
 
     return { tokenRef, reverseTokenRef };
   }

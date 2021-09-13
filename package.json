@@ -7,7 +7,6 @@
   ],
   "description": "Wum.bo Token Staking tests",
   "license": "MIT",
-  "type": "module",
   "author": "Wum.bo Inc.",
   "devDependencies": {
     "@types/chai": "^4.2.21",
@@ -27,7 +26,8 @@
   "scripts": {
     "idl": "node app/idlToTs",
     "watch": "concurrently --kill-others \"lerna run --parallel watch\" \"yarn run idl\"",
-    "test": "env ANCHOR_PROVIDER_URL=$ANCHOR_PROVIDER_URL ts-mocha -p ./tsconfig.json -t 1000000 \"tests/**/*.ts\""
+    "test": "env ANCHOR_PROVIDER_URL=$ANCHOR_PROVIDER_URL ts-mocha -p ./tsconfig.json -t 1000000 \"tests/**/*.ts\"",
+    "bootstrap": "ts-node app/bootstrap"
   },
   "dependencies": {
     "@project-serum/common": "^0.0.1-beta.3",
