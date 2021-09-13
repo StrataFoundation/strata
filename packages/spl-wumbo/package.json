@@ -25,7 +25,6 @@
     "@wum.bo/spl-token-bonding": "1.0.0",
     "@wum.bo/spl-token-account-split": "1.0.0",
     "@wum.bo/spl-token-staking": "1.0.0",
-    "@wum.bo/metaplex-oyster-common": "0.0.3",
     "@bonfida/spl-name-service": "^0.1.14",
     "@project-serum/common": "^0.0.1-beta.3",
     "@solana/web3.js": "^1.24.1",

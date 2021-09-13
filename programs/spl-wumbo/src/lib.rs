@@ -16,8 +16,10 @@ use {
 
 pub mod token_metadata;
 
+use std::hash::Hash;
+
+use anchor_lang::solana_program::hash::hashv;
 use sha2::{Digest, digest::generic_array::{GenericArray, typenum::{UInt, UTerm, bit::{B0, B1}}}};
-use spl_token_staking::PeriodUnit;
 
 use crate::token_metadata::{Metadata};
 
@@ -57,20 +59,27 @@ pub mod spl_wumbo {
 
         token_ref.wumbo = ctx.accounts.wumbo.key();
         token_ref.token_bonding = ctx.accounts.token_bonding.key();
-        token_ref.token_staking = ctx.accounts.token_staking.key();
         token_ref.bump_seed = args.token_ref_bump_seed;
         token_ref.owner = owner_opt;
         token_ref.name = name_opt;
+        token_ref.is_claimed = owner_opt.is_some();
 
         reverse_token_ref.wumbo = ctx.accounts.wumbo.key();
         reverse_token_ref.token_bonding = ctx.accounts.token_bonding.key();
-        reverse_token_ref.token_staking = ctx.accounts.token_staking.key();
         reverse_token_ref.bump_seed = args.reverse_token_ref_bump_seed;
         reverse_token_ref.owner = owner_opt;
         reverse_token_ref.name = name_opt;
+        reverse_token_ref.is_claimed = owner_opt.is_some();
 
         Ok(())
     }
+
+    // pub fn claim_social_token_v0(
+    //   ctx: Context<ClaimSocialTokenV0>,
+    //   args: ClaimSocialTokenV0Args,
+    // ) -> ProgramResult {
+    //     Ok(())
+    // }
 
     // pub fn update_token_metadata(
     //     ctx: Context<UpdateSocialTokenMetadata>,
@@ -94,7 +103,7 @@ pub struct InitializeWumboArgs {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct TokenMetadataDefaults {
     pub symbol: String,
-    pub arweave_uri: String,
+    pub uri: String,
 }
 
 
@@ -119,7 +128,8 @@ pub struct TokenStakingDefaults {
 pub struct InitializeSocialTokenV0Args {
     pub wumbo_bump_seed: u8,
     pub token_bonding_authority_bump_seed: u8,
-    pub token_staking_authority_bump_seed: u8,
+    pub target_royalties_owner_bump_seed: u8,
+    pub base_royalties_owner_bump_seed: u8,
     pub token_ref_bump_seed: u8,
     pub reverse_token_ref_bump_seed: u8,
     pub token_metadata_update_authority_bump_seed: u8,
@@ -159,16 +169,15 @@ fn verify_authority(authority: Option<Pubkey>, seeds: &[&[u8]], bump: u8) -> Res
 }
 
 fn verify_name(name: &AccountInfo, expected: &String) -> Result<bool> {
-  let mut hasher = Sha256::default();
-  hasher.update(expected.as_bytes());
-  let data = hasher.finalize();
   let name_header = NameRecordHeader::unpack_from_slice(name.try_borrow_data()?.as_ref())?;
+  let hashed_name: Vec<u8> = hashv(&[("SPL Name Service".to_owned() + expected).as_bytes()]).0.to_vec();
 
-  let (address, _) = Pubkey::find_program_address(&[
-    data.as_ref(),
-    name_header.class.as_ref(),
-    name_header.parent_name.as_ref()
-  ], &spl_name_service::ID);
+  let (address, _) = spl_name_service::state::get_seeds_and_key(
+    &spl_name_service::ID,
+    hashed_name,
+    Some(&name_header.class),
+    Some(&name_header.parent_name),
+  );
 
   Ok(*name.key == address)
 }
@@ -180,45 +189,57 @@ pub struct InitializeSocialTokenV0<'info> {
     wumbo: Box<Account<'info, Wumbo>>,
     #[account(
       has_one = target_mint,
+      has_one = base_royalties,
+      has_one = target_royalties,
       constraint = verify_authority(token_bonding.authority, &[b"token-bonding-authority", token_ref.key().as_ref()], args.token_bonding_authority_bump_seed)?,
       constraint = token_bonding.curve == wumbo.token_bonding_defaults.curve && 
                     token_bonding.base_royalty_percentage == wumbo.token_bonding_defaults.base_royalty_percentage &&
                     token_bonding.target_royalty_percentage == wumbo.token_bonding_defaults.target_royalty_percentage &&
-                    token_bonding.buy_frozen == wumbo.token_bonding_defaults.buy_frozen
+                    token_bonding.buy_frozen == wumbo.token_bonding_defaults.buy_frozen &&
+                    token_bonding.go_live_unix_time <= clock.unix_timestamp &&
+                    token_bonding.base_mint == wumbo.mint
     )]
     token_bonding: Box<Account<'info, TokenBondingV0>>,
-    // Bonding base mint
+    #[account(
+      constraint =  verify_authority(Some(base_royalties.owner), &[b"base-royalties-owner", token_ref.key().as_ref()], args.base_royalties_owner_bump_seed)?,
+    )]
+    base_royalties: Box<Account<'info, TokenAccount>>,
+    #[account(
+      constraint = owner.is_signer || verify_authority(Some(target_royalties.owner), &[b"target-royalties-owner", token_ref.key().as_ref()], args.target_royalties_owner_bump_seed)?,
+    )]
+    target_royalties: Box<Account<'info, TokenAccount>>,
+    // Bonding target mint
     #[account(
       constraint = target_mint.decimals == wumbo.token_bonding_defaults.target_mint_decimals
     )]
     target_mint: Box<Account<'info, Mint>>,
-    #[account(
-      constraint = token_staking.target_mint == staking_target_mint.key(),
-      has_one = target_mint,
-      constraint = verify_authority(token_staking.authority, &[b"token-staking-authority", token_ref.key().as_ref()], args.token_staking_authority_bump_seed)?,
-      constraint = token_staking.base_mint == token_bonding.base_mint,
-      constraint = token_staking.period_unit == wumbo.token_staking_defaults.period_unit &&
-                   token_staking.reward_percent_per_period_per_lockup_period == wumbo.token_staking_defaults.reward_percent_per_period_per_lockup_period &&
-                   token_staking.period == wumbo.token_staking_defaults.period
+    /* SAVE FOR LATER, will be a separate contract call */
+    // #[account(
+    //   constraint = token_staking.target_mint == staking_target_mint.key(),
+    //   has_one = target_mint,
+    //   constraint = verify_authority(token_staking.authority, &[b"token-staking-authority", token_ref.key().as_ref()], args.token_staking_authority_bump_seed)?,
+    //   constraint = token_staking.base_mint == token_bonding.base_mint,
+    //   constraint = token_staking.period_unit == spl_token_staking::PeriodUnit::from(wumbo.token_staking_defaults.period_unit) &&
+    //                token_staking.reward_percent_per_period_per_lockup_period == wumbo.token_staking_defaults.reward_percent_per_period_per_lockup_period &&
+    //                token_staking.period == wumbo.token_staking_defaults.period
                    
-    )]
-    token_staking: Box<Account<'info, TokenStakingV0>>,
+    // )]
+    // token_staking: Box<Account<'info, TokenStakingV0>>,
     // Staking target mint (cred)
-    #[account(
-      constraint = staking_target_mint.decimals == wumbo.token_staking_defaults.target_mint_decimals
-    )]
-    staking_target_mint: Box<Account<'info, Mint>>,
-    #[account(
-      has_one = token_staking,
-      constraint = token_account_split.token_account == token_bonding.base_royalties,
-      constraint = token_account_split.token_staking == token_staking.key(),
-    )]
-    token_account_split: Box<Account<'info, TokenAccountSplitV0>>,
+    // #[account(
+    //   constraint = staking_target_mint.decimals == wumbo.token_staking_defaults.target_mint_decimals
+    // )]
+    // staking_target_mint: Box<Account<'info, Mint>>,
+    // #[account(
+    //   has_one = token_staking,
+    //   constraint = token_account_split.token_account == token_bonding.base_royalties,
+    //   constraint = token_account_split.token_staking == token_staking.key(),
+    // )]
+    // token_account_split: Box<Account<'info, TokenAccountSplitV0>>,
     #[account(
         init,
         seeds = [
             b"token-ref",
-            wumbo.key().as_ref(),
             (if name.key() == Pubkey::default() { owner.key() } else { name.key() }).as_ref()
         ],
         bump = args.token_ref_bump_seed,
@@ -247,18 +268,20 @@ pub struct InitializeSocialTokenV0<'info> {
     // if creating a claimed token just need the owner.
     #[account(
         constraint = owner.is_signer || owner.key() == Pubkey::default(),
+        // One of name or owner must be provided, but not both
+        constraint = owner.key() == Pubkey::default() || name.key() == Pubkey::default()
     )]
     owner: AccountInfo<'info>,
 
     #[account(
       constraint = name.key() == Pubkey::default() || (
-        verify_name(&name, &token_metadata.data.name)? &&
-        token_metadata.data.uri == wumbo.token_metadata_defaults.symbol &&
-        token_metadata.data.uri == wumbo.token_metadata_defaults.arweave_uri &&
+        verify_name(&name, &str::replace(&token_metadata.data.name, "\u{0000}", ""))? &&
+        str::replace(&token_metadata.data.symbol, "\u{0000}", "") == wumbo.token_metadata_defaults.symbol &&
+        str::replace(&token_metadata.data.uri, "\u{0000}", "") == wumbo.token_metadata_defaults.uri &&
         token_metadata.data.creators.is_none() &&
         token_metadata.data.seller_fee_basis_points == 0
       ),
-      constraint = verify_authority(Some(token_metadata.update_authority), &[b"token-metadata-authority", wumbo.key().as_ref()], args.token_metadata_update_authority_bump_seed)?,
+      constraint = verify_authority(Some(token_metadata.update_authority), &[b"token-metadata-authority", token_ref.key().as_ref()], args.token_metadata_update_authority_bump_seed)?,
       constraint = token_metadata.is_mutable,
     )]
     token_metadata: Box<Account<'info, Metadata>>,
@@ -268,6 +291,7 @@ pub struct InitializeSocialTokenV0<'info> {
     #[account(address = system_program::ID)]
     system_program: AccountInfo<'info>,
     rent: Sysvar<'info, Rent>,
+    clock: Sysvar<'info, Clock>
 }
 
 #[account]
@@ -287,7 +311,7 @@ pub struct Wumbo {
 pub struct TokenRefV0 {
     pub wumbo: Pubkey,
     pub token_bonding: Pubkey,
-    pub token_staking: Pubkey,
+    pub token_staking: Option<Pubkey>,
     pub name: Option<Pubkey>,
     pub owner: Option<Pubkey>,
     pub is_claimed: bool,
@@ -295,32 +319,38 @@ pub struct TokenRefV0 {
     pub bump_seed: u8,
 }
 
-
 // // Unfortunate duplication so that IDL picks it up.
-// #[repr(C)]
-// #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
-// pub enum PeriodUnit {
-//     SECOND,
-//     MINUTE,
-//     HOUR,
-//     DAY,
-//     YEAR,
-// }
+#[repr(C)]
+#[derive(Copy)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
+pub enum PeriodUnit {
+    SECOND,
+    MINUTE,
+    HOUR,
+    DAY,
+    YEAR,
+}
 
-// impl Default for PeriodUnit {
-//     fn default() -> Self {
-//         PeriodUnit::HOUR
-//     }
-// }
+impl From<PeriodUnit> for spl_token_staking::PeriodUnit {
+    fn from(unit: PeriodUnit) -> Self {
+      match unit {
+        PeriodUnit::SECOND => spl_token_staking::PeriodUnit::SECOND,
+        PeriodUnit::MINUTE => spl_token_staking::PeriodUnit::MINUTE,
+        PeriodUnit::HOUR => spl_token_staking::PeriodUnit::HOUR,
+        PeriodUnit::DAY => spl_token_staking::PeriodUnit::DAY,
+        PeriodUnit::YEAR => spl_token_staking::PeriodUnit::YEAR,
+      }
+    }
+}
+
+impl Default for PeriodUnit {
+    fn default() -> Self {
+        PeriodUnit::HOUR
+    }
+}
 
 #[error]
 pub enum ErrorCode {
-    #[msg("Invalid token ref prefix")]
-    InvalidTokenRefPrefix,
-
-    #[msg("Invalid token ref seed")]
-    InvalidTokenRefSeed,
-
     #[msg("Provided account does not have an authority")]
     NoAuthority,
 

@@ -82,7 +82,6 @@ export class SplTokenAccountSplit {
     payer = this.wallet.publicKey,
   }: CreateTokenAccountSplitArgs): Promise<InstructionResult<{ tokenAccountSplit: PublicKey, tokenAccount: PublicKey }>> {
     const programId = this.programId;
-    const tokenStakingAcct = await this.splTokenStakingProgram.account.tokenStakingV0.fetch(tokenStaking);
 
     let slotNumberToUse = slotNumber || 0;
     const getSplit: () => Promise<[PublicKey, Number]> = () => {

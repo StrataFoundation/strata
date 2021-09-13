@@ -17,8 +17,6 @@ impl Deref for Metadata {
   }
 }
 
-
-
 impl anchor_lang::AccountDeserialize for Metadata {
   fn try_deserialize(buf: &mut &[u8]) -> Result<Self, ProgramError> {
       Metadata::try_deserialize_unchecked(buf)

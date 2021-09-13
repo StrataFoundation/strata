@@ -46,6 +46,7 @@ pub mod spl_token_bonding {
       if mint_pda != target_mint.mint_authority.ok_or::<ProgramError>(ErrorCode::NoMintAuthority.into())?
        || (target_mint.freeze_authority.is_some() && mint_pda != target_mint.freeze_authority.ok_or::<ProgramError>(ErrorCode::NoMintAuthority.into())?)
        || target_mint_authority_bump_seed != args.target_mint_authority_bump_seed  {
+         msg!("Auth {} {}", target_mint.mint_authority.unwrap(), mint_pda);
         return Err(ErrorCode::InvalidMintAuthority.into());
       }
 

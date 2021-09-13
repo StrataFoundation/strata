@@ -192,7 +192,12 @@ export class SplTokenBonding {
     goLiveDate = new Date(),
     targetMintDecimals,
     buyFrozen = false,
-  }: CreateTokenBondingArgs): Promise<InstructionResult<{ tokenBonding: PublicKey, targetMint: PublicKey }>> {
+  }: CreateTokenBondingArgs): Promise<InstructionResult<{ 
+    tokenBonding: PublicKey, 
+    targetMint: PublicKey ,
+    baseRoyalties: PublicKey,
+    targetRoyalties: PublicKey
+  }>> {
     if (!targetMint) {
       if (targetRoyalties) {
         throw new Error("Cannot define target royalties if mint is not defined");
@@ -276,7 +281,8 @@ export class SplTokenBonding {
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         targetMint,
-        targetRoyaltiesOwner
+        targetRoyaltiesOwner,
+        true
       );
 
       if (!(await this.accountExists(targetRoyalties))) {
@@ -299,7 +305,8 @@ export class SplTokenBonding {
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         baseMint,
-        baseRoyaltiesOwner
+        baseRoyaltiesOwner,
+        true
       );
 
       if (!(await this.accountExists(baseRoyalties))) {
@@ -323,7 +330,7 @@ export class SplTokenBonding {
           goLiveUnixTime: new BN(Math.floor(goLiveDate.valueOf() / 1000)),
           baseRoyaltyPercentage,
           targetRoyaltyPercentage,
-          mintCap,
+          mintCap: mintCap || null,
           tokenBondingAuthority: authority,
           bumpSeed,
           baseStorageAuthority,
@@ -352,7 +359,9 @@ export class SplTokenBonding {
     return {
       output: {
         tokenBonding,
-        targetMint
+        targetMint,
+        baseRoyalties,
+        targetRoyalties
       },
       instructions,
       signers,
