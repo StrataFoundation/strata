@@ -1,32 +1,58 @@
 use {
     anchor_lang::solana_program::program_pack::Pack,
     anchor_lang::{prelude::*, solana_program::system_program},
-    anchor_spl::token::{self, InitializeAccount, Mint, TokenAccount},
+    anchor_spl::token::{Mint, TokenAccount},
     borsh::{BorshDeserialize, BorshSerialize},
-    spl_token_metadata::{
-        instruction::{update_metadata_accounts},
-        state::{MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH}
-    },
-    spl_name_service::state::NameRecordHeader,
     spl_token_bonding::{CurveV0, TokenBondingV0},
-    spl_token_staking::{TokenStakingV0},
-    spl_token_account_split::{TokenAccountSplitV0},
-    sha2::Sha256
 };
 
 pub mod token_metadata;
+pub mod name;
 
-use std::hash::Hash;
+use anchor_lang::solana_program::{self, hash::hashv, stake::state::Meta};
+use token_metadata::UpdateMetadataAccount;
 
-use anchor_lang::solana_program::hash::hashv;
-use sha2::{Digest, digest::generic_array::{GenericArray, typenum::{UInt, UTerm, bit::{B0, B1}}}};
-
-use crate::token_metadata::{Metadata};
+use crate::token_metadata::{Metadata, UpdateMetadataAccountArgs};
+use crate::name::{NameRecordHeader};
 
 declare_id!("Bn6owcizWtLgeKcVyXVgUgTvbLezCVz9Q7oPdZu5bC1H");
 
+#[derive(Accounts)]
+pub struct CloseTokenAccount<'info> {
+    pub from: AccountInfo<'info>,
+    pub to: AccountInfo<'info>,
+    pub authority: AccountInfo<'info>,
+}
+
+pub fn close_token_account<'a, 'b, 'c, 'info>(
+    ctx: CpiContext<'a, 'b, 'c, 'info, CloseTokenAccount<'info>>,
+) -> ProgramResult {
+    let ix = spl_token::instruction::close_account(
+        &spl_token::ID,
+        ctx.accounts.from.key,
+        ctx.accounts.to.key,
+        ctx.accounts.authority.key,
+        &[],
+    )?;
+    solana_program::program::invoke_signed(
+        &ix,
+        &[
+            ctx.accounts.from.clone(),
+            ctx.accounts.to.clone(),
+            ctx.accounts.authority.clone(),
+            ctx.program.clone(),
+        ],
+        ctx.signer_seeds,
+    )
+}
+
 #[program]
 pub mod spl_wumbo {
+    use anchor_spl::token::{self, Transfer};
+    use spl_token_bonding::{UpdateTokenBondingV0, UpdateTokenBondingV0Args};
+
+    use crate::token_metadata::update_metadata_account;
+
     use super::*;
 
     pub fn initialize_wumbo(
@@ -63,6 +89,10 @@ pub mod spl_wumbo {
         token_ref.owner = owner_opt;
         token_ref.name = name_opt;
         token_ref.is_claimed = owner_opt.is_some();
+        token_ref.token_metadata_update_authority_bump_seed = args.token_metadata_update_authority_bump_seed;
+        token_ref.token_bonding_authority_bump_seed = args.token_bonding_authority_bump_seed;
+        token_ref.target_royalties_owner_bump_seed = args.target_royalties_owner_bump_seed;
+        token_ref.token_metadata = ctx.accounts.token_metadata.key();
 
         reverse_token_ref.wumbo = ctx.accounts.wumbo.key();
         reverse_token_ref.token_bonding = ctx.accounts.token_bonding.key();
@@ -70,23 +100,97 @@ pub mod spl_wumbo {
         reverse_token_ref.owner = owner_opt;
         reverse_token_ref.name = name_opt;
         reverse_token_ref.is_claimed = owner_opt.is_some();
+        reverse_token_ref.token_metadata_update_authority_bump_seed = args.token_metadata_update_authority_bump_seed;
+        reverse_token_ref.token_bonding_authority_bump_seed = args.token_bonding_authority_bump_seed;
+        reverse_token_ref.target_royalties_owner_bump_seed = args.target_royalties_owner_bump_seed;
+        reverse_token_ref.token_metadata = ctx.accounts.token_metadata.key();
 
         Ok(())
     }
 
-    // pub fn claim_social_token_v0(
-    //   ctx: Context<ClaimSocialTokenV0>,
-    //   args: ClaimSocialTokenV0Args,
-    // ) -> ProgramResult {
-    //     Ok(())
-    // }
+    pub fn claim_social_token_v0(
+      ctx: Context<ClaimSocialTokenV0>
+    ) -> ProgramResult {
+      let token_program = ctx.accounts.token_program.to_account_info();
+      let original_target_royalties = ctx.accounts.target_royalties.to_account_info();
+      let new_target_royalties = ctx.accounts.new_target_royalties.to_account_info();
+      let target_royalties_owner = ctx.accounts.target_royalties_owner.to_account_info();
+      let token_ref = &mut ctx.accounts.token_ref;
+      let reverse_token_ref = &mut ctx.accounts.reverse_token_ref;
+      let token_bonding_program = ctx.accounts.token_bonding_program.to_account_info();
+      let token_bonding = &mut ctx.accounts.token_bonding;
 
-    // pub fn update_token_metadata(
-    //     ctx: Context<UpdateSocialTokenMetadata>,
-    //     args: UpdateSocialTokenMetadataArgs
-    // ) -> ProgramResult {
-    //     Ok(())
-    // }
+      msg!("Closing standin royalties account");
+      token::transfer(
+        CpiContext::new_with_signer(
+            ctx.accounts.token_program.clone(),
+            Transfer {
+              from: original_target_royalties.clone(),
+              to: new_target_royalties.clone(),
+              authority: target_royalties_owner.clone()
+            },
+            &[
+              &[b"target-royalties-owner", token_ref.key().as_ref(), &[token_ref.target_royalties_owner_bump_seed]]
+            ]
+        ),
+        ctx.accounts.target_royalties.amount
+      )?;
+      close_token_account(CpiContext::new_with_signer(
+        token_program.clone(), 
+CloseTokenAccount {
+          from: original_target_royalties.clone(),
+          to: ctx.accounts.owner.clone(),
+          authority: target_royalties_owner.clone()
+        },
+        &[
+          &[b"target-royalties-owner", token_ref.key().as_ref(), &[token_ref.target_royalties_owner_bump_seed]]
+        ]
+      ))?;
+
+      msg!("Changing royalties on bonding curve");
+      spl_token_bonding::cpi::update_token_bonding_v0(CpiContext::new_with_signer(token_bonding_program.clone(), UpdateTokenBondingV0 {
+        token_bonding: token_bonding.clone(),
+        authority: ctx.accounts.token_bonding_authority.to_account_info().clone(),
+      }, &[
+        &[b"token-bonding-authority", token_ref.key().as_ref(), &[token_ref.token_bonding_authority_bump_seed]]
+      ]), UpdateTokenBondingV0Args {
+        token_bonding_authority: token_bonding.authority,
+        base_royalty_percentage: token_bonding.base_royalty_percentage,
+        target_royalty_percentage: token_bonding.target_royalty_percentage,
+        buy_frozen: token_bonding.buy_frozen,
+        base_royalties: token_bonding.base_royalties,
+        target_royalties: new_target_royalties.key(),
+      })?;
+
+      token_ref.owner = Some(ctx.accounts.owner.key());
+      token_ref.name = None;
+      reverse_token_ref.owner = Some(ctx.accounts.owner.key());
+      reverse_token_ref.name = None;
+
+      Ok(())
+    }
+
+    pub fn update_token_metadata(
+        ctx: Context<UpdateTokenMetadataV0>,
+        args: UpdateMetadataAccountArgs
+    ) -> ProgramResult {
+      let accounts = ctx.accounts;
+      let cpi_accounts = UpdateMetadataAccount {
+        token_metadata: accounts.token_metadata.clone(),
+        update_authority: accounts.update_authority.clone()
+      };
+      let cpi_program = accounts.token_metadata_program.clone();
+      update_metadata_account(
+        CpiContext::new_with_signer(
+          cpi_program,
+          cpi_accounts, 
+  &[
+          &[b"token-metadata-authority", accounts.token_ref.key().as_ref(), &[accounts.token_ref.token_metadata_update_authority_bump_seed]]
+          ]
+        ), 
+        args
+      )
+    }
 
     // pub fn opt_out_v0() -> ProgramResult {}
     // pub fn opt_in_v0() -> ProgramResult {}
@@ -169,7 +273,7 @@ fn verify_authority(authority: Option<Pubkey>, seeds: &[&[u8]], bump: u8) -> Res
 }
 
 fn verify_name(name: &AccountInfo, expected: &String) -> Result<bool> {
-  let name_header = NameRecordHeader::unpack_from_slice(name.try_borrow_data()?.as_ref())?;
+  let name_header = spl_name_service::state::NameRecordHeader::unpack_from_slice(name.try_borrow_data()?.as_ref())?;
   let hashed_name: Vec<u8> = hashv(&[("SPL Name Service".to_owned() + expected).as_bytes()]).0.to_vec();
 
   let (address, _) = spl_name_service::state::get_seeds_and_key(
@@ -294,6 +398,104 @@ pub struct InitializeSocialTokenV0<'info> {
     clock: Sysvar<'info, Clock>
 }
 
+#[derive(Accounts)]
+pub struct ClaimSocialTokenV0<'info> {
+  wumbo: Box<Account<'info, Wumbo>>,
+  #[account(
+    mut,
+    has_one = wumbo,
+    has_one = token_bonding,
+    seeds = [
+        b"token-ref",
+        name.key().as_ref()
+    ],
+    bump = token_ref.bump_seed,
+  )]
+  token_ref: Box<Account<'info, TokenRefV0>>,
+  #[account(
+    mut,
+    has_one = wumbo,
+    has_one = token_bonding,
+    seeds = [
+        b"reverse-token-ref",
+        wumbo.key().as_ref(),
+        token_bonding.target_mint.as_ref()
+    ],
+    bump = reverse_token_ref.bump_seed,
+  )]
+  reverse_token_ref: Box<Account<'info, TokenRefV0>>,
+  #[account(
+    mut,
+    has_one = target_royalties
+  )]
+  token_bonding: Account<'info, TokenBondingV0>,
+  #[account(
+    seeds = [
+      b"token-bonding-authority", token_ref.key().as_ref()
+    ],
+    bump = token_ref.token_bonding_authority_bump_seed
+  )]
+  token_bonding_authority: AccountInfo<'info>,
+  #[account(
+    seeds =  [b"target-royalties-owner", token_ref.key().as_ref()],
+    bump = token_ref.target_royalties_owner_bump_seed
+  )]
+  target_royalties_owner: AccountInfo<'info>,
+  #[account()]
+  name: Box<Account<'info, NameRecordHeader>>,
+  #[account(
+    signer,
+    // One of name or owner must be provided, but not both
+    // constraint = owner.key() == name.owner
+  )]
+  owner: AccountInfo<'info>,
+
+  #[account(
+    mut,
+    constraint = new_target_royalties.owner == owner.key(),
+    constraint = new_target_royalties.mint == target_royalties.mint,
+    // Ensure it's an associated token account.
+    constraint = new_target_royalties.key() == Pubkey::find_program_address(
+      &[
+        owner.key().as_ref(),
+        spl_token::ID.as_ref(),
+        new_target_royalties.mint.as_ref(),
+      ],
+      &spl_associated_token_account::ID
+    ).0
+  )]
+  new_target_royalties: Box<Account<'info, TokenAccount>>,
+
+  #[account(
+    mut
+  )]
+  target_royalties: Box<Account<'info, TokenAccount>>,
+
+  #[account(address = spl_token::ID)]
+  pub token_program: AccountInfo<'info>,
+
+  #[account(address = spl_token_bonding::id())]
+  pub token_bonding_program: AccountInfo<'info>
+}
+
+#[derive(Accounts)]
+#[instruction(args: UpdateMetadataAccountArgs)]
+pub struct UpdateTokenMetadataV0<'info> {
+    #[account(
+      has_one = token_metadata,
+      constraint = token_ref.owner.unwrap() == owner.key(),
+    )]
+    pub token_ref: Account<'info, TokenRefV0>,
+    #[account(signer)]
+    pub owner: AccountInfo<'info>,
+    #[account(mut)]
+    pub token_metadata: AccountInfo<'info>,
+    #[account()]
+    pub update_authority: AccountInfo<'info>,
+    #[account(address = spl_token_metadata::ID)]
+    pub token_metadata_program: AccountInfo<'info>
+}
+
 #[account]
 #[derive(Default)]
 pub struct Wumbo {
@@ -310,6 +512,7 @@ pub struct Wumbo {
 #[derive(Default)]
 pub struct TokenRefV0 {
     pub wumbo: Pubkey,
+    pub token_metadata: Pubkey,
     pub token_bonding: Pubkey,
     pub token_staking: Option<Pubkey>,
     pub name: Option<Pubkey>,
@@ -317,6 +520,10 @@ pub struct TokenRefV0 {
     pub is_claimed: bool,
 
     pub bump_seed: u8,
+    pub token_bonding_authority_bump_seed: u8,
+    pub target_royalties_owner_bump_seed: u8,
+    pub token_metadata_update_authority_bump_seed: u8,
+    pub staking_authority_bump_seed: Option<u8>,
 }
 
 // // Unfortunate duplication so that IDL picks it up.

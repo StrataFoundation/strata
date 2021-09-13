@@ -5,12 +5,13 @@ import ChaiAsPromised from "chai-as-promised";
 import { SplWumbo } from "../packages/spl-wumbo";
 import { SplTokenBonding } from "../packages/spl-token-bonding";
 import { PeriodUnit, SplTokenStaking } from "../packages/spl-token-staking";
-import { percent } from "../packages/spl-utils/src";
+import { decodeMetadata, percent } from "../packages/spl-utils/src";
 import { SplTokenAccountSplit } from "../packages/spl-token-account-split/src";
 import { Token } from "@solana/spl-token";
 import { TokenUtils } from "./utils/token";
 import { createMint } from "@project-serum/common";
 import { createNameRegistry, getHashedName, getNameAccountKey, NameRegistryState } from "@solana/spl-name-service";
+import { BN } from "@wum.bo/anchor";
 
 use(ChaiAsPromised);
 
@@ -33,7 +34,7 @@ describe("spl-wumbo", () => {
   let wumbo: PublicKey;
   let wumMint: PublicKey;
 
-  beforeEach(async () => {
+  before(async () => {
     wumMint = await createMint(
       splTokenStakingProgram.provider,
       splTokenStakingProgram.wallet.publicKey,
@@ -77,7 +78,7 @@ describe("spl-wumbo", () => {
     let name: PublicKey;
     const tokenName = "test-handle";
  
-    beforeEach(async () => {
+    before(async () => {
       const connection = wumboProgram.provider.connection;
       const hashedName = await getHashedName(tokenName);
       name = await getNameAccountKey(hashedName)
@@ -116,14 +117,31 @@ describe("spl-wumbo", () => {
       expect(tokenRef.name.toBase58()).to.equal(name.toBase58());
       expect(tokenRef.owner).to.be.null;
     });
+
+    it("Allows claiming, which transfers founder rewards to my ata", async () => {
+      const tokenRef = await wumboProgram.account.tokenRefV0.fetch(unclaimedTokenRef);
+      const tokenBonding = await splTokenBondingProgram.account.tokenBondingV0.fetch(tokenRef.tokenBonding);
+      await tokenUtils.createAtaAndMint(wumboProgram.provider, wumMint, 2000000);
+      await splTokenBondingProgram.buyV0({
+        tokenBonding: tokenRef.tokenBonding,
+        desiredTargetAmount: new BN(100_000000000),
+        slippage: 0.1
+      })
+      await wumboProgram.claimSocialToken({
+        tokenRef: unclaimedTokenRef,
+        owner: this
+      });
+      console.log("3")
+
+      await tokenUtils.expectAtaBalance(wumboProgram.wallet.publicKey, tokenBonding.targetMint, 105.263157875)
+    })
   });
 
   describe("Claimed", () => {
     let claimedTokenRef: PublicKey;
     let claimedReverseTokenRef: PublicKey;
  
-    beforeEach(async () => {
-      const connection = wumboProgram.provider.connection;
+    before(async () => {
       const { tokenRef, reverseTokenRef } = await wumboProgram.createSocialToken({
         wumbo,
         owner: wumboProgram.wallet.publicKey,
@@ -146,87 +164,17 @@ describe("spl-wumbo", () => {
       expect(tokenRef.owner.toBase58()).to.equal(wumboProgram.wallet.publicKey.toBase58());
       expect(tokenRef.name).to.be.null;
     });
+
+    it("Allows updating metadata", async () => {
+      await wumboProgram.updateMetadata({
+        tokenRef: claimedTokenRef,
+        name: 'foofoo'
+      });
+      const tokenRef = await wumboProgram.account.tokenRefV0.fetch(claimedTokenRef);
+      const tokenMetadataRaw = await wumboProgram.provider.connection.getAccountInfo(tokenRef.tokenMetadata);
+      const tokenMetadata = decodeMetadata(tokenMetadataRaw!.data);
+
+      expect(tokenMetadata.data.name).to.equal('foofoo');
+    })
   });
-
-  /* describe("Unclaimed Token", () => {
-  *   let socialTokenBonding: PublicKey;
-  *   let socialTokenStaking: PublicKey;
-
-  *   before(async () => {
-  *     socialTokenBonding = await tokenBondingProgram.createTokenBonding({
-  *       authority: wumbo,
-  *       curve: baseCurve,
-  *       baseMint: tokenBondingAcct.targetMint,
-  *       targetMintDecimals: 2,
-  *       baseRoyaltyPercentage: percent(0),
-  *       targetRoyaltyPercentage: percent(5),
-  *       mintCap: new BN(1000),
-  *     });
-
-  *     socialTokenStaking = await tokenStakingProgram.createTokenStaking({
-  *       authority: wumbo,
-  *       baseMint: tokenBondingAcct.targetMint,
-  *       periodUnit: PeriodUnit.SECOND,
-  *       period: 5,
-  *       targetMintDecimals: 2,
-  *       rewardPercentPerPeriodPerLockupPeriod: 4294967295, // 100%
-  *     });
-  *   });
-
-  *   it("Creates a unclaimed social token", async () => {
-  *     let { tokenRef, reverseTokenRefBonding, reverseTokenRefStaking } =
-  *       await wumboProgram.createSocialToken({
-  *         wumbo,
-  *         tokenBonding: socialTokenBonding,
-  *         tokenStaking: socialTokenStaking,
-  *         // nameServiceName:
-  *         name: "TeamWumbo",
-  *       });
-
-  *     expect(tokenRef).to.exist;
-  *     expect(reverseTokenRefBonding).to.exist;
-  *     expect(reverseTokenRefStaking).to.exist;
-  *   });
-  * }); */
-
-  /* describe("Claimed Token", () => {
-  *   let socialTokenBonding: PublicKey;
-  *   let socialTokenStaking: PublicKey;
-
-  *   before(async () => {
-  *     socialTokenBonding = await tokenBondingProgram.createTokenBonding({
-  *       authority: wumbo,
-  *       curve: baseCurve,
-  *       baseMint: tokenBondingAcct.targetMint,
-  *       targetMintDecimals: 2,
-  *       baseRoyaltyPercentage: percent(0),
-  *       targetRoyaltyPercentage: percent(5),
-  *       mintCap: new BN(1000),
-  *     });
-
-  *     socialTokenStaking = await tokenStakingProgram.createTokenStaking({
-  *       authority: wumbo,
-  *       baseMint: tokenBondingAcct.targetMint,
-  *       periodUnit: PeriodUnit.SECOND,
-  *       period: 5,
-  *       targetMintDecimals: 2,
-  *       rewardPercentPerPeriodPerLockupPeriod: 4294967295, // 100%
-  *     });
-  *   });
-
-  *   it("Creates a claimed social token", async () => {
-  *     let { tokenRef, reverseTokenRefBonding, reverseTokenRefStaking, founderRewardsAccount } =
-  *       await wumboProgram.createSocialToken({
-  *         wumbo,
-  *         tokenBonding: socialTokenBonding,
-  *         tokenStaking: socialTokenStaking,
-  *         name: "TeamWumbo",
-  *       });
-
-  *     expect(tokenRef).to.exist;
-  *     expect(reverseTokenRefBonding).to.exist;
-  *     expect(reverseTokenRefStaking).to.exist;
-  *     expect(founderRewardsAccount).to.exist;
-  *   });
-  * }); */
 });

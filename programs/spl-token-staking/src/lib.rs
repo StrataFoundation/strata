@@ -348,24 +348,6 @@ pub mod spl_token_staking {
             ]],
         ))?;
 
-        close_token_account(CpiContext::new_with_signer(
-            ctx.accounts.token_program.clone(),
-            CloseTokenAccount {
-                from: base_holding.clone(),
-                to: ctx.accounts.owner.to_account_info().clone(),
-                authority: ctx
-                    .accounts
-                    .base_holding_authority
-                    .to_account_info()
-                    .clone(),
-            },
-            &[&[
-                b"holding-authority",
-                base_holding.key.as_ref(),
-                &[voucher.holding_authority_bump_seed],
-            ]],
-        ))?;
-
         Ok(())
     }
 }

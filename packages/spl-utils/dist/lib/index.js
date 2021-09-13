@@ -12,4 +12,5 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./percent"), exports);
 __exportStar(require("./metadata"), exports);
+__exportStar(require("./extendBorsh"), exports);
 //# sourceMappingURL=index.js.map

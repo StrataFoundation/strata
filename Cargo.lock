@@ -1370,6 +1370,7 @@ version = "0.1.0"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
+ "borsh",
  "proptest",
  "sha2",
  "spl-associated-token-account",

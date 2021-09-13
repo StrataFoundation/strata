@@ -22,10 +22,11 @@ spl-token = "3.2.0"
 spl-associated-token-account = { version = "1.0.3",  features = [ "no-entrypoint" ] }
 spl-name-service = { path = "../../deps/solana-program-library/name-service/program", features = ["no-entrypoint"] }
 spl-token-metadata = { path = "../../deps/metaplex/rust/token-metadata/program", features = ["no-entrypoint"] }
-spl-token-bonding = { path = '../spl-token-bonding', features = ["no-entrypoint"] }
+spl-token-bonding = { path = '../spl-token-bonding', features = ["no-entrypoint", "cpi"] }
 spl-token-staking = { path = '../spl-token-staking', features = ["no-entrypoint"] }
 spl-token-account-split = { path = '../spl-token-account-split', features = ["no-entrypoint"] }
 sha2 = "0.9.8"
+borsh = "0.9.1"
 
 [dev-dependencies]
 proptest = "1.0.0"

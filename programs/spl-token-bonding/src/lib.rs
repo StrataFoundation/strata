@@ -91,6 +91,8 @@ pub mod spl_token_bonding {
       bonding.target_royalty_percentage = args.target_royalty_percentage;
       bonding.authority = args.token_bonding_authority;
       bonding.buy_frozen = args.buy_frozen;
+      bonding.target_royalties = args.target_royalties;
+      bonding.base_royalties = args.target_royalties;
 
       Ok(())
     }
@@ -324,9 +326,11 @@ pub struct UpdateTokenBondingV0Args {
   /// Percentage of purchases that go to the founder
   /// Percentage Value is (founder_reward_percentage / u32.MAX_VALUE) * 100
   pub token_bonding_authority: Option<Pubkey>,
+  pub target_royalties: Pubkey,
+  pub base_royalties: Pubkey,
   pub base_royalty_percentage: u32,
   pub target_royalty_percentage: u32,
-  pub buy_frozen: bool
+  pub buy_frozen: bool,
 }
 
 pub fn get_curve_seed(args: &CurveV0) -> Vec<u8> {
