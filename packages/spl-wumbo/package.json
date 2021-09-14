@@ -1,6 +1,6 @@
 {
   "name": "@wum.bo/spl-wumbo",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Interface to the spl-wumbo smart contract",
   "publishConfig": {
     "access": "restricted",
@@ -28,10 +28,10 @@
     "@bonfida/spl-name-service": "^0.1.14",
     "@project-serum/common": "^0.0.1-beta.3",
     "@solana/web3.js": "^1.24.1",
-    "@wum.bo/spl-token-account-split": "^0.0.4",
-    "@wum.bo/spl-token-bonding": "^0.0.4",
-    "@wum.bo/spl-token-staking": "^0.0.4",
-    "@wum.bo/spl-utils": "^0.0.4",
+    "@wum.bo/spl-token-account-split": "^0.0.5",
+    "@wum.bo/spl-token-bonding": "^0.0.5",
+    "@wum.bo/spl-token-staking": "^0.0.5",
+    "@wum.bo/spl-utils": "^0.0.5",
     "bn.js": "^5.2.0",
     "copyfiles": "^2.4.1"
   },
@@ -40,5 +40,6 @@
     "style-loader": "^2.0.0",
     "ts-loader": "^9.2.3",
     "typescript": "^4.3.4"
-  }
+  },
+  "gitHead": "af1a1479a9ff153e4fc92cde181a3218cd8d7bfc"
 }
