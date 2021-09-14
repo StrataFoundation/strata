@@ -23,7 +23,6 @@ export type ConstantProductCurveV0 = {
   m: BN
 }
 
-
 function generalLogCurve(c: number, g: number, x: number): number {
   return c * ((1 / g + x) * Math.log(1 + g * x) - x);
 }
@@ -64,6 +63,8 @@ export function fromCurve(curve: any, baseMint: MintInfo, targetMint: MintInfo):
 }
 
 export interface Curve {
+  current(): number
+  locked(): number
   sellTargetAmount(targetAmountNum: number): number
   buyTargetAmount(targetAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number): number
   buyWithBaseAmount(baseAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number): number
@@ -82,6 +83,22 @@ class LogCurve implements LogCurveV0, Curve {
     this.taylorIterations = curve.taylorIterations;
     this.baseMint = baseMint;
     this.targetMint = targetMint;
+  }
+
+  locked(): number {
+    const c = this.c.toNumber() / 1000000000000;
+    const g = this.g.toNumber() / 1000000000000;
+
+    return logCurveRange(c, g, 0, supplyAsNum(this.targetMint));
+  }
+
+  current(): number {
+    const c = this.c.toNumber() / 1000000000000;
+    const g = this.g.toNumber() / 1000000000000;
+    return c *
+      Math.log(
+        1 + (g * supplyAsNum(this.targetMint))
+      );
   }
 
   startFinish(start: number, finish: number) {
@@ -135,6 +152,12 @@ class ExponentialCurve implements ExponentialCurveV0, Curve {
     this.baseMint = baseMint;
     this.targetMint = targetMint;
   }
+  current(): number {
+    throw new Error("Method not implemented.");
+  }
+  locked(): number {
+    throw new Error("Method not implemented.");
+  }
 
   startFinish(start: number, finish: number) {
     const a = this.a.toNumber() / 1_000000000000;
@@ -175,6 +198,12 @@ class FixedPriceCurve implements FixedPriceCurveV0, Curve {
   constructor(curve: FixedPriceCurveV0) {
     this.price = curve.price;
   }
+  current(): number {
+    throw new Error("Method not implemented.");
+  }
+  locked(): number {
+    throw new Error("Method not implemented.");
+  }
 
   get priceNum() {
     return this.price.toNumber() / 1000000000000;
@@ -206,6 +235,12 @@ class ConstantProductCurve implements ConstantProductCurveV0, Curve {
     this.b = curve.b;
     this.baseMint = baseMint;
     this.targetMint = targetMint;
+  }
+  current(): number {
+    throw new Error("Method not implemented.");
+  }
+  locked(): number {
+    throw new Error("Method not implemented.");
   }
 
   startFinish(start: number, finish: number) {
