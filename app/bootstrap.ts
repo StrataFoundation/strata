@@ -1,12 +1,12 @@
 import * as anchor from "@wum.bo/anchor";
 import { BN } from "@project-serum/anchor"
 import { Transaction, PublicKey } from "@solana/web3.js";
-import { percent } from "../packages/spl-utils/dist/lib";
+import { createMetadata, Data, percent } from "../packages/spl-utils/dist/lib";
 import { SplTokenBonding, SplTokenBondingIDL, SplTokenBondingIDLJson } from "../packages/spl-token-bonding/dist/lib";
 import { SplWumbo, SplWumboIDL, SplWumboIDLJson } from "../packages/spl-wumbo/dist/lib";
 import { SplTokenStaking, SplTokenStakingIDL, SplTokenStakingIDLJson } from "../packages/spl-token-staking/dist/lib";
 import { SplTokenAccountSplit, SplTokenAccountSplitIDL, SplTokenAccountSplitIDLJson } from "../packages/spl-token-account-split/dist/lib";
-
+import { createMintInstructions } from "@project-serum/common";
 
 async function run() {
   anchor.setProvider(anchor.Provider.env());
@@ -31,6 +31,8 @@ async function run() {
     splTokenAccountSplitProgram,
     splTokenStakingProgram
   });
+
+  const wallet = splWumboProgram.wallet.publicKey;
   
   const curve = await splTokenBondingProgram.initializeCurve({
     curve: {
@@ -43,28 +45,54 @@ async function run() {
     },
     taylorIterations: 15,
   });
+
+  const signers1 = [];
+  const instructions1 = [];
+  const wumMintKeypair = anchor.web3.Keypair.generate();
+  signers1.push(wumMintKeypair);
+  const wumMint = wumMintKeypair.publicKey;
+  instructions1.push(...(await createMintInstructions(provider, wallet, wumMint, 9)));
+
+  await createMetadata(
+    new Data({
+      symbol: "WUM",
+      name: "WUM",
+      uri: "https://wumbo-token-metadata.s3.us-east-2.amazonaws.com/wum.json",
+      sellerFeeBasisPoints: 0,
+      // @ts-ignore
+      creators: null,
+    }),
+    wallet.toBase58(),
+    wumMint.toBase58(),
+    wallet.toBase58(),
+    instructions1,
+    wallet.toBase58()
+  );
+  
   const { instructions: bondingInstructions, signers: bondingSigners, output: { targetMint, tokenBonding } } = await splTokenBondingProgram.createTokenBondingInstructions({
     curve,
     baseMint: new PublicKey(
       "So11111111111111111111111111111111111111112"
     ),
     targetMintDecimals: 9,
-    authority: splWumboProgram.wallet.publicKey,
+    authority: wallet,
     baseRoyaltyPercentage: percent(20),
     targetRoyaltyPercentage: percent(0),
     mintCap: new BN(1_000_000_000), // 1 billion
   });
+  instructions1.push(...bondingInstructions);
+  signers1.push(...bondingSigners)
 
   const { instructions: wumboInstructions, signers: wumboSigners, output: { wumbo } } = await splWumboProgram.createWumboInstructions({
     wumMint: targetMint
   })
   const tx1 = new Transaction();
-  tx1.add(...bondingInstructions);
+  tx1.add(...instructions1);
 
   const tx2 = new Transaction();
   tx2.add(...wumboInstructions);
 
-  await splWumboProgram.provider.sendAll([{ tx: tx1, signers: bondingSigners }, { tx: tx2, signers: wumboSigners }]);
+  await splWumboProgram.provider.sendAll([{ tx: tx1, signers: signers1 }, { tx: tx2, signers: wumboSigners }]);
 
   console.log(`Wumbo: ${wumbo}, bonding: ${tokenBonding}, wum: ${targetMint}`);
 }

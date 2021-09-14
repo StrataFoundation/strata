@@ -393,7 +393,7 @@ export class SplWumbo {
 
     // Token refs
     const [tokenRef, tokenRefBumpSeed] = await PublicKey.findProgramAddress(
-      [Buffer.from("token-ref", "utf-8"), (name || owner)!.toBuffer()],
+      [Buffer.from("token-ref", "utf-8"), wumbo.toBuffer(), (name || owner)!.toBuffer()],
       programId
     );
 

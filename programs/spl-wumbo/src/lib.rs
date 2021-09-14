@@ -391,6 +391,7 @@ pub struct InitializeOwnedSocialTokenV0<'info> {
     init,
     seeds = [
         b"token-ref",
+        initialize_args.wumbo.key().as_ref(),
         owner.key().as_ref()
     ],
     bump = args.token_ref_bump_seed,
@@ -432,6 +433,7 @@ pub struct InitializeUnclaimedSocialTokenV0<'info> {
     init,
     seeds = [
         b"token-ref",
+        initialize_args.wumbo.key().as_ref(),
         name.key().as_ref()
     ],
     bump = args.token_ref_bump_seed,
@@ -475,6 +477,7 @@ pub struct ClaimSocialTokenV0<'info> {
     has_one = token_bonding,
     seeds = [
         b"token-ref",
+        wumbo.key().as_ref(),
         name.key().as_ref()
     ],
     bump = token_ref.bump_seed,

@@ -37,6 +37,7 @@ import { amountAsNum, asDecimal, Curve, LogCurveV0, fromCurve, supplyAsNum } fro
 import { token } from "@wum.bo/anchor/dist/utils";
 
 export * from "./generated/spl-token-bonding";
+export * from "curves";
 
 interface InitializeCurveArgs {
   curve: CurveV0;
@@ -397,8 +398,10 @@ export class SplTokenBonding {
     const args: IdlTypes<SplTokenBondingIDL>["UpdateTokenBondingV0Args"] = {
       baseRoyaltyPercentage: baseRoyaltyPercentage || tokenBondingAcct.baseRoyaltyPercentage,
       targetRoyaltyPercentage: targetRoyaltyPercentage || tokenBondingAcct.targetRoyaltyPercentage,
-      tokenBondingAuthority: authority === null ? null : authority || tokenBondingAcct.authority,
-      buyFrozen: typeof buyFrozen === "undefined" ? tokenBondingAcct.buyFrozen : buyFrozen,
+      tokenBondingAuthority: authority === null ? null : authority! || tokenBondingAcct.authority as PublicKey,
+      buyFrozen: typeof buyFrozen === "undefined" ? tokenBondingAcct.buyFrozen as boolean : buyFrozen,
+      targetRoyalties: tokenBondingAcct.targetRoyalties,
+      baseRoyalties: tokenBondingAcct.baseRoyalties
     };
 
     return {
