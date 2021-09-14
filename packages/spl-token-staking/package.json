@@ -1,9 +1,9 @@
 {
     "name": "@wum.bo/spl-token-staking",
-    "version": "1.0.0",
+    "version": "0.0.2",
     "publishConfig": {
-      "access": "restricted",
-      "registry": "https://registry.npmjs.org/"
+        "access": "restricted",
+        "registry": "https://registry.npmjs.org/"
     },
     "description": "Interface to the spl-token-staking smart contract",
     "repository": {
@@ -33,6 +33,5 @@
         "style-loader": "^2.0.0",
         "ts-loader": "^9.2.3",
         "typescript": "^4.3.4"
-    },
-    "peerDependencies": {}
+    }
 }
