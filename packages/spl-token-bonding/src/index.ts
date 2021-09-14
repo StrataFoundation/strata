@@ -37,7 +37,7 @@ import { amountAsNum, asDecimal, Curve, LogCurveV0, fromCurve, supplyAsNum } fro
 import { token } from "@wum.bo/anchor/dist/utils";
 
 export * from "./generated/spl-token-bonding";
-export * from "curves";
+export * from "./curves";
 
 interface InitializeCurveArgs {
   curve: CurveV0;

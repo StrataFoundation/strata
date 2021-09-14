@@ -5,6 +5,7 @@
   "workspaces": [
     "packages/*"
   ],
+  "type": "module",
   "description": "Wum.bo Token Staking tests",
   "license": "MIT",
   "author": "Wum.bo Inc.",
