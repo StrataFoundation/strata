@@ -160,7 +160,7 @@ export class SplWumbo {
           bumpSeed: wumboBump,
           tokenMetadataDefaults: {
             symbol: "UNCLAIMED",
-            uri: "testtest", // TODO: get proper arweaveUri
+            uri: "https://wumbo-token-metadata.s3.us-east-2.amazonaws.com/unclaimed.json",
             sellerFeeBasisPoints: 0,
             creators: null,
           },

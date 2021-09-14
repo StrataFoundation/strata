@@ -50,7 +50,7 @@ describe("spl-wumbo", () => {
 
     expect(wumboAcct.tokenMetadataDefaults).to.eql({
       symbol: "UNCLAIMED",
-      uri: "testtest", // TODO: get proper arweaveUri
+      uri: "https://wumbo-token-metadata.s3.us-east-2.amazonaws.com/unclaimed.json", // TODO: get proper arweaveUri
     });
 
     expect({
