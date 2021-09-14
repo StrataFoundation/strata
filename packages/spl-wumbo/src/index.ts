@@ -480,38 +480,63 @@ export class SplWumbo {
         programId
       );
 
-    instructions2.push(
-      await this.instruction.initializeSocialTokenV0(
-        {
-          wumboBumpSeed: wumboAcct.bumpSeed,
-          targetMint,
-          targetRoyaltiesOwnerBumpSeed,
-          baseRoyaltiesOwnerBumpSeed,
-          tokenBondingAuthorityBumpSeed,
-          tokenRefBumpSeed,
-          reverseTokenRefBumpSeed,
-          tokenMetadataUpdateAuthorityBumpSeed,
-        },
-        {
-          accounts: {
-            wumbo,
-            tokenMetadata: new PublicKey(tokenMetadata),
-            tokenBonding,
-            baseRoyalties,
-            targetRoyalties,
-            tokenRef,
-            targetMint,
-            reverseTokenRef,
-            name: name ? name! : anchor.web3.PublicKey.default,
-            owner: owner ? owner! : anchor.web3.PublicKey.default,
-            payer,
-            systemProgram: SystemProgram.programId,
-            rent: SYSVAR_RENT_PUBKEY,
-            clock: SYSVAR_CLOCK_PUBKEY
-          },
-        }
-      )
-    );
+    const initializeArgs = {
+      wumbo,
+      tokenMetadata: new PublicKey(tokenMetadata),
+      tokenBonding,
+      baseRoyalties,
+      targetRoyalties,
+      targetMint,
+      payer,
+      systemProgram: SystemProgram.programId,
+      rent: SYSVAR_RENT_PUBKEY,
+      clock: SYSVAR_CLOCK_PUBKEY
+    }
+    const args = {
+      wumboBumpSeed: wumboAcct.bumpSeed,
+      targetRoyaltiesOwnerBumpSeed,
+      baseRoyaltiesOwnerBumpSeed,
+      tokenBondingAuthorityBumpSeed,
+      tokenRefBumpSeed,
+      reverseTokenRefBumpSeed,
+      tokenMetadataUpdateAuthorityBumpSeed,
+    }
+
+    if (owner) {
+      instructions2.push(
+        await this.instruction.initializeOwnedSocialTokenV0(
+          args,
+          {
+            accounts: {
+              initializeArgs,
+              owner,
+              payer,
+              tokenRef,
+              reverseTokenRef,
+              systemProgram: SystemProgram.programId,
+              rent: SYSVAR_RENT_PUBKEY,
+            },
+          }
+        )
+      );
+    } else {
+      instructions2.push(
+        await this.instruction.initializeUnclaimedSocialTokenV0(
+          args,
+          {
+            accounts: {
+              initializeArgs,
+              name: name!,
+              payer,
+              tokenRef,
+              reverseTokenRef,
+              systemProgram: SystemProgram.programId,
+              rent: SYSVAR_RENT_PUBKEY,
+            },
+          }
+        )
+      ); 
+    }
 
     return {
       output: { tokenRef, reverseTokenRef },

@@ -131,7 +131,6 @@ describe("spl-wumbo", () => {
         tokenRef: unclaimedTokenRef,
         owner: this
       });
-      console.log("3")
 
       await tokenUtils.expectAtaBalance(wumboProgram.wallet.publicKey, tokenBonding.targetMint, 105.263157875)
     })
