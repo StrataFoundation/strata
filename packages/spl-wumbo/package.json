@@ -2,6 +2,10 @@
   "name": "@wum.bo/spl-wumbo",
   "version": "1.0.0",
   "description": "Interface to the spl-wumbo smart contract",
+  "publishConfig": {
+    "access": "restricted",
+    "registry": "https://registry.npmjs.org/"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/ChewingGlassFund/wumbo-programs"
