@@ -7,7 +7,8 @@ import { expect, use } from "chai";
 import { TokenUtils } from "./utils/token";
 import ChaiAsPromised from "chai-as-promised";
 
-import { SplTokenBonding, TokenBondingV0 } from "../packages/spl-token-bonding/src";
+import { LogCurve, SplTokenBonding, TokenBondingV0 } from "../packages/spl-token-bonding/src";
+import { Curves } from "@wum.bo/spl-token-bonding";
 
 use(ChaiAsPromised);
 
@@ -29,6 +30,32 @@ describe("spl-token-bonding", () => {
   const tokenUtils = new TokenUtils(program.provider);
   const tokenBondingProgram = new SplTokenBonding(program);
   const me = tokenBondingProgram.wallet.publicKey;
+
+  describe("log curve test", () => {
+    it("is the same forward and backward", () => {
+      const curve = new LogCurve({
+        c: new BN(1000000000000), // 1
+        g: new BN(100000000000), // 0.1
+        taylorIterations: 15,
+      }, {
+        mintAuthority: null,
+        supply: new BN(0),
+        decimals: 9,
+        isInitialized: true,
+        freezeAuthority: null
+      }, {
+        mintAuthority: null,
+        supply: new BN(0),
+        decimals: 9,
+        isInitialized: true,
+        freezeAuthority: null
+      });
+
+      const baseAmount = curve.buyTargetAmount(10, percent(5), percent(5));
+      const targetAmount = curve.buyWithBaseAmount(baseAmount, percent(5), percent(5));
+      expect(targetAmount).to.be.closeTo(10, 0.05);
+    });
+  })
 
   describe("with normal base mint", () => {
     let baseMint: PublicKey;

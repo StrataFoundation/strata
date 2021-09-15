@@ -70,7 +70,7 @@ export interface Curve {
   buyWithBaseAmount(baseAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number): number
 }
 
-class LogCurve implements LogCurveV0, Curve {
+export class LogCurve implements LogCurveV0, Curve {
   g: BN;
   c: BN;
   taylorIterations: number;
@@ -128,19 +128,22 @@ class LogCurve implements LogCurveV0, Curve {
     https://www.wolframalpha.com/input/?i=solve%5Bc*%281%2Fg+%2B+%28s+%2B+x%29%29+*+log%28g+*+%28s+%2B+x%29+%2B+1%29+-+c+*+%28s+%2B+x%29+%3D+k%2C+x%5D
   */
   buyWithBaseAmount(baseAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number): number {
-    const royaltySubtractedBaseAmount = baseAmountNum * (1 - asDecimal(baseRoyaltiesPercent));
+    const baseRewardsDecimal = (1 / (1 - asDecimal(targetRoyaltiesPercent))) - 1;
+    const royaltySubtractedBaseAmount = baseAmountNum * (1 - baseRewardsDecimal);
     const c = this.c.toNumber() / 1000000000000;
     const g = this.g.toNumber() / 1000000000000;
     const s = supplyAsNum(this.targetMint);
     const rewardsDecimal = asDecimal(targetRoyaltiesPercent);
     const k = royaltySubtractedBaseAmount + generalLogCurve(c, g, s);
     const exp = gsl_sf_lambert_W0((g * k - c) / (c * Math.E)) + 1;
+    const numerator = (Math.pow(Math.E, exp) - g * s - 1);
+    const denominator = ((1 + rewardsDecimal) * g);
 
-    return Math.abs((Math.pow(Math.E, exp) - g * s - 1) / ((1 + rewardsDecimal) * g));
+    return Math.abs(numerator / denominator);
   }
 }
 
-class ExponentialCurve implements ExponentialCurveV0, Curve {
+export class ExponentialCurve implements ExponentialCurveV0, Curve {
   a: BN;
   b: BN;
   baseMint: MintInfo;
@@ -192,7 +195,7 @@ class ExponentialCurve implements ExponentialCurveV0, Curve {
 }
 
 
-class FixedPriceCurve implements FixedPriceCurveV0, Curve {
+export class FixedPriceCurve implements FixedPriceCurveV0, Curve {
   price: BN;
 
   constructor(curve: FixedPriceCurveV0) {
@@ -224,7 +227,7 @@ class FixedPriceCurve implements FixedPriceCurveV0, Curve {
   }
 }
 
-class ConstantProductCurve implements ConstantProductCurveV0, Curve {
+export class ConstantProductCurve implements ConstantProductCurveV0, Curve {
   b: BN;
   m: BN;
   baseMint: MintInfo;
