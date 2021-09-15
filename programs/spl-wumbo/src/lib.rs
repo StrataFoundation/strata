@@ -339,6 +339,7 @@ fn verify_name(name: &AccountInfo, name_class: Option<Pubkey>, name_parent: Opti
     name_parent,
   );
 
+  msg!("Name vs address {} {}", *name.key, address);
   Ok(*name.key == address)
 }
 
@@ -471,6 +472,7 @@ pub struct InitializeUnclaimedSocialTokenV0<'info> {
     constraint = verify_authority(Some(initialize_args.base_royalties.owner), &[b"base-royalties-owner", token_ref.key().as_ref()], args.base_royalties_owner_bump_seed)?,
     constraint = verify_authority(initialize_args.token_bonding.authority, &[b"token-bonding-authority", token_ref.key().as_ref()], args.token_bonding_authority_bump_seed)?,
     constraint = verify_authority(Some(initialize_args.token_metadata.update_authority), &[b"token-metadata-authority", token_ref.key().as_ref()], args.token_metadata_update_authority_bump_seed)?,
+    constraint = verify_authority(Some(initialize_args.target_royalties.owner), &[b"target-royalties-owner", token_ref.key().as_ref()], args.target_royalties_owner_bump_seed)?,
   )]
   token_ref: Box<Account<'info, TokenRefV0>>,
   #[account(
@@ -487,9 +489,8 @@ pub struct InitializeUnclaimedSocialTokenV0<'info> {
   reverse_token_ref: Box<Account<'info, TokenRefV0>>,
   #[account(
     // Deserialize name account checked in token metadata constraint
-    constraint = *name.to_account_info().owner == spl_name_service::ID,
+    constraint = *name.to_account_info().owner == system_program::ID || *name.to_account_info().owner == spl_name_service::ID,
     constraint = verify_name(&name, args.name_class, args.name_parent, &str::replace(&initialize_args.token_metadata.data.name, "\u{0000}", ""))?,
-    constraint = verify_authority(Some(initialize_args.target_royalties.owner), &[b"target-royalties-owner", token_ref.key().as_ref()], args.target_royalties_owner_bump_seed)?,
   )]
   name: AccountInfo<'info>,
   #[account(address = system_program::ID)]

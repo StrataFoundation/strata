@@ -387,6 +387,7 @@ export class SplWumbo {
     BigInstructionResult<{
       tokenRef: PublicKey;
       reverseTokenRef: PublicKey;
+      tokenBonding: PublicKey;
     }>
   > {
     const programId = this.programId;
@@ -546,7 +547,7 @@ export class SplWumbo {
     }
 
     return {
-      output: { tokenRef, reverseTokenRef },
+      output: { tokenRef, reverseTokenRef, tokenBonding },
       instructions: [instructions1, instructions2],
       signers: [signers1, signers2],
     };
@@ -555,9 +556,10 @@ export class SplWumbo {
   async createSocialToken(args: CreateSocialTokenArgs): Promise<{
     tokenRef: PublicKey;
     reverseTokenRef: PublicKey;
+    tokenBonding: PublicKey;
   }> {
     const {
-      output: { tokenRef, reverseTokenRef },
+      output: { tokenRef, reverseTokenRef, tokenBonding },
       instructions,
       signers,
     } = await this.createSocialTokenInstructions(args);
@@ -571,6 +573,6 @@ export class SplWumbo {
     });
     await this.provider.sendAll(txs)
 
-    return { tokenRef, reverseTokenRef };
+    return { tokenRef, reverseTokenRef, tokenBonding };
   }
 }
