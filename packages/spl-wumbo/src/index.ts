@@ -1,5 +1,6 @@
 import * as anchor from "@wum.bo/anchor";
-import { Program, BN } from "@wum.bo/anchor";
+import BN from "bn.js";
+import { Program } from "@wum.bo/anchor";
 import { createMetadata, Data, decodeMetadata, METADATA_PROGRAM_ID, extendBorsh } from "@wum.bo/spl-utils";
 import { createMintInstructions } from "@project-serum/common";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";

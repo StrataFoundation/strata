@@ -397,9 +397,9 @@ pub struct InitializeOwnedSocialTokenV0<'info> {
     bump = args.token_ref_bump_seed,
     payer = payer,
     space = 512,
-    constraint = verify_authority(Some(initialize_args.base_royalties.owner), &[b"base-royalties-owner", token_ref.key().as_ref()], args.base_royalties_owner_bump_seed)?,
-    constraint = verify_authority(initialize_args.token_bonding.authority, &[b"token-bonding-authority", token_ref.key().as_ref()], args.token_bonding_authority_bump_seed)?,
-    constraint = verify_authority(Some(initialize_args.token_metadata.update_authority), &[b"token-metadata-authority", token_ref.key().as_ref()], args.token_metadata_update_authority_bump_seed)?,
+    // constraint = verify_authority(Some(initialize_args.base_royalties.owner), &[b"base-royalties-owner", token_ref.key().as_ref()], args.base_royalties_owner_bump_seed)?,
+    // constraint = verify_authority(initialize_args.token_bonding.authority, &[b"token-bonding-authority", token_ref.key().as_ref()], args.token_bonding_authority_bump_seed)?,
+    // constraint = verify_authority(Some(initialize_args.token_metadata.update_authority), &[b"token-metadata-authority", token_ref.key().as_ref()], args.token_metadata_update_authority_bump_seed)?,
   )]
   token_ref: Box<Account<'info, TokenRefV0>>,
   #[account(

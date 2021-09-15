@@ -17,7 +17,7 @@ use(ChaiAsPromised);
 
 describe("spl-wumbo", () => {
   // Configure the client to use the local cluster.
-  anchor.setProvider(anchor.Provider.local());
+  anchor.setProvider(anchor.Provider.env());
   const program = anchor.workspace.SplWumbo;
 
   const tokenUtils = new TokenUtils(program.provider);
@@ -150,7 +150,7 @@ describe("spl-wumbo", () => {
       claimedReverseTokenRef = reverseTokenRef;
     });
 
-    it("Creates an unclaimed social token", async () => {
+    it("Creates a claimed social token", async () => {
       const reverseTokenRef = await wumboProgram.account.tokenRefV0.fetch(claimedReverseTokenRef);
       expect(reverseTokenRef.isClaimed).to.be.true;
       // @ts-ignore
