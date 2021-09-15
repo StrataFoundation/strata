@@ -1,6 +1,6 @@
 {
   "name": "@wum.bo/spl-utils",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Utils shared across spl suite",
   "publishConfig": {
     "access": "restricted",
