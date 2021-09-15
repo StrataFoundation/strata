@@ -268,7 +268,7 @@ pub struct InitializeWumbo<'info> {
       mint.key().as_ref()], 
       payer=payer,
       bump=args.bump_seed, 
-      space=1000
+      space=512
     )]
     wumbo: Account<'info, Wumbo>,
     #[account(

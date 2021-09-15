@@ -14,7 +14,7 @@
     "@types/chai-as-promised": "^7.1.4",
     "@types/mocha": "^9.0.0",
     "@wum.bo/anchor": "^0.11.1",
-    "@wum.bo/spl-token-staking": "^1.0.0",
+    "@wum.bo/spl-token-staking": "^0.0.9",
     "camelcase": "^6.2.0",
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
@@ -25,10 +25,9 @@
     "typescript": "^4.4.3"
   },
   "scripts": {
-    "idl": "node app/idlToTs",
-    "watch": "concurrently --kill-others \"lerna run --parallel watch\" \"yarn run idl\"",
-    "test": "env ANCHOR_PROVIDER_URL=$ANCHOR_PROVIDER_URL ts-mocha -p ./tsconfig.json -t 1000000 \"tests/**/*.ts\"",
-    "bootstrap": "ts-node app/bootstrap"
+    "watch": "lerna run --parallel watch",
+    "bootstrap": "lerna run bootstrap --scope @wum.bo/cli",
+    "test": "env ANCHOR_PROVIDER_URL=$ANCHOR_PROVIDER_URL ts-mocha -p ./tsconfig.json -t 1000000 \"tests/**/*.ts\""
   },
   "dependencies": {
     "@project-serum/common": "^0.0.1-beta.3",
