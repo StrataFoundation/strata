@@ -196,7 +196,7 @@ Transfer {
           token_program.clone(), 
   MintTo {
             mint: target_mint.to_account_info().clone(),
-            to: target_royalties_account.clone(),
+            to: ctx.accounts.destination.to_account_info().clone(),
             authority: target_mint_authority.clone()
           },
           mint_signer_seeds
