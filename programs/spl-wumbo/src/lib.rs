@@ -251,13 +251,15 @@ pub struct TokenStakingDefaults {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct InitializeSocialTokenV0Args {
-    pub wumbo_bump_seed: u8,
-    pub token_bonding_authority_bump_seed: u8,
-    pub target_royalties_owner_bump_seed: u8,
-    pub base_royalties_owner_bump_seed: u8,
-    pub token_ref_bump_seed: u8,
-    pub reverse_token_ref_bump_seed: u8,
-    pub token_metadata_update_authority_bump_seed: u8,
+  pub name_parent: Option<Pubkey>,
+  pub name_class: Option<Pubkey>,
+  pub wumbo_bump_seed: u8,
+  pub token_bonding_authority_bump_seed: u8,
+  pub target_royalties_owner_bump_seed: u8,
+  pub base_royalties_owner_bump_seed: u8,
+  pub token_ref_bump_seed: u8,
+  pub reverse_token_ref_bump_seed: u8,
+  pub token_metadata_update_authority_bump_seed: u8,
 }
 
 #[derive(Accounts)]
@@ -299,15 +301,42 @@ fn verify_authority(authority: Option<Pubkey>, seeds: &[&[u8]], bump: u8) -> Res
   Ok(true)
 }
 
-fn verify_name(name: &AccountInfo, expected: &String) -> Result<bool> {
-  let name_header = spl_name_service::state::NameRecordHeader::unpack_from_slice(name.try_borrow_data()?.as_ref())?;
+pub fn get_seeds_and_key(
+  program_id: &Pubkey,
+  hashed_name: Vec<u8>, // Hashing is done off-chain
+  name_class_opt: Option<Pubkey>,
+  parent_name_address_opt: Option<Pubkey>,
+) -> (Pubkey, Vec<u8>) {
+  // let hashed_name: Vec<u8> = hashv(&[(HASH_PREFIX.to_owned() + name).as_bytes()]).0.to_vec();
+  let mut seeds_vec: Vec<u8> = hashed_name;
+
+  let name_class = name_class_opt.unwrap_or_default();
+
+  for b in name_class.to_bytes().to_vec() {
+      seeds_vec.push(b);
+  }
+
+  let parent_name_address = parent_name_address_opt.unwrap_or_default();
+
+  for b in parent_name_address.to_bytes().to_vec() {
+      seeds_vec.push(b);
+  }
+
+  let (name_account_key, bump) =
+      Pubkey::find_program_address(&seeds_vec.chunks(32).collect::<Vec<&[u8]>>(), program_id);
+  seeds_vec.push(bump);
+
+  (name_account_key, seeds_vec)
+}
+
+fn verify_name(name: &AccountInfo, name_class: Option<Pubkey>, name_parent: Option<Pubkey>, expected: &String) -> Result<bool> {
   let hashed_name: Vec<u8> = hashv(&[("SPL Name Service".to_owned() + expected).as_bytes()]).0.to_vec();
 
-  let (address, _) = spl_name_service::state::get_seeds_and_key(
+  let (address, _) = get_seeds_and_key(
     &spl_name_service::ID,
     hashed_name,
-    Some(&name_header.class),
-    Some(&name_header.parent_name),
+    name_class,
+    name_parent,
   );
 
   Ok(*name.key == address)
@@ -459,7 +488,7 @@ pub struct InitializeUnclaimedSocialTokenV0<'info> {
   #[account(
     // Deserialize name account checked in token metadata constraint
     constraint = *name.to_account_info().owner == spl_name_service::ID,
-    constraint = verify_name(&name, &str::replace(&initialize_args.token_metadata.data.name, "\u{0000}", ""))?,
+    constraint = verify_name(&name, args.name_class, args.name_parent, &str::replace(&initialize_args.token_metadata.data.name, "\u{0000}", ""))?,
     constraint = verify_authority(Some(initialize_args.target_royalties.owner), &[b"target-royalties-owner", token_ref.key().as_ref()], args.target_royalties_owner_bump_seed)?,
   )]
   name: AccountInfo<'info>,

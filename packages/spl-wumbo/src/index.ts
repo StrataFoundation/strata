@@ -32,7 +32,9 @@ interface CreateWumboArgs {
 interface CreateSocialTokenArgs {
   payer?: PublicKey;
   wumbo: PublicKey;
-  name?: PublicKey; // Either this or owner needs to be provided
+  name?: PublicKey; // Either these or owner needs to be provided
+  nameClass?: PublicKey; // Either these or owner needs to be provided
+  nameParent?: PublicKey; // Either these or owner needs to be provided
   tokenName: string; // For the token metadata name
   owner?: PublicKey;
 }
@@ -378,7 +380,9 @@ export class SplWumbo {
     wumbo,
     name,
     owner,
-    tokenName: handle
+    tokenName: handle,
+    nameClass,
+    nameParent
   }: CreateSocialTokenArgs): Promise<
     BigInstructionResult<{
       tokenRef: PublicKey;
@@ -494,6 +498,8 @@ export class SplWumbo {
       clock: SYSVAR_CLOCK_PUBKEY
     }
     const args = {
+      nameClass: nameClass || null,
+      nameParent: nameParent || null,
       wumboBumpSeed: wumboAcct.bumpSeed,
       targetRoyaltiesOwnerBumpSeed,
       baseRoyaltiesOwnerBumpSeed,
