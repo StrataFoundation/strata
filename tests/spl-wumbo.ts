@@ -46,7 +46,7 @@ describe("spl-wumbo", () => {
   })
 
   it("Initializes Wumbo with sane defaults", async () => {
-    let wumboAcct = await wumboProgram.account.wumbo.fetch(wumbo);
+    let wumboAcct = await wumboProgram.account.wumboV0.fetch(wumbo);
 
     expect(wumboAcct.tokenMetadataDefaults).to.eql({
       symbol: "UNCLAIMED",
@@ -141,6 +141,15 @@ describe("spl-wumbo", () => {
     let claimedReverseTokenRef: PublicKey;
  
     before(async () => {
+      // Recreate to keep from conflicts from prev tests
+      wumMint = await createMint(
+        splTokenStakingProgram.provider,
+        splTokenStakingProgram.wallet.publicKey,
+        1
+      )
+      wumbo = await wumboProgram.createWumbo({
+        wumMint: wumMint
+      });
       const { tokenRef, reverseTokenRef } = await wumboProgram.createSocialToken({
         wumbo,
         owner: wumboProgram.wallet.publicKey,

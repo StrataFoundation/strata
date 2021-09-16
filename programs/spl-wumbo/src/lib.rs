@@ -89,6 +89,7 @@ pub mod spl_wumbo {
 
         wumbo.mint = ctx.accounts.mint.key();
         wumbo.curve = ctx.accounts.curve.key();
+        wumbo.authority = args.authority;
         wumbo.token_metadata_defaults = args.token_metadata_defaults;
         wumbo.token_bonding_defaults = args.token_bonding_defaults;
         wumbo.token_staking_defaults = args.token_staking_defaults;
@@ -130,16 +131,28 @@ pub mod spl_wumbo {
     }
 
     pub fn claim_social_token_v0(
-      ctx: Context<ClaimSocialTokenV0>
+      ctx: Context<ClaimSocialTokenV0>,
+      token_ref_bump_seed: u8
     ) -> ProgramResult {
       let token_program = ctx.accounts.token_program.to_account_info();
       let original_target_royalties = ctx.accounts.target_royalties.to_account_info();
       let new_target_royalties = ctx.accounts.new_target_royalties.to_account_info();
       let target_royalties_owner = ctx.accounts.target_royalties_owner.to_account_info();
       let token_ref = &mut ctx.accounts.token_ref;
+      let new_token_ref = &mut ctx.accounts.new_token_ref;
       let reverse_token_ref = &mut ctx.accounts.reverse_token_ref;
       let token_bonding_program = ctx.accounts.token_bonding_program.to_account_info();
       let token_bonding = &mut ctx.accounts.token_bonding;
+
+      new_token_ref.wumbo = token_ref.wumbo;
+      new_token_ref.token_bonding = token_ref.token_bonding;
+      new_token_ref.bump_seed = token_ref_bump_seed;
+      new_token_ref.token_metadata_update_authority_bump_seed = token_ref.token_metadata_update_authority_bump_seed;
+      new_token_ref.token_bonding_authority_bump_seed = token_ref.token_bonding_authority_bump_seed;
+      new_token_ref.target_royalties_owner_bump_seed = token_ref.target_royalties_owner_bump_seed;
+      new_token_ref.token_metadata = token_ref.token_metadata;
+      new_token_ref.token_staking = token_ref.token_staking;
+      new_token_ref.owner = Some(ctx.accounts.owner.key());
 
       msg!("Closing standin royalties account");
       token::transfer(
@@ -220,6 +233,7 @@ CloseTokenAccount {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct InitializeWumboArgs {
     pub bump_seed: u8,
+    pub authority: Option<Pubkey>,
     pub token_metadata_defaults: TokenMetadataDefaults,
     pub token_bonding_defaults: TokenBondingDefaults,
     pub token_staking_defaults: TokenStakingDefaults,
@@ -272,7 +286,7 @@ pub struct InitializeWumbo<'info> {
       bump=args.bump_seed, 
       space=512
     )]
-    wumbo: Account<'info, Wumbo>,
+    wumbo: Account<'info, WumboV0>,
     #[account(
       constraint = *mint.to_account_info().owner == spl_token::id()
     )]
@@ -348,7 +362,7 @@ pub struct InitializeSocialTokenV0<'info> {
     #[account(mut, signer)]
     payer: AccountInfo<'info>,
     #[account(seeds = [b"wumbo", wumbo.mint.as_ref()], bump = wumbo.bump_seed)]
-    wumbo: Box<Account<'info, Wumbo>>,
+    wumbo: Box<Account<'info, WumboV0>>,
     #[account(
       has_one = target_mint,
       has_one = base_royalties,
@@ -499,8 +513,9 @@ pub struct InitializeUnclaimedSocialTokenV0<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(token_ref_bump_seed: u8)]
 pub struct ClaimSocialTokenV0<'info> {
-  wumbo: Box<Account<'info, Wumbo>>,
+  wumbo: Box<Account<'info, WumboV0>>,
   #[account(
     mut,
     has_one = wumbo,
@@ -511,8 +526,21 @@ pub struct ClaimSocialTokenV0<'info> {
         name.key().as_ref()
     ],
     bump = token_ref.bump_seed,
+    close = owner
   )]
-  token_ref: Box<Account<'info, TokenRefV0>>,
+  token_ref: Account<'info, TokenRefV0>,
+  #[account(
+    init,
+    seeds = [
+        b"token-ref",
+        wumbo.key().as_ref(),
+        owner.key().as_ref()
+    ],
+    bump = token_ref_bump_seed,
+    payer = owner,
+    space = 512,
+  )]
+  new_token_ref: Box<Account<'info, TokenRefV0>>,
   #[account(
     mut,
     has_one = wumbo,
@@ -576,7 +604,11 @@ pub struct ClaimSocialTokenV0<'info> {
   pub token_program: AccountInfo<'info>,
 
   #[account(address = spl_token_bonding::id())]
-  pub token_bonding_program: AccountInfo<'info>
+  pub token_bonding_program: AccountInfo<'info>,
+
+  #[account(address = system_program::ID)]
+  system_program: AccountInfo<'info>,
+  rent: Sysvar<'info, Rent>,
 }
 
 
@@ -600,9 +632,10 @@ pub struct UpdateTokenMetadataV0<'info> {
 
 #[account]
 #[derive(Default)]
-pub struct Wumbo {
+pub struct WumboV0 {
     pub mint: Pubkey,
     pub curve: Pubkey,
+    pub authority: Option<Pubkey>,
     pub token_metadata_defaults: TokenMetadataDefaults,
     pub token_bonding_defaults: TokenBondingDefaults,
     pub token_staking_defaults: TokenStakingDefaults,

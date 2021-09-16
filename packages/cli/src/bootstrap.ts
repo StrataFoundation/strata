@@ -83,6 +83,7 @@ async function run() {
   });
 
   const { instructions: wumboInstructions, signers: wumboSigners, output: { wumbo } } = await splWumboProgram.createWumboInstructions({
+    authority: wallet,
     wumMint: targetMint
   })
   const tx1 = new Transaction();
@@ -96,7 +97,7 @@ async function run() {
 
   await splWumboProgram.provider.sendAll([{ tx: tx1, signers: signers1 }, { tx: tx2, signers: bondingSigners }, { tx: tx3, signers: wumboSigners }]);
 
-  await splWumboProgram.account.wumbo.fetch(wumbo);
+  await splWumboProgram.account.wumboV0.fetch(wumbo);
   console.log(`Wumbo: ${wumbo}, bonding: ${tokenBonding}, wum: ${targetMint}`);
 }
 

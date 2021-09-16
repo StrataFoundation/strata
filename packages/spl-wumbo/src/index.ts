@@ -27,6 +27,7 @@ interface CreateWumboArgs {
   payer?: PublicKey;
   curve?: PublicKey;
   wumMint?: PublicKey;
+  authority?: PublicKey;
 }
 
 interface CreateSocialTokenArgs {
@@ -125,6 +126,7 @@ export class SplWumbo {
     payer = this.wallet.publicKey,
     curve,
     wumMint,
+    authority
   }: CreateWumboArgs): Promise<InstructionResult<{ wumbo: PublicKey }>> {
     const programId = this.programId;
     const instructions: TransactionInstruction[] = [];
@@ -160,6 +162,7 @@ export class SplWumbo {
     instructions.push(
       await this.instruction.initializeWumbo(
         {
+          authority: authority ? authority : null,
           bumpSeed: wumboBump,
           tokenMetadataDefaults: {
             symbol: "UNCLAIMED",
@@ -260,10 +263,16 @@ export class SplWumbo {
         this.programId
       );
 
-    instructions.push(await this.instruction.claimSocialTokenV0({
+    const [newTokenRef, tokenRefBumpSeed] = await PublicKey.findProgramAddress(
+      [Buffer.from("token-ref", "utf-8"), tokenRefAcct.wumbo.toBuffer(), owner.toBuffer()],
+      this.programId
+    );
+
+    instructions.push(await this.instruction.claimSocialTokenV0(tokenRefBumpSeed, {
       accounts: {
         wumbo: tokenRefAcct.wumbo,
         tokenRef: tokenRef,
+        newTokenRef,
         reverseTokenRef,
         tokenBonding: tokenRefAcct.tokenBonding,
         tokenBondingAuthority,
@@ -273,7 +282,9 @@ export class SplWumbo {
         newTargetRoyalties,
         targetRoyalties: tokenBondingAcct.targetRoyalties,
         tokenProgram: TOKEN_PROGRAM_ID,
-        tokenBondingProgram: this.splTokenBondingProgram.programId
+        tokenBondingProgram: this.splTokenBondingProgram.programId,
+        systemProgram: SystemProgram.programId,
+        rent: SYSVAR_RENT_PUBKEY
       }
     }))
 
@@ -395,7 +406,7 @@ export class SplWumbo {
     const instructions1: TransactionInstruction[] = [];
     const signers1: Signer[] = [];
 
-    const wumboAcct = await this.program.account.wumbo.fetch(wumbo);
+    const wumboAcct = await this.program.account.wumboV0.fetch(wumbo);
 
     // Token refs
     const [tokenRef, tokenRefBumpSeed] = await PublicKey.findProgramAddress(
