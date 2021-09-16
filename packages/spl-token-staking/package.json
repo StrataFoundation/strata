@@ -1,6 +1,6 @@
 {
     "name": "@wum.bo/spl-token-staking",
-    "version": "0.0.16",
+    "version": "0.0.17",
     "publishConfig": {
         "access": "restricted",
         "registry": "https://registry.npmjs.org/"
