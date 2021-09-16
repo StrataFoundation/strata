@@ -79,6 +79,7 @@ interface InstructionResult<A> {
 
 interface BuyV0Args {
   tokenBonding: PublicKey;
+  payer?: PublicKey;
   source?: PublicKey; // Will use ATA of sourceAuthority if not provided
   destination?: PublicKey; // Will use ATA of sourceAuthority if not provided
   sourceAuthority?: PublicKey; // Wallet public key if not provided
@@ -88,6 +89,7 @@ interface BuyV0Args {
 
 interface SellV0Args {
   tokenBonding: PublicKey;
+  payer?: PublicKey;
   source?: PublicKey; // Will use ATA of sourceAuthority if not provided
   destination?: PublicKey; // Will use ATA of sourceAuthority if not provided
   sourceAuthority?: PublicKey; // Wallet public key if not provided
@@ -127,7 +129,7 @@ export class SplTokenBonding {
   }
 
   sendInstructions(instructions: TransactionInstruction[], signers: Signer[]): Promise<string> {
-    const tx = new Transaction();
+    const tx = new Transaction({ feePayer: this.wallet.publicKey });
     tx.add(...instructions);
     return this.provider.send(tx, signers);
   }
@@ -477,6 +479,7 @@ export class SplTokenBonding {
     destination,
     desiredTargetAmount,
     slippage,
+    payer = this.wallet.publicKey
   }: BuyV0Args): Promise<InstructionResult<null>> {
     const tokenBondingAcct = await this.account.tokenBondingV0.fetch(tokenBonding);
     // @ts-ignore
@@ -512,7 +515,7 @@ export class SplTokenBonding {
             tokenBondingAcct.targetMint,
             destination,
             sourceAuthority,
-            sourceAuthority
+            payer
           )
         );
       }
@@ -536,7 +539,7 @@ export class SplTokenBonding {
           firstInstructions,
           lastInstructions: lastInstrs,
         } = await this.createTemporaryWSolAccount({
-          payer: sourceAuthority,
+          payer: payer,
           owner: sourceAuthority,
           amount: maxPrice,
         });
@@ -602,6 +605,7 @@ export class SplTokenBonding {
     destination,
     targetAmount,
     slippage,
+    payer = this.wallet.publicKey
   }: SellV0Args): Promise<InstructionResult<null>> {
     const tokenBondingAcct = await this.account.tokenBondingV0.fetch(tokenBonding);
     if (tokenBondingAcct.sellFrozen) {
@@ -646,7 +650,7 @@ export class SplTokenBonding {
           firstInstructions,
           lastInstructions: lastInstrs,
         } = await this.createTemporaryWSolAccount({
-          payer: sourceAuthority,
+          payer,
           owner: sourceAuthority,
           amount: 0,
         });
@@ -671,7 +675,7 @@ export class SplTokenBonding {
               tokenBondingAcct.baseMint,
               destination,
               sourceAuthority,
-              sourceAuthority
+              payer
             )
           );
         }

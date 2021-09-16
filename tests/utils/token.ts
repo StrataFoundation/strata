@@ -79,23 +79,26 @@ export class TokenUtils {
   async createAtaAndMint(
     provider: Provider,
     mint: PublicKey,
-    amount: number
+    amount: number,
+    to: PublicKey = provider.wallet.publicKey,
+    authority: PublicKey = provider.wallet.publicKey,
+    payer: PublicKey = provider.wallet.publicKey
   ): Promise<PublicKey> {
     const ata = await Token.getAssociatedTokenAddress(
       ASSOCIATED_TOKEN_PROGRAM_ID,
       TOKEN_PROGRAM_ID,
       mint,
-      provider.wallet.publicKey
+      to
     )
-    const mintTx = new Transaction();
+    const mintTx = new Transaction({ feePayer: payer });
     if (!await provider.connection.getAccountInfo(ata)) {
       mintTx.add(Token.createAssociatedTokenAccountInstruction(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         mint,
         ata,
-        provider.wallet.publicKey,
-        provider.wallet.publicKey
+        to,
+        payer
       ))
     }
     mintTx.add(
@@ -103,7 +106,7 @@ export class TokenUtils {
         TOKEN_PROGRAM_ID,
         mint,
         ata,
-        provider.wallet.publicKey,
+        authority,
         [],
         amount
       )

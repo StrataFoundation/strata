@@ -116,7 +116,7 @@ pub mod spl_token_bonding {
       ).unwrap();
 
       let base_royalties_percent = get_percent(token_bonding.base_royalty_percentage)?;
-      let target_royalties_percent = get_percent(token_bonding.base_royalty_percentage)?;
+      let target_royalties_percent = get_percent(token_bonding.target_royalty_percentage)?;
 
       let target_royalties_prec = target_royalties_percent.checked_mul(&amount_prec).or_arith_error()?;
       let base_royalties_prec = base_royalties_percent.checked_mul(&price_prec).or_arith_error()?;

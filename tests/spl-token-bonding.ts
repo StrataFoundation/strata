@@ -1,5 +1,5 @@
 import * as anchor from "@project-serum/anchor";
-import { PublicKey } from "@solana/web3.js";
+import { sendAndConfirmTransaction, Transaction, PublicKey, Keypair } from "@solana/web3.js";
 import { createMint } from "@project-serum/common";
 import { NATIVE_MINT, AccountInfo as TokenAccountInfo, u64 } from "@solana/spl-token";
 import { BN } from "@wum.bo/anchor";
@@ -30,6 +30,7 @@ describe("spl-token-bonding", () => {
   const tokenUtils = new TokenUtils(program.provider);
   const tokenBondingProgram = new SplTokenBonding(program);
   const me = tokenBondingProgram.wallet.publicKey;
+  const newWallet = Keypair.generate()
 
   describe("log curve test", () => {
     it("is the same forward and backward", () => {
@@ -183,6 +184,80 @@ describe("spl-token-bonding", () => {
       );
     });
   });
+
+  describe("royalties", () => {
+    let baseMint: PublicKey;
+    let curve: PublicKey;
+    let tokenBonding: PublicKey;
+    let tokenBondingAcct: TokenBondingV0;
+    const INITIAL_BALANCE = 1000;
+    const DECIMALS = 2;
+    beforeEach(async () => {
+      baseMint = await createMint(program.provider, me, DECIMALS);
+      await tokenUtils.createAtaAndMint(program.provider, baseMint, INITIAL_BALANCE);
+      await tokenUtils.createAtaAndMint(program.provider, baseMint, INITIAL_BALANCE, newWallet.publicKey);
+      curve = await tokenBondingProgram.initializeCurve({
+        curve: {
+          // @ts-ignore
+          fixedPriceCurveV0: {
+            price: new BN(1_000000000000),
+          },
+        },
+      });
+    });
+
+    async function createCurve(baseRoyaltyPercentage: number, targetRoyaltyPercentage: number) {
+      tokenBonding = await tokenBondingProgram.createTokenBonding({
+        curve,
+        baseMint,
+        targetMintDecimals: DECIMALS,
+        authority: me,
+        baseRoyaltyPercentage: percent(baseRoyaltyPercentage),
+        targetRoyaltyPercentage: percent(targetRoyaltyPercentage),
+        mintCap: new BN(1000), // 10.0
+      });
+      tokenBondingAcct = (await tokenBondingProgram.account.tokenBondingV0.fetch(
+        tokenBonding
+      )) as TokenBondingV0;
+    }
+
+    it("correctly rewards with base royalties", async () => {
+      await createCurve(20, 0);
+
+      const { instructions, signers } = await tokenBondingProgram.buyV0Instructions({
+        tokenBonding,
+        desiredTargetAmount: new BN(100),
+        slippage: 0.05,
+        sourceAuthority: newWallet.publicKey
+      });
+
+      const tx = new Transaction();
+      tx.add(...instructions);
+      await tokenBondingProgram.provider.send(tx, [...signers, newWallet])
+
+      await tokenUtils.expectAtaBalance(newWallet.publicKey, tokenBondingAcct.targetMint, 1);
+      await tokenUtils.expectAtaBalance(me, tokenBondingAcct.baseMint, (INITIAL_BALANCE / (Math.pow(10, DECIMALS)) + 0.2));
+    })
+
+
+    it("correctly rewards with target royalties", async () => {
+      await createCurve(0, 20);
+
+      const { instructions, signers } = await tokenBondingProgram.buyV0Instructions({
+        tokenBonding,
+        desiredTargetAmount: new BN(100),
+        slippage: 0.05,
+        sourceAuthority: newWallet.publicKey
+      });
+
+      const tx = new Transaction();
+      tx.add(...instructions);
+      await tokenBondingProgram.provider.send(tx, [...signers, newWallet])
+
+      await tokenUtils.expectAtaBalance(newWallet.publicKey, tokenBondingAcct.targetMint, 1);
+      await tokenUtils.expectAtaBalance(me, tokenBondingAcct.targetMint, .25);
+    })
+  })
 
   describe("marketplace", () => {
     async function create(c: any): Promise<{ tokenBonding: PublicKey; baseMint: PublicKey }> {
