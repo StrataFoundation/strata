@@ -128,7 +128,7 @@ export class LogCurve implements LogCurveV0, Curve {
     https://www.wolframalpha.com/input/?i=solve%5Bc*%281%2Fg+%2B+%28s+%2B+x%29%29+*+log%28g+*+%28s+%2B+x%29+%2B+1%29+-+c+*+%28s+%2B+x%29+%3D+k%2C+x%5D
   */
   buyWithBaseAmount(baseAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number): number {
-    const baseRewardsDecimal = (1 / (1 - asDecimal(targetRoyaltiesPercent))) - 1;
+    const baseRewardsDecimal = (1 / (1 - asDecimal(baseRoyaltiesPercent))) - 1;
     const royaltySubtractedBaseAmount = baseAmountNum * (1 - baseRewardsDecimal);
     const c = this.c.toNumber() / 1000000000000;
     const g = this.g.toNumber() / 1000000000000;
@@ -173,14 +173,14 @@ export class ExponentialCurve implements ExponentialCurveV0, Curve {
   }
 
   sellTargetAmount(targetAmountNum: number): number {
-    return this.startFinish(supplyAsNum(this.targetMint) - targetAmountNum, targetAmountNum);
+    return this.startFinish(supplyAsNum(this.targetMint) - targetAmountNum, supplyAsNum(this.targetMint));
   }
 
   buyTargetAmount(targetAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number): number {
     const targetRoyaltiesDecimal = asDecimal(targetRoyaltiesPercent);
     const price = this.startFinish(
       supplyAsNum(this.targetMint),
-      supplyAsNum(this.targetMint) + targetAmountNum * (1 + targetRoyaltiesDecimal)
+      supplyAsNum(this.targetMint) + targetAmountNum * (1 / (1 - targetRoyaltiesDecimal))
     );
     return price * (1 + asDecimal(baseRoyaltiesPercent));
   }
@@ -218,7 +218,7 @@ export class FixedPriceCurve implements FixedPriceCurveV0, Curve {
 
   buyTargetAmount(targetAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number): number {
     const targetRoyaltiesDecimal = asDecimal(targetRoyaltiesPercent);
-    const price = targetAmountNum * (1 + targetRoyaltiesDecimal) * this.priceNum;
+    const price = targetAmountNum * (1 / (1 - targetRoyaltiesDecimal)) * this.priceNum;
     return price * (1 + asDecimal(baseRoyaltiesPercent));
   }
 
@@ -255,14 +255,14 @@ export class ConstantProductCurve implements ConstantProductCurveV0, Curve {
   }
 
   sellTargetAmount(targetAmountNum: number): number {
-    return this.startFinish(supplyAsNum(this.targetMint) - targetAmountNum, targetAmountNum);
+    return this.startFinish(supplyAsNum(this.targetMint) - targetAmountNum, supplyAsNum(this.targetMint));
   }
 
   buyTargetAmount(targetAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number): number {
     const targetRoyaltiesDecimal = asDecimal(targetRoyaltiesPercent);
     const price = this.startFinish(
       supplyAsNum(this.targetMint),
-      supplyAsNum(this.targetMint) + targetAmountNum * (1 + targetRoyaltiesDecimal)
+      supplyAsNum(this.targetMint) + targetAmountNum * (1 / (1 - targetRoyaltiesDecimal))
     );
     return price * (1 + asDecimal(baseRoyaltiesPercent));
   }
