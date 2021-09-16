@@ -109,14 +109,14 @@ export class LogCurve implements LogCurveV0, Curve {
   }
 
   sellTargetAmount(targetAmountNum: number): number {
-    return this.startFinish(supplyAsNum(this.targetMint) - targetAmountNum, targetAmountNum);
+    return this.startFinish(supplyAsNum(this.targetMint) - targetAmountNum, supplyAsNum(this.targetMint));
   }
 
   buyTargetAmount(targetAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number): number {
     const targetRoyaltiesDecimal = asDecimal(targetRoyaltiesPercent);
     const price = this.startFinish(
       supplyAsNum(this.targetMint),
-      supplyAsNum(this.targetMint) + targetAmountNum * (1 + targetRoyaltiesDecimal)
+      supplyAsNum(this.targetMint) + targetAmountNum * (1 / (1 - targetRoyaltiesDecimal))
     );
     return price * (1 + asDecimal(baseRoyaltiesPercent));
   }

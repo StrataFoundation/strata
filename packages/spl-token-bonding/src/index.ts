@@ -525,7 +525,7 @@ export class SplTokenBonding {
     const neededAmount =
       desiredTargetAmountNum * (1 / (1 - asDecimal(tokenBondingAcct.targetRoyaltyPercentage)));
     const curveAmount = curve.buyTargetAmount(
-      neededAmount,
+      desiredTargetAmountNum,
       tokenBondingAcct.baseRoyaltyPercentage,
       tokenBondingAcct.targetRoyaltyPercentage
     );

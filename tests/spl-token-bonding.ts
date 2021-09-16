@@ -54,7 +54,7 @@ describe("spl-token-bonding", () => {
 
       const baseAmount = curve.buyTargetAmount(10, percent(5), percent(5));
       const targetAmount = curve.buyWithBaseAmount(baseAmount, percent(5), percent(5));
-      expect(targetAmount).to.be.closeTo(10, 0.05);
+      expect(targetAmount).to.be.closeTo(10, 0.005);
     });
   })
 
