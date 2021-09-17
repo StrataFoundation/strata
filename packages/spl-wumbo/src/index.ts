@@ -253,13 +253,13 @@ export class SplWumbo {
     );
 
     const targetRoyaltiesOwner = await PublicKey.createProgramAddress(
-      [Buffer.from("target-royalties-owner", "utf-8"), tokenRef.toBuffer(), new BN(tokenRefAcct.targetRoyaltiesOwnerBumpSeed).toBuffer()],
+      [Buffer.from("target-royalties-owner", "utf-8"), reverseTokenRef.toBuffer(), new BN(tokenRefAcct.targetRoyaltiesOwnerBumpSeed).toBuffer()],
       this.programId
     );
 
     const tokenBondingAuthority =
       await PublicKey.createProgramAddress(
-        [Buffer.from("token-bonding-authority", "utf-8"), tokenRef.toBuffer(), new BN(tokenRefAcct.tokenBondingAuthorityBumpSeed).toBuffer()],
+        [Buffer.from("token-bonding-authority", "utf-8"), reverseTokenRef.toBuffer(), new BN(tokenRefAcct.tokenBondingAuthorityBumpSeed).toBuffer()],
         this.programId
       );
 
@@ -313,9 +313,15 @@ export class SplWumbo {
     const tokenMetadataRaw = await this.provider.connection.getAccountInfo(tokenRefAcct.tokenMetadata);
     const tokenMetadata = decodeMetadata(tokenMetadataRaw!.data);
 
+    const [reverseTokenRef] =
+      await PublicKey.findProgramAddress(
+        [Buffer.from("reverse-token-ref", "utf-8"), tokenRefAcct.wumbo.toBuffer(), tokenRefAcct.mint.toBuffer()],
+        this.programId
+      );
+
     const tokenMetadataUpdateAuthority =
       await PublicKey.createProgramAddress(
-        [Buffer.from("token-metadata-authority", "utf-8"), tokenRef.toBuffer(), new BN(tokenRefAcct.tokenMetadataUpdateAuthorityBumpSeed).toBuffer()],
+        [Buffer.from("token-metadata-authority", "utf-8"), reverseTokenRef.toBuffer(), new BN(tokenRefAcct.tokenMetadataUpdateAuthorityBumpSeed).toBuffer()],
         this.programId
       );
 
@@ -328,7 +334,7 @@ export class SplWumbo {
           uri: uri || tokenMetadata.data.uri
         }, {
           accounts: {
-            tokenRef,
+            reverseTokenRef,
             owner: tokenRefAcct.owner! as PublicKey,
             tokenMetadata: tokenRefAcct.tokenMetadata,
             updateAuthority: tokenMetadataUpdateAuthority,
@@ -422,11 +428,16 @@ export class SplWumbo {
 
     instructions1.push(...(await createMintInstructions(provider, payer, targetMint, 9)));
 
+    const [reverseTokenRef, reverseTokenRefBumpSeed] =
+      await PublicKey.findProgramAddress(
+        [Buffer.from("reverse-token-ref", "utf-8"), wumbo.toBuffer(), targetMint.toBuffer()],
+        programId
+      );
     // create metadata with payer as temporary authority
     console.log("Creating social token metadata...");
     const [tokenMetadataUpdateAuthority, tokenMetadataUpdateAuthorityBumpSeed] =
       await PublicKey.findProgramAddress(
-        [Buffer.from("token-metadata-authority", "utf-8"), tokenRef.toBuffer()],
+        [Buffer.from("token-metadata-authority", "utf-8"), reverseTokenRef.toBuffer()],
         programId
       );
     const tokenMetadata = await createMetadata(
@@ -461,7 +472,7 @@ export class SplWumbo {
 
     const [tokenBondingAuthority, tokenBondingAuthorityBumpSeed] =
       await PublicKey.findProgramAddress(
-        [Buffer.from("token-bonding-authority", "utf-8"), tokenRef.toBuffer()],
+        [Buffer.from("token-bonding-authority", "utf-8"), reverseTokenRef.toBuffer()],
         programId
       );
 
@@ -469,11 +480,11 @@ export class SplWumbo {
     const instructions2: TransactionInstruction[] = [];
     const signers2: Signer[] = [];
     const [targetRoyaltiesPdaOwner, targetRoyaltiesOwnerBumpSeed] = await PublicKey.findProgramAddress(
-      [Buffer.from("target-royalties-owner", "utf-8"), tokenRef.toBuffer()],
+      [Buffer.from("target-royalties-owner", "utf-8"), reverseTokenRef.toBuffer()],
       programId
     );
     const [baseRoyaltiesPdaOwner, baseRoyaltiesOwnerBumpSeed] = await PublicKey.findProgramAddress(
-      [Buffer.from("base-royalties-owner", "utf-8"), tokenRef.toBuffer()],
+      [Buffer.from("base-royalties-owner", "utf-8"), reverseTokenRef.toBuffer()],
       programId
     );
     const { instructions: bondingInstructions, signers: bondingSigners, output: { tokenBonding, baseRoyalties, targetRoyalties } } = await this.splTokenBondingProgram.createTokenBondingInstructions({
@@ -489,13 +500,6 @@ export class SplWumbo {
     });
     instructions2.push(...bondingInstructions);
     signers2.push(...bondingSigners);
-
-
-    const [reverseTokenRef, reverseTokenRefBumpSeed] =
-      await PublicKey.findProgramAddress(
-        [Buffer.from("reverse-token-ref", "utf-8"), wumbo.toBuffer(), targetMint.toBuffer()],
-        programId
-      );
 
     const initializeArgs = {
       wumbo,

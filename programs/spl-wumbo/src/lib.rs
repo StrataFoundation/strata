@@ -54,6 +54,7 @@ pub fn initialize_social_token_v0<'info>(
 ) -> ProgramResult {
   token_ref.wumbo = accounts.wumbo.key();
   token_ref.token_bonding = accounts.token_bonding.key();
+  token_ref.mint = accounts.target_mint.key();
   token_ref.bump_seed = args.token_ref_bump_seed;
   token_ref.token_metadata_update_authority_bump_seed = args.token_metadata_update_authority_bump_seed;
   token_ref.token_bonding_authority_bump_seed = args.token_bonding_authority_bump_seed;
@@ -63,6 +64,7 @@ pub fn initialize_social_token_v0<'info>(
   reverse_token_ref.wumbo = accounts.wumbo.key();
   reverse_token_ref.token_bonding = accounts.token_bonding.key();
   reverse_token_ref.bump_seed = args.reverse_token_ref_bump_seed;
+  reverse_token_ref.mint = accounts.target_mint.key();
 
   reverse_token_ref.token_metadata_update_authority_bump_seed = args.token_metadata_update_authority_bump_seed;
   reverse_token_ref.token_bonding_authority_bump_seed = args.token_bonding_authority_bump_seed;
@@ -153,6 +155,7 @@ pub mod spl_wumbo {
       new_token_ref.token_metadata = token_ref.token_metadata;
       new_token_ref.token_staking = token_ref.token_staking;
       new_token_ref.owner = Some(ctx.accounts.owner.key());
+      new_token_ref.mint = token_ref.mint;
 
       msg!("Closing standin royalties account");
       token::transfer(
@@ -164,7 +167,7 @@ pub mod spl_wumbo {
               authority: target_royalties_owner.clone()
             },
             &[
-              &[b"target-royalties-owner", token_ref.key().as_ref(), &[token_ref.target_royalties_owner_bump_seed]]
+              &[b"target-royalties-owner", reverse_token_ref.key().as_ref(), &[token_ref.target_royalties_owner_bump_seed]]
             ]
         ),
         ctx.accounts.target_royalties.amount
@@ -177,7 +180,7 @@ CloseTokenAccount {
           authority: target_royalties_owner.clone()
         },
         &[
-          &[b"target-royalties-owner", token_ref.key().as_ref(), &[token_ref.target_royalties_owner_bump_seed]]
+          &[b"target-royalties-owner", reverse_token_ref.key().as_ref(), &[token_ref.target_royalties_owner_bump_seed]]
         ]
       ))?;
 
@@ -186,7 +189,7 @@ CloseTokenAccount {
         token_bonding: token_bonding.clone(),
         authority: ctx.accounts.token_bonding_authority.to_account_info().clone(),
       }, &[
-        &[b"token-bonding-authority", token_ref.key().as_ref(), &[token_ref.token_bonding_authority_bump_seed]]
+        &[b"token-bonding-authority", reverse_token_ref.key().as_ref(), &[token_ref.token_bonding_authority_bump_seed]]
       ]), UpdateTokenBondingV0Args {
         token_bonding_authority: token_bonding.authority,
         base_royalty_percentage: token_bonding.base_royalty_percentage,
@@ -219,7 +222,7 @@ CloseTokenAccount {
           cpi_program,
           cpi_accounts, 
   &[
-          &[b"token-metadata-authority", accounts.token_ref.key().as_ref(), &[accounts.token_ref.token_metadata_update_authority_bump_seed]]
+          &[b"token-metadata-authority", accounts.reverse_token_ref.key().as_ref(), &[accounts.reverse_token_ref.token_metadata_update_authority_bump_seed]]
           ]
         ), 
         args
@@ -440,10 +443,7 @@ pub struct InitializeOwnedSocialTokenV0<'info> {
     ],
     bump = args.token_ref_bump_seed,
     payer = payer,
-    space = 512,
-    constraint = verify_authority(Some(initialize_args.base_royalties.owner), &[b"base-royalties-owner", token_ref.key().as_ref()], args.base_royalties_owner_bump_seed)?,
-    constraint = verify_authority(initialize_args.token_bonding.authority, &[b"token-bonding-authority", token_ref.key().as_ref()], args.token_bonding_authority_bump_seed)?,
-    constraint = verify_authority(Some(initialize_args.token_metadata.update_authority), &[b"token-metadata-authority", token_ref.key().as_ref()], args.token_metadata_update_authority_bump_seed)?,
+    space = 512
   )]
   token_ref: Box<Account<'info, TokenRefV0>>,
   #[account(
@@ -455,7 +455,10 @@ pub struct InitializeOwnedSocialTokenV0<'info> {
     ],
     bump = args.reverse_token_ref_bump_seed,
     payer = payer,
-    space = 512
+    space = 512,
+    constraint = verify_authority(Some(initialize_args.base_royalties.owner), &[b"base-royalties-owner", reverse_token_ref.key().as_ref()], args.base_royalties_owner_bump_seed)?,
+    constraint = verify_authority(initialize_args.token_bonding.authority, &[b"token-bonding-authority", reverse_token_ref.key().as_ref()], args.token_bonding_authority_bump_seed)?,
+    constraint = verify_authority(Some(initialize_args.token_metadata.update_authority), &[b"token-metadata-authority", reverse_token_ref.key().as_ref()], args.token_metadata_update_authority_bump_seed)?,
   )]
   reverse_token_ref: Box<Account<'info, TokenRefV0>>,
   #[account(
@@ -482,11 +485,7 @@ pub struct InitializeUnclaimedSocialTokenV0<'info> {
     ],
     bump = args.token_ref_bump_seed,
     payer = payer,
-    space = 512,
-    constraint = verify_authority(Some(initialize_args.base_royalties.owner), &[b"base-royalties-owner", token_ref.key().as_ref()], args.base_royalties_owner_bump_seed)?,
-    constraint = verify_authority(initialize_args.token_bonding.authority, &[b"token-bonding-authority", token_ref.key().as_ref()], args.token_bonding_authority_bump_seed)?,
-    constraint = verify_authority(Some(initialize_args.token_metadata.update_authority), &[b"token-metadata-authority", token_ref.key().as_ref()], args.token_metadata_update_authority_bump_seed)?,
-    constraint = verify_authority(Some(initialize_args.target_royalties.owner), &[b"target-royalties-owner", token_ref.key().as_ref()], args.target_royalties_owner_bump_seed)?,
+    space = 512
   )]
   token_ref: Box<Account<'info, TokenRefV0>>,
   #[account(
@@ -498,7 +497,11 @@ pub struct InitializeUnclaimedSocialTokenV0<'info> {
     ],
     bump = args.reverse_token_ref_bump_seed,
     payer = payer,
-    space = 512
+    space = 512,
+    constraint = verify_authority(Some(initialize_args.base_royalties.owner), &[b"base-royalties-owner", reverse_token_ref.key().as_ref()], args.base_royalties_owner_bump_seed)?,
+    constraint = verify_authority(initialize_args.token_bonding.authority, &[b"token-bonding-authority", reverse_token_ref.key().as_ref()], args.token_bonding_authority_bump_seed)?,
+    constraint = verify_authority(Some(initialize_args.token_metadata.update_authority), &[b"token-metadata-authority", reverse_token_ref.key().as_ref()], args.token_metadata_update_authority_bump_seed)?,
+    constraint = verify_authority(Some(initialize_args.target_royalties.owner), &[b"target-royalties-owner", reverse_token_ref.key().as_ref()], args.target_royalties_owner_bump_seed)?,
   )]
   reverse_token_ref: Box<Account<'info, TokenRefV0>>,
   #[account(
@@ -560,13 +563,13 @@ pub struct ClaimSocialTokenV0<'info> {
   token_bonding: Account<'info, TokenBondingV0>,
   #[account(
     seeds = [
-      b"token-bonding-authority", token_ref.key().as_ref()
+      b"token-bonding-authority", reverse_token_ref.key().as_ref()
     ],
     bump = token_ref.token_bonding_authority_bump_seed
   )]
   token_bonding_authority: AccountInfo<'info>,
   #[account(
-    seeds =  [b"target-royalties-owner", token_ref.key().as_ref()],
+    seeds =  [b"target-royalties-owner", reverse_token_ref.key().as_ref()],
     bump = token_ref.target_royalties_owner_bump_seed
   )]
   target_royalties_owner: AccountInfo<'info>,
@@ -574,8 +577,6 @@ pub struct ClaimSocialTokenV0<'info> {
   name: Box<Account<'info, NameRecordHeader>>,
   #[account(
     signer,
-    // One of name or owner must be provided, but not both
-    // constraint = owner.key() == name.owner
   )]
   owner: AccountInfo<'info>,
 
@@ -617,9 +618,9 @@ pub struct ClaimSocialTokenV0<'info> {
 pub struct UpdateTokenMetadataV0<'info> {
     #[account(
       has_one = token_metadata,
-      constraint = token_ref.owner.unwrap() == owner.key(),
+      constraint = reverse_token_ref.owner.unwrap() == owner.key(),
     )]
-    pub token_ref: Account<'info, TokenRefV0>,
+    pub reverse_token_ref: Account<'info, TokenRefV0>,
     #[account(signer)]
     pub owner: AccountInfo<'info>,
     #[account(mut)]
@@ -648,6 +649,7 @@ pub struct WumboV0 {
 pub struct TokenRefV0 {
     pub wumbo: Pubkey,
     pub token_metadata: Pubkey,
+    pub mint: Pubkey,
     pub token_bonding: Pubkey,
     pub token_staking: Option<Pubkey>,
     pub name: Option<Pubkey>,
