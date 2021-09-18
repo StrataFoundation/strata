@@ -92,7 +92,7 @@ pub mod spl_token_bonding {
       bonding.authority = args.token_bonding_authority;
       bonding.buy_frozen = args.buy_frozen;
       bonding.target_royalties = args.target_royalties;
-      bonding.base_royalties = args.target_royalties;
+      bonding.base_royalties = args.base_royalties;
 
       Ok(())
     }
