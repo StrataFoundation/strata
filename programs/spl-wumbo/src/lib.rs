@@ -277,7 +277,7 @@ pub struct InitializeSocialTokenV0Args {
   pub token_ref_bump_seed: u8,
   pub reverse_token_ref_bump_seed: u8,
   pub token_metadata_update_authority_bump_seed: u8,
-}
+}d
 
 #[derive(Accounts)]
 #[instruction(args: InitializeWumboArgs)]
@@ -375,7 +375,9 @@ pub struct InitializeSocialTokenV0<'info> {
                     token_bonding.target_royalty_percentage == wumbo.token_bonding_defaults.target_royalty_percentage &&
                     token_bonding.buy_frozen == wumbo.token_bonding_defaults.buy_frozen &&
                     token_bonding.go_live_unix_time <= clock.unix_timestamp &&
-                    token_bonding.base_mint == wumbo.mint
+                    token_bonding.base_mint == wumbo.mint &&
+                    token_bonding.purchase_cap.is_none() &&
+                    token_bonding.mint_cap.is_none()
     )]
     token_bonding: Box<Account<'info, TokenBondingV0>>,
     #[account()]

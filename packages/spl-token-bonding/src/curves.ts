@@ -229,7 +229,11 @@ export class FixedPriceCurve implements FixedPriceCurveV0, Curve {
   }
 
   buyWithBaseAmount(baseAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number): number {
-    throw new Error("Not implemented because we don't need it yet");
+    const baseAfterTax = baseAmountNum * (1 - asDecimal(baseRoyaltiesPercent));
+    const theoreticalTarget = baseAfterTax / this.priceNum;
+    const targetAfterTax = theoreticalTarget * (1 - asDecimal(targetRoyaltiesPercent));
+
+    return targetAfterTax;
   }
 }
 

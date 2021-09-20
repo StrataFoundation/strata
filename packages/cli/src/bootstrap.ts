@@ -1,12 +1,13 @@
 import * as anchor from "@wum.bo/anchor";
 import { BN } from "@project-serum/anchor"
 import { Transaction, PublicKey } from "@solana/web3.js";
-import { createMetadata, Data, percent } from "@wum.bo/spl-utils";
+import { createMetadata, Data, percent, TOKEN_PROGRAM_ID } from "@wum.bo/spl-utils";
 import { SplTokenBonding, SplTokenBondingIDL, SplTokenBondingIDLJson } from "@wum.bo/spl-token-bonding";
 import { SplWumbo, SplWumboIDL, SplWumboIDLJson } from "@wum.bo/spl-wumbo";
 import { SplTokenStaking, SplTokenStakingIDL, SplTokenStakingIDLJson } from "@wum.bo/spl-token-staking";
 import { SplTokenAccountSplit, SplTokenAccountSplitIDL, SplTokenAccountSplitIDLJson } from "@wum.bo/spl-token-account-split";
-import { createMintInstructions } from "@project-serum/common";
+import { connection, createMintInstructions } from "@project-serum/common";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, Token } from "@solana/spl-token";
 
 async function run() {
   console.log(process.env.ANCHOR_PROVIDER_URL)
@@ -73,6 +74,28 @@ async function run() {
     wallet.toBase58()
   );
   
+  // Real wum
+  // const { instructions: bondingInstructions, signers: bondingSigners, output: { targetMint, tokenBonding } } = await splTokenBondingProgram.createTokenBondingInstructions({
+  //   curve,
+  //   baseMint: new PublicKey(
+  //     "So11111111111111111111111111111111111111112"
+  //   ),
+  //   targetMintDecimals: 9,
+  //   authority: wallet,
+  //   baseRoyaltyPercentage: percent(20),
+  //   targetRoyaltyPercentage: percent(0),
+  //   mintCap: new BN(1_000_000_000), // 1 billion
+  // });
+
+  const baseStorage = await Token.getAssociatedTokenAddress(
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    TOKEN_PROGRAM_ID,
+    new PublicKey(
+      "So11111111111111111111111111111111111111112"
+    ),
+    wallet
+  )
+
   const { instructions: bondingInstructions, signers: bondingSigners, output: { targetMint, tokenBonding } } = await splTokenBondingProgram.createTokenBondingInstructions({
     curve,
     baseMint: new PublicKey(
@@ -80,10 +103,12 @@ async function run() {
     ),
     targetMintDecimals: 9,
     authority: wallet,
-    baseRoyaltyPercentage: percent(20),
+    
+    baseRoyaltyPercentage: percent(0),
     targetRoyaltyPercentage: percent(0),
     mintCap: new BN(1_000_000_000), // 1 billion
-    purchaseCap: new BN(100)
+    purchaseCap: new BN(100),
+    baseStorage
   });
 
   const { instructions: wumboInstructions, signers: wumboSigners, output: { wumbo } } = await splWumboProgram.createWumboInstructions({
@@ -94,6 +119,20 @@ async function run() {
   tx1.add(...instructions1);
 
   const tx2 = new Transaction();
+  // BETA ONLY
+  if (!(await splWumboProgram.provider.connection.getAccountInfo(baseStorage))) {
+    tx2.add(Token.createAssociatedTokenAccountInstruction(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      new PublicKey(
+        "So11111111111111111111111111111111111111112"
+      ),
+      baseStorage,
+      wallet,
+      wallet
+    ));
+  }
+  
   tx2.add(...bondingInstructions);
 
   const tx3 = new Transaction();
