@@ -59,6 +59,7 @@ interface CreateTokenBondingArgs {
   baseRoyaltyPercentage: number;
   targetRoyaltyPercentage: number;
   mintCap?: BN;
+  purchaseCap?: BN;
   goLiveDate?: Date;
   buyFrozen?: boolean;
 }
@@ -192,6 +193,7 @@ export class SplTokenBonding {
     baseRoyaltyPercentage,
     targetRoyaltyPercentage,
     mintCap,
+    purchaseCap,
     goLiveDate = new Date(),
     targetMintDecimals,
     buyFrozen = false,
@@ -334,6 +336,7 @@ export class SplTokenBonding {
           baseRoyaltyPercentage,
           targetRoyaltyPercentage,
           mintCap: mintCap || null,
+          purchaseCap: purchaseCap || null,
           tokenBondingAuthority: authority,
           bumpSeed,
           baseStorageAuthority,

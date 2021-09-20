@@ -56,7 +56,7 @@ export function fromCurve(curve: any, baseMint: MintInfo, targetMint: MintInfo):
     case "exponentialCurveV0": 
       return new ExponentialCurve(curve.curve.exponentialCurveV0 as ExponentialCurveV0, baseMint, targetMint)
     case "fixedPriceCurveV0":
-      return new FixedPriceCurve(curve.curve.fixedPriceCurveV0 as FixedPriceCurveV0);
+      return new FixedPriceCurve(curve.curve.fixedPriceCurveV0 as FixedPriceCurveV0, baseMint, targetMint);
   }
 
   throw new Error("Curve not found")
@@ -197,15 +197,21 @@ export class ExponentialCurve implements ExponentialCurveV0, Curve {
 
 export class FixedPriceCurve implements FixedPriceCurveV0, Curve {
   price: BN;
+  baseMint: MintInfo;
+  targetMint: MintInfo;
 
-  constructor(curve: FixedPriceCurveV0) {
+  constructor(curve: FixedPriceCurveV0, baseMint: MintInfo, targetMint: MintInfo) {
     this.price = curve.price;
+    this.baseMint = baseMint;
+    this.targetMint = targetMint;
   }
+
   current(): number {
-    throw new Error("Method not implemented.");
+    return this.priceNum
   }
+
   locked(): number {
-    throw new Error("Method not implemented.");
+    return this.priceNum * supplyAsNum(this.targetMint)
   }
 
   get priceNum() {

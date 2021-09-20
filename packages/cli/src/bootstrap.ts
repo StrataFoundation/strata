@@ -38,11 +38,14 @@ async function run() {
   const curve = await splTokenBondingProgram.initializeCurve({
     curve: {
       // @ts-ignore
-      logCurveV0: {
-        c: new BN(1000000000000), // 1
-        g: new BN(100000000000), // 0.1
-        taylorIterations: 15,
+      fixedPriceCurveV0: {
+        price: new BN(0_001000000000), // 0.001 SOL per. Max purchase of 100 WUM per instruction.
       },
+      // logCurveV0: {
+      //   c: new BN(1000000000000), // 1
+      //   g: new BN(100000000000), // 0.1
+      //   taylorIterations: 15,
+      // },
     },
     taylorIterations: 15,
   });
@@ -56,9 +59,9 @@ async function run() {
 
   await createMetadata(
     new Data({
-      symbol: "WUM",
-      name: "WUM",
-      uri: "https://wumbo-token-metadata.s3.us-east-2.amazonaws.com/wum.json",
+      symbol: "bWUM",
+      name: "bWUM",
+      uri: "https://wumbo-token-metadata.s3.us-east-2.amazonaws.com/bwum.json",
       sellerFeeBasisPoints: 0,
       // @ts-ignore
       creators: null,
@@ -80,6 +83,7 @@ async function run() {
     baseRoyaltyPercentage: percent(20),
     targetRoyaltyPercentage: percent(0),
     mintCap: new BN(1_000_000_000), // 1 billion
+    purchaseCap: new BN(100)
   });
 
   const { instructions: wumboInstructions, signers: wumboSigners, output: { wumbo } } = await splWumboProgram.createWumboInstructions({

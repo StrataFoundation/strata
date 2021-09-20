@@ -72,6 +72,7 @@ pub mod spl_token_bonding {
       bonding.target_royalty_percentage = args.target_royalty_percentage;
       bonding.curve = *ctx.accounts.curve.to_account_info().key;
       bonding.mint_cap = args.mint_cap;
+      bonding.purchase_cap = args.purchase_cap;
       bonding.buy_frozen = args.buy_frozen;
       bonding.sell_frozen = args.base_storage_authority.is_none();
       bonding.bump_seed = args.bump_seed;
@@ -105,6 +106,14 @@ pub mod spl_token_bonding {
       let curve = &ctx.accounts.curve;
       let amount_prec = precise_supply_amt(amount, target_mint);
       let target_supply = precise_supply(target_mint);
+
+      if token_bonding.mint_cap.is_some() && target_mint.supply + args.target_amount > token_bonding.mint_cap.unwrap() {
+        return Err(ErrorCode::PassedMintCap.into());
+      }
+
+      if token_bonding.purchase_cap.is_some() && args.target_amount > token_bonding.purchase_cap.unwrap() {
+        return Err(ErrorCode::PassedMintCap.into());
+      }
 
       if token_bonding.go_live_unix_time > ctx.accounts.clock.unix_timestamp {
         return Err(ErrorCode::NotLiveYet.into());
@@ -313,6 +322,8 @@ pub struct InitializeTokenBondingV0Args {
   pub go_live_unix_time: i64,
   // The maximum number of target tokens that can be minted.
   pub mint_cap: Option<u64>,
+  // The maximum target tokens per purchase
+  pub purchase_cap: Option<u64>,
   pub token_bonding_authority: Option<Pubkey>,
   pub base_storage_authority: Option<Pubkey>,
   pub buy_frozen: bool,
@@ -637,6 +648,7 @@ pub struct TokenBondingV0 {
   /// The bonding curve to use 
   pub curve: Pubkey,
   pub mint_cap: Option<u64>,
+  pub purchase_cap: Option<u64>,
   pub go_live_unix_time: i64,
   pub buy_frozen: bool,
   pub sell_frozen: bool,
@@ -679,5 +691,11 @@ pub enum ErrorCode {
   SellDisabled,
 
   #[msg("This bonding curve is not live yet")]
-  NotLiveYet
+  NotLiveYet,
+
+  #[msg("Passed the mint cap")]
+  PassedMintCap,
+
+  #[msg("Cannot purchase that many tokens because of purchase cap")]
+  OverPurchaseCap
 }
