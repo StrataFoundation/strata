@@ -1,6 +1,6 @@
 {
     "name": "@wum.bo/spl-token-account-split",
-    "version": "0.0.18",
+    "version": "0.0.19",
     "description": "Interface to the spl-token-account-split smart contract",
     "repository": {
         "type": "git",
@@ -22,7 +22,7 @@
     "dependencies": {
         "@project-serum/common": "^0.0.1-beta.3",
         "@solana/web3.js": "^1.24.1",
-        "@wum.bo/spl-token-staking": "^0.0.18",
+        "@wum.bo/spl-token-staking": "^0.0.19",
         "bn.js": "^5.2.0"
     },
     "devDependencies": {
