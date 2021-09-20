@@ -108,11 +108,12 @@ pub mod spl_token_bonding {
       let target_supply = precise_supply(target_mint);
 
       if token_bonding.mint_cap.is_some() && target_mint.supply + args.target_amount > token_bonding.mint_cap.unwrap() {
+        msg!("Mint cap is {} {} {}", token_bonding.mint_cap.unwrap(), target_mint.supply, args.target_amount);
         return Err(ErrorCode::PassedMintCap.into());
       }
 
       if token_bonding.purchase_cap.is_some() && args.target_amount > token_bonding.purchase_cap.unwrap() {
-        return Err(ErrorCode::PassedMintCap.into());
+        return Err(ErrorCode::OverPurchaseCap.into());
       }
 
       if token_bonding.go_live_unix_time > ctx.accounts.clock.unix_timestamp {

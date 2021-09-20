@@ -84,7 +84,7 @@ async function run() {
   //   authority: wallet,
   //   baseRoyaltyPercentage: percent(20),
   //   targetRoyaltyPercentage: percent(0),
-  //   mintCap: new BN(1_000_000_000), // 1 billion
+  //   mintCap: new BN("1000000000000000000"), // 1 billion
   // });
 
   const baseStorage = await Token.getAssociatedTokenAddress(
@@ -106,8 +106,8 @@ async function run() {
     
     baseRoyaltyPercentage: percent(0),
     targetRoyaltyPercentage: percent(0),
-    mintCap: new BN(1_000_000_000), // 1 billion
-    purchaseCap: new BN(100),
+    mintCap: new BN("1000000000000000000"), // 1 billion
+    purchaseCap: new BN("100000000000"),
     baseStorage
   });
 
