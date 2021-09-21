@@ -1,7 +1,7 @@
 import * as anchor from "@wum.bo/anchor";
 import { BN } from "@project-serum/anchor"
 import { Transaction, PublicKey } from "@solana/web3.js";
-import { createMetadata, Data, percent, TOKEN_PROGRAM_ID } from "@wum.bo/spl-utils";
+import { createMetadata, Data, getMetadata, percent, TOKEN_PROGRAM_ID } from "@wum.bo/spl-utils";
 import { SplTokenBonding, SplTokenBondingIDL, SplTokenBondingIDLJson } from "@wum.bo/spl-token-bonding";
 import { SplWumbo, SplWumboIDL, SplWumboIDLJson } from "@wum.bo/spl-wumbo";
 import { SplTokenStaking, SplTokenStakingIDL, SplTokenStakingIDLJson } from "@wum.bo/spl-token-staking";
@@ -73,6 +73,20 @@ async function run() {
     instructions1,
     wallet.toBase58()
   );
+
+  // Change authority back to token bonding
+  const [wumMintAuthority] = await PublicKey.findProgramAddress(
+    [Buffer.from("target-authority", "utf-8"), wumMint.toBuffer()],
+    splTokenBondingProgramId
+  );
+  instructions1.push(Token.createSetAuthorityInstruction(
+    TOKEN_PROGRAM_ID,
+    wumMint,
+    wumMintAuthority,
+    "MintTokens",
+    wallet,
+    []
+  ))
   
   // Real wum
   // const { instructions: bondingInstructions, signers: bondingSigners, output: { targetMint, tokenBonding } } = await splTokenBondingProgram.createTokenBondingInstructions({
@@ -80,8 +94,8 @@ async function run() {
   //   baseMint: new PublicKey(
   //     "So11111111111111111111111111111111111111112"
   //   ),
-  //   targetMintDecimals: 9,
   //   authority: wallet,
+  //   targetMint: wumMint,
   //   baseRoyaltyPercentage: percent(20),
   //   targetRoyaltyPercentage: percent(0),
   //   mintCap: new BN("1000000000000000000"), // 1 billion
@@ -103,7 +117,7 @@ async function run() {
     ),
     targetMintDecimals: 9,
     authority: wallet,
-    
+    targetMint: wumMint,
     baseRoyaltyPercentage: percent(0),
     targetRoyaltyPercentage: percent(0),
     mintCap: new BN("1000000000000000000"), // 1 billion
@@ -141,7 +155,7 @@ async function run() {
   await splWumboProgram.provider.sendAll([{ tx: tx1, signers: signers1 }, { tx: tx2, signers: bondingSigners }, { tx: tx3, signers: wumboSigners }]);
 
   await splWumboProgram.account.wumboV0.fetch(wumbo);
-  console.log(`Wumbo: ${wumbo}, bonding: ${tokenBonding}, wum: ${targetMint}`);
+  console.log(`Wumbo: ${wumbo}, bonding: ${tokenBonding}, wum: ${targetMint}, wumMetadata: ${await getMetadata(wumMint.toBase58())}`);
 }
 
 run().catch(e => {
