@@ -10,7 +10,7 @@ use precise_number::{PreciseNumber, InnerUint, one};
 
 static TARGET_MINT_AUTHORITY_PREFIX: &str = "target-authority";
 
-declare_id!("CJMw4wALbZJswJCxLsYUj2ExGCaEgMAp8JSGjodbxAF4");
+declare_id!("TBondz6ZwSM5fs4v2GpnVBMuwoncPkFLFR9S422ghhN");
 
 #[program]
 pub mod spl_token_bonding {

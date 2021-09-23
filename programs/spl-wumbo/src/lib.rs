@@ -15,7 +15,7 @@ use token_metadata::UpdateMetadataAccount;
 use crate::token_metadata::{Metadata, UpdateMetadataAccountArgs};
 use crate::name::{NameRecordHeader};
 
-declare_id!("Bn6owcizWtLgeKcVyXVgUgTvbLezCVz9Q7oPdZu5bC1H");
+declare_id!("WumbodN8t7wcDPCY2nGszs4x6HRtL5mJcTR519Qr6m7");
 
 #[derive(Accounts)]
 pub struct CloseTokenAccount<'info> {
@@ -277,7 +277,7 @@ pub struct InitializeSocialTokenV0Args {
   pub token_ref_bump_seed: u8,
   pub reverse_token_ref_bump_seed: u8,
   pub token_metadata_update_authority_bump_seed: u8,
-}d
+}
 
 #[derive(Accounts)]
 #[instruction(args: InitializeWumboArgs)]

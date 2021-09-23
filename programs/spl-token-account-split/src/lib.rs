@@ -5,7 +5,7 @@ use spl_token::state::AccountState;
 
 static TOKEN_ACCOUNT_AUTHORITY_PREFIX: &str = "token-account-authority";
 
-declare_id!("5DbtwvnZnsAkRWc6q5u4FJ4NLc3cmALV637ybjP4wKzE");
+declare_id!("Sp1it1Djn2NmQvXLPnGM4zAXArxuchvSdytNt5n76Hm");
 
 #[program]
 pub mod spl_token_account_split {

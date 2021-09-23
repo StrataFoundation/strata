@@ -11,7 +11,7 @@ use crate::precise_number::PreciseNumber;
 
 static TARGET_MINT_AUTHORITY_PREFIX: &str = "target-authority";
 
-declare_id!("GEFM3nvcHypYtEZMxLrjuAUKwQjLuRcx1YaWXqa85WCm");
+declare_id!("TStakXwvzEZiK6PSNpXuNx6wEsKc93NtSaMxmcqG6qP");
 
 pub fn get_period(
     unix_timestamp: i64,

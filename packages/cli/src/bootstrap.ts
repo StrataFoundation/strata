@@ -14,10 +14,10 @@ async function run() {
   anchor.setProvider(anchor.Provider.env());
   const provider = anchor.getProvider();
 
-  const splTokenBondingProgramId = new PublicKey("CJMw4wALbZJswJCxLsYUj2ExGCaEgMAp8JSGjodbxAF4")
-  const splWumboProgramId = new PublicKey("Bn6owcizWtLgeKcVyXVgUgTvbLezCVz9Q7oPdZu5bC1H")
-  const splTokenAccountSplitProgramId = new PublicKey("5DbtwvnZnsAkRWc6q5u4FJ4NLc3cmALV637ybjP4wKzE")
-  const splTokenStakingProgramId = new PublicKey("GEFM3nvcHypYtEZMxLrjuAUKwQjLuRcx1YaWXqa85WCm")
+  const splTokenBondingProgramId = new PublicKey("TBondz6ZwSM5fs4v2GpnVBMuwoncPkFLFR9S422ghhN")
+  const splWumboProgramId = new PublicKey("WumbodN8t7wcDPCY2nGszs4x6HRtL5mJcTR519Qr6m7")
+  const splTokenAccountSplitProgramId = new PublicKey("Sp1it1Djn2NmQvXLPnGM4zAXArxuchvSdytNt5n76Hm")
+  const splTokenStakingProgramId = new PublicKey("TStakXwvzEZiK6PSNpXuNx6wEsKc93NtSaMxmcqG6qP")
 
   const splTokenBonding = new anchor.Program(SplTokenBondingIDLJson, splTokenBondingProgramId, provider) as anchor.Program<SplTokenBondingIDL>;
   const splWumbo = new anchor.Program(SplWumboIDLJson, splWumboProgramId, provider) as anchor.Program<SplWumboIDL>;
@@ -135,6 +135,7 @@ async function run() {
   const tx2 = new Transaction();
   // BETA ONLY
   if (!(await splWumboProgram.provider.connection.getAccountInfo(baseStorage))) {
+    console.log("Missing base account")
     tx2.add(Token.createAssociatedTokenAccountInstruction(
       ASSOCIATED_TOKEN_PROGRAM_ID,
       TOKEN_PROGRAM_ID,
@@ -151,8 +152,9 @@ async function run() {
 
   const tx3 = new Transaction();
   tx3.add(...wumboInstructions);
-
-  await splWumboProgram.provider.sendAll([{ tx: tx1, signers: signers1 }, { tx: tx2, signers: bondingSigners }, { tx: tx3, signers: wumboSigners }]);
+  await splWumboProgram.provider.send(tx1, signers1);
+  await splWumboProgram.provider.send(tx2, bondingSigners);
+  await splWumboProgram.provider.send(tx3, wumboSigners);
 
   await splWumboProgram.account.wumboV0.fetch(wumbo);
   console.log(`Wumbo: ${wumbo}, bonding: ${tokenBonding}, wum: ${targetMint}, wumMetadata: ${await getMetadata(wumMint.toBase58())}`);
