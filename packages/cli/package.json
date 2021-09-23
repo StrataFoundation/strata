@@ -4,7 +4,7 @@
         "access": "restricted",
         "registry": "https://registry.npmjs.org/"
     },
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Bootstrapping wumbo",
     "repository": {
         "type": "git",
@@ -25,7 +25,7 @@
         "@wum.bo/spl-token-bonding": "^0.1.0",
         "@wum.bo/spl-token-staking": "^0.1.0",
         "@wum.bo/spl-utils": "^0.1.0",
-        "@wum.bo/spl-wumbo": "^0.1.0",
+        "@wum.bo/spl-wumbo": "^0.1.1",
         "bn.js": "^5.2.0",
         "copyfiles": "^2.4.1"
     },

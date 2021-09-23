@@ -1,6 +1,6 @@
 {
   "name": "@wum.bo/spl-wumbo",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Interface to the spl-wumbo smart contract",
   "publishConfig": {
     "access": "restricted",
