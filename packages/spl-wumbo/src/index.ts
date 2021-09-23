@@ -578,14 +578,16 @@ export class SplWumbo {
       instructions,
       signers,
     } = await this.createSocialTokenInstructions(args);
-    const txs = instructions.map((instructions, index) => {
-      const tx = new Transaction();
+    const txs = await Promise.all(instructions.map(async (instructions, index) => {
+      const tx = new Transaction({
+        recentBlockhash: (await this.provider.connection.getRecentBlockhash('finalized')).blockhash
+      });
       tx.add(...instructions);
       return {
         tx,
         signers: signers[index]
       }
-    });
+    }));
     await this.provider.sendAll(txs, {
       commitment: 'finalized'
     })
