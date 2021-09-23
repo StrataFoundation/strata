@@ -18,6 +18,7 @@ import { SplTokenBonding } from "@wum.bo/spl-token-bonding";
 import { PeriodUnit, SplTokenStaking } from "@wum.bo/spl-token-staking";
 import { SplTokenAccountSplit } from "@wum.bo/spl-token-account-split";
 import { percent } from "@wum.bo/spl-utils";
+import { sendAndConfirmRawTransaction } from "@solana/web3.js";
 
 export * from "./generated/spl-wumbo";
 
@@ -589,10 +590,10 @@ export class SplWumbo {
     }));
     await this.provider.wallet.signAllTransactions(txs);
     for (const tx of txs) {
-      await this.provider.send(tx, [], {
+      await sendAndConfirmRawTransaction(this.provider.connection, tx.serialize(), {
         commitment: 'finalized',
         preflightCommitment: 'finalized'
-      });
+      })
     }
     
     return { tokenRef, reverseTokenRef, tokenBonding };
