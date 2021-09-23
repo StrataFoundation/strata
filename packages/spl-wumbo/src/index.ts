@@ -586,7 +586,9 @@ export class SplWumbo {
         signers: signers[index]
       }
     });
-    await this.provider.sendAll(txs)
+    await this.provider.sendAll(txs, {
+      commitment: 'finalized'
+    })
 
     return { tokenRef, reverseTokenRef, tokenBonding };
   }
