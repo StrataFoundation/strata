@@ -588,8 +588,8 @@ export class SplWumbo {
       tx.partialSign(...signers[index])
       return tx;
     }));
-    await this.provider.wallet.signAllTransactions(txs);
-    for (const tx of txs) {
+    const newTxs = await this.provider.wallet.signAllTransactions(txs);
+    for (const tx of newTxs) {
       await sendAndConfirmRawTransaction(this.provider.connection, tx.serialize(), {
         commitment: 'finalized',
         preflightCommitment: 'finalized'
