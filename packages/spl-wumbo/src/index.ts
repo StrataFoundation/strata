@@ -579,7 +579,9 @@ export class SplWumbo {
       signers,
     } = await this.createSocialTokenInstructions(args);
     const txs = await Promise.all(instructions.map(async (instructions, index) => {
-      const tx = new Transaction();
+      const tx = new Transaction({
+        recentBlockhash: (await this.provider.connection.getRecentBlockhash('finalized')).blockhash
+      });
       tx.add(...instructions);
       tx.partialSign(...signers[index])
       return tx;
