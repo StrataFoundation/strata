@@ -581,16 +581,17 @@ export class SplWumbo {
     const txs = await Promise.all(instructions.map(async (instructions, index) => {
       const tx = new Transaction();
       tx.add(...instructions);
-      return {
-        tx,
-        signers: signers[index]
-      }
+      tx.partialSign(...signers[index])
+      return tx;
     }));
-    await this.provider.sendAll(txs, {
-      commitment: 'finalized',
-      preflightCommitment: 'finalized'
-    })
-
+    await this.provider.wallet.signAllTransactions(txs);
+    for (const tx of txs) {
+      await this.provider.send(tx, [], {
+        commitment: 'finalized',
+        preflightCommitment: 'finalized'
+      });
+    }
+    
     return { tokenRef, reverseTokenRef, tokenBonding };
   }
 }
