@@ -579,9 +579,7 @@ export class SplWumbo {
       signers,
     } = await this.createSocialTokenInstructions(args);
     const txs = await Promise.all(instructions.map(async (instructions, index) => {
-      const tx = new Transaction({
-        recentBlockhash: (await this.provider.connection.getRecentBlockhash('finalized')).blockhash
-      });
+      const tx = new Transaction();
       tx.add(...instructions);
       return {
         tx,
@@ -589,7 +587,8 @@ export class SplWumbo {
       }
     }));
     await this.provider.sendAll(txs, {
-      commitment: 'finalized'
+      commitment: 'finalized',
+      preflightCommitment: 'finalized'
     })
 
     return { tokenRef, reverseTokenRef, tokenBonding };
