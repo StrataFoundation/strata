@@ -576,28 +576,16 @@ export class SplWumbo {
   }> {
     const {
       output: { tokenRef, reverseTokenRef, tokenBonding },
-      instructions,
+      instructions: instructionGroups,
       signers,
     } = await this.createSocialTokenInstructions(args);
-    const txs = await Promise.all(instructions.map(async (instructions, index) => {
-      const tx = new Transaction({
-        recentBlockhash: (await this.provider.connection.getRecentBlockhash('finalized')).blockhash,
-        feePayer: args.payer || this.wallet.publicKey
-      });
-      tx.add(...instructions);
-      tx.partialSign(...signers[index])
-      return tx;
-    }));
-    const newTxs = await this.provider.wallet.signAllTransactions(txs);
+    
     console.log("Sending multiple transactions...")
     let txIdx = 0;
-    for (const tx of newTxs) {
-      txIdx++;
+    for (const instructions of instructionGroups) {
+      await this.sendInstructions(instructions, signers[txIdx])
       console.log("Sending transaction", txIdx);
-      await sendAndConfirmRawTransaction(this.provider.connection, tx.serialize(), {
-        commitment: 'finalized',
-        preflightCommitment: 'finalized'
-      })
+      txIdx++;
     }
     
     return { tokenRef, reverseTokenRef, tokenBonding };
