@@ -129,10 +129,19 @@ async function run() {
     authority: wallet,
     wumMint: targetMint
   })
-  const tx1 = new Transaction();
+  const connection = splWumbo.provider.connection;
+  const tx1 = new Transaction({
+    recentBlockhash: (await connection.getRecentBlockhash('finalized')).blockhash,
+    feePayer: wallet
+  });
   tx1.add(...instructions1);
 
-  const tx2 = new Transaction();
+  await splWumboProgram.provider.send(tx1, signers1, { commitment: 'finalized', preflightCommitment: 'finalized' });
+
+  const tx2 = new Transaction({
+    recentBlockhash: (await connection.getRecentBlockhash('finalized')).blockhash,
+    feePayer: wallet
+  });
   // BETA ONLY
   if (!(await splWumboProgram.provider.connection.getAccountInfo(baseStorage))) {
     console.log("Missing base account")
@@ -149,12 +158,14 @@ async function run() {
   }
   
   tx2.add(...bondingInstructions);
+  await splWumboProgram.provider.send(tx2, bondingSigners, { commitment: 'finalized', preflightCommitment: 'finalized' });
 
-  const tx3 = new Transaction();
+  const tx3 = new Transaction({
+    recentBlockhash: (await connection.getRecentBlockhash('finalized')).blockhash,
+    feePayer: wallet
+  });
   tx3.add(...wumboInstructions);
-  await splWumboProgram.provider.send(tx1, signers1);
-  await splWumboProgram.provider.send(tx2, bondingSigners);
-  await splWumboProgram.provider.send(tx3, wumboSigners);
+  await splWumboProgram.provider.send(tx3, wumboSigners, { commitment: 'finalized', preflightCommitment: 'finalized' });
 
   await splWumboProgram.account.wumboV0.fetch(wumbo);
   console.log(`Wumbo: ${wumbo}, bonding: ${tokenBonding}, wum: ${targetMint}, wumMetadata: ${await getMetadata(wumMint.toBase58())}`);

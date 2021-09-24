@@ -589,7 +589,11 @@ export class SplWumbo {
       return tx;
     }));
     const newTxs = await this.provider.wallet.signAllTransactions(txs);
+    console.log("Sending multiple transactions...")
+    let txIdx = 0;
     for (const tx of newTxs) {
+      txIdx++;
+      console.log("Sending transaction", txIdx);
       await sendAndConfirmRawTransaction(this.provider.connection, tx.serialize(), {
         commitment: 'finalized',
         preflightCommitment: 'finalized'
