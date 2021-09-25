@@ -350,13 +350,12 @@
   resolved "https://registry.yarnpkg.com/@ungap/promise-all-settled/-/promise-all-settled-1.1.2.tgz#aa58042711d6e3275dd37dc597e5d31e8c290a44"
   integrity sha512-sL/cEvJWAnClXw0wHk85/2L0G6Sj8UB0Ctc1TEMbKSsmpRosqhwj9gWgFRZSrBr2f9tiXISwNhCPmlfqUqyb9Q==
 
-"@wum.bo/anchor@^0.16.1":
-  version "0.16.1"
-  resolved "https://registry.yarnpkg.com/@wum.bo/anchor/-/anchor-0.16.1.tgz#650a88c15870f6d848cbf6f25127717d6d29183b"
-  integrity sha512-jyH5jSlyJvmsMp8muupOCNjPymSPpogK3XiIF2rqP9fxOPx+it7X5nmLslCJPpHYJhxLN9uADfskINdFqyf3LQ==
+"@wum.bo/anchor@^0.16.2":
+  version "0.16.2"
+  resolved "https://registry.yarnpkg.com/@wum.bo/anchor/-/anchor-0.16.2.tgz#3d542c4b106f79ee56054e6446ee9151ac899411"
+  integrity sha512-AlB+Sq0i09sfYecYdKtblS1k4E04UyYvmH1sWnGGRyO7dcXMmnDPImGSSIcFznshd95zVKM7Iso01YBAZBCJkw==
   dependencies:
     "@project-serum/borsh" "^0.2.2"
-    "@solana/buffer-layout" "^3.0.0"
     "@solana/web3.js" "^1.17.0"
     base64-js "^1.5.1"
     bn.js "^5.1.2"
