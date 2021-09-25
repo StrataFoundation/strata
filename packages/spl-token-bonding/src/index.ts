@@ -99,7 +99,6 @@ export class SplTokenBonding {
   constructor(provider: Provider, program: Program<SplTokenBondingIDL>) {
     this.program = program;
     this.provider = provider;
-    program.idl.errors
   }
 
   get programId() {
