@@ -2,7 +2,7 @@ import * as anchor from "@project-serum/anchor";
 import { sendAndConfirmTransaction, Transaction, PublicKey, Keypair } from "@solana/web3.js";
 import { createMint } from "@project-serum/common";
 import { NATIVE_MINT, AccountInfo as TokenAccountInfo, u64 } from "@solana/spl-token";
-import { BN } from "@wum.bo/anchor";
+import { BN, ProgramError } from "@wum.bo/anchor";
 import { expect, use } from "chai";
 import { TokenUtils } from "./utils/token";
 import ChaiAsPromised from "chai-as-promised";
@@ -25,10 +25,11 @@ function percent(percent: number): number {
 describe("spl-token-bonding", () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.Provider.env());
+  const provider = anchor.getProvider();
 
   const program = anchor.workspace.SplTokenBonding;
-  const tokenUtils = new TokenUtils(program.provider);
-  const tokenBondingProgram = new SplTokenBonding(program);
+  const tokenUtils = new TokenUtils(provider);
+  const tokenBondingProgram = new SplTokenBonding(provider, program);
   const me = tokenBondingProgram.wallet.publicKey;
   const newWallet = Keypair.generate()
 
@@ -66,8 +67,8 @@ describe("spl-token-bonding", () => {
     const INITIAL_BALANCE = 1000;
     const DECIMALS = 2;
     beforeEach(async () => {
-      baseMint = await createMint(program.provider, me, DECIMALS);
-      await tokenUtils.createAtaAndMint(program.provider, baseMint, INITIAL_BALANCE);
+      baseMint = await createMint(provider, me, DECIMALS);
+      await tokenUtils.createAtaAndMint(provider, baseMint, INITIAL_BALANCE);
       curve = await tokenBondingProgram.initializeCurve({
         curve: {
           // @ts-ignore
@@ -154,13 +155,17 @@ describe("spl-token-bonding", () => {
     });
 
     it("does not allow buying past the cap", async () => {
-      expect(
-        tokenBondingProgram.buyV0({
+      try {
+        await tokenBondingProgram.buyV0({
           tokenBonding,
           desiredTargetAmount: new BN(1001),
           slippage: 0.05,
         })
-      ).to.eventually.throw(/0x131/);
+        throw "Shouldn't get here"
+      } catch (e) {
+        console.log(e);
+        expect(e.toString()).to.equal("PassedMintCap: Passed the mint cap")
+      }
     });
 
     it("allows selling", async () => {
@@ -193,9 +198,9 @@ describe("spl-token-bonding", () => {
     const INITIAL_BALANCE = 1000;
     const DECIMALS = 2;
     beforeEach(async () => {
-      baseMint = await createMint(program.provider, me, DECIMALS);
-      await tokenUtils.createAtaAndMint(program.provider, baseMint, INITIAL_BALANCE);
-      await tokenUtils.createAtaAndMint(program.provider, baseMint, INITIAL_BALANCE, newWallet.publicKey);
+      baseMint = await createMint(provider, me, DECIMALS);
+      await tokenUtils.createAtaAndMint(provider, baseMint, INITIAL_BALANCE);
+      await tokenUtils.createAtaAndMint(provider, baseMint, INITIAL_BALANCE, newWallet.publicKey);
       curve = await tokenBondingProgram.initializeCurve({
         curve: {
           // @ts-ignore
@@ -233,7 +238,7 @@ describe("spl-token-bonding", () => {
 
       const tx = new Transaction();
       tx.add(...instructions);
-      await tokenBondingProgram.provider.send(tx, [...signers, newWallet])
+      await provider.send(tx, [...signers, newWallet])
 
       await tokenUtils.expectAtaBalance(newWallet.publicKey, tokenBondingAcct.targetMint, 1);
       await tokenUtils.expectAtaBalance(me, tokenBondingAcct.baseMint, (INITIAL_BALANCE / (Math.pow(10, DECIMALS)) + 0.2));
@@ -252,7 +257,7 @@ describe("spl-token-bonding", () => {
 
       const tx = new Transaction();
       tx.add(...instructions);
-      await tokenBondingProgram.provider.send(tx, [...signers, newWallet])
+      await provider.send(tx, [...signers, newWallet])
 
       await tokenUtils.expectAtaBalance(newWallet.publicKey, tokenBondingAcct.targetMint, 1);
       await tokenUtils.expectAtaBalance(me, tokenBondingAcct.targetMint, .25);
@@ -261,8 +266,8 @@ describe("spl-token-bonding", () => {
 
   describe("marketplace", () => {
     async function create(c: any): Promise<{ tokenBonding: PublicKey; baseMint: PublicKey }> {
-      const baseMint = await createMint(program.provider, me, 2);
-      await tokenUtils.createAtaAndMint(program.provider, baseMint, 100_00);
+      const baseMint = await createMint(provider, me, 2);
+      await tokenUtils.createAtaAndMint(provider, baseMint, 100_00);
       const curve = await tokenBondingProgram.initializeCurve({
         curve: c,
       });
@@ -371,7 +376,7 @@ describe("spl-token-bonding", () => {
     });
 
     it("allows buy/sell", async () => {
-      const initLamports = (await tokenBondingProgram.provider.connection.getAccountInfo(me))
+      const initLamports = (await provider.connection.getAccountInfo(me))
         .lamports;
       await tokenBondingProgram.buyV0({
         tokenBonding,
@@ -386,7 +391,7 @@ describe("spl-token-bonding", () => {
       });
 
       await tokenUtils.expectAtaBalance(me, tokenBondingAcct.targetMint, 0);
-      const lamports = (await tokenBondingProgram.provider.connection.getAccountInfo(me)).lamports;
+      const lamports = (await provider.connection.getAccountInfo(me)).lamports;
       expect(lamports).to.within(100000000, initLamports);
     });
   });

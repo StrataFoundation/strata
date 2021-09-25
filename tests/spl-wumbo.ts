@@ -19,12 +19,14 @@ describe("spl-wumbo", () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.Provider.env());
   const program = anchor.workspace.SplWumbo;
+  const provider = anchor.getProvider();
 
-  const tokenUtils = new TokenUtils(program.provider);
-  const splTokenBondingProgram = new SplTokenBonding(anchor.workspace.SplTokenBonding);
-  const splTokenStakingProgram = new SplTokenStaking(anchor.workspace.SplTokenStaking);
-  const splTokenAccountSplitProgram = new SplTokenAccountSplit(anchor.workspace.SplTokenAccountSplit, splTokenStakingProgram);
+  const tokenUtils = new TokenUtils(provider);
+  const splTokenBondingProgram = new SplTokenBonding(provider, anchor.workspace.SplTokenBonding);
+  const splTokenStakingProgram = new SplTokenStaking(provider, anchor.workspace.SplTokenStaking);
+  const splTokenAccountSplitProgram = new SplTokenAccountSplit(provider, anchor.workspace.SplTokenAccountSplit, splTokenStakingProgram);
   const wumboProgram = new SplWumbo({
+    provider,
     program,
     splTokenBondingProgram,
     splTokenStakingProgram,
@@ -36,7 +38,7 @@ describe("spl-wumbo", () => {
 
   before(async () => {
     wumMint = await createMint(
-      splTokenStakingProgram.provider,
+      provider,
       splTokenStakingProgram.wallet.publicKey,
       1
     )
@@ -79,7 +81,7 @@ describe("spl-wumbo", () => {
     const tokenName = "test-handle";
  
     before(async () => {
-      const connection = wumboProgram.provider.connection;
+      const connection = provider.connection;
       const hashedName = await getHashedName(tokenName);
       name = await getNameAccountKey(hashedName)
       const nameTx = new Transaction({
@@ -94,7 +96,7 @@ describe("spl-wumbo", () => {
           wumboProgram.wallet.publicKey
         )
       )
-      await wumboProgram.provider.send(nameTx);
+      await provider.send(nameTx);
       const { tokenRef, reverseTokenRef } = await wumboProgram.createSocialToken({
         wumbo,
         name,
@@ -121,7 +123,7 @@ describe("spl-wumbo", () => {
     it("Allows claiming, which transfers founder rewards to my ata", async () => {
       const tokenRef = await wumboProgram.account.tokenRefV0.fetch(unclaimedTokenRef);
       const tokenBonding = await splTokenBondingProgram.account.tokenBondingV0.fetch(tokenRef.tokenBonding);
-      await tokenUtils.createAtaAndMint(wumboProgram.provider, wumMint, 2000000);
+      await tokenUtils.createAtaAndMint(provider, wumMint, 2000000);
       await splTokenBondingProgram.buyV0({
         tokenBonding: tokenRef.tokenBonding,
         desiredTargetAmount: new BN(100_000000000),
@@ -143,7 +145,7 @@ describe("spl-wumbo", () => {
     before(async () => {
       // Recreate to keep from conflicts from prev tests
       wumMint = await createMint(
-        splTokenStakingProgram.provider,
+        provider,
         splTokenStakingProgram.wallet.publicKey,
         1
       )
@@ -179,7 +181,7 @@ describe("spl-wumbo", () => {
         name: 'foofoo'
       });
       const tokenRef = await wumboProgram.account.tokenRefV0.fetch(claimedTokenRef);
-      const tokenMetadataRaw = await wumboProgram.provider.connection.getAccountInfo(tokenRef.tokenMetadata);
+      const tokenMetadataRaw = await provider.connection.getAccountInfo(tokenRef.tokenMetadata);
       const tokenMetadata = decodeMetadata(tokenMetadataRaw!.data);
 
       expect(tokenMetadata.data.name).to.equal('foofoo');

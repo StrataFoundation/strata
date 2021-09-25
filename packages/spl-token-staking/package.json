@@ -26,7 +26,9 @@
     "dependencies": {
         "@project-serum/common": "^0.0.1-beta.3",
         "@solana/web3.js": "^1.24.1",
-        "bn.js": "^5.2.0"
+        "@wum.bo/spl-utils": "^0.1.0",
+        "bn.js": "^5.2.0",
+        "semver": "^7.3.5"
     },
     "devDependencies": {
         "prettier": "2.3.1",

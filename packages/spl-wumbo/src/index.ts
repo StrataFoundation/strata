@@ -1,8 +1,8 @@
 import * as anchor from "@wum.bo/anchor";
 import BN from "bn.js";
-import { Program } from "@wum.bo/anchor";
-import { createMetadata, Data, decodeMetadata, METADATA_PROGRAM_ID, extendBorsh } from "@wum.bo/spl-utils";
-import { createMintInstructions } from "@project-serum/common";
+import { Program, Provider } from "@wum.bo/anchor";
+import { createMetadata, Data, decodeMetadata, METADATA_PROGRAM_ID, extendBorsh, InstructionResult, BigInstructionResult, sendInstructions, sendMultipleInstructions } from "@wum.bo/spl-utils";
+import { connection, createMintInstructions } from "@project-serum/common";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import {
   PublicKey,
@@ -54,47 +54,25 @@ interface UpdateMetadataArgs {
   uri?: string;
 }
 
-interface InstructionResult<A> {
-  instructions: TransactionInstruction[];
-  signers: Signer[];
-  output: A;
-}
-
-interface BigInstructionResult<A> {
-  instructions: TransactionInstruction[][];
-  signers: Signer[][];
-  output: A;
-}
-
-async function promiseAllInOrder<T>(it: (() => Promise<T>)[]): Promise<Iterable<T>> {
-  let ret: T[] = [];
-  for (const i of it) {
-    ret.push(await i());
-  }
-
-  return ret;
-}
-
 export class SplWumbo {
   program: Program<SplWumboIDL>;
   splTokenBondingProgram: SplTokenBonding;
   splTokenAccountSplitProgram: SplTokenAccountSplit;
   splTokenStakingProgram: SplTokenStaking;
+  provider: Provider;
 
   constructor(opts: {
+    provider: Provider;
     program: Program<SplWumboIDL>;
     splTokenBondingProgram: SplTokenBonding;
     splTokenAccountSplitProgram: SplTokenAccountSplit;
     splTokenStakingProgram: SplTokenStaking;
   }) {
+    this.provider = opts.provider;
     this.program = opts.program;
     this.splTokenBondingProgram = opts.splTokenBondingProgram;
     this.splTokenAccountSplitProgram = opts.splTokenAccountSplitProgram;
     this.splTokenStakingProgram = opts.splTokenStakingProgram;
-  }
-
-  get provider() {
-    return this.program.provider;
   }
 
   get programId() {
@@ -117,10 +95,15 @@ export class SplWumbo {
     return this.program.account;
   }
 
-  sendInstructions(instructions: TransactionInstruction[], signers: Signer[]): Promise<string> {
-    const tx = new Transaction();
-    tx.add(...instructions);
-    return this.provider.send(tx, signers);
+  get errors() {
+    return this.program.idl.errors.reduce((acc, err) => {
+      acc.set(err.code, `${err.name}: ${err.msg}`);
+      return acc;
+    }, new Map<number, string>())
+  }
+
+  sendInstructions(instructions: TransactionInstruction[], signers: Signer[], payer?: PublicKey): Promise<string> {
+    return sendInstructions(this.errors, this.provider, instructions, signers, payer)
   }
 
   async createWumboInstructions({
@@ -577,16 +560,16 @@ export class SplWumbo {
     const {
       output: { tokenRef, reverseTokenRef, tokenBonding },
       instructions: instructionGroups,
-      signers,
+      signers: signerGroups,
     } = await this.createSocialTokenInstructions(args);
-    
-    console.log("Sending multiple transactions...")
-    let txIdx = 0;
-    for (const instructions of instructionGroups) {
-      await this.sendInstructions(instructions, signers[txIdx])
-      console.log("Sending transaction", txIdx);
-      txIdx++;
-    }
+
+    await sendMultipleInstructions(
+      this.errors,
+      this.provider,
+      instructionGroups,
+      signerGroups,
+      args.payer
+    )
     
     return { tokenRef, reverseTokenRef, tokenBonding };
   }

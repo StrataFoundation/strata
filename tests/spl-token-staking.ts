@@ -2,13 +2,12 @@ import * as anchor from '@project-serum/anchor';
 import { Connection, SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Account, PublicKey, SystemProgram, Transaction, TransactionInstruction, Signer } from '@solana/web3.js';
 import { createMint, createMintInstructions, createTokenAccount, token } from "@project-serum/common"
 import { TOKEN_PROGRAM_ID, Token, ASSOCIATED_TOKEN_PROGRAM_ID, AccountInfo as TokenAccountInfo, u64 } from '@solana/spl-token';
-import { BN, Provider, Program } from '@wum.bo/anchor';
+import { BN, Provider, Program, ProgramError } from '@wum.bo/anchor';
 import { expect, use } from "chai";
 import { PeriodUnit, SplTokenStaking, StakingVoucherV0 } from "@wum.bo/spl-token-staking";
 import { TokenUtils } from './utils/token';
 import ChaiAsPromised from "chai-as-promised";
 import { waitForUnixTime } from './utils/clock';
-import { Idl } from '@wum.bo/anchor/dist/idl';
 import { TokenStakingV0 } from '../packages/spl-token-staking/src';
 
 use(ChaiAsPromised);
@@ -17,17 +16,18 @@ describe('spl-token-staking', () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.Provider.env());
   const program = anchor.workspace.SplTokenStaking;
-  const tokenUtils = new TokenUtils(program.provider);
+  const provider = anchor.getProvider();
+  const tokenUtils = new TokenUtils(provider);
 
   let tokenStaking: PublicKey;
   let tokenStakingAcct: TokenStakingV0;
-  let tokenStakingProgram = new SplTokenStaking(program);
+  let tokenStakingProgram = new SplTokenStaking(provider, program);
   let baseMint: PublicKey;
 
   beforeEach(async () => {
-    baseMint = await createMint(program.provider, tokenStakingProgram.wallet.publicKey, 2);
+    baseMint = await createMint(provider, tokenStakingProgram.wallet.publicKey, 2);
     tokenStaking = await tokenStakingProgram.createTokenStaking({
-      authority: program.provider.wallet.publicKey,
+      authority: provider.wallet.publicKey,
       baseMint,
       periodUnit: PeriodUnit.SECOND,
       period: 5,
@@ -38,7 +38,7 @@ describe('spl-token-staking', () => {
   })
 
   async function waitForPeriod(period: number) {
-    await waitForUnixTime(program.provider.connection, BigInt(tokenStakingAcct.createdTimestamp.toNumber() + tokenStakingAcct.period * period)) // Sleep past remainder of first period, into second
+    await waitForUnixTime(provider.connection, BigInt(tokenStakingAcct.createdTimestamp.toNumber() + tokenStakingAcct.period * period)) // Sleep past remainder of first period, into second
   }
 
   it('Initializes a stake instance and a stake', async () => {
@@ -53,7 +53,7 @@ describe('spl-token-staking', () => {
     let stakingVoucherAccount: StakingVoucherV0;
 
     beforeEach(async () => {
-      baseMintAcct = await tokenUtils.createAtaAndMint(program.provider, baseMint, 100);
+      baseMintAcct = await tokenUtils.createAtaAndMint(provider, baseMint, 100);
       stakingVoucher = await tokenStakingProgram.stake({
         lockupPeriods: new BN(1),
         amount: new BN(2),
@@ -81,12 +81,22 @@ describe('spl-token-staking', () => {
     })
 
     it('Does not allow unstaking before lockup', async () => {
-      expect(tokenStakingProgram.unstake({ tokenStaking, stakingVoucher })).to.eventually.throw(/0x131/)
+      try {
+        await tokenStakingProgram.unstake({ tokenStaking, stakingVoucher })
+        throw "Shouldn't get here";
+      } catch (e) {
+        expect(e.toString()).to.equal("LockupNotPassed: This voucher is still in the lockup period");
+      }
     })
 
     it('Does not allow unstaking before collect', async () => {
       await waitForPeriod(1);
-      expect(tokenStakingProgram.unstake({ tokenStaking, stakingVoucher })).to.eventually.throw(/0x132/)
+      try {
+        await tokenStakingProgram.unstake({ tokenStaking, stakingVoucher })
+        throw "Shouldn't get here"
+      } catch (e) {
+        expect(e.toString()).to.equal("CollectBeforeUnstake: You must collect on this voucher before unstaking it. You should do both in the same transaction")
+      }
     })
 
 

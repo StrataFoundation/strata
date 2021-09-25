@@ -2,10 +2,11 @@ import * as anchor from '@wum.bo/anchor';
 import { SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Account, PublicKey, SystemProgram, Transaction, TransactionInstruction, Signer } from '@solana/web3.js';
 import { getMintInfo, createMintInstructions, createTokenAccountInstrs, getTokenAccount } from "@project-serum/common";
 import BN from "bn.js"
-import { Program } from '@wum.bo/anchor';
+import { Program, Provider } from '@wum.bo/anchor';
 import { SplTokenAccountSplitIDL, TokenAccountSplitV0 } from './generated/spl-token-account-split';
 import { MintInfo, TOKEN_PROGRAM_ID, Token, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { SplTokenStaking } from '@wum.bo/spl-token-staking';
+import { InstructionResult, sendInstructions } from '@wum.bo/spl-utils';
 export * from "./generated/spl-token-account-split";
 
 interface CreateTokenAccountSplitArgs {
@@ -29,23 +30,15 @@ interface CollectTokenArgs {
   sourceAuthority?: PublicKey;
 }
 
-interface InstructionResult<A> {
-  instructions: TransactionInstruction[],
-  signers: Signer[],
-  output: A
-}
-
 export class SplTokenAccountSplit {
   program: Program<SplTokenAccountSplitIDL>;
   splTokenStakingProgram: SplTokenStaking;
+  provider: Provider;
 
-  constructor(program: Program<SplTokenAccountSplitIDL>, splTokenStakingProgram: SplTokenStaking) {
+  constructor(provider: Provider, program: Program<SplTokenAccountSplitIDL>, splTokenStakingProgram: SplTokenStaking) {
+    this.provider = provider;
     this.program = program;
     this.splTokenStakingProgram = splTokenStakingProgram;
-  }
-
-  get provider() {
-    return this.program.provider;
   }
 
   get programId() {
@@ -67,11 +60,16 @@ export class SplTokenAccountSplit {
   get account() {
     return this.program.account
   }
+  
+  get errors() {
+    return this.program.idl.errors.reduce((acc, err) => {
+      acc.set(err.code, `${err.name}: ${err.msg}`);
+      return acc;
+    }, new Map<number, string>())
+  }
 
-  sendInstructions(instructions: TransactionInstruction[], signers: Signer[]): Promise<string> {
-    const tx = new Transaction();
-    tx.add(...instructions);
-    return this.provider.send(tx, signers);
+  sendInstructions(instructions: TransactionInstruction[], signers: Signer[], payer?: PublicKey): Promise<string> {
+    return sendInstructions(this.errors, this.provider, instructions, signers, payer)
   }
 
   async createTokenAccountSplitInstructions({

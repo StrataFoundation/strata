@@ -8,8 +8,6 @@ import { PeriodUnit, SplTokenStaking, StakingVoucherV0, TokenStakingV0 } from "@
 import { TokenUtils } from './utils/token';
 import ChaiAsPromised from "chai-as-promised";
 import { waitForUnixTime } from './utils/clock';
-
-import { Idl } from '@wum.bo/anchor/dist/idl';
 import { SplTokenAccountSplit } from '../packages/spl-token-account-split/src';
 
 use(ChaiAsPromised);
@@ -17,12 +15,13 @@ use(ChaiAsPromised);
 describe('spl-token-account-split', () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.Provider.env());
+  const provider = anchor.getProvider();
   const program = anchor.workspace.SplTokenAccountSplit;
-  const tokenUtils = new TokenUtils(program.provider);
+  const tokenUtils = new TokenUtils(provider);
 
   let tokenStaking: PublicKey;
-  let tokenStakingProgram = new SplTokenStaking(anchor.workspace.SplTokenStaking);
-  let tokenSplitProgram = new SplTokenAccountSplit(program, tokenStakingProgram);
+  let tokenStakingProgram = new SplTokenStaking(provider, anchor.workspace.SplTokenStaking);
+  let tokenSplitProgram = new SplTokenAccountSplit(provider, program, tokenStakingProgram);
   let baseMint: PublicKey;
   let tokenStakingAcct: TokenStakingV0;
   let stakingVoucher: PublicKey;
@@ -30,23 +29,23 @@ describe('spl-token-account-split', () => {
   let splitMint: PublicKey;
 
   beforeEach(async () => {
-    baseMint = await createMint(program.provider, tokenStakingProgram.wallet.publicKey, 2);
+    baseMint = await createMint(provider, tokenStakingProgram.wallet.publicKey, 2);
     tokenStaking = await tokenStakingProgram.createTokenStaking({
-      authority: program.provider.wallet.publicKey,
+      authority: provider.wallet.publicKey,
       baseMint,
       periodUnit: PeriodUnit.SECOND,
       period: 5,
       targetMintDecimals: 2,
       rewardPercentPerPeriodPerLockupPeriod: 4294967295 // 100%
     })
-    await tokenUtils.createAtaAndMint(program.provider, baseMint, 100);
+    await tokenUtils.createAtaAndMint(provider, baseMint, 100);
     stakingVoucher = await tokenStakingProgram.stake({
       lockupPeriods: new BN(1),
       amount: new BN(2),
       tokenStaking
     });
     await tokenStakingProgram.account.stakingVoucherV0.fetch(stakingVoucher);
-    splitMint = await createMint(tokenSplitProgram.provider);
+    splitMint = await createMint(provider);
     const { tokenAccountSplit, tokenAccount } = (await tokenSplitProgram.createTokenAccountSplit({
       mint: splitMint,
       tokenStaking
@@ -57,7 +56,7 @@ describe('spl-token-account-split', () => {
   })
 
   async function waitForPeriod(period: number) {
-    await waitForUnixTime(program.provider.connection, BigInt(tokenStakingAcct.createdTimestamp.toNumber() + tokenStakingAcct.period * period)) // Sleep past remainder of first period, into second
+    await waitForUnixTime(provider.connection, BigInt(tokenStakingAcct.createdTimestamp.toNumber() + tokenStakingAcct.period * period)) // Sleep past remainder of first period, into second
   }
 
   it('Allows taking a share of the pot based on total supply', async () => {
@@ -70,6 +69,6 @@ describe('spl-token-account-split', () => {
     })
     await tokenUtils.expectBalance(destination, 0.01)
     // We redeemed 0.01. We've claimed 0.02.
-    await tokenUtils.expectAtaBalance(tokenSplitProgram.provider.wallet.publicKey, splitMint, 500)
+    await tokenUtils.expectAtaBalance(provider.wallet.publicKey, splitMint, 500)
   })
 });

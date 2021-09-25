@@ -10,9 +10,10 @@ import {
 } from "@solana/web3.js";
 import { getMintInfo, createMintInstructions } from "@project-serum/common";
 import BN from "bn.js";
-import { Program } from "@wum.bo/anchor";
+import { Program, Provider } from "@wum.bo/anchor";
 import { PeriodUnit, SplTokenStakingIDL, TokenStakingV0 } from "./generated/spl-token-staking";
 import { MintInfo, TOKEN_PROGRAM_ID, Token, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { InstructionResult, sendInstructions } from "@wum.bo/spl-utils";
 
 export * from "./generated/spl-token-staking";
 
@@ -46,21 +47,13 @@ interface CollectArgs {
   stakingVoucher: PublicKey;
 }
 
-interface InstructionResult<A> {
-  instructions: TransactionInstruction[];
-  signers: Signer[];
-  output: A;
-}
-
 export class SplTokenStaking {
   program: Program<SplTokenStakingIDL>;
+  provider: Provider;
 
-  constructor(program: Program<SplTokenStakingIDL>) {
+  constructor(provider: Provider, program: Program<SplTokenStakingIDL>) {
     this.program = program;
-  }
-
-  get provider() {
-    return this.program.provider;
+    this.provider = provider;
   }
 
   get programId() {
@@ -128,10 +121,15 @@ export class SplTokenStaking {
     return this.getTotalTargetSupply(mintInfo, staking);
   }
 
-  sendInstructions(instructions: TransactionInstruction[], signers: Signer[]): Promise<string> {
-    const tx = new Transaction();
-    tx.add(...instructions);
-    return this.provider.send(tx, signers);
+  get errors() {
+    return this.program.idl.errors.reduce((acc, err) => {
+      acc.set(err.code, `${err.name}: ${err.msg}`);
+      return acc;
+    }, new Map<number, string>())
+  }
+
+  sendInstructions(instructions: TransactionInstruction[], signers: Signer[], payer?: PublicKey): Promise<string> {
+    return sendInstructions(this.errors, this.provider, instructions, signers, payer)
   }
 
   async createTokenStakingInstructions({

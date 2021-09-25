@@ -24,10 +24,11 @@ async function run() {
   const splTokenAccountSplit = new anchor.Program(SplTokenAccountSplitIDLJson, splTokenAccountSplitProgramId, provider) as anchor.Program<SplTokenAccountSplitIDL>;
   const splTokenStaking = new anchor.Program(SplTokenStakingIDLJson, splTokenStakingProgramId, provider) as anchor.Program<SplTokenStakingIDL>;
 
-  const splTokenBondingProgram = new SplTokenBonding(splTokenBonding);
-  const splTokenStakingProgram = new SplTokenStaking(splTokenStaking);
-  const splTokenAccountSplitProgram = new SplTokenAccountSplit(splTokenAccountSplit, splTokenStakingProgram);
+  const splTokenBondingProgram = new SplTokenBonding(provider, splTokenBonding);
+  const splTokenStakingProgram = new SplTokenStaking(provider, splTokenStaking);
+  const splTokenAccountSplitProgram = new SplTokenAccountSplit(provider, splTokenAccountSplit, splTokenStakingProgram);
   const splWumboProgram = new SplWumbo({
+    provider,
     program: splWumbo,
     splTokenBondingProgram,
     splTokenAccountSplitProgram,
@@ -129,7 +130,7 @@ async function run() {
     authority: wallet,
     wumMint: targetMint
   })
-  const connection = splWumbo.provider.connection;
+  const connection = provider.connection;
   const tx1 = new Transaction({
     recentBlockhash: (await connection.getRecentBlockhash('finalized')).blockhash,
     feePayer: wallet

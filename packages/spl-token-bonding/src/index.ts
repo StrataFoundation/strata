@@ -18,7 +18,7 @@ import {
   connection,
 } from "@project-serum/common";
 import BN, { max } from "bn.js";
-import { Program, IdlTypes, TypesCoder } from "@wum.bo/anchor";
+import { Program, IdlTypes, TypesCoder, Provider } from "@wum.bo/anchor";
 import {
   SplTokenBondingIDL,
   TokenBondingV0,
@@ -34,7 +34,7 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { amountAsNum, asDecimal, Curve, LogCurveV0, fromCurve, supplyAsNum } from "./curves";
-import { token } from "@wum.bo/anchor/dist/utils";
+import { InstructionResult, sendInstructions } from "@wum.bo/spl-utils";
 
 export * from "./generated/spl-token-bonding";
 export * from "./curves";
@@ -72,12 +72,6 @@ interface UpdateTokenBondingArgs {
   buyFrozen?: boolean;
 }
 
-interface InstructionResult<A> {
-  instructions: TransactionInstruction[];
-  signers: Signer[];
-  output: A;
-}
-
 interface BuyV0Args {
   tokenBonding: PublicKey;
   payer?: PublicKey;
@@ -100,13 +94,12 @@ interface SellV0Args {
 
 export class SplTokenBonding {
   program: Program<SplTokenBondingIDL>;
+  provider: Provider;
 
-  constructor(program: Program<SplTokenBondingIDL>) {
+  constructor(provider: Provider, program: Program<SplTokenBondingIDL>) {
     this.program = program;
-  }
-
-  get provider() {
-    return this.program.provider;
+    this.provider = provider;
+    program.idl.errors
   }
 
   get programId() {
@@ -129,10 +122,15 @@ export class SplTokenBonding {
     return this.program.account;
   }
 
-  sendInstructions(instructions: TransactionInstruction[], signers: Signer[]): Promise<string> {
-    const tx = new Transaction({ feePayer: this.wallet.publicKey });
-    tx.add(...instructions);
-    return this.provider.send(tx, signers);
+  get errors() {
+    return this.program.idl.errors.reduce((acc, err) => {
+      acc.set(err.code, `${err.name}: ${err.msg}`);
+      return acc;
+    }, new Map<number, string>())
+  }
+
+  sendInstructions(instructions: TransactionInstruction[], signers: Signer[], payer?: PublicKey): Promise<string> {
+    return sendInstructions(this.errors, this.provider, instructions, signers, payer)
   }
 
   async initializeCurveInstructions({
@@ -490,6 +488,7 @@ export class SplTokenBonding {
     const baseMint = await getMintInfo(this.provider, tokenBondingAcct.baseMint);
     // @ts-ignore
     const curve = await this.getCurve(tokenBondingAcct.curve, baseMint, targetMint);
+
     const targetMintAuthority = await PublicKey.createProgramAddress(
       [
         Buffer.from("target-authority", "utf-8"),
