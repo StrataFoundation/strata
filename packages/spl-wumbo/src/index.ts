@@ -45,6 +45,7 @@ interface ClaimSocialTokenArgs {
   payer?: PublicKey;
   owner: PublicKey;
   tokenRef: PublicKey;
+  handle?: string;
 }
 
 interface UpdateMetadataArgs {
@@ -202,7 +203,8 @@ export class SplWumbo {
   async claimSocialTokenInstructions({
     payer = this.wallet.publicKey,
     owner = this.wallet.publicKey,
-    tokenRef
+    tokenRef,
+    handle
   }: ClaimSocialTokenArgs): Promise<InstructionResult<null>> {
     const tokenRefAcct = await this.account.tokenRefV0.fetch(tokenRef);
     const tokenBondingAcct = await this.splTokenBondingProgram.account.tokenBondingV0.fetch(tokenRefAcct.tokenBonding);
@@ -272,8 +274,19 @@ export class SplWumbo {
       }
     }))
 
+    const signers = []
+    if (handle) {
+      const { instructions: metaInstrs, signers: metaSigners } = await this.updateMetadataInstructions({
+        tokenRef,
+        symbol: handle.slice(0,8)
+      })
+
+      instructions.push(...metaInstrs);
+      signers.push(...metaSigners);
+    }
+
     return {
-      signers: [],
+      signers,
       instructions,
       output: null
     }
@@ -426,8 +439,8 @@ export class SplWumbo {
       );
     const tokenMetadata = await createMetadata(
       new Data({
-        symbol: wumboAcct.tokenMetadataDefaults.symbol as string,
-        name: handle,
+        symbol: handle,
+        name: handle.slice(0,10),
         uri: wumboAcct.tokenMetadataDefaults.uri as string,
         sellerFeeBasisPoints: 0,
         // @ts-ignore
