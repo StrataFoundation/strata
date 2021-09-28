@@ -4,7 +4,7 @@
         "access": "restricted",
         "registry": "https://registry.npmjs.org/"
     },
-    "version": "0.1.18",
+    "version": "0.1.19",
     "description": "Interface to the spl-token-bonding smart contract",
     "repository": {
         "type": "git",
@@ -27,7 +27,7 @@
     "dependencies": {
         "@project-serum/common": "^0.0.1-beta.3",
         "@solana/web3.js": "^1.24.1",
-        "@wum.bo/spl-utils": "^0.1.18",
+        "@wum.bo/spl-utils": "^0.1.19",
         "bn.js": "^5.2.0",
         "copyfiles": "^2.4.1"
     },
