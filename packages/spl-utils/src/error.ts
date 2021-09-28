@@ -42,14 +42,7 @@ export class ProgramError extends Error {
       }
     }
 
-    // Parse user error.
-    let errorMsg = idlErrors.get(errorCode);
-    if (errorMsg !== undefined) {
-      return new ProgramError(errorCode, errorMsg, errorCode + ': ' + errorMsg);
-    }
-
-    // Parse framework internal error.
-    errorMsg = LangErrorMessage.get(errorCode);
+    let errorMsg = idlErrors.get(errorCode) || LangErrorMessage.get(errorCode) || SystemErrorMessage.get(errorCode);
     if (errorMsg !== undefined) {
       return new ProgramError(errorCode, errorMsg, errorCode + ': ' + errorMsg);
     }
@@ -107,6 +100,13 @@ const LangErrorCode = {
   // Used for APIs that shouldn't be used anymore.
   Deprecated: 299,
 };
+
+const SystemErrorMessage = new Map([
+  [
+    0,
+    "Insufficient balance."
+  ]
+])
 
 const LangErrorMessage = new Map([
   // Instructions.
