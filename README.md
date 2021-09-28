@@ -9,6 +9,12 @@ git submodule init
 git submodule update
 ```
 
+## Bootstrap a wumbo instance
+
+```
+env ANCHOR_WALLET=~/.config/solana/id.json ANCHOR_PROVIDER_URL=https://api.devnet.solana.com yarn run bootstrap
+```
+
 ## Build the deps
 
 ```

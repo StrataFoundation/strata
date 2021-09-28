@@ -1,4 +1,5 @@
-import { Provider, IdlError, ProgramError } from "@wum.bo/anchor";
+import { Provider } from "@wum.bo/anchor";
+import { ProgramError } from "./error";
 import {
   PublicKey,
   Signer,
