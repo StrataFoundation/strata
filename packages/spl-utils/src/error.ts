@@ -19,9 +19,14 @@ export class ProgramError extends Error {
     idlErrors: Map<number, string>
   ): ProgramError | null {
     let errorCode: number | null = null;
-    if (err?.err?.InstructionError[1]?.Custom) {
-      errorCode = err.err.InstructionError[1].Custom;
+    const rawFailure = err.message.split("failed (");
+    if (rawFailure.length > 0) {
+      const error = JSON.parse(rawFailure[1]?.replace(")", "") || "{}")
+      if (error.err?.InstructionError[1]?.Custom) {
+        errorCode = err.err.InstructionError[1].Custom;
+      }
     }
+
     if (errorCode == null) {
       // TODO: don't rely on the error string. web3.js should preserve the error
       //       code information instead of giving us an untyped string.
