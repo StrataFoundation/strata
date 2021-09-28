@@ -103,7 +103,7 @@ const LangErrorCode = {
 
 const SystemErrorMessage = new Map([
   [
-    0,
+    1,
     "Insufficient balance."
   ]
 ])
