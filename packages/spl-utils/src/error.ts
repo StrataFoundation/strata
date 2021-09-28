@@ -23,7 +23,7 @@ export class ProgramError extends Error {
     if (rawFailure.length > 0) {
       const error = JSON.parse(rawFailure[1]?.replace(")", "") || "{}")
       if (error.err?.InstructionError[1]?.Custom) {
-        errorCode = err.err.InstructionError[1].Custom;
+        errorCode = error.err.InstructionError[1].Custom;
       }
     }
 
