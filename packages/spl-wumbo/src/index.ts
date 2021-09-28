@@ -45,7 +45,7 @@ interface ClaimSocialTokenArgs {
   payer?: PublicKey;
   owner: PublicKey;
   tokenRef: PublicKey;
-  handle?: string;
+  symbol?: string;
 }
 
 interface UpdateMetadataArgs {
@@ -204,7 +204,7 @@ export class SplWumbo {
     payer = this.wallet.publicKey,
     owner = this.wallet.publicKey,
     tokenRef,
-    handle
+    symbol
   }: ClaimSocialTokenArgs): Promise<InstructionResult<null>> {
     const tokenRefAcct = await this.account.tokenRefV0.fetch(tokenRef);
     const tokenBondingAcct = await this.splTokenBondingProgram.account.tokenBondingV0.fetch(tokenRefAcct.tokenBonding);
@@ -274,19 +274,32 @@ export class SplWumbo {
       }
     }))
 
-    const signers = []
-    if (handle) {
-      const { instructions: metaInstrs, signers: metaSigners } = await this.updateMetadataInstructions({
-        tokenRef,
-        symbol: handle.slice(0,8)
-      })
+    if (symbol) {
+      const tokenMetadataUpdateAuthority =
+        await PublicKey.createProgramAddress(
+          [Buffer.from("token-metadata-authority", "utf-8"), reverseTokenRef.toBuffer(), new BN(tokenRefAcct.tokenMetadataUpdateAuthorityBumpSeed).toBuffer()],
+          this.programId
+        );
 
-      instructions.push(...metaInstrs);
-      signers.push(...metaSigners);
+      const tokenMetadataRaw = await this.provider.connection.getAccountInfo(tokenRefAcct.tokenMetadata);
+      const tokenMetadata = decodeMetadata(tokenMetadataRaw!.data);
+      instructions.push(await this.instruction.updateTokenMetadata({
+        name: tokenMetadata.data.name,
+        symbol: symbol || tokenMetadata.data.symbol,
+        uri: tokenMetadata.data.uri
+      }, {
+        accounts: {
+          reverseTokenRef,
+          owner: owner,
+          tokenMetadata: tokenRefAcct.tokenMetadata,
+          updateAuthority: tokenMetadataUpdateAuthority,
+          tokenMetadataProgram: METADATA_PROGRAM_ID
+        }
+      }))
     }
 
     return {
-      signers,
+      signers: [],
       instructions,
       output: null
     }
@@ -321,7 +334,7 @@ export class SplWumbo {
         [Buffer.from("token-metadata-authority", "utf-8"), reverseTokenRef.toBuffer(), new BN(tokenRefAcct.tokenMetadataUpdateAuthorityBumpSeed).toBuffer()],
         this.programId
       );
-
+      
     return {
       signers: [],
       instructions: [
@@ -439,8 +452,8 @@ export class SplWumbo {
       );
     const tokenMetadata = await createMetadata(
       new Data({
-        symbol: handle,
-        name: handle.slice(0,10),
+        name: handle,
+        symbol: owner ? handle.slice(0,10) : wumboAcct.tokenMetadataDefaults.symbol as string,
         uri: wumboAcct.tokenMetadataDefaults.uri as string,
         sellerFeeBasisPoints: 0,
         // @ts-ignore

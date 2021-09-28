@@ -415,8 +415,6 @@ pub struct InitializeSocialTokenV0<'info> {
 
     #[account(
       constraint = (
-        str::replace(&token_metadata.data.symbol, "\u{0000}", "") == wumbo.token_metadata_defaults.symbol &&
-        str::replace(&token_metadata.data.uri, "\u{0000}", "") == wumbo.token_metadata_defaults.uri &&
         token_metadata.data.creators.is_none() &&
         token_metadata.data.seller_fee_basis_points == 0
       ),
@@ -510,6 +508,8 @@ pub struct InitializeUnclaimedSocialTokenV0<'info> {
     // Deserialize name account checked in token metadata constraint
     constraint = *name.to_account_info().owner == system_program::ID || *name.to_account_info().owner == spl_name_service::ID,
     constraint = verify_name(&name, args.name_class, args.name_parent, &str::replace(&initialize_args.token_metadata.data.name, "\u{0000}", ""))?,
+    constraint = str::replace(&initialize_args.token_metadata.data.symbol, "\u{0000}", "") == initialize_args.wumbo.token_metadata_defaults.symbol &&
+                 str::replace(&initialize_args.token_metadata.data.uri, "\u{0000}", "") == initialize_args.wumbo.token_metadata_defaults.uri
   )]
   name: AccountInfo<'info>,
   #[account(address = system_program::ID)]

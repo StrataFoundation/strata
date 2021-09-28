@@ -45,6 +45,7 @@ export async function sendInstructions(
   try {
     return await provider.send(tx, signers);
   } catch (e) {
+    console.error(e);
     const wrappedE = ProgramError.parse(e, idlErrors)
     throw wrappedE == null ? e : wrappedE;
   }
@@ -80,6 +81,7 @@ export async function sendMultipleInstructions(
       })
     }))
   } catch (e) {
+    console.error(e);
     const wrappedE = ProgramError.parse(e, idlErrors)
     throw wrappedE == null ? e : wrappedE;
   }

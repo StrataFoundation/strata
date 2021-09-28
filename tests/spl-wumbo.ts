@@ -131,7 +131,8 @@ describe("spl-wumbo", () => {
       })
       await wumboProgram.claimSocialToken({
         tokenRef: unclaimedTokenRef,
-        owner: this
+        owner: this,
+        symbol: 'foop'
       });
 
       await tokenUtils.expectAtaBalance(wumboProgram.wallet.publicKey, tokenBonding.targetMint, 105.263157875)
