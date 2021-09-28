@@ -203,7 +203,9 @@ CloseTokenAccount {
       token_ref.name = None;
       reverse_token_ref.owner = Some(ctx.accounts.owner.key());
       reverse_token_ref.name = None;
-
+      new_token_ref.is_claimed = true;
+      reverse_token_ref.is_claimed = true;
+      
       Ok(())
     }
 
