@@ -179,13 +179,18 @@ describe("spl-wumbo", () => {
     it("Allows updating metadata", async () => {
       await wumboProgram.updateMetadata({
         tokenRef: claimedTokenRef,
-        name: 'foofoo'
+        name: 'foofoo',
+        baseRoyaltyPercentage: percent(10),
+        targetRoyaltyPercentage: percent(15)
       });
       const tokenRef = await wumboProgram.account.tokenRefV0.fetch(claimedTokenRef);
       const tokenMetadataRaw = await provider.connection.getAccountInfo(tokenRef.tokenMetadata);
       const tokenMetadata = decodeMetadata(tokenMetadataRaw!.data);
+      const bonding = await splTokenBondingProgram.account.tokenBondingV0.fetch(tokenRef.tokenBonding);
 
       expect(tokenMetadata.data.name).to.equal('foofoo');
+      expect(bonding.baseRoyaltyPercentage).to.equal(percent(10));
+      expect(bonding.targetRoyaltyPercentage).to.equal(percent(15));
     })
   });
 });

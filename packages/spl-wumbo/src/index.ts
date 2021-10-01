@@ -53,6 +53,8 @@ interface UpdateMetadataArgs {
   name?: string;
   symbol?: string;
   uri?: string;
+  baseRoyaltyPercentage?: number;
+  targetRoyaltyPercentage?: number;
 }
 
 export class SplWumbo {
@@ -317,7 +319,9 @@ export class SplWumbo {
     tokenRef,
     name,
     symbol,
-    uri
+    uri,
+    baseRoyaltyPercentage,
+    targetRoyaltyPercentage
   }: UpdateMetadataArgs): Promise<InstructionResult<null>> {
     const tokenRefAcct = await this.account.tokenRefV0.fetch(tokenRef);
     const tokenMetadataRaw = await this.provider.connection.getAccountInfo(tokenRefAcct.tokenMetadata);
@@ -334,24 +338,51 @@ export class SplWumbo {
         [Buffer.from("token-metadata-authority", "utf-8"), reverseTokenRef.toBuffer(), new BN(tokenRefAcct.tokenMetadataUpdateAuthorityBumpSeed).toBuffer()],
         this.programId
       );
-      
-    return {
-      signers: [],
-      instructions: [
-        await this.instruction.updateTokenMetadata({
-          name: name || tokenMetadata.data.name,
-          symbol: symbol || tokenMetadata.data.symbol,
-          uri: uri || tokenMetadata.data.uri
+
+    const instructions = [];
+
+    instructions.push(
+      await this.instruction.updateTokenMetadata({
+        name: name || tokenMetadata.data.name,
+        symbol: symbol || tokenMetadata.data.symbol,
+        uri: uri || tokenMetadata.data.uri
+      }, {
+        accounts: {
+          reverseTokenRef,
+          owner: tokenRefAcct.owner! as PublicKey,
+          tokenMetadata: tokenRefAcct.tokenMetadata,
+          updateAuthority: tokenMetadataUpdateAuthority,
+          tokenMetadataProgram: METADATA_PROGRAM_ID
+        }
+      })
+    )
+
+    if (baseRoyaltyPercentage || targetRoyaltyPercentage) {
+      const tokenBondingAcct = await this.splTokenBondingProgram.account.tokenBondingV0.fetch(tokenRefAcct.tokenBonding);
+      const tokenBondingAuthority =
+        await PublicKey.createProgramAddress(
+          [Buffer.from("token-bonding-authority", "utf-8"), reverseTokenRef.toBuffer(), new BN(tokenRefAcct.tokenBondingAuthorityBumpSeed).toBuffer()],
+          this.programId
+        );
+
+      instructions.push(
+        await this.instruction.updateRoyaltiesV0({
+          baseRoyaltyPercentage: baseRoyaltyPercentage || tokenBondingAcct.baseRoyaltyPercentage, 
+          targetRoyaltyPercentage: targetRoyaltyPercentage || tokenBondingAcct.targetRoyaltyPercentage, 
         }, {
           accounts: {
             reverseTokenRef,
             owner: tokenRefAcct.owner! as PublicKey,
-            tokenMetadata: tokenRefAcct.tokenMetadata,
-            updateAuthority: tokenMetadataUpdateAuthority,
-            tokenMetadataProgram: METADATA_PROGRAM_ID
+            tokenBonding: tokenRefAcct.tokenBonding,
+            tokenBondingAuthority,
+            tokenBondingProgram: this.splTokenBondingProgram.programId,
           }
         })
-      ],
+      )
+    }
+    return {
+      signers: [],
+      instructions,
       output: null
     }
   }

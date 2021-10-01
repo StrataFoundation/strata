@@ -231,8 +231,41 @@ CloseTokenAccount {
       )
     }
 
+    pub fn update_royalties_v0(ctx: Context<UpdateRoyaltiesV0>, args: UpdateRoyaltiesArgs) -> ProgramResult {
+      let token_bonding = ctx.accounts.token_bonding.clone();
+      
+      spl_token_bonding::cpi::update_token_bonding_v0(CpiContext::new_with_signer(
+        ctx.accounts.token_bonding_program.clone(),
+        UpdateTokenBondingV0 {
+          token_bonding: ctx.accounts.token_bonding.clone(),
+          authority: ctx.accounts.token_bonding_authority.clone()
+        },
+        &[
+          &[
+            b"token-bonding-authority", ctx.accounts.reverse_token_ref.key().as_ref(),
+            &[ctx.accounts.reverse_token_ref.token_bonding_authority_bump_seed]
+          ],
+        ]
+      ), UpdateTokenBondingV0Args {
+        token_bonding_authority: token_bonding.authority,
+        target_royalties: token_bonding.target_royalties,
+        base_royalties: token_bonding.base_royalties,
+        base_royalty_percentage: args.base_royalty_percentage,
+        target_royalty_percentage: args.target_royalty_percentage,
+        buy_frozen: token_bonding.buy_frozen,
+      })?;
+
+      Ok(())
+    }
+
     // pub fn opt_out_v0() -> ProgramResult {}
     // pub fn opt_in_v0() -> ProgramResult {}
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
+pub struct UpdateRoyaltiesArgs {
+  pub base_royalty_percentage: u32,
+  pub target_royalty_percentage: u32,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
@@ -279,6 +312,83 @@ pub struct InitializeSocialTokenV0Args {
   pub token_ref_bump_seed: u8,
   pub reverse_token_ref_bump_seed: u8,
   pub token_metadata_update_authority_bump_seed: u8,
+}
+
+#[derive(Accounts)]
+#[instruction(args: UpdateRoyaltiesArgs)]
+pub struct UpdateRoyaltiesV0<'info> {
+  #[account(
+    mut,
+    has_one = token_bonding,
+    constraint = owner.key() == reverse_token_ref.owner.ok_or::<ProgramError>(ErrorCode::IncorrectOwner.into())?
+  )]
+  reverse_token_ref: Account<'info, TokenRefV0>,
+  #[account(
+    mut
+  )]
+  token_bonding: Account<'info, TokenBondingV0>,
+  #[account(
+    seeds = [
+      b"token-bonding-authority", reverse_token_ref.key().as_ref()
+    ],
+    bump = reverse_token_ref.token_bonding_authority_bump_seed
+  )]
+  token_bonding_authority: AccountInfo<'info>,
+  #[account(
+    signer,
+  )]
+  owner: AccountInfo<'info>,
+
+  #[account(address = spl_token_bonding::id())]
+  pub token_bonding_program: AccountInfo<'info>
+}
+
+#[derive(Accounts)]
+#[instruction(args: InitializeWumboArgs)]
+pub struct OptOutV0<'info> {
+  wumbo: Box<Account<'info, WumboV0>>,
+  #[account(
+    mut,
+    has_one = wumbo,
+    has_one = token_bonding,
+  )]
+  reverse_token_ref: Account<'info, TokenRefV0>,
+  #[account(
+    mut,
+    has_one = target_royalties
+  )]
+  token_bonding: Account<'info, TokenBondingV0>,
+  #[account(
+    seeds = [
+      b"token-bonding-authority", reverse_token_ref.key().as_ref()
+    ],
+    bump = reverse_token_ref.token_bonding_authority_bump_seed
+  )]
+  token_bonding_authority: AccountInfo<'info>,
+  #[account(
+    seeds =  [b"target-royalties-owner", reverse_token_ref.key().as_ref()],
+    bump = reverse_token_ref.target_royalties_owner_bump_seed
+  )]
+  target_royalties_owner: AccountInfo<'info>,
+  #[account(
+    signer,
+    constraint = owner.key() == reverse_token_ref.owner.ok_or::<ProgramError>(ErrorCode::IncorrectOwner.into())?
+  )]
+  owner: AccountInfo<'info>,
+  #[account(
+    mut
+  )]
+  target_royalties: Box<Account<'info, TokenAccount>>,
+
+  #[account(address = spl_token::ID)]
+  pub token_program: AccountInfo<'info>,
+
+  #[account(address = spl_token_bonding::id())]
+  pub token_bonding_program: AccountInfo<'info>,
+
+  #[account(address = system_program::ID)]
+  system_program: AccountInfo<'info>,
+  rent: Sysvar<'info, Rent>,
 }
 
 #[derive(Accounts)]
