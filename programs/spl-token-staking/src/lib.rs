@@ -159,7 +159,6 @@ pub mod spl_token_staking {
         token_staking.base_mint = *ctx.accounts.base_mint.to_account_info().key;
         token_staking.target_mint = *ctx.accounts.target_mint.to_account_info().key;
         token_staking.authority = args.authority;
-
         Ok(())
     }
 
@@ -282,7 +281,7 @@ pub mod spl_token_staking {
         );
 
         // Add one to the start period, since they didn't start at the exact start
-        if (current_period - staking_start_period + 1) < voucher.lockup_periods {
+        if !staking.unlocked && (current_period - staking_start_period + 1) < voucher.lockup_periods {
             return Err(ErrorCode::LockupNotPassed.into());
         }
 
@@ -349,6 +348,11 @@ pub mod spl_token_staking {
         ))?;
 
         Ok(())
+    }
+
+    pub fn set_unlocked_v0(ctx: Context<SetUnlockedV0>, unlocked: bool) -> ProgramResult {
+      ctx.accounts.token_staking.unlocked = unlocked;
+      Ok(())
     }
 }
 
@@ -527,6 +531,17 @@ pub struct UnstakeV0<'info> {
     pub system_program: AccountInfo<'info>,
 }
 
+#[derive(Accounts)]
+pub struct SetUnlockedV0<'info> {
+    #[account(
+      mut,
+      constraint = token_staking.authority.ok_or::<ProgramError>(ErrorCode::NoAuthority.into())? == authority.key()
+    )]
+    pub token_staking: Account<'info, TokenStakingV0>,
+    #[account(signer)]
+    pub authority: AccountInfo<'info>
+}
+
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
 pub enum PeriodUnit {
@@ -550,6 +565,7 @@ pub struct TokenStakingV0 {
     pub target_mint: Pubkey,
     pub period_unit: PeriodUnit,
     pub authority: Option<Pubkey>,
+    pub unlocked: bool, // Remove lockup for everyone. For Wum.bo, this happens when someone opts out
     pub period: u32,
     // reward_percent_per_period on each contract is derived from lockup_periods * reward_percent_per_period_per_lockup_period
     pub reward_percent_per_period_per_lockup_period: u32, // Percent, as taken by this value / u32.MAX_VALUE
@@ -611,4 +627,7 @@ pub enum ErrorCode {
 
     #[msg("Account did not serialize while closing")]
     AccountDidNotSerialize,
+
+    #[msg("No authority on this staking instance")]
+    NoAuthority
 }

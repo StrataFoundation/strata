@@ -107,6 +107,10 @@ pub mod spl_token_bonding {
       let amount_prec = precise_supply_amt(amount, target_mint);
       let target_supply = precise_supply(target_mint);
 
+      if token_bonding.buy_frozen {
+        return Err(ErrorCode::BuyFrozen.into());
+      }
+
       if token_bonding.mint_cap.is_some() && target_mint.supply + args.target_amount > token_bonding.mint_cap.unwrap() {
         msg!("Mint cap is {} {} {}", token_bonding.mint_cap.unwrap(), target_mint.supply, args.target_amount);
         return Err(ErrorCode::PassedMintCap.into());
@@ -698,5 +702,8 @@ pub enum ErrorCode {
   PassedMintCap,
 
   #[msg("Cannot purchase that many tokens because of purchase cap")]
-  OverPurchaseCap
+  OverPurchaseCap,
+
+  #[msg("Buy is frozen on this bonding curve, purchases not allowed")]
+  BuyFrozen
 }

@@ -19,11 +19,9 @@ export class ProgramError extends Error {
     idlErrors: Map<number, string>
   ): ProgramError | null {
     let errorCode: number | null = null;
-    const rawFailure = err.message.split("failed (");
-    if (rawFailure.length > 0) {
-      const error = JSON.parse(rawFailure[1]?.replace(")", "") || "{}")
-      if (error.err?.InstructionError[1]?.Custom) {
-        errorCode = error.err.InstructionError[1].Custom;
+    if (err.InstructionError) {
+      if (err.InstructionError[1]?.Custom) {
+        errorCode = err.InstructionError[1].Custom;
       }
     }
 

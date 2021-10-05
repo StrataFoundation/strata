@@ -76,10 +76,18 @@ export async function sendMultipleInstructions(
   console.log("Sending multiple transactions...")
   try {
     return await promiseAllInOrder(txnsSigned.map((txn) => async () => {
-      return sendAndConfirmRawTransaction(provider.connection, txn.serialize(), {
-        skipPreflight: true,
-        commitment: 'confirmed',
+      const txid = await provider.connection.sendRawTransaction(txn.serialize(), {
+        skipPreflight: true
       })
+      const result = await provider.connection.confirmTransaction(txid, "confirmed");
+      if (result.value.err) {
+        const tx = await provider.connection.getTransaction(txid, {
+          commitment: "confirmed"
+        });
+        console.error(tx?.meta?.logMessages?.join("\n"))
+        throw result.value.err
+      }
+      return txid;
     }))
   } catch (e) {
     console.error(e);

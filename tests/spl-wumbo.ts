@@ -1,5 +1,5 @@
 import * as anchor from "@project-serum/anchor";
-import { PublicKey, Transaction, sendAndConfirmTransaction } from "@solana/web3.js";
+import { Keypair, PublicKey, Transaction, sendAndConfirmTransaction } from "@solana/web3.js";
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
 import { SplWumbo } from "../packages/spl-wumbo";
@@ -78,14 +78,16 @@ describe("spl-wumbo", () => {
     let unclaimedTokenRef: PublicKey;
     let unclaimedReverseTokenRef: PublicKey;
     let name: PublicKey;
+    let nameClass = Keypair.generate();
     const tokenName = "test-handle";
- 
-    before(async () => {
+
+    async function create(tokenName: string) {
       const connection = provider.connection;
       const hashedName = await getHashedName(tokenName);
-      name = await getNameAccountKey(hashedName)
+      name = await getNameAccountKey(hashedName, nameClass.publicKey)
       const nameTx = new Transaction({
-        recentBlockhash: (await connection.getRecentBlockhash()).blockhash
+        recentBlockhash: (await connection.getRecentBlockhash()).blockhash,
+        feePayer: provider.wallet.publicKey
       })
       nameTx.instructions.push(
         await createNameRegistry(
@@ -93,17 +95,25 @@ describe("spl-wumbo", () => {
           tokenName,
           NameRegistryState.HEADER_LEN,
           wumboProgram.wallet.publicKey,
-          wumboProgram.wallet.publicKey
+          wumboProgram.wallet.publicKey,
+          10000000,
+          nameClass.publicKey
         )
       )
+      nameTx.partialSign(nameClass);
       await provider.send(nameTx);
       const { tokenRef, reverseTokenRef } = await wumboProgram.createSocialToken({
         wumbo,
         name,
+        nameClass: nameClass.publicKey,
         tokenName
       })
       unclaimedTokenRef = tokenRef;
       unclaimedReverseTokenRef = reverseTokenRef;
+    }
+ 
+    before(async () => {
+      await create(tokenName);
     });
 
     it("Creates an unclaimed social token", async () => {
@@ -111,14 +121,23 @@ describe("spl-wumbo", () => {
       expect(reverseTokenRef.isClaimed).to.be.false;
       // @ts-ignore
       expect(reverseTokenRef.name.toBase58()).to.equal(name.toBase58());
-      expect(reverseTokenRef.owner).to.be.null;
+      expect((reverseTokenRef.owner as PublicKey).toBase58()).to.equal(nameClass.publicKey.toBase58());
 
       const tokenRef = await wumboProgram.account.tokenRefV0.fetch(unclaimedTokenRef);
       expect(tokenRef.isClaimed).to.be.false;
       // @ts-ignore
       expect(tokenRef.name.toBase58()).to.equal(name.toBase58());
-      expect(tokenRef.owner).to.be.null;
+      expect((tokenRef.owner as PublicKey).toBase58()).to.equal(nameClass.publicKey.toBase58());
     });
+
+
+    // it("Allows initializing staking", async () => {
+    //   await wumboProgram.initializeStaking({
+    //     tokenRef: unclaimedTokenRef
+    //   })
+    //   const tokenRef = await wumboProgram.account.tokenRefV0.fetch(unclaimedTokenRef);
+    //   expect(tokenRef.tokenStaking).to.not.be.null;
+    // });
 
     it("Allows claiming, which transfers founder rewards to my ata", async () => {
       const tokenRef = await wumboProgram.account.tokenRefV0.fetch(unclaimedTokenRef);
@@ -131,12 +150,23 @@ describe("spl-wumbo", () => {
       })
       await wumboProgram.claimSocialToken({
         tokenRef: unclaimedTokenRef,
-        owner: this,
+        owner: provider.wallet.publicKey,
         symbol: 'foop'
       });
 
       await tokenUtils.expectAtaBalance(wumboProgram.wallet.publicKey, tokenBonding.targetMint, 105.263157875)
-    })
+    });
+
+    it("Allows opting out", async () => {
+      await create(tokenName + "optout"); // Need to do this because the above claimed it
+      const tokenRef = await wumboProgram.account.tokenRefV0.fetch(unclaimedTokenRef);
+      await wumboProgram.optOut({
+        tokenRef: unclaimedTokenRef,
+        nameClass: nameClass.publicKey
+      });
+      const tokenBonding = await splTokenBondingProgram.account.tokenBondingV0.fetch(tokenRef.tokenBonding);
+      expect(tokenBonding.buyFrozen).to.be.true;
+    });
   });
 
   describe("Claimed", () => {
@@ -192,5 +222,22 @@ describe("spl-wumbo", () => {
       expect(bonding.baseRoyaltyPercentage).to.equal(percent(10));
       expect(bonding.targetRoyaltyPercentage).to.equal(percent(15));
     })
+
+    it("Allows opting out", async () => {
+      const tokenRef = await wumboProgram.account.tokenRefV0.fetch(claimedTokenRef);
+      await wumboProgram.optOut({
+        tokenRef: claimedTokenRef
+      })
+      const tokenBonding = await splTokenBondingProgram.account.tokenBondingV0.fetch(tokenRef.tokenBonding)
+      expect(tokenBonding.buyFrozen).to.be.true;
+    });
+
+    // it("Allows initializing staking", async () => {
+    //   await wumboProgram.initializeStaking({
+    //     tokenRef: claimedTokenRef
+    //   })
+    //   const tokenRef = await wumboProgram.account.tokenRefV0.fetch(claimedTokenRef);
+    //   expect(tokenRef.tokenStaking).to.not.be.null;
+    // });
   });
 });
