@@ -103,8 +103,50 @@ const SystemErrorMessage = new Map([
   [
     1,
     "Insufficient balance."
+  ], [
+    2,
+    "Invalid instruction data."
+  ], [
+    3,
+    "Invalid account data"
+  ], [
+    4,
+    "Account data too small"
+  ], [
+    5,
+    "Insufficient funds" 
+  ], [
+    6,
+    "Incorrect prgoram id"
+  ], [
+    7,
+    "Missing required signature"
+  ], [
+    8,
+    "Account already initialized"
+  ], [
+    9,
+    "Attempt to operate on an account that was not yet initialized"
+  ], [
+    10,
+    "Not enough account keys provided"
+  ], [
+    11,
+    "Account borrow failed, already borrowed"
+  ], [
+    12,
+    "Max seed length exceeded"
+  ], [
+    13,
+    "Invalid seeds"
+  ], [
+    14,
+    "Borsh IO Error"
+  ], [
+    15,
+    "Account not rent exempt"
   ]
-])
+]);
 
 const LangErrorMessage = new Map([
   // Instructions.

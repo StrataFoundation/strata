@@ -193,7 +193,7 @@ CloseTokenAccount {
         ]
       ))?;
 
-      msg!("Changing royalties on bonding curve");
+      msg!("Changing royalties on bonding curve {}", token_bonding.buy_frozen);
       spl_token_bonding::cpi::update_token_bonding_v0(CpiContext::new_with_signer(token_bonding_program.clone(), UpdateTokenBondingV0 {
         token_bonding: token_bonding.clone(),
         authority: ctx.accounts.token_bonding_authority.to_account_info().clone(),
@@ -214,7 +214,7 @@ CloseTokenAccount {
       reverse_token_ref.name = None;
       new_token_ref.is_claimed = true;
       reverse_token_ref.is_claimed = true;
-      
+
       Ok(())
     }
 
@@ -351,64 +351,69 @@ CloseTokenAccount {
       Ok(())
     }
 
-//     pub fn initialize_staking_v0(ctx: Context<InitializeStakingV0>, args: InitializeStakingArgs) -> ProgramResult {
-//       ctx.accounts.token_ref.token_staking = Some(ctx.accounts.token_staking.key());
-//       ctx.accounts.reverse_token_ref.token_staking = Some(ctx.accounts.token_staking.key());
-//       ctx.accounts.token_ref.staking_authority_bump_seed = Some(args.token_staking_authority_bump_seed);
-//       let accounts = ctx.accounts;
-//       let token_bonding = &mut accounts.token_bonding;
+    pub fn initialize_staking_v0(ctx: Context<InitializeStakingV0>, args: InitializeStakingArgs) -> ProgramResult {
+      ctx.accounts.token_ref.token_staking = Some(ctx.accounts.token_staking.key());
+      ctx.accounts.reverse_token_ref.token_staking = Some(ctx.accounts.token_staking.key());
+      ctx.accounts.token_ref.staking_authority_bump_seed = Some(args.token_staking_authority_bump_seed);
+      let accounts = ctx.accounts;
+      let token_bonding = &mut accounts.token_bonding;
 
-//       msg!("Transfering base royalties account to split");
-//       token::transfer(
-//         CpiContext::new_with_signer(
-//             accounts.token_program.clone(),
-//             Transfer {
-//               from: accounts.base_royalties.clone(),
-//               to: accounts.token_account.clone(),
-//               authority: target_royalties_owner.clone()
-//             },
-//             &[
-//               &[b"target-royalties-owner", reverse_token_ref.key().as_ref(), &[token_ref.target_royalties_owner_bump_seed]]
-//             ]
-//         ),
-//         ctx.accounts.target_royalties.amount
-//       )?;
-//       close_token_account(CpiContext::new_with_signer(
-//         accounts.token_program.clone(), 
-// CloseTokenAccount {
-//           from: original_target_royalties.clone(),
-//           to: ctx.accounts.owner.clone(),
-//           authority: target_royalties_owner.clone()
-//         },
-//         &[
-//           &[b"target-royalties-owner", reverse_token_ref.key().as_ref(), &[token_ref.target_royalties_owner_bump_seed]]
-//         ]
-//       ))?;
+      let reverse_token_ref_key = accounts.reverse_token_ref.key();
+      let (_, bump_seed) = Pubkey::find_program_address(
+        &[b"base-royalties-owner", reverse_token_ref_key.as_ref()],
+        ctx.program_id
+      );
 
-//       msg!("changing bonding royalties to new royalties")
-//       spl_token_bonding::cpi::update_token_bonding_v0(CpiContext::new_with_signer(
-//         accounts.token_bonding_program.clone(),
-//         UpdateTokenBondingV0 {
-//           token_bonding: token_bonding.clone(),
-//           authority: accounts.token_bonding_authority.clone()
-//         },
-//         &[
-//           &[
-//             b"token-bonding-authority", accounts.reverse_token_ref.key().as_ref(),
-//             &[accounts.reverse_token_ref.token_bonding_authority_bump_seed]
-//           ],
-//         ]
-//       ), UpdateTokenBondingV0Args {
-//         token_bonding_authority: token_bonding.authority,
-//         target_royalties: token_bonding.target_royalties,
-//         base_royalties: accounts.token_account_split.token_account,
-//         base_royalty_percentage: token_bonding.base_royalty_percentage,
-//         target_royalty_percentage: token_bonding.target_royalty_percentage,
-//         buy_frozen: true,
-//       })?;
+      msg!("Transfering base royalties account to split");
+      let signer_seeds: &[&[&[u8]]] = &[
+        &[b"base-royalties-owner", reverse_token_ref_key.as_ref(), &[bump_seed]]
+      ];
+      token::transfer(
+        CpiContext::new_with_signer(
+            accounts.token_program.clone(),
+            Transfer {
+              from: accounts.base_royalties.to_account_info().clone(),
+              to: accounts.token_account.to_account_info().clone(),
+              authority: accounts.base_royalties_owner.to_account_info().clone()
+            },
+            signer_seeds
+        ),
+        accounts.base_royalties.amount
+      )?;
+      close_token_account(CpiContext::new_with_signer(
+        accounts.token_program.clone(), 
+CloseTokenAccount {
+          from: accounts.base_royalties.to_account_info().clone(),
+          to: accounts.refund.clone(),
+          authority: accounts.base_royalties_owner.to_account_info().clone()
+        },
+        signer_seeds
+      ))?;
 
-//       Ok(())
-//     }
+      msg!("Changing bonding royalties to new royalties");
+      spl_token_bonding::cpi::update_token_bonding_v0(CpiContext::new_with_signer(
+        accounts.token_bonding_program.clone(),
+        UpdateTokenBondingV0 {
+          token_bonding: token_bonding.clone(),
+          authority: accounts.token_bonding_authority.clone()
+        },
+        &[
+          &[
+            b"token-bonding-authority", accounts.reverse_token_ref.key().as_ref(),
+            &[accounts.reverse_token_ref.token_bonding_authority_bump_seed]
+          ],
+        ]
+      ), UpdateTokenBondingV0Args {
+        token_bonding_authority: token_bonding.authority,
+        target_royalties: token_bonding.target_royalties,
+        base_royalties: accounts.token_account_split.token_account,
+        base_royalty_percentage: token_bonding.base_royalty_percentage,
+        target_royalty_percentage: token_bonding.target_royalty_percentage,
+        buy_frozen: token_bonding.buy_frozen,
+      })?;
+
+      Ok(())
+    }
 
     // pub fn opt_out_v0() -> ProgramResult {}
     // pub fn opt_in_v0() -> ProgramResult {}
@@ -881,61 +886,71 @@ pub struct UpdateTokenMetadataV0<'info> {
     pub token_metadata_program: AccountInfo<'info>
 }
 
-// #[derive(Accounts)]
-// #[instruction(args: InitializeStakingArgs)]
-// pub struct InitializeStakingV0<'info> {
-//     wumbo: Box<Account<'info, WumboV0>>,
-//     #[account(
-//       mut,
-//       has_one = token_bonding,
-//       has_one = wumbo,
-//       constraint = token_ref.key() != reverse_token_ref.key(),
-//       constraint = token_ref.token_bonding == reverse_token_ref.token_bonding,
-//     )]
-//     token_ref: Account<'info, TokenRefV0>,
-//     #[account(
-//       mut,
-//       has_one = token_bonding,
-//       has_one = wumbo
-//     )]
-//     reverse_token_ref: Box<Account<'info, TokenRefV0>>,
-//     #[account(
-//       constraint = token_staking.target_mint == staking_target_mint.key(),
-//       has_one = target_mint,
-//       constraint = verify_authority(token_staking.authority, &[b"token-staking-authority", reverse_token_ref.key().as_ref()], args.token_staking_authority_bump_seed)?,
-//       constraint = token_staking.base_mint == token_bonding.target_mint,
-//       constraint = token_staking.period_unit == spl_token_staking::PeriodUnit::from(wumbo.token_staking_defaults.period_unit) &&
-//                    token_staking.reward_percent_per_period_per_lockup_period == wumbo.token_staking_defaults.reward_percent_per_period_per_lockup_period &&
-//                    token_staking.period == wumbo.token_staking_defaults.period
-//     )]
-//     token_staking: Box<Account<'info, TokenStakingV0>>,
-//     #[account(
-//       constraint = staking_target_mint.decimals == wumbo.token_staking_defaults.target_mint_decimals
-//     )]
-//     staking_target_mint: Box<Account<'info, Mint>>,
-//     #[account(
-//       has_one = token_staking,
-//       constraint = token_account_split.token_staking == token_staking.key(),
-//     )]
-//     token_account_split: Box<Account<'info, TokenAccountSplitV0>>,
-//     #[account(
-//       has_one = target_mint
-//     )]
-//     token_bonding: Account<'info, TokenBondingV0>,
-//     #[account(
-//       seeds = [
-//         b"token-bonding-authority", reverse_token_ref.key().as_ref()
-//       ],
-//       bump = token_ref.token_bonding_authority_bump_seed
-//     )]
-//     token_bonding_authority: AccountInfo<'info>,
-//     #[account()]
-//     target_mint: Box<Account<'info, Mint>>,
-//     #[account(address = spl_token_bonding::id())]
-//     pub token_bonding_program: AccountInfo<'info>,
-//     #[account(address = spl_token::id())]
-//     pub token_program: AccountInfo<'info>,
-// }
+#[derive(Accounts)]
+#[instruction(args: InitializeStakingArgs)]
+pub struct InitializeStakingV0<'info> {
+    refund: AccountInfo<'info>, // Account to refund the SOL on the closed base royalties account to
+    wumbo: Box<Account<'info, WumboV0>>,
+    #[account(
+      mut,
+      has_one = token_bonding,
+      has_one = wumbo,
+      constraint = token_ref.key() != reverse_token_ref.key(),
+      constraint = token_ref.token_bonding == reverse_token_ref.token_bonding,
+    )]
+    token_ref: Account<'info, TokenRefV0>,
+    #[account(
+      mut,
+      has_one = token_bonding,
+      has_one = wumbo
+    )]
+    reverse_token_ref: Box<Account<'info, TokenRefV0>>,
+    #[account(
+      constraint = token_staking.target_mint == staking_target_mint.key(),
+      constraint = verify_authority(token_staking.authority, &[b"token-staking-authority", reverse_token_ref.key().as_ref()], args.token_staking_authority_bump_seed)?,
+      constraint = token_staking.base_mint == token_bonding.target_mint,
+      constraint = token_staking.period_unit == spl_token_staking::PeriodUnit::from(wumbo.token_staking_defaults.period_unit) &&
+                   token_staking.reward_percent_per_period_per_lockup_period == wumbo.token_staking_defaults.reward_percent_per_period_per_lockup_period &&
+                   token_staking.period == wumbo.token_staking_defaults.period
+    )]
+    token_staking: Box<Account<'info, TokenStakingV0>>,
+    #[account(
+      constraint = staking_target_mint.decimals == wumbo.token_staking_defaults.target_mint_decimals
+    )]
+    staking_target_mint: Box<Account<'info, Mint>>,
+    #[account(
+      has_one = token_staking,
+      has_one = token_account,
+      constraint = token_account_split.token_staking == token_staking.key(),
+    )]
+    token_account_split: Box<Account<'info, TokenAccountSplitV0>>,
+    #[account(mut)]
+    token_account: Box<Account<'info, TokenAccount>>,
+    #[account(
+      mut,
+      has_one = target_mint,
+      has_one = base_royalties
+    )]
+    token_bonding: Account<'info, TokenBondingV0>,
+    #[account(
+      seeds = [
+        b"token-bonding-authority", reverse_token_ref.key().as_ref()
+      ],
+      bump = token_ref.token_bonding_authority_bump_seed
+    )]
+    token_bonding_authority: AccountInfo<'info>,
+
+    #[account(mut, constraint = base_royalties.owner == base_royalties_owner.key())]
+    base_royalties: Account<'info, TokenAccount>,
+    base_royalties_owner: AccountInfo<'info>,
+
+    #[account()]
+    target_mint: Box<Account<'info, Mint>>,
+    #[account(address = spl_token_bonding::id())]
+    pub token_bonding_program: AccountInfo<'info>,
+    #[account(address = spl_token::id())]
+    pub token_program: AccountInfo<'info>,
+}
 
 #[account]
 #[derive(Default)]

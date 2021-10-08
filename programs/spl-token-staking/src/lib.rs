@@ -51,10 +51,25 @@ pub fn recalculate(staking_data: &mut TokenStakingV0, unix_timestamp: i64) {
     staking_data.last_calculated_timestamp = unix_timestamp;
     let current_period = get_staking_period(staking_data);
 
-    if last_period != current_period {
+    if last_period < current_period {
         staking_data.target_amount_unredeemed +=
             (current_period - last_period) * staking_data.target_amount_per_period;
     }
+}
+
+pub fn recalculate_staking_info(staking: &TokenStakingV0, staking_info: &mut StakingInfoV0, unix_timestamp: i64) {
+  let last_period = get_period(
+    staking_info.last_collected_timestamp,
+    staking.created_timestamp,
+    &staking.period_unit,
+    staking.period,
+    true,
+  );
+  let this_period = get_staking_period(staking);
+  staking_info.last_collected_timestamp = unix_timestamp;
+  if last_period < this_period {
+    staking_info.target_amount_unredeemed += (this_period - last_period) * staking_info.target_amount_per_period;
+  }
 }
 
 pub fn get_rewards_per_period(voucher: &StakingVoucherV0, staking: &TokenStakingV0) -> Result<u64> {
@@ -162,6 +177,16 @@ pub mod spl_token_staking {
         Ok(())
     }
 
+    pub fn initialize_staking_info_v0(ctx: Context<InitializeStakingInfoV0>, bump_seed: u8) -> ProgramResult {
+      ctx.accounts.staking_info.bump_seed = bump_seed;
+      ctx.accounts.staking_info.owner = ctx.accounts.owner.key();
+      ctx.accounts.staking_info.token_staking = ctx.accounts.token_staking.key();
+      ctx.accounts.staking_info.created_timestamp = ctx.accounts.clock.unix_timestamp;
+      ctx.accounts.staking_info.last_collected_timestamp = ctx.accounts.clock.unix_timestamp;
+
+      Ok(())
+    }
+
     pub fn stake_v0(ctx: Context<StakeV0>, args: StakeV0Args) -> ProgramResult {
         let data = &mut ctx.accounts.staking_voucher;
         token::transfer(
@@ -188,6 +213,7 @@ pub mod spl_token_staking {
         )?;
 
         let unix_time = ctx.accounts.clock.unix_timestamp;
+        data.staking_info = ctx.accounts.staking_info.key();
         data.base_amount = args.base_amount;
         data.created_timestamp = unix_time;
         data.last_collected_timestamp = unix_time;
@@ -201,12 +227,19 @@ pub mod spl_token_staking {
         data.holding_bump_seed = args.holding_bump_seed;
         data.holding_authority_bump_seed = args.holding_authority_bump_seed;
 
+        let staking_info = &mut ctx.accounts.staking_info;
+        staking_info.total_base_amount_staked += args.base_amount;
+        staking_info.max_voucher_number = std::cmp::max(staking_info.max_voucher_number, args.voucher_number);
+        staking_info.last_collected_timestamp = ctx.accounts.clock.unix_timestamp;
+
         let staking_data = &mut ctx.accounts.token_staking;
         staking_data.total_base_amount_staked += data.base_amount;
         recalculate(staking_data, ctx.accounts.clock.unix_timestamp);
+        recalculate_staking_info(staking_data, staking_info, ctx.accounts.clock.unix_timestamp);
 
         let rewards_per_period: u64 = get_rewards_per_period(data, staking_data)?;
         staking_data.target_amount_per_period += rewards_per_period;
+        staking_info.target_amount_per_period += rewards_per_period;
 
         Ok(())
     }
@@ -229,15 +262,19 @@ pub mod spl_token_staking {
             staking.period,
             false,
         );
+        let staking_info = &mut ctx.accounts.staking_info;
 
         voucher.last_collected_timestamp = unix_timestamp;
 
         recalculate(staking, unix_timestamp);
+        recalculate_staking_info(staking, staking_info, unix_timestamp);
 
-        if last_period != this_period {
+        if last_period < this_period {
             let rewards_due: u64 =
                 (this_period - last_period) * get_rewards_per_period(voucher, staking)?;
             staking.target_amount_unredeemed -= rewards_due;
+            staking_info.target_amount_unredeemed -= rewards_due;
+
             token::mint_to(
                 CpiContext::new_with_signer(
                     ctx.accounts.token_program.to_account_info().clone(),
@@ -306,6 +343,12 @@ pub mod spl_token_staking {
         recalculate(staking, unix_timestamp);
         let rewards_per_period: u64 = get_rewards_per_period(voucher, staking)?;
         staking.target_amount_per_period -= rewards_per_period;
+        ctx.accounts.staking_info.target_amount_per_period -= rewards_per_period;
+        if ctx.accounts.staking_info.max_voucher_number == staking.voucher_number {
+          ctx.accounts.staking_info.max_voucher_number = ctx.accounts.staking_info.max_voucher_number - 1;
+        }
+        recalculate_staking_info(staking, &mut ctx.accounts.staking_info, unix_timestamp);
+
 
         // Transfer them their holding
         token::transfer(
@@ -377,7 +420,7 @@ pub struct StakeV0Args {
     bump_seed: u8,
     holding_bump_seed: u8,
     holding_authority_bump_seed: u8,
-    ata_bump_seed: u8,
+    ata_bump_seed: u8
 }
 
 #[derive(Accounts)]
@@ -408,28 +451,61 @@ pub struct InitializeTokenStakingV0<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(bump_seed: u8)]
+pub struct InitializeStakingInfoV0<'info> {
+  #[account(signer)]
+  pub payer: AccountInfo<'info>,
+  #[account(
+    mut
+  )]
+  pub token_staking: Account<'info, TokenStakingV0>,
+  #[account(
+    init,
+    seeds = [
+      b"stake-info", 
+      owner.to_account_info().key.as_ref(),
+      token_staking.to_account_info().key.as_ref()
+    ],
+    bump = bump_seed,
+    payer = payer,
+    space = 256
+  )]
+  pub staking_info: Account<'info, StakingInfoV0>,
+  #[account(signer)]
+  pub owner: AccountInfo<'info>,
+  pub system_program: AccountInfo<'info>,
+  pub rent: Sysvar<'info, Rent>,
+  pub clock: Sysvar<'info, Clock>,
+}
+
+#[derive(Accounts)]
 #[instruction(args: StakeV0Args)]
 pub struct StakeV0<'info> {
     #[account(signer)]
     pub payer: AccountInfo<'info>,
     #[account(
-    mut,
-    has_one = base_mint
-  )]
-    pub token_staking: Account<'info, TokenStakingV0>,
+      mut,
+      has_one = base_mint
+    )]
+    pub token_staking: Box<Account<'info, TokenStakingV0>>,
     #[account(
-    init,
-    seeds = [
-      b"stake-voucher", 
-      owner.to_account_info().key.as_ref(),
-      token_staking.to_account_info().key.as_ref(),
-      &args.voucher_number.to_le_bytes()
-    ],
-    bump = args.bump_seed,
-    payer = payer,
-    space = 512
-  )]
-    pub staking_voucher: Account<'info, StakingVoucherV0>,
+      has_one = token_staking,
+      has_one = owner
+    )]
+    pub staking_info: Box<Account<'info, StakingInfoV0>>,
+    #[account(
+      init,
+      seeds = [
+        b"stake-voucher", 
+        owner.to_account_info().key.as_ref(),
+        token_staking.to_account_info().key.as_ref(),
+        &args.voucher_number.to_le_bytes()
+      ],
+      bump = args.bump_seed,
+      payer = payer,
+      space = 512
+    )]
+    pub staking_voucher: Box<Account<'info, StakingVoucherV0>>,
     #[account()]
     pub base_mint: Account<'info, Mint>,
     #[account(
@@ -466,15 +542,21 @@ pub struct StakeV0<'info> {
 #[derive(Accounts)]
 pub struct CollectRewardsV0<'info> {
     #[account(
-    mut,
-    has_one = target_mint
-  )]
+      mut,
+      has_one = target_mint
+    )]
     pub token_staking: Account<'info, TokenStakingV0>,
     #[account(
-    mut,
-    has_one = token_staking
-  )]
-    pub staking_voucher: Account<'info, StakingVoucherV0>,
+      mut,
+      has_one = token_staking
+    )]
+    pub staking_info: Box<Account<'info, StakingInfoV0>>,
+    #[account(
+      mut,
+      has_one = token_staking,
+      has_one = staking_info
+    )]
+    pub staking_voucher: Box<Account<'info, StakingVoucherV0>>,
     #[account(
     mut,
     address = Pubkey::create_program_address(
@@ -484,9 +566,9 @@ pub struct CollectRewardsV0<'info> {
   )]
     pub destination: Account<'info, TokenAccount>,
     #[account(
-    mut,
-    constraint = target_mint.mint_authority.map(|a| a == *mint_authority.to_account_info().key).unwrap_or(false),
-  )]
+      mut,
+      constraint = target_mint.mint_authority.map(|a| a == *mint_authority.to_account_info().key).unwrap_or(false),
+    )]
     pub target_mint: Account<'info, Mint>,
     #[account()]
     pub mint_authority: AccountInfo<'info>,
@@ -500,11 +582,18 @@ pub struct UnstakeV0<'info> {
     #[account(mut)]
     pub token_staking: Account<'info, TokenStakingV0>,
     #[account(
-    mut,
-    has_one = token_staking,
-    has_one = owner,
-    close = owner
-  )]
+      mut,
+      has_one = token_staking,
+      has_one = owner
+    )]
+    pub staking_info: Account<'info, StakingInfoV0>,
+    #[account(
+      mut,
+      has_one = token_staking,
+      has_one = owner,
+      has_one = staking_info,
+      close = owner
+    )]
     pub staking_voucher: Account<'info, StakingVoucherV0>,
     #[account(mut, signer)]
     pub owner: AccountInfo<'info>,
@@ -583,10 +672,27 @@ pub struct TokenStakingV0 {
     pub target_mint_authority_bump_seed: u8,
 }
 
+// Not strictly necessary, but keeps information about all of the staking on this token type
+#[account]
+#[derive(Default)]
+pub struct StakingInfoV0 {
+  pub token_staking: Pubkey,
+  pub owner: Pubkey,
+  pub total_base_amount_staked: u64,
+  pub target_amount_per_period: u64,
+  pub target_amount_unredeemed: u64,
+  pub last_collected_timestamp: i64,
+  pub created_timestamp: i64,
+  pub max_voucher_number: u16,
+
+  pub bump_seed: u8
+}
+
 #[account]
 #[derive(Default)]
 pub struct StakingVoucherV0 {
     pub token_staking: Pubkey,
+    pub staking_info: Pubkey,
     pub base_holding: Pubkey,
     pub owner: Pubkey,
     pub base_amount: u64,

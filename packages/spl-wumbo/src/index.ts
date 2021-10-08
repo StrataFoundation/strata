@@ -24,10 +24,10 @@ export * from "./generated/spl-wumbo";
 
 extendBorsh();
 
-// interface InitializeStakingArgs {
-//   payer?: PublicKey;
-//   tokenRef: PublicKey;
-// }
+interface InitializeStakingArgs {
+  payer?: PublicKey;
+  tokenRef: PublicKey;
+}
 
 interface CreateWumboArgs {
   payer?: PublicKey;
@@ -327,89 +327,153 @@ export class SplWumbo {
     await this.sendInstructions(instructions, signers);
   }
 
-  // async initializeStakingInstructions({
-  //   tokenRef,
-  //   payer = this.wallet.publicKey
-  // }: InitializeStakingArgs): Promise<InstructionResult<null>> {
-  //   const tokenRefAcct = await this.account.tokenRefV0.fetch(tokenRef);
-  //   const wumboAcct = await this.account.wumboV0.fetch(tokenRefAcct.wumbo);
-  //   const tokenBondingAcct = await this.splTokenBondingProgram.account.tokenBondingV0.fetch(tokenRefAcct.tokenBonding);
+  async initializeStakingInstructions({
+    tokenRef,
+    payer = this.wallet.publicKey
+  }: InitializeStakingArgs): Promise<BigInstructionResult<null>> {
+    const tokenRefAcct = await this.account.tokenRefV0.fetch(tokenRef);
+    const wumboAcct = await this.account.wumboV0.fetch(tokenRefAcct.wumbo);
+    const tokenBondingAcct = await this.splTokenBondingProgram.account.tokenBondingV0.fetch(tokenRefAcct.tokenBonding);
+    const tokenMetadataRaw = await this.provider.connection.getAccountInfo(tokenRefAcct.tokenMetadata);
+    const tokenMetadata = decodeMetadata(tokenMetadataRaw!.data);
 
-  //   const [reverseTokenRef] =
-  //     await PublicKey.findProgramAddress(
-  //       [Buffer.from("reverse-token-ref", "utf-8"), tokenRefAcct.wumbo.toBuffer(), tokenRefAcct.mint.toBuffer()],
-  //       this.programId
-  //     );
+    const [reverseTokenRef] =
+      await PublicKey.findProgramAddress(
+        [Buffer.from("reverse-token-ref", "utf-8"), tokenRefAcct.wumbo.toBuffer(), tokenRefAcct.mint.toBuffer()],
+        this.programId
+      );
     
-  //   const instructions = [];
-  //   const signers = [];
+    const instructions = [];
+    const signers = [];
 
-  //     // Create staking
-  //   const [tokenStakingAuthority, tokenStakingAuthorityBumpSeed] =
-  //     await PublicKey.findProgramAddress(
-  //       [Buffer.from("token-staking-authority", "utf-8"), tokenRef.toBuffer()],
-  //       this.programId
-  //     );
+      // Create staking
+    const [tokenStakingAuthority, tokenStakingAuthorityBumpSeed] =
+      await PublicKey.findProgramAddress(
+        [Buffer.from("token-staking-authority", "utf-8"), reverseTokenRef.toBuffer()],
+        this.programId
+      );
 
-  //   const {
-  //     output: { tokenStaking, targetMint: stakingTargetMint },
-  //     instructions: tokenStakingInstructions,
-  //     signers: tokenStakingSigners,
-  //   } = await this.splTokenStakingProgram.createTokenStakingInstructions({
-  //     payer,
-  //     authority: tokenStakingAuthority,
-  //     baseMint: tokenBondingAcct.targetMint,
-  //     periodUnit: wumboAcct.tokenStakingDefaults.periodUnit,
-  //     period: wumboAcct.tokenStakingDefaults.period,
-  //     targetMintDecimals: wumboAcct.tokenStakingDefaults.targetMintDecimals,
-  //     rewardPercentPerPeriodPerLockupPeriod:
-  //       wumboAcct.tokenStakingDefaults.rewardPercentPerPeriodPerLockupPeriod,
-  //   });
-  //   signers.push(...tokenStakingSigners);
-  //   instructions.push(...tokenStakingInstructions);
+    const [baseRoyaltiesOwner, _] = await PublicKey.findProgramAddress(
+      [Buffer.from("base-royalties-owner", "utf-8"), reverseTokenRef.toBuffer()],
+      this.programId
+    );
 
-  //   // Create split
-  //   const { instructions: splitInstructions, signers: splitSigners, output: { tokenAccount: splitTarget, tokenAccountSplit } } =  await this.splTokenAccountSplitProgram.createTokenAccountSplitInstructions({
-  //     payer,
-  //     tokenStaking,
-  //     mint: stakingTargetMint,
-  //     tokenAccount: tokenBondingAcct.baseRoyalties
-  //   });
-  //   signers.push(...splitSigners);
-  //   instructions.push(...splitInstructions);
+    const stakingTargetMintKeypair = anchor.web3.Keypair.generate();
+    signers.push(stakingTargetMintKeypair)
+    const [stakingTargetMintAuthorityRes, stakingTargetMintAuthorityBumpSeed] =
+      await PublicKey.findProgramAddress(
+        [Buffer.from("target-authority", "utf-8"), stakingTargetMintKeypair.publicKey.toBuffer()],
+        this.splTokenStakingProgram.programId
+      );
+    const stakingTargetMintAuthority = stakingTargetMintAuthorityRes;
+    const tokenInstructions = await createMintInstructions(
+      this.provider,
+      this.wallet.publicKey,
+      stakingTargetMintKeypair.publicKey,
+      wumboAcct.tokenStakingDefaults.targetMintDecimals
+    );
+    instructions.push(...tokenInstructions)
 
-  //   instructions.push(
-  //     await this.instruction.initializeStakingV0({
-  //       tokenStakingAuthorityBumpSeed
-  //     }, {
-  //       accounts: {
-  //         wumbo: tokenRefAcct.wumbo,
-  //         tokenRef,
-  //         reverseTokenRef,
-  //         tokenStaking,
-  //         stakingTargetMint,
-  //         tokenAccountSplit,
-  //         tokenBonding: tokenRefAcct.tokenBonding,
-  //         targetMint: tokenBondingAcct.targetMint
-  //       }
-  //     })
-  //   )
+    console.log("Creating social token metadata...");
+    const [tokenMetadataUpdateAuthority, tokenMetadataUpdateAuthorityBumpSeed] =
+      await PublicKey.findProgramAddress(
+        [Buffer.from("token-metadata-authority", "utf-8"), reverseTokenRef.toBuffer()],
+        this.programId
+      );
+    const tokenMetadataKey = await createMetadata(
+      new Data(tokenMetadata.data),
+      tokenMetadataUpdateAuthority.toBase58(),
+      stakingTargetMintKeypair.publicKey.toBase58(),
+      payer.toBase58(),
+      instructions,
+      payer.toBase58()
+    );
 
-  //   return {
-  //     signers,
-  //     instructions,
-  //     output: null
-  //   }
-  // }
+    instructions.push(Token.createSetAuthorityInstruction(
+      TOKEN_PROGRAM_ID,
+      stakingTargetMintKeypair.publicKey,
+      stakingTargetMintAuthority,
+      "MintTokens",
+      payer,
+      []
+    ))
 
 
-  // async initializeStaking(args: InitializeStakingArgs): Promise<void> {
-  //   const {
-  //     instructions,
-  //     signers,
-  //   } = await this.initializeStakingInstructions(args);
-  //   await this.sendInstructions(instructions, signers);
-  // }
+    const {
+      output: { tokenStaking, targetMint: stakingTargetMint },
+      instructions: tokenStakingInstructions,
+      signers: tokenStakingSigners,
+    } = await this.splTokenStakingProgram.createTokenStakingInstructions({
+      payer,
+      targetMint: stakingTargetMintKeypair.publicKey,
+      authority: tokenStakingAuthority,
+      baseMint: tokenBondingAcct.targetMint,
+      periodUnit: wumboAcct.tokenStakingDefaults.periodUnit,
+      period: wumboAcct.tokenStakingDefaults.period,
+      targetMintDecimals: wumboAcct.tokenStakingDefaults.targetMintDecimals,
+      rewardPercentPerPeriodPerLockupPeriod:
+        wumboAcct.tokenStakingDefaults.rewardPercentPerPeriodPerLockupPeriod,
+    });
+    signers.push(...tokenStakingSigners);
+    instructions.push(...tokenStakingInstructions);
+
+    const instructions2 = []
+    const signers2 = []
+
+    // Create split
+    const { instructions: splitInstructions, signers: splitSigners, output: { tokenAccount: splitTarget, tokenAccountSplit } } =  await this.splTokenAccountSplitProgram.createTokenAccountSplitInstructions({
+      payer,
+      tokenStaking,
+      mint: tokenBondingAcct.baseMint
+    });
+    signers2.push(...splitSigners);
+    instructions2.push(...splitInstructions);
+
+    instructions2.push(
+      await this.instruction.initializeStakingV0({
+        tokenStakingAuthorityBumpSeed
+      }, {
+        accounts: {
+          refund: payer,
+          wumbo: tokenRefAcct.wumbo,
+          tokenRef,
+          reverseTokenRef,
+          tokenStaking,
+          stakingTargetMint,
+          tokenAccountSplit,
+          tokenAccount: splitTarget,
+          tokenBonding: tokenRefAcct.tokenBonding,
+          tokenBondingAuthority: tokenBondingAcct.authority! as PublicKey,
+          baseRoyalties: tokenBondingAcct.baseRoyalties,
+          baseRoyaltiesOwner: baseRoyaltiesOwner,
+          targetMint: tokenBondingAcct.targetMint,
+          tokenBondingProgram: this.splTokenBondingProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID
+        }
+      })
+    )
+
+    return {
+      signers: [signers, signers2],
+      instructions: [instructions, instructions2],
+      output: null
+    }
+  }
+
+
+  async initializeStaking(args: InitializeStakingArgs): Promise<void> {
+    const {
+      instructions,
+      signers,
+    } = await this.initializeStakingInstructions(args);
+    await sendMultipleInstructions(
+      this.errors,
+      this.provider,
+      instructions,
+      signers,
+      args.payer
+    )
+  }
 
   async updateMetadataInstructions({
     tokenRef,
@@ -730,29 +794,6 @@ export class SplWumbo {
       ) : PublicKey.default;
 
     const instructions = [];
-
-    console.log({
-      accounts: {
-        reverseTokenRef,
-        tokenBonding: tokenRefAcct.tokenBonding,
-        tokenBondingAuthority,
-        owner: tokenRefAcct.isClaimed ? tokenRefAcct.owner! as PublicKey : nameClass!,
-        baseRoyalties: tokenBondingAcct.baseRoyalties,
-        targetRoyalties: tokenBondingAcct.targetRoyalties,
-        targetRoyaltiesOwner: tokenRefAcct.isClaimed ? tokenRefAcct.owner as PublicKey : targetRoyaltiesOwner,
-        curve: tokenBondingAcct.curve,
-        baseMint: tokenBondingAcct.baseMint,
-        targetMint: tokenBondingAcct.targetMint,
-        baseStorage: tokenBondingAcct.baseStorage,
-        tokenStaking: tokenRefAcct.tokenStaking ? tokenRefAcct.tokenStaking as PublicKey : PublicKey.default,
-        tokenStakingAuthority,
-        baseStorageAuthority,
-        tokenBondingProgram: this.splTokenBondingProgram.programId,
-        tokenStakingProgram: this.splTokenStakingProgram.programId,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        clock: SYSVAR_CLOCK_PUBKEY
-      }
-    })
 
     instructions.push(
       await this.instruction.optOutV0({

@@ -1,5 +1,5 @@
 import * as anchor from "@wum.bo/anchor";
-import { BN } from "@project-serum/anchor"
+import { BN } from "@wum.bo/anchor"
 import { Transaction, PublicKey } from "@solana/web3.js";
 import { createMetadata, Data, getMetadata, percent, TOKEN_PROGRAM_ID } from "@wum.bo/spl-utils";
 import { SplTokenBonding, SplTokenBondingIDL, SplTokenBondingIDLJson } from "@wum.bo/spl-token-bonding";

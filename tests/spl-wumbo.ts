@@ -1,4 +1,4 @@
-import * as anchor from "@project-serum/anchor";
+import * as anchor from "@wum.bo/anchor";
 import { Keypair, PublicKey, Transaction, sendAndConfirmTransaction } from "@solana/web3.js";
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
@@ -17,7 +17,7 @@ use(ChaiAsPromised);
 
 describe("spl-wumbo", () => {
   // Configure the client to use the local cluster.
-  anchor.setProvider(anchor.Provider.env());
+  anchor.setProvider(anchor.Provider.local());
   const program = anchor.workspace.SplWumbo;
   const provider = anchor.getProvider();
 
@@ -131,13 +131,13 @@ describe("spl-wumbo", () => {
     });
 
 
-    // it("Allows initializing staking", async () => {
-    //   await wumboProgram.initializeStaking({
-    //     tokenRef: unclaimedTokenRef
-    //   })
-    //   const tokenRef = await wumboProgram.account.tokenRefV0.fetch(unclaimedTokenRef);
-    //   expect(tokenRef.tokenStaking).to.not.be.null;
-    // });
+    it("Allows initializing staking", async () => {
+      await wumboProgram.initializeStaking({
+        tokenRef: unclaimedTokenRef
+      })
+      const tokenRef = await wumboProgram.account.tokenRefV0.fetch(unclaimedTokenRef);
+      expect(tokenRef.tokenStaking).to.not.be.null;
+    });
 
     it("Allows claiming, which transfers founder rewards to my ata", async () => {
       const tokenRef = await wumboProgram.account.tokenRefV0.fetch(unclaimedTokenRef);
@@ -232,12 +232,12 @@ describe("spl-wumbo", () => {
       expect(tokenBonding.buyFrozen).to.be.true;
     });
 
-    // it("Allows initializing staking", async () => {
-    //   await wumboProgram.initializeStaking({
-    //     tokenRef: claimedTokenRef
-    //   })
-    //   const tokenRef = await wumboProgram.account.tokenRefV0.fetch(claimedTokenRef);
-    //   expect(tokenRef.tokenStaking).to.not.be.null;
-    // });
+    it("Allows initializing staking", async () => {
+      await wumboProgram.initializeStaking({
+        tokenRef: claimedTokenRef
+      })
+      const tokenRef = await wumboProgram.account.tokenRefV0.fetch(claimedTokenRef);
+      expect(tokenRef.tokenStaking).to.not.be.null;
+    });
   });
 });

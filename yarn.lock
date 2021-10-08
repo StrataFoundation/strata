@@ -350,10 +350,10 @@
   resolved "https://registry.yarnpkg.com/@ungap/promise-all-settled/-/promise-all-settled-1.1.2.tgz#aa58042711d6e3275dd37dc597e5d31e8c290a44"
   integrity sha512-sL/cEvJWAnClXw0wHk85/2L0G6Sj8UB0Ctc1TEMbKSsmpRosqhwj9gWgFRZSrBr2f9tiXISwNhCPmlfqUqyb9Q==
 
-"@wum.bo/anchor@^0.16.2":
-  version "0.16.2"
-  resolved "https://registry.yarnpkg.com/@wum.bo/anchor/-/anchor-0.16.2.tgz#3d542c4b106f79ee56054e6446ee9151ac899411"
-  integrity sha512-AlB+Sq0i09sfYecYdKtblS1k4E04UyYvmH1sWnGGRyO7dcXMmnDPImGSSIcFznshd95zVKM7Iso01YBAZBCJkw==
+"@wum.bo/anchor@^0.17.0":
+  version "0.17.0"
+  resolved "https://registry.yarnpkg.com/@wum.bo/anchor/-/anchor-0.17.0.tgz#fa90d68b326ac5f8e55e5fd59cc23728a31e5f9f"
+  integrity sha512-mPSLEFCQ2thYEM1EW2eP5EQ953BZvddExMQsJDDqjKTFgtEnhbC/HIUnOz9z0qfTQGfIBkg5WGo3aWk+Lh42dw==
   dependencies:
     "@project-serum/borsh" "^0.2.2"
     "@solana/web3.js" "^1.17.0"

@@ -1,4 +1,4 @@
-import * as anchor from "@project-serum/anchor";
+import * as anchor from "@wum.bo/anchor";
 import { sendAndConfirmTransaction, Transaction, PublicKey, Keypair } from "@solana/web3.js";
 import { createMint } from "@project-serum/common";
 import { NATIVE_MINT, AccountInfo as TokenAccountInfo, u64 } from "@solana/spl-token";
@@ -24,7 +24,7 @@ function percent(percent: number): number {
 
 describe("spl-token-bonding", () => {
   // Configure the client to use the local cluster.
-  anchor.setProvider(anchor.Provider.env());
+  anchor.setProvider(anchor.Provider.local());
   const provider = anchor.getProvider();
 
   const program = anchor.workspace.SplTokenBonding;

@@ -1,4 +1,4 @@
-import * as anchor from '@project-serum/anchor';
+import * as anchor from '@wum.bo/anchor';
 import { Connection, SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Account, PublicKey, SystemProgram, Transaction, TransactionInstruction, Signer } from '@solana/web3.js';
 import { createMint, createMintInstructions, createTokenAccount, token } from "@project-serum/common"
 import { TOKEN_PROGRAM_ID, Token, ASSOCIATED_TOKEN_PROGRAM_ID, AccountInfo as TokenAccountInfo, u64 } from '@solana/spl-token';
@@ -14,7 +14,7 @@ use(ChaiAsPromised);
 
 describe('spl-token-staking', () => {
   // Configure the client to use the local cluster.
-  anchor.setProvider(anchor.Provider.env());
+  anchor.setProvider(anchor.Provider.local());
   const program = anchor.workspace.SplTokenStaking;
   const provider = anchor.getProvider();
   const tokenUtils = new TokenUtils(provider);
