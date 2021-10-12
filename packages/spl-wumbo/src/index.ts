@@ -1,7 +1,7 @@
 import * as anchor from "@wum.bo/anchor";
 import BN from "bn.js";
 import { Program, Provider } from "@wum.bo/anchor";
-import { createMetadata, Data, decodeMetadata, METADATA_PROGRAM_ID, extendBorsh, InstructionResult, BigInstructionResult, sendInstructions, sendMultipleInstructions } from "@wum.bo/spl-utils";
+import { createMetadata, Data, decodeMetadata, METADATA_PROGRAM_ID, extendBorsh, InstructionResult, BigInstructionResult, sendInstructions, sendMultipleInstructions, getMetadata } from "@wum.bo/spl-utils";
 import { connection, createMintInstructions } from "@project-serum/common";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import {
@@ -15,7 +15,7 @@ import {
 } from "@solana/web3.js";
 import { SplWumboIDL } from "./generated/spl-wumbo";
 import { SplTokenBonding } from "@wum.bo/spl-token-bonding";
-import { PeriodUnit, SplTokenStaking } from "@wum.bo/spl-token-staking";
+import { PeriodUnit, SplTokenStaking, TokenStakingV0 } from "@wum.bo/spl-token-staking";
 import { SplTokenAccountSplit } from "@wum.bo/spl-token-account-split";
 import { percent } from "@wum.bo/spl-utils";
 import { sendAndConfirmRawTransaction } from "@solana/web3.js";
@@ -381,7 +381,11 @@ export class SplWumbo {
         this.programId
       );
     const tokenMetadataKey = await createMetadata(
-      new Data(tokenMetadata.data),
+      new Data({
+        ...new Data(tokenMetadata.data),
+        name: tokenMetadata.data.name + " Cred",
+        symbol: "c" + tokenMetadata.data.symbol
+      }),
       tokenMetadataUpdateAuthority.toBase58(),
       stakingTargetMintKeypair.publicKey.toBase58(),
       payer.toBase58(),
@@ -485,8 +489,10 @@ export class SplWumbo {
   }: UpdateMetadataArgs): Promise<InstructionResult<null>> {
     const tokenRefAcct = await this.account.tokenRefV0.fetch(tokenRef);
     const tokenMetadataRaw = await this.provider.connection.getAccountInfo(tokenRefAcct.tokenMetadata);
+    const tokenStaking = !!tokenRefAcct.tokenStaking && await this.splTokenStakingProgram.account.tokenStakingV0.fetch(tokenRefAcct.tokenStaking as PublicKey);
     const tokenMetadata = decodeMetadata(tokenMetadataRaw!.data);
-
+    const stakingTokenMetadata = tokenStaking && await getMetadata(tokenStaking.targetMint.toBase58());
+    
     const [reverseTokenRef] =
       await PublicKey.findProgramAddress(
         [Buffer.from("reverse-token-ref", "utf-8"), tokenRefAcct.wumbo.toBuffer(), tokenRefAcct.mint.toBuffer()],
@@ -516,6 +522,24 @@ export class SplWumbo {
         }
       })
     )
+
+    if (stakingTokenMetadata) {
+      instructions.push(
+        await this.instruction.updateTokenMetadata({
+          name: (name || tokenMetadata.data.name) + " Cred",
+          symbol: "c" + (symbol || tokenMetadata.data.symbol),
+          uri: uri || tokenMetadata.data.uri
+        }, {
+          accounts: {
+            reverseTokenRef,
+            owner: tokenRefAcct.owner! as PublicKey,
+            tokenMetadata: new PublicKey(stakingTokenMetadata!),
+            updateAuthority: tokenMetadataUpdateAuthority,
+            tokenMetadataProgram: METADATA_PROGRAM_ID
+          }
+        })
+      )
+    }
 
     if (baseRoyaltyPercentage || targetRoyaltyPercentage) {
       const tokenBondingAcct = await this.splTokenBondingProgram.account.tokenBondingV0.fetch(tokenRefAcct.tokenBonding);

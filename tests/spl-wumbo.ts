@@ -12,6 +12,7 @@ import { TokenUtils } from "./utils/token";
 import { createMint } from "@project-serum/common";
 import { createNameRegistry, getHashedName, getNameAccountKey, NameRegistryState } from "@solana/spl-name-service";
 import { BN } from "@wum.bo/anchor";
+import { getMetadata } from "@wum.bo/spl-utils";
 
 use(ChaiAsPromised);
 
@@ -206,23 +207,6 @@ describe("spl-wumbo", () => {
       expect(tokenRef.name).to.be.null;
     });
 
-    it("Allows updating metadata", async () => {
-      await wumboProgram.updateMetadata({
-        tokenRef: claimedTokenRef,
-        name: 'foofoo',
-        baseRoyaltyPercentage: percent(10),
-        targetRoyaltyPercentage: percent(15)
-      });
-      const tokenRef = await wumboProgram.account.tokenRefV0.fetch(claimedTokenRef);
-      const tokenMetadataRaw = await provider.connection.getAccountInfo(tokenRef.tokenMetadata);
-      const tokenMetadata = decodeMetadata(tokenMetadataRaw!.data);
-      const bonding = await splTokenBondingProgram.account.tokenBondingV0.fetch(tokenRef.tokenBonding);
-
-      expect(tokenMetadata.data.name).to.equal('foofoo');
-      expect(bonding.baseRoyaltyPercentage).to.equal(percent(10));
-      expect(bonding.targetRoyaltyPercentage).to.equal(percent(15));
-    })
-
     it("Allows opting out", async () => {
       const tokenRef = await wumboProgram.account.tokenRefV0.fetch(claimedTokenRef);
       await wumboProgram.optOut({
@@ -239,5 +223,29 @@ describe("spl-wumbo", () => {
       const tokenRef = await wumboProgram.account.tokenRefV0.fetch(claimedTokenRef);
       expect(tokenRef.tokenStaking).to.not.be.null;
     });
+    
+    it("Allows updating metadata", async () => {
+      await wumboProgram.updateMetadata({
+        tokenRef: claimedTokenRef,
+        name: 'foofoo',
+        symbol: 'FOO',
+        baseRoyaltyPercentage: percent(10),
+        targetRoyaltyPercentage: percent(15)
+      });
+      const tokenRef = await wumboProgram.account.tokenRefV0.fetch(claimedTokenRef);
+      const tokenMetadataRaw = await provider.connection.getAccountInfo(tokenRef.tokenMetadata);
+      const tokenStaking = await splTokenStakingProgram.account.tokenStakingV0.fetch(tokenRef.tokenStaking as PublicKey);
+      const tokenStakingMetadataKey = await getMetadata(tokenStaking.targetMint.toBase58());
+      const tokenMetadata = decodeMetadata(tokenMetadataRaw!.data);
+      const tokenStakingMetadataRaw = await provider.connection.getAccountInfo(new PublicKey(tokenStakingMetadataKey));
+      const tokenStakingMetadata = decodeMetadata(tokenStakingMetadataRaw.data);
+      const bonding = await splTokenBondingProgram.account.tokenBondingV0.fetch(tokenRef.tokenBonding);
+
+      expect(tokenMetadata.data.name).to.equal('foofoo');
+      expect(tokenStakingMetadata.data.name).to.equal('foofoo Cred');
+      expect(tokenStakingMetadata.data.symbol).to.equal('cFOO');
+      expect(bonding.baseRoyaltyPercentage).to.equal(percent(10));
+      expect(bonding.targetRoyaltyPercentage).to.equal(percent(15));
+    })
   });
 });

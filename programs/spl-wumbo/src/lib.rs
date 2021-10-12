@@ -872,13 +872,12 @@ pub struct ClaimSocialTokenV0<'info> {
 #[instruction(args: UpdateMetadataAccountArgs)]
 pub struct UpdateTokenMetadataV0<'info> {
     #[account(
-      has_one = token_metadata,
       constraint = reverse_token_ref.owner.unwrap() == owner.key(),
     )]
     pub reverse_token_ref: Account<'info, TokenRefV0>,
     #[account(signer)]
     pub owner: AccountInfo<'info>,
-    #[account(mut)]
+    #[account(mut)] // Rely on token metadata for validation on update authority
     pub token_metadata: AccountInfo<'info>,
     #[account()]
     pub update_authority: AccountInfo<'info>,
