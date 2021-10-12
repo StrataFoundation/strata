@@ -166,10 +166,9 @@ export class ExponentialCurve implements ExponentialCurveV0, Curve {
     const a = this.a.toNumber() / 1_000000000000;
     const b = this.b.toNumber() / 1_000000000000;
 
-    // Integrate from supply to supply + amount -- abx/ln(b) + C
-    // ab(supply + amount)/ln(b) - ab(supply)/ln(b)
-    const ab_lna = a * b / Math.log(b);
-    return ab_lna * finish - ab_lna * start
+    // Integrate from supply to supply + amount -- ab^x + C
+    // a*(b^(supply + amount) - b^(supply)))
+    return a * (Math.pow(b, finish) - Math.pow(b, start));
   }
 
   sellTargetAmount(targetAmountNum: number): number {

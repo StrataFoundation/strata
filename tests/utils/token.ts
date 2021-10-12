@@ -14,6 +14,11 @@ export class TokenUtils {
     expect(actual.value.uiAmount).to.equal(balance);
   }
 
+  async expectBalanceWithin(account: PublicKey, balance: number, precision: number) {
+    const actual = await this.provider.connection.getTokenAccountBalance(account);
+    expect(actual.value.uiAmount).to.within(balance, precision);
+  }
+
   async expectAtaBalance(account: PublicKey, mint: PublicKey, balance: number) {
     const ata = await Token.getAssociatedTokenAddress(
       ASSOCIATED_TOKEN_PROGRAM_ID,

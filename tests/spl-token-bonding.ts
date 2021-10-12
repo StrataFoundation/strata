@@ -407,4 +407,93 @@ describe("spl-token-bonding", () => {
       expect(lamports).to.within(100000000, initLamports);
     });
   });
+
+  describe("zero sum tests", () => {
+    let baseMint: PublicKey;
+    let curve: PublicKey;
+    let tokenBonding: PublicKey;
+    const INITIAL_BALANCE = 100000000;
+    const DECIMALS = 2;
+
+    const curves = [
+      {
+        // @ts-ignore
+        logCurveV0: {
+          c: new BN(1000000000000), // 1
+          g: new BN(100000000000), // 0.1
+          taylorIterations: 15,
+        },
+      },
+      {
+        // @ts-ignore
+        exponentialCurveV0: {
+          a: new BN(10_000000000000),
+          b: new BN(2_000000000000),
+        },
+      },
+      {
+        // @ts-ignore
+        fixedPriceCurveV0: {
+          price: new BN(5_000000000000),
+        },
+      }, {
+        // @ts-ignore
+        constantProductCurveV0: {
+          b: new BN(7_500000000000),
+          m: new BN(5_000000000000),
+        }
+      }
+    ]
+
+    curves.forEach(curveSpec => {
+      it(`is zero sum with ${Object.keys(curveSpec)[0]} curves`, async () => {
+        baseMint = await createMint(provider, me, DECIMALS);
+        await tokenUtils.createAtaAndMint(provider, baseMint, INITIAL_BALANCE);
+        curve = await tokenBondingProgram.initializeCurve({
+          // @ts-ignore
+          curve: curveSpec
+        });
+
+        tokenBonding = await tokenBondingProgram.createTokenBonding({
+          curve,
+          baseMint,
+          targetMintDecimals: DECIMALS,
+          authority: me,
+          baseRoyaltyPercentage: percent(0),
+          targetRoyaltyPercentage: percent(0)
+        });
+
+        await tokenBondingProgram.buyV0({
+          tokenBonding,
+          desiredTargetAmount: new BN(500),
+          slippage: 0.5,
+        });
+
+        await tokenBondingProgram.buyV0({
+          tokenBonding,
+          desiredTargetAmount: new BN(1000),
+          slippage: 0.5,
+        });
+
+        await tokenBondingProgram.sellV0({
+          tokenBonding,
+          targetAmount: new BN(1200),
+          slippage: 0.5,
+        });
+
+        await tokenBondingProgram.sellV0({
+          tokenBonding,
+          targetAmount: new BN(300),
+          slippage: 0.5,
+        });
+
+        const tokenBondingAcct = (await tokenBondingProgram.account.tokenBondingV0.fetch(
+          tokenBonding
+        )) as TokenBondingV0;
+
+        await tokenUtils.expectBalanceWithin(tokenBondingAcct.baseStorage, 0, 0.04); // Rounding errors always go in base storage favor, so nobody can rob with wiggling
+        await tokenUtils.expectAtaBalance(me, tokenBondingAcct.targetMint, 0);
+      })
+    });
+  });
 });
