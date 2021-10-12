@@ -21,6 +21,13 @@ pub mod spl_token_bonding {
 
     use super::*;
 
+    pub fn initialize_sol_storage_v0(
+      ctx: Context<InitializeSolStorageV0>,
+      bump: u8
+    ) -> ProgramResult {
+      Ok(())
+    }
+
     pub fn create_curve_v0(
       ctx: Context<InitializeCurveV0>,
       args: Curves
@@ -50,15 +57,28 @@ pub mod spl_token_bonding {
         return Err(ErrorCode::InvalidMintAuthority.into());
       }
 
-      let (base_storage_authority_pda, base_storage_authority_bump_seed) = Pubkey::find_program_address(
-        &[b"storage-authority", ctx.accounts.token_bonding.to_account_info().key.as_ref()], 
-        ctx.program_id
-      );
 
-      if args.base_storage_authority.is_some() && 
-        (args.base_storage_authority_bump_seed.unwrap() != base_storage_authority_bump_seed 
-          || args.base_storage_authority.unwrap() != base_storage_authority_pda) {
-        return Err(ErrorCode::InvalidBaseStorageAuthority.into())
+
+      if args.base_storage_authority.is_some() {
+        if ctx.accounts.base_storage.mint == spl_token::native_mint::ID {
+          let (sol_base_storage_authority, sol_base_storage_authority_bump_seed) = Pubkey::find_program_address(
+            &[b"sol-storage-authority"],
+            ctx.program_id
+          );
+          if args.base_storage_authority_bump_seed.unwrap() != sol_base_storage_authority_bump_seed
+              || args.base_storage_authority.unwrap() != sol_base_storage_authority {
+                return Err(ErrorCode::InvalidBaseStorageAuthority.into())
+              }
+        } else {
+          let (base_storage_authority_pda, base_storage_authority_bump_seed) = Pubkey::find_program_address(
+            &[b"storage-authority", ctx.accounts.token_bonding.to_account_info().key.as_ref()], 
+            ctx.program_id
+          );
+          if args.base_storage_authority_bump_seed.unwrap() != base_storage_authority_bump_seed 
+              || args.base_storage_authority.unwrap() != base_storage_authority_pda {
+            return Err(ErrorCode::InvalidBaseStorageAuthority.into())
+          }  
+        }
       }
 
       let bonding = &mut ctx.accounts.token_bonding;
@@ -138,23 +158,27 @@ pub mod spl_token_bonding {
       let total_price = to_lamports(
         &total_price_prec,
         base_mint,
+        true
       );
       let price = to_lamports(
         &price_prec,
         base_mint,
+        true
       );
       let base_royalties = to_lamports(
         &base_royalties_prec,
-        base_mint
+        base_mint,
+        true
       );
       let target_royalties = to_lamports(
         &target_royalties_prec,
         target_mint,
+        false
       );
 
       msg!("Total price is {}, with {} to base royalties and {} to target royalties", total_price, base_royalties, target_royalties);
       if total_price > args.maximum_price {
-        return Err(ErrorCode::PriceToHigh.into());
+        return Err(ErrorCode::PriceTooHigh.into());
       }
 
       let token_program = ctx.accounts.token_program.to_account_info();
@@ -239,18 +263,19 @@ Transfer {
       }
 
       let reclaimed_prec = curve.curve.price(
-        &target_supply.checked_sub(&amount_prec).ok_or::<ProgramError>(ErrorCode::MintSupplyToLow.into())?,
+        &target_supply.checked_sub(&amount_prec).ok_or::<ProgramError>(ErrorCode::MintSupplyTooLow.into())?,
         &amount_prec,
       ).unwrap();
 
       let reclaimed = to_lamports(
         &reclaimed_prec,
         base_mint,
+        false
       );
 
-      msg!("Total reclaimed is {}", reclaimed);
+      msg!("Total reclaimed is {}, min price {}", reclaimed, args.minimum_price);
       if reclaimed < args.minimum_price {
-        return Err(ErrorCode::PriceToLow.into());
+        return Err(ErrorCode::PriceTooLow.into());
       }
 
       let token_program = ctx.accounts.token_program.to_account_info();
@@ -260,6 +285,19 @@ Transfer {
       let source_authority = ctx.accounts.source_authority.to_account_info();
       let destination = ctx.accounts.destination.to_account_info();
 
+      let auth_str: &[u8];
+      let bump = &[token_bonding.base_storage_authority_bump_seed.unwrap()];
+      let bonding_ref = token_bonding.to_account_info().key.as_ref();
+      let storage_authority_seeds: Vec<&[u8]>;
+      
+      if ctx.accounts.base_mint.key() == spl_token::native_mint::ID {
+        auth_str = b"sol-storage-authority";
+        storage_authority_seeds = vec![auth_str, bump];
+      } else {
+        auth_str = b"storage-authority";
+        storage_authority_seeds = vec![auth_str, bonding_ref, bump];
+      };
+
       msg!("Burning {}", reclaimed);
       token::burn(CpiContext::new(token_program.clone(), Burn {
         mint: target_mint.to_account_info().clone(),
@@ -267,7 +305,7 @@ Transfer {
         authority: source_authority.clone()
       }), amount)?;
 
-      msg!("Paying out {} to base storage", reclaimed);
+      msg!("Paying out {} from base storage", reclaimed);
       token::transfer(CpiContext::new_with_signer(
         token_program.clone(), 
 Transfer {
@@ -276,7 +314,7 @@ Transfer {
           authority: base_storage_authority.clone()
         },
         &[
-          &[b"storage-authority", token_bonding.to_account_info().key.as_ref(), &[token_bonding.base_storage_authority_bump_seed.unwrap()]]
+          &storage_authority_seeds
         ]
       ), reclaimed)?;
 
@@ -311,10 +349,17 @@ fn precise_supply_amt(amt: u64, mint: &Account<Mint>) -> PreciseNumber {
   }
 }
 
-fn to_lamports(amt: &PreciseNumber, mint: &Account<Mint>) -> u64 {
-  amt.checked_mul(
+fn to_lamports(amt: &PreciseNumber, mint: &Account<Mint>, ceil: bool) -> u64 {
+  let pre_round = amt.checked_mul(
       &PreciseNumber::new(10_u128).unwrap().checked_pow(mint.decimals as u128).unwrap()
-  ).unwrap().ceiling().unwrap().to_imprecise().unwrap() as u64
+  ).unwrap();
+  let post_round = if (ceil) {
+    pre_round.ceiling().unwrap()
+  } else {
+    pre_round.floor().unwrap()
+  };
+  
+  post_round.to_imprecise().unwrap() as u64
 }
 
 
@@ -376,6 +421,33 @@ pub struct SellV0Args {
 }
 
 #[derive(Accounts)]
+#[instruction(bump: u8)]
+pub struct InitializeSolStorageV0<'info> {
+  #[account(mut, signer)]
+  pub payer: AccountInfo<'info>,
+  #[account(
+    init,
+    seeds = ["sol-storage".as_bytes()],
+    bump = bump,
+    token::mint = native_mint,
+    token::authority = sol_storage_authority,
+    payer = payer
+  )]
+  pub sol_storage: Box<Account<'info, TokenAccount>>,
+  #[account(
+    address = Pubkey::find_program_address(&[b"sol-storage-authority"], &id()).0
+  )]
+  pub sol_storage_authority: AccountInfo<'info>,
+  #[account(address = spl_token::native_mint::ID)]
+  pub native_mint: Account<'info, Mint>,
+  #[account(address = token::ID)]
+  pub token_program: AccountInfo<'info>,
+  #[account(address = system_program::ID)]
+  pub system_program: AccountInfo<'info>,
+  pub rent: Sysvar<'info, Rent>,
+}
+
+#[derive(Accounts)]
 #[instruction(args: Curves)]
 pub struct InitializeCurveV0<'info> {
   #[account(mut, signer)]
@@ -408,12 +480,13 @@ pub struct InitializeTokenBondingV0<'info> {
   )]
   pub base_mint: Box<Account<'info, Mint>>,
   #[account(
-    constraint = target_mint.supply == 0,
+    constraint = target_mint.supply == 0, // TODO: Calculate supply vs supply of base account
     constraint = target_mint.is_initialized,
     constraint = *target_mint.to_account_info().owner == *base_mint.to_account_info().owner
   )]
   pub target_mint: Box<Account<'info, Mint>>,
   #[account(
+    constraint = base_storage.mint != spl_token::native_mint::ID || base_storage.key() == Pubkey::find_program_address(&["sol-storage".as_bytes()], &id()).0,
     constraint = base_storage.mint == *base_mint.to_account_info().key,
     constraint = args.base_storage_authority.is_none() || base_storage.owner == args.base_storage_authority.unwrap(),
     constraint = base_storage.delegate.is_none(),
@@ -511,10 +584,7 @@ pub struct SellV0<'info> {
   #[account(mut)]
   pub base_storage: Box<Account<'info, TokenAccount>>,
 
-  #[account(
-    seeds = [b"storage-authority", token_bonding.to_account_info().key.as_ref()],
-    bump = token_bonding.base_storage_authority_bump_seed.ok_or::<ProgramError>(ErrorCode::SellDisabled.into())?
-  )]
+  #[account()]
   pub base_storage_authority: AccountInfo<'info>,
 
   #[account(mut)]
@@ -684,13 +754,13 @@ pub enum ErrorCode {
   ArithmeticError,
 
   #[msg("Buy price was higher than the maximum buy price. Try increasing max_price or slippage configuration")]
-  PriceToHigh,
+  PriceTooHigh,
 
   #[msg("Sell price was lower than the minimum sell price. Try decreasing min_price or increasing slippage configuration")]
-  PriceToLow,
+  PriceTooLow,
 
   #[msg("Cannot sell more than the target mint currently has in supply")]
-  MintSupplyToLow,
+  MintSupplyTooLow,
 
   #[msg("Sell is not enabled on this bonding curve")]
   SellDisabled,

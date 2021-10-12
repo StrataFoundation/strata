@@ -12,12 +12,6 @@ import { Curves } from "@wum.bo/spl-token-bonding";
 
 use(ChaiAsPromised);
 
-async function sleep(ts: number) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ts);
-  });
-}
-
 function percent(percent: number): number {
   return Math.floor((percent / 100) * 4294967295); // uint32 max value
 }
@@ -32,6 +26,10 @@ describe("spl-token-bonding", () => {
   const tokenBondingProgram = new SplTokenBonding(provider, program);
   const me = tokenBondingProgram.wallet.publicKey;
   const newWallet = Keypair.generate()
+
+  before(async () => {
+    await tokenBondingProgram.initializeSolStorage();
+  });
 
   describe("log curve test", () => {
     it("is the same forward and backward", () => {
@@ -172,20 +170,20 @@ describe("spl-token-bonding", () => {
       await tokenBondingProgram.buyV0({
         tokenBonding,
         desiredTargetAmount: new BN(50),
-        slippage: 0.05,
+        slippage: 0.5,
       });
 
       await tokenBondingProgram.sellV0({
         tokenBonding,
         targetAmount: new BN(55),
-        slippage: 0.05,
+        slippage: 0.5,
       });
 
       await tokenUtils.expectAtaBalance(me, tokenBondingAcct.targetMint, 0);
       await tokenUtils.expectAtaBalance(
         me,
         tokenBondingAcct.baseMint,
-        INITIAL_BALANCE / Math.pow(10, DECIMALS)
+        INITIAL_BALANCE / Math.pow(10, DECIMALS) - 1 / Math.pow(10, DECIMALS)  // rounding errors
       );
     });
   });
@@ -376,6 +374,7 @@ describe("spl-token-bonding", () => {
     });
 
     it("allows buy/sell", async () => {
+      // Also ensure zero sum.
       const initLamports = (await provider.connection.getAccountInfo(me))
         .lamports;
       await tokenBondingProgram.buyV0({
@@ -384,12 +383,25 @@ describe("spl-token-bonding", () => {
         slippage: 0.05,
       });
 
-      await tokenBondingProgram.sellV0({
+      await tokenBondingProgram.buyV0({
         tokenBonding,
-        targetAmount: new BN(55),
+        desiredTargetAmount: new BN(100),
         slippage: 0.05,
       });
 
+      await tokenBondingProgram.sellV0({
+        tokenBonding,
+        targetAmount: new BN(66),
+        slippage: 0.05,
+      });
+
+      await tokenBondingProgram.sellV0({
+        tokenBonding,
+        targetAmount: new BN(100),
+        slippage: 0.05,
+      });
+
+      await tokenUtils.expectBalance(tokenBondingAcct.baseStorage, 0.000000003); // Rounding errors always go in base storage favor, so nobody can rob with wiggling
       await tokenUtils.expectAtaBalance(me, tokenBondingAcct.targetMint, 0);
       const lamports = (await provider.connection.getAccountInfo(me)).lamports;
       expect(lamports).to.within(100000000, initLamports);

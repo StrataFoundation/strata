@@ -132,6 +132,42 @@ export class SplTokenBonding {
     return sendInstructions(this.errors, this.provider, instructions, signers, payer)
   }
 
+  async initializeSolStorageInstructions(): Promise<InstructionResult<null>> {
+    const [solStorage, solStorageBump] = await PublicKey.findProgramAddress(
+      [Buffer.from("sol-storage", "utf-8")],
+      this.programId
+    );
+    const [solStorageAuthority] = await PublicKey.findProgramAddress(
+      [Buffer.from("sol-storage-authority", "utf-8")],
+      this.programId
+    );
+    const instruction = await this.instruction.initializeSolStorageV0(solStorageBump, {
+      accounts: {
+        payer: this.wallet.publicKey,
+        solStorage,
+        solStorageAuthority,
+        nativeMint: NATIVE_MINT,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        rent: SYSVAR_RENT_PUBKEY
+      }
+    })
+
+    return {
+      instructions: [instruction],
+      signers: [],
+      output: null
+    }
+  }
+
+  async initializeSolStorage(): Promise<void> {
+    const {
+      instructions,
+      signers,
+    } = await this.initializeSolStorageInstructions();
+    await this.sendInstructions(instructions, signers);
+  }
+
   async initializeCurveInstructions({
     payer = this.wallet.publicKey,
     curve,
@@ -276,6 +312,19 @@ export class SplTokenBonding {
           baseStorageAuthority
         )
       );
+    }
+
+    if (baseMint.equals(NATIVE_MINT)) {
+      baseStorage = (await PublicKey.findProgramAddress(
+        [Buffer.from("sol-storage", "utf-8")],
+        this.programId
+      ))[0];
+      const baseStorageAuthorityRes = (await PublicKey.findProgramAddress(
+        [Buffer.from("sol-storage-authority", "utf-8")],
+        this.programId
+      ));
+      baseStorageAuthority = baseStorageAuthorityRes[0];
+      baseStorageAuthorityBumpSeed = baseStorageAuthorityRes[1];
     }
 
     if (!targetRoyalties) {
@@ -619,14 +668,22 @@ export class SplTokenBonding {
     // @ts-ignore
     const curve = await this.getCurve(tokenBondingAcct.curve, baseMint, targetMint);
 
-    const baseStorageAuthority = await PublicKey.createProgramAddress(
-      [
-        Buffer.from("storage-authority", "utf-8"),
-        tokenBonding.toBuffer(),
-        new BN(tokenBondingAcct.baseStorageAuthorityBumpSeed as number).toBuffer(),
-      ],
-      this.programId
-    );
+    let baseStorageAuthority;
+    if (tokenBondingAcct.baseMint.equals(NATIVE_MINT)) {
+      baseStorageAuthority = (await PublicKey.findProgramAddress(
+        [Buffer.from("sol-storage-authority", "utf-8")],
+        this.programId
+      ))[0];
+    } else {
+      baseStorageAuthority = await PublicKey.createProgramAddress(
+        [
+          Buffer.from("storage-authority", "utf-8"),
+          tokenBonding.toBuffer(),
+          new BN(tokenBondingAcct.baseStorageAuthorityBumpSeed as number).toBuffer(),
+        ],
+        this.programId
+      );
+    }
 
     const instructions = [];
     const signers = [];
