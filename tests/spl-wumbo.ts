@@ -61,8 +61,8 @@ describe("spl-wumbo", () => {
       curve: wumboAcct.tokenBondingDefaults.curve.toString(),
     }).to.eql({
       curve: wumboAcct.curve.toString(),
-      baseRoyaltyPercentage: percent(5),
-      targetRoyaltyPercentage: percent(5),
+      buyBaseRoyaltyPercentage: percent(5),
+      buyTargetRoyaltyPercentage: percent(5),
       targetMintDecimals: 9,
       buyFrozen: false,
     });
@@ -229,8 +229,8 @@ describe("spl-wumbo", () => {
         tokenRef: claimedTokenRef,
         name: 'foofoo',
         symbol: 'FOO',
-        baseRoyaltyPercentage: percent(10),
-        targetRoyaltyPercentage: percent(15)
+        buyBaseRoyaltyPercentage: percent(10),
+        buyTargetRoyaltyPercentage: percent(15)
       });
       const tokenRef = await wumboProgram.account.tokenRefV0.fetch(claimedTokenRef);
       const tokenMetadataRaw = await provider.connection.getAccountInfo(tokenRef.tokenMetadata);
@@ -244,8 +244,8 @@ describe("spl-wumbo", () => {
       expect(tokenMetadata.data.name).to.equal('foofoo');
       expect(tokenStakingMetadata.data.name).to.equal('foofoo Cred');
       expect(tokenStakingMetadata.data.symbol).to.equal('cFOO');
-      expect(bonding.baseRoyaltyPercentage).to.equal(percent(10));
-      expect(bonding.targetRoyaltyPercentage).to.equal(percent(15));
+      expect(bonding.buyBaseRoyaltyPercentage).to.equal(percent(10));
+      expect(bonding.buyTargetRoyaltyPercentage).to.equal(percent(15));
     })
   });
 });

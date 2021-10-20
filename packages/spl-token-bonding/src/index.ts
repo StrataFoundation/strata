@@ -50,14 +50,20 @@ interface CreateTokenBondingArgs {
   baseMint: PublicKey;
   targetMint?: PublicKey; // If not provided, will create one with `targetMintDecimals`
   targetMintDecimals?: number; // If target mint not provded, create with these decimals
-  baseRoyalties?: PublicKey; // If not provided, create an Associated Token Account with baseRoyaltiesOwner
-  baseRoyaltiesOwner?: PublicKey; // If base royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
-  targetRoyalties?: PublicKey; // If not provided, create an Associated Token Account with targetRoyaltiesOwner
-  targetRoyaltiesOwner?: PublicKey; // If target royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
+  buyBaseRoyalties?: PublicKey; // If not provided, create an Associated Token Account with baseRoyaltiesOwner
+  buyBaseRoyaltiesOwner?: PublicKey; // If base royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
+  buyTargetRoyalties?: PublicKey; // If not provided, create an Associated Token Account with targetRoyaltiesOwner
+  buyTargetRoyaltiesOwner?: PublicKey; // If target royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
+  sellBaseRoyalties?: PublicKey; // If not provided, create an Associated Token Account with baseRoyaltiesOwner
+  sellBaseRoyaltiesOwner?: PublicKey; // If base royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
+  sellTargetRoyalties?: PublicKey; // If not provided, create an Associated Token Account with targetRoyaltiesOwner
+  sellTargetRoyaltiesOwner?: PublicKey; // If target royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
   authority?: PublicKey;
   baseStorage?: PublicKey; // Base storage account. If provided, will create a bonding curve with Sell disabled, and all proceeds will go to this account.
-  baseRoyaltyPercentage: number;
-  targetRoyaltyPercentage: number;
+  buyBaseRoyaltyPercentage: number;
+  buyTargetRoyaltyPercentage: number;
+  sellBaseRoyaltyPercentage: number;
+  sellTargetRoyaltyPercentage: number;
   mintCap?: BN;
   purchaseCap?: BN;
   goLiveDate?: Date;
@@ -66,8 +72,14 @@ interface CreateTokenBondingArgs {
 
 interface UpdateTokenBondingArgs {
   tokenBonding: PublicKey;
-  baseRoyaltyPercentage?: number;
-  targetRoyaltyPercentage?: number;
+  buyBaseRoyaltyPercentage?: number;
+  buyTargetRoyaltyPercentage?: number;
+  sellBaseRoyaltyPercentage: number;
+  sellTargetRoyaltyPercentage: number;
+  buyBaseRoyalties?: PublicKey;
+  buyTargetRoyalties?: PublicKey;
+  sellBaseRoyalties?: PublicKey;
+  sellTargetRoyalties?: PublicKey;
   authority?: PublicKey | null;
   buyFrozen?: boolean;
 }
@@ -218,13 +230,17 @@ export class SplTokenBonding {
     curve,
     baseMint,
     targetMint,
-    baseRoyalties,
     baseStorage,
-    baseRoyaltiesOwner = this.wallet.publicKey,
-    targetRoyalties,
-    targetRoyaltiesOwner = this.wallet.publicKey,
-    baseRoyaltyPercentage,
-    targetRoyaltyPercentage,
+    buyBaseRoyalties,
+    buyBaseRoyaltiesOwner = this.wallet.publicKey,
+    buyTargetRoyalties,
+    buyTargetRoyaltiesOwner = this.wallet.publicKey,
+    sellBaseRoyalties,
+    sellBaseRoyaltiesOwner = this.wallet.publicKey,
+    sellTargetRoyalties,
+    sellTargetRoyaltiesOwner = this.wallet.publicKey,
+    buyBaseRoyaltyPercentage,
+    buyTargetRoyaltyPercentage,
     mintCap,
     purchaseCap,
     goLiveDate = new Date(),
@@ -233,11 +249,13 @@ export class SplTokenBonding {
   }: CreateTokenBondingArgs): Promise<InstructionResult<{ 
     tokenBonding: PublicKey, 
     targetMint: PublicKey ,
-    baseRoyalties: PublicKey,
-    targetRoyalties: PublicKey
+    buyBaseRoyalties: PublicKey,
+    buyTargetRoyalties: PublicKey,
+    sellBaseRoyalties: PublicKey,
+    sellTargetRoyalties: PublicKey
   }>> {
     if (!targetMint) {
-      if (targetRoyalties) {
+      if (sellTargetRoyalties || buyTargetRoyalties) {
         throw new Error("Cannot define target royalties if mint is not defined");
       }
 
@@ -327,48 +345,96 @@ export class SplTokenBonding {
       baseStorageAuthorityBumpSeed = baseStorageAuthorityRes[1];
     }
 
-    if (!targetRoyalties) {
-      targetRoyalties = await Token.getAssociatedTokenAddress(
+    if (!buyTargetRoyalties) {
+      buyTargetRoyalties = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         targetMint,
-        targetRoyaltiesOwner,
+        buyTargetRoyaltiesOwner,
         true
       );
 
-      if (!(await this.accountExists(targetRoyalties))) {
-        console.log("Creating target royalties...");
+      if (!(await this.accountExists(buyTargetRoyalties))) {
+        console.log("Creating buy target royalties...");
         instructions.push(
           Token.createAssociatedTokenAccountInstruction(
             ASSOCIATED_TOKEN_PROGRAM_ID,
             TOKEN_PROGRAM_ID,
             targetMint,
-            targetRoyalties,
-            targetRoyaltiesOwner,
+            buyTargetRoyalties,
+            buyTargetRoyaltiesOwner,
             payer
           )
         );
       }
     }
 
-    if (!baseRoyalties) {
-      baseRoyalties = await Token.getAssociatedTokenAddress(
+    if (!sellTargetRoyalties) {
+      sellTargetRoyalties = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
-        baseMint,
-        baseRoyaltiesOwner,
+        targetMint,
+        sellTargetRoyaltiesOwner,
         true
       );
 
-      if (!(await this.accountExists(baseRoyalties))) {
+      if (!(await this.accountExists(sellTargetRoyalties))) {
+        console.log("Creating sell target royalties...");
+        instructions.push(
+          Token.createAssociatedTokenAccountInstruction(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            targetMint,
+            sellTargetRoyalties,
+            sellTargetRoyaltiesOwner,
+            payer
+          )
+        );
+      }
+    }
+
+    if (!buyBaseRoyalties) {
+      buyBaseRoyalties = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        baseMint,
+        buyBaseRoyaltiesOwner,
+        true
+      );
+
+      if (!(await this.accountExists(buyBaseRoyalties))) {
         console.log("Creating base royalties...");
         instructions.push(
           Token.createAssociatedTokenAccountInstruction(
             ASSOCIATED_TOKEN_PROGRAM_ID,
             TOKEN_PROGRAM_ID,
             baseMint,
-            baseRoyalties,
-            baseRoyaltiesOwner,
+            buyBaseRoyalties,
+            buyBaseRoyaltiesOwner,
+            payer
+          )
+        );
+      }
+    }
+
+    if (!sellBaseRoyalties) {
+      sellBaseRoyalties = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        baseMint,
+        sellBaseRoyaltiesOwner,
+        true
+      );
+
+      if (!(await this.accountExists(sellBaseRoyalties))) {
+        console.log("Creating base royalties...");
+        instructions.push(
+          Token.createAssociatedTokenAccountInstruction(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            baseMint,
+            sellBaseRoyalties,
+            sellBaseRoyaltiesOwner,
             payer
           )
         );
@@ -379,8 +445,8 @@ export class SplTokenBonding {
       await this.instruction.initializeTokenBondingV0(
         {
           goLiveUnixTime: new BN(Math.floor(goLiveDate.valueOf() / 1000)),
-          baseRoyaltyPercentage,
-          targetRoyaltyPercentage,
+          buyBaseRoyaltyPercentage,
+          buyTargetRoyaltyPercentage,
           mintCap: mintCap || null,
           purchaseCap: purchaseCap || null,
           tokenBondingAuthority: authority,
@@ -398,8 +464,10 @@ export class SplTokenBonding {
             baseMint: baseMint,
             targetMint: targetMint,
             baseStorage,
-            baseRoyalties,
-            targetRoyalties,
+            buyBaseRoyalties,
+            buyTargetRoyalties,
+            sellBaseRoyalties,
+            sellTargetRoyalties,
             tokenProgram: TOKEN_PROGRAM_ID,
             systemProgram: SystemProgram.programId,
             rent: SYSVAR_RENT_PUBKEY,
@@ -412,8 +480,10 @@ export class SplTokenBonding {
       output: {
         tokenBonding,
         targetMint,
-        baseRoyalties,
-        targetRoyalties
+        buyBaseRoyalties,
+        buyTargetRoyalties,
+        sellBaseRoyalties,
+        sellTargetRoyalties,
       },
       instructions,
       signers,
@@ -436,8 +506,10 @@ export class SplTokenBonding {
 
   async updateTokenBondingInstructions({
     tokenBonding,
-    baseRoyaltyPercentage,
-    targetRoyaltyPercentage,
+    buyBaseRoyaltyPercentage,
+    buyTargetRoyaltyPercentage,
+    sellBaseRoyaltyPercentage,
+    sellTargetRoyaltyPercentage,
     authority,
     buyFrozen,
   }: UpdateTokenBondingArgs): Promise<InstructionResult<null>> {
@@ -447,12 +519,12 @@ export class SplTokenBonding {
     }
 
     const args: IdlTypes<SplTokenBondingIDL>["UpdateTokenBondingV0Args"] = {
-      baseRoyaltyPercentage: baseRoyaltyPercentage || tokenBondingAcct.baseRoyaltyPercentage,
-      targetRoyaltyPercentage: targetRoyaltyPercentage || tokenBondingAcct.targetRoyaltyPercentage,
+      buyBaseRoyaltyPercentage: buyBaseRoyaltyPercentage || tokenBondingAcct.buyBaseRoyaltyPercentage,
+      buyTargetRoyaltyPercentage: buyTargetRoyaltyPercentage || tokenBondingAcct.buyTargetRoyaltyPercentage,
+      sellBaseRoyaltyPercentage: sellBaseRoyaltyPercentage || tokenBondingAcct.sellBaseRoyaltyPercentage,
+      sellTargetRoyaltyPercentage: sellTargetRoyaltyPercentage || tokenBondingAcct.sellTargetRoyaltyPercentage,
       tokenBondingAuthority: authority === null ? null : authority! || tokenBondingAcct.authority as PublicKey,
-      buyFrozen: typeof buyFrozen === "undefined" ? tokenBondingAcct.buyFrozen as boolean : buyFrozen,
-      targetRoyalties: tokenBondingAcct.targetRoyalties,
-      baseRoyalties: tokenBondingAcct.baseRoyalties
+      buyFrozen: typeof buyFrozen === "undefined" ? tokenBondingAcct.buyFrozen as boolean : buyFrozen
     };
 
     return {
@@ -463,6 +535,12 @@ export class SplTokenBonding {
           accounts: {
             tokenBonding,
             authority: (tokenBondingAcct.authority as PublicKey)!,
+            baseMint: tokenBondingAcct.baseMint,
+            targetMint: tokenBondingAcct.targetMint,
+            buyTargetRoyalties: tokenBondingAcct.buyTargetRoyalties,
+            buyBaseRoyalties: tokenBondingAcct.buyBaseRoyalties,
+            sellTargetRoyalties: tokenBondingAcct.sellTargetRoyalties,
+            sellBaseRoyalties: tokenBondingAcct.sellBaseRoyalties
           },
         }),
       ],
@@ -573,11 +651,11 @@ export class SplTokenBonding {
 
     const desiredTargetAmountNum = amountAsNum(desiredTargetAmount, targetMint);
     const neededAmount =
-      desiredTargetAmountNum * (1 / (1 - asDecimal(tokenBondingAcct.targetRoyaltyPercentage)));
+      desiredTargetAmountNum * (1 / (1 - asDecimal(tokenBondingAcct.buyTargetRoyaltyPercentage)));
     const curveAmount = curve.buyTargetAmount(
       desiredTargetAmountNum,
-      tokenBondingAcct.baseRoyaltyPercentage,
-      tokenBondingAcct.targetRoyaltyPercentage
+      tokenBondingAcct.buyBaseRoyaltyPercentage,
+      tokenBondingAcct.buyTargetRoyaltyPercentage
     );
     const maxPrice = Math.ceil(curveAmount * (1 + slippage) * Math.pow(10, baseMint.decimals));
 
@@ -624,8 +702,8 @@ export class SplTokenBonding {
         targetMint: tokenBondingAcct.targetMint,
         targetMintAuthority,
         baseStorage: tokenBondingAcct.baseStorage,
-        baseRoyalties: tokenBondingAcct.baseRoyalties,
-        targetRoyalties: tokenBondingAcct.targetRoyalties,
+        buyBaseRoyalties: tokenBondingAcct.buyBaseRoyalties,
+        buyTargetRoyalties: tokenBondingAcct.buyTargetRoyalties,
         source,
         sourceAuthority,
         destination,
@@ -741,13 +819,18 @@ export class SplTokenBonding {
     }
 
     const targetAmountNum = amountAsNum(targetAmount, targetMint);
-    const reclaimedAmount = curve.sellTargetAmount(targetAmountNum);
+    const reclaimedAmount = curve.sellTargetAmount(
+      targetAmountNum,
+      tokenBondingAcct.sellBaseRoyaltyPercentage,
+      tokenBondingAcct.sellTargetRoyaltyPercentage
+    );
     const minPrice = Math.ceil(
       reclaimedAmount * (1 - slippage) * Math.pow(10, targetMint.decimals)
     );
     const args: IdlTypes<SplTokenBondingIDL>["SellV0Args"] = {
       targetAmount,
       minimumPrice: new BN(minPrice),
+      
     };
     const accounts = {
       accounts: {
@@ -757,6 +840,8 @@ export class SplTokenBonding {
         baseMint: tokenBondingAcct.baseMint,
         targetMint: tokenBondingAcct.targetMint,
         baseStorage: tokenBondingAcct.baseStorage,
+        sellBaseRoyalties: tokenBondingAcct.sellBaseRoyalties,
+        sellTargetRoyalties: tokenBondingAcct.sellTargetRoyalties,
         baseStorageAuthority,
         source,
         sourceAuthority,

@@ -97,8 +97,8 @@ async function run() {
   //   ),
   //   authority: wallet,
   //   targetMint: wumMint,
-  //   baseRoyaltyPercentage: percent(20),
-  //   targetRoyaltyPercentage: percent(0),
+  //   buyBaseRoyaltyPercentage: percent(20),
+  //   buyTargetRoyaltyPercentage: percent(0),
   //   mintCap: new BN("1000000000000000000"), // 1 billion
   // });
 
@@ -119,8 +119,10 @@ async function run() {
     targetMintDecimals: 9,
     authority: wallet,
     targetMint: wumMint,
-    baseRoyaltyPercentage: percent(0),
-    targetRoyaltyPercentage: percent(0),
+    buyBaseRoyaltyPercentage: percent(0),
+    buyTargetRoyaltyPercentage: percent(0),
+    sellBaseRoyaltyPercentage: percent(0),
+    sellTargetRoyaltyPercentage: percent(0),
     mintCap: new BN("1000000000000000000"), // 1 billion
     purchaseCap: new BN("100000000000"),
     baseStorage

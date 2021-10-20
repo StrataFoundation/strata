@@ -58,8 +58,8 @@ interface UpdateMetadataArgs {
   name?: string;
   symbol?: string;
   uri?: string;
-  baseRoyaltyPercentage?: number;
-  targetRoyaltyPercentage?: number;
+  buyBaseRoyaltyPercentage?: number;
+  buyTargetRoyaltyPercentage?: number;
 }
 
 interface OptOutArgs {
@@ -170,8 +170,8 @@ export class SplWumbo {
           },
           tokenBondingDefaults: {
             curve,
-            baseRoyaltyPercentage: percent(5),
-            targetRoyaltyPercentage: percent(5),
+            buyBaseRoyaltyPercentage: percent(5),
+            buyTargetRoyaltyPercentage: percent(5),
             targetMintDecimals: 9,
             buyFrozen: false
           },
@@ -484,8 +484,8 @@ export class SplWumbo {
     name,
     symbol,
     uri,
-    baseRoyaltyPercentage,
-    targetRoyaltyPercentage
+    buyBaseRoyaltyPercentage,
+    buyTargetRoyaltyPercentage
   }: UpdateMetadataArgs): Promise<InstructionResult<null>> {
     const tokenRefAcct = await this.account.tokenRefV0.fetch(tokenRef);
     const tokenMetadataRaw = await this.provider.connection.getAccountInfo(tokenRefAcct.tokenMetadata);
@@ -541,7 +541,7 @@ export class SplWumbo {
       )
     }
 
-    if (baseRoyaltyPercentage || targetRoyaltyPercentage) {
+    if (buyBaseRoyaltyPercentage || buyTargetRoyaltyPercentage) {
       const tokenBondingAcct = await this.splTokenBondingProgram.account.tokenBondingV0.fetch(tokenRefAcct.tokenBonding);
       const tokenBondingAuthority =
         await PublicKey.createProgramAddress(
@@ -551,8 +551,8 @@ export class SplWumbo {
 
       instructions.push(
         await this.instruction.updateRoyaltiesV0({
-          baseRoyaltyPercentage: baseRoyaltyPercentage || tokenBondingAcct.baseRoyaltyPercentage, 
-          targetRoyaltyPercentage: targetRoyaltyPercentage || tokenBondingAcct.targetRoyaltyPercentage, 
+          buyBaseRoyaltyPercentage: buyBaseRoyaltyPercentage || tokenBondingAcct.buyBaseRoyaltyPercentage, 
+          buyTargetRoyaltyPercentage: buyTargetRoyaltyPercentage || tokenBondingAcct.buyTargetRoyaltyPercentage, 
         }, {
           accounts: {
             reverseTokenRef,
@@ -681,8 +681,8 @@ export class SplWumbo {
       baseMint: wumboAcct.mint,
       targetMint,
       authority: tokenBondingAuthority,
-      baseRoyaltyPercentage: wumboAcct.tokenBondingDefaults.baseRoyaltyPercentage,
-      targetRoyaltyPercentage: wumboAcct.tokenBondingDefaults.targetRoyaltyPercentage,
+      buyBaseRoyaltyPercentage: wumboAcct.tokenBondingDefaults.buyBaseRoyaltyPercentage,
+      buyTargetRoyaltyPercentage: wumboAcct.tokenBondingDefaults.buyTargetRoyaltyPercentage,
       baseRoyaltiesOwner: baseRoyaltiesPdaOwner,
       targetRoyaltiesOwner: owner || targetRoyaltiesPdaOwner
     });

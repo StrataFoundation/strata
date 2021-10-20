@@ -65,7 +65,7 @@ export function fromCurve(curve: any, baseMint: MintInfo, targetMint: MintInfo):
 export interface Curve {
   current(): number
   locked(): number
-  sellTargetAmount(targetAmountNum: number): number
+  sellTargetAmount(targetAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number): number
   buyTargetAmount(targetAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number): number
   buyWithBaseAmount(baseAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number): number
 }
@@ -108,8 +108,11 @@ export class LogCurve implements LogCurveV0, Curve {
     return logCurveRange(c, g, start, finish);
   }
 
-  sellTargetAmount(targetAmountNum: number): number {
-    return this.startFinish(supplyAsNum(this.targetMint) - targetAmountNum, supplyAsNum(this.targetMint));
+  sellTargetAmount(targetAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number): number {
+    return this.startFinish(
+      supplyAsNum(this.targetMint) - (targetAmountNum * (1 - asDecimal(targetRoyaltiesPercent))), 
+      supplyAsNum(this.targetMint)
+    ) * (1 - asDecimal(baseRoyaltiesPercent));
   }
 
   buyTargetAmount(targetAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number): number {
@@ -120,7 +123,6 @@ export class LogCurve implements LogCurveV0, Curve {
     );
     return price * (1 + asDecimal(baseRoyaltiesPercent));
   }
-
 
   /*
     Just accept the magic...
@@ -171,8 +173,8 @@ export class ExponentialCurve implements ExponentialCurveV0, Curve {
     return a * (Math.pow(b, finish) - Math.pow(b, start));
   }
 
-  sellTargetAmount(targetAmountNum: number): number {
-    return this.startFinish(supplyAsNum(this.targetMint) - targetAmountNum, supplyAsNum(this.targetMint));
+  sellTargetAmount(targetAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number): number {
+    return this.startFinish(supplyAsNum(this.targetMint) - (targetAmountNum * (1 - asDecimal(targetRoyaltiesPercent))), supplyAsNum(this.targetMint)) * (1 - asDecimal(baseRoyaltiesPercent));
   }
 
   buyTargetAmount(targetAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number): number {
@@ -217,8 +219,8 @@ export class FixedPriceCurve implements FixedPriceCurveV0, Curve {
     return this.price.toNumber() / 1000000000000;
   }
 
-  sellTargetAmount(targetAmountNum: number): number {
-    return targetAmountNum * this.priceNum;
+  sellTargetAmount(targetAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number): number {
+    return (targetAmountNum * (1 - asDecimal(targetRoyaltiesPercent)) * this.priceNum) * (1 - asDecimal(baseRoyaltiesPercent));
   }
 
   buyTargetAmount(targetAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number): number {
@@ -263,8 +265,8 @@ export class ConstantProductCurve implements ConstantProductCurveV0, Curve {
       (m * (Math.pow(start, 2)) / 2) + (b * start)
   }
 
-  sellTargetAmount(targetAmountNum: number): number {
-    return this.startFinish(supplyAsNum(this.targetMint) - targetAmountNum, supplyAsNum(this.targetMint));
+  sellTargetAmount(targetAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number): number {
+    return this.startFinish(supplyAsNum(this.targetMint) - (targetAmountNum * (1 - asDecimal(targetRoyaltiesPercent))), supplyAsNum(this.targetMint)) * (1 - asDecimal(baseRoyaltiesPercent));
   }
 
   buyTargetAmount(targetAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number): number {

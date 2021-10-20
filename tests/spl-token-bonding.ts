@@ -83,8 +83,8 @@ describe("spl-token-bonding", () => {
         baseMint,
         targetMintDecimals: DECIMALS,
         authority: me,
-        baseRoyaltyPercentage: percent(5),
-        targetRoyaltyPercentage: percent(10),
+        buyBaseRoyaltyPercentage: percent(5),
+        buyTargetRoyaltyPercentage: percent(10),
         mintCap: new BN(1000), // 10.0
       });
       tokenBondingAcct = (await tokenBondingProgram.account.tokenBondingV0.fetch(
@@ -104,8 +104,8 @@ describe("spl-token-bonding", () => {
 
     it("allows updating token bonding", async () => {
       let tokenBondingNow = await tokenBondingProgram.account.tokenBondingV0.fetch(tokenBonding);
-      expect(tokenBondingNow.targetRoyaltyPercentage).to.equal(percent(10));
-      expect(tokenBondingNow.baseRoyaltyPercentage).to.equal(percent(5));
+      expect(tokenBondingNow.buyTargetRoyaltyPercentage).to.equal(percent(10));
+      expect(tokenBondingNow.buyBaseRoyaltyPercentage).to.equal(percent(5));
       expect(tokenBondingNow.buyFrozen).to.equal(false);
       // @ts-ignore
       expect(tokenBondingNow.curve.toBase58()).to.equal(curve.toBase58());
@@ -114,17 +114,17 @@ describe("spl-token-bonding", () => {
 
       await tokenBondingProgram.updateTokenBonding({
         tokenBonding,
-        targetRoyaltyPercentage: percent(15),
+        buyTargetRoyaltyPercentage: percent(15),
       });
       tokenBondingNow = await tokenBondingProgram.account.tokenBondingV0.fetch(tokenBonding);
-      expect(tokenBondingNow.targetRoyaltyPercentage).to.equal(percent(15));
+      expect(tokenBondingNow.buyTargetRoyaltyPercentage).to.equal(percent(15));
 
       await tokenBondingProgram.updateTokenBonding({
         tokenBonding,
-        baseRoyaltyPercentage: percent(10),
+        buyBaseRoyaltyPercentage: percent(10),
       });
       tokenBondingNow = await tokenBondingProgram.account.tokenBondingV0.fetch(tokenBonding);
-      expect(tokenBondingNow.baseRoyaltyPercentage).to.equal(percent(10));
+      expect(tokenBondingNow.buyBaseRoyaltyPercentage).to.equal(percent(10));
 
       await tokenBondingProgram.updateTokenBonding({
         tokenBonding,
@@ -209,14 +209,14 @@ describe("spl-token-bonding", () => {
       });
     });
 
-    async function createCurve(baseRoyaltyPercentage: number, targetRoyaltyPercentage: number) {
+    async function createCurve(buyBaseRoyaltyPercentage: number, buyTargetRoyaltyPercentage: number) {
       tokenBonding = await tokenBondingProgram.createTokenBonding({
         curve,
         baseMint,
         targetMintDecimals: DECIMALS,
         authority: me,
-        baseRoyaltyPercentage: percent(baseRoyaltyPercentage),
-        targetRoyaltyPercentage: percent(targetRoyaltyPercentage),
+        buyBaseRoyaltyPercentage: percent(buyBaseRoyaltyPercentage),
+        buyTargetRoyaltyPercentage: percent(buyTargetRoyaltyPercentage),
         mintCap: new BN(1000), // 10.0
       });
       tokenBondingAcct = (await tokenBondingProgram.account.tokenBondingV0.fetch(
@@ -275,8 +275,8 @@ describe("spl-token-bonding", () => {
         baseMint,
         targetMintDecimals: 2,
         authority: me,
-        baseRoyaltyPercentage: percent(0),
-        targetRoyaltyPercentage: percent(0),
+        buyBaseRoyaltyPercentage: percent(0),
+        buyTargetRoyaltyPercentage: percent(0),
         mintCap: new BN(10000),
       });
 
@@ -364,8 +364,8 @@ describe("spl-token-bonding", () => {
         baseMint,
         targetMintDecimals: DECIMALS,
         authority: me,
-        baseRoyaltyPercentage: percent(5),
-        targetRoyaltyPercentage: percent(10),
+        buyBaseRoyaltyPercentage: percent(5),
+        buyTargetRoyaltyPercentage: percent(10),
         mintCap: new BN(1000), // 10.0
       });
       tokenBondingAcct = (await tokenBondingProgram.account.tokenBondingV0.fetch(
@@ -459,8 +459,8 @@ describe("spl-token-bonding", () => {
           baseMint,
           targetMintDecimals: DECIMALS,
           authority: me,
-          baseRoyaltyPercentage: percent(0),
-          targetRoyaltyPercentage: percent(0)
+          buyBaseRoyaltyPercentage: percent(0),
+          buyTargetRoyaltyPercentage: percent(0)
         });
 
         await tokenBondingProgram.buyV0({
