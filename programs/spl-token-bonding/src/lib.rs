@@ -601,7 +601,6 @@ pub struct UpdateTokenBondingV0<'info> {
   )]
   pub base_mint: Box<Account<'info, Mint>>,
   #[account(
-    constraint = target_mint.supply == 0, // TODO: Calculate supply vs supply of base account
     constraint = target_mint.is_initialized,
     constraint = *target_mint.to_account_info().owner == *base_mint.to_account_info().owner
   )]

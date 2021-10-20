@@ -74,8 +74,8 @@ interface UpdateTokenBondingArgs {
   tokenBonding: PublicKey;
   buyBaseRoyaltyPercentage?: number;
   buyTargetRoyaltyPercentage?: number;
-  sellBaseRoyaltyPercentage: number;
-  sellTargetRoyaltyPercentage: number;
+  sellBaseRoyaltyPercentage?: number;
+  sellTargetRoyaltyPercentage?: number;
   buyBaseRoyalties?: PublicKey;
   buyTargetRoyalties?: PublicKey;
   sellBaseRoyalties?: PublicKey;
@@ -354,7 +354,8 @@ export class SplTokenBonding {
         true
       );
 
-      if (!(await this.accountExists(buyTargetRoyalties))) {
+      // If sell target royalties are undefined, we'll do this in the next step
+      if (sellTargetRoyalties && !(await this.accountExists(buyTargetRoyalties))) {
         console.log("Creating buy target royalties...");
         instructions.push(
           Token.createAssociatedTokenAccountInstruction(
@@ -402,7 +403,8 @@ export class SplTokenBonding {
         true
       );
 
-      if (!(await this.accountExists(buyBaseRoyalties))) {
+      // If sell base royalties are undefined, we'll do this in the next step
+      if (sellBaseRoyalties && !(await this.accountExists(buyBaseRoyalties))) {
         console.log("Creating base royalties...");
         instructions.push(
           Token.createAssociatedTokenAccountInstruction(

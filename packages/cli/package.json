@@ -15,7 +15,7 @@
     ],
     "scripts": {
         "copy-files": "copyfiles -u 1 src/**/*.js dist/lib",
-        "watch": "yarn run copy-files && tsc && node dist/lib/idlToTs",
+        "watch": "yarn run copy-files && node src/idlToTs",
         "bootstrap": "tsc && node dist/lib/bootstrap"
     },
     "dependencies": {

@@ -34,8 +34,9 @@ describe("spl-wumbo", () => {
     splTokenAccountSplitProgram,
   });
 
-  let wumbo: PublicKey;
+  let collective: PublicKey;
   let wumMint: PublicKey;
+  let curve: PublicKey;
 
   before(async () => {
     wumMint = await createMint(
@@ -43,37 +44,21 @@ describe("spl-wumbo", () => {
       splTokenStakingProgram.wallet.publicKey,
       1
     )
-    wumbo = await wumboProgram.createWumbo({
-      wumMint: wumMint 
+    collective = await wumboProgram.createCollective({
+      mint: wumMint,
+      authority: splTokenStakingProgram.wallet.publicKey
     });
+    curve = await splTokenBondingProgram.initializeCurve({
+      curve: {
+        // @ts-ignore
+        logCurveV0: {
+          c: new BN(1000000000000), // 1
+          g: new BN(100000000000), // 0.1
+          taylorIterations: 15,
+        },
+      },
+    })
   })
-
-  it("Initializes Wumbo with sane defaults", async () => {
-    let wumboAcct = await wumboProgram.account.wumboV0.fetch(wumbo);
-
-    expect(wumboAcct.tokenMetadataDefaults).to.eql({
-      symbol: "UNCLAIMED",
-      uri: "https://wumbo-token-metadata.s3.us-east-2.amazonaws.com/unclaimed.json", // TODO: get proper arweaveUri
-    });
-
-    expect({
-      ...wumboAcct.tokenBondingDefaults,
-      curve: wumboAcct.tokenBondingDefaults.curve.toString(),
-    }).to.eql({
-      curve: wumboAcct.curve.toString(),
-      buyBaseRoyaltyPercentage: percent(5),
-      buyTargetRoyaltyPercentage: percent(5),
-      targetMintDecimals: 9,
-      buyFrozen: false,
-    });
-
-    expect(wumboAcct.tokenStakingDefaults).to.eql({
-      periodUnit: PeriodUnit.DAY,
-      period: 1,
-      targetMintDecimals: 9,
-      rewardPercentPerPeriodPerLockupPeriod: percent(1),
-    });
-  });
 
   describe("Unclaimed", () => {
     let unclaimedTokenRef: PublicKey;
@@ -104,10 +89,17 @@ describe("spl-wumbo", () => {
       nameTx.partialSign(nameClass);
       await provider.send(nameTx);
       const { tokenRef, reverseTokenRef } = await wumboProgram.createSocialToken({
-        wumbo,
+        collective,
         name,
         nameClass: nameClass.publicKey,
-        tokenName
+        tokenName,
+        curve,
+        tokenBondingParams: {
+          buyBaseRoyaltyPercentage: percent(10),
+          buyTargetRoyaltyPercentage: percent(5),
+          sellBaseRoyaltyPercentage: percent(0),
+          sellTargetRoyaltyPercentage: percent(0)
+        }
       })
       unclaimedTokenRef = tokenRef;
       unclaimedReverseTokenRef = reverseTokenRef;
@@ -131,42 +123,22 @@ describe("spl-wumbo", () => {
       expect((tokenRef.owner as PublicKey).toBase58()).to.equal(nameClass.publicKey.toBase58());
     });
 
-
-    it("Allows initializing staking", async () => {
-      await wumboProgram.initializeStaking({
-        tokenRef: unclaimedTokenRef
-      })
-      const tokenRef = await wumboProgram.account.tokenRefV0.fetch(unclaimedTokenRef);
-      expect(tokenRef.tokenStaking).to.not.be.null;
-    });
-
-    it("Allows claiming, which transfers founder rewards to my ata", async () => {
+    it("Allows claiming, which by default sets new rewards to my account", async () => {
       const tokenRef = await wumboProgram.account.tokenRefV0.fetch(unclaimedTokenRef);
       const tokenBonding = await splTokenBondingProgram.account.tokenBondingV0.fetch(tokenRef.tokenBonding);
       await tokenUtils.createAtaAndMint(provider, wumMint, 2000000);
-      await splTokenBondingProgram.buyV0({
-        tokenBonding: tokenRef.tokenBonding,
-        desiredTargetAmount: new BN(100_000000000),
-        slippage: 0.1
-      })
       await wumboProgram.claimSocialToken({
         tokenRef: unclaimedTokenRef,
         owner: provider.wallet.publicKey,
         symbol: 'foop'
       });
+      await splTokenBondingProgram.buyV0({
+        tokenBonding: tokenRef.tokenBonding,
+        desiredTargetAmount: new BN(100_000000000),
+        slippage: 0.1
+      })
 
       await tokenUtils.expectAtaBalance(wumboProgram.wallet.publicKey, tokenBonding.targetMint, 105.263157875)
-    });
-
-    it("Allows opting out", async () => {
-      await create(tokenName + "optout"); // Need to do this because the above claimed it
-      const tokenRef = await wumboProgram.account.tokenRefV0.fetch(unclaimedTokenRef);
-      await wumboProgram.optOut({
-        tokenRef: unclaimedTokenRef,
-        nameClass: nameClass.publicKey
-      });
-      const tokenBonding = await splTokenBondingProgram.account.tokenBondingV0.fetch(tokenRef.tokenBonding);
-      expect(tokenBonding.buyFrozen).to.be.true;
     });
   });
 
@@ -181,13 +153,22 @@ describe("spl-wumbo", () => {
         splTokenStakingProgram.wallet.publicKey,
         1
       )
-      wumbo = await wumboProgram.createWumbo({
-        wumMint: wumMint
+      collective = await wumboProgram.createCollective({
+        mint: wumMint,
+        isOpen: false,
+        authority: splTokenStakingProgram.wallet.publicKey
       });
       const { tokenRef, reverseTokenRef } = await wumboProgram.createSocialToken({
-        wumbo,
+        collective,
         owner: wumboProgram.wallet.publicKey,
-        tokenName: 'Whaddup'
+        tokenName: 'Whaddup',
+        curve,
+        tokenBondingParams: {
+          buyBaseRoyaltyPercentage: percent(0),
+          buyTargetRoyaltyPercentage: percent(0),
+          sellBaseRoyaltyPercentage: percent(0),
+          sellTargetRoyaltyPercentage: percent(0)
+        }
       })
       claimedTokenRef = tokenRef;
       claimedReverseTokenRef = reverseTokenRef;
@@ -205,47 +186,9 @@ describe("spl-wumbo", () => {
       // @ts-ignore
       expect(tokenRef.owner.toBase58()).to.equal(wumboProgram.wallet.publicKey.toBase58());
       expect(tokenRef.name).to.be.null;
-    });
-
-    it("Allows opting out", async () => {
-      const tokenRef = await wumboProgram.account.tokenRefV0.fetch(claimedTokenRef);
-      await wumboProgram.optOut({
-        tokenRef: claimedTokenRef
-      })
-      const tokenBonding = await splTokenBondingProgram.account.tokenBondingV0.fetch(tokenRef.tokenBonding)
-      expect(tokenBonding.buyFrozen).to.be.true;
-    });
-
-    it("Allows initializing staking", async () => {
-      await wumboProgram.initializeStaking({
-        tokenRef: claimedTokenRef
-      })
-      const tokenRef = await wumboProgram.account.tokenRefV0.fetch(claimedTokenRef);
-      expect(tokenRef.tokenStaking).to.not.be.null;
-    });
-    
-    it("Allows updating metadata", async () => {
-      await wumboProgram.updateMetadata({
-        tokenRef: claimedTokenRef,
-        name: 'foofoo',
-        symbol: 'FOO',
-        buyBaseRoyaltyPercentage: percent(10),
-        buyTargetRoyaltyPercentage: percent(15)
-      });
-      const tokenRef = await wumboProgram.account.tokenRefV0.fetch(claimedTokenRef);
       const tokenMetadataRaw = await provider.connection.getAccountInfo(tokenRef.tokenMetadata);
-      const tokenStaking = await splTokenStakingProgram.account.tokenStakingV0.fetch(tokenRef.tokenStaking as PublicKey);
-      const tokenStakingMetadataKey = await getMetadata(tokenStaking.targetMint.toBase58());
       const tokenMetadata = decodeMetadata(tokenMetadataRaw!.data);
-      const tokenStakingMetadataRaw = await provider.connection.getAccountInfo(new PublicKey(tokenStakingMetadataKey));
-      const tokenStakingMetadata = decodeMetadata(tokenStakingMetadataRaw.data);
-      const bonding = await splTokenBondingProgram.account.tokenBondingV0.fetch(tokenRef.tokenBonding);
-
-      expect(tokenMetadata.data.name).to.equal('foofoo');
-      expect(tokenStakingMetadata.data.name).to.equal('foofoo Cred');
-      expect(tokenStakingMetadata.data.symbol).to.equal('cFOO');
-      expect(bonding.buyBaseRoyaltyPercentage).to.equal(percent(10));
-      expect(bonding.buyTargetRoyaltyPercentage).to.equal(percent(15));
-    })
+      expect(tokenMetadata.updateAuthority).to.equal(wumboProgram.wallet.publicKey.toBase58())
+    });
   });
 });

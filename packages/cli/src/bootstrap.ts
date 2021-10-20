@@ -128,7 +128,7 @@ async function run() {
     baseStorage
   });
 
-  const { instructions: wumboInstructions, signers: wumboSigners, output: { wumbo } } = await splWumboProgram.createWumboInstructions({
+  const { instructions: wumboInstructions, signers: wumboSigners, output: { wumbo } } = await splWumboProgram.createCollectiveInstructions({
     authority: wallet,
     wumMint: targetMint
   })
@@ -170,7 +170,7 @@ async function run() {
   tx3.add(...wumboInstructions);
   await splWumboProgram.provider.send(tx3, wumboSigners, { commitment: 'finalized', preflightCommitment: 'finalized' });
 
-  await splWumboProgram.account.wumboV0.fetch(wumbo);
+  await splWumboProgram.account.collectiveV0.fetch(wumbo);
   console.log(`Wumbo: ${wumbo}, bonding: ${tokenBonding}, wum: ${targetMint}, wumMetadata: ${await getMetadata(wumMint.toBase58())}`);
 }
 

@@ -38,14 +38,16 @@ export class TokenUtils {
     );
 
     const transaction = new Transaction();
-    transaction.add(Token.createAssociatedTokenAccountInstruction(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
-      NATIVE_MINT,
-      newAccount,
-      provider.wallet.publicKey,
-      provider.wallet.publicKey
-    ));
+    if (!(await provider.connection.getAccountInfo(newAccount))) {
+      transaction.add(Token.createAssociatedTokenAccountInstruction(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        NATIVE_MINT,
+        newAccount,
+        provider.wallet.publicKey,
+        provider.wallet.publicKey
+      ));
+    }
 
     // Send lamports to it (these will be wrapped into native tokens by the token program)
     transaction.add(SystemProgram.transfer({

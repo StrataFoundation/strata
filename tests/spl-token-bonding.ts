@@ -85,6 +85,8 @@ describe("spl-token-bonding", () => {
         authority: me,
         buyBaseRoyaltyPercentage: percent(5),
         buyTargetRoyaltyPercentage: percent(10),
+        sellBaseRoyaltyPercentage: percent(0),
+        sellTargetRoyaltyPercentage: percent(0),
         mintCap: new BN(1000), // 10.0
       });
       tokenBondingAcct = (await tokenBondingProgram.account.tokenBondingV0.fetch(
@@ -183,7 +185,7 @@ describe("spl-token-bonding", () => {
       await tokenUtils.expectAtaBalance(
         me,
         tokenBondingAcct.baseMint,
-        INITIAL_BALANCE / Math.pow(10, DECIMALS) - 1 / Math.pow(10, DECIMALS)  // rounding errors
+        INITIAL_BALANCE / Math.pow(10, DECIMALS)
       );
     });
   });
@@ -209,7 +211,7 @@ describe("spl-token-bonding", () => {
       });
     });
 
-    async function createCurve(buyBaseRoyaltyPercentage: number, buyTargetRoyaltyPercentage: number) {
+    async function createCurve(buyBaseRoyaltyPercentage: number, buyTargetRoyaltyPercentage: number, sellBaseRoyaltyPercentage: number, sellTargetRoyaltyPercentage: number) {
       tokenBonding = await tokenBondingProgram.createTokenBonding({
         curve,
         baseMint,
@@ -217,6 +219,8 @@ describe("spl-token-bonding", () => {
         authority: me,
         buyBaseRoyaltyPercentage: percent(buyBaseRoyaltyPercentage),
         buyTargetRoyaltyPercentage: percent(buyTargetRoyaltyPercentage),
+        sellBaseRoyaltyPercentage: percent(sellBaseRoyaltyPercentage),
+        sellTargetRoyaltyPercentage: percent(sellTargetRoyaltyPercentage),
         mintCap: new BN(1000), // 10.0
       });
       tokenBondingAcct = (await tokenBondingProgram.account.tokenBondingV0.fetch(
@@ -225,7 +229,7 @@ describe("spl-token-bonding", () => {
     }
 
     it("correctly rewards with base royalties", async () => {
-      await createCurve(20, 0);
+      await createCurve(20, 0, 0, 0);
 
       const { instructions, signers } = await tokenBondingProgram.buyV0Instructions({
         tokenBonding,
@@ -244,7 +248,7 @@ describe("spl-token-bonding", () => {
 
 
     it("correctly rewards with target royalties", async () => {
-      await createCurve(0, 20);
+      await createCurve(0, 20, 0, 0);
 
       const { instructions, signers } = await tokenBondingProgram.buyV0Instructions({
         tokenBonding,
@@ -277,6 +281,8 @@ describe("spl-token-bonding", () => {
         authority: me,
         buyBaseRoyaltyPercentage: percent(0),
         buyTargetRoyaltyPercentage: percent(0),
+        sellBaseRoyaltyPercentage: percent(0),
+        sellTargetRoyaltyPercentage: percent(0),
         mintCap: new BN(10000),
       });
 
@@ -366,6 +372,8 @@ describe("spl-token-bonding", () => {
         authority: me,
         buyBaseRoyaltyPercentage: percent(5),
         buyTargetRoyaltyPercentage: percent(10),
+        sellBaseRoyaltyPercentage: percent(0),
+        sellTargetRoyaltyPercentage: percent(0),
         mintCap: new BN(1000), // 10.0
       });
       tokenBondingAcct = (await tokenBondingProgram.account.tokenBondingV0.fetch(
@@ -401,7 +409,7 @@ describe("spl-token-bonding", () => {
         slippage: 0.05,
       });
 
-      await tokenUtils.expectBalance(tokenBondingAcct.baseStorage, 0.000000003); // Rounding errors always go in base storage favor, so nobody can rob with wiggling
+      await tokenUtils.expectBalance(tokenBondingAcct.baseStorage, 0.000000001); // Rounding errors always go in base storage favor, so nobody can rob with wiggling
       await tokenUtils.expectAtaBalance(me, tokenBondingAcct.targetMint, 0);
       const lamports = (await provider.connection.getAccountInfo(me)).lamports;
       expect(lamports).to.within(100000000, initLamports);
@@ -460,7 +468,9 @@ describe("spl-token-bonding", () => {
           targetMintDecimals: DECIMALS,
           authority: me,
           buyBaseRoyaltyPercentage: percent(0),
-          buyTargetRoyaltyPercentage: percent(0)
+          buyTargetRoyaltyPercentage: percent(0),
+          sellBaseRoyaltyPercentage: percent(0),
+          sellTargetRoyaltyPercentage: percent(0)
         });
 
         await tokenBondingProgram.buyV0({

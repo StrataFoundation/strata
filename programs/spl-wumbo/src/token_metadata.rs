@@ -57,6 +57,7 @@ pub struct UpdateMetadataAccountArgs {
 pub struct UpdateMetadataAccount<'info> {
   pub token_metadata: AccountInfo<'info>,
   pub update_authority: AccountInfo<'info>,
+  pub new_update_authority: AccountInfo<'info>,
 }
 
 pub fn update_metadata_account<'a, 'b, 'c, 'info>(
@@ -67,7 +68,7 @@ pub fn update_metadata_account<'a, 'b, 'c, 'info>(
     spl_token_metadata::ID,
     *ctx.accounts.token_metadata.key,
     *ctx.accounts.update_authority.key,
-    None,
+    Some(*ctx.accounts.new_update_authority.key),
     Some(Data {
       name: args.name,
       symbol: args.symbol,
