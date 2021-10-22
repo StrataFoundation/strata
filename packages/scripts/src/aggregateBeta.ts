@@ -11,6 +11,7 @@ import {
   Curve,
   fromCurve,
   amountAsNum,
+  CurveV0,
 } from "@wum.bo/spl-token-bonding";
 import { TokenAccountParser, TokenAccount } from "@wum.bo/spl-utils";
 
@@ -82,12 +83,12 @@ const run = async () => {
       {}
     );
 
-  const mints: (string | undefined)[] = [
+  const mints = new Set([
     WUM_TOKEN.toBase58(),
     ...tokenBondingAcctsWithWumBase.map((tokenBondingAcct) =>
       tokenBondingAcct.account.targetMint.toBase58()
     ),
-  ];
+  ]);
 
   const tokenAcctsByBetaParticipant: { [key: string]: TokenAccount[] } =
     await betaParticipants.reduce(
@@ -109,7 +110,9 @@ const run = async () => {
         );
 
         const filteredTokenAccts = parsedTokenAccts.filter((tokenAcct) =>
-          mints.includes(tokenAcct?.info?.mint?.toBase58())
+          tokenAcct?.info?.mint
+            ? mints.has(tokenAcct?.info?.mint?.toBase58())
+            : false
         );
 
         return {
@@ -120,6 +123,7 @@ const run = async () => {
       Promise.resolve({})
     );
 
+  let curveAcct: any;
   const [totalWumByBetaParticipant, totalSupplyByMint] = await Object.entries(
     tokenAcctsByBetaParticipant
   ).reduce(
@@ -163,10 +167,15 @@ const run = async () => {
               tokenBondingAcct.targetMint
             );
             baseMint = await getMintInfo(provider, tokenBondingAcct.baseMint);
-            const curveAcct = await splTokenBonding.account.curveV0.fetch(
-              tokenBondingAcct.curve
-            );
+
+            if (!curveAcct) {
+              curveAcct = await splTokenBonding.account.curveV0.fetch(
+                tokenBondingAcct.curve
+              );
+            }
+
             const curve: Curve = fromCurve(curveAcct, baseMint, targetMint);
+
             const targetAmountNum = amountAsNum(
               tokenAcct.info.amount,
               targetMint
