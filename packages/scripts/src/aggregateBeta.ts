@@ -120,7 +120,7 @@ const run = async () => {
       Promise.resolve({})
     );
 
-  const [totalWumByBetaParticipant, totalWumByMint] = await Object.entries(
+  const [totalWumByBetaParticipant, totalSupplyByMint] = await Object.entries(
     tokenAcctsByBetaParticipant
   ).reduce(
     async (
@@ -129,13 +129,12 @@ const run = async () => {
       currentIndex,
       orgArray
     ) => {
-      const [totalWumByBetaParticipantAcc, totalWumByMintAcc] = await accP;
+      const [totalWumByBetaParticipantAcc, totalSupplyByMintAcc] = await accP;
       console.log(
         `Processing: betaParticipant ${currentIndex + 1} of ${orgArray.length}`
       );
 
-      for (let i = 0, len = tokenAccts.length; i < len; i++) {
-        const tokenAcct = tokenAccts[i];
+      for (const tokenAcct of tokenAccts) {
         let tokenBondingAcct;
         let targetMint;
         let baseMint;
@@ -178,19 +177,19 @@ const run = async () => {
               reclaimedAmount +
               (totalWumByBetaParticipantAcc[betaParticipant] || 0);
 
-            totalWumByMintAcc[tokenAcct.info.mint.toBase58()] =
-              reclaimedAmount +
-              (totalWumByMintAcc[tokenAcct.info.mint.toBase58()] || 0);
+            totalSupplyByMintAcc[tokenAcct.info.mint.toBase58()] =
+              targetAmountNum +
+              (totalSupplyByMintAcc[tokenAcct.info.mint.toBase58()] || 0);
           }
         }
       }
 
-      return [totalWumByBetaParticipantAcc, totalWumByMintAcc];
+      return [totalWumByBetaParticipantAcc, totalSupplyByMintAcc];
     },
     Promise.resolve([{}, {}])
   );
 
-  const top10TotalWumCreators = await Object.keys(totalWumByMint)
+  const top10TotalSupplyCreators = await Object.keys(totalSupplyByMint)
     .reduce(
       async (
         accP: Promise<(string | number)[][]>,
@@ -220,7 +219,7 @@ const run = async () => {
 
           acc.push([
             (reverseTokenRefAcct.owner as PublicKey).toBase58(),
-            totalWumByMint[mint],
+            totalSupplyByMint[mint],
           ]);
         } catch (e) {
           console.error(e);
@@ -237,8 +236,8 @@ const run = async () => {
     );
 
   console.log("totalWumByBetaParticipant", totalWumByBetaParticipant);
-  console.log("totalWumByMint", totalWumByMint);
-  console.log("top10TotalWumCreators", top10TotalWumCreators);
+  console.log("totalWumByMint", totalSupplyByMint);
+  console.log("top10TotalWumCreators", top10TotalSupplyCreators);
 };
 
 (async () => {
