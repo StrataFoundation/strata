@@ -1,6 +1,6 @@
 import * as anchor from "@wum.bo/anchor";
 import BN from "bn.js";
-import { Program, Provider } from "@wum.bo/anchor";
+import { IdlTypes, Program, Provider } from "@wum.bo/anchor";
 import { createMetadata, Data, decodeMetadata, METADATA_PROGRAM_ID, extendBorsh, InstructionResult, BigInstructionResult, sendInstructions, sendMultipleInstructions, getMetadata, updateMetadata } from "@wum.bo/spl-utils";
 import { connection, createMintInstructions } from "@project-serum/common";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
@@ -29,7 +29,7 @@ interface CreateCollectiveArgs {
   mint: PublicKey;
   mintAuthority?: PublicKey;
   authority?: PublicKey;
-  isOpen?: boolean;
+  config: IdlTypes<SplWumboIDL>["CollectiveConfigV0"],
 }
 
 interface CreateSocialTokenArgs {
@@ -88,22 +88,16 @@ interface OptOutArgs {
 export class SplWumbo {
   program: Program<SplWumboIDL>;
   splTokenBondingProgram: SplTokenBonding;
-  splTokenAccountSplitProgram: SplTokenAccountSplit;
-  splTokenStakingProgram: SplTokenStaking;
   provider: Provider;
 
   constructor(opts: {
     provider: Provider;
     program: Program<SplWumboIDL>;
     splTokenBondingProgram: SplTokenBonding;
-    splTokenAccountSplitProgram: SplTokenAccountSplit;
-    splTokenStakingProgram: SplTokenStaking;
   }) {
     this.provider = opts.provider;
     this.program = opts.program;
     this.splTokenBondingProgram = opts.splTokenBondingProgram;
-    this.splTokenAccountSplitProgram = opts.splTokenAccountSplitProgram;
-    this.splTokenStakingProgram = opts.splTokenStakingProgram;
   }
 
   get programId() {
@@ -142,7 +136,7 @@ export class SplWumbo {
     mint,
     authority,
     mintAuthority,
-    isOpen = true
+    config
   }: CreateCollectiveArgs): Promise<InstructionResult<{ collective: PublicKey }>> {
     const programId = this.programId;
     const instructions: TransactionInstruction[] = [];
@@ -168,7 +162,7 @@ export class SplWumbo {
         {
           authority: authority ? authority : null,
           bumpSeed: collectiveBump,
-          isOpen
+          config
         },
         {
           accounts: {
@@ -295,6 +289,12 @@ export class SplWumbo {
         this.programId
       );
 
+    const [royaltiesOwner] =
+      await PublicKey.findProgramAddress(
+        [Buffer.from("standin-royalties-owner", "utf-8"), reverseTokenRef.toBuffer()],
+        this.programId
+      );
+
     instructions.push(await this.instruction.claimSocialTokenV0({
       tokenRefBumpSeed,
     }, {
@@ -311,10 +311,16 @@ export class SplWumbo {
         owner,
         baseMint: tokenBondingAcct.baseMint,
         targetMint: tokenBondingAcct.targetMint,
-        buyBaseRoyalties,
-        buyTargetRoyalties,
-        sellBaseRoyalties,
-        sellTargetRoyalties,
+        buyBaseRoyalties: tokenBondingAcct.sellBaseRoyalties,
+        buyTargetRoyalties: tokenBondingAcct.buyTargetRoyalties,
+        sellBaseRoyalties: tokenBondingAcct.sellBaseRoyalties,
+        sellTargetRoyalties: tokenBondingAcct.sellTargetRoyalties,
+        newBuyBaseRoyalties: buyBaseRoyalties,
+        newBuyTargetRoyalties: buyTargetRoyalties,
+        newSellBaseRoyalties: sellBaseRoyalties,
+        newSellTargetRoyalties: sellTargetRoyalties,
+        royaltiesOwner,
+        tokenProgram: TOKEN_PROGRAM_ID,
         tokenBondingProgram: this.splTokenBondingProgram.programId,
         tokenMetadataProgram: METADATA_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
@@ -447,7 +453,7 @@ export class SplWumbo {
     // Create token bonding
     const instructions2: TransactionInstruction[] = [];
     const signers2: Signer[] = [];
-    const { instructions: bondingInstructions, signers: bondingSigners, output: { tokenBonding } } = await this.splTokenBondingProgram.createTokenBondingInstructions({
+    const { instructions: bondingInstructions, signers: bondingSigners, output: { tokenBonding, buyBaseRoyalties, buyTargetRoyalties, sellBaseRoyalties, sellTargetRoyalties } } = await this.splTokenBondingProgram.createTokenBondingInstructions({
       payer,
       curve,
       baseMint: collectiveAcct.mint,
@@ -463,6 +469,12 @@ export class SplWumbo {
       tokenMetadata: new PublicKey(tokenMetadata),
       tokenBonding,
       payer,
+      baseMint: collectiveAcct.mint,
+      targetMint,
+      buyBaseRoyalties,
+      buyTargetRoyalties,
+      sellBaseRoyalties,
+      sellTargetRoyalties,
       systemProgram: SystemProgram.programId,
       rent: SYSVAR_RENT_PUBKEY,
       clock: SYSVAR_CLOCK_PUBKEY
@@ -507,6 +519,7 @@ export class SplWumbo {
               payer,
               tokenRef,
               reverseTokenRef,
+              tokenMetadata,
               systemProgram: SystemProgram.programId,
               rent: SYSVAR_RENT_PUBKEY,
             },

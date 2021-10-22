@@ -2,7 +2,7 @@ import * as anchor from "@wum.bo/anchor";
 import { Keypair, PublicKey, Transaction, sendAndConfirmTransaction } from "@solana/web3.js";
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
-import { SplWumbo } from "../packages/spl-wumbo";
+import { SplWumbo, SplWumboIDL } from "../packages/spl-wumbo";
 import { SplTokenBonding } from "../packages/spl-token-bonding";
 import { PeriodUnit, SplTokenStaking } from "../packages/spl-token-staking";
 import { decodeMetadata, percent } from "../packages/spl-utils/src";
@@ -11,7 +11,7 @@ import { Token } from "@solana/spl-token";
 import { TokenUtils } from "./utils/token";
 import { createMint } from "@project-serum/common";
 import { createNameRegistry, getHashedName, getNameAccountKey, NameRegistryState } from "@solana/spl-name-service";
-import { BN } from "@wum.bo/anchor";
+import { BN, IdlTypes } from "@wum.bo/anchor";
 import { getMetadata } from "@wum.bo/spl-utils";
 
 use(ChaiAsPromised);
@@ -24,15 +24,47 @@ describe("spl-wumbo", () => {
 
   const tokenUtils = new TokenUtils(provider);
   const splTokenBondingProgram = new SplTokenBonding(provider, anchor.workspace.SplTokenBonding);
-  const splTokenStakingProgram = new SplTokenStaking(provider, anchor.workspace.SplTokenStaking);
-  const splTokenAccountSplitProgram = new SplTokenAccountSplit(provider, anchor.workspace.SplTokenAccountSplit, splTokenStakingProgram);
   const wumboProgram = new SplWumbo({
     provider,
     program,
-    splTokenBondingProgram,
-    splTokenStakingProgram,
-    splTokenAccountSplitProgram,
+    splTokenBondingProgram
   });
+
+  let config = {
+    isOpen: false,
+    unclaimedTokenBondingSettings: {
+      curve: null,
+      minSellBaseRoyaltyPercentage: null,
+      minSellTargetRoyaltyPercentage: null,
+      maxSellBaseRoyaltyPercentage: null,
+      maxSellTargetRoyaltyPercentage: null,
+      minBuyBaseRoyaltyPercentage: null,
+      minBuyTargetRoyaltyPercentage: null,
+      maxBuyBaseRoyaltyPercentage: null,
+      maxBuyTargetRoyaltyPercentage: null,
+      targetMintDecimals: null,
+      buyBaseRoyalties: {
+        ownedByName: true,
+        address: null
+      },
+      sellBaseRoyalties: {
+        ownedByName: true,
+        address: null
+      },
+      buyTargetRoyalties: {
+        ownedByName: true,
+        address: null
+      },
+      sellTargetRoyalties: {
+        ownedByName: true,
+        address: null
+      },
+      minPurchaseCap: null,
+      maxPurchaseCap: null,
+      minMintCap: null,
+      maxMintCap: null,
+    }
+  }
 
   let collective: PublicKey;
   let wumMint: PublicKey;
@@ -41,12 +73,13 @@ describe("spl-wumbo", () => {
   before(async () => {
     wumMint = await createMint(
       provider,
-      splTokenStakingProgram.wallet.publicKey,
+      wumboProgram.wallet.publicKey,
       1
     )
     collective = await wumboProgram.createCollective({
       mint: wumMint,
-      authority: splTokenStakingProgram.wallet.publicKey
+      authority: wumboProgram.wallet.publicKey,
+      config
     });
     curve = await splTokenBondingProgram.initializeCurve({
       curve: {
@@ -123,10 +156,15 @@ describe("spl-wumbo", () => {
       expect((tokenRef.owner as PublicKey).toBase58()).to.equal(nameClass.publicKey.toBase58());
     });
 
-    it("Allows claiming, which by default sets new rewards to my account", async () => {
+    it("Allows claiming, which by default sets new rewards to my account and transfers rewards from any accounts with owned_by_name", async () => {
       const tokenRef = await wumboProgram.account.tokenRefV0.fetch(unclaimedTokenRef);
       const tokenBonding = await splTokenBondingProgram.account.tokenBondingV0.fetch(tokenRef.tokenBonding);
       await tokenUtils.createAtaAndMint(provider, wumMint, 2000000);
+      await splTokenBondingProgram.buyV0({
+        tokenBonding: tokenRef.tokenBonding,
+        desiredTargetAmount: new BN(100_000000000),
+        slippage: 0.1
+      })
       await wumboProgram.claimSocialToken({
         tokenRef: unclaimedTokenRef,
         owner: provider.wallet.publicKey,
@@ -138,7 +176,7 @@ describe("spl-wumbo", () => {
         slippage: 0.1
       })
 
-      await tokenUtils.expectAtaBalance(wumboProgram.wallet.publicKey, tokenBonding.targetMint, 105.263157875)
+      await tokenUtils.expectAtaBalance(wumboProgram.wallet.publicKey, tokenBonding.targetMint, 210.52631575)
     });
   });
 
@@ -150,13 +188,14 @@ describe("spl-wumbo", () => {
       // Recreate to keep from conflicts from prev tests
       wumMint = await createMint(
         provider,
-        splTokenStakingProgram.wallet.publicKey,
+        wumboProgram.wallet.publicKey,
         1
       )
       collective = await wumboProgram.createCollective({
         mint: wumMint,
         isOpen: false,
-        authority: splTokenStakingProgram.wallet.publicKey
+        authority: wumboProgram.wallet.publicKey,
+        config
       });
       const { tokenRef, reverseTokenRef } = await wumboProgram.createSocialToken({
         collective,
