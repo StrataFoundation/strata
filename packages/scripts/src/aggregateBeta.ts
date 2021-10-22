@@ -190,45 +190,37 @@ const run = async () => {
   );
 
   const top10TotalSupplyCreators = await Object.keys(totalSupplyByMint)
-    .reduce(
-      async (
-        accP: Promise<(string | number)[][]>,
-        mint,
-        currentIndex,
-        orgArray
-      ) => {
-        const acc = await accP;
-        console.log("Determining top 10");
+    .reduce(async (accP: Promise<(string | number)[][]>, mint) => {
+      const acc = await accP;
+      console.log("Determining top 10");
 
-        const [reverseTokenRef] = await PublicKey.findProgramAddress(
-          [
-            Buffer.from("reverse-token-ref", "utf-8"),
-            WUMBO_INSTANCE.toBuffer(),
-            new PublicKey(mint).toBuffer(),
-          ],
-          splWumboProgramId
-        );
+      const [reverseTokenRef] = await PublicKey.findProgramAddress(
+        [
+          Buffer.from("reverse-token-ref", "utf-8"),
+          WUMBO_INSTANCE.toBuffer(),
+          new PublicKey(mint).toBuffer(),
+        ],
+        splWumboProgramId
+      );
 
-        try {
-          const reverseTokenRefAcct: TokenRefV0 =
-            await splWumbo.account.tokenRefV0.fetch(reverseTokenRef);
+      try {
+        const reverseTokenRefAcct: TokenRefV0 =
+          await splWumbo.account.tokenRefV0.fetch(reverseTokenRef);
 
-          const hasOwner = !!(reverseTokenRefAcct.owner as PublicKey);
+        const hasOwner = !!(reverseTokenRefAcct.owner as PublicKey);
 
-          if (!hasOwner) return acc;
+        if (!hasOwner) return acc;
 
-          acc.push([
-            (reverseTokenRefAcct.owner as PublicKey).toBase58(),
-            totalSupplyByMint[mint],
-          ]);
-        } catch (e) {
-          console.error(e);
-        }
+        acc.push([
+          (reverseTokenRefAcct.owner as PublicKey).toBase58(),
+          totalSupplyByMint[mint],
+        ]);
+      } catch (e) {
+        console.error(e);
+      }
 
-        return acc;
-      },
-      Promise.resolve([])
-    )
+      return acc;
+    }, Promise.resolve([]))
     .then((multiArrayOfCreatorsWum) =>
       multiArrayOfCreatorsWum
         .sort(([_a, a]: any, [_b, b]: any) => (a > b ? -1 : 1))
