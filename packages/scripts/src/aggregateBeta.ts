@@ -11,7 +11,6 @@ import {
   Curve,
   fromCurve,
   amountAsNum,
-  CurveV0,
 } from "@wum.bo/spl-token-bonding";
 import { TokenAccountParser, TokenAccount } from "@wum.bo/spl-utils";
 
