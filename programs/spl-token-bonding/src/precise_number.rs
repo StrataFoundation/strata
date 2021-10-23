@@ -24,8 +24,9 @@ pub const fn one() -> InnerUint {
 }
 
 /// The number 0 as a PreciseNumber, used for easier calculations.
-fn zero() -> InnerUint {
-    InnerUint::from(0)
+#[inline]
+pub const fn zero() -> InnerUint {
+  U128([0_u64, 0_u64])
 }
 
 impl PreciseNumber {
@@ -277,10 +278,7 @@ impl PreciseNumber {
 
     /// Get the power of a number, where the exponent is expressed as a fraction
     /// (numerator / denominator)
-    /// NOTE: this function is private because its accurate range and precision
-    /// have not been estbalished.
-    #[allow(dead_code)]
-    fn checked_pow_fraction(&self, exponent: &Self) -> Option<Self> {
+    pub fn checked_pow_fraction(&self, exponent: &Self) -> Option<Self> {
         assert!(self.value >= Self::min_pow_base());
         assert!(self.value <= Self::max_pow_base());
         let whole_exponent = exponent.floor()?;

@@ -7,7 +7,7 @@ import { expect, use } from "chai";
 import { TokenUtils } from "./utils/token";
 import ChaiAsPromised from "chai-as-promised";
 
-import { LogCurve, SplTokenBonding, TokenBondingV0 } from "../packages/spl-token-bonding/src";
+import { ExponentialCurve, SplTokenBonding, TokenBondingV0 } from "../packages/spl-token-bonding/src";
 import { Curves } from "@wum.bo/spl-token-bonding";
 
 use(ChaiAsPromised);
@@ -31,12 +31,25 @@ describe("spl-token-bonding", () => {
     await tokenBondingProgram.initializeSolStorage();
   });
 
-  describe("log curve test", () => {
-    it("is the same forward and backward", () => {
-      const curve = new LogCurve({
-        c: new BN(1000000000000), // 1
-        g: new BN(100000000000), // 0.1
-        taylorIterations: 15,
+  describe("exp curve test", () => {
+    it("it does the correct calculation when supply is 0", () => {
+      const curve = new ExponentialCurve(
+        new BN(1000000000000), // c = 1
+        new BN(100000000000), // b = 0.1
+      {
+        k: new BN(500000000000), // 0.5
+      }, {
+        address: PublicKey.default,
+        mint: PublicKey.default,
+        owner: PublicKey.default,
+        amount: new BN(0),
+        delegate: null,
+        delegatedAmount: new BN(0),
+        isInitialized: false,
+        isFrozen: false,
+        isNative: false,
+        rentExemptReserve: null,
+        closeAuthority: null
       }, {
         mintAuthority: null,
         supply: new BN(0),
@@ -46,6 +59,42 @@ describe("spl-token-bonding", () => {
       }, {
         mintAuthority: null,
         supply: new BN(0),
+        decimals: 9,
+        isInitialized: true,
+        freezeAuthority: null
+      });
+
+      const baseAmount = curve.buyTargetAmount(10, percent(5), percent(5));
+      expect(baseAmount).to.be.closeTo(25.07426349820264, 0.005);
+    });
+
+    it("is the same forward and backward when supply and reserves are nonzero", () => {
+      const curve = new ExponentialCurve(
+        new BN(1000000000000), // c = 1
+        new BN(100000000000), // b = 0.1
+      {
+        k: new BN(500000000000), // 0.5
+      }, {
+        address: PublicKey.default,
+        mint: PublicKey.default,
+        owner: PublicKey.default,
+        amount: new BN(1000000000),
+        delegate: null,
+        delegatedAmount: new BN(0),
+        isInitialized: false,
+        isFrozen: false,
+        isNative: false,
+        rentExemptReserve: null,
+        closeAuthority: null
+      }, {
+        mintAuthority: null,
+        supply: new BN(1000000000),
+        decimals: 9,
+        isInitialized: true,
+        freezeAuthority: null
+      }, {
+        mintAuthority: null,
+        supply: new BN(1000000000),
         decimals: 9,
         isInitialized: true,
         freezeAuthority: null
@@ -70,10 +119,13 @@ describe("spl-token-bonding", () => {
       curve = await tokenBondingProgram.initializeCurve({
         curve: {
           // @ts-ignore
-          logCurveV0: {
-            c: new BN(1000000000000), // 1
-            g: new BN(100000000000), // 0.1
-            taylorIterations: 15,
+          c: new BN(1000000000000), // c = 1
+          b: new BN(100000000000), // b = 0.1
+          curve: {
+            exponentialCurveV0: {
+            // @ts-ignore
+              k: new BN(1000000000000)
+            }
           },
         },
       });
@@ -97,11 +149,11 @@ describe("spl-token-bonding", () => {
     it("succesfully creates the curve", async () => {
       const curveAcct = await tokenBondingProgram.account.curveV0.fetch(curve);
       // @ts-ignore
-      expect(curveAcct.curve.logCurveV0.g.toNumber()).to.equal(100000000000);
+      expect(curveAcct.curve.exponentialCurveV0.k.toNumber()).to.equal(1000000000000);
       // @ts-ignore
-      expect(curveAcct.curve.logCurveV0.c.toNumber()).to.equal(1000000000000);
+      expect(curveAcct.c.toNumber()).to.equal(1000000000000);
       // @ts-ignore
-      expect(curveAcct.curve.logCurveV0.taylorIterations).to.equal(15);
+      expect(curveAcct.b.toNumber()).to.equal(100000000000);
     });
 
     it("allows updating token bonding", async () => {
@@ -426,7 +478,7 @@ describe("spl-token-bonding", () => {
     const curves = [
       {
         // @ts-ignore
-        logCurveV0: {
+        exponentialCurveV0: {
           c: new BN(1000000000000), // 1
           g: new BN(100000000000), // 0.1
           taylorIterations: 15,
