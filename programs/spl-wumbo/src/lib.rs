@@ -584,7 +584,7 @@ pub struct InitializeSocialTokenV0<'info> {
       has_one = buy_base_royalties,
       has_one = buy_target_royalties,
       has_one = sell_base_royalties,
-      has_one = sell_target_royalties
+      has_one = sell_target_royalties,
     )]
     token_bonding: Box<Account<'info, TokenBondingV0>>,
     #[account(
@@ -596,6 +596,9 @@ pub struct InitializeSocialTokenV0<'info> {
     )]
     token_metadata: Box<Account<'info, Metadata>>,
     pub base_mint: Box<Account<'info, Mint>>,
+    #[account(
+      constraint = target_mint.supply == 0
+    )]
     pub target_mint: Box<Account<'info, Mint>>,
     pub buy_base_royalties: Box<Account<'info, TokenAccount>>,
     pub buy_target_royalties: Box<Account<'info, TokenAccount>>,
