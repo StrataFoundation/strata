@@ -4,7 +4,6 @@ use spl_token::state::AccountState;
 
 pub mod precise_number;
 pub mod uint;
-pub mod ln;
 use precise_number::{InnerUint, PreciseNumber, one, zero};
 
 static TARGET_MINT_AUTHORITY_PREFIX: &str = "target-authority";
@@ -88,7 +87,7 @@ pub mod spl_token_bonding {
           ctx.accounts.system_program.to_account_info().clone(),
         ],
         &[
-          &["sol-storage".as_bytes()]
+          &["sol-storage".as_bytes(), &[ctx.accounts.state.sol_storage_bump_seed]]
         ]
       )?;
 
@@ -134,15 +133,6 @@ pub mod spl_token_bonding {
         ctx.program_id
       );
       let target_mint = &ctx.accounts.target_mint;
-      if mint_pda != target_mint.mint_authority.ok_or::<ProgramError>(ErrorCode::NoMintAuthority.into())?
-       || (target_mint.freeze_authority.is_some() && mint_pda != target_mint.freeze_authority.ok_or::<ProgramError>(ErrorCode::NoMintAuthority.into())?)
-       || target_mint_authority_bump_seed != args.target_mint_authority_bump_seed  {
-         msg!("Auth {} {}", target_mint.mint_authority.unwrap(), mint_pda);
-        return Err(ErrorCode::InvalidMintAuthority.into());
-      }
-
-
-
       if args.base_storage_authority.is_some() {
         let (base_storage_authority_pda, base_storage_authority_bump_seed) = Pubkey::find_program_address(
           &[b"storage-authority", ctx.accounts.token_bonding.to_account_info().key.as_ref()], 
@@ -170,7 +160,12 @@ pub mod spl_token_bonding {
       bonding.curve = *ctx.accounts.curve.to_account_info().key;
       bonding.mint_cap = args.mint_cap;
       bonding.purchase_cap = args.purchase_cap;
-      bonding.buy_frozen = args.buy_frozen;
+      // We need to own the mint authority if this bonding curve supports buying.
+      // This can be a sell only bonding curve
+      bonding.buy_frozen = args.buy_frozen
+        || mint_pda != target_mint.mint_authority.ok_or::<ProgramError>(ErrorCode::NoMintAuthority.into())?
+        || (target_mint.freeze_authority.is_some() && mint_pda != target_mint.freeze_authority.ok_or::<ProgramError>(ErrorCode::NoMintAuthority.into())?)
+        || target_mint_authority_bump_seed != args.target_mint_authority_bump_seed;
       bonding.sell_frozen = args.base_storage_authority.is_none();
       bonding.bump_seed = args.bump_seed;
       bonding.base_storage_authority_bump_seed = args.base_storage_authority_bump_seed;
@@ -208,6 +203,7 @@ pub mod spl_token_bonding {
       let base_amount = precise_supply_amt(ctx.accounts.base_storage.amount, base_mint);
       let amount_prec = precise_supply_amt(amount, target_mint);
       let target_supply = precise_supply(target_mint);
+      msg!("Current reserves {} and supply {}, buying {}", ctx.accounts.base_storage.amount, ctx.accounts.target_mint.supply, amount);
 
       if token_bonding.buy_frozen {
         return Err(ErrorCode::BuyFrozen.into());
@@ -230,7 +226,8 @@ pub mod spl_token_bonding {
         &base_amount,
         &target_supply,
         &amount_prec,
-      ).unwrap();
+        false
+      ).or_arith_error()?;
 
       let base_royalties_percent = get_percent(token_bonding.buy_base_royalty_percentage)?;
       let target_royalties_percent = get_percent(token_bonding.buy_target_royalty_percentage)?;
@@ -261,6 +258,7 @@ pub mod spl_token_bonding {
 
       msg!("Total price is {}, with {} to base royalties and {} to target royalties", total_price, base_royalties, target_royalties);
       if total_price > args.maximum_price {
+        msg!("Price too high for max price {}", args.maximum_price);
         return Err(ErrorCode::PriceTooHigh.into());
       }
 
@@ -339,6 +337,7 @@ Transfer {
       let amount_prec = precise_supply_amt(amount, target_mint);
       let base_amount = precise_supply_amt(ctx.accounts.base_storage.amount, base_mint);
       let target_supply = precise_supply(target_mint);
+      msg!("Current reserves {} and supply {}", ctx.accounts.base_storage.amount, ctx.accounts.target_mint.supply);
 
       if token_bonding.go_live_unix_time > ctx.accounts.clock.unix_timestamp {
         return Err(ErrorCode::NotLiveYet.into());
@@ -355,9 +354,10 @@ Transfer {
       let amount_minus_royalties_prec = amount_prec.checked_sub(&target_royalties_prec).or_arith_error()?;
       let reclaimed_prec = curve.price(
         &base_amount,
-        &target_supply.checked_sub(&amount_minus_royalties_prec).ok_or::<ProgramError>(ErrorCode::MintSupplyTooLow.into())?,
-        &amount_prec,
-      ).unwrap();
+        &target_supply,
+        &amount_minus_royalties_prec,
+        true
+      ).or_arith_error()?;
 
       let base_royalties_prec = base_royalties_percent.checked_mul(&reclaimed_prec).or_arith_error()?;
 
@@ -420,7 +420,7 @@ Transfer {
         }
       ), target_royalties)?;
 
-      msg!("Paying out {} from base storage", reclaimed);
+      msg!("Paying out {} from base storage, {}", reclaimed, ctx.accounts.base_storage.amount);
       token::transfer(CpiContext::new_with_signer(
         token_program.clone(), 
 Transfer {
@@ -618,6 +618,7 @@ pub struct BuyWrappedSolV0<'info> {
   pub mint_authority: AccountInfo<'info>,
   #[account(mut)]
   pub sol_storage: AccountInfo<'info>,
+  #[account(mut)]
   pub source: Signer<'info>,
   #[account(
     mut,
@@ -692,7 +693,6 @@ pub struct InitializeTokenBondingV0<'info> {
   )]
   pub base_mint: Box<Account<'info, Mint>>,
   #[account(
-    constraint = target_mint.supply == 0, // TODO: Calculate supply vs supply of base account
     constraint = target_mint.is_initialized,
     constraint = *target_mint.to_account_info().owner == *base_mint.to_account_info().owner
   )]
@@ -742,7 +742,7 @@ pub struct UpdateTokenBondingV0<'info> {
     has_one = base_mint,
     has_one = target_mint
   )]
-  pub token_bonding: Account<'info, TokenBondingV0>,
+  pub token_bonding: Box<Account<'info, TokenBondingV0>>,
   #[account(signer)]
   pub authority: AccountInfo<'info>,
 
@@ -862,18 +862,20 @@ pub struct SellV0<'info> {
 pub enum Curves {
   // All u128s are fixed precision decimal with 12 decimal places. So 1 would be 1_000_000_000_000. 1.5 is 1_500_000_000_000
 
-  // c(x^k) + b.
-  // Constant product = k = 1, b = 0
-  // Fixed price = k = 0, c = 0, b = price
+  // c(x^(pow/frac)) + b.
+  // Constant product = pow = 1, frac = 1, b = 0
+  // Fixed price = pow = 0, frac = 1, c = 0, b = price
   ExponentialCurveV0 {
-    k: u128
+    pow: u64,
+    frac: u64
   }
 }
 
 impl Default for Curves {
     fn default() -> Self {
         Curves::ExponentialCurveV0 {
-          k: 0_500_000_000_000, // 0.5
+          pow: 1_000_000_000_000, // 1
+          frac: 1_000_000_000_000, // 1
         }
     }
 }
@@ -904,27 +906,28 @@ pub struct CreateCurveV0Args {
 }
 
 pub trait Curve {
-  fn price(&self, base_supply: &PreciseNumber, target_supply: &PreciseNumber, amount: &PreciseNumber) -> Option<PreciseNumber>;
+  fn price(&self, base_supply: &PreciseNumber, target_supply: &PreciseNumber, amount: &PreciseNumber, sell: bool) -> Option<PreciseNumber>;
 }
 
 static ONE_PREC: PreciseNumber =  PreciseNumber { value: one() };
 static ZERO_PREC: PreciseNumber =  PreciseNumber { value: zero() };
 
 impl Curve for CurveV0 {
-  fn price(&self, base_amount: &PreciseNumber, target_supply: &PreciseNumber, amount: &PreciseNumber) -> Option<PreciseNumber> {
+  fn price(&self, base_amount: &PreciseNumber, target_supply: &PreciseNumber, amount: &PreciseNumber, sell: bool) -> Option<PreciseNumber> {
     let b_prec = PreciseNumber { value: InnerUint::from(self.b) };
-    let c_prec = PreciseNumber { value: InnerUint::from(self.b) };
+    let c_prec = PreciseNumber { value: InnerUint::from(self.c) };
     if base_amount.eq(&ZERO_PREC) || target_supply.eq(&ZERO_PREC) {
       match self.curve {
-        // b dS + (c dS^(1 + k))/(1 + k)
-        Curves::ExponentialCurveV0 { k } => {
-          let k_prec = PreciseNumber { value: InnerUint::from(k) };
-          let one_plus_k = k_prec.checked_add(&ONE_PREC)?;
+        // b dS + (c dS^(1 + pow/frac))/(1 + pow/frac)
+        Curves::ExponentialCurveV0 { pow, frac } => {
+          let one_plus_k_numerator = frac.checked_add(pow)?;
+          let pow_prec = PreciseNumber::new(pow as u128)?;
+          let frac_prec = PreciseNumber::new(frac as u128)?;
           b_prec.checked_mul(&amount)?.checked_add(
             &c_prec.checked_mul(
-              &amount.checked_pow_fraction(&one_plus_k)?
+              &amount.pow_frac_approximation(one_plus_k_numerator, frac)?
             )?.checked_div(
-              &one_plus_k
+              &ONE_PREC.checked_add(&pow_prec.checked_div(&frac_prec)?)?
             )?
           )
         }
@@ -932,15 +935,29 @@ impl Curve for CurveV0 {
     } else {
       match self.curve {
         /*
-          (R / S^(1 + k)) ((S + dS)(S + dS)^k - S^(1 + k))
+          (R / S^(1 + k)) ((S + dS)^(1 + k) - S^(1 + k))
         */
-        Curves::ExponentialCurveV0 { k } => {
-          let k_prec = PreciseNumber { value: InnerUint::from(k) };
-          let one_plus_k = k_prec.checked_add(&ONE_PREC)?;
-          let s_plus_ds = target_supply.checked_add(&amount)?;
-          let s_plus_ds_k = s_plus_ds.checked_pow_fraction(&k_prec)?;
-          base_amount.checked_div(&target_supply.checked_pow_fraction(&one_plus_k)?)?.checked_mul(
-            &target_supply.checked_add(&amount)?.checked_mul(&s_plus_ds_k)?.checked_sub(&target_supply.checked_pow_fraction(&one_plus_k)?)?
+        Curves::ExponentialCurveV0 { pow, frac } => {
+          let one_plus_k_numerator = frac.checked_add(pow)?;
+          let s_plus_ds = if sell {
+            target_supply.checked_sub(&amount)?
+          } else {
+            target_supply.checked_add(&amount)?
+          };
+
+          let s_plus_ds_k1 = s_plus_ds.pow_frac_approximation(one_plus_k_numerator, frac)?;
+          let s_k1 = &target_supply.pow_frac_approximation(one_plus_k_numerator, frac)?;
+
+          // PreciseNumbers cannot be negative. If we're selling, S + dS is less than S.
+          // Swap the two around. This will invert the sine of this function, but since sell = true they are expecting a positive number
+          let right_paren_value = if sell {
+            s_k1.checked_sub(&s_plus_ds_k1)?
+          } else {
+            s_plus_ds_k1.checked_sub(&s_k1)?
+          };
+
+          base_amount.checked_div(s_k1)?.checked_mul(
+            &right_paren_value
           )
         }
       }
@@ -1024,6 +1041,6 @@ pub enum ErrorCode {
   #[msg("Buy is frozen on this bonding curve, purchases not allowed")]
   BuyFrozen,
 
-  #[msg("Use token bonding wrapped sol via buy_wsol, sell_wsol commands. We may one day provide liquid staking rewards on this stored sol.")]
+  #[msg("Use token bonding wrapped sol via buy_wrapped_sol, sell_wrapped_sol commands. We may one day provide liquid staking rewards on this stored sol.")]
   WrappedSolNotAllowed
 }

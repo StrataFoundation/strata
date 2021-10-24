@@ -153,7 +153,7 @@ export class SplTokenBonding {
       [Buffer.from("state", "utf-8")],
       this.programId
     );
-    const [solStorage, solStorageBump] = await PublicKey.findProgramAddress(
+    const [solStorage, solStorageBumpSeed] = await PublicKey.findProgramAddress(
       [Buffer.from("sol-storage", "utf-8")],
       this.programId
     );
@@ -167,12 +167,22 @@ export class SplTokenBonding {
     const mintKeypair = anchor.web3.Keypair.generate();
     signers.push(mintKeypair);
 
-    instructions.push(...await createMintInstructions(
-      this.provider,
-      this.wallet.publicKey,
-      mintKeypair.publicKey,
-      9
-    ))
+    instructions.push(...[
+      SystemProgram.createAccount({
+        fromPubkey: this.wallet.publicKey,
+        newAccountPubkey: mintKeypair.publicKey,
+        space: 82,
+        lamports: await this.provider.connection.getMinimumBalanceForRentExemption(82),
+        programId: TOKEN_PROGRAM_ID,
+      }),
+      Token.createInitMintInstruction(
+        TOKEN_PROGRAM_ID,
+        mintKeypair.publicKey,
+        9,
+        this.wallet.publicKey,
+        wrappedSolAuthority
+      ),
+    ])
 
     await createMetadata(
       new Data({
@@ -193,14 +203,14 @@ export class SplTokenBonding {
     instructions.push(Token.createSetAuthorityInstruction(
       TOKEN_PROGRAM_ID,
       mintKeypair.publicKey,
-      this.wallet.publicKey,
+      wrappedSolAuthority,
       "MintTokens",
       this.wallet.publicKey,
       []
     ))
 
     instructions.push(await this.instruction.initializeSolStorageV0({
-      solStorageBump,
+      solStorageBumpSeed,
       bumpSeed,
       mintAuthorityBumpSeed
     }, {
@@ -316,6 +326,10 @@ export class SplTokenBonding {
     }
     const programId = this.programId;
     const provider = this.provider;
+    const state = await this.getState();
+    if (baseMint.equals(NATIVE_MINT)) {
+      baseMint = state.wrappedSolMint;
+    }
 
     const instructions: TransactionInstruction[] = [];
     const signers = [];
@@ -501,7 +515,7 @@ export class SplTokenBonding {
             payer: payer,
             curve,
             tokenBonding,
-            baseMint: baseMint,
+            baseMint,
             targetMint: targetMint,
             baseStorage,
             buyBaseRoyalties,
@@ -633,12 +647,12 @@ export class SplTokenBonding {
         }),
         Token.createInitAccountInstruction(
           TOKEN_PROGRAM_ID,
-          NATIVE_MINT,
+          state.wrappedSolMint,
           newAccount.publicKey,
           owner
         ),
         await this.instruction.buyWrappedSolV0({
-          amount
+          amount: new BN(amount)
         }, {
           accounts: {
             state: stateAddress,
@@ -655,7 +669,7 @@ export class SplTokenBonding {
       lastInstructions: [
         await this.instruction.sellWrappedSolV0({
           all: true,
-          amount
+          amount: new BN(amount)
         }, {
           accounts: {
             state: stateAddress,

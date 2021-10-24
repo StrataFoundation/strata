@@ -37,7 +37,10 @@ describe("spl-token-bonding", () => {
         new BN(1000000000000), // c = 1
         new BN(100000000000), // b = 0.1
       {
-        k: new BN(500000000000), // 0.5
+        // @ts-ignore
+        pow: new BN(1),
+        // @ts-ignore
+        frac: new BN(2)
       }, {
         address: PublicKey.default,
         mint: PublicKey.default,
@@ -73,7 +76,10 @@ describe("spl-token-bonding", () => {
         new BN(1000000000000), // c = 1
         new BN(100000000000), // b = 0.1
       {
-        k: new BN(500000000000), // 0.5
+        // @ts-ignore
+        pow: new BN(1),
+        // @ts-ignore
+        frac: new BN(2)
       }, {
         address: PublicKey.default,
         mint: PublicKey.default,
@@ -123,8 +129,10 @@ describe("spl-token-bonding", () => {
           b: new BN(100000000000), // b = 0.1
           curve: {
             exponentialCurveV0: {
-            // @ts-ignore
-              k: new BN(1000000000000)
+              // @ts-ignore
+              pow: new BN(1),
+              // @ts-ignore
+              frac: new BN(1)
             }
           },
         },
@@ -149,7 +157,9 @@ describe("spl-token-bonding", () => {
     it("succesfully creates the curve", async () => {
       const curveAcct = await tokenBondingProgram.account.curveV0.fetch(curve);
       // @ts-ignore
-      expect(curveAcct.curve.exponentialCurveV0.k.toNumber()).to.equal(1000000000000);
+      expect(curveAcct.curve.exponentialCurveV0.pow.toNumber()).to.equal(1);
+      // @ts-ignore
+      expect(curveAcct.curve.exponentialCurveV0.frac.toNumber()).to.equal(1);
       // @ts-ignore
       expect(curveAcct.c.toNumber()).to.equal(1000000000000);
       // @ts-ignore
@@ -256,10 +266,17 @@ describe("spl-token-bonding", () => {
       curve = await tokenBondingProgram.initializeCurve({
         curve: {
           // @ts-ignore
-          fixedPriceCurveV0: {
-            price: new BN(1_000000000000),
+          c: new BN(0), // c = 0
+          b: new BN(1_000000000000),
+          curve: {
+            exponentialCurveV0: {
+              // @ts-ignore
+              pow: new BN(0),
+              // @ts-ignore
+              frac: new BN(1)
+            }
           },
-        },
+        }
       });
     });
 
@@ -322,9 +339,7 @@ describe("spl-token-bonding", () => {
     async function create(c: any): Promise<{ tokenBonding: PublicKey; baseMint: PublicKey }> {
       const baseMint = await createMint(provider, me, 2);
       await tokenUtils.createAtaAndMint(provider, baseMint, 100_00);
-      const curve = await tokenBondingProgram.initializeCurve({
-        curve: c,
-      });
+      const curve = await tokenBondingProgram.initializeCurve(c);
 
       const tokenBonding = await tokenBondingProgram.createTokenBonding({
         curve,
@@ -344,35 +359,19 @@ describe("spl-token-bonding", () => {
       };
     }
 
-    it("allows a doubling mechanic", async () => {
-      const { tokenBonding, baseMint } = await create({
-        // @ts-ignore
-        exponentialCurveV0: {
-          a: new BN(10_000000000000),
-          b: new BN(2_000000000000),
-        },
-      });
-      await tokenBondingProgram.buyV0({
-        tokenBonding,
-        desiredTargetAmount: new BN(100),
-        slippage: 0.05,
-      });
-      await tokenUtils.expectAtaBalance(me, baseMint, 90);
-
-      await tokenBondingProgram.buyV0({
-        tokenBonding,
-        desiredTargetAmount: new BN(200),
-        slippage: 0.05,
-      });
-      await tokenUtils.expectAtaBalance(me, baseMint, 30);
-    });
-
     it("allows a fixed price", async () => {
       const { tokenBonding, baseMint } = await create({
-        // @ts-ignore
-        fixedPriceCurveV0: {
-          price: new BN(5_000000000000),
-        },
+        curve: {
+          // @ts-ignore
+          c: new BN(0), // c = 0
+          b: new BN(5_000000000000), // b = 5
+          curve: {
+            exponentialCurveV0: {
+              pow: new BN(0),
+              frac: new BN(1)
+            }
+          },
+        }
       });
       await tokenBondingProgram.buyV0({
         tokenBonding,
@@ -384,11 +383,17 @@ describe("spl-token-bonding", () => {
 
     it("allows a constant product price", async () => {
       const { tokenBonding, baseMint } = await create({
-        // @ts-ignore
-        constantProductCurveV0: {
-          b: new BN(7_500000000000),
-          m: new BN(5_000000000000),
-        },
+        curve: {
+          // @ts-ignore
+          c: new BN(5_000000000000), // c = 5
+          b: new BN(7_500000000000), // b = 7.5
+          curve: {
+            exponentialCurveV0: {
+              pow: new BN(1),
+              frac: new BN(1)
+            }
+          },
+        }
       });
       await tokenBondingProgram.buyV0({
         tokenBonding,
@@ -409,12 +414,17 @@ describe("spl-token-bonding", () => {
       curve = await tokenBondingProgram.initializeCurve({
         curve: {
           // @ts-ignore
-          logCurveV0: {
-            c: new BN(1000000000000), // 1
-            g: new BN(100000000000), // 0.1
-            taylorIterations: 15,
+          c: new BN(1000000000000), // c = 1
+          b: new BN(100000000000), // b = 0.1
+          curve: {
+            exponentialCurveV0: {
+              // @ts-ignore
+              pow: new BN(1),
+              // @ts-ignore
+              frac: new BN(1)
+            }
           },
-        },
+        }
       });
 
       tokenBonding = await tokenBondingProgram.createTokenBonding({
@@ -461,7 +471,7 @@ describe("spl-token-bonding", () => {
         slippage: 0.05,
       });
 
-      await tokenUtils.expectBalance(tokenBondingAcct.baseStorage, 0.000000001); // Rounding errors always go in base storage favor, so nobody can rob with wiggling
+      await tokenUtils.expectBalance(tokenBondingAcct.baseStorage, 0);
       await tokenUtils.expectAtaBalance(me, tokenBondingAcct.targetMint, 0);
       const lamports = (await provider.connection.getAccountInfo(me)).lamports;
       expect(lamports).to.within(100000000, initLamports);
@@ -477,42 +487,52 @@ describe("spl-token-bonding", () => {
 
     const curves = [
       {
-        // @ts-ignore
-        exponentialCurveV0: {
-          c: new BN(1000000000000), // 1
-          g: new BN(100000000000), // 0.1
-          taylorIterations: 15,
-        },
+        curve: {
+          // @ts-ignore
+          c: new BN(1000000000000),
+          b: new BN(100000000000),
+          curve: {
+            exponentialCurveV0: {
+              pow: new BN(1),
+              frac: new BN(2)
+            }
+          },
+        }
       },
       {
-        // @ts-ignore
-        exponentialCurveV0: {
-          a: new BN(10_000000000000),
-          b: new BN(2_000000000000),
-        },
+        curve: {
+          // @ts-ignore
+          c: new BN(2000000000000),
+          b: new BN(0),
+          curve: {
+            exponentialCurveV0: {
+              pow: new BN(1),
+              frac: new BN(2)
+            }
+          },
+        }
       },
       {
-        // @ts-ignore
-        fixedPriceCurveV0: {
-          price: new BN(5_000000000000),
-        },
-      }, {
-        // @ts-ignore
-        constantProductCurveV0: {
-          b: new BN(7_500000000000),
-          m: new BN(5_000000000000),
+        curve: {
+          // @ts-ignore
+          c: new BN(0), // c = 0
+          b: new BN(100000000000),
+          curve: {
+            exponentialCurveV0: {
+              pow: new BN(0),
+              frac: new BN(1)
+            }
+          },
         }
       }
     ]
 
-    curves.forEach(curveSpec => {
-      it(`is zero sum with ${Object.keys(curveSpec)[0]} curves`, async () => {
+    curves.forEach((curveSpec, index) => {
+      it(`is zero sum with curve ${index}`, async () => {
         baseMint = await createMint(provider, me, DECIMALS);
         await tokenUtils.createAtaAndMint(provider, baseMint, INITIAL_BALANCE);
-        curve = await tokenBondingProgram.initializeCurve({
-          // @ts-ignore
-          curve: curveSpec
-        });
+        // @ts-ignore
+        curve = await tokenBondingProgram.initializeCurve(curveSpec);
 
         tokenBonding = await tokenBondingProgram.createTokenBonding({
           curve,

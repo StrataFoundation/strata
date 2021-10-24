@@ -559,7 +559,8 @@ pub fn verify_token_bonding_defaults<'info>(defaults: &TokenBondingSettingsV0, t
     defaults.min_purchase_cap.map_or(true, |cap| token_bonding.purchase_cap.map_or(true, |bond_cap| bond_cap >= cap)) &&
     defaults.max_purchase_cap.map_or(true, |cap| token_bonding.purchase_cap.map_or(true, |bond_cap| bond_cap <= cap)) &&
     defaults.min_mint_cap.map_or(true, |cap| token_bonding.mint_cap.map_or(true, |bond_cap| bond_cap >= cap)) &&
-    defaults.max_mint_cap.map_or(true, |cap| token_bonding.mint_cap.map_or(true, |bond_cap| bond_cap <= cap));
+    defaults.max_mint_cap.map_or(true, |cap| token_bonding.mint_cap.map_or(true, |bond_cap| bond_cap <= cap)) &&
+    !token_bonding.sell_frozen;
     // TODO: Go live check?
     // token_bonding_defaults.go_live_unix_time.map_or(true, |go_live| token_bonding.go_live_unix_time <= go_live) &&
 
@@ -726,7 +727,7 @@ pub struct UpdateTokenBondingV0ArgsWrapper {
 #[derive(Accounts)]
 #[instruction(args: UpdateTokenBondingV0ArgsWrapper)]
 pub struct UpdateTokenBondingV0Wrapper<'info> {
-  collective: Account<'info, CollectiveV0>,
+  collective: Box<Account<'info, CollectiveV0>>,
   #[account(
     address = collective.authority.unwrap_or(Pubkey::default()),
     constraint = collective.config.is_open || authority.is_signer
@@ -737,13 +738,13 @@ pub struct UpdateTokenBondingV0Wrapper<'info> {
     has_one = collective,
     constraint = owner.key() == reverse_token_ref.owner.ok_or::<ProgramError>(ErrorCode::IncorrectOwner.into())?
   )]
-  reverse_token_ref: Account<'info, TokenRefV0>,
+  reverse_token_ref: Box<Account<'info, TokenRefV0>>,
   #[account(
     mut,
     has_one = base_mint,
     has_one = target_mint
   )]
-  token_bonding: Account<'info, TokenBondingV0>,
+  token_bonding: Box<Account<'info, TokenBondingV0>>,
   #[account(
     seeds = [
       b"token-bonding-authority", reverse_token_ref.key().as_ref()

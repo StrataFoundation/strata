@@ -3,7 +3,8 @@ import { AccountInfo, MintInfo, u64 } from "@solana/spl-token";
 import BN from "bn.js";
 
 export type ExponentialCurveV0 = {
-  k: BN
+  pow: BN;
+  frac: BN;
 }
 
 export function supplyAsNum(mint: MintInfo): number {
@@ -48,7 +49,7 @@ export class ExponentialCurve implements Curve {
   constructor(c: BN, b: BN, curve: ExponentialCurveV0, baseStorage: AccountInfo, baseMint: MintInfo, targetMint: MintInfo) {
     this.c = c.toNumber() / 1000000000000;
     this.b = b.toNumber() / 1000000000000;
-    this.k = curve.k.toNumber() / 1000000000000;
+    this.k = curve.pow.toNumber() / curve.frac.toNumber();
 
     this.baseStorage = baseStorage;
     this.baseMint = baseMint;

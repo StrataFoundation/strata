@@ -1,7 +1,9 @@
 //! Defines PreciseNumber, a U256 wrapper with float-like operations
 // Stolen from SPL math, but changing inner unit
 
-use crate::uint::U128;
+use anchor_lang::prelude::msg;
+
+use crate::{ONE_PREC, ZERO_PREC, uint::U128};
 
 // Allows for easy swapping between different internal representations
 pub type InnerUint = U128;
@@ -279,6 +281,16 @@ impl PreciseNumber {
     /// Get the power of a number, where the exponent is expressed as a fraction
     /// (numerator / denominator)
     pub fn checked_pow_fraction(&self, exponent: &Self) -> Option<Self> {
+        if exponent.eq(&ZERO_PREC) {
+          return Some(ONE_PREC.clone())
+        }
+
+        // Check if this is a whole number. If so, don't use checked_pow_fraction
+        let imprecise = exponent.to_imprecise()?;
+        if PreciseNumber::new(imprecise)?.eq(&exponent) {
+          return self.checked_pow(imprecise)
+        }
+
         assert!(self.value >= Self::min_pow_base());
         assert!(self.value <= Self::max_pow_base());
         let whole_exponent = exponent.floor()?;
@@ -345,6 +357,19 @@ impl PreciseNumber {
     /// provides an epsilon of 11 digits
     fn maximum_sqrt_base() -> Self {
         Self::new(std::u128::MAX).unwrap()
+    }
+
+    pub fn pow_frac_approximation(&self, pow: u64, frac: u64) -> Option<Self> {
+      self.checked_pow(pow as u128)?.root_approximation(&PreciseNumber::new(frac as u128)?)
+    }
+
+    pub fn root_approximation(&self, root: &Self) -> Option<Self> {
+      let two = PreciseNumber::new(2)?;
+      let one = PreciseNumber::new(1)?;
+      // A good initial guess is the average of the interval that contains the
+      // input number.  For all numbers, that will be between 1 and the given number.
+      let guess = self.checked_add(&one)?.checked_div(&two)?;
+      self.newtonian_root_approximation(&root, guess, Self::MAX_APPROXIMATION_ITERATIONS)
     }
 
     /// Approximate the square root using Newton's method.  Based on testing,
