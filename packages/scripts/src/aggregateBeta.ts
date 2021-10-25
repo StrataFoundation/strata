@@ -1,7 +1,8 @@
+import fs from "fs";
 import * as anchor from "@wum.bo/anchor";
 import { getMintInfo } from "@project-serum/common";
 import axios from "axios";
-import { PublicKey } from "@solana/web3.js";
+import { Connection, PublicKey } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { SplWumboIDL, SplWumboIDLJson, TokenRefV0 } from "@wum.bo/spl-wumbo";
 import {
@@ -13,6 +14,11 @@ import {
   amountAsNum,
 } from "@wum.bo/spl-token-bonding";
 import { TokenAccountParser, TokenAccount } from "@wum.bo/spl-utils";
+import {
+  getHashedName,
+  getNameAccountKey,
+  ReverseTwitterRegistryState,
+} from "@solana/spl-name-service";
 
 const WUMBO_INSTANCE: PublicKey = new PublicKey(
   "BRP7kHUu1c4MMLVauHQF6Jc34iH1EcQaWMijErVXk9S6"
@@ -26,6 +32,14 @@ const WUM_TOKEN: PublicKey = new PublicKey(
   "8ZEdEGcrPCLujEQuuUsmuosx2osuuCa8Hfm5WwKW73Ka"
 );
 
+const TWITTER_VERIFIER = new PublicKey(
+  "DTok7pfUzNeNPqU3Q6foySCezPQE82eRyhX1HdhVNLVC"
+);
+
+const TWITTER_TLD = new PublicKey(
+  "Fhqd3ostRQQE65hzoA7xFMgT9kge2qPnsTNAKuL2yrnx"
+);
+
 const splTokenBondingProgramId = new PublicKey(
   "TBondz6ZwSM5fs4v2GpnVBMuwoncPkFLFR9S422ghhN"
 );
@@ -33,6 +47,22 @@ const splTokenBondingProgramId = new PublicKey(
 const splWumboProgramId = new PublicKey(
   "WumbodN8t7wcDPCY2nGszs4x6HRtL5mJcTR519Qr6m7"
 );
+
+const getTwitterName = async (connection: Connection, owner: PublicKey) => {
+  const hashedName = await getHashedName(owner.toString());
+  const key = await getNameAccountKey(
+    hashedName,
+    TWITTER_VERIFIER,
+    TWITTER_TLD
+  );
+
+  return ReverseTwitterRegistryState.retrieve(connection, key);
+};
+
+const dump: { inputs: Record<string, any>; outputs: Record<string, any> } = {
+  inputs: {},
+  outputs: {},
+};
 
 const run = async () => {
   console.log(process.env.ANCHOR_PROVIDER_URL);
@@ -72,6 +102,8 @@ const run = async () => {
     (tokenBondingAcct) => tokenBondingAcct.account.baseMint.equals(WUM_TOKEN)
   );
 
+  dump.inputs["tokenBondingAcctsWithWumBase"] = tokenBondingAcctsWithWumBase;
+
   const tokenBondingAcctsByTargetMint: { [key: string]: TokenBondingV0 } =
     tokenBondingAcctsWithWumBase.reduce(
       (acc, tokenBondingAcct) => ({
@@ -88,6 +120,8 @@ const run = async () => {
       tokenBondingAcct.account.targetMint.toBase58()
     ),
   ]);
+
+  dump.inputs["mints"] = mints;
 
   const tokenAcctsByBetaParticipant: { [key: string]: TokenAccount[] } =
     await betaParticipants.reduce(
@@ -121,6 +155,8 @@ const run = async () => {
       },
       Promise.resolve({})
     );
+
+  dump.inputs["tokenAcctsByBetaParticipant"] = tokenAcctsByBetaParticipant;
 
   let curveAcct: any;
   const [totalWumByBetaParticipant, totalSupplyByMint] = await Object.entries(
@@ -197,10 +233,10 @@ const run = async () => {
     Promise.resolve([{}, {}])
   );
 
-  const top10TotalSupplyCreators = await Object.keys(totalSupplyByMint)
+  const top11CreatorsBySupply = await Object.keys(totalSupplyByMint)
     .reduce(async (accP: Promise<(string | number)[][]>, mint) => {
       const acc = await accP;
-      console.log("Determining top 10");
+      console.log("Determining top 11");
 
       const [reverseTokenRef] = await PublicKey.findProgramAddress(
         [
@@ -232,12 +268,44 @@ const run = async () => {
     .then((multiArrayOfCreatorsWum) =>
       multiArrayOfCreatorsWum
         .sort(([_a, a]: any, [_b, b]: any) => (a > b ? -1 : 1))
-        .slice(0, 10)
+        .slice(0, 11)
+        .reduce(async (accP, [owner, supply]) => {
+          const acc = await accP;
+          const handle = await getTwitterName(
+            provider.connection,
+            new PublicKey(owner)
+          );
+
+          return {
+            ...acc,
+            [owner]: {
+              handle: handle.twitterHandle,
+              totalWum: totalWumByBetaParticipant[owner],
+              totalSupply: supply,
+            },
+          };
+        }, Promise.resolve({}))
     );
 
-  console.log("totalWumByBetaParticipant", totalWumByBetaParticipant);
-  console.log("totalWumByMint", totalSupplyByMint);
-  console.log("top10TotalWumCreators", top10TotalSupplyCreators);
+  dump.outputs["totalWumByBetaParticipant"] = totalWumByBetaParticipant;
+  dump.outputs["totalSupplyByMint"] = totalSupplyByMint;
+  dump.outputs["top11CreatorsBySupply"] = top11CreatorsBySupply;
+
+  fs.writeFile("./aggregateBetaDump.json", JSON.stringify(dump), (err) => {
+    if (err) {
+      console.error("Error writing file", err);
+    }
+  });
+
+  fs.writeFile(
+    "./aggregateBetaOutput.json",
+    JSON.stringify(top11CreatorsBySupply),
+    (err) => {
+      if (err) {
+        console.error("Error writing file", err);
+      }
+    }
+  );
 };
 
 (async () => {

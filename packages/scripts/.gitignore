@@ -2,3 +2,5 @@ npm-debug.log
 dist/
 tmp/
 ./node_modules
+aggregateBetaOutput.json
+aggregateBetaDump.json
