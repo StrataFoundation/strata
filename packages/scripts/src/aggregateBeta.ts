@@ -102,8 +102,6 @@ const run = async () => {
     (tokenBondingAcct) => tokenBondingAcct.account.baseMint.equals(WUM_TOKEN)
   );
 
-  dump.inputs["tokenBondingAcctsWithWumBase"] = tokenBondingAcctsWithWumBase;
-
   const tokenBondingAcctsByTargetMint: { [key: string]: TokenBondingV0 } =
     tokenBondingAcctsWithWumBase.reduce(
       (acc, tokenBondingAcct) => ({
@@ -120,8 +118,6 @@ const run = async () => {
       tokenBondingAcct.account.targetMint.toBase58()
     ),
   ]);
-
-  dump.inputs["mints"] = mints;
 
   const tokenAcctsByBetaParticipant: { [key: string]: TokenAccount[] } =
     await betaParticipants.reduce(
@@ -155,8 +151,6 @@ const run = async () => {
       },
       Promise.resolve({})
     );
-
-  dump.inputs["tokenAcctsByBetaParticipant"] = tokenAcctsByBetaParticipant;
 
   let curveAcct: any;
   const [totalWumByBetaParticipant, totalSupplyByMint] = await Object.entries(
@@ -287,6 +281,10 @@ const run = async () => {
         }, Promise.resolve({}))
     );
 
+  dump.inputs["betaParticipants"] = betaParticipants;
+  dump.inputs["tokenBondingAcctsWithWumBase"] = tokenBondingAcctsWithWumBase;
+  dump.inputs["mints"] = mints;
+  dump.inputs["tokenAcctsByBetaParticipant"] = tokenAcctsByBetaParticipant;
   dump.outputs["totalWumByBetaParticipant"] = totalWumByBetaParticipant;
   dump.outputs["totalSupplyByMint"] = totalSupplyByMint;
   dump.outputs["top11CreatorsBySupply"] = top11CreatorsBySupply;
