@@ -70,6 +70,7 @@ interface CreateTokenBondingArgs {
   mintCap?: BN;
   purchaseCap?: BN;
   goLiveDate?: Date;
+  freezeBuyDate?: Date;
   buyFrozen?: boolean;
 }
 
@@ -305,6 +306,7 @@ export class SplTokenBonding {
     mintCap,
     purchaseCap,
     goLiveDate = new Date(),
+    freezeBuyDate,
     targetMintDecimals,
     buyFrozen = false,
   }: CreateTokenBondingArgs): Promise<InstructionResult<{ 
@@ -313,7 +315,8 @@ export class SplTokenBonding {
     buyBaseRoyalties: PublicKey,
     buyTargetRoyalties: PublicKey,
     sellBaseRoyalties: PublicKey,
-    sellTargetRoyalties: PublicKey
+    sellTargetRoyalties: PublicKey,
+    baseStorage: PublicKey
   }>> {
     if (!targetMint) {
       if (sellTargetRoyalties || buyTargetRoyalties) {
@@ -358,7 +361,7 @@ export class SplTokenBonding {
     }
 
     const [tokenBonding, bumpSeed] = await PublicKey.findProgramAddress(
-      [Buffer.from("token-bonding", "utf-8"), targetMint.toBuffer()],
+      [Buffer.from("token-bonding", "utf-8"), baseMint.toBuffer(), targetMint.toBuffer()],
       programId
     );
 
@@ -499,6 +502,7 @@ export class SplTokenBonding {
       await this.instruction.initializeTokenBondingV0(
         {
           goLiveUnixTime: new BN(Math.floor(goLiveDate.valueOf() / 1000)),
+          freezeBuyUnixTime: freezeBuyDate ? new BN(Math.floor(freezeBuyDate.valueOf() / 1000)) : null,
           buyBaseRoyaltyPercentage,
           buyTargetRoyaltyPercentage,
           mintCap: mintCap || null,
@@ -538,6 +542,7 @@ export class SplTokenBonding {
         buyTargetRoyalties,
         sellBaseRoyalties,
         sellTargetRoyalties,
+        baseStorage
       },
       instructions,
       signers,
@@ -787,8 +792,11 @@ export class SplTokenBonding {
     }
 
     const args: IdlTypes<SplTokenBondingIDL>["BuyV0Args"] = {
-      targetAmount: new BN(Math.floor(neededAmount * Math.pow(10, targetMint.decimals))),
-      maximumPrice: new BN(maxPrice),
+      buyTargetAmount: {
+        targetAmount: new BN(Math.floor(neededAmount * Math.pow(10, targetMint.decimals))),
+        maximumPrice: new BN(maxPrice),
+      },
+      buyWithBase: null
     };
     const accounts = {
       accounts: {

@@ -67,7 +67,9 @@ export async function sendMultipleInstructions(
       recentBlockhash
     });
     tx.add(...instructions)
-    tx.partialSign(...signers);
+    if (signers.length > 0) {
+      tx.partialSign(...signers);
+    }
     return tx;
   })
 

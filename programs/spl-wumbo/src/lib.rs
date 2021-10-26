@@ -2,13 +2,12 @@ use {
     anchor_lang::{prelude::*, solana_program::system_program},
     anchor_spl::token::{Mint, TokenAccount, Transfer, transfer},
     borsh::{BorshDeserialize, BorshSerialize},
-    spl_token_bonding::{CurveV0, TokenBondingV0},
+    spl_token_bonding::{UpdateTokenBondingV0Args, TokenBondingV0},
 };
 
 pub mod token_metadata;
 pub mod name;
 use spl_token_bonding::cpi::accounts::{UpdateTokenBondingV0};
-
 use anchor_lang::solana_program::{self, hash::hashv};
 use token_metadata::UpdateMetadataAccount;
 
@@ -560,7 +559,8 @@ pub fn verify_token_bonding_defaults<'info>(defaults: &TokenBondingSettingsV0, t
     defaults.max_purchase_cap.map_or(true, |cap| token_bonding.purchase_cap.map_or(true, |bond_cap| bond_cap <= cap)) &&
     defaults.min_mint_cap.map_or(true, |cap| token_bonding.mint_cap.map_or(true, |bond_cap| bond_cap >= cap)) &&
     defaults.max_mint_cap.map_or(true, |cap| token_bonding.mint_cap.map_or(true, |bond_cap| bond_cap <= cap)) &&
-    !token_bonding.sell_frozen;
+    !token_bonding.sell_frozen &&
+    token_bonding.freeze_buy_unix_time.is_none();
     // TODO: Go live check?
     // token_bonding_defaults.go_live_unix_time.map_or(true, |go_live| token_bonding.go_live_unix_time <= go_live) &&
 
@@ -957,6 +957,3 @@ pub enum ErrorCode {
     #[msg("Incorrect owner on account")]
     IncorrectOwner
 }
-
-    use spl_token_bonding::UpdateTokenBondingV0Args;
-

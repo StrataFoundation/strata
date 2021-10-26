@@ -1,5 +1,5 @@
-use anchor_lang::{prelude::*, solana_program::{system_program, system_instruction, program::{invoke_signed, invoke}}};
-use anchor_spl::token::{self, Burn, InitializeAccount, TokenAccount, Mint, Transfer, MintTo};
+use anchor_lang::{prelude::*, solana_program, solana_program::{system_program, system_instruction, program::{invoke_signed, invoke}}};
+use anchor_spl::token::{self, set_authority, SetAuthority, Burn, InitializeAccount, TokenAccount, Mint, Transfer, MintTo};
 use spl_token::state::AccountState;
 
 pub mod precise_number;
@@ -9,6 +9,35 @@ use precise_number::{InnerUint, PreciseNumber, one, zero};
 static TARGET_MINT_AUTHORITY_PREFIX: &str = "target-authority";
 
 declare_id!("TBondz6ZwSM5fs4v2GpnVBMuwoncPkFLFR9S422ghhN");
+
+#[derive(Accounts)]
+pub struct CloseTokenAccount<'info> {
+    pub from: AccountInfo<'info>,
+    pub to: AccountInfo<'info>,
+    pub authority: AccountInfo<'info>,
+}
+
+pub fn close_token_account<'a, 'b, 'c, 'info>(
+    ctx: CpiContext<'a, 'b, 'c, 'info, CloseTokenAccount<'info>>,
+) -> ProgramResult {
+    let ix = spl_token::instruction::close_account(
+        &spl_token::ID,
+        ctx.accounts.from.key,
+        ctx.accounts.to.key,
+        ctx.accounts.authority.key,
+        &[],
+    )?;
+    solana_program::program::invoke_signed(
+        &ix,
+        &[
+            ctx.accounts.from.clone(),
+            ctx.accounts.to.clone(),
+            ctx.accounts.authority.clone(),
+            ctx.program.clone(),
+        ],
+        ctx.signer_seeds,
+    )
+}
 
 #[program]
 pub mod spl_token_bonding {
@@ -128,14 +157,14 @@ pub mod spl_token_bonding {
       let (mint_pda, target_mint_authority_bump_seed) = Pubkey::find_program_address(
         &[
           TARGET_MINT_AUTHORITY_PREFIX.as_bytes(), 
-          ctx.accounts.target_mint.to_account_info().key.as_ref()
+          ctx.accounts.target_mint.key().as_ref()
         ], 
         ctx.program_id
       );
       let target_mint = &ctx.accounts.target_mint;
       if args.base_storage_authority.is_some() {
         let (base_storage_authority_pda, base_storage_authority_bump_seed) = Pubkey::find_program_address(
-          &[b"storage-authority", ctx.accounts.token_bonding.to_account_info().key.as_ref()], 
+          &[b"storage-authority", ctx.accounts.token_bonding.key().as_ref()], 
           ctx.program_id
         );
         if args.base_storage_authority_bump_seed.unwrap() != base_storage_authority_bump_seed 
@@ -145,19 +174,22 @@ pub mod spl_token_bonding {
       }
 
       let bonding = &mut ctx.accounts.token_bonding;
-      bonding.base_mint = *ctx.accounts.base_mint.to_account_info().key;
-      bonding.target_mint = *ctx.accounts.target_mint.to_account_info().key;
+      bonding.go_live_unix_time = args.go_live_unix_time;
+      bonding.freeze_buy_unix_time = args.freeze_buy_unix_time;
+      bonding.base_mint = ctx.accounts.base_mint.key();
+      bonding.base_mint = ctx.accounts.base_mint.key();
+      bonding.target_mint = ctx.accounts.target_mint.key();
       bonding.authority = args.token_bonding_authority;
-      bonding.base_storage = *ctx.accounts.base_storage.to_account_info().key;
-      bonding.buy_base_royalties = *ctx.accounts.buy_base_royalties.to_account_info().key;
-      bonding.buy_target_royalties = *ctx.accounts.buy_target_royalties.to_account_info().key;
-      bonding.sell_base_royalties = *ctx.accounts.sell_base_royalties.to_account_info().key;
-      bonding.sell_target_royalties = *ctx.accounts.sell_target_royalties.to_account_info().key;
+      bonding.base_storage = ctx.accounts.base_storage.key();
+      bonding.buy_base_royalties = ctx.accounts.buy_base_royalties.key();
+      bonding.buy_target_royalties = ctx.accounts.buy_target_royalties.key();
+      bonding.sell_base_royalties = ctx.accounts.sell_base_royalties.key();
+      bonding.sell_target_royalties = ctx.accounts.sell_target_royalties.key();
       bonding.buy_base_royalty_percentage = args.buy_base_royalty_percentage;
       bonding.buy_target_royalty_percentage = args.buy_target_royalty_percentage;
       bonding.sell_base_royalty_percentage = args.sell_base_royalty_percentage;
       bonding.sell_target_royalty_percentage = args.sell_target_royalty_percentage;
-      bonding.curve = *ctx.accounts.curve.to_account_info().key;
+      bonding.curve = ctx.accounts.curve.key();
       bonding.mint_cap = args.mint_cap;
       bonding.purchase_cap = args.purchase_cap;
       // We need to own the mint authority if this bonding curve supports buying.
@@ -170,6 +202,57 @@ pub mod spl_token_bonding {
       bonding.bump_seed = args.bump_seed;
       bonding.base_storage_authority_bump_seed = args.base_storage_authority_bump_seed;
       bonding.target_mint_authority_bump_seed = args.target_mint_authority_bump_seed;
+
+      Ok(())
+    }
+
+    pub fn close_token_bonding_v0(
+      ctx: Context<CloseTokenBondingV0>
+    ) -> ProgramResult {
+      let token_bonding = &mut ctx.accounts.token_bonding;
+      if token_bonding.base_storage_authority_bump_seed.is_some() {
+        let auth_str: &[u8] = b"storage-authority";
+        let bump = &[token_bonding.base_storage_authority_bump_seed.unwrap()];
+        let bonding_ref = token_bonding.to_account_info().key.as_ref();
+        let storage_authority_seeds: Vec<&[u8]> = vec![auth_str, bonding_ref, bump];
+  
+        let base_storage_authority = Pubkey::create_program_address(&storage_authority_seeds, &ctx.program_id)?;
+        if ctx.accounts.base_storage.owner == base_storage_authority {
+          close_token_account(CpiContext::new_with_signer(
+            ctx.accounts.token_program.clone(),
+            CloseTokenAccount {
+                from: ctx.accounts.base_storage.to_account_info().clone(),
+                to: ctx.accounts.refund.to_account_info().clone(),
+                authority: ctx
+                    .accounts
+                    .base_storage_authority
+                    .to_account_info()
+                    .clone(),
+            },
+            &[&storage_authority_seeds],
+          ))?;
+        }
+      }
+
+      msg!("Setting mint authority to none");
+      set_authority(
+        CpiContext::new_with_signer(
+          ctx.accounts.token_program.to_account_info().clone(), 
+          SetAuthority {
+            current_authority: ctx.accounts.target_mint_authority.to_account_info().clone(),
+            account_or_mint: ctx.accounts.target_mint.to_account_info().clone()
+          },
+          &[
+            &[
+              TARGET_MINT_AUTHORITY_PREFIX.as_bytes(), 
+              ctx.accounts.target_mint.key().as_ref(),
+              &[ctx.accounts.token_bonding.target_mint_authority_bump_seed]
+            ]
+          ]
+        ),
+        spl_token::instruction::AuthorityType::MintTokens,
+        None,
+      )?;
 
       Ok(())
     }
@@ -198,72 +281,118 @@ pub mod spl_token_bonding {
       let token_bonding = &mut ctx.accounts.token_bonding;
       let base_mint = &ctx.accounts.base_mint;
       let target_mint = &ctx.accounts.target_mint;
-      let amount = args.target_amount;
       let curve = &ctx.accounts.curve;
       let base_amount = precise_supply_amt(ctx.accounts.base_storage.amount, base_mint);
-      let amount_prec = precise_supply_amt(amount, target_mint);
       let target_supply = precise_supply(target_mint);
-      msg!("Current reserves {} and supply {}, buying {}", ctx.accounts.base_storage.amount, ctx.accounts.target_mint.supply, amount);
 
-      if token_bonding.buy_frozen {
-        return Err(ErrorCode::BuyFrozen.into());
-      }
-
-      if token_bonding.mint_cap.is_some() && target_mint.supply + args.target_amount > token_bonding.mint_cap.unwrap() {
-        msg!("Mint cap is {} {} {}", token_bonding.mint_cap.unwrap(), target_mint.supply, args.target_amount);
-        return Err(ErrorCode::PassedMintCap.into());
-      }
-
-      if token_bonding.purchase_cap.is_some() && args.target_amount > token_bonding.purchase_cap.unwrap() {
-        return Err(ErrorCode::OverPurchaseCap.into());
-      }
+      msg!("Current reserves {} and supply {}", ctx.accounts.base_storage.amount, ctx.accounts.target_mint.supply);
 
       if token_bonding.go_live_unix_time > ctx.accounts.clock.unix_timestamp {
         return Err(ErrorCode::NotLiveYet.into());
       }
 
-      let price_prec = curve.price(
-        &base_amount,
-        &target_supply,
-        &amount_prec,
-        false
-      ).or_arith_error()?;
+      if token_bonding.buy_frozen {
+        return Err(ErrorCode::BuyFrozen.into());
+      }
+
+      if token_bonding.freeze_buy_unix_time.is_some() && token_bonding.freeze_buy_unix_time.unwrap() < ctx.accounts.clock.unix_timestamp {
+        return Err(ErrorCode::BuyFrozen.into());
+      }
 
       let base_royalties_percent = get_percent(token_bonding.buy_base_royalty_percentage)?;
       let target_royalties_percent = get_percent(token_bonding.buy_target_royalty_percentage)?;
 
-      let target_royalties_prec = target_royalties_percent.checked_mul(&amount_prec).or_arith_error()?;
-      let base_royalties_prec = base_royalties_percent.checked_mul(&price_prec).or_arith_error()?;
-      let total_price_prec = price_prec.checked_add(&base_royalties_prec).or_arith_error()?;
-      let total_price = to_lamports(
-        &total_price_prec,
-        base_mint,
-        true
-      );
-      let price = to_lamports(
-        &price_prec,
-        base_mint,
-        true
-      );
-      let base_royalties = to_lamports(
-        &base_royalties_prec,
-        base_mint,
-        true
-      );
-      let target_royalties = to_lamports(
-        &target_royalties_prec,
-        target_mint,
-        false
-      );
+      let price: u64;
+      let total_amount: u64;
+      let base_royalties: u64;
+      let target_royalties: u64;
+      if args.buy_target_amount.is_some() {
+        let buy_target_amount = args.buy_target_amount.unwrap();
 
-      msg!("Total price is {}, with {} to base royalties and {} to target royalties", total_price, base_royalties, target_royalties);
-      if total_price > args.maximum_price {
-        msg!("Price too high for max price {}", args.maximum_price);
-        return Err(ErrorCode::PriceTooHigh.into());
+        total_amount = buy_target_amount.target_amount;
+        let amount_prec = precise_supply_amt(total_amount, target_mint);
+        let price_prec = curve.price(
+          &base_amount,
+          &target_supply,
+          &amount_prec,
+          false
+        ).or_arith_error()?;
+        price = to_mint_amount(
+          &price_prec,
+          base_mint,
+          true
+        );
+        let base_royalties_prec = base_royalties_percent.checked_mul(&price_prec).or_arith_error()?;
+
+        let target_royalties_prec = target_royalties_percent.checked_mul(&amount_prec).or_arith_error()?;
+        base_royalties = to_mint_amount(
+          &base_royalties_prec,
+          base_mint,
+          true
+        );
+        target_royalties = to_mint_amount(
+          &target_royalties_prec,
+          target_mint,
+          false
+        );
+
+        if price + base_royalties > buy_target_amount.maximum_price {
+          msg!("Price too high for max price {}", buy_target_amount.maximum_price);
+          return Err(ErrorCode::PriceTooHigh.into());
+        }
+      } else {
+        let buy_with_base = args.buy_with_base.unwrap();
+        let total_price = buy_with_base.base_amount;
+        let total_price_prec = precise_supply_amt(total_price, base_mint);
+        let base_royalties_prec = base_royalties_percent.checked_mul(&total_price_prec).or_arith_error()?;
+        let price_prec = total_price_prec.checked_sub(&base_royalties_prec).or_arith_error()?;
+
+        let amount_prec = curve.expected_amount(
+          &base_amount,
+          &target_supply,
+          &total_price_prec
+        ).or_arith_error()?;
+
+        total_amount = to_mint_amount(
+          &amount_prec,
+          target_mint,
+          false
+        );
+
+        price = to_mint_amount(
+          &price_prec,
+          base_mint,
+          true
+        );
+
+        let target_royalties_prec = target_royalties_percent.checked_mul(&amount_prec).or_arith_error()?;
+        base_royalties = to_mint_amount(
+          &base_royalties_prec,
+          base_mint,
+          true
+        );
+        target_royalties = to_mint_amount(
+          &target_royalties_prec,
+          target_mint,
+          false
+        );
+
+        if total_amount - target_royalties < buy_with_base.minimum_target_amount {
+          msg!("Tokens less than minimum tokens {}", buy_with_base.minimum_target_amount);
+          return Err(ErrorCode::PriceTooHigh.into());
+        }
       }
 
-      token_bonding.reserves += total_price;
+      if token_bonding.mint_cap.is_some() && target_mint.supply + total_amount > token_bonding.mint_cap.unwrap() {
+        msg!("Mint cap is {} {} {}", token_bonding.mint_cap.unwrap(), target_mint.supply, total_amount);
+        return Err(ErrorCode::PassedMintCap.into());
+      }
 
+      if token_bonding.purchase_cap.is_some() && total_amount > token_bonding.purchase_cap.unwrap() {
+        return Err(ErrorCode::OverPurchaseCap.into());
+      }
+
+      msg!("Total price is {}, with {} to base royalties and {} to target royalties", price + base_royalties, base_royalties, target_royalties);
       let token_program = ctx.accounts.token_program.to_account_info();
       let source = ctx.accounts.source.to_account_info();
       let base_storage_account = ctx.accounts.base_storage.to_account_info();
@@ -311,7 +440,7 @@ Transfer {
         target_royalties
       )?;
 
-      msg!("Minting {} to destination", amount - target_royalties);
+      msg!("Minting {} to destination", total_amount - target_royalties);
       token::mint_to(
         CpiContext::new_with_signer(
           token_program.clone(), 
@@ -322,7 +451,7 @@ Transfer {
           },
           mint_signer_seeds
         ),
-        amount - target_royalties
+        total_amount - target_royalties
       )?;
 
       Ok(())
@@ -362,28 +491,26 @@ Transfer {
       let base_royalties_prec = base_royalties_percent.checked_mul(&reclaimed_prec).or_arith_error()?;
 
       let reclaimed_prec = reclaimed_prec.checked_sub(&base_royalties_prec).or_arith_error()?;
-      let reclaimed = to_lamports(
+      let reclaimed = to_mint_amount(
         &reclaimed_prec,
         base_mint,
         true
       );
-      let total_reclaimed = to_lamports(
+      let total_reclaimed = to_mint_amount(
         &reclaimed_prec,
         base_mint,
         true
       );
-      let base_royalties = to_lamports(
+      let base_royalties = to_mint_amount(
         &base_royalties_prec,
         base_mint,
         true
       );
-      let target_royalties = to_lamports(
+      let target_royalties = to_mint_amount(
         &target_royalties_prec,
         target_mint,
         false
       );
-
-      token_bonding.reserves -= total_reclaimed;
 
       msg!("Total reclaimed is {}, with {} to base royalties, {} to target royalties", total_reclaimed, base_royalties, target_royalties);
       if reclaimed < args.minimum_price {
@@ -460,28 +587,28 @@ impl OrArithError for Option<PreciseNumber> {
   }
 }
 
-fn get_percent(percent: u32) -> Result<PreciseNumber> {
+pub fn get_percent(percent: u32) -> Result<PreciseNumber> {
   let max_u32 = PreciseNumber::new(u32::MAX as u128).or_arith_error()?;
   let percent_prec = PreciseNumber::new(percent as u128).or_arith_error()?;
 
   Ok(percent_prec.checked_div(&max_u32).or_arith_error()?)
 }
 
-fn precise_supply(mint: &Account<Mint>) -> PreciseNumber {
+pub fn precise_supply(mint: &Account<Mint>) -> PreciseNumber {
   precise_supply_amt(mint.supply, mint)
 }
 
-fn precise_supply_amt(amt: u64, mint: &Account<Mint>) -> PreciseNumber {
+pub fn precise_supply_amt(amt: u64, mint: &Account<Mint>) -> PreciseNumber {
   PreciseNumber {
       value: InnerUint::from((amt as u128) * 10_u128.pow(12_u32 - mint.decimals as u32))
   }
 }
 
-fn to_lamports(amt: &PreciseNumber, mint: &Account<Mint>, ceil: bool) -> u64 {
+pub fn to_mint_amount(amt: &PreciseNumber, mint: &Account<Mint>, ceil: bool) -> u64 {
   let pre_round = amt.checked_mul(
       &PreciseNumber::new(10_u128).unwrap().checked_pow(mint.decimals as u128).unwrap()
   ).unwrap();
-  let post_round = if (ceil) {
+  let post_round = if ceil {
     pre_round.ceiling().unwrap()
   } else {
     pre_round.floor().unwrap()
@@ -500,6 +627,7 @@ pub struct InitializeTokenBondingV0Args {
   pub sell_base_royalty_percentage: u32,
   pub sell_target_royalty_percentage: u32,
   pub go_live_unix_time: i64,
+  pub freeze_buy_unix_time: Option<i64>, // Cut this bonding curve off at some time
   // The maximum number of target tokens that can be minted.
   pub mint_cap: Option<u64>,
   // The maximum target tokens per purchase
@@ -532,13 +660,24 @@ pub fn get_curve_seed(args: &CurveV0) -> Vec<u8> {
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct BuyV0Args {
+pub struct BuyWithBaseV0Args {
+  pub base_amount: u64,
+  pub minimum_target_amount: u64
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
+pub struct BuyTargetAmountV0Args {
   // Number to purchase. This is including the decimal value. So 1 is the lowest possible fraction of a coin
   // Note that you will receive this amount, less target_royalties.
   // Target royalties are taken out of the total purchased amount. Base royalties inflate the purchase price.
   pub target_amount: u64,
   // Maximum price to pay for this amount. Allows users to account and fail-fast for slippage.
   pub maximum_price: u64
+}
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
+pub struct BuyV0Args {
+  pub buy_with_base: Option<BuyWithBaseV0Args>,
+  pub buy_target_amount: Option<BuyTargetAmountV0Args>,
 }
 
 
@@ -576,6 +715,7 @@ pub struct InitializeSolStorageV0<'info> {
   pub payer: AccountInfo<'info>,
   #[account(
     init,
+    space = 212,
     seeds = ["state".as_bytes()],
     bump = args.bump_seed,
     payer = payer
@@ -682,23 +822,19 @@ pub struct InitializeTokenBondingV0<'info> {
   pub curve: Box<Account<'info, CurveV0>>,
   #[account(
     init,
-    seeds = [b"token-bonding", target_mint.to_account_info().key.as_ref()],
+    seeds = [b"token-bonding", base_mint.key().as_ref(), target_mint.key().as_ref()],
     bump = args.bump_seed,
     payer = payer,
     space = 512
   )]
   pub token_bonding: Box<Account<'info, TokenBondingV0>>,
-  #[account(
-    constraint = *base_mint.to_account_info().owner == token::ID
-  )]
   pub base_mint: Box<Account<'info, Mint>>,
   #[account(
-    constraint = target_mint.is_initialized,
-    constraint = *target_mint.to_account_info().owner == *base_mint.to_account_info().owner
+    constraint = target_mint.is_initialized
   )]
   pub target_mint: Box<Account<'info, Mint>>,
   #[account(
-    constraint = base_storage.mint == *base_mint.to_account_info().key,
+    constraint = base_storage.mint == base_mint.key(),
     constraint = args.base_storage_authority.is_none() || base_storage.owner == args.base_storage_authority.unwrap(),
     constraint = base_storage.delegate.is_none(),
     constraint = base_storage.close_authority.is_none(),
@@ -707,22 +843,22 @@ pub struct InitializeTokenBondingV0<'info> {
   pub base_storage: Box<Account<'info, TokenAccount>>,
 
   #[account(
-    constraint = buy_base_royalties.mint == *base_mint.to_account_info().key
+    constraint = buy_base_royalties.mint == base_mint.key()
   )]
   pub buy_base_royalties: Box<Account<'info, TokenAccount>>,
 
   #[account(
-    constraint = buy_target_royalties.mint == *target_mint.to_account_info().key
+    constraint = buy_target_royalties.mint == target_mint.key()
   )] // Will init for you, since target mint doesn't exist yet.
   pub buy_target_royalties: Box<Account<'info, TokenAccount>>,
 
   #[account(
-    constraint = sell_base_royalties.mint == *base_mint.to_account_info().key
+    constraint = sell_base_royalties.mint == base_mint.key()
   )]
   pub sell_base_royalties: Box<Account<'info, TokenAccount>>,
 
   #[account(
-    constraint = sell_target_royalties.mint == *target_mint.to_account_info().key
+    constraint = sell_target_royalties.mint == target_mint.key()
   )] // Will init for you, since target mint doesn't exist yet.
   pub sell_target_royalties: Box<Account<'info, TokenAccount>>,
 
@@ -734,11 +870,45 @@ pub struct InitializeTokenBondingV0<'info> {
 }
 
 #[derive(Accounts)]
+pub struct CloseTokenBondingV0<'info> {
+  #[account(mut)]
+  refund: AccountInfo<'info>, // Will receive the reclaimed SOL
+  #[account(
+    mut,
+    close = refund,
+    constraint = token_bonding.authority.ok_or::<ProgramError>(ErrorCode::NoAuthority.into())? == authority.key(),
+    has_one = target_mint,
+    has_one = base_storage
+  )]
+  pub token_bonding: Account<'info, TokenBondingV0>,
+  #[account(
+    signer,
+    // Bonding can be closed by the authority if 
+    //   1. Target supply is empty or
+    //   2. Sell is frozen
+    constraint = token_bonding.sell_frozen || target_mint.supply == 0
+  )]
+  pub authority: AccountInfo<'info>,
+
+  #[account(
+    mut,
+    constraint = target_mint.mint_authority.unwrap() == target_mint_authority.key(),
+  )]
+  pub target_mint: Box<Account<'info, Mint>>,
+  pub target_mint_authority: AccountInfo<'info>,
+  #[account(constraint = base_storage.owner == base_storage_authority.key())]
+  pub base_storage: Box<Account<'info, TokenAccount>>,
+  pub base_storage_authority: AccountInfo<'info>,
+  #[account(address = spl_token::ID)]
+  pub token_program: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
 #[instruction(args: UpdateTokenBondingV0Args)]
 pub struct UpdateTokenBondingV0<'info> {
   #[account(
     mut,
-    constraint = token_bonding.authority.ok_or::<ProgramError>(ErrorCode::NoAuthority.into())? == *authority.to_account_info().key,
+    constraint = token_bonding.authority.ok_or::<ProgramError>(ErrorCode::NoAuthority.into())? == authority.key(),
     has_one = base_mint,
     has_one = target_mint
   )]
@@ -756,22 +926,22 @@ pub struct UpdateTokenBondingV0<'info> {
   )]
   pub target_mint: Box<Account<'info, Mint>>,
   #[account(
-    constraint = buy_base_royalties.mint == *base_mint.to_account_info().key
+    constraint = buy_base_royalties.mint == base_mint.key()
   )]
   pub buy_base_royalties: Box<Account<'info, TokenAccount>>,
 
   #[account(
-    constraint = buy_target_royalties.mint == *target_mint.to_account_info().key
+    constraint = buy_target_royalties.mint == target_mint.key()
   )] // Will init for you, since target mint doesn't exist yet.
   pub buy_target_royalties: Box<Account<'info, TokenAccount>>,
 
   #[account(
-    constraint = sell_base_royalties.mint == *base_mint.to_account_info().key
+    constraint = sell_base_royalties.mint == base_mint.key()
   )]
   pub sell_base_royalties: Box<Account<'info, TokenAccount>>,
 
   #[account(
-    constraint = sell_target_royalties.mint == *target_mint.to_account_info().key
+    constraint = sell_target_royalties.mint == target_mint.key()
   )] // Will init for you, since target mint doesn't exist yet.
   pub sell_target_royalties: Box<Account<'info, TokenAccount>>,
 }
@@ -780,7 +950,7 @@ pub struct UpdateTokenBondingV0<'info> {
 #[derive(Accounts)]
 pub struct BuyV0<'info> {
   #[account(
-    mut,
+    has_one = base_mint,
     has_one = target_mint,
     has_one = base_storage,
     has_one = buy_base_royalties,
@@ -823,7 +993,6 @@ pub struct BuyV0<'info> {
 #[derive(Accounts)]
 pub struct SellV0<'info> {
   #[account(
-    mut,
     has_one = target_mint,
     has_one = base_storage,
     has_one = curve
@@ -906,13 +1075,57 @@ pub struct CreateCurveV0Args {
 }
 
 pub trait Curve {
-  fn price(&self, base_supply: &PreciseNumber, target_supply: &PreciseNumber, amount: &PreciseNumber, sell: bool) -> Option<PreciseNumber>;
+  fn price(&self, base_amount: &PreciseNumber, target_supply: &PreciseNumber, amount: &PreciseNumber, sell: bool) -> Option<PreciseNumber>;
+  fn expected_amount(&self, base_amount: &PreciseNumber, target_supply: &PreciseNumber, reserve_change: &PreciseNumber) -> Option<PreciseNumber>;
 }
 
-static ONE_PREC: PreciseNumber =  PreciseNumber { value: one() };
-static ZERO_PREC: PreciseNumber =  PreciseNumber { value: zero() };
+pub static ONE_PREC: PreciseNumber =  PreciseNumber { value: one() };
+pub static ZERO_PREC: PreciseNumber =  PreciseNumber { value: zero() };
 
 impl Curve for CurveV0 {
+  fn expected_amount(&self, base_amount: &PreciseNumber, target_supply: &PreciseNumber, reserve_change: &PreciseNumber) -> Option<PreciseNumber> {
+    let b_prec = PreciseNumber { value: InnerUint::from(self.b) };
+    let c_prec = PreciseNumber { value: InnerUint::from(self.c) };
+    
+    if base_amount.eq(&ZERO_PREC) || target_supply.eq(&ZERO_PREC) {
+      match self.curve {
+        // b dS + (c dS^(1 + pow/frac))/(1 + pow/frac)
+        Curves::ExponentialCurveV0 { pow, frac } => {
+          if self.b == 0 && self.c != 0 {
+            /*
+             * (((1 + k) dR)/c)^(1/(1 + k))
+             */
+            let pow_prec = PreciseNumber::new(pow as u128)?;
+            let frac_prec = PreciseNumber::new(frac as u128)?;
+            let one_plus_k =  &ONE_PREC.checked_add(&pow_prec.checked_div(&frac_prec)?)?;
+            one_plus_k.checked_mul(&reserve_change)?.checked_div(&c_prec)?.pow_frac_approximation(frac, frac + pow)
+          } else if pow == 0 {
+            reserve_change.checked_div(&b_prec)
+          } else {
+            None // This math is too hard, have not implemented yet.
+          }
+        }
+      }
+    } else {
+      match self.curve {
+        Curves::ExponentialCurveV0 { pow, frac } => {
+          let one_plus_k_numerator = frac.checked_add(pow)?;
+  
+          /*
+            dS = -S + ((S^(1 + k) (R + dR))/R)^(1/(1 + k))
+          */
+          target_supply.pow_frac_approximation(one_plus_k_numerator, frac)?
+                        .checked_mul(
+                          &base_amount.checked_add(&reserve_change)?
+                        )?.checked_div(
+                          &base_amount
+                        )?
+                        .pow_frac_approximation(frac, frac + pow)
+        }
+      }
+    }
+  }
+
   fn price(&self, base_amount: &PreciseNumber, target_supply: &PreciseNumber, amount: &PreciseNumber, sell: bool) -> Option<PreciseNumber> {
     let b_prec = PreciseNumber { value: InnerUint::from(self.b) };
     let c_prec = PreciseNumber { value: InnerUint::from(self.c) };
@@ -988,9 +1201,9 @@ pub struct TokenBondingV0 {
   pub mint_cap: Option<u64>,
   pub purchase_cap: Option<u64>,
   pub go_live_unix_time: i64,
+  pub freeze_buy_unix_time: Option<i64>,
   pub buy_frozen: bool,
   pub sell_frozen: bool,
-  pub reserves: u64,
   
   // Needed to derive the PDA of this instance
   pub bump_seed: u8,

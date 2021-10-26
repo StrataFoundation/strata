@@ -92,7 +92,7 @@ export class ExponentialCurve implements Curve {
     const dR = (baseAmountNum * (1 - asDecimal(baseRoyaltiesPercent)));
     if (this.baseStorage.amount.toNumber() == 0 || this.targetMint.supply.toNumber() == 0) {
       if (this.b == 0) {
-        /**
+        /*
          * (((1 + k) dR)/c)^(1/(1 + k))
          */
         return (Math.pow(((1 + this.k) * dR) / this.c, 1 / (1 + this.k))) + dR / this.b * (1 / (1 - asDecimal(targetRoyaltiesPercent)));
@@ -105,8 +105,8 @@ export class ExponentialCurve implements Curve {
       const R = amountAsNum(this.baseStorage.amount, this.baseMint)
       const S = supplyAsNum(this.targetMint);
       /*
-        dS * (1 / (1 - royalty)) = -S + ((S^(1 + k) (R + dR))/R)^(1/(1 + k))
-      */
+       * dS = -S + ((S^(1 + k) (R + dR))/R)^(1/(1 + k))
+       */
       return (-S + Math.pow(((Math.pow(S, 1 + this.k) * (R + dR)) / R), 1 / (1 + this.k))) * (1 - asDecimal(targetRoyaltiesPercent));
     }
   }

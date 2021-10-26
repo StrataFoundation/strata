@@ -315,14 +315,14 @@ impl PreciseNumber {
         mut guess: Self,
         iterations: u128,
     ) -> Option<Self> {
-        let zero = Self::zero();
-        if *self == zero {
-            return Some(zero);
+        let zero = &ZERO_PREC;
+        if *self == *zero {
+            return Some(Self::zero());
         }
-        if *root == zero {
+        if *root == *zero {
             return None;
         }
-        let one = Self::new(1)?;
+        let one = &ONE_PREC;
         let root_minus_one = root.checked_sub(&one)?;
         let root_minus_one_whole = root_minus_one.to_imprecise()?;
         let mut last_guess = guess.clone();
@@ -342,7 +342,12 @@ impl PreciseNumber {
                 last_guess = guess.clone();
             }
         }
-        Some(guess)
+
+        if last_guess.almost_eq(&guess, precision) {
+          Some(guess)
+        } else {
+          None // Don't return answers that are not close
+        }
     }
 
     /// Based on testing around the limits, this base is the smallest value that
@@ -364,11 +369,10 @@ impl PreciseNumber {
     }
 
     pub fn root_approximation(&self, root: &Self) -> Option<Self> {
-      let two = PreciseNumber::new(2)?;
       let one = PreciseNumber::new(1)?;
       // A good initial guess is the average of the interval that contains the
       // input number.  For all numbers, that will be between 1 and the given number.
-      let guess = self.checked_add(&one)?.checked_div(&two)?;
+      let guess = self.checked_add(&one)?.checked_div(&root)?;
       self.newtonian_root_approximation(&root, guess, Self::MAX_APPROXIMATION_ITERATIONS)
     }
 
