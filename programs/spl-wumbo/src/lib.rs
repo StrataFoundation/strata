@@ -104,6 +104,7 @@ pub mod spl_wumbo {
         verify_token_bonding_royalties(
           &token_bonding_settings.unwrap(), 
           &initialize_args.token_bonding,
+          &ctx.accounts.reverse_token_ref.key(),
           &initialize_args.buy_base_royalties,
           &initialize_args.buy_target_royalties,
           &initialize_args.sell_base_royalties,
@@ -137,6 +138,7 @@ pub mod spl_wumbo {
         verify_token_bonding_royalties(
           &token_bonding_settings_opt.unwrap(), 
           &initialize_args.token_bonding,
+          &ctx.accounts.reverse_token_ref.key(),
           &initialize_args.buy_base_royalties,
           &initialize_args.buy_target_royalties,
           &initialize_args.sell_base_royalties,
@@ -180,7 +182,6 @@ pub mod spl_wumbo {
       let new_token_ref = &mut ctx.accounts.new_token_ref;
       let reverse_token_ref = &mut ctx.accounts.reverse_token_ref;
       let data = &ctx.accounts.token_metadata.data;
-      let token_bonding_key = ctx.accounts.token_bonding.key();
       let token_program = &ctx.accounts.token_program;
       let owner = &ctx.accounts.owner;
       let royalties_owner = ctx.accounts.royalties_owner.to_account_info();
@@ -191,17 +192,23 @@ pub mod spl_wumbo {
         [&mut ctx.accounts.sell_base_royalties, &mut ctx.accounts.new_sell_base_royalties], 
         [&mut ctx.accounts.sell_target_royalties, &mut ctx.accounts.new_sell_target_royalties], 
       ];
-      royalty_accounts.iter().map(|royalty_accounts| {
-        let [old_royalty_account, new_royalty_account] = royalty_accounts;
-        let (standin_royalties_owner, standin_royalties_bump_seed) = Pubkey::find_program_address(
-          &[b"standin-royalties-owner", token_bonding_key.as_ref()],
-          &self::id()
-        );
+      let (standin_royalties_owner, standin_royalties_bump_seed) = Pubkey::find_program_address(
+        &[b"standin-royalties-owner", reverse_token_ref.to_account_info().key.as_ref()],
+        &self::id()
+      );
+      let seeds: &[&[&[u8]]] = &[
+        &[b"standin-royalties-owner", reverse_token_ref.to_account_info().key.as_ref(), &[standin_royalties_bump_seed]]
+      ];
+      msg!("Closing standin royalties accounts");
+      let mut i = 0;
+      for [old_royalty_account, new_royalty_account] in royalty_accounts {
+        if i > 1 { // Only possible collistions after index 2. Saves compute on reload
+          old_royalty_account.reload()?; // Make sure the balance is up-to-date as one of the other royalty accts could be the same as this one.
+        } else {
+          i+=1;
+        }
+        
         if old_royalty_account.owner == standin_royalties_owner {
-          msg!("Closing standin royalties account {} into new royalty account {}", old_royalty_account.key(), new_royalty_account.key());
-          let seeds: &[&[&[u8]]] = &[
-            &[b"standin-royalties-owner", token_bonding_key.as_ref(), &[standin_royalties_bump_seed]]
-          ];
           transfer(
             CpiContext::new_with_signer(
                 token_program.clone(),
@@ -224,9 +231,7 @@ pub mod spl_wumbo {
             seeds
           ))?;
         }
-
-        Ok::<(), ProgramError>(())
-      }).collect::<ProgramResult>()?;
+      }
 
       new_token_ref.collective = token_ref.collective;
       new_token_ref.token_bonding = token_ref.token_bonding;
@@ -274,10 +279,10 @@ pub mod spl_wumbo {
           base_mint: ctx.accounts.base_mint.to_account_info().clone(),
           target_mint: ctx.accounts.target_mint.to_account_info().clone(),
           authority: ctx.accounts.token_bonding_authority.to_account_info().clone(),
-          buy_base_royalties: ctx.accounts.buy_base_royalties.to_account_info().clone(),
-          buy_target_royalties: ctx.accounts.buy_target_royalties.to_account_info().clone(),
-          sell_base_royalties: ctx.accounts.sell_base_royalties.to_account_info().clone(),
-          sell_target_royalties: ctx.accounts.sell_target_royalties.to_account_info().clone(),
+          buy_base_royalties: ctx.accounts.new_buy_base_royalties.to_account_info().clone(),
+          buy_target_royalties: ctx.accounts.new_buy_target_royalties.to_account_info().clone(),
+          sell_base_royalties: ctx.accounts.new_sell_base_royalties.to_account_info().clone(),
+          sell_target_royalties: ctx.accounts.new_sell_target_royalties.to_account_info().clone(),
         },
         &[
           &[
@@ -301,6 +306,7 @@ pub mod spl_wumbo {
         verify_token_bonding_royalties(
           &token_bonding_settings_opt.unwrap(), 
           &ctx.accounts.token_bonding,
+          &ctx.accounts.reverse_token_ref.key(),
           &ctx.accounts.buy_base_royalties,
           &ctx.accounts.buy_target_royalties,
           &ctx.accounts.sell_base_royalties,
@@ -349,6 +355,7 @@ pub mod spl_wumbo {
         verify_token_bonding_royalties(
           &token_bonding_settings_opt.unwrap(), 
           &ctx.accounts.token_bonding,
+          &ctx.accounts.reverse_token_ref.key(),
           &ctx.accounts.buy_base_royalties,
           &ctx.accounts.buy_target_royalties,
           &ctx.accounts.sell_base_royalties,
@@ -514,6 +521,7 @@ fn verify_name(name: &AccountInfo, name_class: Option<Pubkey>, name_parent: Opti
 pub fn verify_token_bonding_royalties<'info>(
   defaults: &TokenBondingSettingsV0, 
   token_bonding: &Account<'info, TokenBondingV0>, 
+  reverse_token_ref_key: &Pubkey,
   buy_base_royalties: &Account<'info, TokenAccount>,
   buy_target_royalties: &Account<'info, TokenAccount>,
   sell_base_royalties: &Account<'info, TokenAccount>,
@@ -521,7 +529,7 @@ pub fn verify_token_bonding_royalties<'info>(
   claimed: bool
 ) -> ProgramResult {
   let (standin_royalties_owner, _) = Pubkey::find_program_address(
-    &[b"standin-royalties-owner", token_bonding.key().as_ref()],
+    &[b"standin-royalties-owner", reverse_token_ref_key.as_ref()],
     &self::id()
   );
 

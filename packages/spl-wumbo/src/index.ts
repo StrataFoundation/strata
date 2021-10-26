@@ -387,6 +387,7 @@ export class SplWumbo {
     const signers1: Signer[] = [];
 
     const collectiveAcct = await this.program.account.collectiveV0.fetch(collective);
+    const config = collectiveAcct.config;
 
     // Token refs
     const [tokenRef, tokenRefBumpSeed] = await PublicKey.findProgramAddress(
@@ -449,9 +450,16 @@ export class SplWumbo {
         [Buffer.from("token-bonding-authority", "utf-8"), reverseTokenRef.toBuffer()],
         programId
       );
+    
+    const [standinRoyaltiesOwner] =
+      await PublicKey.findProgramAddress(
+        [Buffer.from("standin-royalties-owner", "utf-8"), reverseTokenRef.toBuffer()],
+        programId
+      );
 
     // Create token bonding
     const instructions2: TransactionInstruction[] = [];
+    const tokenBondingSettings = owner ? config.claimedTokenBondingSettings : config.unclaimedTokenBondingSettings;
     const signers2: Signer[] = [];
     const { instructions: bondingInstructions, signers: bondingSigners, output: { tokenBonding, buyBaseRoyalties, buyTargetRoyalties, sellBaseRoyalties, sellTargetRoyalties } } = await this.splTokenBondingProgram.createTokenBondingInstructions({
       payer,
@@ -459,6 +467,22 @@ export class SplWumbo {
       baseMint: collectiveAcct.mint,
       targetMint,
       authority: tokenBondingAuthority,
+      // @ts-ignore
+      buyBaseRoyaltiesOwner: tokenBondingSettings?.buyBaseRoyalties.ownedByName ? standinRoyaltiesOwner : undefined,
+      // @ts-ignore
+      sellBaseRoyaltiesOwner: tokenBondingSettings?.sellBaseRoyalties.ownedByName ? standinRoyaltiesOwner : undefined,
+      // @ts-ignore
+      buyTargetRoyaltiesOwner: tokenBondingSettings?.buyTargetRoyalties.ownedByName ? standinRoyaltiesOwner : undefined,
+      // @ts-ignore
+      sellTargetRoyaltiesOwner: tokenBondingSettings?.sellTargetRoyalties.ownedByName ? standinRoyaltiesOwner : undefined,
+      // @ts-ignore
+      buyBaseRoyalties: tokenBondingSettings?.buyBaseRoyalties.address,
+      // @ts-ignore
+      sellBaseRoyalties: tokenBondingSettings?.sellBaseRoyalties.address,
+      // @ts-ignore
+      buyTargetRoyalties: tokenBondingSettings?.buyTargetRoyalties.address,
+      // @ts-ignore
+      sellTargetRoyalties: tokenBondingSettings?.sellTargetRoyalties.address,
       ...tokenBondingParams
     });
     instructions2.push(...bondingInstructions);

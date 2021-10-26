@@ -47,6 +47,15 @@ interface InitializeCurveArgs {
   payer?: PublicKey;
 }
 
+export function toU128(num: number): BN {
+  const [beforeDec, afteDec] = num.toString().split(".")
+  if (isNaN(Number(beforeDec)) || !isFinite(Number(beforeDec))) {
+    return new BN(0)
+  }
+
+  return new BN(`${beforeDec || ""}${(afteDec || "").slice(0, 12).padEnd(12, "0")}`)
+}
+
 interface CreateTokenBondingArgs {
   payer?: PublicKey;
   curve: PublicKey;
@@ -150,6 +159,15 @@ export class SplTokenBonding {
   }
 
   async initializeSolStorageInstructions(): Promise<InstructionResult<null>> {
+    const exists = await this.getState();
+    if (exists) {
+      return {
+        output: null,
+        instructions: [],
+        signers: []
+      }
+    }
+
     const [state, bumpSeed] = await PublicKey.findProgramAddress(
       [Buffer.from("state", "utf-8")],
       this.programId
@@ -239,7 +257,9 @@ export class SplTokenBonding {
       instructions,
       signers,
     } = await this.initializeSolStorageInstructions();
-    await this.sendInstructions(instructions, signers);
+    if (instructions.length > 0) {
+      await this.sendInstructions(instructions, signers);
+    }
   }
 
   async initializeCurveInstructions({
@@ -305,7 +325,7 @@ export class SplTokenBonding {
     buyTargetRoyaltyPercentage,
     mintCap,
     purchaseCap,
-    goLiveDate = new Date(),
+    goLiveDate = new Date(new Date().valueOf() - 10000), // 10 seos ago
     freezeBuyDate,
     targetMintDecimals,
     buyFrozen = false,
@@ -329,7 +349,7 @@ export class SplTokenBonding {
     }
     const programId = this.programId;
     const provider = this.provider;
-    const state = await this.getState();
+    const state = (await this.getState())!;
     if (baseMint.equals(NATIVE_MINT)) {
       baseMint = state.wrappedSolMint;
     }
@@ -636,7 +656,7 @@ export class SplTokenBonding {
     
     
     const balanceNeeded = await Token.getMinBalanceRentForExemptAccount(this.provider.connection);
-    const state = await this.getState();
+    const state = (await this.getState())!;
 
     // Create a new account
     const newAccount = anchor.web3.Keypair.generate();
@@ -708,7 +728,7 @@ export class SplTokenBonding {
     slippage,
     payer = this.wallet.publicKey
   }: BuyV0Args): Promise<InstructionResult<null>> {
-    const state = await this.getState();
+    const state = (await this.getState())!;
     const tokenBondingAcct = await this.account.tokenBondingV0.fetch(tokenBonding);
     // @ts-ignore
     const targetMint = await getMintInfo(this.provider, tokenBondingAcct.targetMint);
@@ -792,11 +812,13 @@ export class SplTokenBonding {
     }
 
     const args: IdlTypes<SplTokenBondingIDL>["BuyV0Args"] = {
+      // @ts-ignore
       buyTargetAmount: {
         targetAmount: new BN(Math.floor(neededAmount * Math.pow(10, targetMint.decimals))),
         maximumPrice: new BN(maxPrice),
       },
-      buyWithBase: null
+      buyWithBase: null,
+      rootEstimates: curve.buyTargetAmountRootEstimates(desiredTargetAmountNum, tokenBondingAcct.buyTargetRoyaltyPercentage).map(toU128)
     };
     const accounts = {
       accounts: {
@@ -831,7 +853,7 @@ export class SplTokenBonding {
     await this.sendInstructions(instructions, signers);
   }
 
-  async getState(): Promise<ProgramStateV0> {
+  async getState(): Promise<ProgramStateV0 | null> {
     if (this.state) {
       return this.state;
     }
@@ -840,7 +862,7 @@ export class SplTokenBonding {
       [Buffer.from("state", "utf-8")],
       this.programId
     ))[0];
-    return this.account.programStateV0.fetch(stateAddress)
+    return this.account.programStateV0.fetchNullable(stateAddress)
   }
 
   async sellV0Instructions({
@@ -852,7 +874,7 @@ export class SplTokenBonding {
     slippage,
     payer = this.wallet.publicKey
   }: SellV0Args): Promise<InstructionResult<null>> {
-    const state = await this.getState();
+    const state = (await this.getState())!;
     const tokenBondingAcct = await this.account.tokenBondingV0.fetch(tokenBonding);
     if (tokenBondingAcct.sellFrozen) {
       throw new Error("Sell is frozen on this bonding curve");
@@ -937,12 +959,12 @@ export class SplTokenBonding {
       tokenBondingAcct.sellTargetRoyaltyPercentage
     );
     const minPrice = Math.ceil(
-      reclaimedAmount * (1 - slippage) * Math.pow(10, targetMint.decimals)
+      reclaimedAmount * (1 - slippage) * Math.pow(10, baseMint.decimals)
     );
     const args: IdlTypes<SplTokenBondingIDL>["SellV0Args"] = {
       targetAmount,
       minimumPrice: new BN(minPrice),
-      
+      rootEstimates: curve.buyTargetAmountRootEstimates(targetAmountNum, tokenBondingAcct.sellTargetRoyaltyPercentage).map(toU128)
     };
     const accounts = {
       accounts: {

@@ -364,16 +364,8 @@ impl PreciseNumber {
         Self::new(std::u128::MAX).unwrap()
     }
 
-    pub fn pow_frac_approximation(&self, pow: u64, frac: u64) -> Option<Self> {
-      self.checked_pow(pow as u128)?.root_approximation(&PreciseNumber::new(frac as u128)?)
-    }
-
-    pub fn root_approximation(&self, root: &Self) -> Option<Self> {
-      let one = PreciseNumber::new(1)?;
-      // A good initial guess is the average of the interval that contains the
-      // input number.  For all numbers, that will be between 1 and the given number.
-      let guess = self.checked_add(&one)?.checked_div(&root)?;
-      self.newtonian_root_approximation(&root, guess, Self::MAX_APPROXIMATION_ITERATIONS)
+    pub fn pow_frac_approximation(&self, pow: u64, frac: u64, guess: Self) -> Option<Self> {
+      self.checked_pow(pow as u128)?.newtonian_root_approximation(&PreciseNumber::new(frac as u128)?, guess, Self::MAX_APPROXIMATION_ITERATIONS)
     }
 
     /// Approximate the square root using Newton's method.  Based on testing,

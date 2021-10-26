@@ -5,6 +5,7 @@ use spl_token::state::AccountState;
 pub mod precise_number;
 pub mod uint;
 use precise_number::{InnerUint, PreciseNumber, one, zero};
+use crate::{uint::U128};
 
 static TARGET_MINT_AUTHORITY_PREFIX: &str = "target-authority";
 
@@ -315,7 +316,8 @@ pub mod spl_token_bonding {
           &base_amount,
           &target_supply,
           &amount_prec,
-          false
+          false,
+          args.root_estimates
         ).or_arith_error()?;
         price = to_mint_amount(
           &price_prec,
@@ -347,10 +349,11 @@ pub mod spl_token_bonding {
         let base_royalties_prec = base_royalties_percent.checked_mul(&total_price_prec).or_arith_error()?;
         let price_prec = total_price_prec.checked_sub(&base_royalties_prec).or_arith_error()?;
 
-        let amount_prec = curve.expected_amount(
+        let amount_prec = curve.expected_target_amount(
           &base_amount,
           &target_supply,
-          &total_price_prec
+          &total_price_prec,
+          args.root_estimates
         ).or_arith_error()?;
 
         total_amount = to_mint_amount(
@@ -454,7 +457,7 @@ Transfer {
         total_amount - target_royalties
       )?;
 
-      Ok(())
+      Ok(())        
     }
 
     pub fn sell_v0(ctx: Context<SellV0>, args: SellV0Args) -> ProgramResult {
@@ -485,7 +488,8 @@ Transfer {
         &base_amount,
         &target_supply,
         &amount_minus_royalties_prec,
-        true
+        true,
+        args.root_estimates
       ).or_arith_error()?;
 
       let base_royalties_prec = base_royalties_percent.checked_mul(&reclaimed_prec).or_arith_error()?;
@@ -598,15 +602,37 @@ pub fn precise_supply(mint: &Account<Mint>) -> PreciseNumber {
   precise_supply_amt(mint.supply, mint)
 }
 
+fn get_pow_10(decimals: u8) -> PreciseNumber {
+  match decimals {
+    0 => PreciseNumber::new(0),
+    1 => PreciseNumber::new(10),
+    2 => PreciseNumber::new(100),
+    3 => PreciseNumber::new(1000),
+    4 => PreciseNumber::new(10000),
+    5 => PreciseNumber::new(100000),
+    6 => PreciseNumber::new(1000000),
+    7 => PreciseNumber::new(10000000),
+    8 => PreciseNumber::new(100000000),
+    9 => PreciseNumber::new(1000000000),
+    10 => PreciseNumber::new(10000000000),
+    11 => PreciseNumber::new(100000000000),
+    12 => PreciseNumber::new(1000000000000),
+    _ => unreachable!()
+  }.unwrap()
+}
+
 pub fn precise_supply_amt(amt: u64, mint: &Account<Mint>) -> PreciseNumber {
   PreciseNumber {
-      value: InnerUint::from((amt as u128) * 10_u128.pow(12_u32 - mint.decimals as u32))
-  }
+      value: InnerUint::from(amt as u128)
+  }.checked_mul(&get_pow_10(12_u8 - mint.decimals)).unwrap()
 }
 
 pub fn to_mint_amount(amt: &PreciseNumber, mint: &Account<Mint>, ceil: bool) -> u64 {
+  // Lookup is faster than a checked_pow
+  let pow_10 = get_pow_10(mint.decimals);
+
   let pre_round = amt.checked_mul(
-      &PreciseNumber::new(10_u128).unwrap().checked_pow(mint.decimals as u128).unwrap()
+    &pow_10
   ).unwrap();
   let post_round = if ceil {
     pre_round.ceiling().unwrap()
@@ -678,6 +704,7 @@ pub struct BuyTargetAmountV0Args {
 pub struct BuyV0Args {
   pub buy_with_base: Option<BuyWithBaseV0Args>,
   pub buy_target_amount: Option<BuyTargetAmountV0Args>,
+  pub root_estimates: Option<[u128; 2]> // Required when computing an exponential. Greatly assists with newtonian root approximation, saving compute units
 }
 
 
@@ -686,7 +713,8 @@ pub struct SellV0Args {
   // Number to sell. This is including the decimal value. So 1 is the lowest possible fraction of a coin
   pub target_amount: u64,
   // Minimum price to receive for this amount. Allows users to account and fail-fast for slippage.
-  pub minimum_price: u64
+  pub minimum_price: u64,
+  pub root_estimates: Option<[u128; 2]> // Required when computing an exponential. Greatly assists with newtonian root approximation, saving compute units
 }
 
 
@@ -1075,17 +1103,19 @@ pub struct CreateCurveV0Args {
 }
 
 pub trait Curve {
-  fn price(&self, base_amount: &PreciseNumber, target_supply: &PreciseNumber, amount: &PreciseNumber, sell: bool) -> Option<PreciseNumber>;
-  fn expected_amount(&self, base_amount: &PreciseNumber, target_supply: &PreciseNumber, reserve_change: &PreciseNumber) -> Option<PreciseNumber>;
+  fn price(&self, base_amount: &PreciseNumber, target_supply: &PreciseNumber, amount: &PreciseNumber, sell: bool, root_estimates: Option<[u128; 2]>) -> Option<PreciseNumber>;
+  fn expected_target_amount(&self, base_amount: &PreciseNumber, target_supply: &PreciseNumber, reserve_change: &PreciseNumber, root_estimates: Option<[u128; 2]>) -> Option<PreciseNumber>;
 }
 
 pub static ONE_PREC: PreciseNumber =  PreciseNumber { value: one() };
 pub static ZERO_PREC: PreciseNumber =  PreciseNumber { value: zero() };
 
 impl Curve for CurveV0 {
-  fn expected_amount(&self, base_amount: &PreciseNumber, target_supply: &PreciseNumber, reserve_change: &PreciseNumber) -> Option<PreciseNumber> {
+  fn expected_target_amount(&self, base_amount: &PreciseNumber, target_supply: &PreciseNumber, reserve_change: &PreciseNumber, root_estimates: Option<[u128; 2]>) -> Option<PreciseNumber> {
     let b_prec = PreciseNumber { value: InnerUint::from(self.b) };
     let c_prec = PreciseNumber { value: InnerUint::from(self.c) };
+    let guess1 = PreciseNumber { value: InnerUint::from(root_estimates.unwrap()[0]) };
+    let guess2 = PreciseNumber { value: InnerUint::from(root_estimates.unwrap()[1]) };
     
     if base_amount.eq(&ZERO_PREC) || target_supply.eq(&ZERO_PREC) {
       match self.curve {
@@ -1098,7 +1128,7 @@ impl Curve for CurveV0 {
             let pow_prec = PreciseNumber::new(pow as u128)?;
             let frac_prec = PreciseNumber::new(frac as u128)?;
             let one_plus_k =  &ONE_PREC.checked_add(&pow_prec.checked_div(&frac_prec)?)?;
-            one_plus_k.checked_mul(&reserve_change)?.checked_div(&c_prec)?.pow_frac_approximation(frac, frac + pow)
+            one_plus_k.checked_mul(&reserve_change)?.checked_div(&c_prec)?.pow_frac_approximation(frac, frac + pow, guess1)
           } else if pow == 0 {
             reserve_change.checked_div(&b_prec)
           } else {
@@ -1114,21 +1144,24 @@ impl Curve for CurveV0 {
           /*
             dS = -S + ((S^(1 + k) (R + dR))/R)^(1/(1 + k))
           */
-          target_supply.pow_frac_approximation(one_plus_k_numerator, frac)?
+          target_supply.pow_frac_approximation(one_plus_k_numerator, frac, guess1)?
                         .checked_mul(
                           &base_amount.checked_add(&reserve_change)?
                         )?.checked_div(
                           &base_amount
                         )?
-                        .pow_frac_approximation(frac, frac + pow)
+                        .pow_frac_approximation(frac, frac + pow, guess2)
         }
       }
     }
   }
 
-  fn price(&self, base_amount: &PreciseNumber, target_supply: &PreciseNumber, amount: &PreciseNumber, sell: bool) -> Option<PreciseNumber> {
+  fn price(&self, base_amount: &PreciseNumber, target_supply: &PreciseNumber, amount: &PreciseNumber, sell: bool, root_estimates: Option<[u128; 2]>) -> Option<PreciseNumber> {
     let b_prec = PreciseNumber { value: InnerUint::from(self.b) };
     let c_prec = PreciseNumber { value: InnerUint::from(self.c) };
+    let guess1 = PreciseNumber { value: InnerUint::from(root_estimates.unwrap()[0]) };
+    let guess2 = PreciseNumber { value: InnerUint::from(root_estimates.unwrap()[1]) };
+
     if base_amount.eq(&ZERO_PREC) || target_supply.eq(&ZERO_PREC) {
       match self.curve {
         // b dS + (c dS^(1 + pow/frac))/(1 + pow/frac)
@@ -1138,7 +1171,7 @@ impl Curve for CurveV0 {
           let frac_prec = PreciseNumber::new(frac as u128)?;
           b_prec.checked_mul(&amount)?.checked_add(
             &c_prec.checked_mul(
-              &amount.pow_frac_approximation(one_plus_k_numerator, frac)?
+              &amount.pow_frac_approximation(one_plus_k_numerator, frac, guess1)?
             )?.checked_div(
               &ONE_PREC.checked_add(&pow_prec.checked_div(&frac_prec)?)?
             )?
@@ -1158,8 +1191,8 @@ impl Curve for CurveV0 {
             target_supply.checked_add(&amount)?
           };
 
-          let s_plus_ds_k1 = s_plus_ds.pow_frac_approximation(one_plus_k_numerator, frac)?;
-          let s_k1 = &target_supply.pow_frac_approximation(one_plus_k_numerator, frac)?;
+          let s_k1 = &target_supply.pow_frac_approximation(one_plus_k_numerator, frac, guess1)?;
+          let s_plus_ds_k1 = s_plus_ds.pow_frac_approximation(one_plus_k_numerator, frac, guess2)?;
 
           // PreciseNumbers cannot be negative. If we're selling, S + dS is less than S.
           // Swap the two around. This will invert the sine of this function, but since sell = true they are expecting a positive number

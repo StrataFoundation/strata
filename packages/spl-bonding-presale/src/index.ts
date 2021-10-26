@@ -1,8 +1,8 @@
-import { getMintInfo } from "@project-serum/common";
+import { getMintInfo, getTokenAccount } from "@project-serum/common";
 import { AccountLayout, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { Keypair, PublicKey, Signer, SystemProgram, SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, TransactionInstruction } from "@solana/web3.js";
 import { BN, Program, Provider } from "@wum.bo/anchor";
-import { SplTokenBonding } from "@wum.bo/spl-token-bonding";
+import { amountAsNum, fromCurve, SplTokenBonding, toU128 } from "@wum.bo/spl-token-bonding";
 import { BigInstructionResult, InstructionResult, sendInstructions, sendMultipleInstructions } from "@wum.bo/spl-utils";
 import { SplBondingPresaleIDL } from "./generated/spl-bonding-presale";
 
@@ -112,7 +112,6 @@ export class SplBondingPresale {
     }
 
     let presaleTargetMint: PublicKey | null = null;
-    let presaleBaseRoyalties: PublicKey | null = null;
     let presaleTargetRoyalties: PublicKey | null = null;
     if (!presaleTokenBonding) {
       const baseStorageKeypair = Keypair.generate();
@@ -152,7 +151,6 @@ export class SplBondingPresale {
       presaleTargetMint = targetMint;
       presaleTokenBonding = out;
       presaleBaseStorage = baseStorage;
-      presaleBaseRoyalties = buyBaseRoyalties;
       presaleTargetRoyalties = buyTargetRoyalties;
 
       instructions2.push(...presaleInstrs);
@@ -161,7 +159,6 @@ export class SplBondingPresale {
       const preTokenBondingAcct = await this.tokenBondingProgram.account.tokenBondingV0.fetch(presaleTokenBonding);
       presaleBaseStorage = preTokenBondingAcct.baseStorage;
       presaleTargetMint = preTokenBondingAcct.targetMint;
-      presaleBaseRoyalties = preTokenBondingAcct.buyBaseRoyalties;
       presaleTargetRoyalties = preTokenBondingAcct.buyTargetRoyalties;
     }
     
@@ -178,7 +175,7 @@ export class SplBondingPresale {
         sellBaseRoyaltyPercentage: 0,
         sellTargetRoyaltyPercentage: 0,
         goLiveDate: presaleEndDate!,
-        buyFrozen: true,
+        buyFrozen: false,
         buyBaseRoyalties: tokenBondingAcct.buyTargetRoyalties,
         sellBaseRoyalties: tokenBondingAcct.sellTargetRoyalties,
         buyTargetRoyalties: presaleTargetRoyalties!,
@@ -240,7 +237,9 @@ export class SplBondingPresale {
     const presaleTokenBondingAcct = await this.tokenBondingProgram.account.tokenBondingV0.fetch(presaleAcct.presaleTokenBonding);
     const postTokenBondingAcct = await this.tokenBondingProgram.account.tokenBondingV0.fetch(presaleAcct.postTokenBonding);
     const presaleTargetMint = await getMintInfo(this.provider, presaleTokenBondingAcct.targetMint);
+    const baseMint = await getMintInfo(this.provider, tokenBondingAcct.baseMint);
     const targetMint = await getMintInfo(this.provider, tokenBondingAcct.targetMint);
+    const presaleBaseStorage = await getTokenAccount(this.provider, presaleTokenBondingAcct.baseStorage);
     const tokenBondingAuthority = await PublicKey.createProgramAddress(
       [Buffer.from("token-bonding-authority", "utf-8"), presale.toBuffer(), new BN(presaleAcct.tokenBondingAuthorityBumpSeed).toBuffer()],
       this.programId
@@ -249,10 +248,14 @@ export class SplBondingPresale {
       [Buffer.from("base-storage-authority", "utf-8"), presale.toBuffer(), new BN(presaleAcct.baseStorageAuthorityBumpSeed).toBuffer()],
       this.programId
     );
+    const curveAcct = await this.tokenBondingProgram.account.curveV0.fetch(tokenBondingAcct.curve as PublicKey);
+    const curve = fromCurve(curveAcct, presaleBaseStorage, baseMint, targetMint);
 
     return {
       instructions: [
         await this.instruction.launchV0({
+          rootEstimates: curve.buyWithBaseRootEstimates(amountAsNum(presaleBaseStorage.amount, baseMint), tokenBondingAcct.buyBaseRoyaltyPercentage).map(toU128)
+        }, {
           accounts: {
             refund,
             presale,

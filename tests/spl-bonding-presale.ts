@@ -3,7 +3,7 @@ import { expect, use } from "chai";
 import { TokenUtils } from "./utils/token";
 import ChaiAsPromised from "chai-as-promised";
 
-import { SplTokenBonding } from "../packages/spl-token-bonding/src";
+import { asDecimal, SplTokenBonding } from "../packages/spl-token-bonding/src";
 import { SplBondingPresale } from "../packages/spl-bonding-presale/src";
 import { BN } from "@wum.bo/anchor";
 import { PublicKey } from "@solana/web3.js";
@@ -33,14 +33,14 @@ describe("spl-bonding-presale", () => {
     const curve = await tokenBondingProgram.initializeCurve({
       curve: {
         // @ts-ignore
-        c: new BN(1_000000000000),
-        b: new BN(0_000000000000),
+        c: new BN(0),
+        b: new BN(1_000000000000),
         curve: {
           exponentialCurveV0: {
             // @ts-ignore
-            pow: new BN(5),
+            pow: new BN(0),
             // @ts-ignore
-            frac: new BN(3)
+            frac: new BN(1)
           }
         },
       }
@@ -89,6 +89,21 @@ describe("spl-bonding-presale", () => {
     }
   })
 
+  it("has a locked post bonding curve", async () => {
+    const presaleAcct = await bondingPresaleProgram.account.tokenBondingPresaleV0.fetch(presale);
+    try {
+      await tokenBondingProgram.buyV0({
+        tokenBonding: presaleAcct.postTokenBonding,
+        desiredTargetAmount: new BN(200),
+        slippage: 0.05
+      });
+      throw "Shouldn't get here"
+    } catch (e) {
+      console.log(e);
+      expect(e.toString()).to.equal("NotLiveYet: This bonding curve is not live yet")
+    }
+  })
+
   describe('launch', () => {
     let presaleAcct;
     before(async () => {
@@ -108,30 +123,17 @@ describe("spl-bonding-presale", () => {
       expect(await provider.connection.getAccountInfo(presaleAcct.presaleTokenBonding)).to.be.null;
     });
 
-    it("has a locked buy for postsale", async () => {
-      try {
-        await tokenBondingProgram.buyV0({
-          tokenBonding: presaleAcct.postTokenBonding,
-          desiredTargetAmount: new BN(2000000000),
-          slippage: 0.05
-        });
-        throw "Shouldn't get here"
-      } catch (e) {
-        console.log(e);
-        expect(e.toString()).to.equal("BuyFrozen: Buy is frozen on this bonding curve, purchases not allowed")
-      }
-    });
 
     it("transfers the presale to the post sale", async () => {
       const postBondingAcct = await tokenBondingProgram.account.tokenBondingV0.fetch(presaleAcct.postTokenBonding);
-      await tokenUtils.expectBalance(postBondingAcct.baseStorage, 2);
+      // Make sure to account for royalties, which will be floor'd
+      await tokenUtils.expectBalance(postBondingAcct.baseStorage, 1.81);
     });
 
     it("allows transforming presale tokens into target tokens", async () => {
-      const tokenBondingAcct = await tokenBondingProgram.account.tokenBondingV0.fetch(presaleAcct.presaleTokenBonding);
-      await tokenBondingProgram.buyV0({
+      await tokenBondingProgram.sellV0({
         tokenBonding: presaleAcct.postTokenBonding,
-        desiredTargetAmount: new BN(200),
+        targetAmount: new BN(2000000000),
         slippage: 0.05
       });
     })

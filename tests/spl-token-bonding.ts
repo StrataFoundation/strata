@@ -490,7 +490,7 @@
 //         curve: {
 //           // @ts-ignore
 //           c: new BN(1000000000000),
-//           b: new BN(100000000000),
+//           b: new BN(0),
 //           curve: {
 //             exponentialCurveV0: {
 //               pow: new BN(1),

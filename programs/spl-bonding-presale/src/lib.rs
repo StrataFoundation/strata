@@ -27,12 +27,15 @@ pub mod spl_bonding_presale {
     presale.post_launch_token_bonding_authority = args.post_launch_token_bonding_authority;
     presale.go_live_unix_time = ctx.accounts.token_bonding.go_live_unix_time;
     presale.base_storage_authority_bump_seed = args.base_storage_authority_bump_seed;
+    presale.launched = false;
 
     Ok(())
   }
 
-  pub fn launch_v0(ctx: Context<LaunchV0>) -> ProgramResult {
+  pub fn launch_v0(ctx: Context<LaunchV0>, args: LaunchV0Args) -> ProgramResult {
     let token_bonding = &mut ctx.accounts.token_bonding;
+
+    ctx.accounts.presale.launched = true;
 
     // Reopen bonding curve
     msg!("Reopening bonding curve");
@@ -88,7 +91,8 @@ pub mod spl_bonding_presale {
         base_amount: ctx.accounts.presale_base_storage.amount,
         minimum_target_amount: 1
       }),
-      buy_target_amount: None
+      buy_target_amount: None,
+      root_estimates: args.root_estimates
     })?;
 
     msg!("Cleaning up presale token bonding");
@@ -119,6 +123,11 @@ pub struct InitializeTokenBondingPresaleV0Args {
   pub bump_seed: u8,
   pub token_bonding_authority_bump_seed: u8,
   pub base_storage_authority_bump_seed: u8,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
+pub struct LaunchV0Args {
+  pub root_estimates: Option<[u128; 2]> // Required when computing an exponential, sent to buy_v0 of the bonding curve. Greatly assists with newtonian root approximation, saving compute units
 }
 
 fn verify_authority(authority: Option<Pubkey>, seeds: &[&[u8]], bump: u8) -> Result<bool> {
@@ -169,7 +178,6 @@ pub struct InitializeTokenBondingPresaleV0<'info> {
   base_storage: Box<Account<'info, TokenAccount>>,
   #[account(
     constraint = verify_authority(post_token_bonding.authority, &[b"token-bonding-authority", presale.key().as_ref()], args.token_bonding_authority_bump_seed)?,
-    constraint = post_token_bonding.buy_frozen,
     constraint = token_bonding.target_mint == post_token_bonding.base_mint,
     constraint = post_token_bonding.go_live_unix_time == token_bonding.go_live_unix_time,
   )]
@@ -186,6 +194,7 @@ pub struct LaunchV0<'info> {
   #[account(mut)]
   refund: AccountInfo<'info>, // Will receive the reclaimed SOL
   #[account(
+    mut,
     has_one = token_bonding,
     has_one = presale_token_bonding,
     has_one = post_token_bonding
@@ -262,6 +271,8 @@ pub struct TokenBondingPresaleV0 {
   pub post_launch_token_bonding_authority: Pubkey,
 
   pub go_live_unix_time: i64,
+
+  pub launched: bool,
 
   pub bump_seed: u8,
   pub token_bonding_authority_bump_seed: u8,

@@ -36,12 +36,16 @@ export interface Curve {
   sellTargetAmount(targetAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number): number
   buyTargetAmount(targetAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number): number
   buyWithBaseAmount(baseAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number): number
+  buyWithBaseRootEstimates(baseAmountNum: number, baseRoyaltiesPercent: number): number[]
+  buyTargetAmountRootEstimates(targetAmountNum: number,  targetRoyaltiesPercent: number): number[]
 }
 
 export class ExponentialCurve implements Curve {
   c: number;
   b: number;
   k: number;
+  pow: number;
+  frac: number;
   baseStorage: AccountInfo;
   baseMint: MintInfo;
   targetMint: MintInfo;
@@ -50,10 +54,49 @@ export class ExponentialCurve implements Curve {
     this.c = c.toNumber() / 1000000000000;
     this.b = b.toNumber() / 1000000000000;
     this.k = curve.pow.toNumber() / curve.frac.toNumber();
+    this.pow = curve.pow.toNumber();
+    this.frac = curve.frac.toNumber();
 
     this.baseStorage = baseStorage;
     this.baseMint = baseMint;
     this.targetMint = targetMint;
+  }
+
+
+  buyWithBaseRootEstimates(baseAmountNum: number, baseRoyaltiesPercent: number): number[] {
+    const S = supplyAsNum(this.targetMint);
+    const R = amountAsNum(this.baseStorage.amount, this.baseMint);
+    const dR = (baseAmountNum * (1 - asDecimal(baseRoyaltiesPercent)));
+
+    if (R == 0 || S == 0) {
+      return [Math.pow((dR * (1 + this.k)) / this.c, 1 / (1 + this.k)), 1]
+    } else {
+      /*
+        dS = -S + ((S^(1 + k) (R + dR))/R)^(1/(1 + k))
+      */
+      
+      return [Math.pow(S, 1 + this.k), Math.pow(Math.pow(S, 1+ this.k) * (R + dR) / R, 1/(1 + this.k))]
+    }
+  }
+
+  buyTargetAmountRootEstimates(targetAmountNum: number, targetRoyaltiesPercent: number): number[] {
+    const S = supplyAsNum(this.targetMint);
+    const dS = targetAmountNum * (1 / (1 - asDecimal(targetRoyaltiesPercent)));
+    const R = amountAsNum(this.baseStorage.amount, this.baseMint);
+
+    if (R == 0 || S == 0) {
+      if (this.b == 0 && this.c != 0) {
+        return [Math.pow(targetAmountNum, 1 + this.k), 1]
+      }
+
+      return [0, 0]
+    } else {
+      /*
+        (R / S^(1 + k)) ((S + dS)^(1 + k) - S^(1 + k))
+      */
+      
+      return [Math.pow(S, 1 + this.k), Math.pow(S + dS, 1 + this.k)]
+    }
   }
 
   current(): number {
