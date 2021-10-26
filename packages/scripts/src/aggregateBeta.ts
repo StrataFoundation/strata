@@ -1,7 +1,7 @@
-import fs from "fs";
+import fs from "fs/promises";
+import path from "path";
 import * as anchor from "@wum.bo/anchor";
 import { getMintInfo } from "@project-serum/common";
-import axios from "axios";
 import { Connection, PublicKey } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { SplWumboIDL, SplWumboIDLJson, TokenRefV0 } from "@wum.bo/spl-wumbo";
@@ -64,6 +64,15 @@ const dump: { inputs: Record<string, any>; outputs: Record<string, any> } = {
   outputs: {},
 };
 
+const rootDir = path.join(__dirname, "../..");
+
+const betaAccountFiles = [
+  path.join(rootDir, "/beta_accounts_1.json"),
+  path.join(rootDir, "/beta_accounts_2.json"),
+  path.join(rootDir, "/beta_accounts_3.json"),
+  path.join(rootDir, "/beta_accounts_4.json"),
+];
+
 const run = async () => {
   console.log(process.env.ANCHOR_PROVIDER_URL);
   anchor.setProvider(anchor.Provider.env());
@@ -81,17 +90,19 @@ const run = async () => {
     provider
   ) as anchor.Program<SplWumboIDL>;
 
-  const betaParticipants: { publicKey: string }[] = await axios({
-    url: "https://prod-api.teamwumbo.com/graphql",
-    method: "post",
-    data: {
-      query: `query {
-        topWumHolders(startRank:0, stopRank:500000) {
-          publicKey
-        }
-      }`,
-    },
-  }).then((res: any) => res.data.data.topWumHolders);
+  const betaParticipants: string[] = await Promise.all(
+    betaAccountFiles.map(async (path) => {
+      const raw = await fs.readFile(path);
+      return JSON.parse(raw.toString());
+    })
+  ).then((contents) => [
+    ...contents
+      .reduce((acc: Set<string>, content) => {
+        content.map((obj: any) => acc.add(obj.key.payload));
+        return acc;
+      }, new Set())
+      .values(),
+  ]);
 
   const tokenBondingAccts = await splTokenBonding.account.tokenBondingV0.all();
   const wumBondingAcct = await splTokenBonding.account.tokenBondingV0.fetch(
@@ -121,7 +132,7 @@ const run = async () => {
 
   const tokenAcctsByBetaParticipant: { [key: string]: TokenAccount[] } =
     await betaParticipants.reduce(
-      async (accP, { publicKey }, currentIndex, orgArray) => {
+      async (accP, publicKey, currentIndex, orgArray) => {
         const acc = await accP;
         console.log(
           `Retrieving tokenAccts for betaParticipant ${currentIndex + 1} of ${
@@ -153,79 +164,95 @@ const run = async () => {
     );
 
   let curveAcct: any;
-  const [totalWumByBetaParticipant, totalSupplyByMint] = await Object.entries(
-    tokenAcctsByBetaParticipant
-  ).reduce(
-    async (
-      accP: Promise<Record<string, number>[]>,
-      [betaParticipant, tokenAccts],
-      currentIndex,
-      orgArray
-    ) => {
-      const [totalWumByBetaParticipantAcc, totalSupplyByMintAcc] = await accP;
-      console.log(
-        `Processing: betaParticipant ${currentIndex + 1} of ${orgArray.length}`
-      );
+  const [totalWum, totalWumByBetaParticipant, totalSupplyByMint] =
+    await Object.entries(tokenAcctsByBetaParticipant).reduce(
+      async (
+        accP: Promise<Record<string, number>[]>,
+        [betaParticipant, tokenAccts],
+        currentIndex,
+        orgArray
+      ) => {
+        const [
+          totalWumAcc,
+          totalWumByBetaParticipantAcc,
+          totalSupplyByMintAcc,
+        ] = await accP;
+        console.log(
+          `Processing: betaParticipant ${currentIndex + 1} of ${
+            orgArray.length
+          }`
+        );
 
-      for (const tokenAcct of tokenAccts) {
-        let tokenBondingAcct;
-        let targetMint;
-        let baseMint;
-        let reclaimedAmount = 0;
-        const [hasAmount, isWum] = [
-          !!tokenAcct.info.amount,
-          tokenAcct.info.mint.equals(WUM_TOKEN),
-        ];
+        for (const tokenAcct of tokenAccts) {
+          let tokenBondingAcct;
+          let targetMint;
+          let baseMint;
+          let reclaimedAmount = 0;
+          const [hasAmount, isWum] = [
+            !!tokenAcct.info.amount,
+            tokenAcct.info.mint.equals(WUM_TOKEN),
+          ];
 
-        if (hasAmount) {
-          if (isWum) {
-            tokenBondingAcct = wumBondingAcct;
-            targetMint = await getMintInfo(
-              provider,
-              tokenBondingAcct.targetMint
-            );
-            reclaimedAmount = amountAsNum(tokenAcct.info.amount, targetMint);
-            totalWumByBetaParticipantAcc[betaParticipant] =
-              reclaimedAmount +
-              (totalWumByBetaParticipantAcc[betaParticipant] || 0);
-          } else {
-            tokenBondingAcct =
-              tokenBondingAcctsByTargetMint[tokenAcct.info.mint.toBase58()];
-            targetMint = await getMintInfo(
-              provider,
-              tokenBondingAcct.targetMint
-            );
-            baseMint = await getMintInfo(provider, tokenBondingAcct.baseMint);
-
-            if (!curveAcct) {
-              curveAcct = await splTokenBonding.account.curveV0.fetch(
-                tokenBondingAcct.curve
+          if (hasAmount) {
+            if (isWum) {
+              tokenBondingAcct = wumBondingAcct;
+              targetMint = await getMintInfo(
+                provider,
+                tokenBondingAcct.targetMint
               );
+              reclaimedAmount = amountAsNum(tokenAcct.info.amount, targetMint);
+
+              totalWumAcc["totalWum"] =
+                reclaimedAmount + (totalWumAcc["totalWum"] || 0);
+
+              totalWumByBetaParticipantAcc[betaParticipant] =
+                reclaimedAmount +
+                (totalWumByBetaParticipantAcc[betaParticipant] || 0);
+            } else {
+              tokenBondingAcct =
+                tokenBondingAcctsByTargetMint[tokenAcct.info.mint.toBase58()];
+              targetMint = await getMintInfo(
+                provider,
+                tokenBondingAcct.targetMint
+              );
+              baseMint = await getMintInfo(provider, tokenBondingAcct.baseMint);
+
+              if (!curveAcct) {
+                curveAcct = await splTokenBonding.account.curveV0.fetch(
+                  tokenBondingAcct.curve
+                );
+              }
+
+              const curve: Curve = fromCurve(curveAcct, baseMint, targetMint);
+
+              const targetAmountNum = amountAsNum(
+                tokenAcct.info.amount,
+                targetMint
+              );
+              reclaimedAmount = curve.sellTargetAmount(targetAmountNum);
+
+              totalWumAcc["totalWum"] =
+                reclaimedAmount + (totalWumAcc["totalWum"] || 0);
+
+              totalWumByBetaParticipantAcc[betaParticipant] =
+                reclaimedAmount +
+                (totalWumByBetaParticipantAcc[betaParticipant] || 0);
+
+              totalSupplyByMintAcc[tokenAcct.info.mint.toBase58()] =
+                targetAmountNum +
+                (totalSupplyByMintAcc[tokenAcct.info.mint.toBase58()] || 0);
             }
-
-            const curve: Curve = fromCurve(curveAcct, baseMint, targetMint);
-
-            const targetAmountNum = amountAsNum(
-              tokenAcct.info.amount,
-              targetMint
-            );
-            reclaimedAmount = curve.sellTargetAmount(targetAmountNum);
-
-            totalWumByBetaParticipantAcc[betaParticipant] =
-              reclaimedAmount +
-              (totalWumByBetaParticipantAcc[betaParticipant] || 0);
-
-            totalSupplyByMintAcc[tokenAcct.info.mint.toBase58()] =
-              targetAmountNum +
-              (totalSupplyByMintAcc[tokenAcct.info.mint.toBase58()] || 0);
           }
         }
-      }
 
-      return [totalWumByBetaParticipantAcc, totalSupplyByMintAcc];
-    },
-    Promise.resolve([{}, {}])
-  );
+        return [
+          totalWumAcc,
+          totalWumByBetaParticipantAcc,
+          totalSupplyByMintAcc,
+        ];
+      },
+      Promise.resolve([{}, {}, {}])
+    );
 
   const top11CreatorsBySupply = await Object.keys(totalSupplyByMint)
     .reduce(async (accP: Promise<(string | number)[][]>, mint) => {
@@ -285,25 +312,22 @@ const run = async () => {
   dump.inputs["tokenBondingAcctsWithWumBase"] = tokenBondingAcctsWithWumBase;
   dump.inputs["mints"] = mints;
   dump.inputs["tokenAcctsByBetaParticipant"] = tokenAcctsByBetaParticipant;
+  dump.outputs["totalWum"] = totalWum;
   dump.outputs["totalWumByBetaParticipant"] = totalWumByBetaParticipant;
   dump.outputs["totalSupplyByMint"] = totalSupplyByMint;
   dump.outputs["top11CreatorsBySupply"] = top11CreatorsBySupply;
 
-  fs.writeFile("./aggregateBetaDump.json", JSON.stringify(dump), (err) => {
-    if (err) {
-      console.error("Error writing file", err);
-    }
-  });
+  console.log("totalWum", totalWum);
 
-  fs.writeFile(
-    "./aggregateBetaOutput.json",
-    JSON.stringify(top11CreatorsBySupply),
-    (err) => {
-      if (err) {
-        console.error("Error writing file", err);
-      }
-    }
-  );
+  try {
+    await fs.writeFile("./aggregateBetaDump.json", JSON.stringify(dump));
+    await fs.writeFile(
+      "./aggregateBetaOutput.json",
+      JSON.stringify(top11CreatorsBySupply)
+    );
+  } catch (err) {
+    console.error("Error writting files", err);
+  }
 };
 
 (async () => {

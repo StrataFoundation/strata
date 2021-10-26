@@ -1,0 +1,4002 @@
+[
+    {
+        "partitionID": 0,
+        "offset": 0,
+        "timestamp": 1632461617000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "45NuC1tpS8HvLtRqEGoBV1ebmAvbLAuKHpNk9rSuWQ2D",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 1,
+        "timestamp": 1632461949000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "F1cQKBUWqLHFnRj53TnzKu1BcTr3AJfKEekw2iEVV4m6",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 2,
+        "timestamp": 1632605813000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "8kWFCsBfcGvvSsjWbAcMktq6SHX8xSjTHzEQrsP7t3gu",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 3,
+        "timestamp": 1632616726000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "5kzzHsBU1V7MmLawvaYdQiGYPjsTU4QGD978dMhWtTSL",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 4,
+        "timestamp": 1632618360000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "CVQYxvxJXLhaKRUJrqYcGPiFUEdHDnJHiwQBuXLMzgUQ",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 5,
+        "timestamp": 1632619975000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "CK7gveyhJVg8tYk53pWx9b2HDsE5aktpc9zBp3EXQ1oP",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 6,
+        "timestamp": 1632626610000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "DMSf7po5eSaoZ2hCRPP4csTzy6FiABUrdoLHhVsWr8vU",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 7,
+        "timestamp": 1632626610000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "HAzL8AWL8EPEBNyVojJt4t3hsAz3qgyaRZ4Rm2tEaqf",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 8,
+        "timestamp": 1632628956000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "2BwMzvE7Tmecqkc7DYptVzf8tKxDdSRDS5JUTFTPfoZc",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 9,
+        "timestamp": 1632629990000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "DBw1oGTSUYoPt7rjY1Ropd1pPbNXH8oZ4YYiWFsmn9jf",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 10,
+        "timestamp": 1632630138000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "Ad1eQajG27MEPFZy6ueC2igTRgBHQDFeTsD6SGfqu6KJ",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 11,
+        "timestamp": 1632633015000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "5PTci4W1LV98r1sx7c1JWFqM3TCk3XGiFoPgwUPTUQTq",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 12,
+        "timestamp": 1632634754000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "5u3sSEUUjUuW7vKzHpGh7KAL77qKSqRfQiMFiDuEd4vE",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 13,
+        "timestamp": 1632635168000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "8nJK3oMjmRjJTPWDpVNGGNjHQQJbJQ5ba26r4sjtxktT",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 14,
+        "timestamp": 1632639449000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "2rcwrLFRusHa7X1nvRDGyckkWXnxJPsf9nNY7QPH7AHX",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 15,
+        "timestamp": 1632642715000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "6ResywTuvkS41JviDwtP84aqqDYzZ3tFo7aNYWQ47Umg",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 16,
+        "timestamp": 1632648052000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "nyPaRNyL64coZp2y35i7SyEMuBBNwqATAfhDNxMPzW5",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 17,
+        "timestamp": 1632648540000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "FoPpjyvEX4Vm9yi2HKX2UBPG8SFH77SRkSBuT6jKz59K",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 18,
+        "timestamp": 1632649100000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "EomA3J8BakLRe7B92ZKpy3227qu3naG8ZSn1Kyhyjh47",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 19,
+        "timestamp": 1632649878000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "C7fcvY4GuAaUqRNoGUb6wcqda2VnBXKG7Z6JUMv6srdC",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 20,
+        "timestamp": 1632650197000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "AXt96mD8KjJrbH4bfHB9zuwaBcCVqXQtHDoTd9j63jS7",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 21,
+        "timestamp": 1632650975000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "7FPxeFhyTsCwu571H8gJ1NzdZsSps3QvQhejeiL5sd9f",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 22,
+        "timestamp": 1632651020000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "8RG128rcrHpBNKNyW7nqWtCKtsuijYAAzcVdZDcRsAFh",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 23,
+        "timestamp": 1632651090000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "B3KnUPwWAHHL7zbgrKeZGuRL4o8UMCayW1zpbJox56FZ",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 24,
+        "timestamp": 1632651196000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "HBUq2rs7KJYMgDikj3jkCD1R6HR3jbERpSboA1JkeMqo",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 25,
+        "timestamp": 1632651554000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "2MmrkpLqAWQqFZWDvvb2kkq5patm66DF98wBvvtTcq1V",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 26,
+        "timestamp": 1632651720000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "8LEKDzmLENheQ8RRmZRVMJ6rqVerfBAt3ebJzU9XQzq2",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 27,
+        "timestamp": 1632652080000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "AKYbji5bkfkijGem3A2XJG8RuHbtAXU7urDjXyUnZxdV",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 28,
+        "timestamp": 1632652565000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "9qom8aAiTQd2HnvvGmcAVXoosRgAbb2zv8JF9aHGZ7Fr",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 29,
+        "timestamp": 1632653001000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "FwzTPPJGxNFi9S1DbRrsSyHgrA8dwYU73zCWkUEhRoGf",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 30,
+        "timestamp": 1632653077000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "EKGxfTHG1GwHFgv2Kfa4ksdvjLocKc2ZkU1D2ZzmExdB",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 31,
+        "timestamp": 1632653482000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "CTpfNhmRZpY4GPvXfkH9HQK9fqcVXR5BXnQgorrV7Brm",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 32,
+        "timestamp": 1632653635000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "7rfPhX1o7hqNyxXvD4wUJZnzcKTqwL3Fiu1WPmBvEGZA",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 33,
+        "timestamp": 1632653715000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "4wtAeRWqrzDj7DesReF6fjFx6xuZHj8HNrMCmZcfBB2f",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 34,
+        "timestamp": 1632653803000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "CsjEgZHt2VTyYsRAuQKxkqErSJJgzvqNis8EtbyrAR9A",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 35,
+        "timestamp": 1632654550000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "BT9ZrK2iKs1Wn867qirRUBsowCmbpqnkroSHTey8jJRZ",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 36,
+        "timestamp": 1632654753000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "9ZyoQK7iUUGKtTwUpm2QxaZyNg9SxsnQ1TWCU1pqq2uF",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 37,
+        "timestamp": 1632655202000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "7tMxqxPV11VU5QnHfb5BncZ1pK6FYYHremKjLKTNVeeF",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 38,
+        "timestamp": 1632655357000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "Gh49KsBpQ1zJw26Xg1YstxBC8EhqvVvsKrYPf2GvfdGK",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 39,
+        "timestamp": 1632655379000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "28KuVqrgZXEQtVfTiXMVmmEE2CWxBqyw2XQ8FQHQCdWD",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 40,
+        "timestamp": 1632655569000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "Cz9B2buyd9bNsyWa6BskaRSWcVx3iUzZrXANAD2YWCtZ",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 41,
+        "timestamp": 1632655625000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "6thiPH2m8DCxt3Y87v4nTEb6mnaFzYdDuGtno1nPuDgb",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 42,
+        "timestamp": 1632655617000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "Ea5pnpbFosvdWFV86M81ZDxqXKC2i3ouS72D1kG9eFnQ",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 43,
+        "timestamp": 1632655718000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "uvvyjagFNsdvPjysbqz5PMm7A7xFyneUEdHLbuuhdhK",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 44,
+        "timestamp": 1632655854000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "2uVukmpYaS7A39kgGVvDvosUs5w5E1ui77UjzVAn3HGn",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 45,
+        "timestamp": 1632656295000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "5Jg1wcuX3mVuz2hyjVqR57apqcmjbLFkutZQv7xR9J9d",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 46,
+        "timestamp": 1632657787000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "4fSRiEokkdzBh3KVVam3eQZ1gmwdwd6QK7yEq8QeDcgw",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 47,
+        "timestamp": 1632658740000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "516SADkPVeVCDTMpSXGqYeHsNNDQMBVZn4mTMeQ9CrFp",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 48,
+        "timestamp": 1632659163000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "GDKPyqz7ManZAAaL15ds2rMoKzcjGZ7cCjPgkcotvXFo",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 49,
+        "timestamp": 1632659267000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "5XpQWCR1UDe9BJpkhtMTHyE1WoPSFMAebgWB9yMs5oom",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 50,
+        "timestamp": 1632660065000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "6pmUGc4xJtxawscHVhheQahPQQRW3qU5dnpt143c8FNr",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 51,
+        "timestamp": 1632660285000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "5oVxmcNrWrfKa6StK8TQ9WuFA5Yp6wXUXhuB3HbhcL5q",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 52,
+        "timestamp": 1632660332000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "GXJ7XzRAKWQzf8qtt1oBG3yPVyrhCkmhgDhY2sJBHzGc",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 53,
+        "timestamp": 1632660354000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "CT3xoHJ7EAG7DLdNcx8fYsPty7g5SmCLsHuvxYQXWmDs",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 54,
+        "timestamp": 1632660840000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "8PYXsJUky7Br6Ridqy2ShxSSyShfQobnY3ZZKkbuaxZ1",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 55,
+        "timestamp": 1632661284000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "Atdut6cQK1LLN8MPytTPrypjwd5uGuSiyBNMrGsaK8BL",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 56,
+        "timestamp": 1632661382000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "6xwPYQq9JQY8soAcZDJA9XGaTRuiFVQiTtRkAwXE57ZR",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 57,
+        "timestamp": 1632662489000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "G9CX1GaRhWyWDiHDy4dFwQ6aDQzwp45GkT98f2fx5Mdg",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 58,
+        "timestamp": 1632662756000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "HuN2oDBr4w873jqLHVGcfVjmgSUAvPynHA5tWwVetrw5",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 59,
+        "timestamp": 1632663371000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "AeFhcxkfeFL2QWkGHTob2s3U5r7n7ahqzXuRp9LwVf3V",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 60,
+        "timestamp": 1632663500000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "8fckZkbgNxLQfyms8JBYM4jAZRQETrEj2bD4Gz7MCgWB",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 61,
+        "timestamp": 1632663645000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "9SbqwHAkkoqDEKeKwAMXNxg8oYNGDZbqoicSiYqxzwcm",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 62,
+        "timestamp": 1632663688000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "ACzerrUVK8KQRss1rsfw3hNsNJE4piHLZrdzRRT6ELat",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 63,
+        "timestamp": 1632663758000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "7KceDNUduhZC2ri5yyfhpZ67MToCrkY12mcBLLBfudzs",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 64,
+        "timestamp": 1632663829000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "2Tbur9Wocfi7522Vw5fVbM3LwrmqDcZUmMEi85A17jYH",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 65,
+        "timestamp": 1632663907000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "J13NQRbxrhLSpURdCEBpdN2mQZUd4hW1fMbjchvYpeJ",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 66,
+        "timestamp": 1632663956000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "7eeTRMNTd7Z1hZsBbqsrfGwX7fr7zfMtR2k5kbExobFr",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 67,
+        "timestamp": 1632664019000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "AYL5SMPgEAKj2nXxVUakHy6CeWsxA3C3YVuQYe3NsARx",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 68,
+        "timestamp": 1632664076000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "4gHucu8My9Wgn5DJBSonbMtn4LbVpYLCbkENKkcQzHhs",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 69,
+        "timestamp": 1632664162000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "BiR27Ua9jwbg7UEq366irS2YifNbSYwzUyTTwEkmPG9p",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 70,
+        "timestamp": 1632664224000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "7hqnYYMhs9L6ekZugnWCq2GwFbG3WSBnhoLdDShd6KqV",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 71,
+        "timestamp": 1632664312000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "BmSszwjkigx2SKmqCRdtMNt1Bo1oCkXv4YkhVPNxpPPq",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 72,
+        "timestamp": 1632664371000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "9cw7sZFTiPWz4N4Tc1HMDGcqfpFRtoSaCpK1rK44FnV6",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 73,
+        "timestamp": 1632664577000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "GdszweZtzhNi4mYU74uVihmvkTgkMJtChMbYHDvFN1S3",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 74,
+        "timestamp": 1632664642000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "6a2D1K27QGdatYXmgjbZ4EZSdxHsBR1xKCmVRj5sqjSD",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 75,
+        "timestamp": 1632666429000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "9g2uiCVhDhRj1fAsMftJncbKit2WtrEGYsifwZVrxKiR",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 76,
+        "timestamp": 1632666502000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "8hhbJRLwA3ZxXFn3S2M8zDsx8DPdpLUs5Tbk2iGeewvZ",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 77,
+        "timestamp": 1632666555000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "DF3HikBzF7xxydFR8HE3zqa19M4AAkQTbdU6R38Pxmgb",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 78,
+        "timestamp": 1632666684000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "5Sj3m1o7uRcwRVC6UvdbHRuj14wVfM9u2HGZSzBZro91",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 79,
+        "timestamp": 1632666867000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "5YmeZS2VVkUErtc1n35LPSu17jqmnLpWiDRdjCNDqq8s",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 80,
+        "timestamp": 1632667113000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "5UorGBF2nxhThQ2xfsaj6QuTBqkG6RnTLGX1e4gQjTtp",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 81,
+        "timestamp": 1632667273000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "6zdLUxfE8xif4ve4CN92JB5fvhycHMcTjbsPNGEYUga5",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 82,
+        "timestamp": 1632667558000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "CJQbqtXzcVfChveyLAgmCka9ai3rA99JDeGtbM8E3qHs",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 83,
+        "timestamp": 1632667620000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "ENjixsLS6zzZBvuv3gJo5CB28Ko9fXe5C64BieL9M5w8",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 84,
+        "timestamp": 1632667752000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "DxQMRFogvwHme3G73PEp73tJ8k31Yd5CXhufX4ZmnShB",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 85,
+        "timestamp": 1632667819000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "BrdHGqvZ2YCeKf7r8Cim7eyz5UzoSw41bfaiwGPsK5a",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 86,
+        "timestamp": 1632667874000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "EpiAZ7ANb2NPpK5Rf3sj7Wf9JqspEgCM8VGd1GtMHnZo",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 87,
+        "timestamp": 1632670163000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "55z3VeduvsoVFpjzFYYaryW7MeTEFfXQKhr97tGb3z4H",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 88,
+        "timestamp": 1632672958000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "J7YSAqzUxEU8fpQQEMGXbKpJQ5n1cJGBACek11UEuvt",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 89,
+        "timestamp": 1632675204000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "8tbhMutwaKfJDMq3vr6N8uei9PwHgi5T79CKq2Y2qeiJ",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 90,
+        "timestamp": 1632675255000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "Ye9qXdQafHxxfJqPxnMZGCxTS4DhHHezRVR7w3ZWcAd",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 91,
+        "timestamp": 1632675290000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "6JDcgicumVRrdUiCk4JtT9cQuLps8wSvqnL5JQissK8q",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 92,
+        "timestamp": 1632676501000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "7pcFwPJ47GmqESwZre9srYDo5H4KXjf2TcPZ8eFTr4YA",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 93,
+        "timestamp": 1632685513000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "8kF8dUxeAUG1EXxTh3y351zBtQ7eDMpRvybG6jiitEYb",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 94,
+        "timestamp": 1632685604000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "2ho3yMkcm19c6aZYdQq9jUFJcQDssYyfhK3UGGqnAhHz",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 95,
+        "timestamp": 1632690008000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "DKkgZR8yTniZhch3rYJh1rxfTcrkc4aDodBjvhCHSbqk",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 96,
+        "timestamp": 1632690699000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "uCWYfdsxbo9cDw3rh73vU4FYiFWFAqZi7ZmHCP2JtuW",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 97,
+        "timestamp": 1632690803000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "5NYmZSJGdaPAjagmAfjxGonH7ZVaUMTjYXEVAcQAWXxZ",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 98,
+        "timestamp": 1632690912000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "GVfStYKRM8wVXizQQDdud6ApGF17yewm89npCGXgWvdm",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 99,
+        "timestamp": 1632691024000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "Btv2tRtiWvoPezvATUJLhi6V8LmwHBNJMQ3ubsyqr5qW",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 100,
+        "timestamp": 1632691120000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "FWMVBwdtRqeYVMJAyxW3KLgL4vpnJE7igBJjZVy5iCxZ",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 101,
+        "timestamp": 1632691350000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "2M6qNSkBqiy2LFT7wr8jh4FNyWLjGZMYft9Ceka5Cohd",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 102,
+        "timestamp": 1632691434000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "4yQWrkV6cGx6Z81coKzbZWhDoUr86UagtYsHZpDVeuvk",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 103,
+        "timestamp": 1632691474000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "AHkKQbuC62LG2bFUoP9dmSRVtPUFFEuZ2LyxMTyYJ24z",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 104,
+        "timestamp": 1632691609000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "FfiQgGcDZ9jH2ctvyXoZp3fvWt4j4QJsLVCek6kLNgu2",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 105,
+        "timestamp": 1632691786000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "HrRLcsjHeZu7jppxgfBFZQmDka9GVcnE2pc9htbRxFid",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 106,
+        "timestamp": 1632691896000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "5QeoHWD9994R6FkxfVoidZFA5qdXcUsavdVBBMhJo4Qc",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 107,
+        "timestamp": 1632692448000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "2BcGpVwLaeW5UyUG3fKNNuyCbqYCDLwbA2bP3JeJxmR9",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 108,
+        "timestamp": 1632692897000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "5UoraSSiTHRZhYN5ukZEYoLytC83f2mXxgZsaCJtkLa3",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 109,
+        "timestamp": 1632693314000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "7sBTXaKBx6vVcyQRV4sbr2kvqrtw4PoeFpDBrMTfBu1o",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 110,
+        "timestamp": 1632695656000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "BygMpU8bHus3iJzVkqdkHMeSqVVPH6HCz7sw41nBAL1g",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 111,
+        "timestamp": 1632695945000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "En9Y48YpSe2DGJjKngCsM7A7LTWp389hKw4irVdCpxed",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 112,
+        "timestamp": 1632696677000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "6BZXQo2U3cGyyyCqQ1EAWz6mcvNedxoM13tjuFhsE9iG",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 113,
+        "timestamp": 1632697712000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "9591xLR698NPjhHnXD1hFrYZhv8azLWtixSisxX3PDnB",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 114,
+        "timestamp": 1632698117000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "3AK76qxxWVt39JGzH5dv2PTYcnPWs6xVwtHntUM6R4i3",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 115,
+        "timestamp": 1632699437000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "2RNfoym7tB3uCnEJGM7BiHarqv7PrAynKN2oLTYfuBeu",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 116,
+        "timestamp": 1632700108000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "GyxijJsGirSErYSCEV8HcDRAxnH6Tx7sYsfzyNcHXgmC",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 117,
+        "timestamp": 1632706020000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "DioLXxsM9WpmwmKSXGEmMJJQQkpFmWKDpLPhCWWfAkWu",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 118,
+        "timestamp": 1632707562000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "8vmbWsjsfRxEFaWsfUYFnzyH66TKZ37hEDLrCdaeVst1",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 119,
+        "timestamp": 1632708266000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "8FiKcEoCtPDSgk9WYnohFha5793L8TYbKPFd5fJQ83V7",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 120,
+        "timestamp": 1632708324000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "eBU9NfoV2VbnZ4MrGnE3peXiYde7Z6J3piN29Z8BfLj",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 121,
+        "timestamp": 1632708328000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "3vBPenxBrU1HQhWQ5GrEy6s95L2yqak8xbexVymTmzog",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 122,
+        "timestamp": 1632708431000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "9BRL28nbhFCefknhGY57QwjMV5G9dYeHxJ3h89nNbYCY",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 123,
+        "timestamp": 1632708515000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "CtWXGUh8adDh8wdiAuR6CMLokQewBbNjh4SMZaDkCFyf",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 124,
+        "timestamp": 1632729393000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "CNG3UsXX3mMa9U1qCm8efVK9YsiM4K6E7Hh1GsxrM7yC",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 125,
+        "timestamp": 1632738562000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "6xKkPEN4hWi2qmGPB7sP68mSVh4FsydurUkPQL1FLGaL",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 126,
+        "timestamp": 1632741036000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "CgbbrVwaZWXo1NnpEcSvEWkS9N3mE5XBWb46wZY7ZN2F",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 127,
+        "timestamp": 1632742032000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "6oNLA1HxpUbNM58aUgNHyjA1HPaB78d2LDanRYVtS61c",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 128,
+        "timestamp": 1632747972000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "JBhdwwfvqWCPFMKyUkdTuCrPGGmivaKaV2VyUCtUH5Ef",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 129,
+        "timestamp": 1632767123000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "FKdT17PC93nM2Z3K1zCHCRXFuX3TpcbC77sh2uL6ZV6Q",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 130,
+        "timestamp": 1632767297000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "3S6qERWi1Uao8Q22MUqyBoQfeFaUyaitQS5ooUZ2JGHt",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 131,
+        "timestamp": 1632767531000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "E4YcsouoyD58UtiuiRzCbGNt1BKFJ4Y6u5d1VzygPSqe",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 132,
+        "timestamp": 1632767533000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "EcnVXv5VTA33qW2UJ4RYCZD6RieuDoyzS8pZ5B33QMWH",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 133,
+        "timestamp": 1632767852000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "7g7JxXcAZYJaxRNZU8WeG4g8uHjvmLGRrRJsZ39mQYG8",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 134,
+        "timestamp": 1632767953000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "2V9NTLQFJf9gKcWFdAfXgkXLA293RGkUPvUe8cuKK7rE",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 135,
+        "timestamp": 1632768901000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "8PMH1af5kFop3bm5uQfSSt1fGxZ2ZAkTwxxcDvNLJA3S",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 136,
+        "timestamp": 1632769034000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "EkzvB4tywzwAW59f23C41isYQXd48e1piufiGUYZHZeS",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 137,
+        "timestamp": 1632769154000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "frF28JxZPtT89vWL6XyTrFY2zL42nWXGDQ8MsEiPfxn",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 138,
+        "timestamp": 1632772270000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "yJ9cALsoJkNHzSqTMWcLbrLeumcWJSAsDj6RP7LxV95",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 139,
+        "timestamp": 1632772581000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "38g4gZqy7i857dXYCM9pMMLm1dpqzzCi3kobEK4AeYvu",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 140,
+        "timestamp": 1632772806000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "7dxgtWDcmaQWvJCNzeYTJZkAN1gTa6EtY9QaHQbAuSsq",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 141,
+        "timestamp": 1632772826000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "27vCfVBcBAvYNtiNpUdeiqKqNGLxq2EMiCBLoXc8fskz",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 142,
+        "timestamp": 1632772884000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "BF31Jv31d45MPZRTDgzephBzPYbnC4XvzBH6cEXphMps",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 143,
+        "timestamp": 1632773138000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "CpFFQZDRy6mGx2DSqQUMFxnMsXnjha5cGmPWhH5Jaqkw",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 144,
+        "timestamp": 1632773208000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "2cgK7UrU5uMFwLnNy56ofFjteBF4GxKeEPz8K9bX6J74",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 145,
+        "timestamp": 1632773408000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "BqyaYszBGFNFKdeceGL8Vr3ctduy6cdveAqoBLEMp3cv",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 146,
+        "timestamp": 1632775028000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "7cNXrMQDVFJWMoiNhPa5Maxa8NeimaFxVskSxqYUfpxN",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 147,
+        "timestamp": 1632775585000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "BmttcM6mrWX1TpWUWXc99p6z3SnUsMDxE7wNigtMJWkk",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 148,
+        "timestamp": 1632775641000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "J2HXtLCCsgJNrpy79Ui3gHVPz5YkHwWcxj49DQTi94Zr",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 149,
+        "timestamp": 1632775777000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "FR7JEYw4skjgXJgbMJRCn5y7zNBXRSvYgacRtKYckgae",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 150,
+        "timestamp": 1632776966000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "AJ9j9s31bHEW1LDVW7iPQH6SA6pKPUiYUYFkW64QXApN",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 151,
+        "timestamp": 1632777174000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "auzULqrKBY3AfVuuzFh8dRLVU9G2zXFS3VCGeyghsGK",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 152,
+        "timestamp": 1632778065000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "3Wvh5xngJFctU16tLWj9rvArjSmcTE2RkN8UBUbhQbKS",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 153,
+        "timestamp": 1632778505000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "3xefgwn64ps41fKagi4J4xvhUz8j3BMsYj8DkT84qtbQ",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 154,
+        "timestamp": 1632778703000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "E51JeDGX5odSeeLJTqa9Cav1KPr31hEAMeL7mfuwoMNF",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 155,
+        "timestamp": 1632780014000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "CnWzchckT87hz5sL1cMeePy5iCfXAU18n587zCghux7C",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 156,
+        "timestamp": 1632780183000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "Bxf71uKDe2a4YyMznFB16A9ZQjmhV31zXr9t15o7TQ3P",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 157,
+        "timestamp": 1632780223000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "B3EDetQkSA6UdTpNwQ3EVJyq7oaVsBzsNrkDJbc5gAZT",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 158,
+        "timestamp": 1632780312000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "96VYdzNfJNk69SMn7z31JuUQrwsaZAngK3jqNGVpkEYD",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 159,
+        "timestamp": 1632780479000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "BspjRCGuHe4AjGSrhFqT7LSzG9wMhYVECP5yVjrCVjp4",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 160,
+        "timestamp": 1632780589000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "6T5tko9uyS5sHgQULXXYUhi7RxVsfLSwWjD9ywxVqWUW",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 161,
+        "timestamp": 1632780593000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "Go8bgCMU7gexB6A6mXg8PrxnNfjMiSnRMq1KAZwCDiMm",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 162,
+        "timestamp": 1632780670000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "FEGmWtPJn1ScEoTieL1WcVXFrJ9dfjTNoqCKsJKNoCgk",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 163,
+        "timestamp": 1632781092000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "7szFb3NiBRtnYgq7LbwMv3QSASR2sH4qEzf5cS7xSuLp",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 164,
+        "timestamp": 1632781198000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "79paWwTwPYnFF5MegNqWH2dHj5Zpe9tb4DcfbY8abTw1",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 165,
+        "timestamp": 1632781281000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "948qjC5XDrKNRctCou48uy4Ku3YxiqLyGWaf9reJDPm9",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 166,
+        "timestamp": 1632781609000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "CJffmBqquAmkXpSrxPrS8Gcv5gX3bJEmL1gqE1dfzUHc",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 167,
+        "timestamp": 1632781612000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "FmzRZ7EVosPH62xA48jUNsBoadkXJcBk7HjeDrBpJdQa",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 168,
+        "timestamp": 1632781879000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "NqUYb9DHSUidS1yvDhaPuQvCoH3mB99HZQAiDG2gdkb",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 169,
+        "timestamp": 1632781923000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "GpKJfJfvG91zMcb9MMC3Jdgm9wzoJ1Z5Zm8DEvqP2zp6",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 170,
+        "timestamp": 1632782164000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "5zeDFGm6vxNvf8UbVPmcMKCnvhwnR7Nd5DR8t7nGazUB",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 171,
+        "timestamp": 1632782164000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "D7XbgkmpodkFSLy2ngHdTmAGqd6yatBgvwMuqLxdUYGP",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 172,
+        "timestamp": 1632782364000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "DWra4Zr2sq22LYV4Vbakvp8PDnC2VyYDnFXQipgiJrMb",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 173,
+        "timestamp": 1632782655000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "FTV8Edxu54BoDT9bh51uBBnN71YhedaS28msZZ95fgoV",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 174,
+        "timestamp": 1632782689000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "34QwvtmkScwyGyXys3EkHzSKea2bXK1WLekHyRR8sHmx",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 175,
+        "timestamp": 1632783008000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "8KEm5bE8Svzh6FhS7NEN44g2hbcjgZph5DMXHZP4VfnX",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 176,
+        "timestamp": 1632783140000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "5rVv7oAgJUppmCxU6K9b6wT4HCNCc36aJBtrURjfHmkR",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 177,
+        "timestamp": 1632783223000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "GqgxGDrHyxCjqTYvgjyfvMgkg7cwMihSiege2D3vHbBz",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 178,
+        "timestamp": 1632783250000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "Aidh852tqTfc83C9GNP31TY4P8Vho4656YfoigBvmimX",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 179,
+        "timestamp": 1632783672000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "3WDkc2sxkH4RkHSzcJ39w4LzvrwFB8UUd9FH7717nYfL",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 180,
+        "timestamp": 1632783686000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "FSVGyiSHZ71Xg7HYrdyCFLPDzJRLrNZMnG4gCtP9fr44",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 181,
+        "timestamp": 1632783686000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "CGQYs7cGaYbPHx9cf5vePqHEK8EVW5qh5B9ciCBr9Q1v",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 182,
+        "timestamp": 1632783696000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "2LAfskJJav9E3TruqXqGvSDfqB1mA8dXeHpZiMxKVq69",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 183,
+        "timestamp": 1632783724000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "FVNCA2GfgMB5LUa6HZFHZW6JxLArGLEMdfsoYxeLYhiV",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 184,
+        "timestamp": 1632783822000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "HyqrTXSptVLfqcqKwhNe4FyWr5hSf2hHPQc96LxEKRjz",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 185,
+        "timestamp": 1632783949000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "HNXmdnvdhuMSLxwpC7HYQpEKW1VfXTfeF1HinPqXWvmV",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 186,
+        "timestamp": 1632784899000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "CsXJwFLQgCP41PhynYLVjrSGkMWzKpywPiR3mAZLxDLq",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 187,
+        "timestamp": 1632784987000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "5Q9AttqjfmgUYxdEwj4V3N5yy7DYNcDrwaXjWgLQSaE9",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 188,
+        "timestamp": 1632785069000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "9TZWVJwthJUUFKokZ85wfv1c3TaGihh4wjnV69HDEUSN",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 189,
+        "timestamp": 1632785173000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "E8k3cKLfHAjsvtruT3cXUpNbegPC5mjjFcpzcb1cJf1b",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 190,
+        "timestamp": 1632785386000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "Gm5w4b9uC4Mn67vZM1xpUvF967k977ZSXo7LmTXpMwTk",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 191,
+        "timestamp": 1632785728000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "2jNQWuNZWk1i9xBAitjEDE6dfRqFt7gxBcBsyHsjNhgn",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 192,
+        "timestamp": 1632786570000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "4DYPexKSxdUDY9D5NW4bjKYKXXCH6TY53k5kzs2goojv",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 193,
+        "timestamp": 1632788399000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "FCvc9L5eR6AnwHUYgn8ZHCuaEyiNto4eUtNm3tSR4s4C",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 194,
+        "timestamp": 1632788829000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "3cQoyp3vPVeDJ6jzGJfga2YFHcbzs5dFQkyfrvKbKqSq",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 195,
+        "timestamp": 1632788897000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "CEAN72cx9fcRYpcE2c7b5FdwZ5njgA6J5dkP1NfRbXC3",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 196,
+        "timestamp": 1632789836000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "AhTHdfsh8pqHzxPq6WXZBWFwX7pjDu5ruauzYLoWvbF9",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 197,
+        "timestamp": 1632790488000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "CNJMga8vxs4M7q7Z9M6a8Tp2pJMNcFCZJoXJ7cDrW91p",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 198,
+        "timestamp": 1632791060000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "DjCFE5hsDGoxsTA73ghMo6JTsKbpk2HoHTkDiziBeYWi",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    },
+    {
+        "partitionID": 0,
+        "offset": 199,
+        "timestamp": 1632791328000,
+        "compression": "uncompressed",
+        "isTransactional": false,
+        "headers": [],
+        "key": {
+            "payload": "CfNrvWwQCago4Kw1GwDvez1WxzVkNJWMoQdh8bsp2iXm",
+            "encoding": "text",
+            "schemaId": 0
+        },
+        "value": {
+            "payload": {
+                "accounts": 1
+            },
+            "encoding": "json",
+            "schemaId": 0
+        }
+    }
+]

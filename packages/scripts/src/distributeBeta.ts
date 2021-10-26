@@ -108,24 +108,41 @@ const run = async () => {
   const wummieMintKeypair = anchor.web3.Keypair.generate();
 
   signers1.push(wummieMintKeypair);
-  const rWumMint = wummieMintKeypair.publicKey;
+  const netbWumMint = wummieMintKeypair.publicKey;
   instructions1.push(
-    ...(await createMintInstructions(provider, wallet, rWumMint, 9))
+    ...(await createMintInstructions(provider, wallet, netbWumMint, 9))
   );
 
   await createMetadata(
     new Data({
-      symbol: "rWUM",
-      name: "rWUM",
-      uri: "", // Need uri
+      symbol: "netbWUM",
+      name: "Wum Beta Net Worth",
+      uri: "https://5ujhyixf6slwojh6dr4vq7kygl7qjpvyu4rmwgkgsiesnq7jjxla.arweave.net/7RJ8IuX0l2ck_hx5WH1YMv8EvrinIssZRpIJJsPpTdY/",
       sellerFeeBasisPoints: 0,
       creators: null,
     }),
     wallet.toBase58(),
-    rWumMint.toBase58(),
+    netbWumMint.toBase58(),
     wallet.toBase58(),
     instructions1,
     wallet.toBase58()
+  );
+
+  // Change authority back to token bonding
+  const [netbWumMintAuthority] = await PublicKey.findProgramAddress(
+    [Buffer.from("target-authority", "utf-8"), netbWumMint.toBuffer()],
+    splTokenBondingProgramId
+  );
+
+  instructions1.push(
+    Token.createSetAuthorityInstruction(
+      TOKEN_PROGRAM_ID,
+      netbWumMint,
+      netbWumMintAuthority,
+      "MintTokens",
+      wallet,
+      []
+    )
   );
 
   // Iterate over keys of this and mint/distrubute rWum
