@@ -10,7 +10,6 @@ import {
   SystemProgram,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
-  Transaction,
   TransactionInstruction,
 } from "@solana/web3.js";
 import { SplTokenCollectiveIDL, } from "./generated/spl-token-collective";
