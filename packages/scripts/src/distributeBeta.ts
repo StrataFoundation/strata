@@ -220,40 +220,42 @@ const run = async () => {
       }`
     );
 
-    let retries = 5;
-    let success = false;
-    let error: Error;
+    if ((amount as number) > 0) {
+      let retries = 5;
+      let success = false;
+      let error: Error;
 
-    const ata = await createAta({
-      provider,
-      mint: netbWumMint,
-      betaParticipant: new PublicKey(betaParticipant),
-      payer: wallet,
-    });
+      const ata = await createAta({
+        provider,
+        mint: netbWumMint,
+        betaParticipant: new PublicKey(betaParticipant),
+        payer: wallet,
+      });
 
-    while (retries-- > 0 && !success) {
-      console.log(`Try ${5 - retries} of 5`);
-      await sleep(250);
+      while (retries-- > 0 && !success) {
+        console.log(`Try ${5 - retries} of 5`);
+        await sleep(250);
 
-      try {
-        await mintTo({
-          provider,
-          mint: netbWumMint,
-          to: ata,
-          amount: new anchor.BN((amount as number) * Math.pow(10, 9)),
-        });
-        success = true;
-      } catch (err) {
-        console.error(err);
-        error = err as Error;
+        try {
+          await mintTo({
+            provider,
+            mint: netbWumMint,
+            to: ata,
+            amount: new anchor.BN((amount as number) * Math.pow(10, 9)),
+          });
+          success = true;
+        } catch (err) {
+          console.error(err);
+          error = err as Error;
+        }
       }
-    }
 
-    if (!success)
-      failed[betaParticipant] = {
-        amount: amount as number,
-        error: error!,
-      };
+      if (!success)
+        failed[betaParticipant] = {
+          amount: amount as number,
+          error: error!,
+        };
+    }
   }
 
   if (Object.keys(failed).length) {
