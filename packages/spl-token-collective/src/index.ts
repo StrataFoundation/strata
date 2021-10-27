@@ -2,7 +2,7 @@ import * as anchor from "@wum.bo/anchor";
 import BN from "bn.js";
 import { IdlTypes, Program, Provider } from "@wum.bo/anchor";
 import { createMetadata, Data, decodeMetadata, METADATA_PROGRAM_ID, extendBorsh, InstructionResult, BigInstructionResult, sendInstructions, sendMultipleInstructions, getMetadata, updateMetadata } from "@wum.bo/spl-utils";
-import { connection, createMintInstructions } from "@project-serum/common";
+import { createMintInstructions } from "@project-serum/common";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import {
   PublicKey,
@@ -15,10 +15,6 @@ import {
 } from "@solana/web3.js";
 import { SplTokenCollectiveIDL, } from "./generated/spl-token-collective";
 import { SplTokenBonding } from "@wum.bo/spl-token-bonding";
-import { PeriodUnit, SplTokenStaking, TokenStakingV0 } from "@wum.bo/spl-token-staking";
-import { SplTokenAccountSplit } from "@wum.bo/spl-token-account-split";
-import { percent } from "@wum.bo/spl-utils";
-import { sendAndConfirmRawTransaction } from "@solana/web3.js";
 
 export * from "./generated/spl-token-collective";
 
@@ -69,22 +65,6 @@ interface ClaimSocialTokenArgs {
   sellBaseRoyalties?: PublicKey; // Defaults to ATA fo the owner
   sellTargetRoyalties?: PublicKey; // Defaults to ATA fo the owner
 }
-
-interface UpdateMetadataArgs {
-  tokenRef: PublicKey;
-  name?: string;
-  symbol?: string;
-  uri?: string;
-  buyBaseRoyaltyPercentage?: number;
-  buyTargetRoyaltyPercentage?: number;
-}
-
-interface OptOutArgs {
-  tokenRef: PublicKey;
-  payer?: PublicKey;
-  nameClass?: PublicKey;
-}
-
 
 interface IRoyaltySetting {
   ownedByName?: boolean,
