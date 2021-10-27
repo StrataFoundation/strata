@@ -2,13 +2,7 @@ import fs from "fs/promises";
 import { Command, Option } from "commander";
 import * as anchor from "@wum.bo/anchor";
 import { Transaction, PublicKey } from "@solana/web3.js";
-import {
-  createMetadata,
-  Data,
-  getMetadata,
-  percent,
-  TOKEN_PROGRAM_ID,
-} from "@wum.bo/spl-utils";
+import { createMetadata, Data } from "@wum.bo/spl-utils";
 import {
   SplTokenBonding,
   SplTokenBondingIDL,
@@ -25,11 +19,14 @@ import {
   SplTokenAccountSplitIDL,
   SplTokenAccountSplitIDLJson,
 } from "@wum.bo/spl-token-account-split";
-import { connection, createMintInstructions } from "@project-serum/common";
-import { ASSOCIATED_TOKEN_PROGRAM_ID, Token } from "@solana/spl-token";
+import { createMintInstructions } from "@project-serum/common";
+import {
+  Token,
+  TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
 
 const program = new Command();
-
 program
   .addOption(
     new Option("-w, --wallet <file>", "anchor wallet file")
@@ -45,12 +42,80 @@ program
   .parse();
 
 const options = program.opts();
+
+const mintTo = async ({
+  provider,
+  mint,
+  amount,
+  to,
+}: {
+  provider: anchor.Provider;
+  mint: PublicKey;
+  amount: anchor.BN;
+  to: PublicKey;
+}) => {
+  const mintTx = new Transaction();
+  mintTx.add(
+    Token.createMintToInstruction(
+      TOKEN_PROGRAM_ID,
+      mint,
+      to,
+      provider.wallet.publicKey,
+      [],
+      amount.toNumber()
+    )
+  );
+  await provider.send(mintTx);
+};
+
+const createAta = async ({
+  provider,
+  mint,
+  betaParticipant,
+  payer,
+}: {
+  provider: anchor.Provider;
+  mint: PublicKey;
+  betaParticipant: PublicKey;
+  payer: PublicKey;
+}) => {
+  const ata = await Token.getAssociatedTokenAddress(
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    TOKEN_PROGRAM_ID,
+    mint,
+    betaParticipant
+  );
+
+  if (!(await provider.connection.getAccountInfo(ata))) {
+    const ataTx = new Transaction({ feePayer: payer });
+    ataTx.add(
+      Token.createAssociatedTokenAccountInstruction(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        mint,
+        ata,
+        betaParticipant,
+        payer
+      )
+    );
+
+    await provider.send(ataTx);
+  }
+
+  return ata;
+};
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const run = async () => {
   anchor.setProvider(anchor.Provider.env());
   const provider = anchor.getProvider();
+  const connection = provider.connection;
 
   const rawDump = await fs.readFile(options.file);
-  const dump = JSON.parse(rawDump.toString());
+  const {
+    outputs: { totalWumByBetaParticipant },
+  } = JSON.parse(rawDump.toString());
 
   const splTokenBondingProgramId = new PublicKey(
     "TBondz6ZwSM5fs4v2GpnVBMuwoncPkFLFR9S422ghhN"
@@ -103,20 +168,23 @@ const run = async () => {
 
   const wallet = splWumboProgram.wallet.publicKey;
 
-  const signers1 = [];
-  const instructions1 = [];
-  const wummieMintKeypair = anchor.web3.Keypair.generate();
+  const signers = [];
+  const instructions = [];
+  const netbWumMintKeypair = anchor.web3.Keypair.generate();
 
-  signers1.push(wummieMintKeypair);
-  const netbWumMint = wummieMintKeypair.publicKey;
-  instructions1.push(
+  signers.push(netbWumMintKeypair);
+
+  const netbWumMint = netbWumMintKeypair.publicKey;
+
+  instructions.push(
     ...(await createMintInstructions(provider, wallet, netbWumMint, 9))
   );
 
+  console.log("Creating metadata");
   await createMetadata(
     new Data({
       symbol: "netbWUM",
-      name: "Wum Beta Net Worth",
+      name: "netbWUM",
       uri: "https://5ujhyixf6slwojh6dr4vq7kygl7qjpvyu4rmwgkgsiesnq7jjxla.arweave.net/7RJ8IuX0l2ck_hx5WH1YMv8EvrinIssZRpIJJsPpTdY/",
       sellerFeeBasisPoints: 0,
       creators: null,
@@ -124,29 +192,80 @@ const run = async () => {
     wallet.toBase58(),
     netbWumMint.toBase58(),
     wallet.toBase58(),
-    instructions1,
+    instructions,
     wallet.toBase58()
   );
 
-  // Change authority back to token bonding
-  const [netbWumMintAuthority] = await PublicKey.findProgramAddress(
-    [Buffer.from("target-authority", "utf-8"), netbWumMint.toBuffer()],
-    splTokenBondingProgramId
-  );
+  const tx = new Transaction({
+    recentBlockhash: (await connection.getRecentBlockhash("finalized"))
+      .blockhash,
+    feePayer: wallet,
+  }).add(...instructions);
 
-  instructions1.push(
-    Token.createSetAuthorityInstruction(
-      TOKEN_PROGRAM_ID,
-      netbWumMint,
-      netbWumMintAuthority,
-      "MintTokens",
-      wallet,
-      []
-    )
-  );
+  console.log("Creating netbWumMint");
+  await splWumboProgram.provider.send(tx, signers, {
+    commitment: "finalized",
+    preflightCommitment: "finalized",
+  });
 
-  // Iterate over keys of this and mint/distrubute rWum
-  console.log(dump.outputs.totalWumByBetaParticipant);
+  // iterate over participants and mint amount;
+  const failed: Record<string, { amount: number; error: Error }> = {};
+
+  for await (const [index, [betaParticipant, amount]] of [
+    ...Object.entries(totalWumByBetaParticipant),
+  ].entries()) {
+    console.log(
+      `Minting betaParticipant ${index + 1} of ${
+        Object.keys(totalWumByBetaParticipant).length
+      }`
+    );
+
+    let retries = 5;
+    let success = false;
+    let error: Error;
+
+    const ata = await createAta({
+      provider,
+      mint: netbWumMint,
+      betaParticipant: new PublicKey(betaParticipant),
+      payer: wallet,
+    });
+
+    while (retries-- > 0 && !success) {
+      console.log(`Try ${5 - retries} of 5`);
+      await sleep(250);
+
+      try {
+        await mintTo({
+          provider,
+          mint: netbWumMint,
+          to: ata,
+          amount: new anchor.BN((amount as number) * Math.pow(10, 9)),
+        });
+        success = true;
+      } catch (err) {
+        console.error(err);
+        error = err as Error;
+      }
+    }
+
+    if (!success)
+      failed[betaParticipant] = {
+        amount: amount as number,
+        error: error!,
+      };
+  }
+
+  if (Object.keys(failed).length) {
+    try {
+      await fs.writeFile(
+        "./failedBetaDistributions.json",
+        JSON.stringify(failed)
+      );
+    } catch (err) {
+      console.log("Error writting file", err);
+    }
+  }
 };
 
 (async () => {
