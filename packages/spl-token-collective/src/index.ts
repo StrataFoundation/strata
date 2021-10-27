@@ -13,7 +13,7 @@ import {
   Transaction,
   TransactionInstruction,
 } from "@solana/web3.js";
-import { SplTokenCollectiveIDL } from "./generated/spl-token-collective";
+import { SplTokenCollectiveIDL, } from "./generated/spl-token-collective";
 import { SplTokenBonding } from "@wum.bo/spl-token-bonding";
 import { PeriodUnit, SplTokenStaking, TokenStakingV0 } from "@wum.bo/spl-token-staking";
 import { SplTokenAccountSplit } from "@wum.bo/spl-token-account-split";
@@ -29,7 +29,7 @@ interface CreateCollectiveArgs {
   mint: PublicKey;
   mintAuthority?: PublicKey;
   authority?: PublicKey;
-  config: IdlTypes<SplTokenCollectiveIDL>["CollectiveConfigV0"],
+  config: ICollectiveConfig,
 }
 
 interface CreateSocialTokenArgs {
@@ -84,6 +84,113 @@ interface OptOutArgs {
   payer?: PublicKey;
   nameClass?: PublicKey;
 }
+
+
+interface IRoyaltySetting {
+  ownedByName?: boolean,
+  address?: number
+}
+
+interface ITokenBondingSettings {
+  curve?: PublicKey;
+  minSellBaseRoyaltyPercentage?: number,
+  minSellTargetRoyaltyPercentage?: number,
+  maxSellBaseRoyaltyPercentage?: number,
+  maxSellTargetRoyaltyPercentage?: number,
+  minBuyBaseRoyaltyPercentage?: number,
+  minBuyTargetRoyaltyPercentage?: number,
+  maxBuyBaseRoyaltyPercentage?: number,
+  maxBuyTargetRoyaltyPercentage?: number,
+  targetMintDecimals?: number,
+  buyBaseRoyalties?: IRoyaltySetting,
+  sellBaseRoyalties?: IRoyaltySetting,
+  buyTargetRoyalties?: IRoyaltySetting,
+  sellTargetRoyalties?: IRoyaltySetting,
+  minPurchaseCap?: number,
+  maxPurchaseCap?: number,
+  minMintCap?: number,
+  maxMintCap?: number,
+}
+
+interface ITokenMetadataSettings {
+  symbol?: string;
+  uri?: string;
+  nameIsNameServiceName?: boolean;
+}
+
+interface ICollectiveConfig {
+  isOpen: boolean;
+  unclaimedTokenBondingSettings?: ITokenBondingSettings;
+  claimedTokenBondingSettings?: ITokenBondingSettings;
+  unclaimedTokenMetadataSettings?: ITokenMetadataSettings;
+}
+
+type CollectiveConfigV0 = IdlTypes<SplTokenCollectiveIDL>["CollectiveConfigV0"];
+type TokenBondingSettingsV0 = IdlTypes<SplTokenCollectiveIDL>["TokenBondingSettingsV0"];
+type RoyaltySettingV0 = IdlTypes<SplTokenCollectiveIDL>["RoyaltySettingV0"];
+type TokenMetadataSettingsV0 = IdlTypes<SplTokenCollectiveIDL>["TokenMetadataSettingsV0"];
+function undefinedToNull(obj: any | undefined): any | null {
+  if (typeof obj === "undefined") {
+    return null;
+  }
+
+  return obj;
+}
+
+function toIdlTokenMetdataSettings(settings: ITokenMetadataSettings | undefined): TokenMetadataSettingsV0 | null {
+  return settings ? {
+    symbol: undefinedToNull(settings.symbol),
+    uri: undefinedToNull(settings.uri),
+    nameIsNameServiceName: !!settings.nameIsNameServiceName
+  } : null;
+}
+
+function toIdlRoyaltySettings(settings: IRoyaltySetting | undefined): RoyaltySettingV0 | null {
+  return settings ? {
+    ownedByName: !!settings.ownedByName,
+    address: undefinedToNull(settings?.address)
+  } : null
+}
+
+function toIdlTokenBondingSettings(settings: ITokenBondingSettings | undefined): TokenBondingSettingsV0 | null {
+  return settings ? {
+    curve: undefinedToNull(settings.curve),
+    minSellBaseRoyaltyPercentage: undefinedToNull(settings.minSellBaseRoyaltyPercentage),
+    minSellTargetRoyaltyPercentage: undefinedToNull(settings.minSellTargetRoyaltyPercentage),
+    maxSellBaseRoyaltyPercentage: undefinedToNull(settings.maxSellBaseRoyaltyPercentage),
+    maxSellTargetRoyaltyPercentage: undefinedToNull(settings.maxSellTargetRoyaltyPercentage),
+    minBuyBaseRoyaltyPercentage: undefinedToNull(settings.minBuyBaseRoyaltyPercentage),
+    minBuyTargetRoyaltyPercentage: undefinedToNull(settings.minBuyTargetRoyaltyPercentage),
+    maxBuyBaseRoyaltyPercentage: undefinedToNull(settings.maxBuyBaseRoyaltyPercentage),
+    maxBuyTargetRoyaltyPercentage: undefinedToNull(settings.maxBuyTargetRoyaltyPercentage),
+    targetMintDecimals: undefinedToNull(settings.targetMintDecimals),
+    // @ts-ignore
+    buyBaseRoyalties: toIdlRoyaltySettings(settings.buyBaseRoyalties),
+    // @ts-ignore
+    sellBaseRoyalties: toIdlRoyaltySettings(settings.sellBaseRoyalties),
+    // @ts-ignore
+    buyTargetRoyalties: toIdlRoyaltySettings(settings.buyTargetRoyalties),
+    // @ts-ignore
+    sellTargetRoyalties: toIdlRoyaltySettings(settings.sellTargetRoyalties),
+    minPurchaseCap: undefinedToNull(settings.minPurchaseCap),
+    maxPurchaseCap: undefinedToNull(settings.maxPurchaseCap),
+    minMintCap: undefinedToNull(settings.minMintCap),
+    maxMintCap: undefinedToNull(settings.maxMintCap),
+  } as TokenBondingSettingsV0 : null;
+}
+
+function toIdlConfig(config: ICollectiveConfig): CollectiveConfigV0 {
+  return {
+    isOpen: config.isOpen,
+    // @ts-ignore
+    unclaimedTokenBondingSettings: toIdlTokenBondingSettings(config.unclaimedTokenBondingSettings),
+    // @ts-ignore
+    claimedTokenBondingSettings: toIdlTokenBondingSettings(config.claimedTokenBondingSettings),
+    // @ts-ignore
+    unclaimedTokenMetadataSettings: toIdlTokenMetdataSettings(config.unclaimedTokenMetadataSettings)
+  }
+}
+
 
 export class SplTokenCollective {
   program: Program<SplTokenCollectiveIDL>;
@@ -162,7 +269,7 @@ export class SplTokenCollective {
         {
           authority: authority ? authority : null,
           bumpSeed: collectiveBump,
-          config
+          config: toIdlConfig(config)
         },
         {
           accounts: {

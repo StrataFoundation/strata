@@ -33,72 +33,21 @@ describe("spl-token-collective", () => {
   let config = {
     isOpen: false,
     unclaimedTokenBondingSettings: {
-      curve: null,
-      minSellBaseRoyaltyPercentage: null,
-      minSellTargetRoyaltyPercentage: null,
-      maxSellBaseRoyaltyPercentage: null,
-      maxSellTargetRoyaltyPercentage: null,
-      minBuyBaseRoyaltyPercentage: null,
-      minBuyTargetRoyaltyPercentage: null,
-      maxBuyBaseRoyaltyPercentage: null,
-      maxBuyTargetRoyaltyPercentage: null,
-      targetMintDecimals: null,
       buyBaseRoyalties: {
         ownedByName: true,
-        address: null
       },
       sellBaseRoyalties: {
         ownedByName: true,
-        address: null
       },
       buyTargetRoyalties: {
         ownedByName: true,
-        address: null
       },
       sellTargetRoyalties: {
         ownedByName: true,
-        address: null
       },
-      minPurchaseCap: null,
-      maxPurchaseCap: null,
-      minMintCap: null,
-      maxMintCap: null,
-    },
-    claimedTokenBondingSettings: {
-      curve: null,
-      minSellBaseRoyaltyPercentage: null,
-      minSellTargetRoyaltyPercentage: null,
-      maxSellBaseRoyaltyPercentage: null,
-      maxSellTargetRoyaltyPercentage: null,
-      minBuyBaseRoyaltyPercentage: null,
-      minBuyTargetRoyaltyPercentage: null,
-      maxBuyBaseRoyaltyPercentage: null,
-      maxBuyTargetRoyaltyPercentage: null,
-      targetMintDecimals: null,
-      buyBaseRoyalties: {
-        ownedByName: true,
-        address: null
-      },
-      sellBaseRoyalties: {
-        ownedByName: true,
-        address: null
-      },
-      buyTargetRoyalties: {
-        ownedByName: true,
-        address: null
-      },
-      sellTargetRoyalties: {
-        ownedByName: true,
-        address: null
-      },
-      minPurchaseCap: null,
-      maxPurchaseCap: null,
-      minMintCap: null,
-      maxMintCap: null,
     },
     unclaimedTokenMetadataSettings: {
       symbol: "UNCLAIMED",
-      uri: null,
       nameIsNameServiceName: true
     }
   }
