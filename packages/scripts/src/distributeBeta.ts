@@ -43,42 +43,20 @@ program
 
 const options = program.opts();
 
-const mintTo = async ({
+const createAtaAndmintTo = async ({
   provider,
   mint,
   amount,
-  to,
-}: {
-  provider: anchor.Provider;
-  mint: PublicKey;
-  amount: anchor.BN;
-  to: PublicKey;
-}) => {
-  const mintTx = new Transaction();
-  mintTx.add(
-    Token.createMintToInstruction(
-      TOKEN_PROGRAM_ID,
-      mint,
-      to,
-      provider.wallet.publicKey,
-      [],
-      amount.toNumber()
-    )
-  );
-  await provider.send(mintTx);
-};
-
-const createAta = async ({
-  provider,
-  mint,
   betaParticipant,
   payer,
 }: {
   provider: anchor.Provider;
   mint: PublicKey;
+  amount: anchor.BN;
   betaParticipant: PublicKey;
   payer: PublicKey;
 }) => {
+  const tx = new Transaction();
   const ata = await Token.getAssociatedTokenAddress(
     ASSOCIATED_TOKEN_PROGRAM_ID,
     TOKEN_PROGRAM_ID,
@@ -86,23 +64,29 @@ const createAta = async ({
     betaParticipant
   );
 
-  if (!(await provider.connection.getAccountInfo(ata))) {
-    const ataTx = new Transaction({ feePayer: payer });
-    ataTx.add(
-      Token.createAssociatedTokenAccountInstruction(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        mint,
-        ata,
-        betaParticipant,
-        payer
-      )
-    );
+  tx.add(
+    Token.createAssociatedTokenAccountInstruction(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      mint,
+      ata,
+      betaParticipant,
+      payer
+    )
+  );
 
-    await provider.send(ataTx);
-  }
+  tx.add(
+    Token.createMintToInstruction(
+      TOKEN_PROGRAM_ID,
+      mint,
+      ata,
+      provider.wallet.publicKey,
+      [],
+      amount.toNumber()
+    )
+  );
 
-  return ata;
+  await provider.send(tx);
 };
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -208,12 +192,12 @@ const run = async () => {
     preflightCommitment: "finalized",
   });
 
-  // iterate over participants and mint amount;
   const failed: Record<string, { amount: number; error: Error }> = {};
-
   for await (const [index, [betaParticipant, amount]] of [
     ...Object.entries(totalWumByBetaParticipant),
   ].entries()) {
+    await sleep(250);
+
     console.log(
       `Minting betaParticipant ${index + 1} of ${
         Object.keys(totalWumByBetaParticipant).length
@@ -221,40 +205,21 @@ const run = async () => {
     );
 
     if ((amount as number) > 0) {
-      let retries = 5;
-      let success = false;
-      let error: Error;
-
-      const ata = await createAta({
-        provider,
-        mint: netbWumMint,
-        betaParticipant: new PublicKey(betaParticipant),
-        payer: wallet,
-      });
-
-      while (retries-- > 0 && !success) {
-        console.log(`Try ${5 - retries} of 5`);
-        await sleep(250);
-
-        try {
-          await mintTo({
-            provider,
-            mint: netbWumMint,
-            to: ata,
-            amount: new anchor.BN((amount as number) * Math.pow(10, 9)),
-          });
-          success = true;
-        } catch (err) {
-          console.error(err);
-          error = err as Error;
-        }
-      }
-
-      if (!success)
+      try {
+        await createAtaAndmintTo({
+          provider,
+          mint: netbWumMint,
+          betaParticipant: new PublicKey(betaParticipant),
+          amount: new anchor.BN((amount as number) * Math.pow(10, 9)),
+          payer: wallet,
+        });
+      } catch (err) {
+        console.error(err);
         failed[betaParticipant] = {
           amount: amount as number,
-          error: error!,
+          error: err as Error,
         };
+      }
     }
   }
 
