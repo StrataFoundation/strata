@@ -13,14 +13,14 @@ import {
   Transaction,
   TransactionInstruction,
 } from "@solana/web3.js";
-import { SplWumboIDL } from "./generated/spl-wumbo";
+import { SplTokenCollectiveIDL } from "./generated/spl-token-collective";
 import { SplTokenBonding } from "@wum.bo/spl-token-bonding";
 import { PeriodUnit, SplTokenStaking, TokenStakingV0 } from "@wum.bo/spl-token-staking";
 import { SplTokenAccountSplit } from "@wum.bo/spl-token-account-split";
 import { percent } from "@wum.bo/spl-utils";
 import { sendAndConfirmRawTransaction } from "@solana/web3.js";
 
-export * from "./generated/spl-wumbo";
+export * from "./generated/spl-token-collective";
 
 extendBorsh();
 
@@ -29,7 +29,7 @@ interface CreateCollectiveArgs {
   mint: PublicKey;
   mintAuthority?: PublicKey;
   authority?: PublicKey;
-  config: IdlTypes<SplWumboIDL>["CollectiveConfigV0"],
+  config: IdlTypes<SplTokenCollectiveIDL>["CollectiveConfigV0"],
 }
 
 interface CreateSocialTokenArgs {
@@ -85,14 +85,14 @@ interface OptOutArgs {
   nameClass?: PublicKey;
 }
 
-export class SplWumbo {
-  program: Program<SplWumboIDL>;
+export class SplTokenCollective {
+  program: Program<SplTokenCollectiveIDL>;
   splTokenBondingProgram: SplTokenBonding;
   provider: Provider;
 
   constructor(opts: {
     provider: Provider;
-    program: Program<SplWumboIDL>;
+    program: Program<SplTokenCollectiveIDL>;
     splTokenBondingProgram: SplTokenBonding;
   }) {
     this.provider = opts.provider;

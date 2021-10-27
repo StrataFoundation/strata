@@ -1,12 +1,12 @@
 [package]
-name = "spl-wumbo"
+name = "spl-token-collective"
 version = "0.1.0"
 description = "Created with Anchor"
 edition = "2018"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "spl_wumbo"
+name = "spl_token_collective"
 
 [features]
 no-entrypoint = []

@@ -72,7 +72,7 @@ pub fn initialize_social_token_v0<'info>(
 }
 
 #[program]
-pub mod spl_wumbo {
+pub mod spl_token_collective {
 
     use crate::token_metadata::update_metadata_account;
 

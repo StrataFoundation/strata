@@ -1338,6 +1338,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "spl-token-collective"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "borsh",
+ "proptest",
+ "sha2",
+ "spl-associated-token-account",
+ "spl-name-service",
+ "spl-token",
+ "spl-token-account-split",
+ "spl-token-bonding",
+ "spl-token-metadata",
+ "uint",
+]
+
+[[package]]
 name = "spl-token-metadata"
 version = "0.0.1"
 dependencies = [
@@ -1373,24 +1391,6 @@ dependencies = [
  "solana-program",
  "spl-token",
  "thiserror",
-]
-
-[[package]]
-name = "spl-wumbo"
-version = "0.1.0"
-dependencies = [
- "anchor-lang",
- "anchor-spl",
- "borsh",
- "proptest",
- "sha2",
- "spl-associated-token-account",
- "spl-name-service",
- "spl-token",
- "spl-token-account-split",
- "spl-token-bonding",
- "spl-token-metadata",
- "uint",
 ]
 
 [[package]]

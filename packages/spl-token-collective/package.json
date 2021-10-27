@@ -1,7 +1,7 @@
 {
-  "name": "@wum.bo/spl-wumbo",
+  "name": "@wum.bo/spl-token-collective",
   "version": "0.1.20",
-  "description": "Interface to the spl-wumbo smart contract",
+  "description": "Interface to the spl-token-collective smart contract",
   "publishConfig": {
     "access": "restricted",
     "registry": "https://registry.npmjs.org/"
