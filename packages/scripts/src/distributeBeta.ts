@@ -198,19 +198,20 @@ const run = async () => {
   ].entries()) {
     await sleep(250);
 
-    console.log(
-      `Minting betaParticipant ${index + 1} of ${
-        Object.keys(totalWumByBetaParticipant).length
-      }`
-    );
-
     if ((amount as number) > 0) {
+      const sanitizedAmount = +(amount as number).toFixed(9) * Math.pow(10, 9);
+      console.log(
+        `Minting ${amount} to betaParticipant ${index + 1} of ${
+          Object.keys(totalWumByBetaParticipant).length
+        }`
+      );
+
       try {
         await createAtaAndmintTo({
           provider,
           mint: netbWumMint,
           betaParticipant: new PublicKey(betaParticipant),
-          amount: new anchor.BN((amount as number) * Math.pow(10, 9)),
+          amount: new anchor.BN(sanitizedAmount),
           payer: wallet,
         });
       } catch (err) {
