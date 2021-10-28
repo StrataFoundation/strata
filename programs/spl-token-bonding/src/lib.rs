@@ -203,6 +203,7 @@ pub mod spl_token_bonding {
       bonding.bump_seed = args.bump_seed;
       bonding.base_storage_authority_bump_seed = args.base_storage_authority_bump_seed;
       bonding.target_mint_authority_bump_seed = args.target_mint_authority_bump_seed;
+      bonding.index = args.index;
 
       Ok(())
     }
@@ -433,7 +434,7 @@ Transfer {
       token::mint_to(
         CpiContext::new_with_signer(
           token_program.clone(), 
-        MintTo {
+          MintTo {
             mint: target_mint.to_account_info().clone(),
             to: target_royalties_account.clone(),
             authority: target_mint_authority.clone()
@@ -661,6 +662,7 @@ pub struct InitializeTokenBondingV0Args {
   pub token_bonding_authority: Option<Pubkey>,
   pub base_storage_authority: Option<Pubkey>,
   pub buy_frozen: bool,
+  pub index: u16, // A given target mint can have multiple curves associated with it. Index 0 is reserved for the primary curve that holds mint authority
   pub bump_seed: u8,
   pub target_mint_authority_bump_seed: u8,
   pub base_storage_authority_bump_seed: Option<u8>,
@@ -850,8 +852,17 @@ pub struct InitializeTokenBondingV0<'info> {
   pub curve: Box<Account<'info, CurveV0>>,
   #[account(
     init,
-    seeds = [b"token-bonding", base_mint.key().as_ref(), target_mint.key().as_ref()],
+    seeds = [b"token-bonding", target_mint.key().as_ref(), &args.index.to_le_bytes()],
     bump = args.bump_seed,
+    // Index 0 is reserved for the primary bonding curve, the one with which new tokens can be minted
+    constraint = args.index != 0 || target_mint.mint_authority.unwrap() == Pubkey::create_program_address(
+      &[
+        TARGET_MINT_AUTHORITY_PREFIX.as_bytes(), 
+        target_mint.key().as_ref(),
+        &[args.target_mint_authority_bump_seed]
+      ],
+      &self::id()
+    )?,
     payer = payer,
     space = 512
   )]
@@ -1239,6 +1250,7 @@ pub struct TokenBondingV0 {
   pub sell_frozen: bool,
   
   // Needed to derive the PDA of this instance
+  pub index: u16,
   pub bump_seed: u8,
   pub base_storage_bump_seed: u8,
   pub target_mint_authority_bump_seed: u8,

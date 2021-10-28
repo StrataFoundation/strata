@@ -620,7 +620,6 @@ pub struct InitializeSocialTokenV0<'info> {
 
 #[derive(Accounts)]
 #[instruction(args: InitializeSocialTokenV0Args)]
-
 pub struct InitializeOwnedSocialTokenV0<'info> {
   initialize_args: InitializeSocialTokenV0<'info>,
   #[account(

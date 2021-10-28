@@ -180,6 +180,7 @@ export class SplBondingPresale {
         sellBaseRoyalties: tokenBondingAcct.sellTargetRoyalties,
         buyTargetRoyalties: presaleTargetRoyalties!,
         sellTargetRoyalties: presaleTargetRoyalties!,
+        index: 1
       });
       postTokenBonding = out;
 

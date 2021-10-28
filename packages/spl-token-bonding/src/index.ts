@@ -81,6 +81,7 @@ interface CreateTokenBondingArgs {
   goLiveDate?: Date;
   freezeBuyDate?: Date;
   buyFrozen?: boolean;
+  index?: number; // Multiple bonding curves can exist for a given target mint. 0 is reserved for the one where the curve owns mint authority
 }
 
 interface UpdateTokenBondingArgs {
@@ -306,6 +307,15 @@ export class SplTokenBonding {
     return curve;
   }
 
+  async tokenBondingKey(targetMint: PublicKey, index: number): Promise<[PublicKey, number]> {
+    const pad = Buffer.alloc(2);
+    new BN(index, 16, 'le').toBuffer().copy(pad)
+    return PublicKey.findProgramAddress(
+      [Buffer.from("token-bonding", "utf-8"), targetMint!.toBuffer(), pad],
+      this.programId
+    );
+  }
+
   async createTokenBondingInstructions({
     authority = this.wallet.publicKey,
     payer = this.wallet.publicKey,
@@ -329,6 +339,7 @@ export class SplTokenBonding {
     freezeBuyDate,
     targetMintDecimals,
     buyFrozen = false,
+    index
   }: CreateTokenBondingArgs): Promise<InstructionResult<{ 
     tokenBonding: PublicKey, 
     targetMint: PublicKey ,
@@ -364,9 +375,29 @@ export class SplTokenBonding {
       shouldCreateMint = true;
     }
 
+    // Find the proper bonding index to use that isn't taken.
+    let indexToUse = index || 0;
+    const getTokenBonding: () => Promise<[PublicKey, Number]> = () => {
+      return this.tokenBondingKey(targetMint!, indexToUse);
+    };
+    const getTokenBondingAccount = async () => {
+      return this.provider.connection.getAccountInfo((await getTokenBonding())[0]);
+    };
+    if (!index) {
+      // Find an empty voucher account
+      while (await getTokenBondingAccount()) {
+        indexToUse++;
+      }
+    } else {
+      indexToUse = index;
+    }
+
     const [targetMintAuthority, targetMintAuthorityBumpSeed] = await PublicKey.findProgramAddress(
-      [Buffer.from("target-authority", "utf-8"), targetMint.toBuffer()],
-      programId
+      [
+        Buffer.from("target-authority", "utf-8"),
+        targetMint!.toBuffer()
+      ],
+      this.programId
     );
 
     if (shouldCreateMint) {
@@ -380,10 +411,7 @@ export class SplTokenBonding {
       );
     }
 
-    const [tokenBonding, bumpSeed] = await PublicKey.findProgramAddress(
-      [Buffer.from("token-bonding", "utf-8"), baseMint.toBuffer(), targetMint.toBuffer()],
-      programId
-    );
+    const [tokenBonding, bumpSeed] = await this.tokenBondingKey(targetMint!, indexToUse)
 
     let baseStorageAuthority: PublicKey | null = null;
     let baseStorageAuthorityBumpSeed: number | null = null;
@@ -521,6 +549,7 @@ export class SplTokenBonding {
     instructions.push(
       await this.instruction.initializeTokenBondingV0(
         {
+          index,
           goLiveUnixTime: new BN(Math.floor(goLiveDate.valueOf() / 1000)),
           freezeBuyUnixTime: freezeBuyDate ? new BN(Math.floor(freezeBuyDate.valueOf() / 1000)) : null,
           buyBaseRoyaltyPercentage,
