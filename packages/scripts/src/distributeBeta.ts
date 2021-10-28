@@ -199,7 +199,8 @@ const run = async () => {
     await sleep(250);
 
     if ((amount as number) > 0) {
-      const sanitizedAmount = +(amount as number).toFixed(9) * Math.pow(10, 9);
+      const sanitizedAmount = (amount as number) * Math.pow(10, 9);
+
       console.log(
         `Minting ${amount} to betaParticipant ${index + 1} of ${
           Object.keys(totalWumByBetaParticipant).length
