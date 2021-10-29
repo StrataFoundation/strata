@@ -43,7 +43,7 @@ program
 
 const options = program.opts();
 
-const createAtaAndmintTo = async ({
+const createAtaAndMintTo = async ({
   provider,
   mint,
   amount,
@@ -95,6 +95,20 @@ const run = async () => {
   anchor.setProvider(anchor.Provider.env());
   const provider = anchor.getProvider();
   const connection = provider.connection;
+  const output: {
+    netbWumMint?: PublicKey;
+    totalDistributed: number;
+    offCurveDistributions: Record<string, number>;
+    noAmountToDistribute: Record<string, number>;
+    successfullyDistributed: Record<string, number>;
+    failedDistribution: Record<string, { amount: number; error: Error }>;
+  } = {
+    totalDistributed: 0,
+    offCurveDistributions: {},
+    noAmountToDistribute: {},
+    successfullyDistributed: {},
+    failedDistribution: {},
+  };
 
   const rawDump = await fs.readFile(options.file);
   const {
@@ -159,12 +173,13 @@ const run = async () => {
   signers.push(netbWumMintKeypair);
 
   const netbWumMint = netbWumMintKeypair.publicKey;
+  output["netbWumMint"] = netbWumMint;
 
   instructions.push(
     ...(await createMintInstructions(provider, wallet, netbWumMint, 9))
   );
 
-  console.log("Creating metadata");
+  console.log("Creating: metadata");
   await createMetadata(
     new Data({
       symbol: "netbWUM",
@@ -186,54 +201,93 @@ const run = async () => {
     feePayer: wallet,
   }).add(...instructions);
 
-  console.log("Creating netbWumMint");
+  console.log("Creating: netbWumMint");
   await splWumboProgram.provider.send(tx, signers, {
     commitment: "finalized",
     preflightCommitment: "finalized",
   });
 
-  const failed: Record<string, { amount: number; error: Error }> = {};
   for await (const [index, [betaParticipant, amount]] of [
     ...Object.entries(totalWumByBetaParticipant),
   ].entries()) {
     await sleep(250);
+    const pubKey = new PublicKey(betaParticipant);
+    const isOnCurve = PublicKey.isOnCurve(pubKey.toBuffer());
 
-    if ((amount as number) > 0) {
-      const sanitizedAmount = (amount as number) * Math.pow(10, 9);
-
+    if ((amount as number) <= 0) {
       console.log(
-        `Minting ${amount} to betaParticipant ${index + 1} of ${
+        `NoAmount: Skipping betaParticipant ${index + 1} of ${
           Object.keys(totalWumByBetaParticipant).length
         }`
       );
 
-      try {
-        await createAtaAndmintTo({
-          provider,
-          mint: netbWumMint,
-          betaParticipant: new PublicKey(betaParticipant),
-          amount: new anchor.BN(sanitizedAmount),
-          payer: wallet,
-        });
-      } catch (err) {
-        console.error(err);
-        failed[betaParticipant] = {
+      output["noAmountToDistribute"] = {
+        ...output.noAmountToDistribute,
+        [betaParticipant]: amount as number,
+      };
+      continue;
+    }
+
+    if (!isOnCurve) {
+      console.log(
+        `OffCurve: Skipping betaParticipant ${index + 1} of ${
+          Object.keys(totalWumByBetaParticipant).length
+        }`
+      );
+
+      output["offCurveDistributions"] = {
+        ...output.offCurveDistributions,
+        [betaParticipant]: amount as number,
+      };
+
+      continue;
+    }
+
+    const sanitizedAmount = (amount as number) * Math.pow(10, 9);
+
+    console.log(
+      `Minting: ${amount} to betaParticipant ${index + 1} of ${
+        Object.keys(totalWumByBetaParticipant).length
+      }`
+    );
+
+    try {
+      await createAtaAndMintTo({
+        provider,
+        mint: netbWumMint,
+        betaParticipant: new PublicKey(betaParticipant),
+        amount: new anchor.BN(sanitizedAmount),
+        payer: wallet,
+      });
+
+      output["totalDistributed"] =
+        output["totalDistributed"] + (amount as number);
+
+      output["successfullyDistributed"] = {
+        ...output.successfullyDistributed,
+        [betaParticipant]: amount as number,
+      };
+    } catch (err) {
+      console.error(err);
+
+      output["failedDistribution"] = {
+        ...output["failedDistribution"],
+        [betaParticipant]: {
           amount: amount as number,
           error: err as Error,
-        };
-      }
+        },
+      };
     }
   }
 
-  if (Object.keys(failed).length) {
-    try {
-      await fs.writeFile(
-        "./failedBetaDistributions.json",
-        JSON.stringify(failed)
-      );
-    } catch (err) {
-      console.log("Error writting file", err);
-    }
+  try {
+    await fs.writeFile("./distributeBetaOutput.json", JSON.stringify(output));
+    /* console.log("NoAmount:", Object.keys(output.noAmountToDistribute).length);
+     * console.log("OffCurve:", Object.keys(output.offCurveDistributions).length);
+     * console.log("OnCurve:", Object.keys(output.successfullyDistributed).length);
+     * console.log("TotalDistributed", output.totalDistributed); */
+  } catch (err) {
+    console.log("Error writting file", err);
   }
 };
 
