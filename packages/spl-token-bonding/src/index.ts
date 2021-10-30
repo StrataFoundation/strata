@@ -36,24 +36,125 @@ import {
   Token,
   ASSOCIATED_TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import { amountAsNum, asDecimal, Curve, fromCurve, supplyAsNum } from "./curves";
+import { amountAsNum, asDecimal, Curve, fromCurve } from "./curves";
 import { createMetadata, Data, InstructionResult, sendInstructions } from "@wum.bo/spl-utils";
+import { TypeDef } from "@wum.bo/anchor/dist/cjs/program/namespace/types";
 
 export * from "./generated/spl-token-bonding";
 export * from "./curves";
 
-interface InitializeCurveArgs {
-  curve: CurveV0;
-  payer?: PublicKey;
+interface CurveConfig {
+  toRawConfig(): CurveV0
 }
 
-export function toU128(num: number): BN {
+interface PrimitiveCurve {
+  toRawPrimitiveConfig(): any
+}
+
+export function toU128(num: number | BN): BN {
+  if (BN.isBN(num)) {
+    return num;
+  }
+
   const [beforeDec, afteDec] = num.toString().split(".")
   if (isNaN(Number(beforeDec)) || !isFinite(Number(beforeDec))) {
     return new BN(0)
   }
 
   return new BN(`${beforeDec || ""}${(afteDec || "").slice(0, 12).padEnd(12, "0")}`)
+}
+
+
+
+export class ExponentialCurveConfig implements CurveConfig, PrimitiveCurve {
+  c: BN;
+  b: BN;
+  pow: number;
+  frac: number;
+
+  constructor({
+    c = 1,
+    b = 0,
+    pow = 1,
+    frac = 1
+  }: {
+    c?: number | BN,
+    b?: number | BN,
+    pow?: number,
+    frac?: number,
+  }) {
+    this.c = toU128(c);
+    this.b = toU128(b);
+    this.pow = pow;
+    this.frac = frac;
+  }
+
+  toRawPrimitiveConfig(): any {
+    return {
+      exponentialCurveV0: {
+        // @ts-ignore
+        c: this.c,
+        // @ts-ignore
+        b: this.b,
+        // @ts-ignore
+        pow: this.pow,
+        // @ts-ignore
+        frac: this.frac
+      }
+    }
+  }
+
+  toRawConfig(): CurveV0 {
+    return {
+      definition: {
+        timeV0: {
+          curves: [{
+              // @ts-ignore
+            offset: new BN(0),
+            // @ts-ignore
+            curve: this.toRawPrimitiveConfig()
+          }]
+        }
+      }
+    }
+  }
+}
+
+export class TimeCurveConfig implements CurveConfig {
+  curves: { curve: PrimitiveCurve, offset: BN }[] = [];
+
+  addCurve(timeOffset: number, curve: PrimitiveCurve): TimeCurveConfig {
+    if (this.curves.length == 0 && timeOffset != 0) {
+      throw new Error("First time offset must be 0");
+    }
+
+    this.curves.push({
+      curve,
+      offset: new BN(timeOffset)
+    });
+    
+    return this;
+  }
+
+  toRawConfig(): CurveV0 {
+    return {
+      definition: {
+        timeV0: {
+          // @ts-ignore
+          curves: this.curves.map(({ curve, offset }) => ({
+            curve: curve.toRawPrimitiveConfig(),
+            offset
+          }))
+        }
+      }
+    }
+  }
+}
+
+
+interface InitializeCurveArgs {
+  config: CurveConfig;
+  payer?: PublicKey;
 }
 
 interface CreateTokenBondingArgs {
@@ -265,8 +366,9 @@ export class SplTokenBonding {
 
   async initializeCurveInstructions({
     payer = this.wallet.publicKey,
-    curve,
+    config: curveConfig,
   }: InitializeCurveArgs): Promise<InstructionResult<{ curve: PublicKey }>> {
+    const curve = curveConfig.toRawConfig();
     const curveKeypair = anchor.web3.Keypair.generate();
     return {
       output: {
@@ -335,7 +437,7 @@ export class SplTokenBonding {
     buyTargetRoyaltyPercentage,
     mintCap,
     purchaseCap,
-    goLiveDate = new Date(new Date().valueOf() - 10000), // 10 seos ago
+    goLiveDate = new Date(new Date().valueOf() - 1000), // 1 secs ago
     freezeBuyDate,
     targetMintDecimals,
     buyFrozen = false,
@@ -578,6 +680,7 @@ export class SplTokenBonding {
             tokenProgram: TOKEN_PROGRAM_ID,
             systemProgram: SystemProgram.programId,
             rent: SYSVAR_RENT_PUBKEY,
+            clock: SYSVAR_CLOCK_PUBKEY
           },
         }
       )

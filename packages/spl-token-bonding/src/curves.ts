@@ -3,8 +3,10 @@ import { AccountInfo, MintInfo, u64 } from "@solana/spl-token";
 import BN from "bn.js";
 
 export type ExponentialCurveV0 = {
-  pow: BN;
-  frac: BN;
+  c: BN;
+  b: BN;
+  pow: number;
+  frac: number;
 }
 
 export function supplyAsNum(mint: MintInfo): number {
@@ -22,9 +24,10 @@ export function amountAsNum(amount: u64, mint: MintInfo): number {
 }
 
 export function fromCurve(curve: any, baseStorage: AccountInfo, baseMint: MintInfo, targetMint: MintInfo): Curve {
-  switch (Object.keys(curve.curve)[0]) {
-    case "exponentialCurveV0": 
-      return new ExponentialCurve(curve.c, curve.b, curve.curve.exponentialCurveV0 as ExponentialCurveV0, baseStorage, baseMint, targetMint)
+  switch (Object.keys(curve.definition)[0]) {
+    case "timeV0": 
+      const curv = curve.definition.timeV0.curves[0].curve.exponentialCurveV0
+      return new ExponentialCurve(curv as ExponentialCurveV0, baseStorage, baseMint, targetMint)
   }
 
   throw new Error("Curve not found")
@@ -50,12 +53,12 @@ export class ExponentialCurve implements Curve {
   baseMint: MintInfo;
   targetMint: MintInfo;
 
-  constructor(c: BN, b: BN, curve: ExponentialCurveV0, baseStorage: AccountInfo, baseMint: MintInfo, targetMint: MintInfo) {
-    this.c = c.toNumber() / 1000000000000;
-    this.b = b.toNumber() / 1000000000000;
-    this.k = curve.pow.toNumber() / curve.frac.toNumber();
-    this.pow = curve.pow.toNumber();
-    this.frac = curve.frac.toNumber();
+  constructor(curve: ExponentialCurveV0, baseStorage: AccountInfo, baseMint: MintInfo, targetMint: MintInfo) {
+    this.c = curve.c.toNumber() / 1000000000000;
+    this.b = curve.b.toNumber() / 1000000000000;
+    this.k = curve.pow / curve.frac;
+    this.pow = curve.pow;
+    this.frac = curve.frac;
 
     this.baseStorage = baseStorage;
     this.baseMint = baseMint;

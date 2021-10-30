@@ -3,10 +3,11 @@
 
 use anchor_lang::prelude::msg;
 
-use crate::{ONE_PREC, ZERO_PREC, uint::U128};
+use crate::curve::{ONE_PREC, ZERO_PREC};
+use crate::uint::U256;
 
 // Allows for easy swapping between different internal representations
-pub type InnerUint = U128;
+pub type InnerUint = U256;
 
 /// The representation of the number one as a precise number as 10^12
 pub const ONE: u64 = 1_000_000_000_000;
@@ -21,14 +22,14 @@ pub struct PreciseNumber {
 /// The precise-number 1 as a InnerUint
 #[inline]
 pub const fn one() -> InnerUint {
-    U128([1_000_000_000_000_u64, 0_u64])
+  U256([1_000_000_000_000_u64, 0_u64, 0_u64, 0_u64])
     // InnerUint::from(ONE)
 }
 
 /// The number 0 as a PreciseNumber, used for easier calculations.
 #[inline]
 pub const fn zero() -> InnerUint {
-  U128([0_u64, 0_u64])
+  U256([0_u64, 0_u64, 0_u64, 0_u64])
 }
 
 impl PreciseNumber {
@@ -364,7 +365,7 @@ impl PreciseNumber {
         Self::new(std::u128::MAX).unwrap()
     }
 
-    pub fn pow_frac_approximation(&self, pow: u64, frac: u64, guess: Self) -> Option<Self> {
+    pub fn pow_frac_approximation(&self, pow: u8, frac: u8, guess: Self) -> Option<Self> {
       self.checked_pow(pow as u128)?.newtonian_root_approximation(&PreciseNumber::new(frac as u128)?, guess, Self::MAX_APPROXIMATION_ITERATIONS)
     }
 

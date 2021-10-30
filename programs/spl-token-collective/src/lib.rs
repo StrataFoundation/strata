@@ -2,7 +2,7 @@ use {
     anchor_lang::{prelude::*, solana_program::system_program},
     anchor_spl::token::{Mint, TokenAccount, Transfer, transfer},
     borsh::{BorshDeserialize, BorshSerialize},
-    spl_token_bonding::{UpdateTokenBondingV0Args, TokenBondingV0},
+    spl_token_bonding::{arg::{UpdateTokenBondingV0Args}, state::TokenBondingV0},
 };
 
 pub mod token_metadata;
@@ -99,6 +99,7 @@ pub mod spl_token_collective {
       let initialize_args = &ctx.accounts.initialize_args;
       let config = &initialize_args.collective.config;
       let token_bonding_settings = config.claimed_token_bonding_settings.as_ref();
+      verify_presale(config, ctx.remaining_accounts)?;
       if token_bonding_settings.is_some() {
         verify_token_bonding_defaults(&token_bonding_settings.unwrap(), &initialize_args.token_bonding)?;
         verify_token_bonding_royalties(
@@ -133,6 +134,7 @@ pub mod spl_token_collective {
       let config = &initialize_args.collective.config;
       let token_bonding_settings_opt = config.unclaimed_token_bonding_settings.as_ref();
       let token_metadata_settings_opt = config.unclaimed_token_metadata_settings.as_ref();
+      verify_presale(config, ctx.remaining_accounts)?;
       if token_bonding_settings_opt.is_some() {
         verify_token_bonding_defaults(&token_bonding_settings_opt.unwrap(), &initialize_args.token_bonding)?;
         verify_token_bonding_royalties(
@@ -387,7 +389,9 @@ pub struct CollectiveConfigV0 {
   pub is_open: bool,
   pub unclaimed_token_metadata_settings: Option<TokenMetadataSettingsV0>,
   pub unclaimed_token_bonding_settings: Option<TokenBondingSettingsV0>,
-  pub claimed_token_bonding_settings: Option<TokenBondingSettingsV0>, // Note that this only enforces at entry into the collective. Some fields may be able to be changed
+  pub claimed_token_bonding_settings: Option<TokenBondingSettingsV0>,
+  pub presale_token_bonding_settings: Option<TokenBondingSettingsV0>,
+  pub post_sale_token_bonding_settings: Option<TokenBondingSettingsV0>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
@@ -551,6 +555,10 @@ pub fn verify_token_bonding_royalties<'info>(
   } else {
     Err(ErrorCode::InvalidTokenBondingRoyalties.into())
   }
+}
+
+pub fn verify_presale<'info>(config: &CollectiveConfigV0, remaining_accounts: &[AccountInfo<'info>]) -> ProgramResult {
+  Ok(())
 }
 
 pub fn verify_token_bonding_defaults<'info>(defaults: &TokenBondingSettingsV0, token_bonding: &Account<'info, TokenBondingV0>) -> ProgramResult {

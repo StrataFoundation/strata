@@ -2,7 +2,7 @@ import * as anchor from "@wum.bo/anchor";
 import { BN } from "@wum.bo/anchor"
 import { Transaction, PublicKey } from "@solana/web3.js";
 import { createMetadata, Data, getMetadata, percent, TOKEN_PROGRAM_ID } from "@wum.bo/spl-utils";
-import { SplTokenBonding, SplTokenBondingIDL, SplTokenBondingIDLJson } from "@wum.bo/spl-token-bonding";
+import { SplTokenBonding, SplTokenBondingIDL, SplTokenBondingIDLJson, ExponentialCurveConfig } from "@wum.bo/spl-token-bonding";
 import { SplTokenCollective, SplTokenCollectiveIDL, SplTokenCollectiveIDLJson } from "@wum.bo/spl-token-collective";
 import { SplTokenStaking, SplTokenStakingIDL, SplTokenStakingIDLJson } from "@wum.bo/spl-token-staking";
 import { SplTokenAccountSplit, SplTokenAccountSplitIDL, SplTokenAccountSplitIDLJson } from "@wum.bo/spl-token-account-split";
@@ -38,18 +38,12 @@ async function run() {
   const wallet = splTokenCollectiveProgram.wallet.publicKey;
   
   const curve = await splTokenBondingProgram.initializeCurve({
-    curve: {
-      // @ts-ignore
-      fixedPriceCurveV0: {
-        price: new BN(0_001000000000), // 0.001 SOL per. Max purchase of 100 WUM per instruction.
-      },
-      // logCurveV0: {
-      //   c: new BN(1000000000000), // 1
-      //   g: new BN(100000000000), // 0.1
-      //   taylorIterations: 15,
-      // },
-    },
-    taylorIterations: 15,
+    config: new ExponentialCurveConfig({
+      c: 0,
+      b: 1,
+      pow: 0,
+      frac: 1
+    })
   });
 
   const signers1 = [];

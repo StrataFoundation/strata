@@ -1,49 +1,20 @@
 use anchor_lang::{prelude::*, solana_program, solana_program::{system_program, system_instruction, program::{invoke_signed, invoke}}};
-use anchor_spl::token::{self, set_authority, SetAuthority, Burn, InitializeAccount, TokenAccount, Mint, Transfer, MintTo};
-use spl_token::state::AccountState;
+use anchor_spl::token::{self, set_authority, SetAuthority, Burn, Transfer, MintTo};
+use crate::{error::ErrorCode, curve::*, account::*, arg::*, util::*};
 
+pub mod util;
+pub mod curve;
+pub mod error;
+pub mod account;
+pub mod state;
+pub mod arg;
 pub mod precise_number;
 pub mod uint;
-use precise_number::{InnerUint, PreciseNumber, one, zero};
-use crate::{uint::U128};
-
-static TARGET_MINT_AUTHORITY_PREFIX: &str = "target-authority";
 
 declare_id!("TBondz6ZwSM5fs4v2GpnVBMuwoncPkFLFR9S422ghhN");
 
-#[derive(Accounts)]
-pub struct CloseTokenAccount<'info> {
-    pub from: AccountInfo<'info>,
-    pub to: AccountInfo<'info>,
-    pub authority: AccountInfo<'info>,
-}
-
-pub fn close_token_account<'a, 'b, 'c, 'info>(
-    ctx: CpiContext<'a, 'b, 'c, 'info, CloseTokenAccount<'info>>,
-) -> ProgramResult {
-    let ix = spl_token::instruction::close_account(
-        &spl_token::ID,
-        ctx.accounts.from.key,
-        ctx.accounts.to.key,
-        ctx.accounts.authority.key,
-        &[],
-    )?;
-    solana_program::program::invoke_signed(
-        &ix,
-        &[
-            ctx.accounts.from.clone(),
-            ctx.accounts.to.clone(),
-            ctx.accounts.authority.clone(),
-            ctx.program.clone(),
-        ],
-        ctx.signer_seeds,
-    )
-}
-
 #[program]
 pub mod spl_token_bonding {
-    use std::borrow::BorrowMut;
-
     use super::*;
 
     pub fn initialize_sol_storage_v0(
@@ -141,9 +112,7 @@ pub mod spl_token_bonding {
       args: CreateCurveV0Args
     ) -> ProgramResult {
       let curve = &mut ctx.accounts.curve;
-      curve.c = args.c;
-      curve.b = args.b;
-      curve.curve = args.curve;
+      curve.definition = args.definition;
 
       Ok(())
     }
@@ -176,6 +145,7 @@ pub mod spl_token_bonding {
 
       let bonding = &mut ctx.accounts.token_bonding;
       bonding.go_live_unix_time = args.go_live_unix_time;
+      bonding.created_at_unix_time = ctx.accounts.clock.unix_timestamp;
       bonding.freeze_buy_unix_time = args.freeze_buy_unix_time;
       bonding.base_mint = ctx.accounts.base_mint.key();
       bonding.base_mint = ctx.accounts.base_mint.key();
@@ -313,7 +283,8 @@ pub mod spl_token_bonding {
 
         total_amount = buy_target_amount.target_amount;
         let amount_prec = precise_supply_amt(total_amount, target_mint);
-        let price_prec = curve.price(
+        let price_prec = curve.definition.price(
+          ctx.accounts.clock.unix_timestamp - token_bonding.go_live_unix_time,
           &base_amount,
           &target_supply,
           &amount_prec,
@@ -350,7 +321,8 @@ pub mod spl_token_bonding {
         let base_royalties_prec = base_royalties_percent.checked_mul(&total_price_prec).or_arith_error()?;
         let price_prec = total_price_prec.checked_sub(&base_royalties_prec).or_arith_error()?;
 
-        let amount_prec = curve.expected_target_amount(
+        let amount_prec = curve.definition.expected_target_amount(
+          ctx.accounts.clock.unix_timestamp - token_bonding.go_live_unix_time,
           &base_amount,
           &target_supply,
           &total_price_prec,
@@ -413,7 +385,7 @@ pub mod spl_token_bonding {
       msg!("Paying out {} base royalties", base_royalties);
       token::transfer(CpiContext::new(
         token_program.clone(), 
-Transfer {
+        Transfer {
           from: source.clone(),
           to: base_royalties_account.clone(),
           authority: source_authority.clone()
@@ -423,7 +395,7 @@ Transfer {
       msg!("Paying out {} to base storage", price);
       token::transfer(CpiContext::new(
         token_program.clone(), 
-Transfer {
+        Transfer {
           from: source.clone(),
           to: base_storage_account.clone(),
           authority: source_authority.clone()
@@ -485,7 +457,8 @@ Transfer {
 
       let target_royalties_prec = target_royalties_percent.checked_mul(&amount_prec).or_arith_error()?;
       let amount_minus_royalties_prec = amount_prec.checked_sub(&target_royalties_prec).or_arith_error()?;
-      let reclaimed_prec = curve.price(
+      let reclaimed_prec = curve.definition.price(
+        ctx.accounts.clock.unix_timestamp - token_bonding.go_live_unix_time,
         &base_amount,
         &target_supply,
         &amount_minus_royalties_prec,
@@ -545,7 +518,7 @@ Transfer {
       msg!("Paying out {} to target royalties", target_royalties);
       token::transfer(CpiContext::new(
         token_program.clone(), 
-Transfer {
+        Transfer {
           from: source.clone(),
           to: ctx.accounts.sell_target_royalties.to_account_info().clone(),
           authority: source_authority.clone()
@@ -555,7 +528,7 @@ Transfer {
       msg!("Paying out {} from base storage, {}", reclaimed, ctx.accounts.base_storage.amount);
       token::transfer(CpiContext::new_with_signer(
         token_program.clone(), 
-Transfer {
+        Transfer {
           from: base_storage_account.clone(),
           to: destination.clone(),
           authority: base_storage_authority.clone()
@@ -568,7 +541,7 @@ Transfer {
       msg!("Paying out {} from base storage to base royalties", base_royalties);
       token::transfer(CpiContext::new_with_signer(
         token_program.clone(), 
-Transfer {
+        Transfer {
           from: base_storage_account.clone(),
           to: ctx.accounts.sell_base_royalties.to_account_info().clone(),
           authority: base_storage_authority.clone()
@@ -580,725 +553,4 @@ Transfer {
 
       Ok(())
     }
-}
-
-trait OrArithError {
-  fn or_arith_error(self) -> Result<PreciseNumber>;
-}
-
-impl OrArithError for Option<PreciseNumber> {
-  fn or_arith_error(self) -> Result<PreciseNumber> {
-    self.ok_or(ErrorCode::ArithmeticError.into())
-  }
-}
-
-pub fn get_percent(percent: u32) -> Result<PreciseNumber> {
-  let max_u32 = PreciseNumber::new(u32::MAX as u128).or_arith_error()?;
-  let percent_prec = PreciseNumber::new(percent as u128).or_arith_error()?;
-
-  Ok(percent_prec.checked_div(&max_u32).or_arith_error()?)
-}
-
-pub fn precise_supply(mint: &Account<Mint>) -> PreciseNumber {
-  precise_supply_amt(mint.supply, mint)
-}
-
-fn get_pow_10(decimals: u8) -> PreciseNumber {
-  match decimals {
-    0 => PreciseNumber::new(0),
-    1 => PreciseNumber::new(10),
-    2 => PreciseNumber::new(100),
-    3 => PreciseNumber::new(1000),
-    4 => PreciseNumber::new(10000),
-    5 => PreciseNumber::new(100000),
-    6 => PreciseNumber::new(1000000),
-    7 => PreciseNumber::new(10000000),
-    8 => PreciseNumber::new(100000000),
-    9 => PreciseNumber::new(1000000000),
-    10 => PreciseNumber::new(10000000000),
-    11 => PreciseNumber::new(100000000000),
-    12 => PreciseNumber::new(1000000000000),
-    _ => unreachable!()
-  }.unwrap()
-}
-
-pub fn precise_supply_amt(amt: u64, mint: &Account<Mint>) -> PreciseNumber {
-  PreciseNumber {
-      value: InnerUint::from(amt as u128)
-  }.checked_mul(&get_pow_10(12_u8 - mint.decimals)).unwrap()
-}
-
-pub fn to_mint_amount(amt: &PreciseNumber, mint: &Account<Mint>, ceil: bool) -> u64 {
-  // Lookup is faster than a checked_pow
-  let pow_10 = get_pow_10(mint.decimals);
-
-  let pre_round = amt.checked_mul(
-    &pow_10
-  ).unwrap();
-  let post_round = if ceil {
-    pre_round.ceiling().unwrap()
-  } else {
-    pre_round.floor().unwrap()
-  };
-  
-  post_round.to_imprecise().unwrap() as u64
-}
-
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct InitializeTokenBondingV0Args {
-  /// Percentage of purchases that go to the founder
-  /// Percentage Value is (founder_reward_percentage / u32.MAX_VALUE) * 100
-  pub buy_base_royalty_percentage: u32,
-  pub buy_target_royalty_percentage: u32,
-  pub sell_base_royalty_percentage: u32,
-  pub sell_target_royalty_percentage: u32,
-  pub go_live_unix_time: i64,
-  pub freeze_buy_unix_time: Option<i64>, // Cut this bonding curve off at some time
-  // The maximum number of target tokens that can be minted.
-  pub mint_cap: Option<u64>,
-  // The maximum target tokens per purchase
-  pub purchase_cap: Option<u64>,
-  pub token_bonding_authority: Option<Pubkey>,
-  pub base_storage_authority: Option<Pubkey>,
-  pub buy_frozen: bool,
-  pub index: u16, // A given target mint can have multiple curves associated with it. Index 0 is reserved for the primary curve that holds mint authority
-  pub bump_seed: u8,
-  pub target_mint_authority_bump_seed: u8,
-  pub base_storage_authority_bump_seed: Option<u8>,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct UpdateTokenBondingV0Args {
-  pub token_bonding_authority: Option<Pubkey>,
-  /// Percentage of purchases that go to the founder
-  /// Percentage Value is (founder_reward_percentage / u32.MAX_VALUE) * 100
-  pub buy_base_royalty_percentage: u32,
-  pub buy_target_royalty_percentage: u32,
-  pub sell_base_royalty_percentage: u32,
-  pub sell_target_royalty_percentage: u32,
-  pub buy_frozen: bool,
-}
-
-pub fn get_curve_seed(args: &CurveV0) -> Vec<u8> {
-  let mut buffer: Vec<u8> = Vec::new();
-  args.serialize(&mut buffer).unwrap();
-
-  buffer
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct BuyWithBaseV0Args {
-  pub base_amount: u64,
-  pub minimum_target_amount: u64
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct BuyTargetAmountV0Args {
-  // Number to purchase. This is including the decimal value. So 1 is the lowest possible fraction of a coin
-  // Note that you will receive this amount, less target_royalties.
-  // Target royalties are taken out of the total purchased amount. Base royalties inflate the purchase price.
-  pub target_amount: u64,
-  // Maximum price to pay for this amount. Allows users to account and fail-fast for slippage.
-  pub maximum_price: u64
-}
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct BuyV0Args {
-  pub buy_with_base: Option<BuyWithBaseV0Args>,
-  pub buy_target_amount: Option<BuyTargetAmountV0Args>,
-  pub root_estimates: Option<[u128; 2]> // Required when computing an exponential. Greatly assists with newtonian root approximation, saving compute units
-}
-
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct SellV0Args {
-  // Number to sell. This is including the decimal value. So 1 is the lowest possible fraction of a coin
-  pub target_amount: u64,
-  // Minimum price to receive for this amount. Allows users to account and fail-fast for slippage.
-  pub minimum_price: u64,
-  pub root_estimates: Option<[u128; 2]> // Required when computing an exponential. Greatly assists with newtonian root approximation, saving compute units
-}
-
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct InitializeSolStorageV0Args {
-  pub mint_authority_bump_seed: u8,
-  pub sol_storage_bump_seed: u8,
-  pub bump_seed: u8
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct BuyWrappedSolV0Args {
-  amount: u64
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct SellWrappedSolV0Args {
-  amount: u64,
-  all: bool // Optional flag to just sell all of it.
-}
-
-#[derive(Accounts)]
-#[instruction(args: InitializeSolStorageV0Args)]
-pub struct InitializeSolStorageV0<'info> {
-  #[account(mut, signer)]
-  pub payer: AccountInfo<'info>,
-  #[account(
-    init,
-    space = 212,
-    seeds = ["state".as_bytes()],
-    bump = args.bump_seed,
-    payer = payer
-  )]
-  pub state: Account<'info, ProgramStateV0>,
-  #[account(
-    seeds = ["sol-storage".as_bytes()],
-    bump = args.sol_storage_bump_seed,
-  )]
-  pub sol_storage: AccountInfo<'info>,
-  #[account(
-    constraint = wrapped_sol_mint.mint_authority.unwrap() == mint_authority.key() &&
-                 wrapped_sol_mint.decimals == spl_token::native_mint::DECIMALS &&
-                 wrapped_sol_mint.freeze_authority.unwrap() == mint_authority.key() &&
-                 wrapped_sol_mint.supply == 0
-  )]
-  pub wrapped_sol_mint: Account<'info, Mint>,
-  #[account(
-    seeds = ["wrapped-sol-authority".as_bytes()],
-    bump = args.mint_authority_bump_seed
-  )]
-  pub mint_authority: AccountInfo<'info>,
-  #[account(address = token::ID)]
-  pub token_program: AccountInfo<'info>,
-  #[account(address = system_program::ID)]
-  pub system_program: AccountInfo<'info>,
-  pub rent: Sysvar<'info, Rent>,
-}
-
-#[derive(Accounts)]
-#[instruction(args: BuyWrappedSolV0Args)]
-pub struct BuyWrappedSolV0<'info> {
-  #[account(
-    has_one = sol_storage,
-    has_one = wrapped_sol_mint
-  )]
-  pub state: Account<'info, ProgramStateV0>,
-  #[account(mut, constraint = wrapped_sol_mint.mint_authority.unwrap() == mint_authority.key())]
-  pub wrapped_sol_mint: Account<'info, Mint>,
-  pub mint_authority: AccountInfo<'info>,
-  #[account(mut)]
-  pub sol_storage: AccountInfo<'info>,
-  #[account(mut)]
-  pub source: Signer<'info>,
-  #[account(
-    mut,
-    constraint = destination.mint == wrapped_sol_mint.key()
-  )]
-  pub destination: Account<'info, TokenAccount>,
-  #[account(address = spl_token::ID)]
-  pub token_program: AccountInfo<'info>,
-  #[account(address = system_program::ID)]
-  pub system_program: AccountInfo<'info>,
-}
-
-#[derive(Accounts)]
-#[instruction(args: SellWrappedSolV0Args)]
-pub struct SellWrappedSolV0<'info> {
-  #[account(
-    has_one = sol_storage,
-    has_one = wrapped_sol_mint
-  )]
-  pub state: Account<'info, ProgramStateV0>,
-  #[account(mut)]
-  pub wrapped_sol_mint: Account<'info, Mint>,
-  #[account(mut)]
-  pub sol_storage: AccountInfo<'info>,
-  #[account(
-    mut,
-    has_one = owner,
-    constraint = source.mint == wrapped_sol_mint.key()
-  )]
-  pub source: Account<'info, TokenAccount>,
-  pub owner: Signer<'info>,
-  #[account(
-    mut
-  )]
-  pub destination: AccountInfo<'info>,
-  #[account(address = spl_token::ID)]
-  pub token_program: AccountInfo<'info>,
-  #[account(address = system_program::ID)]
-  pub system_program: AccountInfo<'info>,
-}
-
-#[derive(Accounts)]
-#[instruction(args: Curves)]
-pub struct InitializeCurveV0<'info> {
-  #[account(mut, signer)]
-  pub payer: AccountInfo<'info>,
-  #[account(
-    zero
-  )]
-  pub curve: Account<'info, CurveV0>,
-  #[account(address = system_program::ID)]
-  pub system_program: AccountInfo<'info>,
-  pub rent: Sysvar<'info, Rent>,
-}
-
-#[derive(Accounts)]
-#[instruction(args: InitializeTokenBondingV0Args)]
-pub struct InitializeTokenBondingV0<'info> {
-  #[account(mut, signer)]
-  pub payer: AccountInfo<'info>,
-  pub curve: Box<Account<'info, CurveV0>>,
-  #[account(
-    init,
-    seeds = [b"token-bonding", target_mint.key().as_ref(), &args.index.to_le_bytes()],
-    bump = args.bump_seed,
-    // Index 0 is reserved for the primary bonding curve, the one with which new tokens can be minted
-    constraint = args.index != 0 || target_mint.mint_authority.unwrap() == Pubkey::create_program_address(
-      &[
-        TARGET_MINT_AUTHORITY_PREFIX.as_bytes(), 
-        target_mint.key().as_ref(),
-        &[args.target_mint_authority_bump_seed]
-      ],
-      &self::id()
-    )?,
-    payer = payer,
-    space = 512
-  )]
-  pub token_bonding: Box<Account<'info, TokenBondingV0>>,
-  pub base_mint: Box<Account<'info, Mint>>,
-  #[account(
-    constraint = target_mint.is_initialized
-  )]
-  pub target_mint: Box<Account<'info, Mint>>,
-  #[account(
-    constraint = base_storage.mint == base_mint.key(),
-    constraint = args.base_storage_authority.is_none() || base_storage.owner == args.base_storage_authority.unwrap(),
-    constraint = base_storage.delegate.is_none(),
-    constraint = base_storage.close_authority.is_none(),
-    constraint = base_storage.state == AccountState::Initialized
-  )]
-  pub base_storage: Box<Account<'info, TokenAccount>>,
-
-  #[account(
-    constraint = buy_base_royalties.mint == base_mint.key()
-  )]
-  pub buy_base_royalties: Box<Account<'info, TokenAccount>>,
-
-  #[account(
-    constraint = buy_target_royalties.mint == target_mint.key()
-  )] // Will init for you, since target mint doesn't exist yet.
-  pub buy_target_royalties: Box<Account<'info, TokenAccount>>,
-
-  #[account(
-    constraint = sell_base_royalties.mint == base_mint.key()
-  )]
-  pub sell_base_royalties: Box<Account<'info, TokenAccount>>,
-
-  #[account(
-    constraint = sell_target_royalties.mint == target_mint.key()
-  )] // Will init for you, since target mint doesn't exist yet.
-  pub sell_target_royalties: Box<Account<'info, TokenAccount>>,
-
-  #[account(address = spl_token::ID)]
-  pub token_program: AccountInfo<'info>,
-  #[account(address = system_program::ID)]
-  pub system_program: AccountInfo<'info>,
-  pub rent: Sysvar<'info, Rent>,
-}
-
-#[derive(Accounts)]
-pub struct CloseTokenBondingV0<'info> {
-  #[account(mut)]
-  refund: AccountInfo<'info>, // Will receive the reclaimed SOL
-  #[account(
-    mut,
-    close = refund,
-    constraint = token_bonding.authority.ok_or::<ProgramError>(ErrorCode::NoAuthority.into())? == authority.key(),
-    has_one = target_mint,
-    has_one = base_storage
-  )]
-  pub token_bonding: Account<'info, TokenBondingV0>,
-  #[account(
-    signer,
-    // Bonding can be closed by the authority if 
-    //   1. Target supply is empty or
-    //   2. Sell is frozen
-    constraint = token_bonding.sell_frozen || target_mint.supply == 0
-  )]
-  pub authority: AccountInfo<'info>,
-
-  #[account(
-    mut,
-    constraint = target_mint.mint_authority.unwrap() == target_mint_authority.key(),
-  )]
-  pub target_mint: Box<Account<'info, Mint>>,
-  pub target_mint_authority: AccountInfo<'info>,
-  #[account(constraint = base_storage.owner == base_storage_authority.key())]
-  pub base_storage: Box<Account<'info, TokenAccount>>,
-  pub base_storage_authority: AccountInfo<'info>,
-  #[account(address = spl_token::ID)]
-  pub token_program: AccountInfo<'info>,
-}
-
-#[derive(Accounts)]
-#[instruction(args: UpdateTokenBondingV0Args)]
-pub struct UpdateTokenBondingV0<'info> {
-  #[account(
-    mut,
-    constraint = token_bonding.authority.ok_or::<ProgramError>(ErrorCode::NoAuthority.into())? == authority.key(),
-    has_one = base_mint,
-    has_one = target_mint
-  )]
-  pub token_bonding: Box<Account<'info, TokenBondingV0>>,
-  #[account(signer)]
-  pub authority: AccountInfo<'info>,
-
-  #[account(
-    constraint = *base_mint.to_account_info().owner == token::ID
-  )]
-  pub base_mint: Box<Account<'info, Mint>>,
-  #[account(
-    constraint = target_mint.is_initialized,
-    constraint = *target_mint.to_account_info().owner == *base_mint.to_account_info().owner
-  )]
-  pub target_mint: Box<Account<'info, Mint>>,
-  #[account(
-    constraint = buy_base_royalties.mint == base_mint.key()
-  )]
-  pub buy_base_royalties: Box<Account<'info, TokenAccount>>,
-
-  #[account(
-    constraint = buy_target_royalties.mint == target_mint.key()
-  )] // Will init for you, since target mint doesn't exist yet.
-  pub buy_target_royalties: Box<Account<'info, TokenAccount>>,
-
-  #[account(
-    constraint = sell_base_royalties.mint == base_mint.key()
-  )]
-  pub sell_base_royalties: Box<Account<'info, TokenAccount>>,
-
-  #[account(
-    constraint = sell_target_royalties.mint == target_mint.key()
-  )] // Will init for you, since target mint doesn't exist yet.
-  pub sell_target_royalties: Box<Account<'info, TokenAccount>>,
-}
-
-
-#[derive(Accounts)]
-pub struct BuyV0<'info> {
-  #[account(
-    has_one = base_mint,
-    has_one = target_mint,
-    has_one = base_storage,
-    has_one = buy_base_royalties,
-    has_one = buy_target_royalties,
-    has_one = curve
-  )]
-  pub token_bonding: Box<Account<'info, TokenBondingV0>>,
-  #[account()]
-  pub curve: Box<Account<'info, CurveV0>>,
-  #[account()]
-  pub base_mint: Box<Account<'info, Mint>>,
-  #[account(mut)]
-  pub target_mint: Box<Account<'info, Mint>>,
-  #[account(
-    seeds = [
-      TARGET_MINT_AUTHORITY_PREFIX.as_bytes(), 
-      token_bonding.target_mint.as_ref()
-    ],
-    bump = token_bonding.target_mint_authority_bump_seed
-  )]
-  pub target_mint_authority: AccountInfo<'info>,
-  #[account(mut)]
-  pub base_storage: Box<Account<'info, TokenAccount>>,
-  #[account(mut)]
-  pub buy_base_royalties: Box<Account<'info, TokenAccount>>,
-  #[account(mut)]
-  pub buy_target_royalties: Box<Account<'info, TokenAccount>>,
-
-  #[account(mut)]
-  pub source: Box<Account<'info, TokenAccount>>,
-  #[account(signer)]
-  pub source_authority: AccountInfo<'info>,
-  #[account(mut)]
-  pub destination: Box<Account<'info, TokenAccount>>,
-  #[account(address = spl_token::ID)]
-  pub token_program: AccountInfo<'info>,
-  pub clock: Sysvar<'info, Clock>,
-}
-
-#[derive(Accounts)]
-pub struct SellV0<'info> {
-  #[account(
-    has_one = target_mint,
-    has_one = base_storage,
-    has_one = curve
-  )]
-  pub token_bonding: Box<Account<'info, TokenBondingV0>>,
-  #[account()]
-  pub curve: Box<Account<'info, CurveV0>>,
-  #[account()]
-  pub base_mint: Box<Account<'info, Mint>>,
-  #[account(mut)]
-  pub target_mint: Box<Account<'info, Mint>>,
-  #[account(mut)]
-  pub base_storage: Box<Account<'info, TokenAccount>>,
-  #[account(mut)]
-  pub sell_base_royalties: Box<Account<'info, TokenAccount>>,
-  #[account(mut)]
-  pub sell_target_royalties: Box<Account<'info, TokenAccount>>,
-
-  #[account()]
-  pub base_storage_authority: AccountInfo<'info>,
-
-  #[account(mut)]
-  pub source: Box<Account<'info, TokenAccount>>,
-  #[account(signer)]
-  pub source_authority: AccountInfo<'info>,
-
-  #[account(mut)]
-  pub destination: Box<Account<'info, TokenAccount>>,
-
-  #[account(address = spl_token::ID)]
-  pub token_program: AccountInfo<'info>,
-  pub clock: Sysvar<'info, Clock>,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
-pub enum Curves {
-  // All u128s are fixed precision decimal with 12 decimal places. So 1 would be 1_000_000_000_000. 1.5 is 1_500_000_000_000
-
-  // c(x^(pow/frac)) + b.
-  // Constant product = pow = 1, frac = 1, b = 0
-  // Fixed price = pow = 0, frac = 1, c = 0, b = price
-  ExponentialCurveV0 {
-    pow: u64,
-    frac: u64
-  }
-}
-
-impl Default for Curves {
-    fn default() -> Self {
-        Curves::ExponentialCurveV0 {
-          pow: 1_000_000_000_000, // 1
-          frac: 1_000_000_000_000, // 1
-        }
-    }
-}
-
-#[account]
-#[derive(Default)]
-pub struct ProgramStateV0 {
-  wrapped_sol_mint: Pubkey,
-  sol_storage: Pubkey,
-  mint_authority_bump_seed: u8,
-  sol_storage_bump_seed: u8,
-  bump_seed: u8
-}
-
-#[account]
-#[derive(Default)]
-pub struct CurveV0 {
-  c: u128, // Constant multiplied by the curve formula. Used to set initial price, but gets cancelled out as more is injected into the reserves
-  b: u128, // Constant added to the curve formula. Used to set initial price, but gets cancelled out as more is injected into the reserves
-  curve: Curves
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
-pub struct CreateCurveV0Args {
-  c: u128, // Constant multiplied by the curve formula. Used to set initial price, but gets cancelled out as more is injected into the reserves
-  b: u128, // Constant added to the curve formula. Used to set initial price, but gets cancelled out as more is injected into the reserves
-  curve: Curves
-}
-
-pub trait Curve {
-  fn price(&self, base_amount: &PreciseNumber, target_supply: &PreciseNumber, amount: &PreciseNumber, sell: bool, root_estimates: Option<[u128; 2]>) -> Option<PreciseNumber>;
-  fn expected_target_amount(&self, base_amount: &PreciseNumber, target_supply: &PreciseNumber, reserve_change: &PreciseNumber, root_estimates: Option<[u128; 2]>) -> Option<PreciseNumber>;
-}
-
-pub static ONE_PREC: PreciseNumber =  PreciseNumber { value: one() };
-pub static ZERO_PREC: PreciseNumber =  PreciseNumber { value: zero() };
-
-impl Curve for CurveV0 {
-  fn expected_target_amount(&self, base_amount: &PreciseNumber, target_supply: &PreciseNumber, reserve_change: &PreciseNumber, root_estimates: Option<[u128; 2]>) -> Option<PreciseNumber> {
-    let b_prec = PreciseNumber { value: InnerUint::from(self.b) };
-    let c_prec = PreciseNumber { value: InnerUint::from(self.c) };
-    let guess1 = PreciseNumber { value: InnerUint::from(root_estimates.unwrap()[0]) };
-    let guess2 = PreciseNumber { value: InnerUint::from(root_estimates.unwrap()[1]) };
-    
-    if base_amount.eq(&ZERO_PREC) || target_supply.eq(&ZERO_PREC) {
-      match self.curve {
-        // b dS + (c dS^(1 + pow/frac))/(1 + pow/frac)
-        Curves::ExponentialCurveV0 { pow, frac } => {
-          if self.b == 0 && self.c != 0 {
-            /*
-             * (((1 + k) dR)/c)^(1/(1 + k))
-             */
-            let pow_prec = PreciseNumber::new(pow as u128)?;
-            let frac_prec = PreciseNumber::new(frac as u128)?;
-            let one_plus_k =  &ONE_PREC.checked_add(&pow_prec.checked_div(&frac_prec)?)?;
-            one_plus_k.checked_mul(&reserve_change)?.checked_div(&c_prec)?.pow_frac_approximation(frac, frac + pow, guess1)
-          } else if pow == 0 {
-            reserve_change.checked_div(&b_prec)
-          } else {
-            None // This math is too hard, have not implemented yet.
-          }
-        }
-      }
-    } else {
-      match self.curve {
-        Curves::ExponentialCurveV0 { pow, frac } => {
-          let one_plus_k_numerator = frac.checked_add(pow)?;
-  
-          /*
-            dS = -S + ((S^(1 + k) (R + dR))/R)^(1/(1 + k))
-          */
-          target_supply.pow_frac_approximation(one_plus_k_numerator, frac, guess1)?
-                        .checked_mul(
-                          &base_amount.checked_add(&reserve_change)?
-                        )?.checked_div(
-                          &base_amount
-                        )?
-                        .pow_frac_approximation(frac, frac + pow, guess2)
-        }
-      }
-    }
-  }
-
-  fn price(&self, base_amount: &PreciseNumber, target_supply: &PreciseNumber, amount: &PreciseNumber, sell: bool, root_estimates: Option<[u128; 2]>) -> Option<PreciseNumber> {
-    let b_prec = PreciseNumber { value: InnerUint::from(self.b) };
-    let c_prec = PreciseNumber { value: InnerUint::from(self.c) };
-    let guess1 = PreciseNumber { value: InnerUint::from(root_estimates.unwrap()[0]) };
-    let guess2 = PreciseNumber { value: InnerUint::from(root_estimates.unwrap()[1]) };
-
-    if base_amount.eq(&ZERO_PREC) || target_supply.eq(&ZERO_PREC) {
-      match self.curve {
-        // b dS + (c dS^(1 + pow/frac))/(1 + pow/frac)
-        Curves::ExponentialCurveV0 { pow, frac } => {
-          let one_plus_k_numerator = frac.checked_add(pow)?;
-          let pow_prec = PreciseNumber::new(pow as u128)?;
-          let frac_prec = PreciseNumber::new(frac as u128)?;
-          b_prec.checked_mul(&amount)?.checked_add(
-            &c_prec.checked_mul(
-              &amount.pow_frac_approximation(one_plus_k_numerator, frac, guess1)?
-            )?.checked_div(
-              &ONE_PREC.checked_add(&pow_prec.checked_div(&frac_prec)?)?
-            )?
-          )
-        }
-      }
-    } else {
-      match self.curve {
-        /*
-          (R / S^(1 + k)) ((S + dS)^(1 + k) - S^(1 + k))
-        */
-        Curves::ExponentialCurveV0 { pow, frac } => {
-          let one_plus_k_numerator = frac.checked_add(pow)?;
-          let s_plus_ds = if sell {
-            target_supply.checked_sub(&amount)?
-          } else {
-            target_supply.checked_add(&amount)?
-          };
-
-          let s_k1 = &target_supply.pow_frac_approximation(one_plus_k_numerator, frac, guess1)?;
-          let s_plus_ds_k1 = s_plus_ds.pow_frac_approximation(one_plus_k_numerator, frac, guess2)?;
-
-          // PreciseNumbers cannot be negative. If we're selling, S + dS is less than S.
-          // Swap the two around. This will invert the sine of this function, but since sell = true they are expecting a positive number
-          let right_paren_value = if sell {
-            s_k1.checked_sub(&s_plus_ds_k1)?
-          } else {
-            s_plus_ds_k1.checked_sub(&s_k1)?
-          };
-
-          base_amount.checked_div(s_k1)?.checked_mul(
-            &right_paren_value
-          )
-        }
-      }
-    }
-  }
-}
-
-
-#[account]
-#[derive(Default)]
-pub struct TokenBondingV0 {
-  pub base_mint: Pubkey,
-  pub target_mint: Pubkey,
-  pub authority: Option<Pubkey>,
-  pub base_storage: Pubkey,
-  pub buy_base_royalties: Pubkey,
-  pub buy_target_royalties: Pubkey,
-  pub sell_base_royalties: Pubkey,
-  pub sell_target_royalties: Pubkey,
-  /// Percentage of purchases that go to royalties
-  /// Percentage Value is (founder_reward_percentage / u32.MAX_VALUE) * 100
-  pub buy_base_royalty_percentage: u32,
-  pub buy_target_royalty_percentage: u32,
-  pub sell_base_royalty_percentage: u32,
-  pub sell_target_royalty_percentage: u32,
-  /// The bonding curve to use 
-  pub curve: Pubkey,
-  pub mint_cap: Option<u64>,
-  pub purchase_cap: Option<u64>,
-  pub go_live_unix_time: i64,
-  pub freeze_buy_unix_time: Option<i64>,
-  pub buy_frozen: bool,
-  pub sell_frozen: bool,
-  
-  // Needed to derive the PDA of this instance
-  pub index: u16,
-  pub bump_seed: u8,
-  pub base_storage_bump_seed: u8,
-  pub target_mint_authority_bump_seed: u8,
-  pub base_storage_authority_bump_seed: Option<u8>,
-}
-
-
-#[error]
-pub enum ErrorCode {
-  #[msg("Target mint must have an authority")]
-  NoMintAuthority,
-
-  #[msg("Target mint must have an authority that is a pda of this program")]
-  InvalidMintAuthority,
-
-  #[msg("Invalid base storage authority pda or seed did not match canonical seed for base storage authority")]
-  InvalidBaseStorageAuthority,
-
-  #[msg("Token bonding does not have an authority")]
-  NoAuthority,
-
-  #[msg("Error in precise number arithmetic")]
-  ArithmeticError,
-
-  #[msg("Buy price was higher than the maximum buy price. Try increasing max_price or slippage configuration")]
-  PriceTooHigh,
-
-  #[msg("Sell price was lower than the minimum sell price. Try decreasing min_price or increasing slippage configuration")]
-  PriceTooLow,
-
-  #[msg("Cannot sell more than the target mint currently has in supply")]
-  MintSupplyTooLow,
-
-  #[msg("Sell is not enabled on this bonding curve")]
-  SellDisabled,
-
-  #[msg("This bonding curve is not live yet")]
-  NotLiveYet,
-
-  #[msg("Passed the mint cap")]
-  PassedMintCap,
-
-  #[msg("Cannot purchase that many tokens because of purchase cap")]
-  OverPurchaseCap,
-
-  #[msg("Buy is frozen on this bonding curve, purchases not allowed")]
-  BuyFrozen,
-
-  #[msg("Use token bonding wrapped sol via buy_wrapped_sol, sell_wrapped_sol commands. We may one day provide liquid staking rewards on this stored sol.")]
-  WrappedSolNotAllowed
 }

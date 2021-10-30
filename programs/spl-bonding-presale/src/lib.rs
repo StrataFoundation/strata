@@ -1,6 +1,6 @@
 use anchor_lang::{prelude::*, solana_program::{system_program, system_instruction, program::{invoke_signed, invoke}}};
 use anchor_spl::{token, token::{Transfer, Mint, TokenAccount}};
-use spl_token_bonding::{ONE_PREC, Curve, CurveV0, TokenBondingV0, get_percent, precise_number::PreciseNumber, precise_supply, precise_supply_amt, to_mint_amount};
+use spl_token_bonding::{curve::{ONE_PREC, Curve}, state::CurveV0, state::TokenBondingV0, util::get_percent, precise_number::PreciseNumber, util::{precise_supply, precise_supply_amt, to_mint_amount}};
 
 declare_id!("7qjwGzGaQshSgD1QiNRrVtxBfqrsBAXwPfoHHN58v4oG");
 
@@ -54,7 +54,7 @@ pub mod spl_bonding_presale {
       &[
         &[b"token-bonding-authority", ctx.accounts.presale.key().as_ref(), &[ctx.accounts.presale.token_bonding_authority_bump_seed]]
       ]
-    ), spl_token_bonding::UpdateTokenBondingV0Args {
+    ), spl_token_bonding::arg::UpdateTokenBondingV0Args {
       token_bonding_authority: Some(ctx.accounts.presale.post_launch_token_bonding_authority),
       buy_base_royalty_percentage: token_bonding.buy_base_royalty_percentage,
       buy_target_royalty_percentage: token_bonding.buy_target_royalty_percentage,
@@ -86,8 +86,8 @@ pub mod spl_bonding_presale {
         clock: ctx.accounts.clock.to_account_info().clone()
       }, 
       base_storage_seeds
-    ), spl_token_bonding::BuyV0Args {
-      buy_with_base: Some(spl_token_bonding::BuyWithBaseV0Args {
+    ), spl_token_bonding::arg::BuyV0Args {
+      buy_with_base: Some(spl_token_bonding::arg::BuyWithBaseV0Args {
         base_amount: ctx.accounts.presale_base_storage.amount,
         minimum_target_amount: 1
       }),
