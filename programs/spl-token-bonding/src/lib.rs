@@ -50,7 +50,7 @@ pub mod spl_token_bonding {
       
       token::mint_to(
         CpiContext::new_with_signer(
-          ctx.accounts.token_program.clone(), 
+          ctx.accounts.token_program.to_account_info().clone(), 
           MintTo {
             mint: ctx.accounts.wrapped_sol_mint.to_account_info().clone(),
             to: ctx.accounts.destination.to_account_info().clone(),
@@ -94,7 +94,7 @@ pub mod spl_token_bonding {
 
       token::burn(
         CpiContext::new(
-          ctx.accounts.token_program.clone(), 
+          ctx.accounts.token_program.to_account_info().clone(), 
           Burn {
             mint: ctx.accounts.wrapped_sol_mint.to_account_info().clone(),
             to: ctx.accounts.destination.to_account_info().clone(),
@@ -191,7 +191,7 @@ pub mod spl_token_bonding {
         let base_storage_authority = Pubkey::create_program_address(&storage_authority_seeds, &ctx.program_id)?;
         if ctx.accounts.base_storage.owner == base_storage_authority {
           close_token_account(CpiContext::new_with_signer(
-            ctx.accounts.token_program.clone(),
+            ctx.accounts.token_program.to_account_info().clone(),
             CloseTokenAccount {
                 from: ctx.accounts.base_storage.to_account_info().clone(),
                 to: ctx.accounts.refund.to_account_info().clone(),

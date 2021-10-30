@@ -1,5 +1,5 @@
 use anchor_lang::{prelude::*, solana_program::{system_program, system_instruction, program::{invoke_signed, invoke}}};
-use anchor_spl::{token, token::{Transfer, Mint, TokenAccount}};
+use anchor_spl::{token, token::{Mint, Token, TokenAccount, Transfer}};
 use spl_token_bonding::{curve::{ONE_PREC, Curve}, state::CurveV0, state::TokenBondingV0, util::get_percent, precise_number::PreciseNumber, util::{precise_supply, precise_supply_amt, to_mint_amount}};
 
 declare_id!("7qjwGzGaQshSgD1QiNRrVtxBfqrsBAXwPfoHHN58v4oG");
@@ -183,8 +183,7 @@ pub struct InitializeTokenBondingPresaleV0<'info> {
   )]
   post_token_bonding: Box<Account<'info, TokenBondingV0>>,
 
-  #[account(address = system_program::ID)]
-  system_program: AccountInfo<'info>,
+  system_program: Program<'info, System>,
   rent: Sysvar<'info, Rent>,
   clock: Sysvar<'info, Clock>
 }
@@ -257,8 +256,7 @@ pub struct LaunchV0<'info> {
   pub buy_target_royalties: Box<Account<'info, TokenAccount>>,
   #[account(address = spl_token_bonding::id())]
   pub spl_token_bonding_program: AccountInfo<'info>,
-  #[account(address = spl_token::ID)]
-  pub token_program: AccountInfo<'info>,
+  pub token_program: Program<'info, Token>,
   pub clock: Sysvar<'info, Clock>,
 }
 

@@ -189,7 +189,7 @@ pub mod spl_token_collective {
         if old_royalty_account.owner == standin_royalties_owner {
           transfer(
             CpiContext::new_with_signer(
-                token_program.clone(),
+                token_program.to_account_info().clone(),
                 Transfer {
                   from: old_royalty_account.to_account_info().clone(),
                   to: new_royalty_account.to_account_info().clone(),
@@ -200,7 +200,7 @@ pub mod spl_token_collective {
             old_royalty_account.amount
           )?;
           close_token_account(CpiContext::new_with_signer(
-            token_program.clone(), 
+            token_program.to_account_info().clone(), 
             CloseTokenAccount {
               from: old_royalty_account.to_account_info().clone(),
               to: owner.clone(),

@@ -1,7 +1,6 @@
 use anchor_lang::solana_program::program_error::ProgramError;
-use anchor_lang::solana_program::system_program;
 use anchor_lang::{prelude::*, solana_program};
-use anchor_spl::token::{self, Mint, MintTo, SetAuthority, TokenAccount, Transfer};
+use anchor_spl::token::{self, Mint, MintTo, Token, TokenAccount, Transfer};
 use borsh::{BorshDeserialize, BorshSerialize};
 
 pub mod precise_number;
@@ -191,7 +190,7 @@ pub mod spl_token_staking {
         let data = &mut ctx.accounts.staking_voucher;
         token::transfer(
             CpiContext::new(
-                ctx.accounts.token_program.clone(),
+                ctx.accounts.token_program.to_account_info().clone(),
                 Transfer {
                     from: ctx.accounts.purchase_account.to_account_info(),
                     to: ctx.accounts.base_holding.to_account_info(),
@@ -353,7 +352,7 @@ pub mod spl_token_staking {
         // Transfer them their holding
         token::transfer(
             CpiContext::new_with_signer(
-                ctx.accounts.token_program.clone(),
+                ctx.accounts.token_program.to_account_info().clone(),
                 Transfer {
                     from: base_holding.clone(),
                     to: ctx.accounts.destination.to_account_info().clone(),
@@ -373,7 +372,7 @@ pub mod spl_token_staking {
         )?;
 
         close_token_account(CpiContext::new_with_signer(
-            ctx.accounts.token_program.clone(),
+            ctx.accounts.token_program.to_account_info().clone(),
             CloseTokenAccount {
                 from: base_holding.clone(),
                 to: ctx.accounts.owner.to_account_info().clone(),
@@ -444,8 +443,7 @@ pub struct InitializeTokenStakingV0<'info> {
     constraint = *target_mint.to_account_info().owner == *base_mint.to_account_info().owner
   )]
     pub target_mint: Account<'info, Mint>,
-    #[account(address = system_program::ID)]
-    pub system_program: AccountInfo<'info>,
+    pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>,
     pub clock: Sysvar<'info, Clock>,
 }
@@ -481,42 +479,42 @@ pub struct InitializeStakingInfoV0<'info> {
 #[derive(Accounts)]
 #[instruction(args: StakeV0Args)]
 pub struct StakeV0<'info> {
-    #[account(signer)]
-    pub payer: AccountInfo<'info>,
-    #[account(
-      mut,
-      has_one = base_mint
-    )]
-    pub token_staking: Box<Account<'info, TokenStakingV0>>,
-    #[account(
-      has_one = token_staking,
-      has_one = owner
-    )]
-    pub staking_info: Box<Account<'info, StakingInfoV0>>,
-    #[account(
-      init,
-      seeds = [
-        b"stake-voucher", 
-        owner.to_account_info().key.as_ref(),
-        token_staking.to_account_info().key.as_ref(),
-        &args.voucher_number.to_le_bytes()
-      ],
-      bump = args.bump_seed,
-      payer = payer,
-      space = 512
-    )]
-    pub staking_voucher: Box<Account<'info, StakingVoucherV0>>,
-    #[account()]
-    pub base_mint: Account<'info, Mint>,
-    #[account(
+  #[account(signer)]
+  pub payer: AccountInfo<'info>,
+  #[account(
+    mut,
+    has_one = base_mint
+  )]
+  pub token_staking: Box<Account<'info, TokenStakingV0>>,
+  #[account(
+    has_one = token_staking,
+    has_one = owner
+  )]
+  pub staking_info: Box<Account<'info, StakingInfoV0>>,
+  #[account(
+    init,
+    seeds = [
+      b"stake-voucher", 
+      owner.to_account_info().key.as_ref(),
+      token_staking.to_account_info().key.as_ref(),
+      &args.voucher_number.to_le_bytes()
+    ],
+    bump = args.bump_seed,
+    payer = payer,
+    space = 512
+  )]
+  pub staking_voucher: Box<Account<'info, StakingVoucherV0>>,
+  #[account()]
+  pub base_mint: Account<'info, Mint>,
+  #[account(
     mut,
     constraint = purchase_account.mint == *base_mint.to_account_info().key,
     constraint = purchase_account.owner == *owner.to_account_info().key,
   )]
-    pub purchase_account: Account<'info, TokenAccount>,
-    #[account(signer)]
-    pub owner: AccountInfo<'info>,
-    #[account(
+  pub purchase_account: Account<'info, TokenAccount>,
+  #[account(signer)]
+  pub owner: AccountInfo<'info>,
+  #[account(
     init,
     seeds = [b"holding", staking_voucher.to_account_info().key.as_ref()],
     token::mint = base_mint,
@@ -524,152 +522,147 @@ pub struct StakeV0<'info> {
     payer = payer,
     bump = args.holding_bump_seed
   )]
-    pub base_holding: Box<Account<'info, TokenAccount>>,
-    #[account(
+  pub base_holding: Box<Account<'info, TokenAccount>>,
+  #[account(
     seeds = [b"holding-authority", base_holding.to_account_info().key.as_ref()],
     bump = args.holding_authority_bump_seed
   )]
-    pub base_holding_authority: AccountInfo<'info>,
-    #[account(address = *base_mint.to_account_info().owner)]
-    pub token_program: AccountInfo<'info>,
-    #[account(address = system_program::ID)]
-    pub system_program: AccountInfo<'info>,
-    pub rent: Sysvar<'info, Rent>,
-    pub clock: Sysvar<'info, Clock>,
+  pub base_holding_authority: AccountInfo<'info>,
+  pub token_program: Program<'info, Token>,
+  pub system_program: Program<'info, System>,
+  pub rent: Sysvar<'info, Rent>,
+  pub clock: Sysvar<'info, Clock>,
 }
 
 /// Collect rewards for a given staking voucher. This operation is permissionless.
 #[derive(Accounts)]
 pub struct CollectRewardsV0<'info> {
-    #[account(
-      mut,
-      has_one = target_mint
-    )]
-    pub token_staking: Account<'info, TokenStakingV0>,
-    #[account(
-      mut,
-      has_one = token_staking
-    )]
-    pub staking_info: Box<Account<'info, StakingInfoV0>>,
-    #[account(
-      mut,
-      has_one = token_staking,
-      has_one = staking_info
-    )]
-    pub staking_voucher: Box<Account<'info, StakingVoucherV0>>,
-    #[account(
+  #[account(
     mut,
-    address = Pubkey::create_program_address(
-      &[staking_voucher.owner.as_ref(), &token::ID.to_bytes(), token_staking.target_mint.as_ref(), &[staking_voucher.ata_bump_seed]],
-      &spl_associated_token_account::ID
-    )?
+    has_one = target_mint
   )]
-    pub destination: Account<'info, TokenAccount>,
-    #[account(
-      mut,
-      constraint = target_mint.mint_authority.map(|a| a == *mint_authority.to_account_info().key).unwrap_or(false),
-    )]
-    pub target_mint: Account<'info, Mint>,
-    #[account()]
-    pub mint_authority: AccountInfo<'info>,
-    #[account(address = *target_mint.to_account_info().owner)]
-    pub token_program: AccountInfo<'info>,
-    pub clock: Sysvar<'info, Clock>,
+  pub token_staking: Account<'info, TokenStakingV0>,
+  #[account(
+    mut,
+    has_one = token_staking
+  )]
+  pub staking_info: Box<Account<'info, StakingInfoV0>>,
+  #[account(
+    mut,
+    has_one = token_staking,
+    has_one = staking_info
+  )]
+  pub staking_voucher: Box<Account<'info, StakingVoucherV0>>,
+  #[account(
+  mut,
+  address = Pubkey::create_program_address(
+    &[staking_voucher.owner.as_ref(), &token::ID.to_bytes(), token_staking.target_mint.as_ref(), &[staking_voucher.ata_bump_seed]],
+    &spl_associated_token_account::ID
+  )?
+)]
+  pub destination: Account<'info, TokenAccount>,
+  #[account(
+    mut,
+    constraint = target_mint.mint_authority.map(|a| a == *mint_authority.to_account_info().key).unwrap_or(false),
+  )]
+  pub target_mint: Account<'info, Mint>,
+  #[account()]
+  pub mint_authority: AccountInfo<'info>,
+  pub token_program: Program<'info, Token>,
+  pub clock: Sysvar<'info, Clock>,
 }
 
 #[derive(Accounts)]
 pub struct UnstakeV0<'info> {
-    #[account(mut)]
-    pub token_staking: Account<'info, TokenStakingV0>,
-    #[account(
-      mut,
-      has_one = token_staking,
-      has_one = owner
-    )]
-    pub staking_info: Account<'info, StakingInfoV0>,
-    #[account(
-      mut,
-      has_one = token_staking,
-      has_one = owner,
-      has_one = staking_info,
-      close = owner
-    )]
-    pub staking_voucher: Account<'info, StakingVoucherV0>,
-    #[account(mut, signer)]
-    pub owner: AccountInfo<'info>,
-    #[account(
+  #[account(mut)]
+  pub token_staking: Account<'info, TokenStakingV0>,
+  #[account(
+    mut,
+    has_one = token_staking,
+    has_one = owner
+  )]
+  pub staking_info: Account<'info, StakingInfoV0>,
+  #[account(
+    mut,
+    has_one = token_staking,
+    has_one = owner,
+    has_one = staking_info,
+    close = owner
+  )]
+  pub staking_voucher: Account<'info, StakingVoucherV0>,
+  #[account(mut, signer)]
+  pub owner: AccountInfo<'info>,
+  #[account(
     mut,
     constraint = destination.mint == token_staking.base_mint
   )]
-    pub destination: Account<'info, TokenAccount>,
-    #[account(
+  pub destination: Account<'info, TokenAccount>,
+  #[account(
     mut,
     seeds = [b"holding", staking_voucher.to_account_info().key.as_ref()],
     bump = staking_voucher.holding_bump_seed
   )]
-    pub base_holding: Account<'info, TokenAccount>,
-    #[account(
+  pub base_holding: Account<'info, TokenAccount>,
+  #[account(
     seeds = [b"holding-authority", base_holding.to_account_info().key.as_ref()],
     bump = staking_voucher.holding_authority_bump_seed
   )]
-    pub base_holding_authority: AccountInfo<'info>,
-    pub clock: Sysvar<'info, Clock>,
-    #[account(address = *base_holding.to_account_info().owner)]
-    pub token_program: AccountInfo<'info>,
-    #[account(address = system_program::ID)]
-    pub system_program: AccountInfo<'info>,
+  pub base_holding_authority: AccountInfo<'info>,
+  pub clock: Sysvar<'info, Clock>,
+  pub token_program: Program<'info, Token>,
+  pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
 pub struct SetUnlockedV0<'info> {
-    #[account(
-      mut,
-      constraint = token_staking.authority.ok_or::<ProgramError>(ErrorCode::NoAuthority.into())? == authority.key()
-    )]
-    pub token_staking: Account<'info, TokenStakingV0>,
-    #[account(signer)]
-    pub authority: AccountInfo<'info>
+  #[account(
+    mut,
+    constraint = token_staking.authority.ok_or::<ProgramError>(ErrorCode::NoAuthority.into())? == authority.key()
+  )]
+  pub token_staking: Account<'info, TokenStakingV0>,
+  #[account(signer)]
+  pub authority: AccountInfo<'info>
 }
 
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
 pub enum PeriodUnit {
-    SECOND,
-    MINUTE,
-    HOUR,
-    DAY,
-    YEAR,
+  SECOND,
+  MINUTE,
+  HOUR,
+  DAY,
+  YEAR,
 }
 
 impl Default for PeriodUnit {
-    fn default() -> Self {
-        PeriodUnit::HOUR
-    }
+  fn default() -> Self {
+    PeriodUnit::HOUR
+  }
 }
 
 #[account]
 #[derive(Default)]
 pub struct TokenStakingV0 {
-    pub base_mint: Pubkey,
-    pub target_mint: Pubkey,
-    pub period_unit: PeriodUnit,
-    pub authority: Option<Pubkey>,
-    pub unlocked: bool, // Remove lockup for everyone. For Wum.bo, this happens when someone opts out
-    pub period: u32,
-    // reward_percent_per_period on each contract is derived from lockup_periods * reward_percent_per_period_per_lockup_period
-    pub reward_percent_per_period_per_lockup_period: u32, // Percent, as taken by this value / u32.MAX_VALUE
+  pub base_mint: Pubkey,
+  pub target_mint: Pubkey,
+  pub period_unit: PeriodUnit,
+  pub authority: Option<Pubkey>,
+  pub unlocked: bool, // Remove lockup for everyone. For Wum.bo, this happens when someone opts out
+  pub period: u32,
+  // reward_percent_per_period on each contract is derived from lockup_periods * reward_percent_per_period_per_lockup_period
+  pub reward_percent_per_period_per_lockup_period: u32, // Percent, as taken by this value / u32.MAX_VALUE
 
-    // Calculated values, used to calculate the total target supply included unwithdrawn rewards
-    pub total_base_amount_staked: u64, // Useful to have, not necessary.
-    pub target_amount_per_period: u64,
-    pub target_amount_unredeemed: u64,
-    pub last_calculated_timestamp: i64,
-    pub created_timestamp: i64,
+  // Calculated values, used to calculate the total target supply included unwithdrawn rewards
+  pub total_base_amount_staked: u64, // Useful to have, not necessary.
+  pub target_amount_per_period: u64,
+  pub target_amount_unredeemed: u64,
+  pub last_calculated_timestamp: i64,
+  pub created_timestamp: i64,
 
-    // Needed to derive the PDA of this instance
-    pub voucher_number: u16,
-    pub bump_seed: u8,
-    pub target_mint_authority_bump_seed: u8,
+  // Needed to derive the PDA of this instance
+  pub voucher_number: u16,
+  pub bump_seed: u8,
+  pub target_mint_authority_bump_seed: u8,
 }
 
 // Not strictly necessary, but keeps information about all of the staking on this token type
@@ -691,49 +684,49 @@ pub struct StakingInfoV0 {
 #[account]
 #[derive(Default)]
 pub struct StakingVoucherV0 {
-    pub token_staking: Pubkey,
-    pub staking_info: Pubkey,
-    pub base_holding: Pubkey,
-    pub owner: Pubkey,
-    pub base_amount: u64,
-    pub created_timestamp: i64,
-    pub last_collected_timestamp: i64,
-    pub lockup_periods: u64,
+  pub token_staking: Pubkey,
+  pub staking_info: Pubkey,
+  pub base_holding: Pubkey,
+  pub owner: Pubkey,
+  pub base_amount: u64,
+  pub created_timestamp: i64,
+  pub last_collected_timestamp: i64,
+  pub lockup_periods: u64,
 
-    // Needed to derive the PDA of this instance
-    pub voucher_number: u16,
-    pub holding_bump_seed: u8,
-    pub holding_authority_bump_seed: u8,
-    pub bump_seed: u8,
-    pub ata_bump_seed: u8,
+  // Needed to derive the PDA of this instance
+  pub voucher_number: u16,
+  pub holding_bump_seed: u8,
+  pub holding_authority_bump_seed: u8,
+  pub bump_seed: u8,
+  pub ata_bump_seed: u8,
 }
 
 #[error]
 pub enum ErrorCode {
-    #[msg("Target mint must have an authority")]
-    NoMintAuthority,
+  #[msg("Target mint must have an authority")]
+  NoMintAuthority,
 
-    #[msg("Target mint must have an authority that is a pda of this program")]
-    InvalidMintAuthority,
+  #[msg("Target mint must have an authority that is a pda of this program")]
+  InvalidMintAuthority,
 
-    #[msg("Staking is already initialized")]
-    StakingAlreadyInitialized,
+  #[msg("Staking is already initialized")]
+  StakingAlreadyInitialized,
 
-    #[msg("Invalid pda for staking voucher, should be [stake-voucher, owner, token staking, voucher number]")]
-    InvalidStakingVoucherPDA,
+  #[msg("Invalid pda for staking voucher, should be [stake-voucher, owner, token staking, voucher number]")]
+  InvalidStakingVoucherPDA,
 
-    #[msg("Error in precise number arithmetic")]
-    ArithmeticError,
+  #[msg("Error in precise number arithmetic")]
+  ArithmeticError,
 
-    #[msg("This voucher is still in the lockup period")]
-    LockupNotPassed,
+  #[msg("This voucher is still in the lockup period")]
+  LockupNotPassed,
 
-    #[msg("You must collect on this voucher before unstaking it. You should do both in the same transaction")]
-    CollectBeforeUnstake,
+  #[msg("You must collect on this voucher before unstaking it. You should do both in the same transaction")]
+  CollectBeforeUnstake,
 
-    #[msg("Account did not serialize while closing")]
-    AccountDidNotSerialize,
+  #[msg("Account did not serialize while closing")]
+  AccountDidNotSerialize,
 
-    #[msg("No authority on this staking instance")]
-    NoAuthority
+  #[msg("No authority on this staking instance")]
+  NoAuthority
 }

@@ -2,7 +2,7 @@ use anchor_lang::{prelude::*, solana_program, solana_program::{system_program, s
 use crate::arg::*;
 use crate::state::*;
 use crate::error::ErrorCode;
-use anchor_spl::{token, token::{Mint, TokenAccount}};
+use anchor_spl::{token, token::{Mint, Token, TokenAccount}};
 
 pub static TARGET_MINT_AUTHORITY_PREFIX: &str = "target-authority";
                
@@ -65,10 +65,8 @@ pub struct InitializeSolStorageV0<'info> {
     bump = args.mint_authority_bump_seed
   )]
   pub mint_authority: AccountInfo<'info>,
-  #[account(address = token::ID)]
-  pub token_program: AccountInfo<'info>,
-  #[account(address = system_program::ID)]
-  pub system_program: AccountInfo<'info>,
+  pub token_program: Program<'info, Token>,
+  pub system_program: Program<'info, System>,
   pub rent: Sysvar<'info, Rent>,
 }
 
@@ -92,10 +90,8 @@ pub struct BuyWrappedSolV0<'info> {
     constraint = destination.mint == wrapped_sol_mint.key()
   )]
   pub destination: Account<'info, TokenAccount>,
-  #[account(address = spl_token::ID)]
-  pub token_program: AccountInfo<'info>,
-  #[account(address = system_program::ID)]
-  pub system_program: AccountInfo<'info>,
+  pub token_program: Program<'info, Token>,
+  pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
@@ -121,10 +117,8 @@ pub struct SellWrappedSolV0<'info> {
     mut
   )]
   pub destination: AccountInfo<'info>,
-  #[account(address = spl_token::ID)]
-  pub token_program: AccountInfo<'info>,
-  #[account(address = system_program::ID)]
-  pub system_program: AccountInfo<'info>,
+  pub token_program: Program<'info, Token>,
+  pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
@@ -136,8 +130,7 @@ pub struct InitializeCurveV0<'info> {
     zero
   )]
   pub curve: Account<'info, CurveV0>,
-  #[account(address = system_program::ID)]
-  pub system_program: AccountInfo<'info>,
+  pub system_program: Program<'info, System>,
   pub rent: Sysvar<'info, Rent>,
 }
 
@@ -197,10 +190,8 @@ pub struct InitializeTokenBondingV0<'info> {
   )] // Will init for you, since target mint doesn't exist yet.
   pub sell_target_royalties: Box<Account<'info, TokenAccount>>,
 
-  #[account(address = spl_token::ID)]
-  pub token_program: AccountInfo<'info>,
-  #[account(address = system_program::ID)]
-  pub system_program: AccountInfo<'info>,
+  pub token_program: Program<'info, Token>,
+  pub system_program: Program<'info, System>,
   pub rent: Sysvar<'info, Rent>,
   pub clock: Sysvar<'info, Clock>,
 }
@@ -235,8 +226,7 @@ pub struct CloseTokenBondingV0<'info> {
   #[account(constraint = base_storage.owner == base_storage_authority.key())]
   pub base_storage: Box<Account<'info, TokenAccount>>,
   pub base_storage_authority: AccountInfo<'info>,
-  #[account(address = spl_token::ID)]
-  pub token_program: AccountInfo<'info>,
+  pub token_program: Program<'info, Token>,
 }
 
 #[derive(Accounts)]
@@ -321,8 +311,7 @@ pub struct BuyV0<'info> {
   pub source_authority: AccountInfo<'info>,
   #[account(mut)]
   pub destination: Box<Account<'info, TokenAccount>>,
-  #[account(address = spl_token::ID)]
-  pub token_program: AccountInfo<'info>,
+  pub token_program: Program<'info, Token>,
   pub clock: Sysvar<'info, Clock>,
 }
 
@@ -358,7 +347,6 @@ pub struct SellV0<'info> {
   #[account(mut)]
   pub destination: Box<Account<'info, TokenAccount>>,
 
-  #[account(address = spl_token::ID)]
-  pub token_program: AccountInfo<'info>,
+  pub token_program: Program<'info, Token>,
   pub clock: Sysvar<'info, Clock>,
 }

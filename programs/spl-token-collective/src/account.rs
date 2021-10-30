@@ -6,7 +6,7 @@ use crate::{token_metadata, token_metadata::Metadata};
 use crate::util::*;
 use crate::state::*;
 use crate::error::*;
-use anchor_spl::token::{Mint, TokenAccount};
+use anchor_spl::token::{Mint, Token, TokenAccount};
 
 #[derive(Accounts)]
 pub struct CloseTokenAccount<'info> {
@@ -59,8 +59,7 @@ pub struct InitializeCollectiveV0<'info> {
 
   #[account(mut, signer)]
   pub payer: AccountInfo<'info>,
-  #[account(address = system_program::ID)]
-  pub system_program: AccountInfo<'info>,
+  pub system_program: Program<'info, System>,
   pub rent: Sysvar<'info, Rent>,
 }
 
@@ -98,8 +97,7 @@ pub struct InitializeSocialTokenV0<'info> {
   pub buy_target_royalties: Box<Account<'info, TokenAccount>>,
   pub sell_base_royalties: Box<Account<'info, TokenAccount>>,  
   pub sell_target_royalties: Box<Account<'info, TokenAccount>>,  
-  #[account(address = system_program::ID)]
-  pub system_program: AccountInfo<'info>,
+  pub system_program: Program<'info, System>,
   pub rent: Sysvar<'info, Rent>,
   pub clock: Sysvar<'info, Clock>
 }
@@ -144,8 +142,7 @@ pub struct InitializeOwnedSocialTokenV0<'info> {
     signer
   )]
   pub owner: AccountInfo<'info>,
-  #[account(address = system_program::ID)]
-  pub system_program: AccountInfo<'info>,
+  pub system_program: Program<'info, System>,
   pub rent: Sysvar<'info, Rent>,
 }
 
@@ -202,8 +199,7 @@ pub struct InitializeUnclaimedSocialTokenV0<'info> {
     // Deserialize name account checked in token metadata constraint
   )]
   pub name: AccountInfo<'info>,
-  #[account(address = system_program::ID)]
-  pub system_program: AccountInfo<'info>,
+  pub system_program: Program<'info, System>,
   pub rent: Sysvar<'info, Rent>,
 }
 
@@ -380,11 +376,9 @@ pub struct ClaimSocialTokenV0<'info> {
 
   #[account(address = spl_token_bonding::id())]
   pub token_bonding_program: AccountInfo<'info>,
-  #[account(address = spl_token::ID)]
-  pub token_program: AccountInfo<'info>,
+  pub token_program: Program<'info, Token>,
   #[account(address = token_metadata::ID)]
   pub token_metadata_program: AccountInfo<'info>,
-  #[account(address = system_program::ID)]
-  pub system_program: AccountInfo<'info>,
+  pub system_program: Program<'info, System>,
   pub rent: Sysvar<'info, Rent>,
 }
