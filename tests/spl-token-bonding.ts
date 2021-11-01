@@ -202,7 +202,7 @@ describe("spl-token-bonding", () => {
     });
 
     it("allows buying the bonding curve", async () => {
-      await tokenBondingProgram.buyV0({
+      await tokenBondingProgram.buy({
         tokenBonding,
         desiredTargetAmount: new BN(50),
         slippage: 0.05,
@@ -214,7 +214,7 @@ describe("spl-token-bonding", () => {
 
     it("does not allow buying past the cap", async () => {
       try {
-        await tokenBondingProgram.buyV0({
+        await tokenBondingProgram.buy({
           tokenBonding,
           desiredTargetAmount: new BN(1001),
           slippage: 0.05,
@@ -227,13 +227,13 @@ describe("spl-token-bonding", () => {
     });
 
     it("allows selling", async () => {
-      await tokenBondingProgram.buyV0({
+      await tokenBondingProgram.buy({
         tokenBonding,
         desiredTargetAmount: new BN(50),
         slippage: 0.5,
       });
 
-      await tokenBondingProgram.sellV0({
+      await tokenBondingProgram.sell({
         tokenBonding,
         targetAmount: new BN(55),
         slippage: 0.5,
@@ -295,7 +295,7 @@ describe("spl-token-bonding", () => {
     })
 
     it ("switches from a fixed price model to a linear model", async () => {
-      await tokenBondingProgram.buyV0({
+      await tokenBondingProgram.buy({
         tokenBonding,
         desiredTargetAmount: new BN(100),
         slippage: 0.5
@@ -307,7 +307,7 @@ describe("spl-token-bonding", () => {
       );
 
       await waitForUnixTime(provider.connection, BigInt(tokenBondingAcct.goLiveUnixTime.toNumber() + 10));
-      await tokenBondingProgram.sellV0({
+      await tokenBondingProgram.sell({
         tokenBonding,
         targetAmount: new BN(50),
         slippage: 0.5
@@ -430,7 +430,7 @@ describe("spl-token-bonding", () => {
           frac: 1
         })
       });
-      await tokenBondingProgram.buyV0({
+      await tokenBondingProgram.buy({
         tokenBonding,
         desiredTargetAmount: new BN(100),
         slippage: 0.05,
@@ -447,7 +447,7 @@ describe("spl-token-bonding", () => {
           frac: 1
         })
       });
-      await tokenBondingProgram.buyV0({
+      await tokenBondingProgram.buy({
         tokenBonding,
         desiredTargetAmount: new BN(100),
         slippage: 0.05,
@@ -492,25 +492,25 @@ describe("spl-token-bonding", () => {
       // Also ensure zero sum.
       const initLamports = (await provider.connection.getAccountInfo(me))
         .lamports;
-      await tokenBondingProgram.buyV0({
+      await tokenBondingProgram.buy({
         tokenBonding,
         desiredTargetAmount: new BN(50),
         slippage: 0.05,
       });
 
-      await tokenBondingProgram.buyV0({
+      await tokenBondingProgram.buy({
         tokenBonding,
         desiredTargetAmount: new BN(100),
         slippage: 0.05,
       });
 
-      await tokenBondingProgram.sellV0({
+      await tokenBondingProgram.sell({
         tokenBonding,
         targetAmount: new BN(66),
         slippage: 0.05,
       });
 
-      await tokenBondingProgram.sellV0({
+      await tokenBondingProgram.sell({
         tokenBonding,
         targetAmount: new BN(100),
         slippage: 0.05,
@@ -575,25 +575,25 @@ describe("spl-token-bonding", () => {
           sellTargetRoyaltyPercentage: 0
         });
 
-        await tokenBondingProgram.buyV0({
+        await tokenBondingProgram.buy({
           tokenBonding,
           desiredTargetAmount: new BN(500),
           slippage: 0.5,
         });
 
-        await tokenBondingProgram.buyV0({
+        await tokenBondingProgram.buy({
           tokenBonding,
           desiredTargetAmount: new BN(1000),
           slippage: 0.5,
         });
 
-        await tokenBondingProgram.sellV0({
+        await tokenBondingProgram.sell({
           tokenBonding,
           targetAmount: new BN(1200),
           slippage: 0.5,
         });
 
-        await tokenBondingProgram.sellV0({
+        await tokenBondingProgram.sell({
           tokenBonding,
           targetAmount: new BN(300),
           slippage: 0.5,

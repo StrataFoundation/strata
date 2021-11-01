@@ -28,6 +28,7 @@ interface CreateCollectiveArgs {
 }
 
 interface CreateSocialTokenArgs {
+  ignoreIfExists: boolean; // If this social token already exists, don't throw an error
   payer?: PublicKey;
   collective?: PublicKey; // Defaults to open collective
   name?: PublicKey; // Either these or owner needs to be provided
@@ -178,9 +179,9 @@ export class SplTokenCollective {
   provider: Provider;
 
   static ID = new PublicKey("WumbodN8t7wcDPCY2nGszs4x6HRtL5mJcTR519Qr6m7");
-  static OPEN_COLLECTIVE_ID = new PublicKey("7cqGGtNsCpSPdDK79uSWfLrh94A5yPtFBDUy51hZx1w5");
-  static OPEN_COLLECTIVE_BONDING_ID = new PublicKey("99acj79A3e5kTB4SFyqxmJp4LRPrP2d6GCXuYLK3mmBf");
-  static OPEN_COLLECTIVE_MINT_ID = new PublicKey("6fwh2Z98GE5QwuQQA6LihfG871i3BqBqrngTfbEH7LsW");
+  static OPEN_COLLECTIVE_ID = new PublicKey("AHzARGg7AqQ37YQzZmXJjzfj5N9cA9rAi9ZWrcJsHBD6");
+  static OPEN_COLLECTIVE_BONDING_ID = new PublicKey("6UuF2yvHg8Xpj36uydNMiZCNtj2XcTMuY2gMggRzmRPq");
+  static OPEN_COLLECTIVE_MINT_ID = new PublicKey("8K1Z1yG1iP2CJz8ZinXLBbbACuZoR1Euc1M33oiKYMPJ");
 
   static async init(provider: Provider, splCollectiveProgramId: PublicKey = SplTokenCollective.ID, splTokenBondingProgramId: PublicKey = SplTokenBonding.ID): Promise<SplTokenCollective> {
     const SplCollectiveIDLJson = await anchor.Program.fetchIdl(splCollectiveProgramId, provider);
@@ -469,6 +470,7 @@ export class SplTokenCollective {
   }
 
   async createSocialTokenInstructions({
+    ignoreIfExists = false,
     payer = this.wallet.publicKey,
     collective = SplTokenCollective.OPEN_COLLECTIVE_ID,
     name,
@@ -517,6 +519,24 @@ export class SplTokenCollective {
         [Buffer.from("reverse-token-ref", "utf-8"), collective.toBuffer(), targetMint.toBuffer()],
         programId
       );
+
+      console.log(tokenRef);
+    const existing = await this.account.tokenRefV0.fetchNullable(tokenRef)
+    if (existing) {
+      if (ignoreIfExists) {
+        return {
+          instructions: [],
+          signers: [],
+          output: {
+            tokenRef,
+            reverseTokenRef,
+            tokenBonding: existing.tokenBonding
+          }
+        }
+      }
+      throw new Error("Social token already exists for this wallet or name");
+    }
+    
     // create metadata with payer as temporary authority
     console.log("Creating social token metadata...");
     const [tokenMetadataUpdateAuthority, tokenMetadataUpdateAuthorityBumpSeed] =
@@ -680,13 +700,16 @@ export class SplTokenCollective {
       signers: signerGroups,
     } = await this.createSocialTokenInstructions(args);
 
-    await sendMultipleInstructions(
-      this.errors,
-      this.provider,
-      instructionGroups,
-      signerGroups,
-      args.payer
-    )
+    if (instructionGroups.length > 0) {
+      await sendMultipleInstructions(
+        this.errors,
+        this.provider,
+        instructionGroups,
+        signerGroups,
+        args.payer
+      )
+      
+    }
     
     return { tokenRef, reverseTokenRef, tokenBonding };
   }

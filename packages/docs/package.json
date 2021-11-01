@@ -32,7 +32,9 @@
     "buffer": "^6.0.3",
     "clsx": "^1.1.1",
     "crypto-browserify": "^3.12.0",
+    "esprima": "^4.0.1",
     "file-loader": "^6.2.0",
+    "hast-util-is-element": "1.1.0",
     "os-browserify": "^0.3.0",
     "path-browserify": "^1.0.1",
     "prism-react-renderer": "^1.2.1",
@@ -42,6 +44,8 @@
     "react-dom": "^17.0.1",
     "react-icons": "^4.3.1",
     "react-json-view": "^1.21.3",
+    "rehype-katex": "4",
+    "remark-math": "3",
     "stream-browserify": "^3.0.0",
     "url-loader": "^4.1.1",
     "util": "^0.12.4"

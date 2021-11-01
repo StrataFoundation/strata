@@ -54,16 +54,18 @@ function ThemedLiveEditor() {
   );
 }
 
-function transformAsync(code) {
+let index = 1;
+function transformAsync(code, scope, name, deps) {
   return `
 function AsyncExec() {
+  const scope = { ${Object.keys(scope).join(", ")} };
   const code = \`${code}\`
-  return <AsyncButton code={code} />
+  return <AsyncButton name={"${name || index++}"} deps={[${(deps ||"").split(",").map(d => `"${d}"`).join(",")}]} code={code} scope={scope} />
 }
   `
 }
 
-export default function Playground({children, transformCode, async, ...props}) {
+export default function Playground({children, transformCode, async, scope, name, deps, ...props}) {
   const {
     siteConfig: {
       themeConfig: {
@@ -72,7 +74,7 @@ export default function Playground({children, transformCode, async, ...props}) {
     },
   } = useDocusaurusContext();
   const prismTheme = usePrismTheme();
-  const transform = async ? transformAsync : ((code) => `${code};`);
+  const transform = async ? (c) => transformAsync(c, scope, name, deps) : ((code) => `${code};`);
 
   return (
     <div className={styles.playgroundContainer}>
@@ -80,6 +82,7 @@ export default function Playground({children, transformCode, async, ...props}) {
         code={children.replace(/\n$/, '')}
         transformCode={transformCode || transform}
         theme={prismTheme}
+        scope={scope}
         {...props}>
           <>
             <ThemedLiveEditor />

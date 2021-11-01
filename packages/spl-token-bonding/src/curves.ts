@@ -127,7 +127,7 @@ export class ExponentialCurve implements Curve {
   }
 
   sellTargetAmount(targetAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number): number {
-    return this.changeInTargetAmount(-targetAmountNum, baseRoyaltiesPercent, targetRoyaltiesPercent);
+    return - this.changeInTargetAmount(-targetAmountNum, baseRoyaltiesPercent, targetRoyaltiesPercent);
   }
 
   buyTargetAmount(targetAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number): number {
@@ -139,9 +139,9 @@ export class ExponentialCurve implements Curve {
     if (this.baseStorage.amount.toNumber() == 0 || this.targetMint.supply.toNumber() == 0) {
       if (this.b == 0) {
         /*
-         * (((1 + k) dR)/c)^(1/(1 + k))
+         * -S + (((1 + k) dR)/c)^(1/(1 + k))
          */
-        return (Math.pow(((1 + this.k) * dR) / this.c, 1 / (1 + this.k))) + dR / this.b * (1 / (1 - asDecimal(targetRoyaltiesPercent)));
+        return (Math.pow(((1 + this.k) * dR) / this.c, 1 / (1 + this.k)) - supplyAsNum(this.targetMint)) * (1 - asDecimal(targetRoyaltiesPercent));
       } else if (this.k == 0) {
         return dR / this.b
       }

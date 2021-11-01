@@ -146,7 +146,7 @@ describe("spl-token-collective", () => {
       const tokenRef = await tokenCollectiveProgram.account.tokenRefV0.fetch(unclaimedTokenRef);
       const tokenBonding = await splTokenBondingProgram.account.tokenBondingV0.fetch(tokenRef.tokenBonding);
       await tokenUtils.createAtaAndMint(provider, wumMint, 2000000);
-      await splTokenBondingProgram.buyV0({
+      await splTokenBondingProgram.buy({
         tokenBonding: tokenRef.tokenBonding,
         desiredTargetAmount: new BN(100_000000000),
         slippage: 0.1
@@ -156,7 +156,7 @@ describe("spl-token-collective", () => {
         owner: provider.wallet.publicKey,
         symbol: 'foop'
       });
-      await splTokenBondingProgram.buyV0({
+      await splTokenBondingProgram.buy({
         tokenBonding: tokenRef.tokenBonding,
         desiredTargetAmount: new BN(100_000000000),
         slippage: 0.1

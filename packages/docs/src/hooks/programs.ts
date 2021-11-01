@@ -6,15 +6,15 @@ import { SplTokenBonding } from "@wum.bo/spl-token-bonding";
 import { SplTokenCollective } from "@wum.bo/spl-token-collective";
 
 export type Programs = {
-  tokenBonding?: SplTokenBonding;
-  tokenCollective?: SplTokenCollective
+  tokenBondingSdk?: SplTokenBonding;
+  tokenCollectiveSdk?: SplTokenCollective
 }
 async function getPrograms(provider: Provider): Promise<Programs> {
   const tokenCollective = await SplTokenCollective.init(provider);
   const tokenBonding = await SplTokenBonding.init(provider);
   return {
-    tokenCollective,
-    tokenBonding
+    tokenCollectiveSdk: tokenCollective,
+    tokenBondingSdk: tokenBonding
   }
 }
 

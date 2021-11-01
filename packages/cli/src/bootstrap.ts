@@ -30,16 +30,16 @@ async function run() {
   await splTokenBondingProgram.initializeSolStorage();
   const curve = await splTokenBondingProgram.initializeCurve({
     config: new ExponentialCurveConfig({
-      c: 0,
-      b: 0.001,
+      c: 0.001,
+      b: 0,
       pow: 1,
       frac: 2
     })
   });
   const socialCurve = await splTokenBondingProgram.initializeCurve({
     config: new ExponentialCurveConfig({
-      c: 0,
-      b: 0.00001,
+      c: 0.0001,
+      b: 0,
       pow: 1,
       frac: 2
     })

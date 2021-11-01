@@ -13,6 +13,7 @@ import {
   getTorusWallet,
 } from '@solana/wallet-adapter-wallets';
 import { clusterApiUrl } from '@solana/web3.js';
+import { VariablesProvider } from "./variables";
 
 // Default styles that can be overridden by your app
 require('@solana/wallet-adapter-react-ui/styles.css');
@@ -47,7 +48,9 @@ export const Wallet: FC = ({ children }) => {
 export default ({ children }) => (
   <>
     <Wallet>
-      {children}
+      <VariablesProvider>
+        {children}
+      </VariablesProvider>
     </Wallet>
   </>
 )

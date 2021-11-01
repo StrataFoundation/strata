@@ -37,8 +37,6 @@ impl Curve for PrimitiveCurve {
     } else {
       match self {
         PrimitiveCurve::ExponentialCurveV0 { pow, frac, b, c } => {
-          let b_prec = PreciseNumber { value: InnerUint::from(*b) };
-          let c_prec = PreciseNumber { value: InnerUint::from(*c) };
           let one_plus_k_numerator = frac.checked_add(*pow)?;
   
           /*
@@ -50,7 +48,8 @@ impl Curve for PrimitiveCurve {
                         )?.checked_div(
                           &base_amount
                         )?
-                        .pow_frac_approximation(*frac, frac + pow, guess2)
+                        .pow_frac_approximation(*frac, frac + pow, guess2)?
+                        .checked_sub(&target_supply)
         }
       }
     }

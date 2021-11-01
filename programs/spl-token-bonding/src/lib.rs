@@ -353,8 +353,9 @@ pub mod spl_token_bonding {
           false
         );
 
-        if total_amount - target_royalties < buy_with_base.minimum_target_amount {
-          msg!("Tokens less than minimum tokens {}", buy_with_base.minimum_target_amount);
+        let target_amount_minus_royalties = total_amount - target_royalties;
+        if target_amount_minus_royalties < buy_with_base.minimum_target_amount {
+          msg!("{} less than minimum tokens {}", target_amount_minus_royalties, buy_with_base.minimum_target_amount);
           return Err(ErrorCode::PriceTooHigh.into());
         }
       }

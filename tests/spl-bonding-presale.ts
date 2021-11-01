@@ -60,7 +60,7 @@ describe("spl-bonding-presale", () => {
   it("sets up a presale bonding curve", async () => {
     const presaleAcct = await bondingPresaleProgram.account.tokenBondingPresaleV0.fetch(presale);
     const presaleBondingAcct = await tokenBondingProgram.account.tokenBondingV0.fetch(presaleAcct.presaleTokenBonding);
-    await tokenBondingProgram.buyV0({
+    await tokenBondingProgram.buy({
       tokenBonding: presaleAcct.presaleTokenBonding,
       desiredTargetAmount: new BN(2000000000),
       slippage: 0.05
@@ -70,7 +70,7 @@ describe("spl-bonding-presale", () => {
 
   it("has a locked bonding curve", async () => {
     try {
-      await tokenBondingProgram.buyV0({
+      await tokenBondingProgram.buy({
         tokenBonding,
         desiredTargetAmount: new BN(200),
         slippage: 0.05
@@ -85,7 +85,7 @@ describe("spl-bonding-presale", () => {
   it("has a locked post bonding curve", async () => {
     const presaleAcct = await bondingPresaleProgram.account.tokenBondingPresaleV0.fetch(presale);
     try {
-      await tokenBondingProgram.buyV0({
+      await tokenBondingProgram.buy({
         tokenBonding: presaleAcct.postTokenBonding,
         desiredTargetAmount: new BN(200),
         slippage: 0.05
@@ -124,7 +124,7 @@ describe("spl-bonding-presale", () => {
     });
 
     it("allows transforming presale tokens into target tokens", async () => {
-      await tokenBondingProgram.sellV0({
+      await tokenBondingProgram.sell({
         tokenBonding: presaleAcct.postTokenBonding,
         targetAmount: new BN(2000000000),
         slippage: 0.05
