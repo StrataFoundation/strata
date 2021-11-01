@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "aggregateBeta": "tsc && node dist/lib/aggregateBeta",
+    "aggregateWallet": "tsc && node dist/lib/aggregateBetaForWallet",
     "distributeBeta": "tsc && node dist/lib/distributeBeta",
     "mintNetbWum": "tsc && node dist/lib/mintNetbWum"
   },

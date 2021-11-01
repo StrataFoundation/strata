@@ -1,8 +1,6 @@
-import fs from "fs/promises";
 import { Command, Option } from "commander";
 import * as anchor from "@wum.bo/anchor";
 import { Transaction, PublicKey } from "@solana/web3.js";
-import { createMetadata, Data } from "@wum.bo/spl-utils";
 import {
   SplTokenBonding,
   SplTokenBondingIDL,
@@ -19,7 +17,6 @@ import {
   SplTokenAccountSplitIDL,
   SplTokenAccountSplitIDLJson,
 } from "@wum.bo/spl-token-account-split";
-import { createMintInstructions } from "@project-serum/common";
 import {
   Token,
   TOKEN_PROGRAM_ID,
