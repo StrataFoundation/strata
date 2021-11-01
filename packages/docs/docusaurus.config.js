@@ -39,7 +39,7 @@ const config = {
     ],
   ],
 
-  plugins: [],
+  plugins: ["./src/plugins/webpack-loader"],
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */

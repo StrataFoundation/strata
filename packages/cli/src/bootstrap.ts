@@ -1,13 +1,11 @@
 import * as anchor from "@wum.bo/anchor";
-import { BN } from "@wum.bo/anchor"
-import { Transaction, PublicKey } from "@solana/web3.js";
+import { Transaction, PublicKey, Keypair } from "@solana/web3.js";
 import { createMetadata, Data, getMetadata, percent, TOKEN_PROGRAM_ID } from "@wum.bo/spl-utils";
 import { SplTokenBonding, SplTokenBondingIDL, SplTokenBondingIDLJson, ExponentialCurveConfig } from "@wum.bo/spl-token-bonding";
 import { SplTokenCollective, SplTokenCollectiveIDL, SplTokenCollectiveIDLJson } from "@wum.bo/spl-token-collective";
-import { SplTokenStaking, SplTokenStakingIDL, SplTokenStakingIDLJson } from "@wum.bo/spl-token-staking";
-import { SplTokenAccountSplit, SplTokenAccountSplitIDL, SplTokenAccountSplitIDLJson } from "@wum.bo/spl-token-account-split";
-import { connection, createMintInstructions } from "@project-serum/common";
+import { createMintInstructions } from "@project-serum/common";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token } from "@solana/spl-token";
+import fs from "fs";
 
 async function run() {
   console.log(process.env.ANCHOR_PROVIDER_URL)
@@ -16,94 +14,114 @@ async function run() {
 
   const splTokenBondingProgramId = new PublicKey("TBondz6ZwSM5fs4v2GpnVBMuwoncPkFLFR9S422ghhN")
   const splTokenCollectiveProgramId = new PublicKey("WumbodN8t7wcDPCY2nGszs4x6HRtL5mJcTR519Qr6m7")
-  const splTokenAccountSplitProgramId = new PublicKey("Sp1it1Djn2NmQvXLPnGM4zAXArxuchvSdytNt5n76Hm")
-  const splTokenStakingProgramId = new PublicKey("TStakXwvzEZiK6PSNpXuNx6wEsKc93NtSaMxmcqG6qP")
 
   const splTokenBonding = new anchor.Program(SplTokenBondingIDLJson, splTokenBondingProgramId, provider) as anchor.Program<SplTokenBondingIDL>;
   const splTokenCollective = new anchor.Program(SplTokenCollectiveIDLJson, splTokenCollectiveProgramId, provider) as anchor.Program<SplTokenCollectiveIDL>;
-  const splTokenAccountSplit = new anchor.Program(SplTokenAccountSplitIDLJson, splTokenAccountSplitProgramId, provider) as anchor.Program<SplTokenAccountSplitIDL>;
-  const splTokenStaking = new anchor.Program(SplTokenStakingIDLJson, splTokenStakingProgramId, provider) as anchor.Program<SplTokenStakingIDL>;
 
   const splTokenBondingProgram = new SplTokenBonding(provider, splTokenBonding);
-  const splTokenStakingProgram = new SplTokenStaking(provider, splTokenStaking);
-  const splTokenAccountSplitProgram = new SplTokenAccountSplit(provider, splTokenAccountSplit, splTokenStakingProgram);
   const splTokenCollectiveProgram = new SplTokenCollective({
     provider,
     program: splTokenCollective,
     splTokenBondingProgram,
-    splTokenAccountSplitProgram,
-    splTokenStakingProgram
   });
 
   const wallet = splTokenCollectiveProgram.wallet.publicKey;
   
+  await splTokenBondingProgram.initializeSolStorage();
   const curve = await splTokenBondingProgram.initializeCurve({
     config: new ExponentialCurveConfig({
       c: 0,
-      b: 1,
-      pow: 0,
-      frac: 1
+      b: 0.001,
+      pow: 1,
+      frac: 2
+    })
+  });
+  const socialCurve = await splTokenBondingProgram.initializeCurve({
+    config: new ExponentialCurveConfig({
+      c: 0,
+      b: 0.00001,
+      pow: 1,
+      frac: 2
     })
   });
 
   const signers1 = [];
   const instructions1 = [];
-  const wumMintKeypair = anchor.web3.Keypair.generate();
-  signers1.push(wumMintKeypair);
-  const wumMint = wumMintKeypair.publicKey;
-  instructions1.push(...(await createMintInstructions(provider, wallet, wumMint, 9)));
+  const openMintKeypair = Keypair.fromSecretKey(new Uint8Array(JSON.parse(fs.readFileSync(process.env.OPEN_MINT_PATH!).toString())));
+  signers1.push(openMintKeypair);
+  const openMint = openMintKeypair.publicKey;
+  instructions1.push(...(await createMintInstructions(provider, wallet, openMint, 9)));
 
   await createMetadata(
     new Data({
-      symbol: "bWUM",
-      name: "bWUM",
-      uri: "https://wumbo-token-metadata.s3.us-east-2.amazonaws.com/bwum.json",
+      symbol: "OPEN",
+      name: "Open Collective",
+      uri: "https://wumbo-token-metadata.s3.us-east-2.amazonaws.com/open.json",
       sellerFeeBasisPoints: 0,
       // @ts-ignore
       creators: null,
     }),
     wallet.toBase58(),
-    wumMint.toBase58(),
+    openMint.toBase58(),
     wallet.toBase58(),
     instructions1,
     wallet.toBase58()
   );
 
+  const { instructions: openCollectiveInstructions, signers: openCollectiveSigners, output: { collective: openCollective } } = await splTokenCollectiveProgram.createCollectiveInstructions({
+    mintAuthority: wallet,
+    authority: wallet,
+    mint: openMint,
+    config: {
+      isOpen: true,
+      unclaimedTokenBondingSettings: {
+        curve: socialCurve,
+        buyBaseRoyalties: {
+          ownedByName: true,
+        },
+        sellBaseRoyalties: {
+          ownedByName: true,
+        },
+        buyTargetRoyalties: {
+          ownedByName: true,
+        },
+        sellTargetRoyalties: {
+          ownedByName: true,
+        },
+        minBuyBaseRoyaltyPercentage: 0,
+        maxBuyBaseRoyaltyPercentage: 0,
+        minSellBaseRoyaltyPercentage: 0,
+        maxSellBaseRoyaltyPercentage: 0,
+        minBuyTargetRoyaltyPercentage: 5,
+        maxBuyTargetRoyaltyPercentage: 5,
+        minSellTargetRoyaltyPercentage: 0,
+        maxSellTargetRoyaltyPercentage: 0,
+      },
+      unclaimedTokenMetadataSettings: {
+        symbol: "UNCLAIMED",
+        nameIsNameServiceName: true
+      },
+      claimedTokenBondingSettings: {
+        maxSellBaseRoyaltyPercentage: 20,
+        maxSellTargetRoyaltyPercentage: 20,
+      }
+    }
+  });
+
   // Change authority back to token bonding
-  const [wumMintAuthority] = await PublicKey.findProgramAddress(
-    [Buffer.from("target-authority", "utf-8"), wumMint.toBuffer()],
+  const instructions3 = [];
+  const [openMintAuthority] = await PublicKey.findProgramAddress(
+    [Buffer.from("target-authority", "utf-8"), openMint.toBuffer()],
     splTokenBondingProgramId
   );
-  instructions1.push(Token.createSetAuthorityInstruction(
+  instructions3.push(Token.createSetAuthorityInstruction(
     TOKEN_PROGRAM_ID,
-    wumMint,
-    wumMintAuthority,
+    openMint,
+    openMintAuthority,
     "MintTokens",
     wallet,
     []
-  ))
-  
-  // Real wum
-  // const { instructions: bondingInstructions, signers: bondingSigners, output: { targetMint, tokenBonding } } = await splTokenBondingProgram.createTokenBondingInstructions({
-  //   curve,
-  //   baseMint: new PublicKey(
-  //     "So11111111111111111111111111111111111111112"
-  //   ),
-  //   authority: wallet,
-  //   targetMint: wumMint,
-  //   buyBaseRoyaltyPercentage: percent(20),
-  //   buyTargetRoyaltyPercentage: percent(0),
-  //   mintCap: new BN("1000000000000000000"), // 1 billion
-  // });
-
-  const baseStorage = await Token.getAssociatedTokenAddress(
-    ASSOCIATED_TOKEN_PROGRAM_ID,
-    TOKEN_PROGRAM_ID,
-    new PublicKey(
-      "So11111111111111111111111111111111111111112"
-    ),
-    wallet
-  )
+  ));
 
   const { instructions: bondingInstructions, signers: bondingSigners, output: { targetMint, tokenBonding } } = await splTokenBondingProgram.createTokenBondingInstructions({
     curve,
@@ -112,21 +130,17 @@ async function run() {
     ),
     targetMintDecimals: 9,
     authority: wallet,
-    targetMint: wumMint,
-    buyBaseRoyaltyPercentage: percent(0),
-    buyTargetRoyaltyPercentage: percent(0),
-    sellBaseRoyaltyPercentage: percent(0),
-    sellTargetRoyaltyPercentage: percent(0),
-    mintCap: new BN("1000000000000000000"), // 1 billion
-    purchaseCap: new BN("100000000000"),
-    baseStorage
+    targetMint: openMint,
+    buyBaseRoyaltyPercentage: 0,
+    buyTargetRoyaltyPercentage: 0,
+    sellBaseRoyaltyPercentage: 0,
+    sellTargetRoyaltyPercentage: 0,
+    index: 0
   });
+  instructions3.push(...bondingInstructions);
 
-  const { instructions: wumboInstructions, signers: wumboSigners, output: { wumbo } } = await splTokenCollectiveProgram.createCollectiveInstructions({
-    authority: wallet,
-    wumMint: targetMint
-  })
   const connection = provider.connection;
+  console.log("Sending txn 1/3...");
   const tx1 = new Transaction({
     recentBlockhash: (await connection.getRecentBlockhash('finalized')).blockhash,
     feePayer: wallet
@@ -135,37 +149,25 @@ async function run() {
 
   await splTokenCollectiveProgram.provider.send(tx1, signers1, { commitment: 'finalized', preflightCommitment: 'finalized' });
 
+  console.log("Sending txn 2/3...");
   const tx2 = new Transaction({
     recentBlockhash: (await connection.getRecentBlockhash('finalized')).blockhash,
     feePayer: wallet
   });
-  // BETA ONLY
-  if (!(await splTokenCollectiveProgram.provider.connection.getAccountInfo(baseStorage))) {
-    console.log("Missing base account")
-    tx2.add(Token.createAssociatedTokenAccountInstruction(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
-      new PublicKey(
-        "So11111111111111111111111111111111111111112"
-      ),
-      baseStorage,
-      wallet,
-      wallet
-    ));
-  }
   
-  tx2.add(...bondingInstructions);
-  await splTokenCollectiveProgram.provider.send(tx2, bondingSigners, { commitment: 'finalized', preflightCommitment: 'finalized' });
+  tx2.add(...openCollectiveInstructions);
+  await splTokenCollectiveProgram.provider.send(tx2, openCollectiveSigners, { commitment: 'finalized', preflightCommitment: 'finalized' });
 
+  console.log("Sending txn 3/3...");
   const tx3 = new Transaction({
     recentBlockhash: (await connection.getRecentBlockhash('finalized')).blockhash,
     feePayer: wallet
   });
-  tx3.add(...wumboInstructions);
-  await splTokenCollectiveProgram.provider.send(tx3, wumboSigners, { commitment: 'finalized', preflightCommitment: 'finalized' });
+  tx3.add(...instructions3);
+  await splTokenCollectiveProgram.provider.send(tx3, bondingSigners, { commitment: 'finalized', preflightCommitment: 'finalized' });
 
-  await splTokenCollectiveProgram.account.collectiveV0.fetch(wumbo);
-  console.log(`Wumbo: ${wumbo}, bonding: ${tokenBonding}, wum: ${targetMint}, wumMetadata: ${await getMetadata(wumMint.toBase58())}`);
+  await splTokenCollectiveProgram.account.collectiveV0.fetch(openCollective);
+  console.log(`Open Collective: ${openCollective}, bonding: ${tokenBonding}, open: ${targetMint}, openMetadata: ${await getMetadata(openMint.toBase58())}`);
 }
 
 run().catch(e => {

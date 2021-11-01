@@ -50,7 +50,6 @@ pub struct InitializeCollectiveV0<'info> {
   )]
   pub collective: Box<Account<'info, CollectiveV0>>,
   #[account(
-    constraint = *mint.to_account_info().owner == spl_token::id(),
     constraint = mint.mint_authority.unwrap() == mint_authority.key()
   )]
   pub mint: Box<Account<'info, Mint>>,

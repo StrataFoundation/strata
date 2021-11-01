@@ -49,7 +49,8 @@ Let's create a Social Token named TEST within the Open Collective that gives us 
 
 ```jsx async
 const tokenRef = await tokenCollective.createSocialToken({
-  tokenName: "TEST",
+  tokenName: "My Test Token",
+  symbol: "TEST",
   tokenBondingParams: {
     buyBaseRoyaltyPercentage: 0,
     buyTargetRoyaltyPercentage: 10,
@@ -57,4 +58,6 @@ const tokenRef = await tokenCollective.createSocialToken({
     sellTargetRoyaltyPercentage: 0
   }
 })
+// Display the account
+const tokenRefAcct = await tokenCollective.account.tokenRefV0.fetch(tokenRef)
 ```

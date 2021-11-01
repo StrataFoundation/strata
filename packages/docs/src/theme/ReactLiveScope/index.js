@@ -7,11 +7,13 @@
 
 import React from 'react';
 import AsyncButton from './AsyncButton';
+import { usePrograms } from '../../hooks/programs';
 
 // Add react-live imports you need here
 const ReactLiveScope = {
   React,
   AsyncButton,
+  usePrograms,
   ...React,
 };
 

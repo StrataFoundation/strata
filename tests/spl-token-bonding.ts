@@ -174,7 +174,7 @@ describe("spl-token-bonding", () => {
 
       await tokenBondingProgram.updateTokenBonding({
         tokenBonding,
-        buyTargetRoyaltyPercentage: percent(15),
+        buyTargetRoyaltyPercentage: 15,
       });
       tokenBondingNow = await tokenBondingProgram.account.tokenBondingV0.fetch(tokenBonding);
       expect(tokenBondingNow.buyTargetRoyaltyPercentage).to.equal(percent(15));

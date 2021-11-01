@@ -7,13 +7,16 @@ import {
   WalletDisconnectButton,
   WalletMultiButton
 } from '@solana/wallet-adapter-react-ui';
-import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { usePrograms } from '../../hooks/programs';
 
 export default ({ code }) => {
   const [loading, setLoading] = useState(false);
   const [variables, setVariables] = useState<any>(null);
   const [error, setError] = useState<Error>();
   const { connected } = useWallet()
+  // Leave these here so they can be used inside the eval
+  const { tokenCollective, tokenBonding } = usePrograms();
 
   if (error) {
     throw error;
@@ -52,7 +55,6 @@ export default ({ code }) => {
     {!connected && <>
       <WalletModalProvider>
         <WalletMultiButton />
-        <WalletDisconnectButton />
       </WalletModalProvider>
     </>}
   </div>

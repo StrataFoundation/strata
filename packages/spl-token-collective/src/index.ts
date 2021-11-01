@@ -1,7 +1,7 @@
 import * as anchor from "@wum.bo/anchor";
 import BN from "bn.js";
 import { IdlTypes, Program, Provider } from "@wum.bo/anchor";
-import { createMetadata, Data, decodeMetadata, METADATA_PROGRAM_ID, extendBorsh, InstructionResult, BigInstructionResult, sendInstructions, sendMultipleInstructions, getMetadata, updateMetadata } from "@wum.bo/spl-utils";
+import { createMetadata, Data, decodeMetadata, METADATA_PROGRAM_ID, extendBorsh, InstructionResult, BigInstructionResult, sendInstructions, sendMultipleInstructions, getMetadata, updateMetadata, percent } from "@wum.bo/spl-utils";
 import { createMintInstructions } from "@project-serum/common";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import {
@@ -34,6 +34,7 @@ interface CreateSocialTokenArgs {
   nameClass?: PublicKey; // Either these or owner needs to be provided
   nameParent?: PublicKey; // Either these or owner needs to be provided
   tokenName: string; // For the token metadata name
+  symbol?: string; // Symbol for the token
   owner?: PublicKey; // If name is no provided, defaults to provider's wallet
   curve?: PublicKey; // The curve to create this social token on. If not provided, will use the collective's curve
   // Taken from token bonding initialize
@@ -116,46 +117,46 @@ function undefinedToNull(obj: any | undefined): any | null {
   return obj;
 }
 
-function toIdlTokenMetdataSettings(settings: ITokenMetadataSettings | undefined): TokenMetadataSettingsV0 | null {
-  return settings ? {
-    symbol: undefinedToNull(settings.symbol),
-    uri: undefinedToNull(settings.uri),
-    nameIsNameServiceName: !!settings.nameIsNameServiceName
-  } : null;
+function toIdlTokenMetdataSettings(settings: ITokenMetadataSettings | undefined): TokenMetadataSettingsV0 {
+  return {
+    symbol: undefinedToNull(settings?.symbol),
+    uri: undefinedToNull(settings?.uri),
+    nameIsNameServiceName: !!settings?.nameIsNameServiceName
+  };
 }
 
-function toIdlRoyaltySettings(settings: IRoyaltySetting | undefined): RoyaltySettingV0 | null {
-  return settings ? {
-    ownedByName: !!settings.ownedByName,
+function toIdlRoyaltySettings(settings: IRoyaltySetting | undefined): RoyaltySettingV0 {
+  return {
+    ownedByName: !!settings?.ownedByName,
     address: undefinedToNull(settings?.address)
-  } : null
+  }
 }
 
-function toIdlTokenBondingSettings(settings: ITokenBondingSettings | undefined): TokenBondingSettingsV0 | null {
-  return settings ? {
-    curve: undefinedToNull(settings.curve),
-    minSellBaseRoyaltyPercentage: undefinedToNull(settings.minSellBaseRoyaltyPercentage),
-    minSellTargetRoyaltyPercentage: undefinedToNull(settings.minSellTargetRoyaltyPercentage),
-    maxSellBaseRoyaltyPercentage: undefinedToNull(settings.maxSellBaseRoyaltyPercentage),
-    maxSellTargetRoyaltyPercentage: undefinedToNull(settings.maxSellTargetRoyaltyPercentage),
-    minBuyBaseRoyaltyPercentage: undefinedToNull(settings.minBuyBaseRoyaltyPercentage),
-    minBuyTargetRoyaltyPercentage: undefinedToNull(settings.minBuyTargetRoyaltyPercentage),
-    maxBuyBaseRoyaltyPercentage: undefinedToNull(settings.maxBuyBaseRoyaltyPercentage),
-    maxBuyTargetRoyaltyPercentage: undefinedToNull(settings.maxBuyTargetRoyaltyPercentage),
-    targetMintDecimals: undefinedToNull(settings.targetMintDecimals),
+function toIdlTokenBondingSettings(settings: ITokenBondingSettings | undefined): TokenBondingSettingsV0 {
+  return {
+    curve: undefinedToNull(settings?.curve),
+    minSellBaseRoyaltyPercentage: undefinedToNull(percent(settings?.minSellBaseRoyaltyPercentage)),
+    minSellTargetRoyaltyPercentage: undefinedToNull(percent(settings?.minSellTargetRoyaltyPercentage)),
+    maxSellBaseRoyaltyPercentage: undefinedToNull(percent(settings?.maxSellBaseRoyaltyPercentage)),
+    maxSellTargetRoyaltyPercentage: undefinedToNull(percent(settings?.maxSellTargetRoyaltyPercentage)),
+    minBuyBaseRoyaltyPercentage: undefinedToNull(percent(settings?.minBuyBaseRoyaltyPercentage)),
+    minBuyTargetRoyaltyPercentage: undefinedToNull(percent(settings?.minBuyTargetRoyaltyPercentage)),
+    maxBuyBaseRoyaltyPercentage: undefinedToNull(percent(settings?.maxBuyBaseRoyaltyPercentage)),
+    maxBuyTargetRoyaltyPercentage: undefinedToNull(percent(settings?.maxBuyTargetRoyaltyPercentage)),
+    targetMintDecimals: undefinedToNull(settings?.targetMintDecimals),
     // @ts-ignore
-    buyBaseRoyalties: toIdlRoyaltySettings(settings.buyBaseRoyalties),
+    buyBaseRoyalties: toIdlRoyaltySettings(settings?.buyBaseRoyalties),
     // @ts-ignore
-    sellBaseRoyalties: toIdlRoyaltySettings(settings.sellBaseRoyalties),
+    sellBaseRoyalties: toIdlRoyaltySettings(settings?.sellBaseRoyalties),
     // @ts-ignore
-    buyTargetRoyalties: toIdlRoyaltySettings(settings.buyTargetRoyalties),
+    buyTargetRoyalties: toIdlRoyaltySettings(settings?.buyTargetRoyalties),
     // @ts-ignore
-    sellTargetRoyalties: toIdlRoyaltySettings(settings.sellTargetRoyalties),
-    minPurchaseCap: undefinedToNull(settings.minPurchaseCap),
-    maxPurchaseCap: undefinedToNull(settings.maxPurchaseCap),
-    minMintCap: undefinedToNull(settings.minMintCap),
-    maxMintCap: undefinedToNull(settings.maxMintCap),
-  } as TokenBondingSettingsV0 : null;
+    sellTargetRoyalties: toIdlRoyaltySettings(settings?.sellTargetRoyalties),
+    minPurchaseCap: undefinedToNull(settings?.minPurchaseCap),
+    maxPurchaseCap: undefinedToNull(settings?.maxPurchaseCap),
+    minMintCap: undefinedToNull(settings?.minMintCap),
+    maxMintCap: undefinedToNull(settings?.maxMintCap),
+  } as TokenBondingSettingsV0;
 }
 
 function toIdlConfig(config: ICollectiveConfig): CollectiveConfigV0 {
@@ -177,11 +178,13 @@ export class SplTokenCollective {
   provider: Provider;
 
   static ID = new PublicKey("WumbodN8t7wcDPCY2nGszs4x6HRtL5mJcTR519Qr6m7");
-  static OPEN_COLLECTIVE_ID = new PublicKey("WumbodN8t7wcDPCY2nGszs4x6HRtL5mJcTR519Qr6m7");
+  static OPEN_COLLECTIVE_ID = new PublicKey("7cqGGtNsCpSPdDK79uSWfLrh94A5yPtFBDUy51hZx1w5");
+  static OPEN_COLLECTIVE_BONDING_ID = new PublicKey("99acj79A3e5kTB4SFyqxmJp4LRPrP2d6GCXuYLK3mmBf");
+  static OPEN_COLLECTIVE_MINT_ID = new PublicKey("6fwh2Z98GE5QwuQQA6LihfG871i3BqBqrngTfbEH7LsW");
 
   static async init(provider: Provider, splCollectiveProgramId: PublicKey = SplTokenCollective.ID, splTokenBondingProgramId: PublicKey = SplTokenBonding.ID): Promise<SplTokenCollective> {
     const SplCollectiveIDLJson = await anchor.Program.fetchIdl(splCollectiveProgramId, provider);
-    const splCollective = new anchor.Program(SplCollectiveIDLJson!, splCollectiveProgramId, provider) as anchor.Program<SplTokenBondingIDL>;
+    const splCollective = new anchor.Program(SplCollectiveIDLJson!, splCollectiveProgramId, provider) as anchor.Program<SplTokenCollectiveIDL>;
     const splTokenBondingProgram = await SplTokenBonding.init(provider, splTokenBondingProgramId);
 
     return new this({
@@ -470,7 +473,8 @@ export class SplTokenCollective {
     collective = SplTokenCollective.OPEN_COLLECTIVE_ID,
     name,
     owner,
-    tokenName: handle,
+    tokenName,
+    symbol,
     nameClass,
     nameParent,
     curve,
@@ -522,8 +526,8 @@ export class SplTokenCollective {
       );
     const tokenMetadata = await createMetadata(
       new Data({
-        name: handle,
-        symbol: owner ? handle.slice(0,10) : "UNCLAIMED",
+        name: tokenName,
+        symbol: owner ? (symbol || tokenName.slice(0,10)) : "UNCLAIMED",
         uri: "https://wumbo-token-metadata.s3.us-east-2.amazonaws.com/unclaimed.json",
         sellerFeeBasisPoints: 0,
         // @ts-ignore
@@ -568,7 +572,8 @@ export class SplTokenCollective {
     const signers2: Signer[] = [];
     const { instructions: bondingInstructions, signers: bondingSigners, output: { tokenBonding, buyBaseRoyalties, buyTargetRoyalties, sellBaseRoyalties, sellTargetRoyalties } } = await this.splTokenBondingProgram.createTokenBondingInstructions({
       payer,
-      curve,
+      // @ts-ignore
+      curve: (curve || (!owner && collectiveAcct.config.unclaimedTokenBondingSettings?.curve) || (owner && collectiveAcct.config.claimedTokenBondingSettings?.curve) || collectiveAcct.config.unclaimedTokenBondingSettings?.curve || collectiveAcct.config.claimedTokenBondingSettings?.curve)!,
       baseMint: collectiveAcct.mint,
       targetMint,
       authority: tokenBondingAuthority,
@@ -581,13 +586,13 @@ export class SplTokenCollective {
       // @ts-ignore
       sellTargetRoyaltiesOwner: tokenBondingSettings?.sellTargetRoyalties.ownedByName ? standinRoyaltiesOwner : undefined,
       // @ts-ignore
-      buyBaseRoyalties: tokenBondingSettings?.buyBaseRoyalties.address,
+      buyBaseRoyalties: tokenBondingSettings?.buyBaseRoyalties?.address,
       // @ts-ignore
-      sellBaseRoyalties: tokenBondingSettings?.sellBaseRoyalties.address,
+      sellBaseRoyalties: tokenBondingSettings?.sellBaseRoyalties?.address,
       // @ts-ignore
-      buyTargetRoyalties: tokenBondingSettings?.buyTargetRoyalties.address,
+      buyTargetRoyalties: tokenBondingSettings?.buyTargetRoyalties?.address,
       // @ts-ignore
-      sellTargetRoyalties: tokenBondingSettings?.sellTargetRoyalties.address,
+      sellTargetRoyalties: tokenBondingSettings?.sellTargetRoyalties?.address,
       ...tokenBondingParams
     });
     instructions2.push(...bondingInstructions);

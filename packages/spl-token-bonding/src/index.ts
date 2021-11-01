@@ -224,7 +224,7 @@ export class SplTokenBonding {
   provider: Provider;
   state: ProgramStateV0 | undefined;
 
-  static ID = new PublicKey("WumbodN8t7wcDPCY2nGszs4x6HRtL5mJcTR519Qr6m7");
+  static ID = new PublicKey("TBondz6ZwSM5fs4v2GpnVBMuwoncPkFLFR9S422ghhN");
 
   static async init(provider: Provider, splTokenBondingProgramId: PublicKey = SplTokenBonding.ID): Promise<SplTokenBonding> {
     const SplTokenBondingIDLJson = await anchor.Program.fetchIdl(splTokenBondingProgramId, provider);

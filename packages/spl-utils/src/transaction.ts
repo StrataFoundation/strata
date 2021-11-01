@@ -44,7 +44,10 @@ export async function sendInstructions(
   tx.add(...instructions);
 
   try {
-    return await provider.send(tx, signers);
+    return await provider.send(tx, signers, {
+      commitment: "confirmed",
+      preflightCommitment: "confirmed"
+    });
   } catch (e) {
     console.error(e);
     const wrappedE = ProgramError.parse(e, idlErrors)
