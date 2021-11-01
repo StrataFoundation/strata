@@ -150,12 +150,12 @@ export class TimeCurveConfig implements CurveConfig {
 }
 
 
-interface InitializeCurveArgs {
+export interface InitializeCurveArgs {
   config: CurveConfig;
   payer?: PublicKey;
 }
 
-interface CreateTokenBondingArgs {
+export interface CreateTokenBondingArgs {
   payer?: PublicKey;
   curve: PublicKey;
   baseMint: PublicKey;
@@ -183,7 +183,7 @@ interface CreateTokenBondingArgs {
   index?: number; // Multiple bonding curves can exist for a given target mint. 0 is reserved for the one where the curve owns mint authority
 }
 
-interface UpdateTokenBondingArgs {
+export interface UpdateTokenBondingArgs {
   tokenBonding: PublicKey;
   buyBaseRoyaltyPercentage?: number;
   buyTargetRoyaltyPercentage?: number;
@@ -197,7 +197,7 @@ interface UpdateTokenBondingArgs {
   buyFrozen?: boolean;
 }
 
-interface BuyArgs {
+export interface BuyArgs {
   tokenBonding: PublicKey;
   payer?: PublicKey;
   source?: PublicKey; // Will use ATA of sourceAuthority if not provided
@@ -208,7 +208,7 @@ interface BuyArgs {
   slippage: number; // Decimal number. max price will be (1 + slippage) * price_for_desired_target_amount
 }
 
-interface SellArgs {
+export interface SellArgs {
   tokenBonding: PublicKey;
   payer?: PublicKey;
   source?: PublicKey; // Will use ATA of sourceAuthority if not provided
@@ -478,7 +478,7 @@ export class SplTokenBonding {
     index
   }: CreateTokenBondingArgs): Promise<InstructionResult<{ 
     tokenBonding: PublicKey, 
-    targetMint: PublicKey ,
+    targetMint: PublicKey,
     buyBaseRoyalties: PublicKey,
     buyTargetRoyalties: PublicKey,
     sellBaseRoyalties: PublicKey,

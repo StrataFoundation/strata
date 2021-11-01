@@ -11,6 +11,7 @@ import {
 } from '@solana/web3.js';
 import { deserializeUnchecked, serialize } from 'borsh';
 import BN from 'bn.js';
+import { Provider } from "@wum.bo/anchor";
 export const METADATA_PREFIX = 'metadata';
 export const EDITION = 'edition';
 export const RESERVATION = 'reservation';

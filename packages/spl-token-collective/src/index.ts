@@ -1,7 +1,7 @@
 import * as anchor from "@wum.bo/anchor";
 import BN from "bn.js";
 import { IdlTypes, Program, Provider } from "@wum.bo/anchor";
-import { createMetadata, Data, decodeMetadata, METADATA_PROGRAM_ID, extendBorsh, InstructionResult, BigInstructionResult, sendInstructions, sendMultipleInstructions, getMetadata, updateMetadata, percent } from "@wum.bo/spl-utils";
+import { createMetadata, Data, SplTokenMetadata, decodeMetadata, METADATA_PROGRAM_ID, extendBorsh, InstructionResult, BigInstructionResult, sendInstructions, sendMultipleInstructions, ICreateArweaveUrlArgs, updateMetadata, percent } from "@wum.bo/spl-utils";
 import { createMintInstructions } from "@project-serum/common";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import {
@@ -13,21 +13,44 @@ import {
   TransactionInstruction,
 } from "@solana/web3.js";
 import { SplTokenCollectiveIDL, } from "./generated/spl-token-collective";
-import { SplTokenBonding, SplTokenBondingIDL } from "@wum.bo/spl-token-bonding";
+import { SplTokenBonding, CreateTokenBondingArgs } from "@wum.bo/spl-token-bonding";
 
 export * from "./generated/spl-token-collective";
 
 extendBorsh();
 
-interface CreateCollectiveArgs {
+export interface CreateCollectiveArgs {
   payer?: PublicKey;
-  mint: PublicKey;
-  mintAuthority?: PublicKey;
+  // Optional token metadata, if provided will create token metadata for this collective
+  metadata?: ICreateArweaveUrlArgs & {
+    uploadUrl?: string
+  }, // Optional, will add token metadata to the mint before creating
+  bonding?: CreateTokenBondingArgs, // Optional, needed if `mint` not provided to create a bonding curve
+  mint?: PublicKey; // If not provided, will create a bonding curve around the `bonding` params
+  mintAuthority?: PublicKey; // If not provided, will attempt to fetch it from mint. Must be a signer on the txn
   authority?: PublicKey;
   config: ICollectiveConfig,
 }
 
-interface CreateSocialTokenArgs {
+// Taken from token bonding initialize
+export interface TokenBondingParams {
+  buyBaseRoyaltyPercentage: number;
+  buyTargetRoyaltyPercentage: number;
+  sellBaseRoyaltyPercentage: number;
+  sellTargetRoyaltyPercentage: number;
+
+  targetMintDecimals?: number; // Defaults to 9, or uses ffrom config
+  buyBaseRoyalties?: PublicKey; // If not provided, create an Associated Token Account with baseRoyaltiesOwner
+  buyBaseRoyaltiesOwner?: PublicKey; // If base royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
+  buyTargetRoyalties?: PublicKey; // If not provided, create an Associated Token Account with targetRoyaltiesOwner
+  buyTargetRoyaltiesOwner?: PublicKey; // If target royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
+  sellBaseRoyalties?: PublicKey; // If not provided, create an Associated Token Account with baseRoyaltiesOwner
+  sellBaseRoyaltiesOwner?: PublicKey; // If base royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
+  sellTargetRoyalties?: PublicKey; // If not provided, create an Associated Token Account with targetRoyaltiesOwner
+  sellTargetRoyaltiesOwner?: PublicKey; // If target royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
+}
+
+export interface CreateSocialTokenArgs {
   ignoreIfExists: boolean; // If this social token already exists, don't throw an error
   payer?: PublicKey;
   collective?: PublicKey; // Defaults to open collective
@@ -39,24 +62,10 @@ interface CreateSocialTokenArgs {
   owner?: PublicKey; // If name is no provided, defaults to provider's wallet
   curve?: PublicKey; // The curve to create this social token on. If not provided, will use the collective's curve
   // Taken from token bonding initialize
-  tokenBondingParams: {
-    buyBaseRoyaltyPercentage: number;
-    buyTargetRoyaltyPercentage: number;
-    sellBaseRoyaltyPercentage: number;
-    sellTargetRoyaltyPercentage: number;
-
-    buyBaseRoyalties?: PublicKey; // If not provided, create an Associated Token Account with baseRoyaltiesOwner
-    buyBaseRoyaltiesOwner?: PublicKey; // If base royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
-    buyTargetRoyalties?: PublicKey; // If not provided, create an Associated Token Account with targetRoyaltiesOwner
-    buyTargetRoyaltiesOwner?: PublicKey; // If target royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
-    sellBaseRoyalties?: PublicKey; // If not provided, create an Associated Token Account with baseRoyaltiesOwner
-    sellBaseRoyaltiesOwner?: PublicKey; // If base royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
-    sellTargetRoyalties?: PublicKey; // If not provided, create an Associated Token Account with targetRoyaltiesOwner
-    sellTargetRoyaltiesOwner?: PublicKey; // If target royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
-  }
+  tokenBondingParams: TokenBondingParams
 }
 
-interface ClaimSocialTokenArgs {
+export interface ClaimSocialTokenArgs {
   payer?: PublicKey;
   owner: PublicKey;
   tokenRef: PublicKey;
@@ -67,12 +76,12 @@ interface ClaimSocialTokenArgs {
   sellTargetRoyalties?: PublicKey; // Defaults to ATA fo the owner
 }
 
-interface IRoyaltySetting {
+export interface IRoyaltySetting {
   ownedByName?: boolean,
   address?: number
 }
 
-interface ITokenBondingSettings {
+export interface ITokenBondingSettings {
   curve?: PublicKey;
   minSellBaseRoyaltyPercentage?: number,
   minSellTargetRoyaltyPercentage?: number,
@@ -93,13 +102,13 @@ interface ITokenBondingSettings {
   maxMintCap?: number,
 }
 
-interface ITokenMetadataSettings {
+export interface ITokenMetadataSettings {
   symbol?: string;
   uri?: string;
   nameIsNameServiceName?: boolean;
 }
 
-interface ICollectiveConfig {
+export interface ICollectiveConfig {
   isOpen: boolean;
   unclaimedTokenBondingSettings?: ITokenBondingSettings;
   claimedTokenBondingSettings?: ITokenBondingSettings;
@@ -176,6 +185,7 @@ function toIdlConfig(config: ICollectiveConfig): CollectiveConfigV0 {
 export class SplTokenCollective {
   program: Program<SplTokenCollectiveIDL>;
   splTokenBondingProgram: SplTokenBonding;
+  splTokenMetadata: SplTokenMetadata;
   provider: Provider;
 
   static ID = new PublicKey("WumbodN8t7wcDPCY2nGszs4x6HRtL5mJcTR519Qr6m7");
@@ -187,11 +197,13 @@ export class SplTokenCollective {
     const SplCollectiveIDLJson = await anchor.Program.fetchIdl(splCollectiveProgramId, provider);
     const splCollective = new anchor.Program(SplCollectiveIDLJson!, splCollectiveProgramId, provider) as anchor.Program<SplTokenCollectiveIDL>;
     const splTokenBondingProgram = await SplTokenBonding.init(provider, splTokenBondingProgramId);
+    const splTokenMetadata = await SplTokenMetadata.init(provider);
 
     return new this({
       provider,
       program: splCollective,
-      splTokenBondingProgram
+      splTokenBondingProgram,
+      splTokenMetadata
     });
   }
 
@@ -199,10 +211,12 @@ export class SplTokenCollective {
     provider: Provider;
     program: Program<SplTokenCollectiveIDL>;
     splTokenBondingProgram: SplTokenBonding;
+    splTokenMetadata: SplTokenMetadata;
   }) {
     this.provider = opts.provider;
     this.program = opts.program;
     this.splTokenBondingProgram = opts.splTokenBondingProgram;
+    this.splTokenMetadata = opts.splTokenMetadata;
   }
 
   get programId() {
@@ -241,13 +255,55 @@ export class SplTokenCollective {
     mint,
     authority,
     mintAuthority,
-    config
-  }: CreateCollectiveArgs): Promise<InstructionResult<{ collective: PublicKey }>> {
+    config,
+    bonding,
+    metadata
+  }: CreateCollectiveArgs): Promise<BigInstructionResult<{ collective: PublicKey, tokenBonding?: PublicKey }>> {
     const programId = this.programId;
     const instructions: TransactionInstruction[] = [];
     const signers: Signer[] = [];
+
+    let metadataAdded = false;
+    const addMetadata = async () => {
+      if (metadata && !metadataAdded) {
+        const { files, txid } = await this.splTokenMetadata.presignCreateArweaveUrl(metadata);
+        const uri = await this.splTokenMetadata.getArweaveUrl({
+          txid,
+          files,
+          mint: mint!,
+          uploadUrl: metadata.uploadUrl
+        })
+        
+        const { instructions: metadataInstructions, signers: metadataSigners } = await this.splTokenMetadata.createMetadataInstructions({
+          mint: mint!,
+          authority: mintAuthority,
+          data: new Data({
+            name: metadata.name,
+            symbol: metadata.symbol,
+            uri,
+            creators: metadata.creators,
+            sellerFeeBasisPoints: 0
+          })
+        })
+        instructions.push(...metadataInstructions)
+        signers.push(...metadataSigners)
+      }
+
+      metadataAdded = true;
+    }
+
+    if (!mint) {
+      const targetMintKeypair = anchor.web3.Keypair.generate();
+      signers.push(targetMintKeypair);
+      mint = targetMintKeypair.publicKey;
+      instructions.push(...(await createMintInstructions(this.provider, payer, mint, bonding?.targetMintDecimals || 9)));
+      mintAuthority = payer;
+
+      await addMetadata();
+    }
+
     if (!mintAuthority) {
-      const mintAcct = await this.provider.connection.getAccountInfo(mint);
+      const mintAcct = await this.provider.connection.getAccountInfo(mint!);
       const data = Buffer.from(mintAcct!.data);
       const mintInfo = MintLayout.decode(data);
       if (mintInfo.mintAuthorityOption === 0) {
@@ -255,6 +311,7 @@ export class SplTokenCollective {
       } else {
         mintAuthority = new PublicKey(mintInfo.mintAuthority);
       }
+      await addMetadata();
     }
     
     const [collective, collectiveBump] = await PublicKey.findProgramAddress(
@@ -272,7 +329,7 @@ export class SplTokenCollective {
         {
           accounts: {
             collective,
-            mint,
+            mint: mint!,
             mintAuthority: mintAuthority!,
             payer,
             systemProgram: SystemProgram.programId,
@@ -282,22 +339,55 @@ export class SplTokenCollective {
       )
     );
 
+    const instructions2 = [];
+    const signers2 = [];
+    let tokenBonding: PublicKey | undefined;
+    if (bonding) {
+      // Set back to token bonding's authority
+      const [targetMintAuthority] = await PublicKey.findProgramAddress(
+        [Buffer.from("target-authority", "utf-8"), mint.toBuffer()],
+        this.splTokenBondingProgram.programId
+      );
+      instructions2.push(Token.createSetAuthorityInstruction(
+        TOKEN_PROGRAM_ID,
+        mint,
+        targetMintAuthority,
+        "MintTokens",
+        mintAuthority,
+        []
+      ))
+      mintAuthority = targetMintAuthority;
+
+      var {
+        instructions: tokenBondingInstructions,
+        signers: tokenBondingSigners,
+        output: { tokenBonding: outputTokenBonding }
+      } = await this.splTokenBondingProgram.createTokenBondingInstructions({
+        ...bonding,
+        targetMint: mint
+      });
+      tokenBonding = outputTokenBonding;
+
+      instructions2.push(...tokenBondingInstructions);
+      signers2.push(...tokenBondingSigners);
+    }
+
     return {
-      output: { collective },
-      instructions,
-      signers,
+      output: { collective, tokenBonding },
+      instructions: [instructions, instructions2],
+      signers: [signers, signers2],
     };
   }
 
-  async createCollective(args: CreateCollectiveArgs): Promise<PublicKey> {
+  async createCollective(args: CreateCollectiveArgs): Promise<{ collective: PublicKey, tokenBonding?: PublicKey }> {
     const {
-      output: { collective },
+      output,
       instructions,
       signers,
     } = await this.createCollectiveInstructions(args);
-    await this.sendInstructions(instructions, signers);
+    await sendMultipleInstructions(this.errors, this.provider, instructions, signers, args.payer);
 
-    return collective;
+    return output;
   }
 
   async claimSocialTokenInstructions({
@@ -512,7 +602,8 @@ export class SplTokenCollective {
     signers1.push(targetMintKeypair);
     const targetMint = targetMintKeypair.publicKey;
 
-    instructions1.push(...(await createMintInstructions(provider, payer, targetMint, 9)));
+    // @ts-ignore
+    instructions1.push(...(await createMintInstructions(provider, payer, targetMint, tokenBondingParams.targetMintDecimals || config.unclaimedTokenBondingSettings?.targetMintDecimals || 9)));
 
     const [reverseTokenRef, reverseTokenRefBumpSeed] =
       await PublicKey.findProgramAddress(

@@ -15,8 +15,11 @@ import { getAssociatedAccountBalance } from "@wum.bo/spl-utils";
 import { ExponentialCurveConfig, TimeCurveConfig } from "@wum.bo/spl-token-bonding";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, AccountLayout } from "@solana/spl-token";
+import { sendMultipleInstructions } from "@wum.bo/spl-utils";
+
 // Add react-live imports you need here
 const ReactLiveScope = {
+  sendMultipleInstructions,
   React,
   AccountLayout,
   TOKEN_PROGRAM_ID,
