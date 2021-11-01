@@ -1,6 +1,6 @@
 {
     "name": "@wum.bo/spl-bonding-presale",
-    "version": "0.1.19",
+    "version": "0.2.0",
     "description": "Interface to the spl-bonding-presale smart contract",
     "repository": {
         "type": "git",
@@ -22,8 +22,8 @@
     "dependencies": {
         "@project-serum/common": "^0.0.1-beta.3",
         "@solana/web3.js": "^1.24.1",
-        "@wum.bo/spl-token-bonding": "^0.1.19",
-        "@wum.bo/spl-utils": "^0.1.19",
+        "@wum.bo/spl-token-bonding": "^0.2.0",
+        "@wum.bo/spl-utils": "^0.2.0",
         "bn.js": "^5.2.0"
     },
     "devDependencies": {
