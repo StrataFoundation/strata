@@ -43,7 +43,7 @@ describe("spl-bonding-presale", () => {
       authority: me,
       buyBaseRoyaltyPercentage: 0,
       sellBaseRoyaltyPercentage: 0,
-      buyTargetRoyaltyPercentage: percent(10),
+      buyTargetRoyaltyPercentage: 10,
       sellTargetRoyaltyPercentage: 0,
       baseMint: NATIVE_MINT,
       targetMintDecimals: 2,

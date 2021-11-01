@@ -37,7 +37,7 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { amountAsNum, asDecimal, Curve, fromCurve } from "./curves";
-import { createMetadata, Data, InstructionResult, sendInstructions } from "@wum.bo/spl-utils";
+import { createMetadata, Data, InstructionResult, percent, sendInstructions } from "@wum.bo/spl-utils";
 import { TypeDef } from "@wum.bo/anchor/dist/cjs/program/namespace/types";
 
 export * from "./generated/spl-token-bonding";
@@ -223,6 +223,15 @@ export class SplTokenBonding {
   program: Program<SplTokenBondingIDL>;
   provider: Provider;
   state: ProgramStateV0 | undefined;
+
+  static ID = new PublicKey("WumbodN8t7wcDPCY2nGszs4x6HRtL5mJcTR519Qr6m7");
+
+  static async init(provider: Provider, splTokenBondingProgramId: PublicKey = SplTokenBonding.ID): Promise<SplTokenBonding> {
+    const SplTokenBondingIDLJson = await anchor.Program.fetchIdl(splTokenBondingProgramId, provider);
+    const splTokenBonding = new anchor.Program(SplTokenBondingIDLJson!, splTokenBondingProgramId, provider) as anchor.Program<SplTokenBondingIDL>;
+
+    return new this(provider, splTokenBonding);
+  }
 
   constructor(provider: Provider, program: Program<SplTokenBondingIDL>) {
     this.program = program;
@@ -435,6 +444,8 @@ export class SplTokenBonding {
     sellTargetRoyaltiesOwner = this.wallet.publicKey,
     buyBaseRoyaltyPercentage,
     buyTargetRoyaltyPercentage,
+    sellBaseRoyaltyPercentage,
+    sellTargetRoyaltyPercentage,
     mintCap,
     purchaseCap,
     goLiveDate = new Date(new Date().valueOf() - 1000), // 1 secs ago
@@ -654,8 +665,10 @@ export class SplTokenBonding {
           index,
           goLiveUnixTime: new BN(Math.floor(goLiveDate.valueOf() / 1000)),
           freezeBuyUnixTime: freezeBuyDate ? new BN(Math.floor(freezeBuyDate.valueOf() / 1000)) : null,
-          buyBaseRoyaltyPercentage,
-          buyTargetRoyaltyPercentage,
+          buyBaseRoyaltyPercentage: percent(buyBaseRoyaltyPercentage),
+          buyTargetRoyaltyPercentage: percent(buyTargetRoyaltyPercentage),
+          sellBaseRoyaltyPercentage: percent(sellBaseRoyaltyPercentage),
+          sellTargetRoyaltyPercentage: percent(sellTargetRoyaltyPercentage),
           mintCap: mintCap || null,
           purchaseCap: purchaseCap || null,
           tokenBondingAuthority: authority,

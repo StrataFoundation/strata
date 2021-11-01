@@ -137,10 +137,10 @@ describe("spl-token-bonding", () => {
         baseMint,
         targetMintDecimals: DECIMALS,
         authority: me,
-        buyBaseRoyaltyPercentage: percent(5),
-        buyTargetRoyaltyPercentage: percent(10),
-        sellBaseRoyaltyPercentage: percent(0),
-        sellTargetRoyaltyPercentage: percent(0),
+        buyBaseRoyaltyPercentage: 5,
+        buyTargetRoyaltyPercentage: 10,
+        sellBaseRoyaltyPercentage: 0,
+        sellTargetRoyaltyPercentage: 0,
         mintCap: new BN(1000), // 10.0
       });
       tokenBondingAcct = (await tokenBondingProgram.account.tokenBondingV0.fetch(
@@ -181,7 +181,7 @@ describe("spl-token-bonding", () => {
 
       await tokenBondingProgram.updateTokenBonding({
         tokenBonding,
-        buyBaseRoyaltyPercentage: percent(10),
+        buyBaseRoyaltyPercentage: 10,
       });
       tokenBondingNow = await tokenBondingProgram.account.tokenBondingV0.fetch(tokenBonding);
       expect(tokenBondingNow.buyBaseRoyaltyPercentage).to.equal(percent(10));
@@ -283,10 +283,10 @@ describe("spl-token-bonding", () => {
         baseMint,
         targetMintDecimals: DECIMALS,
         authority: me,
-        buyBaseRoyaltyPercentage: percent(0),
-        buyTargetRoyaltyPercentage: percent(0),
-        sellBaseRoyaltyPercentage: percent(0),
-        sellTargetRoyaltyPercentage: percent(0),
+        buyBaseRoyaltyPercentage: 0,
+        buyTargetRoyaltyPercentage: 0,
+        sellBaseRoyaltyPercentage: 0,
+        sellTargetRoyaltyPercentage: 0,
         mintCap: new BN(1000), // 10.0
       });
       tokenBondingAcct = (await tokenBondingProgram.account.tokenBondingV0.fetch(
@@ -348,10 +348,10 @@ describe("spl-token-bonding", () => {
         baseMint,
         targetMintDecimals: DECIMALS,
         authority: me,
-        buyBaseRoyaltyPercentage: percent(buyBaseRoyaltyPercentage),
-        buyTargetRoyaltyPercentage: percent(buyTargetRoyaltyPercentage),
-        sellBaseRoyaltyPercentage: percent(sellBaseRoyaltyPercentage),
-        sellTargetRoyaltyPercentage: percent(sellTargetRoyaltyPercentage),
+        buyBaseRoyaltyPercentage,
+        buyTargetRoyaltyPercentage,
+        sellBaseRoyaltyPercentage,
+        sellTargetRoyaltyPercentage,
         mintCap: new BN(1000), // 10.0
       });
       tokenBondingAcct = (await tokenBondingProgram.account.tokenBondingV0.fetch(
@@ -408,10 +408,10 @@ describe("spl-token-bonding", () => {
         baseMint,
         targetMintDecimals: 2,
         authority: me,
-        buyBaseRoyaltyPercentage: percent(0),
-        buyTargetRoyaltyPercentage: percent(0),
-        sellBaseRoyaltyPercentage: percent(0),
-        sellTargetRoyaltyPercentage: percent(0),
+        buyBaseRoyaltyPercentage: 0,
+        buyTargetRoyaltyPercentage: 0,
+        sellBaseRoyaltyPercentage: 0,
+        sellTargetRoyaltyPercentage: 0,
         mintCap: new BN(10000),
       });
 
@@ -477,10 +477,10 @@ describe("spl-token-bonding", () => {
         baseMint,
         targetMintDecimals: DECIMALS,
         authority: me,
-        buyBaseRoyaltyPercentage: percent(5),
-        buyTargetRoyaltyPercentage: percent(10),
-        sellBaseRoyaltyPercentage: percent(0),
-        sellTargetRoyaltyPercentage: percent(0),
+        buyBaseRoyaltyPercentage: 5,
+        buyTargetRoyaltyPercentage: 10,
+        sellBaseRoyaltyPercentage: 0,
+        sellTargetRoyaltyPercentage: 0,
         mintCap: new BN(1000), // 10.0
       });
       tokenBondingAcct = (await tokenBondingProgram.account.tokenBondingV0.fetch(
@@ -569,10 +569,10 @@ describe("spl-token-bonding", () => {
           baseMint,
           targetMintDecimals: DECIMALS,
           authority: me,
-          buyBaseRoyaltyPercentage: percent(0),
-          buyTargetRoyaltyPercentage: percent(0),
-          sellBaseRoyaltyPercentage: percent(0),
-          sellTargetRoyaltyPercentage: percent(0)
+          buyBaseRoyaltyPercentage: 0,
+          buyTargetRoyaltyPercentage: 0,
+          sellBaseRoyaltyPercentage: 0,
+          sellTargetRoyaltyPercentage: 0
         });
 
         await tokenBondingProgram.buyV0({

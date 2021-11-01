@@ -13,7 +13,7 @@ import {
   TransactionInstruction,
 } from "@solana/web3.js";
 import { SplTokenCollectiveIDL, } from "./generated/spl-token-collective";
-import { SplTokenBonding } from "@wum.bo/spl-token-bonding";
+import { SplTokenBonding, SplTokenBondingIDL } from "@wum.bo/spl-token-bonding";
 
 export * from "./generated/spl-token-collective";
 
@@ -29,13 +29,13 @@ interface CreateCollectiveArgs {
 
 interface CreateSocialTokenArgs {
   payer?: PublicKey;
-  collective: PublicKey;
+  collective?: PublicKey; // Defaults to open collective
   name?: PublicKey; // Either these or owner needs to be provided
   nameClass?: PublicKey; // Either these or owner needs to be provided
   nameParent?: PublicKey; // Either these or owner needs to be provided
   tokenName: string; // For the token metadata name
-  owner?: PublicKey;
-  curve: PublicKey; // The curve to create this social token on
+  owner?: PublicKey; // If name is no provided, defaults to provider's wallet
+  curve?: PublicKey; // The curve to create this social token on. If not provided, will use the collective's curve
   // Taken from token bonding initialize
   tokenBondingParams: {
     buyBaseRoyaltyPercentage: number;
@@ -175,6 +175,21 @@ export class SplTokenCollective {
   program: Program<SplTokenCollectiveIDL>;
   splTokenBondingProgram: SplTokenBonding;
   provider: Provider;
+
+  static ID = new PublicKey("WumbodN8t7wcDPCY2nGszs4x6HRtL5mJcTR519Qr6m7");
+  static OPEN_COLLECTIVE_ID = new PublicKey("WumbodN8t7wcDPCY2nGszs4x6HRtL5mJcTR519Qr6m7");
+
+  static async init(provider: Provider, splCollectiveProgramId: PublicKey = SplTokenCollective.ID, splTokenBondingProgramId: PublicKey = SplTokenBonding.ID): Promise<SplTokenCollective> {
+    const SplCollectiveIDLJson = await anchor.Program.fetchIdl(splCollectiveProgramId, provider);
+    const splCollective = new anchor.Program(SplCollectiveIDLJson!, splCollectiveProgramId, provider) as anchor.Program<SplTokenBondingIDL>;
+    const splTokenBondingProgram = await SplTokenBonding.init(provider, splTokenBondingProgramId);
+
+    return new this({
+      provider,
+      program: splCollective,
+      splTokenBondingProgram
+    });
+  }
 
   constructor(opts: {
     provider: Provider;
@@ -452,7 +467,7 @@ export class SplTokenCollective {
 
   async createSocialTokenInstructions({
     payer = this.wallet.publicKey,
-    collective,
+    collective = SplTokenCollective.OPEN_COLLECTIVE_ID,
     name,
     owner,
     tokenName: handle,
@@ -467,6 +482,10 @@ export class SplTokenCollective {
       tokenBonding: PublicKey;
     }>
   > {
+    if (!owner && !name) {
+      owner = this.wallet.publicKey;
+    }
+
     const programId = this.programId;
     const provider = this.provider;
     const instructions1: TransactionInstruction[] = [];

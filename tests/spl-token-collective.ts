@@ -114,10 +114,10 @@ describe("spl-token-collective", () => {
         tokenName,
         curve,
         tokenBondingParams: {
-          buyBaseRoyaltyPercentage: percent(10),
-          buyTargetRoyaltyPercentage: percent(5),
-          sellBaseRoyaltyPercentage: percent(0),
-          sellTargetRoyaltyPercentage: percent(0)
+          buyBaseRoyaltyPercentage: 10,
+          buyTargetRoyaltyPercentage: 5,
+          sellBaseRoyaltyPercentage: 0,
+          sellTargetRoyaltyPercentage: 0
         }
       })
       unclaimedTokenRef = tokenRef;
@@ -189,10 +189,10 @@ describe("spl-token-collective", () => {
         tokenName: 'Whaddup',
         curve,
         tokenBondingParams: {
-          buyBaseRoyaltyPercentage: percent(0),
-          buyTargetRoyaltyPercentage: percent(0),
-          sellBaseRoyaltyPercentage: percent(0),
-          sellTargetRoyaltyPercentage: percent(0)
+          buyBaseRoyaltyPercentage: 0,
+          buyTargetRoyaltyPercentage: 0,
+          sellBaseRoyaltyPercentage: 0,
+          sellTargetRoyaltyPercentage: 0
         }
       })
       claimedTokenRef = tokenRef;
