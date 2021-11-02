@@ -4,4 +4,5 @@ tmp/
 ./node_modules
 aggregateBetaOutput.json
 aggregateBetaDump.json
-distributeBetaDev.json
+sanityCheckBetaOutput.json
+distributeBetaOutput.json
