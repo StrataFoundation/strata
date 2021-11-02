@@ -16,16 +16,19 @@ import {
   createMintInstructions,
   createTokenAccountInstrs,
   connection,
+  getTokenAccount,
 } from "@project-serum/common";
-import BN, { max } from "bn.js";
-import { Program, IdlTypes, TypesCoder, Provider } from "@wum.bo/anchor";
+import BN, { max, min } from "bn.js";
+import { Program, IdlTypes, TypesCoder, Provider, IdlAccounts } from "@wum.bo/anchor";
 import {
   SplTokenBondingIDL,
   TokenBondingV0,
   SplTokenBondingIDLJson,
   CurveV0,
+  ProgramStateV0,
 } from "./generated/spl-token-bonding";
 import {
+  AccountInfo,
   AccountLayout,
   NATIVE_MINT,
   MintInfo,
@@ -33,68 +36,218 @@ import {
   Token,
   ASSOCIATED_TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import { amountAsNum, asDecimal, Curve, LogCurveV0, fromCurve, supplyAsNum } from "./curves";
-import { InstructionResult, sendInstructions } from "@wum.bo/spl-utils";
+import { amountAsNum, asDecimal, Curve, fromCurve } from "./curves";
+import { createMetadata, Data, InstructionResult, percent, sendInstructions } from "@wum.bo/spl-utils";
+import { TypeDef } from "@wum.bo/anchor/dist/cjs/program/namespace/types";
 
 export * from "./generated/spl-token-bonding";
 export * from "./curves";
 
-interface InitializeCurveArgs {
-  curve: CurveV0;
+interface CurveConfig {
+  toRawConfig(): CurveV0
+}
+
+interface PrimitiveCurve {
+  toRawPrimitiveConfig(): any
+}
+
+export function toU128(num: number | BN): BN {
+  if (BN.isBN(num)) {
+    return num;
+  }
+
+  const [beforeDec, afteDec] = num.toString().split(".")
+  if (isNaN(Number(beforeDec)) || !isFinite(Number(beforeDec))) {
+    return new BN(0)
+  }
+
+  return new BN(`${beforeDec || ""}${(afteDec || "").slice(0, 12).padEnd(12, "0")}`)
+}
+
+export class ExponentialCurveConfig implements CurveConfig, PrimitiveCurve {
+  c: BN;
+  b: BN;
+  pow: number;
+  frac: number;
+
+  constructor({
+    c = 1,
+    b = 0,
+    pow = 1,
+    frac = 1
+  }: {
+    c?: number | BN,
+    b?: number | BN,
+    pow?: number,
+    frac?: number,
+  }) {
+    this.c = toU128(c);
+    this.b = toU128(b);
+    this.pow = pow;
+    this.frac = frac;
+  }
+
+  toRawPrimitiveConfig(): any {
+    return {
+      exponentialCurveV0: {
+        // @ts-ignore
+        c: this.c,
+        // @ts-ignore
+        b: this.b,
+        // @ts-ignore
+        pow: this.pow,
+        // @ts-ignore
+        frac: this.frac
+      }
+    }
+  }
+
+  toRawConfig(): CurveV0 {
+    return {
+      definition: {
+        timeV0: {
+          curves: [{
+              // @ts-ignore
+            offset: new BN(0),
+            // @ts-ignore
+            curve: this.toRawPrimitiveConfig()
+          }]
+        }
+      }
+    }
+  }
+}
+
+export class TimeCurveConfig implements CurveConfig {
+  curves: { curve: PrimitiveCurve, offset: BN }[] = [];
+
+  addCurve(timeOffset: number, curve: PrimitiveCurve): TimeCurveConfig {
+    if (this.curves.length == 0 && timeOffset != 0) {
+      throw new Error("First time offset must be 0");
+    }
+
+    this.curves.push({
+      curve,
+      offset: new BN(timeOffset)
+    });
+    
+    return this;
+  }
+
+  toRawConfig(): CurveV0 {
+    return {
+      definition: {
+        timeV0: {
+          // @ts-ignore
+          curves: this.curves.map(({ curve, offset }) => ({
+            curve: curve.toRawPrimitiveConfig(),
+            offset
+          }))
+        }
+      }
+    }
+  }
+}
+
+
+export interface InitializeCurveArgs {
+  config: CurveConfig;
   payer?: PublicKey;
 }
 
-interface CreateTokenBondingArgs {
+export interface CreateTokenBondingArgs {
   payer?: PublicKey;
   curve: PublicKey;
   baseMint: PublicKey;
   targetMint?: PublicKey; // If not provided, will create one with `targetMintDecimals`
   targetMintDecimals?: number; // If target mint not provded, create with these decimals
-  baseRoyalties?: PublicKey; // If not provided, create an Associated Token Account with baseRoyaltiesOwner
-  baseRoyaltiesOwner?: PublicKey; // If base royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
-  targetRoyalties?: PublicKey; // If not provided, create an Associated Token Account with targetRoyaltiesOwner
-  targetRoyaltiesOwner?: PublicKey; // If target royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
+  buyBaseRoyalties?: PublicKey; // If not provided, create an Associated Token Account with baseRoyaltiesOwner
+  buyBaseRoyaltiesOwner?: PublicKey; // If base royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
+  buyTargetRoyalties?: PublicKey; // If not provided, create an Associated Token Account with targetRoyaltiesOwner
+  buyTargetRoyaltiesOwner?: PublicKey; // If target royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
+  sellBaseRoyalties?: PublicKey; // If not provided, create an Associated Token Account with baseRoyaltiesOwner
+  sellBaseRoyaltiesOwner?: PublicKey; // If base royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
+  sellTargetRoyalties?: PublicKey; // If not provided, create an Associated Token Account with targetRoyaltiesOwner
+  sellTargetRoyaltiesOwner?: PublicKey; // If target royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
   authority?: PublicKey;
   baseStorage?: PublicKey; // Base storage account. If provided, will create a bonding curve with Sell disabled, and all proceeds will go to this account.
-  baseRoyaltyPercentage: number;
-  targetRoyaltyPercentage: number;
+  buyBaseRoyaltyPercentage: number;
+  buyTargetRoyaltyPercentage: number;
+  sellBaseRoyaltyPercentage: number;
+  sellTargetRoyaltyPercentage: number;
   mintCap?: BN;
   purchaseCap?: BN;
   goLiveDate?: Date;
+  freezeBuyDate?: Date;
   buyFrozen?: boolean;
+  index?: number; // Multiple bonding curves can exist for a given target mint. 0 is reserved for the one where the curve owns mint authority
 }
 
-interface UpdateTokenBondingArgs {
+export interface UpdateTokenBondingArgs {
   tokenBonding: PublicKey;
-  baseRoyaltyPercentage?: number;
-  targetRoyaltyPercentage?: number;
+  buyBaseRoyaltyPercentage?: number;
+  buyTargetRoyaltyPercentage?: number;
+  sellBaseRoyaltyPercentage?: number;
+  sellTargetRoyaltyPercentage?: number;
+  buyBaseRoyalties?: PublicKey;
+  buyTargetRoyalties?: PublicKey;
+  sellBaseRoyalties?: PublicKey;
+  sellTargetRoyalties?: PublicKey;
   authority?: PublicKey | null;
   buyFrozen?: boolean;
 }
 
-interface BuyV0Args {
+export interface BuyArgs {
   tokenBonding: PublicKey;
   payer?: PublicKey;
   source?: PublicKey; // Will use ATA of sourceAuthority if not provided
   destination?: PublicKey; // Will use ATA of sourceAuthority if not provided
   sourceAuthority?: PublicKey; // Wallet public key if not provided
-  desiredTargetAmount: BN;
+  desiredTargetAmount?: BN | number; // Must prrovide either base amount or desired target amount
+  baseAmount?: BN | number;
   slippage: number; // Decimal number. max price will be (1 + slippage) * price_for_desired_target_amount
 }
 
-interface SellV0Args {
+export interface SellArgs {
   tokenBonding: PublicKey;
   payer?: PublicKey;
   source?: PublicKey; // Will use ATA of sourceAuthority if not provided
   destination?: PublicKey; // Will use ATA of sourceAuthority if not provided
   sourceAuthority?: PublicKey; // Wallet public key if not provided
-  targetAmount: BN;
+  targetAmount: BN | number;
   slippage: number; // Decimal number. max price will be (1 + slippage) * price_for_desired_target_amount
+}
+
+function toNumber(numberOrBn: BN | number, mint: MintInfo): number {
+  if (BN.isBN(numberOrBn)) {
+    return amountAsNum(numberOrBn, mint);
+  } else {
+    return numberOrBn;
+  }
+}
+
+
+function toBN(numberOrBn: BN | number, mint: MintInfo): BN {
+  if (BN.isBN(numberOrBn)) {
+    return numberOrBn;
+  } else {
+    return new BN(Math.ceil(Number(numberOrBn) * Math.pow(10, mint.decimals)));
+  }
 }
 
 export class SplTokenBonding {
   program: Program<SplTokenBondingIDL>;
   provider: Provider;
+  state: ProgramStateV0 | undefined;
+
+  static ID = new PublicKey("TBondz6ZwSM5fs4v2GpnVBMuwoncPkFLFR9S422ghhN");
+
+  static async init(provider: Provider, splTokenBondingProgramId: PublicKey = SplTokenBonding.ID): Promise<SplTokenBonding> {
+    const SplTokenBondingIDLJson = await anchor.Program.fetchIdl(splTokenBondingProgramId, provider);
+    const splTokenBonding = new anchor.Program(SplTokenBondingIDLJson!, splTokenBondingProgramId, provider) as anchor.Program<SplTokenBondingIDL>;
+
+    return new this(provider, splTokenBonding);
+  }
 
   constructor(provider: Provider, program: Program<SplTokenBondingIDL>) {
     this.program = program;
@@ -132,10 +285,115 @@ export class SplTokenBonding {
     return sendInstructions(this.errors, this.provider, instructions, signers, payer)
   }
 
+  async initializeSolStorageInstructions(): Promise<InstructionResult<null>> {
+    const exists = await this.getState();
+    if (exists) {
+      return {
+        output: null,
+        instructions: [],
+        signers: []
+      }
+    }
+
+    const [state, bumpSeed] = await PublicKey.findProgramAddress(
+      [Buffer.from("state", "utf-8")],
+      this.programId
+    );
+    const [solStorage, solStorageBumpSeed] = await PublicKey.findProgramAddress(
+      [Buffer.from("sol-storage", "utf-8")],
+      this.programId
+    );
+    const [wrappedSolAuthority, mintAuthorityBumpSeed] = await PublicKey.findProgramAddress(
+      [Buffer.from("wrapped-sol-authority", "utf-8")],
+      this.programId
+    );
+
+    const instructions: TransactionInstruction[] = [];
+    const signers = [];
+    const mintKeypair = anchor.web3.Keypair.generate();
+    signers.push(mintKeypair);
+
+    instructions.push(...[
+      SystemProgram.createAccount({
+        fromPubkey: this.wallet.publicKey,
+        newAccountPubkey: mintKeypair.publicKey,
+        space: 82,
+        lamports: await this.provider.connection.getMinimumBalanceForRentExemption(82),
+        programId: TOKEN_PROGRAM_ID,
+      }),
+      Token.createInitMintInstruction(
+        TOKEN_PROGRAM_ID,
+        mintKeypair.publicKey,
+        9,
+        this.wallet.publicKey,
+        wrappedSolAuthority
+      ),
+    ])
+
+    await createMetadata(
+      new Data({
+        name: 'Token Bonding Wrapped SOL',
+        symbol: "twSOL",
+        uri: "",
+        sellerFeeBasisPoints: 0,
+        // @ts-ignore
+        creators: null,
+      }),
+      this.wallet.publicKey.toBase58(),
+      mintKeypair.publicKey.toBase58(),
+      this.wallet.publicKey.toBase58(),
+      instructions,
+      this.wallet.publicKey.toBase58()
+    );
+
+    instructions.push(Token.createSetAuthorityInstruction(
+      TOKEN_PROGRAM_ID,
+      mintKeypair.publicKey,
+      wrappedSolAuthority,
+      "MintTokens",
+      this.wallet.publicKey,
+      []
+    ))
+
+    instructions.push(await this.instruction.initializeSolStorageV0({
+      solStorageBumpSeed,
+      bumpSeed,
+      mintAuthorityBumpSeed
+    }, {
+      accounts: {
+        state,
+        payer: this.wallet.publicKey,
+        solStorage,
+        mintAuthority: wrappedSolAuthority,
+        wrappedSolMint: mintKeypair.publicKey,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        rent: SYSVAR_RENT_PUBKEY
+      }
+    }))
+
+    return {
+      instructions,
+      signers,
+      output: null
+    }
+  }
+
+  async initializeSolStorage(): Promise<void> {
+    const {
+      instructions,
+      signers,
+    } = await this.initializeSolStorageInstructions();
+    if (instructions.length > 0) {
+      await this.sendInstructions(instructions, signers);
+    }
+  }
+
   async initializeCurveInstructions({
     payer = this.wallet.publicKey,
-    curve,
+    config: curveConfig,
   }: InitializeCurveArgs): Promise<InstructionResult<{ curve: PublicKey }>> {
+    const curve = curveConfig.toRawConfig();
     const curveKeypair = anchor.web3.Keypair.generate();
     return {
       output: {
@@ -176,32 +434,59 @@ export class SplTokenBonding {
     return curve;
   }
 
+  async tokenBondingKey(targetMint: PublicKey, index: number): Promise<[PublicKey, number]> {
+    const pad = Buffer.alloc(2);
+    new BN(index, 16, 'le').toBuffer().copy(pad)
+    return PublicKey.findProgramAddress(
+      [Buffer.from("token-bonding", "utf-8"), targetMint!.toBuffer(), pad],
+      this.programId
+    );
+  }
+
+  async baseStorageAuthorityKey(tokenBonding: PublicKey): Promise<[PublicKey, number]> {
+    return PublicKey.findProgramAddress(
+      [Buffer.from("storage-authority", "utf-8"), tokenBonding.toBuffer()],
+      this.programId
+    );
+  }
+
   async createTokenBondingInstructions({
     authority = this.wallet.publicKey,
     payer = this.wallet.publicKey,
     curve,
     baseMint,
     targetMint,
-    baseRoyalties,
     baseStorage,
-    baseRoyaltiesOwner = this.wallet.publicKey,
-    targetRoyalties,
-    targetRoyaltiesOwner = this.wallet.publicKey,
-    baseRoyaltyPercentage,
-    targetRoyaltyPercentage,
+    buyBaseRoyalties,
+    buyBaseRoyaltiesOwner = this.wallet.publicKey,
+    buyTargetRoyalties,
+    buyTargetRoyaltiesOwner = this.wallet.publicKey,
+    sellBaseRoyalties,
+    sellBaseRoyaltiesOwner = this.wallet.publicKey,
+    sellTargetRoyalties,
+    sellTargetRoyaltiesOwner = this.wallet.publicKey,
+    buyBaseRoyaltyPercentage,
+    buyTargetRoyaltyPercentage,
+    sellBaseRoyaltyPercentage,
+    sellTargetRoyaltyPercentage,
     mintCap,
     purchaseCap,
-    goLiveDate = new Date(),
+    goLiveDate = new Date(new Date().valueOf() - 1000), // 1 secs ago
+    freezeBuyDate,
     targetMintDecimals,
     buyFrozen = false,
+    index
   }: CreateTokenBondingArgs): Promise<InstructionResult<{ 
     tokenBonding: PublicKey, 
-    targetMint: PublicKey ,
-    baseRoyalties: PublicKey,
-    targetRoyalties: PublicKey
+    targetMint: PublicKey,
+    buyBaseRoyalties: PublicKey,
+    buyTargetRoyalties: PublicKey,
+    sellBaseRoyalties: PublicKey,
+    sellTargetRoyalties: PublicKey,
+    baseStorage: PublicKey
   }>> {
     if (!targetMint) {
-      if (targetRoyalties) {
+      if (sellTargetRoyalties || buyTargetRoyalties) {
         throw new Error("Cannot define target royalties if mint is not defined");
       }
 
@@ -211,6 +496,10 @@ export class SplTokenBonding {
     }
     const programId = this.programId;
     const provider = this.provider;
+    const state = (await this.getState())!;
+    if (baseMint.equals(NATIVE_MINT)) {
+      baseMint = state.wrappedSolMint;
+    }
 
     const instructions: TransactionInstruction[] = [];
     const signers = [];
@@ -222,9 +511,29 @@ export class SplTokenBonding {
       shouldCreateMint = true;
     }
 
+    // Find the proper bonding index to use that isn't taken.
+    let indexToUse = index || 0;
+    const getTokenBonding: () => Promise<[PublicKey, Number]> = () => {
+      return this.tokenBondingKey(targetMint!, indexToUse);
+    };
+    const getTokenBondingAccount = async () => {
+      return this.provider.connection.getAccountInfo((await getTokenBonding())[0]);
+    };
+    if (!index) {
+      // Find an empty voucher account
+      while (await getTokenBondingAccount()) {
+        indexToUse++;
+      }
+    } else {
+      indexToUse = index;
+    }
+
     const [targetMintAuthority, targetMintAuthorityBumpSeed] = await PublicKey.findProgramAddress(
-      [Buffer.from("target-authority", "utf-8"), targetMint.toBuffer()],
-      programId
+      [
+        Buffer.from("target-authority", "utf-8"),
+        targetMint!.toBuffer()
+      ],
+      this.programId
     );
 
     if (shouldCreateMint) {
@@ -238,22 +547,16 @@ export class SplTokenBonding {
       );
     }
 
-    const [tokenBonding, bumpSeed] = await PublicKey.findProgramAddress(
-      [Buffer.from("token-bonding", "utf-8"), targetMint.toBuffer()],
-      programId
-    );
+    const [tokenBonding, bumpSeed] = await this.tokenBondingKey(targetMint!, indexToUse)
 
     let baseStorageAuthority: PublicKey | null = null;
-    let baseStorageAuthorityBumpSeed: number | null = null;
+    const [baseStorageAuthorityRes, baseStorageAuthorityBumpSeedRes] =
+        await this.baseStorageAuthorityKey(tokenBonding);
+    const baseStorageAuthorityBumpSeed = baseStorageAuthorityBumpSeedRes;
+  
     // This is a buy/sell bonding curve. Create the program owned base storage account
     if (!baseStorage) {
-      const [baseStorageAuthorityRes, baseStorageAuthorityBumpSeedRes] =
-        await PublicKey.findProgramAddress(
-          [Buffer.from("storage-authority", "utf-8"), tokenBonding.toBuffer()],
-          programId
-        );
       baseStorageAuthority = baseStorageAuthorityRes;
-      baseStorageAuthorityBumpSeed = baseStorageAuthorityBumpSeedRes;
 
       const baseStorageKeypair = anchor.web3.Keypair.generate();
       signers.push(baseStorageKeypair);
@@ -278,60 +581,119 @@ export class SplTokenBonding {
       );
     }
 
-    if (!targetRoyalties) {
-      targetRoyalties = await Token.getAssociatedTokenAddress(
+    let createdAccts: Set<string> = new Set()
+    if (!buyTargetRoyalties) {
+      buyTargetRoyalties = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         targetMint,
-        targetRoyaltiesOwner,
+        buyTargetRoyaltiesOwner,
         true
       );
 
-      if (!(await this.accountExists(targetRoyalties))) {
-        console.log("Creating target royalties...");
+      // If sell target royalties are undefined, we'll do this in the next step
+      if (!createdAccts.has(buyTargetRoyalties.toBase58()) && !(await this.accountExists(buyTargetRoyalties))) {
+        console.log("Creating buy target royalties...");
         instructions.push(
           Token.createAssociatedTokenAccountInstruction(
             ASSOCIATED_TOKEN_PROGRAM_ID,
             TOKEN_PROGRAM_ID,
             targetMint,
-            targetRoyalties,
-            targetRoyaltiesOwner,
+            buyTargetRoyalties,
+            buyTargetRoyaltiesOwner,
             payer
           )
         );
+        createdAccts.add(buyTargetRoyalties.toBase58());
       }
     }
 
-    if (!baseRoyalties) {
-      baseRoyalties = await Token.getAssociatedTokenAddress(
+    if (!sellTargetRoyalties) {
+      sellTargetRoyalties = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
-        baseMint,
-        baseRoyaltiesOwner,
+        targetMint,
+        sellTargetRoyaltiesOwner,
         true
       );
 
-      if (!(await this.accountExists(baseRoyalties))) {
+      if (!createdAccts.has(sellTargetRoyalties.toBase58()) && !(await this.accountExists(sellTargetRoyalties))) {
+        console.log("Creating sell target royalties...");
+        instructions.push(
+          Token.createAssociatedTokenAccountInstruction(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            targetMint,
+            sellTargetRoyalties,
+            sellTargetRoyaltiesOwner,
+            payer
+          )
+        );
+        createdAccts.add(buyTargetRoyalties.toBase58());
+      }
+    }
+
+    if (!buyBaseRoyalties) {
+      buyBaseRoyalties = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        baseMint,
+        buyBaseRoyaltiesOwner,
+        true
+      );
+
+      // If sell base royalties are undefined, we'll do this in the next step
+      if (!createdAccts.has(buyBaseRoyalties.toBase58()) && !(await this.accountExists(buyBaseRoyalties))) {
         console.log("Creating base royalties...");
         instructions.push(
           Token.createAssociatedTokenAccountInstruction(
             ASSOCIATED_TOKEN_PROGRAM_ID,
             TOKEN_PROGRAM_ID,
             baseMint,
-            baseRoyalties,
-            baseRoyaltiesOwner,
+            buyBaseRoyalties,
+            buyBaseRoyaltiesOwner,
             payer
           )
         );
+        createdAccts.add(buyBaseRoyalties.toBase58());
+      }
+    }
+
+    if (!sellBaseRoyalties) {
+      sellBaseRoyalties = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        baseMint,
+        sellBaseRoyaltiesOwner,
+        true
+      );
+
+      if (!createdAccts.has(sellBaseRoyalties.toBase58()) && !(await this.accountExists(sellBaseRoyalties))) {
+        console.log("Creating base royalties...");
+        instructions.push(
+          Token.createAssociatedTokenAccountInstruction(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            baseMint,
+            sellBaseRoyalties,
+            sellBaseRoyaltiesOwner,
+            payer
+          )
+        );
+        createdAccts.add(sellBaseRoyalties.toBase58());
       }
     }
 
     instructions.push(
       await this.instruction.initializeTokenBondingV0(
         {
+          index,
           goLiveUnixTime: new BN(Math.floor(goLiveDate.valueOf() / 1000)),
-          baseRoyaltyPercentage,
-          targetRoyaltyPercentage,
+          freezeBuyUnixTime: freezeBuyDate ? new BN(Math.floor(freezeBuyDate.valueOf() / 1000)) : null,
+          buyBaseRoyaltyPercentage: percent(buyBaseRoyaltyPercentage),
+          buyTargetRoyaltyPercentage: percent(buyTargetRoyaltyPercentage),
+          sellBaseRoyaltyPercentage: percent(sellBaseRoyaltyPercentage),
+          sellTargetRoyaltyPercentage: percent(sellTargetRoyaltyPercentage),
           mintCap: mintCap || null,
           purchaseCap: purchaseCap || null,
           tokenBondingAuthority: authority,
@@ -346,14 +708,17 @@ export class SplTokenBonding {
             payer: payer,
             curve,
             tokenBonding,
-            baseMint: baseMint,
+            baseMint,
             targetMint: targetMint,
             baseStorage,
-            baseRoyalties,
-            targetRoyalties,
+            buyBaseRoyalties,
+            buyTargetRoyalties,
+            sellBaseRoyalties,
+            sellTargetRoyalties,
             tokenProgram: TOKEN_PROGRAM_ID,
             systemProgram: SystemProgram.programId,
             rent: SYSVAR_RENT_PUBKEY,
+            clock: SYSVAR_CLOCK_PUBKEY
           },
         }
       )
@@ -363,8 +728,11 @@ export class SplTokenBonding {
       output: {
         tokenBonding,
         targetMint,
-        baseRoyalties,
-        targetRoyalties
+        buyBaseRoyalties,
+        buyTargetRoyalties,
+        sellBaseRoyalties,
+        sellTargetRoyalties,
+        baseStorage
       },
       instructions,
       signers,
@@ -387,8 +755,14 @@ export class SplTokenBonding {
 
   async updateTokenBondingInstructions({
     tokenBonding,
-    baseRoyaltyPercentage,
-    targetRoyaltyPercentage,
+    buyBaseRoyaltyPercentage,
+    buyTargetRoyaltyPercentage,
+    sellBaseRoyaltyPercentage,
+    sellTargetRoyaltyPercentage,
+    buyBaseRoyalties,
+    buyTargetRoyalties,
+    sellBaseRoyalties,
+    sellTargetRoyalties,
     authority,
     buyFrozen,
   }: UpdateTokenBondingArgs): Promise<InstructionResult<null>> {
@@ -398,12 +772,12 @@ export class SplTokenBonding {
     }
 
     const args: IdlTypes<SplTokenBondingIDL>["UpdateTokenBondingV0Args"] = {
-      baseRoyaltyPercentage: baseRoyaltyPercentage || tokenBondingAcct.baseRoyaltyPercentage,
-      targetRoyaltyPercentage: targetRoyaltyPercentage || tokenBondingAcct.targetRoyaltyPercentage,
+      buyBaseRoyaltyPercentage: buyBaseRoyaltyPercentage || tokenBondingAcct.buyBaseRoyaltyPercentage,
+      buyTargetRoyaltyPercentage: buyTargetRoyaltyPercentage || tokenBondingAcct.buyTargetRoyaltyPercentage,
+      sellBaseRoyaltyPercentage: sellBaseRoyaltyPercentage || tokenBondingAcct.sellBaseRoyaltyPercentage,
+      sellTargetRoyaltyPercentage: sellTargetRoyaltyPercentage || tokenBondingAcct.sellTargetRoyaltyPercentage,
       tokenBondingAuthority: authority === null ? null : authority! || tokenBondingAcct.authority as PublicKey,
-      buyFrozen: typeof buyFrozen === "undefined" ? tokenBondingAcct.buyFrozen as boolean : buyFrozen,
-      targetRoyalties: tokenBondingAcct.targetRoyalties,
-      baseRoyalties: tokenBondingAcct.baseRoyalties
+      buyFrozen: typeof buyFrozen === "undefined" ? tokenBondingAcct.buyFrozen as boolean : buyFrozen
     };
 
     return {
@@ -414,6 +788,12 @@ export class SplTokenBonding {
           accounts: {
             tokenBonding,
             authority: (tokenBondingAcct.authority as PublicKey)!,
+            baseMint: tokenBondingAcct.baseMint,
+            targetMint: tokenBondingAcct.targetMint,
+            buyTargetRoyalties: buyTargetRoyalties || tokenBondingAcct.buyTargetRoyalties,
+            buyBaseRoyalties: buyBaseRoyalties || tokenBondingAcct.buyBaseRoyalties,
+            sellTargetRoyalties: sellTargetRoyalties || tokenBondingAcct.sellTargetRoyalties,
+            sellBaseRoyalties: sellBaseRoyalties || tokenBondingAcct.sellBaseRoyalties
           },
         }),
       ],
@@ -438,7 +818,20 @@ export class SplTokenBonding {
     firstInstructions: TransactionInstruction[];
     lastInstructions: TransactionInstruction[];
   }> {
+    const stateAddress = (await PublicKey.findProgramAddress(
+      [Buffer.from("state", "utf-8")],
+      this.programId
+    ))[0];
+
+    const mintAuthority = (await PublicKey.findProgramAddress(
+      [Buffer.from("wrapped-sol-authority", "utf-8")],
+      this.programId
+    ))[0];
+    
+    
     const balanceNeeded = await Token.getMinBalanceRentForExemptAccount(this.provider.connection);
+    const state = (await this.getState())!;
+    const mint = await getMintInfo(this.provider, state.wrappedSolMint);
 
     // Create a new account
     const newAccount = anchor.web3.Keypair.generate();
@@ -448,18 +841,47 @@ export class SplTokenBonding {
         SystemProgram.createAccount({
           fromPubkey: payer,
           newAccountPubkey: newAccount.publicKey,
-          lamports: balanceNeeded + amount,
+          lamports: balanceNeeded,
           space: AccountLayout.span,
           programId: TOKEN_PROGRAM_ID,
         }),
         Token.createInitAccountInstruction(
           TOKEN_PROGRAM_ID,
-          NATIVE_MINT,
+          state.wrappedSolMint,
           newAccount.publicKey,
           owner
         ),
+        await this.instruction.buyWrappedSolV0({
+          amount: toBN(amount, mint).add(new BN(1)) // In case of rounding errors
+        }, {
+          accounts: {
+            state: stateAddress,
+            wrappedSolMint: state.wrappedSolMint,
+            mintAuthority: mintAuthority,
+            solStorage: state.solStorage,
+            source: owner,
+            destination: newAccount.publicKey,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            systemProgram: SystemProgram.programId
+          }
+        })
       ],
       lastInstructions: [
+        await this.instruction.sellWrappedSolV0({
+          all: true,
+          amount: toBN(amount, mint)
+        }, {
+          accounts: {
+            state: stateAddress,
+            wrappedSolMint: state.wrappedSolMint,
+            solStorage: state.solStorage,
+            source: newAccount.publicKey,
+            owner,
+            destination: newAccount.publicKey,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            systemProgram: SystemProgram.programId
+          }
+        }),
         Token.createCloseAccountInstruction(
           TOKEN_PROGRAM_ID,
           newAccount.publicKey,
@@ -472,21 +894,24 @@ export class SplTokenBonding {
     };
   }
 
-  async buyV0Instructions({
+  async buyInstructions({
     tokenBonding,
     source,
     sourceAuthority = this.wallet.publicKey,
     destination,
     desiredTargetAmount,
+    baseAmount,
     slippage,
     payer = this.wallet.publicKey
-  }: BuyV0Args): Promise<InstructionResult<null>> {
+  }: BuyArgs): Promise<InstructionResult<null>> {
+    const state = (await this.getState())!;
     const tokenBondingAcct = await this.account.tokenBondingV0.fetch(tokenBonding);
     // @ts-ignore
     const targetMint = await getMintInfo(this.provider, tokenBondingAcct.targetMint);
     const baseMint = await getMintInfo(this.provider, tokenBondingAcct.baseMint);
+    const baseStorage = await getTokenAccount(this.provider, tokenBondingAcct.baseStorage);
     // @ts-ignore
-    const curve = await this.getCurve(tokenBondingAcct.curve, baseMint, targetMint);
+    const curve = await this.getCurve(tokenBondingAcct.curve, baseStorage, baseMint, targetMint);
 
     const targetMintAuthority = await PublicKey.createProgramAddress(
       [
@@ -522,19 +947,46 @@ export class SplTokenBonding {
       }
     }
 
-    const desiredTargetAmountNum = amountAsNum(desiredTargetAmount, targetMint);
-    const neededAmount =
-      desiredTargetAmountNum * (1 / (1 - asDecimal(tokenBondingAcct.targetRoyaltyPercentage)));
-    const curveAmount = curve.buyTargetAmount(
-      desiredTargetAmountNum,
-      tokenBondingAcct.baseRoyaltyPercentage,
-      tokenBondingAcct.targetRoyaltyPercentage
-    );
-    const maxPrice = Math.ceil(curveAmount * (1 + slippage) * Math.pow(10, baseMint.decimals));
+    let buyTargetAmount = null;
+    let buyWithBase = null;
+    let rootEstimates = null;
+    let maxPrice: number = 0;
+    if (desiredTargetAmount) {
+      const desiredTargetAmountNum = toNumber(desiredTargetAmount, targetMint);
+      const neededAmount =
+        desiredTargetAmountNum * (1 / (1 - asDecimal(tokenBondingAcct.buyTargetRoyaltyPercentage)));
+      const curveAmount = curve.buyTargetAmount(
+        desiredTargetAmountNum,
+        tokenBondingAcct.buyBaseRoyaltyPercentage,
+        tokenBondingAcct.buyTargetRoyaltyPercentage
+      );
+      maxPrice = curveAmount * (1 + slippage);  
+      rootEstimates = curve.buyTargetAmountRootEstimates(desiredTargetAmountNum, tokenBondingAcct.buyTargetRoyaltyPercentage);
+
+      buyTargetAmount = {
+        targetAmount: new BN(Math.floor(neededAmount * Math.pow(10, targetMint.decimals))),
+        maximumPrice: toBN(maxPrice, baseMint),
+      }
+    }
+
+    if (baseAmount) {
+      const baseAmountNum = toNumber(baseAmount, baseMint);
+      const min = curve.buyWithBaseAmount(baseAmountNum, tokenBondingAcct.buyBaseRoyaltyPercentage, tokenBondingAcct.buyTargetRoyaltyPercentage) * (1 - slippage);
+      maxPrice = baseAmountNum;
+      rootEstimates = curve.buyWithBaseRootEstimates(baseAmountNum, tokenBondingAcct.buyBaseRoyaltyPercentage);
+
+      buyWithBase = {
+        baseAmount: toBN(baseAmount, baseMint),
+        minimumTargetAmount:  new BN(Math.ceil(min * Math.pow(10, targetMint.decimals)))
+      }
+    }
+
+    console.log(maxPrice);
+    
 
     let lastInstructions = [];
     if (!source) {
-      if (tokenBondingAcct.baseMint.toBase58() === NATIVE_MINT.toBase58()) {
+      if (tokenBondingAcct.baseMint.equals(state.wrappedSolMint)) {
         const {
           signer,
           firstInstructions,
@@ -542,7 +994,7 @@ export class SplTokenBonding {
         } = await this.createTemporaryWSolAccount({
           payer: payer,
           owner: sourceAuthority,
-          amount: maxPrice,
+          amount: maxPrice!,
         });
         source = signer.publicKey;
         signers.push(signer);
@@ -563,9 +1015,13 @@ export class SplTokenBonding {
     }
 
     const args: IdlTypes<SplTokenBondingIDL>["BuyV0Args"] = {
-      targetAmount: new BN(Math.floor(neededAmount * Math.pow(10, targetMint.decimals))),
-      maximumPrice: new BN(maxPrice),
+      // @ts-ignore
+      buyTargetAmount,
+      // @ts-ignore
+      buyWithBase,
+      rootEstimates: rootEstimates?.map(toU128)
     };
+    console.log(args);
     const accounts = {
       accounts: {
         tokenBonding,
@@ -575,8 +1031,8 @@ export class SplTokenBonding {
         targetMint: tokenBondingAcct.targetMint,
         targetMintAuthority,
         baseStorage: tokenBondingAcct.baseStorage,
-        baseRoyalties: tokenBondingAcct.baseRoyalties,
-        targetRoyalties: tokenBondingAcct.targetRoyalties,
+        buyBaseRoyalties: tokenBondingAcct.buyBaseRoyalties,
+        buyTargetRoyalties: tokenBondingAcct.buyTargetRoyalties,
         source,
         sourceAuthority,
         destination,
@@ -594,12 +1050,24 @@ export class SplTokenBonding {
     };
   }
 
-  async buyV0(args: BuyV0Args): Promise<void> {
-    const { instructions, signers } = await this.buyV0Instructions(args);
+  async buy(args: BuyArgs): Promise<void> {
+    const { instructions, signers } = await this.buyInstructions(args);
     await this.sendInstructions(instructions, signers);
   }
 
-  async sellV0Instructions({
+  async getState(): Promise<ProgramStateV0 | null> {
+    if (this.state) {
+      return this.state;
+    }
+
+    const stateAddress = (await PublicKey.findProgramAddress(
+      [Buffer.from("state", "utf-8")],
+      this.programId
+    ))[0];
+    return this.account.programStateV0.fetchNullable(stateAddress)
+  }
+
+  async sellInstructions({
     tokenBonding,
     source,
     sourceAuthority = this.wallet.publicKey,
@@ -607,7 +1075,8 @@ export class SplTokenBonding {
     targetAmount,
     slippage,
     payer = this.wallet.publicKey
-  }: SellV0Args): Promise<InstructionResult<null>> {
+  }: SellArgs): Promise<InstructionResult<null>> {
+    const state = (await this.getState())!;
     const tokenBondingAcct = await this.account.tokenBondingV0.fetch(tokenBonding);
     if (tokenBondingAcct.sellFrozen) {
       throw new Error("Sell is frozen on this bonding curve");
@@ -616,10 +1085,12 @@ export class SplTokenBonding {
     // @ts-ignore
     const targetMint = await getMintInfo(this.provider, tokenBondingAcct.targetMint);
     const baseMint = await getMintInfo(this.provider, tokenBondingAcct.baseMint);
+    const baseStorage = await getTokenAccount(this.provider, tokenBondingAcct.baseStorage);
     // @ts-ignore
-    const curve = await this.getCurve(tokenBondingAcct.curve, baseMint, targetMint);
+    const curve = await this.getCurve(tokenBondingAcct.curve, baseStorage, baseMint, targetMint);
 
-    const baseStorageAuthority = await PublicKey.createProgramAddress(
+    let baseStorageAuthority;
+    baseStorageAuthority = await PublicKey.createProgramAddress(
       [
         Buffer.from("storage-authority", "utf-8"),
         tokenBonding.toBuffer(),
@@ -645,7 +1116,7 @@ export class SplTokenBonding {
 
     const lastInstructions = [];
     if (!destination) {
-      if (tokenBondingAcct.baseMint.toBase58() === NATIVE_MINT.toBase58()) {
+      if (tokenBondingAcct.baseMint.equals(state.wrappedSolMint)) {
         const {
           signer,
           firstInstructions,
@@ -653,7 +1124,7 @@ export class SplTokenBonding {
         } = await this.createTemporaryWSolAccount({
           payer,
           owner: sourceAuthority,
-          amount: 0,
+          amount: 0
         });
         destination = signer.publicKey;
         signers.push(signer);
@@ -683,14 +1154,19 @@ export class SplTokenBonding {
       }
     }
 
-    const targetAmountNum = amountAsNum(targetAmount, targetMint);
-    const reclaimedAmount = curve.sellTargetAmount(targetAmountNum);
+    const targetAmountNum = toNumber(targetAmount, targetMint);
+    const reclaimedAmount = curve.sellTargetAmount(
+      targetAmountNum,
+      tokenBondingAcct.sellBaseRoyaltyPercentage,
+      tokenBondingAcct.sellTargetRoyaltyPercentage
+    );
     const minPrice = Math.ceil(
-      reclaimedAmount * (1 - slippage) * Math.pow(10, targetMint.decimals)
+      reclaimedAmount * (1 - slippage) * Math.pow(10, baseMint.decimals)
     );
     const args: IdlTypes<SplTokenBondingIDL>["SellV0Args"] = {
-      targetAmount,
+      targetAmount: toBN(targetAmount, targetMint),
       minimumPrice: new BN(minPrice),
+      rootEstimates: curve.buyTargetAmountRootEstimates(targetAmountNum, tokenBondingAcct.sellTargetRoyaltyPercentage).map(toU128)
     };
     const accounts = {
       accounts: {
@@ -700,6 +1176,8 @@ export class SplTokenBonding {
         baseMint: tokenBondingAcct.baseMint,
         targetMint: tokenBondingAcct.targetMint,
         baseStorage: tokenBondingAcct.baseStorage,
+        sellBaseRoyalties: tokenBondingAcct.sellBaseRoyalties,
+        sellTargetRoyalties: tokenBondingAcct.sellTargetRoyalties,
         baseStorageAuthority,
         source,
         sourceAuthority,
@@ -718,14 +1196,23 @@ export class SplTokenBonding {
     };
   }
 
-  async sellV0(args: SellV0Args): Promise<void> {
-    const { instructions, signers } = await this.sellV0Instructions(args);
+  async sell(args: SellArgs): Promise<void> {
+    const { instructions, signers } = await this.sellInstructions(args);
     await this.sendInstructions(instructions, signers);
   }
 
-  async getCurve(key: PublicKey, baseMint: MintInfo, targetMint: MintInfo): Promise<Curve> {
+  async getPricing(tokenBonding: PublicKey): Promise<Curve> {
+    const tokenBondingAcct = await this.account.tokenBondingV0.fetch(tokenBonding);
+    const targetMint = await getMintInfo(this.provider, tokenBondingAcct.targetMint);
+    const baseMint = await getMintInfo(this.provider, tokenBondingAcct.baseMint);
+    const baseStorage = await getTokenAccount(this.provider, tokenBondingAcct.baseStorage);
+
+    return this.getCurve(tokenBondingAcct.curve, baseStorage, baseMint, targetMint);
+  }
+
+  async getCurve(key: PublicKey, baseStorage: AccountInfo, baseMint: MintInfo, targetMint: MintInfo): Promise<Curve> {
     const curve = await this.account.curveV0.fetch(key);
     // @ts-ignore
-    return fromCurve(curve, baseMint, targetMint);
+    return fromCurve(curve, baseStorage, baseMint, targetMint);
   }
 }

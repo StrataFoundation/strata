@@ -117,10 +117,8 @@ pub struct InitializeTokenAccountSplitV0<'info> {
                  token_account.state == AccountState::Initialized
   )]
   pub token_account: Account<'info, TokenAccount>,
-  #[account()]
   pub token_staking: Account<'info, TokenStakingV0>,
-  #[account(address = system_program::ID)]
-  pub system_program: AccountInfo<'info>,
+  pub system_program: Program<'info, System>,
   pub rent: Sysvar<'info, Rent>,
 }
 

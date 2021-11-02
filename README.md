@@ -1,4 +1,12 @@
-# wumbo-programs
+# Wumbo
+
+The Wumbo contract serves as a way of standardizing and indexing all social tokens. A social token is made up of
+
+  * A token mint
+  * Token metadata for that mint (picture, name, etc)
+  * A bonding curve against that mint to WUM
+
+# Development
 
 ## Install Submodules
 
@@ -66,23 +74,3 @@ Use passing when the account has utility outside of this contract. For example a
 Use initializing for actual program data. For example, for the bonding curve or for the Wumbo token ref. This way users can directly lookup the account via PDA. 
 
 You should also use initializing on Token accounts that are exclusively for the program, for example a holding account in token staking. 
-
-# Wumbo
-
-The Wumbo contract serves as a way of standardizing and indexing all social tokens. A social token is made up of
-
-  * A token mint
-  * Token metadata for that mint (picture, name, etc)
-  * A bonding curve against that mint to WUM
-  * A staking instance of that mint --> Creator Credits
-  * A profit share of bonding curve WUM royalties amongst Creator Credits
-
-These should all be initialized and passed to the WUM program; which will verify they fit the standards specified in the WumboInstance. Wumbo should not initialize any of these itself, but should retain authority over
-
-  * The bonding curve
-    * The bonding curve has authority over the mint
-  * The token metadata
-  * The staking instance
-  * The profit share
-
-In this way, wumbo ensures all Social Tokens behave the same, and will utilize its authority to ensure they stay the same going forward in time.

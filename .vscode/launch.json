@@ -14,7 +14,8 @@
         "${workspaceFolder}/tests/**/*.ts"
       ],
       "env": {
-        "ANCHOR_PROVIDER_URL": "http://127.0.0.1:8899"
+        "ANCHOR_PROVIDER_URL": "http://127.0.0.1:8899",
+        "ANCHOR_WALLET": "/Users/nprince/.config/solana/id.json"
       },
       "internalConsoleOptions": "openOnSessionStart",
       "name": "Mocha Tests",
@@ -35,7 +36,8 @@
         "${workspaceFolder}/tests/spl-token-account-split.ts"
       ],
       "env": {
-        "ANCHOR_PROVIDER_URL": "http://127.0.0.1:8899"
+        "ANCHOR_PROVIDER_URL": "http://127.0.0.1:8899",
+        "ANCHOR_WALLET": "/Users/nprince/.config/solana/id.json"
       },
       "internalConsoleOptions": "openOnSessionStart",
       "name": "Account Split Test",

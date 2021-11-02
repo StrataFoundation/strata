@@ -24,6 +24,7 @@ interface CreateTokenStakingArgs {
   period: number;
   payer?: PublicKey;
   rewardPercentPerPeriodPerLockupPeriod: number;
+  targetMint?: PublicKey;
   targetMintDecimals: number;
 }
 
@@ -140,64 +141,79 @@ export class SplTokenStaking {
     period,
     rewardPercentPerPeriodPerLockupPeriod,
     targetMintDecimals,
+    targetMint
   }: CreateTokenStakingArgs): Promise<
     InstructionResult<{ tokenStaking: PublicKey; tokenStakingBumpSeed: number; targetMint: PublicKey }>
   > {
     const programId = this.programId;
     const provider = this.provider;
-    const targetMintKeypair = anchor.web3.Keypair.generate();
+    
+    const instructions = [];
+    const signers = []
+    let shouldCreateMint = false;
+    if (!targetMint) {
+      const targetMintKeypair = anchor.web3.Keypair.generate();
+      targetMint = targetMintKeypair.publicKey;
+      signers.push(targetMintKeypair);
+      shouldCreateMint = true;
+    }
+
     const [targetMintAuthorityRes, targetMintAuthorityBumpSeed] =
-      await PublicKey.findProgramAddress(
-        [Buffer.from("target-authority", "utf-8"), targetMintKeypair.publicKey.toBuffer()],
-        programId
-      );
+    await PublicKey.findProgramAddress(
+      [Buffer.from("target-authority", "utf-8"), targetMint.toBuffer()],
+      programId
+    );
     const targetMintAuthority = targetMintAuthorityRes;
+
+    if (shouldCreateMint) {
+      const tokenInstructions = await createMintInstructions(
+        provider,
+        targetMintAuthority,
+        targetMint,
+        targetMintDecimals
+      );
+      instructions.push(...tokenInstructions);
+    }
+    
     const [tokenStaking, bumpSeed] = await PublicKey.findProgramAddress(
       [
         Buffer.from("token-staking", "utf-8"),
         baseMint.toBuffer(),
-        targetMintKeypair.publicKey.toBuffer(),
+        targetMint.toBuffer(),
       ],
       programId
     );
-    const tokenInstructions = await createMintInstructions(
-      provider,
-      targetMintAuthority,
-      targetMintKeypair.publicKey,
-      targetMintDecimals
-    );
+
+    instructions.push(await this.instruction.initializeTokenStakingV0(
+      {
+        periodUnit,
+        period,
+        rewardPercentPerPeriodPerLockupPeriod,
+        bumpSeed,
+        targetMintAuthorityBumpSeed,
+        authority,
+      },
+      {
+        accounts: {
+          payer: payer,
+          baseMint: baseMint,
+          targetMint: targetMint,
+          tokenStaking,
+          systemProgram: SystemProgram.programId,
+          rent: SYSVAR_RENT_PUBKEY,
+          clock: SYSVAR_CLOCK_PUBKEY,
+        },
+      }
+    ))
 
     return {
       output: {
-        targetMint: targetMintKeypair.publicKey,
+        targetMint: targetMint,
         tokenStaking,
         tokenStakingBumpSeed: bumpSeed,
       },
-      instructions: [
-        ...tokenInstructions,
-        await this.instruction.initializeTokenStakingV0(
-          {
-            periodUnit,
-            period,
-            rewardPercentPerPeriodPerLockupPeriod,
-            bumpSeed,
-            targetMintAuthorityBumpSeed,
-            authority,
-          },
-          {
-            accounts: {
-              payer: payer,
-              baseMint: baseMint,
-              targetMint: targetMintKeypair.publicKey,
-              tokenStaking,
-              systemProgram: SystemProgram.programId,
-              rent: SYSVAR_RENT_PUBKEY,
-              clock: SYSVAR_CLOCK_PUBKEY,
-            },
-          }
-        ),
-      ],
-      signers: [targetMintKeypair],
+      instructions,
+      signers,
     };
   }
 
@@ -220,6 +236,7 @@ export class SplTokenStaking {
     payer = this.wallet.publicKey,
   }: StakeArgs): Promise<InstructionResult<{ stakingVoucher: PublicKey }>> {
     const tokenStakingAccount = await this.program.account.tokenStakingV0.fetch(tokenStaking);
+
     let voucherNumberToUse = voucherNumber || 0;
     const getVoucher: () => Promise<[PublicKey, Number]> = () => {
       const pad = Buffer.alloc(2);
@@ -263,7 +280,36 @@ export class SplTokenStaking {
       owner
     );
 
-    const instructions = [
+    const instructions = [];
+
+    const [stakingInfo, stakingInfoBumpSeed] = await PublicKey.findProgramAddress(
+      [
+        Buffer.from("stake-info", "utf-8"),
+        owner.toBuffer(),
+        tokenStaking.toBuffer()
+      ],
+      this.programId
+    );
+    const stakingInfoAccount = await this.program.account.stakingInfoV0.fetchNullable(stakingInfo);
+    if (!stakingInfoAccount) {
+      instructions.push(
+        await this.instruction.initializeStakingInfoV0(
+          stakingInfoBumpSeed, {
+            accounts: {
+              payer,
+              tokenStaking,
+              stakingInfo,
+              owner,
+              systemProgram: SystemProgram.programId,
+              rent: SYSVAR_RENT_PUBKEY,
+              clock: SYSVAR_CLOCK_PUBKEY,
+            }
+          }
+        )
+      )
+    }
+
+    instructions.push(
       await this.instruction.stakeV0(
         {
           voucherNumber: voucherNumberToUse,
@@ -273,9 +319,11 @@ export class SplTokenStaking {
           holdingAuthorityBumpSeed,
           holdingBumpSeed,
           ataBumpSeed,
+          stakingInfoBumpSeed
         },
         {
           accounts: {
+            stakingInfo,
             payer,
             baseMint: tokenStakingAccount.baseMint,
             tokenStaking: tokenStaking,
@@ -291,7 +339,7 @@ export class SplTokenStaking {
           },
         }
       ),
-    ];
+    )
 
     return {
       instructions,
@@ -350,10 +398,20 @@ export class SplTokenStaking {
       this.programId
     );
 
+    const [stakingInfo] = await PublicKey.findProgramAddress(
+      [
+        Buffer.from("stake-info", "utf-8"),
+        voucher.owner.toBuffer(),
+        tokenStaking.toBuffer()
+      ],
+      this.programId
+    );
+
     instructions.push(
       await this.instruction.collectRewardsV0({
         accounts: {
           tokenStaking,
+          stakingInfo,
           stakingVoucher,
           destination,
           targetMint: staking.targetMint,
@@ -414,6 +472,15 @@ export class SplTokenStaking {
       this.programId
     );
 
+    const [stakingInfo] = await PublicKey.findProgramAddress(
+      [
+        Buffer.from("stake-info", "utf-8"),
+        voucher.owner.toBuffer(),
+        tokenStaking.toBuffer()
+      ],
+      this.programId
+    );
+
     return {
       signers: [],
       output: null,
@@ -421,6 +488,7 @@ export class SplTokenStaking {
         await this.instruction.unstakeV0({
           accounts: {
             tokenStaking,
+            stakingInfo,
             stakingVoucher,
             owner: voucher.owner,
             destination,

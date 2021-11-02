@@ -14,6 +14,11 @@ export class TokenUtils {
     expect(actual.value.uiAmount).to.equal(balance);
   }
 
+  async expectBalanceWithin(account: PublicKey, balance: number, precision: number) {
+    const actual = await this.provider.connection.getTokenAccountBalance(account);
+    expect(actual.value.uiAmount).to.within(balance, precision);
+  }
+
   async expectAtaBalance(account: PublicKey, mint: PublicKey, balance: number) {
     const ata = await Token.getAssociatedTokenAddress(
       ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -33,14 +38,16 @@ export class TokenUtils {
     );
 
     const transaction = new Transaction();
-    transaction.add(Token.createAssociatedTokenAccountInstruction(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
-      NATIVE_MINT,
-      newAccount,
-      provider.wallet.publicKey,
-      provider.wallet.publicKey
-    ));
+    if (!(await provider.connection.getAccountInfo(newAccount))) {
+      transaction.add(Token.createAssociatedTokenAccountInstruction(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        NATIVE_MINT,
+        newAccount,
+        provider.wallet.publicKey,
+        provider.wallet.publicKey
+      ));
+    }
 
     // Send lamports to it (these will be wrapped into native tokens by the token program)
     transaction.add(SystemProgram.transfer({

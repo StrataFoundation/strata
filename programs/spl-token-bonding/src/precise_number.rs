@@ -1,10 +1,13 @@
 //! Defines PreciseNumber, a U256 wrapper with float-like operations
 // Stolen from SPL math, but changing inner unit
 
-use crate::uint::U128;
+use anchor_lang::prelude::msg;
+
+use crate::curve::{ONE_PREC, ZERO_PREC};
+use crate::uint::U256;
 
 // Allows for easy swapping between different internal representations
-pub type InnerUint = U128;
+pub type InnerUint = U256;
 
 /// The representation of the number one as a precise number as 10^12
 pub const ONE: u64 = 1_000_000_000_000;
@@ -19,13 +22,14 @@ pub struct PreciseNumber {
 /// The precise-number 1 as a InnerUint
 #[inline]
 pub const fn one() -> InnerUint {
-    U128([1_000_000_000_000_u64, 0_u64])
+  U256([1_000_000_000_000_u64, 0_u64, 0_u64, 0_u64])
     // InnerUint::from(ONE)
 }
 
 /// The number 0 as a PreciseNumber, used for easier calculations.
-fn zero() -> InnerUint {
-    InnerUint::from(0)
+#[inline]
+pub const fn zero() -> InnerUint {
+  U256([0_u64, 0_u64, 0_u64, 0_u64])
 }
 
 impl PreciseNumber {
@@ -277,10 +281,17 @@ impl PreciseNumber {
 
     /// Get the power of a number, where the exponent is expressed as a fraction
     /// (numerator / denominator)
-    /// NOTE: this function is private because its accurate range and precision
-    /// have not been estbalished.
-    #[allow(dead_code)]
-    fn checked_pow_fraction(&self, exponent: &Self) -> Option<Self> {
+    pub fn checked_pow_fraction(&self, exponent: &Self) -> Option<Self> {
+        if exponent.eq(&ZERO_PREC) {
+          return Some(ONE_PREC.clone())
+        }
+
+        // Check if this is a whole number. If so, don't use checked_pow_fraction
+        let imprecise = exponent.to_imprecise()?;
+        if PreciseNumber::new(imprecise)?.eq(&exponent) {
+          return self.checked_pow(imprecise)
+        }
+
         assert!(self.value >= Self::min_pow_base());
         assert!(self.value <= Self::max_pow_base());
         let whole_exponent = exponent.floor()?;
@@ -305,14 +316,14 @@ impl PreciseNumber {
         mut guess: Self,
         iterations: u128,
     ) -> Option<Self> {
-        let zero = Self::zero();
-        if *self == zero {
-            return Some(zero);
+        let zero = &ZERO_PREC;
+        if *self == *zero {
+            return Some(Self::zero());
         }
-        if *root == zero {
+        if *root == *zero {
             return None;
         }
-        let one = Self::new(1)?;
+        let one = &ONE_PREC;
         let root_minus_one = root.checked_sub(&one)?;
         let root_minus_one_whole = root_minus_one.to_imprecise()?;
         let mut last_guess = guess.clone();
@@ -332,7 +343,12 @@ impl PreciseNumber {
                 last_guess = guess.clone();
             }
         }
-        Some(guess)
+
+        if last_guess.almost_eq(&guess, precision) {
+          Some(guess)
+        } else {
+          None // Don't return answers that are not close
+        }
     }
 
     /// Based on testing around the limits, this base is the smallest value that
@@ -347,6 +363,10 @@ impl PreciseNumber {
     /// provides an epsilon of 11 digits
     fn maximum_sqrt_base() -> Self {
         Self::new(std::u128::MAX).unwrap()
+    }
+
+    pub fn pow_frac_approximation(&self, pow: u8, frac: u8, guess: Self) -> Option<Self> {
+      self.checked_pow(pow as u128)?.newtonian_root_approximation(&PreciseNumber::new(frac as u128)?, guess, Self::MAX_APPROXIMATION_ITERATIONS)
     }
 
     /// Approximate the square root using Newton's method.  Based on testing,
