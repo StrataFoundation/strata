@@ -1,17 +1,11 @@
-endi:
-  name: Endilie Yacop Sucipto
-  title: Maintainer of Strata
-  url: https://github.com/endiliey
-  image_url: https://github.com/endiliey.png
+noah:
+  name: Noah Prince
+  title: Strata Founder, CEO
+  url: https://github.com/noahprince22
+  image_url: https://github.com/noahprince22.png
 
-yangshun:
-  name: Yangshun Tay
-  title: Front End Engineer @ Facebook
-  url: https://github.com/yangshun
-  image_url: https://github.com/yangshun.png
-
-slorber:
-  name: Sébastien Lorber
-  title: Strata maintainer
-  url: https://sebastienlorber.com
-  image_url: https://github.com/slorber.png
+bry:
+  name: Bryan Zettler
+  title: Strata Cofounder
+  url: https://github.com/bryzettler
+  image_url: https://github.com/bryzettler.png
