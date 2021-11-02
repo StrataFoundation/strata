@@ -1,4 +1,4 @@
-import { Provider } from "@wum.bo/anchor";
+import { Provider } from "@project-serum/anchor";
 import { PublicKey, Transaction, SystemProgram } from "@solana/web3.js";
 import { NATIVE_MINT, AccountLayout, TOKEN_PROGRAM_ID, Token, ASSOCIATED_TOKEN_PROGRAM_ID, AccountInfo as TokenAccountInfo, u64 } from '@solana/spl-token';
 import { expect } from "chai";

@@ -69,7 +69,7 @@ $$
 $$
 
 ```js
-import { ExponentialCurveConfig } from "@wum.bo/spl-token-bonding";
+import { ExponentialCurveConfig } from "@strata-foundation/spl-token-bonding";
 ```
 
 ```js async name=curve
@@ -96,7 +96,7 @@ t_1 = S^2
 $$
 
 ```js
-import { ExponentialCurveConfig, TimeCurveConfig } from "@wum.bo/spl-token-bonding";
+import { ExponentialCurveConfig, TimeCurveConfig } from "@strata-foundation/spl-token-bonding";
 ```
 
 ```js async
@@ -127,7 +127,7 @@ var timeCurveAcct = await tokenBondingSdk.account.curveV0.fetch(timeCurve);
 Using our curve from above, let's create a simple bonding curve against SOL:
 
 ```js
-import { getAssociatedAccountBalance } from "@wum.bo/spl-utils";
+import { getAssociatedAccountBalance } from "@strata-foundation/spl-utils";
 import { PublicKey } from "@solana/web3.js";
 ```
 

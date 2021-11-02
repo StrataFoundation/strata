@@ -1,19 +1,19 @@
-import * as anchor from "@wum.bo/anchor";
+import * as anchor from "@project-serum/anchor";
 import { Keypair, PublicKey, Transaction, sendAndConfirmTransaction } from "@solana/web3.js";
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
 import { SplTokenCollective } from "../packages/spl-token-collective";
-import { SplTokenBonding } from "@wum.bo/spl-token-bonding";
+import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import { PeriodUnit, SplTokenStaking } from "../packages/spl-token-staking/dist/lib";
-import { decodeMetadata, percent } from "@wum.bo/spl-utils";
+import { decodeMetadata, percent } from "@strata-foundation/spl-utils";
 import { SplTokenAccountSplit } from "../packages/spl-token-account-split/src";
 import { Token } from "@solana/spl-token";
 import { TokenUtils } from "./utils/token";
 import { createMint } from "@project-serum/common";
-import { createNameRegistry, getHashedName, getNameAccountKey, NameRegistryState } from "@solana/spl-name-service";
-import { BN, IdlTypes } from "@wum.bo/anchor";
-import { getMetadata } from "@wum.bo/spl-utils";
-import { ExponentialCurveConfig } from "@wum.bo/spl-token-bonding";
+import { createNameRegistry, getHashedName, getNameAccountKey, NameRegistryState } from "@bonfida/spl-name-service";
+import { BN, IdlTypes } from "@project-serum/anchor";
+import { getMetadata } from "@strata-foundation/spl-utils";
+import { ExponentialCurveConfig } from "@strata-foundation/spl-token-bonding";
 
 use(ChaiAsPromised);
 

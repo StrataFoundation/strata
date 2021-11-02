@@ -1,4 +1,4 @@
-import * as anchor from "@wum.bo/anchor";
+import * as anchor from "@project-serum/anchor";
 import {
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
@@ -10,10 +10,10 @@ import {
 } from "@solana/web3.js";
 import { getMintInfo, createMintInstructions } from "@project-serum/common";
 import BN from "bn.js";
-import { Program, Provider } from "@wum.bo/anchor";
+import { Program, Provider } from "@project-serum/anchor";
 import { PeriodUnit, SplTokenStakingIDL, TokenStakingV0 } from "./generated/spl-token-staking";
 import { MintInfo, TOKEN_PROGRAM_ID, Token, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { InstructionResult, sendInstructions } from "@wum.bo/spl-utils";
+import { InstructionResult, sendInstructions } from "@strata-foundation/spl-utils";
 
 export * from "./generated/spl-token-staking";
 

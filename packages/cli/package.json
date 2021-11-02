@@ -1,5 +1,5 @@
 {
-    "name": "@wum.bo/cli",
+    "name": "@strata-foundation/cli",
     "publishConfig": {
         "access": "restricted",
         "registry": "https://registry.npmjs.org/"
@@ -8,7 +8,7 @@
     "description": "Bootstrapping wumbo",
     "repository": {
         "type": "git",
-        "url": "https://github.com/ChewingGlassFund/wumbo-programs"
+        "url": "https://github.com/StrataFoundation/strata"
     },
     "files": [
         "dist/lib/**/*"
@@ -20,12 +20,12 @@
     },
     "dependencies": {
         "@project-serum/common": "^0.0.1-beta.3",
-        "@solana/web3.js": "^1.24.1",
-        "@wum.bo/spl-token-account-split": "^0.2.0",
-        "@wum.bo/spl-token-bonding": "^0.2.0",
-        "@wum.bo/spl-token-collective": "^0.2.0",
-        "@wum.bo/spl-token-staking": "^0.2.0",
-        "@wum.bo/spl-utils": "^0.2.0",
+        "@solana/web3.js": "^1.29.2",
+        "@strata-foundation/spl-token-account-split": "^0.2.0",
+        "@strata-foundation/spl-token-bonding": "^0.2.0",
+        "@strata-foundation/spl-token-collective": "^0.2.0",
+        "@strata-foundation/spl-token-staking": "^0.2.0",
+        "@strata-foundation/spl-utils": "^0.2.0",
         "bn.js": "^5.2.0",
         "copyfiles": "^2.4.1",
         "semver": "^7.3.5"

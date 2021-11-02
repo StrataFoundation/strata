@@ -1,10 +1,10 @@
-import * as anchor from '@wum.bo/anchor';
+import * as anchor from '@project-serum/anchor';
 import { SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Account, PublicKey, SystemProgram, Transaction, TransactionInstruction, Signer } from '@solana/web3.js';
 import { createMint, createMintInstructions, createTokenAccount, token } from "@project-serum/common"
 import { TOKEN_PROGRAM_ID, Token, ASSOCIATED_TOKEN_PROGRAM_ID, AccountInfo as TokenAccountInfo, u64 } from '@solana/spl-token';
-import { BN, Provider, Program } from '@wum.bo/anchor';
+import { BN, Provider, Program } from '@project-serum/anchor';
 import { expect, use } from "chai";
-import { PeriodUnit, SplTokenStaking, StakingVoucherV0, TokenStakingV0 } from "@wum.bo/spl-token-staking";
+import { PeriodUnit, SplTokenStaking, StakingVoucherV0, TokenStakingV0 } from "@strata-foundation/spl-token-staking";
 import { TokenUtils } from './utils/token';
 import ChaiAsPromised from "chai-as-promised";
 import { waitForUnixTime } from './utils/clock';

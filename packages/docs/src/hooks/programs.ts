@@ -2,8 +2,8 @@ import { useAsync } from "react-async-hook";
 import { useProvider } from "./provider";
 
 import { Provider } from "@project-serum/anchor";
-import { SplTokenBonding } from "@wum.bo/spl-token-bonding";
-import { SplTokenCollective } from "@wum.bo/spl-token-collective";
+import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
+import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
 
 export type Programs = {
   tokenBondingSdk?: SplTokenBonding;

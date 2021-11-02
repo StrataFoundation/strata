@@ -9,18 +9,17 @@ import React from 'react';
 import AsyncButton from './AsyncButton';
 import { usePrograms } from '../../hooks/programs';
 import { BN } from "bn.js";
-import { SplTokenBonding } from "@wum.bo/spl-token-bonding";
-import { SplTokenCollective } from "@wum.bo/spl-token-collective";
-import { getAssociatedAccountBalance } from "@wum.bo/spl-utils";
-import { ExponentialCurveConfig, TimeCurveConfig } from "@wum.bo/spl-token-bonding";
-import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
+import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
+import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
+import { getAssociatedAccountBalance } from "@strata-foundation/spl-utils";
+import { ExponentialCurveConfig, TimeCurveConfig } from "@strata-foundation/spl-token-bonding";
+// import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, AccountLayout } from "@solana/spl-token";
-import { sendMultipleInstructions } from "@wum.bo/spl-utils";
-import { createNameRegistry, getHashedName, getNameAccountKey, NameRegistryState } from "@solana/spl-name-service";
+import { sendMultipleInstructions } from "@strata-foundation/spl-utils";
+import { createNameRegistry, getHashedName, getNameAccountKey, NameRegistryState } from "@bonfida/spl-name-service";
 
 // Add react-live imports you need here
 const ReactLiveScope = {
-  Keypair,
   sendMultipleInstructions,
   createNameRegistry,
   getHashedName,
@@ -33,12 +32,13 @@ const ReactLiveScope = {
   usePrograms,
   BN,
   SplTokenBonding,
-  PublicKey,
+  // Keypair,
+  // PublicKey,
+  // Transaction,
   SplTokenCollective,
   getAssociatedAccountBalance,
   ExponentialCurveConfig,
   TimeCurveConfig,
-  Transaction,
   ...React,
 };
 

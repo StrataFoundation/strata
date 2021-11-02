@@ -1,4 +1,4 @@
-import * as anchor from "@wum.bo/anchor";
+import * as anchor from "@project-serum/anchor";
 import {
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
@@ -19,7 +19,7 @@ import {
   getTokenAccount,
 } from "@project-serum/common";
 import BN, { max, min } from "bn.js";
-import { Program, IdlTypes, TypesCoder, Provider, IdlAccounts } from "@wum.bo/anchor";
+import { Program, IdlTypes, Provider, IdlAccounts } from "@project-serum/anchor";
 import {
   SplTokenBondingIDL,
   TokenBondingV0,
@@ -37,8 +37,8 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { amountAsNum, asDecimal, Curve, fromCurve } from "./curves";
-import { createMetadata, Data, InstructionResult, percent, sendInstructions } from "@wum.bo/spl-utils";
-import { TypeDef } from "@wum.bo/anchor/dist/cjs/program/namespace/types";
+import { createMetadata, Data, InstructionResult, percent, sendInstructions } from "@strata-foundation/spl-utils";
+import { TypeDef } from "@project-serum/anchor/dist/cjs/program/namespace/types";
 
 export * from "./generated/spl-token-bonding";
 export * from "./curves";
@@ -244,7 +244,7 @@ export class SplTokenBonding {
 
   static async init(provider: Provider, splTokenBondingProgramId: PublicKey = SplTokenBonding.ID): Promise<SplTokenBonding> {
     const SplTokenBondingIDLJson = await anchor.Program.fetchIdl(splTokenBondingProgramId, provider);
-    const splTokenBonding = new anchor.Program(SplTokenBondingIDLJson!, splTokenBondingProgramId, provider) as anchor.Program<SplTokenBondingIDL>;
+    const splTokenBonding = new anchor.Program<SplTokenBondingIDL>(SplTokenBondingIDLJson as SplTokenBondingIDL, splTokenBondingProgramId, provider) as anchor.Program<SplTokenBondingIDL>;
 
     return new this(provider, splTokenBonding);
   }
@@ -687,13 +687,13 @@ export class SplTokenBonding {
     instructions.push(
       await this.instruction.initializeTokenBondingV0(
         {
-          index,
+          index: indexToUse,
           goLiveUnixTime: new BN(Math.floor(goLiveDate.valueOf() / 1000)),
           freezeBuyUnixTime: freezeBuyDate ? new BN(Math.floor(freezeBuyDate.valueOf() / 1000)) : null,
-          buyBaseRoyaltyPercentage: percent(buyBaseRoyaltyPercentage),
-          buyTargetRoyaltyPercentage: percent(buyTargetRoyaltyPercentage),
-          sellBaseRoyaltyPercentage: percent(sellBaseRoyaltyPercentage),
-          sellTargetRoyaltyPercentage: percent(sellTargetRoyaltyPercentage),
+          buyBaseRoyaltyPercentage: percent(buyBaseRoyaltyPercentage) || 0,
+          buyTargetRoyaltyPercentage: percent(buyTargetRoyaltyPercentage) || 0,
+          sellBaseRoyaltyPercentage: percent(sellBaseRoyaltyPercentage) || 0,
+          sellTargetRoyaltyPercentage: percent(sellTargetRoyaltyPercentage) || 0,
           mintCap: mintCap || null,
           purchaseCap: purchaseCap || null,
           tokenBondingAuthority: authority,

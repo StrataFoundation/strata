@@ -123,7 +123,7 @@ export default ({ code, scope, name, deps }) => {
     { (!tokenBondingSdk || !tokenCollectiveSdk) && <div>Loading SDK...</div>}
     {loading && !runningThisCommand && <div>Running previous commands...</div>}
     {loading && runningThisCommand && <div>Loading...</div>}
-    {!fullLoading && <ReactJson collapsed={1} displayDataTypes={false} name={false} src={recursiveTransformBN(variables || {})} /> }
+    {!fullLoading && <ReactJson theme="bright:inverted" collapsed={1} displayDataTypes={false} name={false} src={recursiveTransformBN(variables || {})} /> }
     { connected && <button
       disabled={fullLoading}
       className={styles.runButton}

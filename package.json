@@ -1,5 +1,5 @@
 {
-  "name": "@wum.bo/wumbo-programs",
+  "name": "@strata-foundation/strata",
   "version": "1.0.0",
   "private": true,
   "workspaces": [
@@ -13,7 +13,7 @@
     "@types/chai": "^4.2.21",
     "@types/chai-as-promised": "^7.1.4",
     "@types/mocha": "^9.0.0",
-    "@wum.bo/anchor": "^0.17.0",
+    "@project-serum/anchor": "^0.18.0",
     "camelcase": "^6.2.0",
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
@@ -25,13 +25,14 @@
   },
   "scripts": {
     "watch": "lerna run --parallel watch",
-    "bootstrap": "lerna run bootstrap --scope @wum.bo/cli",
+    "bootstrap": "lerna run bootstrap --scope @strata-foundation/cli",
     "test": "ts-mocha -p ./tsconfig.json -t 1000000 \"tests/**/*.ts\""
   },
   "dependencies": {
+    "@solana/web3.js": "^1.29.2",
     "@project-serum/common": "^0.0.1-beta.3",
     "@solana/buffer-layout": "^3.0.0",
-    "@solana/spl-name-service": "^0.1.3",
+    "@bonfida/spl-name-service": "^0.1.22",
     "@solana/spl-token": "^0.1.8",
     "quicktype-core": "^6.0.70"
   }

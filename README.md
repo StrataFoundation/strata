@@ -31,7 +31,7 @@ anchor run build-deps
 
 ## TODO
 
-We should probably eventually change from @wum.bo/anchor, which is using code from https://github.com/project-serum/anchor/pull/537.
+We should probably eventually change from @project-serum/anchor, which is using code from https://github.com/project-serum/anchor/pull/537.
 
 
 # On Initializing vs Passing

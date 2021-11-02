@@ -182,7 +182,7 @@ Now, let's add an unclaimed token to the collective. You can read more about unc
 First, create a testing name. Note that the name does not have to exist yet for us to create a token:
 
 ```js
-import { createNameRegistry, getHashedName, getNameAccountKey, NameRegistryState } from "@solana/spl-name-service";
+import { createNameRegistry, getHashedName, getNameAccountKey, NameRegistryState } from "@bonfida/spl-name-service";
 import { Keypair } from "@solana/web3.js";
 ```
 

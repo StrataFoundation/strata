@@ -1,5 +1,5 @@
 {
-  "name": "@wum.bo/spl-token-collective",
+  "name": "@strata-foundation/spl-token-collective",
   "version": "0.2.0",
   "description": "Interface to the spl-token-collective smart contract",
   "publishConfig": {
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ChewingGlassFund/wumbo-programs"
+    "url": "https://github.com/StrataFoundation/strata"
   },
   "main": "dist/lib/index.js",
   "types": "dist/lib/index.d.ts",
@@ -25,13 +25,13 @@
     "style": "prettier --write \"src/**/*.{ts,tsx}\""
   },
   "dependencies": {
-    "@bonfida/spl-name-service": "^0.1.14",
+    "@bonfida/spl-name-service": "^0.1.22",
     "@project-serum/common": "^0.0.1-beta.3",
-    "@solana/web3.js": "^1.24.1",
-    "@wum.bo/spl-token-account-split": "^0.2.0",
-    "@wum.bo/spl-token-bonding": "^0.2.0",
-    "@wum.bo/spl-token-staking": "^0.2.0",
-    "@wum.bo/spl-utils": "^0.2.0",
+    "@solana/web3.js": "^1.29.2",
+    "@strata-foundation/spl-token-account-split": "^0.2.0",
+    "@strata-foundation/spl-token-bonding": "^0.2.0",
+    "@strata-foundation/spl-token-staking": "^0.2.0",
+    "@strata-foundation/spl-utils": "^0.2.0",
     "bn.js": "^5.2.0",
     "copyfiles": "^2.4.1"
   },

@@ -1,5 +1,5 @@
 {
-    "name": "@wum.bo/spl-token-staking",
+    "name": "@strata-foundation/spl-token-staking",
     "version": "0.2.0",
     "publishConfig": {
         "access": "restricted",
@@ -8,7 +8,7 @@
     "description": "Interface to the spl-token-staking smart contract",
     "repository": {
         "type": "git",
-        "url": "https://github.com/ChewingGlassFund/wumbo"
+        "url": "https://github.com/StrataFoundation/wumbo"
     },
     "main": "dist/lib/index.js",
     "types": "dist/lib/index.d.ts",
@@ -25,8 +25,8 @@
     },
     "dependencies": {
         "@project-serum/common": "^0.0.1-beta.3",
-        "@solana/web3.js": "^1.24.1",
-        "@wum.bo/spl-utils": "^0.2.0",
+        "@solana/web3.js": "^1.29.2",
+        "@strata-foundation/spl-utils": "^0.2.0",
         "bn.js": "^5.2.0",
         "semver": "^7.3.5"
     },

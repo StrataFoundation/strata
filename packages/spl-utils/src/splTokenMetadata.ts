@@ -1,4 +1,4 @@
-import { Provider } from "@wum.bo/anchor";
+import { Provider } from "@project-serum/anchor";
 import { ARWEAVE_UPLOAD_URL, getFilesWithMetadata, prepPayForFilesInstructions, uploadToArweave } from "./arweave";
 import { createMetadata, Creator, Data, MetadataCategory } from "./metadata";
 import { PublicKey, Connection, TransactionInstruction, Signer, Transaction, Account } from "@solana/web3.js";

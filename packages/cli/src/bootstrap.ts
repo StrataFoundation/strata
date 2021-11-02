@@ -1,8 +1,8 @@
-import * as anchor from "@wum.bo/anchor";
+import * as anchor from "@project-serum/anchor";
 import { Transaction, PublicKey, Keypair } from "@solana/web3.js";
-import { createMetadata, Data, getMetadata, percent, TOKEN_PROGRAM_ID } from "@wum.bo/spl-utils";
-import { SplTokenBonding, SplTokenBondingIDL, SplTokenBondingIDLJson, ExponentialCurveConfig } from "@wum.bo/spl-token-bonding";
-import { SplTokenCollective, SplTokenCollectiveIDL, SplTokenCollectiveIDLJson } from "@wum.bo/spl-token-collective";
+import { createMetadata, Data, getMetadata, percent, TOKEN_PROGRAM_ID } from "@strata-foundation/spl-utils";
+import { SplTokenBonding, SplTokenBondingIDL, SplTokenBondingIDLJson, ExponentialCurveConfig } from "@strata-foundation/spl-token-bonding";
+import { SplTokenCollective, SplTokenCollectiveIDL, SplTokenCollectiveIDLJson } from "@strata-foundation/spl-token-collective";
 import { createMintInstructions } from "@project-serum/common";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token } from "@solana/spl-token";
 import fs from "fs";

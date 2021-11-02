@@ -1,4 +1,4 @@
-import { Provider } from "@wum.bo/anchor";
+import { Provider } from "@project-serum/anchor";
 import { ProgramError } from "./error";
 import {
   PublicKey,

@@ -1,12 +1,12 @@
-import * as anchor from '@wum.bo/anchor';
+import * as anchor from '@project-serum/anchor';
 import { SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Account, PublicKey, SystemProgram, Transaction, TransactionInstruction, Signer } from '@solana/web3.js';
 import { getMintInfo, createMintInstructions, createTokenAccountInstrs, getTokenAccount } from "@project-serum/common";
 import BN from "bn.js"
-import { Program, Provider } from '@wum.bo/anchor';
+import { Program, Provider } from '@project-serum/anchor';
 import { SplTokenAccountSplitIDL, TokenAccountSplitV0 } from './generated/spl-token-account-split';
 import { MintInfo, TOKEN_PROGRAM_ID, Token, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { SplTokenStaking } from '@wum.bo/spl-token-staking';
-import { InstructionResult, sendInstructions } from '@wum.bo/spl-utils';
+import { SplTokenStaking } from '@strata-foundation/spl-token-staking';
+import { InstructionResult, sendInstructions } from '@strata-foundation/spl-utils';
 export * from "./generated/spl-token-account-split";
 
 interface CreateTokenAccountSplitArgs {

@@ -1,15 +1,15 @@
-import * as anchor from "@wum.bo/anchor";
+import * as anchor from "@project-serum/anchor";
 import { sendAndConfirmTransaction, Transaction, PublicKey, Keypair } from "@solana/web3.js";
 import { createMint } from "@project-serum/common";
 import { NATIVE_MINT, AccountInfo as TokenAccountInfo, u64 } from "@solana/spl-token";
-import { BN, ProgramError } from "@wum.bo/anchor";
+import { BN, ProgramError } from "@project-serum/anchor";
 import { expect, use } from "chai";
 import { TokenUtils } from "./utils/token";
 import ChaiAsPromised from "chai-as-promised";
 import { waitForUnixTime } from './utils/clock';
 
 import { ExponentialCurve, ExponentialCurveConfig, SplTokenBonding, TimeCurveConfig, TokenBondingV0 } from "../packages/spl-token-bonding/src";
-import { Curves } from "@wum.bo/spl-token-bonding";
+import { Curves } from "@strata-foundation/spl-token-bonding";
 
 use(ChaiAsPromised);
 

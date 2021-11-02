@@ -1,7 +1,7 @@
-import * as anchor from "@wum.bo/anchor";
+import * as anchor from "@project-serum/anchor";
 import BN from "bn.js";
-import { IdlTypes, Program, Provider } from "@wum.bo/anchor";
-import { createMetadata, Data, SplTokenMetadata, decodeMetadata, METADATA_PROGRAM_ID, extendBorsh, InstructionResult, BigInstructionResult, sendInstructions, sendMultipleInstructions, ICreateArweaveUrlArgs, updateMetadata, percent } from "@wum.bo/spl-utils";
+import { IdlTypes, Program, Provider } from "@project-serum/anchor";
+import { createMetadata, Data, SplTokenMetadata, decodeMetadata, METADATA_PROGRAM_ID, extendBorsh, InstructionResult, BigInstructionResult, sendInstructions, sendMultipleInstructions, ICreateArweaveUrlArgs, updateMetadata, percent } from "@strata-foundation/spl-utils";
 import { createMintInstructions } from "@project-serum/common";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import {
@@ -13,7 +13,7 @@ import {
   TransactionInstruction,
 } from "@solana/web3.js";
 import { SplTokenCollectiveIDL, } from "./generated/spl-token-collective";
-import { SplTokenBonding, CreateTokenBondingArgs } from "@wum.bo/spl-token-bonding";
+import { SplTokenBonding, CreateTokenBondingArgs } from "@strata-foundation/spl-token-bonding";
 
 export * from "./generated/spl-token-collective";
 
@@ -322,6 +322,7 @@ export class SplTokenCollective {
 
     instructions.push(
       await this.instruction.initializeCollectiveV0(
+        // @ts-ignore
         {
           authority: authority ? authority : null,
           bumpSeed: collectiveBump,

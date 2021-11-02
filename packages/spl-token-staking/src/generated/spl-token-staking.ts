@@ -1,4 +1,4 @@
-import { IdlAccounts, Idl } from '@wum.bo/anchor';
+import { IdlAccounts, Idl } from '@project-serum/anchor';
 export const SplTokenStakingIDLJson: Idl & { metadata?: { address: string } } = {
   "version": "0.0.0",
   "name": "spl_token_staking",

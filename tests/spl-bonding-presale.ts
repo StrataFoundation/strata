@@ -1,11 +1,11 @@
-import * as anchor from "@wum.bo/anchor";
+import * as anchor from "@project-serum/anchor";
 import { expect, use } from "chai";
 import { TokenUtils } from "./utils/token";
 import ChaiAsPromised from "chai-as-promised";
 
 import { asDecimal, ExponentialCurveConfig, SplTokenBonding } from "../packages/spl-token-bonding/src";
 import { SplBondingPresale } from "../packages/spl-bonding-presale/src";
-import { BN } from "@wum.bo/anchor";
+import { BN } from "@project-serum/anchor";
 import { PublicKey } from "@solana/web3.js";
 import { NATIVE_MINT } from "@solana/spl-token";
 import { waitForUnixTime } from './utils/clock';

@@ -13,7 +13,7 @@ Every smart contract on Strata comes with an SDK. The two main smart contracts a
 Let's get started by installing the sdks
 
 ```bash
-yarn add @wum.bo/spl-collective @wum.bo/spl-token-bonding
+yarn add @strata-foundation/spl-collective @strata-foundation/spl-token-bonding
 ```
 
 Now, we can initialize the sdks:
@@ -22,9 +22,9 @@ Now, we can initialize the sdks:
 import { PublicKey } from "@solana/web3.js"
 import * as anchor from "@project-serum/anchor";
 import { BN } from "bn.js";
-import { SplTokenBonding } from "@wum.bo/spl-token-bonding";
-import { SplTokenCollective } from "@wum.bo/spl-token-collective";
-import { getAssociatedAccountBalance } from "@wum.bo/spl-utils";
+import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
+import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
+import { getAssociatedAccountBalance } from "@strata-foundation/spl-utils";
 
 anchor.setProvider(anchor.Provider.local());
 const provider = anchor.getProvider();
