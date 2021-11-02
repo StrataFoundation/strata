@@ -11,6 +11,8 @@
   "author": "Wum.bo Inc.",
   "devDependencies": {
     "@project-serum/anchor": "^0.18.0",
+    "@parcel/packager-ts": "^2.0.0",
+    "@parcel/transformer-typescript-types": "^2.0.0",
     "@types/chai": "^4.2.21",
     "@types/chai-as-promised": "^7.1.4",
     "@types/mocha": "^9.0.0",
