@@ -34,6 +34,7 @@
     "buffer": "^6.0.3",
     "clsx": "^1.1.1",
     "crypto-browserify": "^3.12.0",
+    "ecdh": "^0.1.1",
     "esprima": "^4.0.1",
     "file-loader": "^6.2.0",
     "gatsby-remark-plantuml": "^0.7.0",
