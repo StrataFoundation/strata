@@ -681,10 +681,16 @@ export class SplTokenCollective {
     const instructions2: TransactionInstruction[] = [];
     const tokenBondingSettings = owner ? config.claimedTokenBondingSettings : config.unclaimedTokenBondingSettings;
     const signers2: Signer[] = [];
+    const curveToUse = (curve || (!owner && collectiveAcct.config.unclaimedTokenBondingSettings?.curve) || (owner && collectiveAcct.config.claimedTokenBondingSettings?.curve) || collectiveAcct.config.unclaimedTokenBondingSettings?.curve || collectiveAcct.config.claimedTokenBondingSettings?.curve)!;
+
+    if (!curveToUse) {
+      throw new Error("No curve provided");
+    }
+    
     const { instructions: bondingInstructions, signers: bondingSigners, output: { tokenBonding, buyBaseRoyalties, buyTargetRoyalties, sellBaseRoyalties, sellTargetRoyalties } } = await this.splTokenBondingProgram.createTokenBondingInstructions({
       payer,
       // @ts-ignore
-      curve: (curve || (!owner && collectiveAcct.config.unclaimedTokenBondingSettings?.curve) || (owner && collectiveAcct.config.claimedTokenBondingSettings?.curve) || collectiveAcct.config.unclaimedTokenBondingSettings?.curve || collectiveAcct.config.claimedTokenBondingSettings?.curve)!,
+      curve: curveToUse,
       baseMint: collectiveAcct.mint,
       targetMint,
       authority: tokenBondingAuthority,

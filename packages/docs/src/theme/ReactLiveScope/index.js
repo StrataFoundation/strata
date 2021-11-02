@@ -16,10 +16,15 @@ import { ExponentialCurveConfig, TimeCurveConfig } from "@wum.bo/spl-token-bondi
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, AccountLayout } from "@solana/spl-token";
 import { sendMultipleInstructions } from "@wum.bo/spl-utils";
+import { createNameRegistry, getHashedName, getNameAccountKey, NameRegistryState } from "@solana/spl-name-service";
 
 // Add react-live imports you need here
 const ReactLiveScope = {
   sendMultipleInstructions,
+  createNameRegistry,
+  getHashedName,
+  getNameAccountKey,
+  NameRegistryState,
   React,
   AccountLayout,
   TOKEN_PROGRAM_ID,

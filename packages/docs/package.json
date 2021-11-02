@@ -15,6 +15,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@akebifiky/remark-simple-plantuml": "^1.0.2",
     "@docusaurus/core": "2.0.0-beta.8",
     "@docusaurus/preset-classic": "2.0.0-beta.8",
     "@docusaurus/theme-live-codeblock": "^2.0.0-beta.8",
@@ -34,6 +35,7 @@
     "crypto-browserify": "^3.12.0",
     "esprima": "^4.0.1",
     "file-loader": "^6.2.0",
+    "gatsby-remark-plantuml": "^0.7.0",
     "hast-util-is-element": "1.1.0",
     "os-browserify": "^0.3.0",
     "path-browserify": "^1.0.1",
