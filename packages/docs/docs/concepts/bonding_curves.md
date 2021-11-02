@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Bonding Curves
 
-At the heart of this protocol is the ability to buy and sell a new token without a liquidity provider. This is accomplished via a Bonding Curve. A Bonding Curve is an Automated Market Maker (AMM) that sets the price of a token relative to the supply of that token. 
+At the heart of Strata is the ability to buy and sell a new token without a liquidity provider. This is accomplished via a Bonding Curve. A Bonding Curve is an Automated Market Maker (AMM) that sets the price of a token relative to the supply of that token. 
 
 Every bonding curve consists of a `Base` Token and a `Target` token. The `Base` token is the token we set the price relative to, the `Target` token is the token the Automated Market Maker sells.
 

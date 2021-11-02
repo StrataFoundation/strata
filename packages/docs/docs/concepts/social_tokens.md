@@ -12,12 +12,15 @@ A social token is actually like one large join-table. It is the intersection of
   * Token metadata (name, symbol, etc)
   * A bonding curve for that token
 
-As such, the protocol has no SocialToken struct; as the token itself is the Social Token. Instead, the protocol has a `TokenRef`. The following [Entity Relationship Diagram (ERD)](https://plantuml.com/ie-diagram) shows the state structures on chain 
+
+## State
+
+Strata has no SocialToken struct; as the token itself is the Social Token. Instead, strata has a `TokenRef`. The following [Entity Relationship Diagram (ERD)](https://plantuml.com/ie-diagram) shows the state structures on chain 
 
 ```plantuml
 @startuml
 entity Curve {
-  config
+  definition
 }
 
 entity Collective {
@@ -32,6 +35,12 @@ entity Mint {
   supply
   mint_authority
   freeze_authority
+}
+
+entity TokenAccount {
+  owner
+  amount
+  mint
 }
 
 entity Wallet {
@@ -56,14 +65,20 @@ entity Name {
   ["SPL Name Service", name_class, name_parent]
   --
   owner
+  class
+  parent
 }
 
 entity TokenBonding {
   ["token-bonding", target_mint, index (0 = default)]
   --
   curve
-  royalties
   authority
+  base_storage
+  buy_base_royalties
+  buy_target_royalties
+  sell_base_royalties
+  sell_target_royalties
   base_storage
   ...
 }
@@ -77,6 +92,13 @@ Wallet ||--o{ Name
 TokenBonding ||--|| Curve
 TokenBonding |o--|| Mint : base
 TokenBonding |o--|| Mint : target (PDA)
+TokenBonding |o--|| TokenAccount : buy base royalties
+TokenBonding |o--|| TokenAccount : buy target royalties
+TokenBonding |o--|| TokenAccount : sell base royalties
+TokenBonding |o--|| TokenAccount : sell target royalties
+TokenBonding |o--|| TokenAccount : base storage
+TokenAccount ||--|| Mint
+Name |o--o| Name : parent
 ```
 
 # Creation
@@ -98,6 +120,14 @@ var curve = await tokenBondingSdk.initializeCurve({
 
 // Create a collective around the Target of the above token bonding
 var { collective, tokenBonding } = await tokenCollectiveSdk.createCollective({
+  // Commented to avoid uploading to arweave. You should always include this.
+  // metadata: {
+  //   name: "My Collective",
+  //   symbol: "tCOLL", 
+  //   image: "https://ibb.co/sRpBwYh",
+  //   // Because this is dev, we need to provide the metaplex dev upload file url
+  //   uploadUrl: "https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2"
+  // },
   bonding: {
     curve,
     baseMint: new PublicKey("So11111111111111111111111111111111111111112"),
@@ -109,10 +139,17 @@ var { collective, tokenBonding } = await tokenCollectiveSdk.createCollective({
   },
   authority: publicKey,
   config: {
-    isOpen: true
+    isOpen: true,
+    unclaimedTokenBondingSettings: {
+      buyTargetRoyalties: {
+        // This account is owned by the name service name, and will be transferred to the person who claims this token
+        ownedByName: true
+      }
+    }
   }
 });
 
+var collectiveTokenBonding = tokenBonding;
 var collectiveAcct = await tokenCollectiveSdk.account.collectiveV0.fetch(collective);
 var collectiveBondingAcct = await tokenBondingSdk.account.tokenBondingV0.fetch(tokenBonding);
 ```
@@ -142,15 +179,18 @@ var tokenRefAcct = await tokenCollectiveSdk.account.tokenRefV0.fetch(tokenRef);
 
 Now, let's add an unclaimed token to the collective. You can read more about unclaimed tokens in [collectives](./collectives)
 
-First, create a testing top level domain. Note that the name does not have to exist yet for us to create a token:
+First, create a testing name. Note that the name does not have to exist yet for us to create a token:
 
 ```js
 import { createNameRegistry, getHashedName, getNameAccountKey, NameRegistryState } from "@solana/spl-name-service";
+import { Keypair } from "@solana/web3.js";
 ```
 
 ```js async name=name
-var nameStr = "test-" + publicKey.toBase58();
-var hashedName = await getHashedName(name);
+var nameOwner = Keypair.generate();
+var nameStr = "test-" + nameOwner.publicKey.toBase58();
+var hashedName = await getHashedName(nameStr);
+// Create a name with our wallet as the name class
 var name = await getNameAccountKey(hashedName, publicKey)
 ```
 
@@ -171,9 +211,10 @@ var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
     sellTargetRoyaltyPercentage: 0
   }
 });
+var tokenBondingAcct = await tokenBondingSdk.account.tokenBondingV0.fetch(tokenBonding);
 ```
 
-Now, let's create the name with ourselves as the owner
+Now, let's create the name with the new wallet as the owner
 ```js async name=create_name deps=name
 if (!(await connection.getAccountInfo(name))) {
   var nameTx = new Transaction()
@@ -183,11 +224,49 @@ if (!(await connection.getAccountInfo(name))) {
       nameStr,
       NameRegistryState.HEADER_LEN,
       publicKey, // payer
-      publicKey, // owner
+      nameOwner.publicKey, // owner
       10000000,
       publicKey // class
     )
   )
-  await provider.send(nameTx);
+  var txid = await provider.send(nameTx);
 }
+```
+
+Buy some of the unclaimed coin. This should result in 5% royalties accumulated into a temporary account. Here we can use the Instructions modifier to group these buy calls together:
+
+```js async name=buy deps=unclaimed
+var { instructions, signers } = await tokenBondingSdk.buyInstructions({
+  tokenBonding: collectiveTokenBonding,
+  desiredTargetAmount: 10,
+  slippage: 0.05
+});
+var { instructions: sellInstructions, signers: sellSigners } = await tokenBondingSdk.buyInstructions({
+  tokenBonding: tokenBonding,
+  baseAmount: 10,
+  slippage: 0.05
+});
+var tx = new Transaction();
+tx.add(...instructions, ...sellInstructions);
+await provider.send(tx, [...signers, ...sellSigners]);
+var royaltiesBalance = (await connection.getTokenAccountBalance(tokenBondingAcct.buyTargetRoyalties)).value;
+```
+
+Now, let's have the user claim the social token. We should see the funds move to their Associated Token Account:
+
+:::tip Owned By Name
+When creating a collective that allows unclaimed tokens, be sure to include the `ownedByName` field in the royalties configuration for every account you want to transfer to the name owner.
+:::
+
+```js async name=claim deps=buy,create_name
+var { instructions, signers } = await tokenCollectiveSdk.claimSocialTokenInstructions({
+  tokenRef,
+  owner: nameOwner.publicKey,
+  symbol: "CLM",
+});
+var tx = new Transaction();
+tx.add(...instructions);
+await provider.send(tx, [nameOwner]);
+
+var balance = await getAssociatedAccountBalance(connection, nameOwner.publicKey, tokenBondingAcct.targetMint);
 ```

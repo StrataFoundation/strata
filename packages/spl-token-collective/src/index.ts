@@ -74,6 +74,7 @@ export interface ClaimSocialTokenArgs {
   buyTargetRoyalties?: PublicKey; // Defaults to ATA fo the owner
   sellBaseRoyalties?: PublicKey; // Defaults to ATA fo the owner
   sellTargetRoyalties?: PublicKey; // Defaults to ATA fo the owner
+  ignoreMissingName?: boolean; // Ignore missing name account, useful if you're creating the name in the same txn
 }
 
 export interface IRoyaltySetting {
@@ -398,12 +399,17 @@ export class SplTokenCollective {
     buyBaseRoyalties,
     buyTargetRoyalties,
     sellBaseRoyalties,
-    sellTargetRoyalties
+    sellTargetRoyalties,
+    ignoreMissingName
   }: ClaimSocialTokenArgs): Promise<InstructionResult<null>> {
     const tokenRefAcct = await this.account.tokenRefV0.fetch(tokenRef);
     const tokenBondingAcct = await this.splTokenBondingProgram.account.tokenBondingV0.fetch(tokenRefAcct.tokenBonding);
     const name = tokenRefAcct.name! as PublicKey;
     const instructions = [];
+
+    if (!ignoreMissingName && !(await this.splTokenBondingProgram.accountExists(name))) {
+      throw new Error("Name account does not exist");
+    }
 
     const defaultBaseRoyalties = await Token.getAssociatedTokenAddress(
       ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -494,6 +500,7 @@ export class SplTokenCollective {
       tokenRefBumpSeed,
     }, {
       accounts: {
+        payer,
         collective: tokenRefAcct.collective,
         tokenRef: tokenRef,
         newTokenRef,
@@ -506,7 +513,7 @@ export class SplTokenCollective {
         owner,
         baseMint: tokenBondingAcct.baseMint,
         targetMint: tokenBondingAcct.targetMint,
-        buyBaseRoyalties: tokenBondingAcct.sellBaseRoyalties,
+        buyBaseRoyalties: tokenBondingAcct.buyBaseRoyalties,
         buyTargetRoyalties: tokenBondingAcct.buyTargetRoyalties,
         sellBaseRoyalties: tokenBondingAcct.sellBaseRoyalties,
         sellTargetRoyalties: tokenBondingAcct.sellTargetRoyalties,
@@ -681,12 +688,13 @@ export class SplTokenCollective {
     const instructions2: TransactionInstruction[] = [];
     const tokenBondingSettings = owner ? config.claimedTokenBondingSettings : config.unclaimedTokenBondingSettings;
     const signers2: Signer[] = [];
+    // @ts-ignore
     const curveToUse = (curve || (!owner && collectiveAcct.config.unclaimedTokenBondingSettings?.curve) || (owner && collectiveAcct.config.claimedTokenBondingSettings?.curve) || collectiveAcct.config.unclaimedTokenBondingSettings?.curve || collectiveAcct.config.claimedTokenBondingSettings?.curve)!;
 
     if (!curveToUse) {
       throw new Error("No curve provided");
     }
-    
+
     const { instructions: bondingInstructions, signers: bondingSigners, output: { tokenBonding, buyBaseRoyalties, buyTargetRoyalties, sellBaseRoyalties, sellTargetRoyalties } } = await this.splTokenBondingProgram.createTokenBondingInstructions({
       payer,
       // @ts-ignore

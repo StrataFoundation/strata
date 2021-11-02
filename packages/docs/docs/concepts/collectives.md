@@ -65,7 +65,7 @@ Collectives contain a rich set of configuration. To understand the configuration
 
 ## Claimed vs Unclaimed Tokens
 
-A token can exist in either a claimed or unclaimed state. This allows the collective to create tokens for people that have not yet joined the protocol, and allow them to later claim the token and its associated royalties.
+A token can exist in either a claimed or unclaimed state. This allows the collective to create tokens for people that have not yet joined strata, and allow them to later claim the token and its associated royalties.
 
 ### Claimed Tokens
 

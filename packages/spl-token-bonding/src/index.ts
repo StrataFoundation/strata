@@ -581,6 +581,7 @@ export class SplTokenBonding {
       );
     }
 
+    let createdAccts: Set<string> = new Set()
     if (!buyTargetRoyalties) {
       buyTargetRoyalties = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -591,7 +592,7 @@ export class SplTokenBonding {
       );
 
       // If sell target royalties are undefined, we'll do this in the next step
-      if (sellTargetRoyalties && !(await this.accountExists(buyTargetRoyalties))) {
+      if (!createdAccts.has(buyTargetRoyalties.toBase58()) && !(await this.accountExists(buyTargetRoyalties))) {
         console.log("Creating buy target royalties...");
         instructions.push(
           Token.createAssociatedTokenAccountInstruction(
@@ -603,6 +604,7 @@ export class SplTokenBonding {
             payer
           )
         );
+        createdAccts.add(buyTargetRoyalties.toBase58());
       }
     }
 
@@ -615,7 +617,7 @@ export class SplTokenBonding {
         true
       );
 
-      if (!(await this.accountExists(sellTargetRoyalties))) {
+      if (!createdAccts.has(sellTargetRoyalties.toBase58()) && !(await this.accountExists(sellTargetRoyalties))) {
         console.log("Creating sell target royalties...");
         instructions.push(
           Token.createAssociatedTokenAccountInstruction(
@@ -627,6 +629,7 @@ export class SplTokenBonding {
             payer
           )
         );
+        createdAccts.add(buyTargetRoyalties.toBase58());
       }
     }
 
@@ -640,7 +643,7 @@ export class SplTokenBonding {
       );
 
       // If sell base royalties are undefined, we'll do this in the next step
-      if (sellBaseRoyalties && !(await this.accountExists(buyBaseRoyalties))) {
+      if (!createdAccts.has(buyBaseRoyalties.toBase58()) && !(await this.accountExists(buyBaseRoyalties))) {
         console.log("Creating base royalties...");
         instructions.push(
           Token.createAssociatedTokenAccountInstruction(
@@ -652,6 +655,7 @@ export class SplTokenBonding {
             payer
           )
         );
+        createdAccts.add(buyBaseRoyalties.toBase58());
       }
     }
 
@@ -664,7 +668,7 @@ export class SplTokenBonding {
         true
       );
 
-      if (!(await this.accountExists(sellBaseRoyalties))) {
+      if (!createdAccts.has(sellBaseRoyalties.toBase58()) && !(await this.accountExists(sellBaseRoyalties))) {
         console.log("Creating base royalties...");
         instructions.push(
           Token.createAssociatedTokenAccountInstruction(
@@ -676,6 +680,7 @@ export class SplTokenBonding {
             payer
           )
         );
+        createdAccts.add(sellBaseRoyalties.toBase58());
       }
     }
 

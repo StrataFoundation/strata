@@ -8,8 +8,8 @@ const plantuml = require("@akebifiky/remark-simple-plantuml");
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'Emergent',
-  tagline: 'Emergent Collectives',
+  title: 'Strata',
+  tagline: 'Strata Collectives',
   url: 'https://your-docusaurus-test-site.com',
   baseUrl: '/',
   onBrokenLinks: 'throw',
@@ -62,9 +62,9 @@ const config = {
         playgroundPosition: 'bottom',
       },
       navbar: {
-        title: 'My Site',
+        title: 'Strata',
         logo: {
-          alt: 'My Site Logo',
+          alt: 'Strata Logo',
           src: 'img/logo.svg',
         },
         items: [
@@ -125,7 +125,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Strata.`,
       },
       prism: {
         theme: lightCodeTheme,

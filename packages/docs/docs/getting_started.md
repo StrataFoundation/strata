@@ -4,11 +4,11 @@ sidebar_position: 1
 
 # Getting Started
 
-name Protocol lets you effortlessly create Social Tokens and communities of Social Tokens (Collectives) on Solana!
+Strata Protocol lets you effortlessly create Social Tokens and communities of Social Tokens (Collectives) on Solana!
 
 ## Initializing the SDK
 
-Every smart contract on name comes with an SDK for easy use. The two main smart contracts are spl-collective and spl-token-bonding.
+Every smart contract on Strata comes with an SDK for easy use. The two main smart contracts are spl-collective and spl-token-bonding.
 
 Let's get started by installing the sdks
 

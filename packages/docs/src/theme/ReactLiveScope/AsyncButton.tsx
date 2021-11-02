@@ -68,6 +68,7 @@ function recursiveTransformBN(args: any): Record<string, any> {
 
 export default ({ code, scope, name, deps }) => {
   const [loading, setLoading] = useState(false);
+  const [runningThisCommand, setRunningThisCommand] = useState(false);
   const  { register, execWithDeps } = useVariablesContext();
   const [variables, setVariables] = useState<any>(null);
   const [error, setError] = useState<Error>();
@@ -78,9 +79,7 @@ export default ({ code, scope, name, deps }) => {
 
   var vars = {}; // Outer variable, not stored.
   async function exec(globalVariables: any) {
-    setError(null);
-    setLoading(true);
-
+    setRunningThisCommand(true);
     try {
       const walletAcct = await connection.getAccountInfo(publicKey)
       if (!walletAcct || walletAcct.lamports < 500000000) {
@@ -93,10 +92,20 @@ export default ({ code, scope, name, deps }) => {
         ...globalVariables,
         ...vars,
       }
-    } catch (e) {
-      setError(e)
     } finally {
-      setLoading(false)
+      setRunningThisCommand(false);
+    }
+  }
+
+  async function wrappedExecWithDeps() {
+    setError(null);
+    setLoading(true);
+    try {
+      await execWithDeps(name);
+    } catch (e) {
+      setError(e);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -111,12 +120,14 @@ export default ({ code, scope, name, deps }) => {
   const fullLoading = loading || !tokenBondingSdk || !tokenCollectiveSdk
 
   return <div className={styles.container}>
-    {fullLoading && <div>Loading...</div>}
+    { (!tokenBondingSdk || !tokenCollectiveSdk) && <div>Loading SDK...</div>}
+    {loading && !runningThisCommand && <div>Running previous commands...</div>}
+    {loading && runningThisCommand && <div>Loading...</div>}
     {!fullLoading && <ReactJson collapsed={1} displayDataTypes={false} name={false} src={recursiveTransformBN(variables || {})} /> }
     { connected && <button
       disabled={fullLoading}
       className={styles.runButton}
-      onClick={() => execWithDeps(name)}
+      onClick={wrappedExecWithDeps}
     >
       <FaPlay className={styles.buttonIcon} /> Run
     </button> }

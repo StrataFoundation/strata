@@ -273,6 +273,7 @@ pub struct UpdateTokenBondingV0Wrapper<'info> {
 #[derive(Accounts)]
 #[instruction(args: ClaimSocialTokenV0Args)]
 pub struct ClaimSocialTokenV0<'info> {
+  pub payer: Signer<'info>,
   pub collective: Box<Account<'info, CollectiveV0>>,
   #[account(
     mut,
@@ -285,7 +286,7 @@ pub struct ClaimSocialTokenV0<'info> {
         name.key().as_ref()
     ],
     bump = token_ref.bump_seed,
-    close = owner
+    close = payer
   )]
   pub token_ref: Account<'info, TokenRefV0>,
   #[account(
@@ -296,7 +297,7 @@ pub struct ClaimSocialTokenV0<'info> {
         owner.key().as_ref()
     ],
     bump = args.token_ref_bump_seed,
-    payer = owner,
+    payer = payer,
     space = 512,
   )]
   pub new_token_ref: Box<Account<'info, TokenRefV0>>,
