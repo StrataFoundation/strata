@@ -12,9 +12,9 @@ import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { usePrograms } from '../../hooks/programs';
 import { parse } from "esprima";
 import BN from 'bn.js';
-import { load } from 'quicktype-core/dist/MarkovChain';
 import { useVariablesContext } from '../Root/variables';
 import { useProvider } from '@site/src/hooks/provider';
+import BrowserOnly from '@docusaurus/BrowserOnly';
 
 
 function wrapAndCollectVars(code: string, injectedVars): string {
@@ -66,7 +66,7 @@ function recursiveTransformBN(args: any): Record<string, any> {
   }, {} as Record<string, any>);
 }
 
-export default ({ code, scope, name, deps }) => {
+const AsyncButton = ({ code, scope, name, deps }) => {
   const [loading, setLoading] = useState(false);
   const [runningThisCommand, setRunningThisCommand] = useState(false);
   const  { register, execWithDeps } = useVariablesContext();
@@ -120,17 +120,17 @@ export default ({ code, scope, name, deps }) => {
   const fullLoading = loading || !tokenBondingSdk || !tokenCollectiveSdk
 
   return <div className={styles.container}>
-    { (!tokenBondingSdk || !tokenCollectiveSdk) && <div>Loading SDK...</div>}
+    {(!tokenBondingSdk || !tokenCollectiveSdk) && <div>Loading SDK...</div>}
     {loading && !runningThisCommand && <div>Running previous commands...</div>}
     {loading && runningThisCommand && <div>Loading...</div>}
-    {!fullLoading && <ReactJson theme="bright:inverted" collapsed={1} displayDataTypes={false} name={false} src={recursiveTransformBN(variables || {})} /> }
-    { connected && <button
+    {!fullLoading && <ReactJson theme="bright:inverted" collapsed={1} displayDataTypes={false} name={false} src={recursiveTransformBN(variables || {})} />}
+    {connected && <button
       disabled={fullLoading}
       className={styles.runButton}
       onClick={wrappedExecWithDeps}
     >
       <FaPlay className={styles.buttonIcon} /> Run
-    </button> }
+    </button>}
     {!connected && <>
       <WalletModalProvider>
         <WalletMultiButton />
@@ -138,3 +138,7 @@ export default ({ code, scope, name, deps }) => {
     </>}
   </div>
 }
+
+export default (props: any) => <BrowserOnly fallback={<div>...</div>}>
+ { () => <AsyncButton {...props} />}
+</BrowserOnly>

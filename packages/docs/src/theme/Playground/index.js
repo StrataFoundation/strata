@@ -7,17 +7,11 @@
 
 import * as React from 'react';
 import {LiveProvider, LiveEditor, LiveError, LivePreview} from 'react-live';
-import clsx from 'clsx';
-import Translate from '@docusaurus/Translate';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import BrowserOnly from '@docusaurus/BrowserOnly';
 import usePrismTheme from '@theme/hooks/usePrismTheme';
 import styles from './styles.module.css';
 import useIsBrowser from '@docusaurus/core/lib/client/exports/useIsBrowser';
-
-function Header({children}) {
-  return <div className={clsx(styles.playgroundHeader)}>{children}</div>;
-}
 
 function LivePreviewLoader() {
   // Is it worth improving/translating?

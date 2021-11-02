@@ -1,4 +1,7 @@
 import { Buffer } from 'buffer';
 
-// @ts-ignore
-window.Buffer = Buffer;
+if (typeof window !== "undefined") {
+  window.Buffer = Buffer;
+} else {
+  global.Buffer = Buffer;
+}
