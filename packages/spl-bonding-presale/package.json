@@ -1,6 +1,6 @@
 {
     "name": "@strata-foundation/spl-bonding-presale",
-    "version": "0.2.3",
+    "version": "0.2.4",
     "description": "Interface to the spl-bonding-presale smart contract",
     "repository": {
         "type": "git",
@@ -22,8 +22,8 @@
     "dependencies": {
         "@project-serum/common": "^0.0.1-beta.3",
         "@solana/web3.js": "^1.29.2",
-        "@strata-foundation/spl-token-bonding": "^0.2.3",
-        "@strata-foundation/spl-utils": "^0.2.3",
+        "@strata-foundation/spl-token-bonding": "^0.2.4",
+        "@strata-foundation/spl-utils": "^0.2.4",
         "bn.js": "^5.2.0"
     },
     "devDependencies": {
