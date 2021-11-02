@@ -16,20 +16,18 @@ import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, AccountLayout } from "@solana/spl-token";
 import { sendMultipleInstructions } from "@strata-foundation/spl-utils";
 import { createNameRegistry, getHashedName, getNameAccountKey, NameRegistryState } from "@bonfida/spl-name-service";
+import BrowserOnly from '@docusaurus/BrowserOnly';
 
-
-function createBrowserOnlyLibComponent(path, componentExportName) {
-  function LibComponentBrowserOnly(props) {
-    return (
-      <BrowserOnly fallback={<div>...</div>}>
-        {() => {
-          const Component = require(path)[componentExportName];
-          return <Component {...props} />;
-        }}
-      </BrowserOnly>
-    );
-  }
-};
+function BrowserOnlyAsyncButton(props) {
+  return (
+    <BrowserOnly fallback={<div>...</div>}>
+      {() => {
+        const Component = require("./AsyncButton").default;
+        return <Component {...props} />;
+      }}
+    </BrowserOnly>
+  );
+}
 
 // Add react-live imports you need here
 const ReactLiveScope = {
@@ -41,7 +39,7 @@ const ReactLiveScope = {
   React,
   AccountLayout,
   TOKEN_PROGRAM_ID,
-  AsyncButton: createBrowserOnlyLibComponent("./AsyncButton", "AsyncButton"),
+  AsyncButton: BrowserOnlyAsyncButton,
   usePrograms,
   BN,
   SplTokenBonding,
