@@ -13,8 +13,6 @@
     "skipLibCheck": true,
     "declaration": true,
     "declarationMap": true,
-    "outDir": "./dist/lib",
-    "rootDir": "./src",
     "sourceMap": true,
     "strict": true,
     "target": "es6",

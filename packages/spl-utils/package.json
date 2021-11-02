@@ -10,14 +10,6 @@
     "type": "git",
     "url": "https://github.com/ChewingGlassFund/wumbo-programs"
   },
-  "main": "dist/lib/index.js",
-  "types": "dist/lib/index.d.ts",
-  "exports": {
-    ".": "./dist/lib/index.js"
-  },
-  "files": [
-    "dist/lib/**/*"
-  ],
   "scripts": {
     "build": "yarn run copy-files && tsc --project tsconfig.json",
     "copy-files": "copyfiles -u 1 src/**/*.js dist/lib",
