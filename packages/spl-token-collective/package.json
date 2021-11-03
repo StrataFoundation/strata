@@ -1,6 +1,6 @@
 {
   "name": "@strata-foundation/spl-token-collective",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Interface to the spl-token-collective smart contract",
   "publishConfig": {
     "access": "public",
@@ -42,5 +42,5 @@
     "ts-loader": "^9.2.3",
     "typescript": "^4.3.4"
   },
-  "gitHead": "4437fa25d76d796d0ea410097b8f98e097397a0b"
+  "gitHead": "20d033663d866ba79990b9bb8be45f7e5627122f"
 }
