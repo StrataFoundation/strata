@@ -905,13 +905,13 @@ export class SplTokenCollective {
     signers1.push(targetMintKeypair);
     const targetMint = targetMintKeypair.publicKey;
 
-    // @ts-ignore
     instructions1.push(
       ...(await createMintInstructions(
         provider,
         payer,
         targetMint,
         tokenBondingParams.targetMintDecimals ||
+          // @ts-ignore
           config.unclaimedTokenBondingSettings?.targetMintDecimals ||
           9
       ))
@@ -1026,11 +1026,14 @@ export class SplTokenCollective {
       ? config.claimedTokenBondingSettings
       : config.unclaimedTokenBondingSettings;
     const signers2: Signer[] = [];
-    // @ts-ignore
     const curveToUse = (curve ||
+      // @ts-ignore
       (!owner && collectiveAcct.config.unclaimedTokenBondingSettings?.curve) ||
+      // @ts-ignore
       (owner && collectiveAcct.config.claimedTokenBondingSettings?.curve) ||
+      // @ts-ignore
       collectiveAcct.config.unclaimedTokenBondingSettings?.curve ||
+      // @ts-ignore
       collectiveAcct.config.claimedTokenBondingSettings?.curve)!;
 
     if (!curveToUse) {
