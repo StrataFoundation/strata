@@ -1,1 +1,9 @@
-export const add = (a: number, b: number) => a + b;
+import path from "path";
+const rootDir = path.join(__dirname, "../../..");
+
+require("dotenv").config({
+  path: path.join(rootDir, ".env"),
+});
+
+export * from "./contexts";
+export * from "./hooks";

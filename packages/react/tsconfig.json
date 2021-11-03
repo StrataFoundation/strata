@@ -6,7 +6,7 @@
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": false,
     "jsx": "react",
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "lib": ["DOM", "DOM.Ieterable", "ESNext"],
     "module": "commonjs",
     "moduleResolution": "Node",
     "resolveJsonModule": true,
@@ -16,10 +16,7 @@
     "sourceMap": true,
     "strict": true,
     "target": "es6",
-    "typeRoots": ["node_modules/@types"],
-    "paths": {
-      "@/*": ["*"]
-    }
+    "typeRoots": ["node_modules/@types"]
   },
   "include": ["src"],
   "exclude": ["dist", "node_modules"]
