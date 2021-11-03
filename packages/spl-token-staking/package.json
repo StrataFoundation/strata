@@ -1,6 +1,6 @@
 {
     "name": "@strata-foundation/spl-token-staking",
-    "version": "0.3.0",
+    "version": "0.3.3",
     "publishConfig": {
         "access": "public",
         "registry": "https://registry.npmjs.org/"
