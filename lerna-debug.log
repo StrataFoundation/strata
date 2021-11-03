@@ -1,0 +1,6 @@
+77 error Error: Command failed with exit code 128: git tag v0.2.8 -m v0.2.8
+77 error fatal: tag 'v0.2.8' already exists
+77 error     at makeError (/Users/nprince/.config/yarn/global/node_modules/execa/lib/error.js:60:11)
+77 error     at handlePromise (/Users/nprince/.config/yarn/global/node_modules/execa/index.js:118:26)
+77 error     at processTicksAndRejections (node:internal/process/task_queues:96:5)
+77 error     at async Promise.all (index 0)
