@@ -53,9 +53,14 @@ Let's create a Social Token named TEST within the Open Collective that gives us 
 
 ```jsx async name=create_social
 var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
-  tokenName: "My Test Token",
-  symbol: "TEST",
   ignoreIfExists: true, // If a Social Token already exists for this wallet, ignore.
+  metadata: {
+    tokenName: "My Test Token",
+    symbol: "TEST",
+    image: "https://ibb.co/sRpBwYh",
+    // Because this is dev, we need to provide the metaplex dev upload file url
+    uploadUrl: "https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2"
+  },
   tokenBondingParams: {
     buyBaseRoyaltyPercentage: 0,
     buyTargetRoyaltyPercentage: 10,
@@ -110,4 +115,4 @@ var testBalance = await getAssociatedAccountBalance(connection, publicKey, token
 
 ## Next Steps
 
-Interested in Learninng More? Continue on to take a deeper dive with more examples!
+Interested in Learning More? Continue on with the rest of the tutorial take a deeper dive with more examples!

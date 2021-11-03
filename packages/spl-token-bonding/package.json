@@ -22,7 +22,8 @@
         "build": "yarn run copy-files && tsc --project tsconfig.json",
         "copy-files": "copyfiles -u 1 src/**/*.js dist/lib",
         "watch": "yarn run copy-files && tsc --watch --project tsconfig.json",
-        "style": "prettier --write \"src/**/*.{ts,tsx}\""
+        "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+        "precommit": "yarn format"
     },
     "dependencies": {
         "@project-serum/common": "^0.0.1-beta.3",

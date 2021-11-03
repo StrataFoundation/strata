@@ -1,8 +1,11 @@
 import Root from "@theme/Root";
-import "./bufferFill"
-import React, { FC, useMemo } from 'react';
-import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
+import "./bufferFill";
+import React, { FC, useMemo } from "react";
+import {
+  ConnectionProvider,
+  WalletProvider,
+} from "@solana/wallet-adapter-react";
+import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import {
   getLedgerWallet,
   getPhantomWallet,
@@ -11,12 +14,12 @@ import {
   getSolletExtensionWallet,
   getSolletWallet,
   getTorusWallet,
-} from '@solana/wallet-adapter-wallets';
-import { clusterApiUrl } from '@solana/web3.js';
+} from "@solana/wallet-adapter-wallets";
+import { clusterApiUrl } from "@solana/web3.js";
 import { VariablesProvider } from "./variables";
 
 // Default styles that can be overridden by your app
-require('@solana/wallet-adapter-react-ui/styles.css');
+require("@solana/wallet-adapter-react-ui/styles.css");
 
 export const Wallet: FC = ({ children }) => {
   // Can be set to 'devnet', 'testnet', or 'mainnet-beta'
@@ -27,14 +30,17 @@ export const Wallet: FC = ({ children }) => {
 
   // @solana/wallet-adapter-wallets includes all the adapters but supports tree shaking --
   // Only the wallets you configure here will be compiled into your application
-  const wallets = useMemo(() => [
-    getPhantomWallet(),
-    getSlopeWallet(),
-    getSolflareWallet(),
-    getLedgerWallet(),
-    getSolletWallet({ network }),
-    getSolletExtensionWallet({ network }),
-  ], [network]);
+  const wallets = useMemo(
+    () => [
+      getPhantomWallet(),
+      getSlopeWallet(),
+      getSolflareWallet(),
+      getLedgerWallet(),
+      getSolletWallet({ network }),
+      getSolletExtensionWallet({ network }),
+    ],
+    [network]
+  );
 
   return (
     <ConnectionProvider endpoint={endpoint}>
@@ -48,9 +54,7 @@ export const Wallet: FC = ({ children }) => {
 export default ({ children }) => (
   <>
     <Wallet>
-      <VariablesProvider>
-        {children}
-      </VariablesProvider>
+      <VariablesProvider>{children}</VariablesProvider>
     </Wallet>
   </>
-)
+);

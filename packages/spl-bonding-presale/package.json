@@ -20,7 +20,8 @@
     "scripts": {
         "build": "tsc --project tsconfig.json",
         "watch": "tsc --watch --project tsconfig.json",
-        "style": "prettier --write \"src/**/*.{ts,tsx}\""
+        "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+        "precommit": "yarn format"
     },
     "dependencies": {
         "@project-serum/common": "^0.0.1-beta.3",

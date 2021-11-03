@@ -1,10 +1,8 @@
-# Wumbo
+# Strata
 
-The Wumbo contract serves as a way of standardizing and indexing all social tokens. A social token is made up of
+This series of smart contracts serves to standardizing and indexing all social tokens.
 
-  * A token mint
-  * Token metadata for that mint (picture, name, etc)
-  * A bonding curve against that mint to WUM
+Docs are located in `packages/docs`
 
 # Development
 
@@ -17,7 +15,7 @@ git submodule init
 git submodule update
 ```
 
-## Bootstrap a wumbo instance
+## Bootstrap the Open Collective
 
 ```
 env ANCHOR_WALLET=~/.config/solana/id.json ANCHOR_PROVIDER_URL=https://api.devnet.solana.com yarn run bootstrap
@@ -28,11 +26,6 @@ env ANCHOR_WALLET=~/.config/solana/id.json ANCHOR_PROVIDER_URL=https://api.devne
 ```
 anchor run build-deps
 ```
-
-## TODO
-
-We should probably eventually change from @project-serum/anchor, which is using code from https://github.com/project-serum/anchor/pull/537.
-
 
 # On Initializing vs Passing
 

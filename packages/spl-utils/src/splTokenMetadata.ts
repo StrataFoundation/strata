@@ -10,7 +10,7 @@ export interface ICreateArweaveUrlArgs {
   symbol: string;
   description?: string;
   image?: string;
-  creators: Creator[],
+  creators?: Creator[],
   files?: File[]
 }
 
@@ -62,7 +62,7 @@ export class SplTokenMetadata {
         category: MetadataCategory.Image,
         files,
       },
-      creators: creators,
+      creators: creators ? creators : null,
       sellerFeeBasisPoints: 0,
     };
     const realFiles = getFilesWithMetadata(files, metadata);

@@ -7,20 +7,23 @@ import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
 
 export type Programs = {
   tokenBondingSdk?: SplTokenBonding;
-  tokenCollectiveSdk?: SplTokenCollective
-}
+  tokenCollectiveSdk?: SplTokenCollective;
+};
 async function getPrograms(provider: Provider): Promise<Programs> {
   const tokenCollective = await SplTokenCollective.init(provider);
   const tokenBonding = await SplTokenBonding.init(provider);
   return {
     tokenCollectiveSdk: tokenCollective,
-    tokenBondingSdk: tokenBonding
-  }
+    tokenBondingSdk: tokenBonding,
+  };
 }
 
 export function usePrograms(): Programs {
   const provider = useProvider();
-  const { result: programs } = useAsync(() => getPrograms(provider), [provider]);
+  const { result: programs } = useAsync(
+    () => getPrograms(provider),
+    [provider]
+  );
 
   return programs || {};
 }

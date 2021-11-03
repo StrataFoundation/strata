@@ -1,7 +1,7 @@
-import React from 'react';
+import React from "react";
 import { Provider } from "@project-serum/anchor";
-import { useConnection, useWallet } from "@solana/wallet-adapter-react"
-import { sendAndConfirmRawTransaction } from '@solana/web3.js';
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { sendAndConfirmRawTransaction } from "@solana/web3.js";
 
 export function useProvider(): Provider | undefined {
   const { connection } = useConnection();
@@ -20,7 +20,9 @@ export function useProvider(): Provider | undefined {
         opts = this.opts;
       }
       tx.feePayer = this.wallet.publicKey;
-      tx.recentBlockhash = (await this.connection.getRecentBlockhash(opts.preflightCommitment)).blockhash;
+      tx.recentBlockhash = (
+        await this.connection.getRecentBlockhash(opts.preflightCommitment)
+      ).blockhash;
       const signed = await this.wallet.signTransaction(tx);
       signers
         .filter((s) => s !== undefined)
@@ -30,7 +32,7 @@ export function useProvider(): Provider | undefined {
       const rawTx = signed.serialize();
       const txId = await sendAndConfirmRawTransaction(connection, rawTx, opts);
       return txId;
-    }
+    };
 
     return provider;
   }, [connection, adapter]);

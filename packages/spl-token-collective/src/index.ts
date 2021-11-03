@@ -1,7 +1,5 @@
 import * as anchor from "@project-serum/anchor";
-import BN from "bn.js";
 import { IdlTypes, Program, Provider } from "@project-serum/anchor";
-import { createMetadata, Data, SplTokenMetadata, decodeMetadata, METADATA_PROGRAM_ID, extendBorsh, InstructionResult, BigInstructionResult, sendInstructions, sendMultipleInstructions, ICreateArweaveUrlArgs, updateMetadata, percent } from "@strata-foundation/spl-utils";
 import { createMintInstructions } from "@project-serum/common";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import {
@@ -10,77 +8,165 @@ import {
   SystemProgram,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
-  TransactionInstruction,
+  TransactionInstruction
 } from "@solana/web3.js";
-import { SplTokenCollectiveIDL, } from "./generated/spl-token-collective";
-import { SplTokenBonding, CreateTokenBondingArgs } from "@strata-foundation/spl-token-bonding";
+import { ICreateTokenBondingArgs, SplTokenBonding } from "@strata-foundation/spl-token-bonding";
+import { BigInstructionResult, createMetadata, Data, decodeMetadata, extendBorsh, ICreateArweaveUrlArgs, InstructionResult, METADATA_PROGRAM_ID, percent, sendInstructions, sendMultipleInstructions, SplTokenMetadata, updateMetadata } from "@strata-foundation/spl-utils";
+import BN from "bn.js";
+import { SplTokenCollectiveIDL } from "./generated/spl-token-collective";
 
 export * from "./generated/spl-token-collective";
 
 extendBorsh();
 
-export interface CreateCollectiveArgs {
+export interface ICreateCollectiveArgs {
+  /** Payer for this transaction */
   payer?: PublicKey;
-  // Optional token metadata, if provided will create token metadata for this collective
+  /** 
+   * Token metadata that, if provided, will create metaplex spl-token-metadata for this collective.
+   * 
+   * Reccommended to always fill this out so that your token displays with a name, symbol, and image.
+   */
   metadata?: ICreateArweaveUrlArgs & {
+    /** The metaplex file upload url to use. For devnet, needs to be uploadFile2, prod is uploadFileProd2 url. TODO: Once small file support is added, switch to uploadFile4 */
     uploadUrl?: string
-  }, // Optional, will add token metadata to the mint before creating
-  bonding?: CreateTokenBondingArgs, // Optional, needed if `mint` not provided to create a bonding curve
-  mint?: PublicKey; // If not provided, will create a bonding curve around the `bonding` params
-  mintAuthority?: PublicKey; // If not provided, will attempt to fetch it from mint. Must be a signer on the txn
+  },
+  /**
+   * If `mint` is not provided, create a bonding curve automatically for this collective.
+   */
+  bonding?: ICreateTokenBondingArgs,
+  /** The mint to base this collective around. It is recommended for compatability that all collectives be on a bonding curve, so it's easy to make user interfaces that can buy in and out of your social tokens */
+  mint?: PublicKey;
+  /** **Default:** Fetch from mint. This may not be possible if the mint is being created in the same transaction as the collective. */
+  mintAuthority?: PublicKey; 
+  /** The authority of this collective */
   authority?: PublicKey;
+  /** The configs around what is and isn't allowed in the collective */
   config: ICollectiveConfig,
 }
 
 // Taken from token bonding initialize
-export interface TokenBondingParams {
+/** See [InitializeTokenBondingArgs](/docs/api/spl-token-bonding/interfaces/ICreateTokenBondingArgs) */
+export interface ITokenBondingParams {
+  /** The curve to create this social token on. **Default:** Curve from the collective's config */
+  curve?: PublicKey;
+
   buyBaseRoyaltyPercentage: number;
   buyTargetRoyaltyPercentage: number;
   sellBaseRoyaltyPercentage: number;
   sellTargetRoyaltyPercentage: number;
 
-  targetMintDecimals?: number; // Defaults to 9, or uses ffrom config
-  buyBaseRoyalties?: PublicKey; // If not provided, create an Associated Token Account with baseRoyaltiesOwner
-  buyBaseRoyaltiesOwner?: PublicKey; // If base royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
-  buyTargetRoyalties?: PublicKey; // If not provided, create an Associated Token Account with targetRoyaltiesOwner
-  buyTargetRoyaltiesOwner?: PublicKey; // If target royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
-  sellBaseRoyalties?: PublicKey; // If not provided, create an Associated Token Account with baseRoyaltiesOwner
-  sellBaseRoyaltiesOwner?: PublicKey; // If base royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
-  sellTargetRoyalties?: PublicKey; // If not provided, create an Associated Token Account with targetRoyaltiesOwner
-  sellTargetRoyaltiesOwner?: PublicKey; // If target royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
+  /** **Default:** uses decimals from collective config, or 9 */
+  targetMintDecimals?: number;
+  buyBaseRoyalties?: PublicKey;
+  buyBaseRoyaltiesOwner?: PublicKey; 
+  buyTargetRoyalties?: PublicKey;
+  buyTargetRoyaltiesOwner?: PublicKey;
+  sellBaseRoyalties?: PublicKey;
+  sellBaseRoyaltiesOwner?: PublicKey;
+  sellTargetRoyalties?: PublicKey;
+  sellTargetRoyaltiesOwner?: PublicKey;
 }
 
-export interface CreateSocialTokenArgs {
-  isPrimary?: boolean; // Is this the primary social token for this wallet? Defaults to true
-  ignoreIfExists?: boolean; // If this social token already exists, don't throw an error
+
+export interface ICreateSocialTokenArgs {
+  /** 
+   * Is this the primary social token for this wallet? **Default:** true
+   * 
+   * A primary social token is the social token people should see when they look up your wallet. While it's possible to belong to many
+   * collectives, generally most people will have one social token.
+   */
+  isPrimary?: boolean; // 
+  /** If this social token already exists, don't throw an error. **Default:** false */
+  ignoreIfExists?: boolean;
+  /** The payer for this account and txn */
   payer?: PublicKey;
-  collective?: PublicKey; // Defaults to open collective
-  name?: PublicKey; // Either these or owner needs to be provided
-  nameClass?: PublicKey; // Either these or owner needs to be provided
-  nameParent?: PublicKey; // Either these or owner needs to be provided
-  tokenName: string; // For the token metadata name
-  symbol?: string; // Symbol for the token
-  owner?: PublicKey; // If name is no provided, defaults to provider's wallet
-  curve?: PublicKey; // The curve to create this social token on. If not provided, will use the collective's curve
-  // Taken from token bonding initialize
-  tokenBondingParams: TokenBondingParams
+  /** The collective to create this social token under. **Default:**: the Open Collective*/
+  collective?: PublicKey;
+  /** The spl-name-service name to associate with this account. Will create an unclaimed social token. */
+  name?: PublicKey;
+  /** The spl-name-service name class associated with name above, if provided */
+  nameClass?: PublicKey;
+  /** The spl-name-service name paent associated with name above, if provided */
+  nameParent?: PublicKey;
+  /** 
+   * Token metadata that, if provided, will create metaplex spl-token-metadata for this collective.
+   * 
+   * Reccommended to fill this out so that your token displays with a name, symbol, and image.
+   */
+   metadata: ICreateArweaveUrlArgs & {
+     /** 
+      * Getting a uri for token metadata is a process that involves a separate transaction and an upload to arweave. 
+      * 
+      * To save time and effort, this will use the {@link ICollectiveConfig.unclaimedTokenMetadataSettings.uri}. While the name and symbol will not match properly, the name
+      * and symbol on chain will be correct.
+      * 
+      * **Default:** false
+      */
+     useCollectiveDefaultUri?: boolean,
+    /** 
+     * The metaplex file upload url to use. For devnet, needs to be uploadFile2, prod is uploadFileProd2 url. TODO: Once small file support is added, switch to uploadFile4 
+     */
+    uploadUrl?: string
+  },
+  /** The wallet to create this social token under, defaults to `provider.wallet` */
+  owner?: PublicKey;
+  /**
+   * **Default:** New generated keypair
+   * 
+   * Pass in the keypair to use for the mint. Useful if you want a vanity keypair
+   */
+  targetMintKeypair?: anchor.web3.Keypair,
+  /** Params for the bonding curve  */
+  tokenBondingParams: ITokenBondingParams
 }
 
-export interface ClaimSocialTokenArgs {
-  isPrimary?: boolean; // Is this the primary social token for this wallet?
+export interface IClaimSocialTokenArgs {
+  /** 
+   * Is this the primary social token for this wallet? **Default:** true
+   * 
+   * A primary social token is the social token people should see when they look up your wallet. While it's possible to belong to many
+   * collectives, generally most people will have one social token.
+   */
+  isPrimary?: boolean;
+  /** The payer for this txn */
   payer?: PublicKey;
-  owner: PublicKey;
+  /** The owning wallet of this social token. **Default:**: `provider.wallet` */
+  owner?: PublicKey;
+  /** The token ref of the token we are claiming */
   tokenRef: PublicKey;
+  /** Change the smart-contract level name for this token without changing the url. To do a full update to token metadata, directly use SplTokenMetadata after a claim */
+  tokenName?: string;
+  /** Change the smart-contract level symbol for this token without changing the url. To do a full update to token metadata, directly use SplTokenMetadata after a claim */
   symbol?: string;
-  buyBaseRoyalties?: PublicKey; // Defaults to ATA fo the owner
-  buyTargetRoyalties?: PublicKey; // Defaults to ATA fo the owner
-  sellBaseRoyalties?: PublicKey; // Defaults to ATA fo the owner
-  sellTargetRoyalties?: PublicKey; // Defaults to ATA fo the owner
-  ignoreMissingName?: boolean; // Ignore missing name account, useful if you're creating the name in the same txn
+  /** The buy base royalties destination. **Default:** ATA of owner */
+  buyBaseRoyalties?: PublicKey;
+  /** The buy target royalties destination. **Default:** ATA of owner */
+  buyTargetRoyalties?: PublicKey;
+  /** The sell base royalties destination. **Default:** ATA of owner */
+  sellBaseRoyalties?: PublicKey;
+  /** The sell target royalties destination. **Default:** ATA of owner */
+  sellTargetRoyalties?: PublicKey;
+  /** 
+   * Ignore missing name account. Useful if you're creating the name in the same txn.
+   * 
+   * Otherwise, the sdk checks to make sure the name account exists before claiming to provide a more useful error
+   * 
+   * **Default:** false
+   */
+  ignoreMissingName?: boolean; // Ignore missing name account, 
 }
 
 export interface IRoyaltySetting {
+  /**
+   * In the case of an unclaimed token, is this royalty account required to be owned by the name account.
+   * 
+   * If `true`, when the token is claimed, the owner of the name that's claiming it will receive all of the funds in the royalty account
+   */
   ownedByName?: boolean,
+  /**
+   * A static address such that all curves must have this as the royalty address.
+   */
   address?: number
 }
 
@@ -106,15 +192,26 @@ export interface ITokenBondingSettings {
 }
 
 export interface ITokenMetadataSettings {
+  /** The default symbol for an unclaimed token */
   symbol?: string;
+  /** The default uri for an unclaimed token */
   uri?: string;
+  /** Enforce that the name of the unclaimed token matches the spl-name-service name */
   nameIsNameServiceName?: boolean;
 }
 
 export interface ICollectiveConfig {
+  /**
+   * A collective can either be open or closed. A closed collective must sign on the creation of _any_ social token
+   * within the collective. An open collective allows any social tokens to bind themself to the collective token, so long
+   * as they follow the CollectiveConfig settings
+   */
   isOpen: boolean;
+  /** Settings for bonding curves on unclaimed tokens */
   unclaimedTokenBondingSettings?: ITokenBondingSettings;
+  /** Settings for bonding curves on claimed tokens */
   claimedTokenBondingSettings?: ITokenBondingSettings;
+  /** Settings for token metadata of unclaimed tokens */
   unclaimedTokenMetadataSettings?: ITokenMetadataSettings;
 }
 
@@ -184,7 +281,6 @@ function toIdlConfig(config: ICollectiveConfig): CollectiveConfigV0 {
   }
 }
 
-
 export class SplTokenCollective {
   program: Program<SplTokenCollectiveIDL>;
   splTokenBondingProgram: SplTokenBonding;
@@ -253,6 +349,12 @@ export class SplTokenCollective {
     return sendInstructions(this.errors, this.provider, instructions, signers, payer)
   }
 
+  /**
+   * Instructions to create a Collective
+   *
+   * @param param0 
+   * @returns 
+   */
   async createCollectiveInstructions({
     payer = this.wallet.publicKey,
     mint,
@@ -261,7 +363,7 @@ export class SplTokenCollective {
     config,
     bonding,
     metadata
-  }: CreateCollectiveArgs): Promise<BigInstructionResult<{ collective: PublicKey, tokenBonding?: PublicKey }>> {
+  }: ICreateCollectiveArgs): Promise<BigInstructionResult<{ collective: PublicKey, tokenBonding?: PublicKey }>> {
     const programId = this.programId;
     const instructions: TransactionInstruction[] = [];
     const signers: Signer[] = [];
@@ -284,7 +386,7 @@ export class SplTokenCollective {
             name: metadata.name,
             symbol: metadata.symbol,
             uri,
-            creators: metadata.creators,
+            creators: metadata.creators ? metadata.creators : null,
             sellerFeeBasisPoints: 0
           })
         })
@@ -383,7 +485,12 @@ export class SplTokenCollective {
     };
   }
 
-  async createCollective(args: CreateCollectiveArgs): Promise<{ collective: PublicKey, tokenBonding?: PublicKey }> {
+  /**
+   * Run {@link createCollectiveInstructions}
+   * @param args 
+   * @returns 
+   */
+  async createCollective(args: ICreateCollectiveArgs): Promise<{ collective: PublicKey, tokenBonding?: PublicKey }> {
     const {
       output,
       instructions,
@@ -394,10 +501,17 @@ export class SplTokenCollective {
     return output;
   }
 
+  /**
+   * Instructions to claim a social token
+   *
+   * @param param0 
+   * @returns 
+   */
   async claimSocialTokenInstructions({
     payer = this.wallet.publicKey,
     owner = this.wallet.publicKey,
     tokenRef,
+    tokenName,
     symbol,
     buyBaseRoyalties,
     buyTargetRoyalties,
@@ -405,7 +519,7 @@ export class SplTokenCollective {
     sellTargetRoyalties,
     ignoreMissingName,
     isPrimary = true
-  }: ClaimSocialTokenArgs): Promise<InstructionResult<null>> {
+  }: IClaimSocialTokenArgs): Promise<InstructionResult<null>> {
     const tokenRefAcct = await this.account.tokenRefV0.fetch(tokenRef);
     const tokenBondingAcct = await this.splTokenBondingProgram.account.tokenBondingV0.fetch(tokenRefAcct.tokenBonding);
     const name = tokenRefAcct.name! as PublicKey;
@@ -541,7 +655,7 @@ export class SplTokenCollective {
 
       updateMetadata(
         new Data({
-          name: tokenMetadata.data.name,
+          name: tokenName || tokenMetadata.data.name,
           symbol: symbol || tokenMetadata.data.symbol,
           uri: tokenMetadata.data.uri,
           sellerFeeBasisPoints: 0,
@@ -563,7 +677,11 @@ export class SplTokenCollective {
     }
   }
 
-  async claimSocialToken(args: ClaimSocialTokenArgs): Promise<void> {
+  /**
+   * Run {@link claimSocialTokenInstructions}
+   * @param args 
+   */
+  async claimSocialToken(args: IClaimSocialTokenArgs): Promise<void> {
     const {
       instructions,
       signers,
@@ -571,6 +689,12 @@ export class SplTokenCollective {
     await this.sendInstructions(instructions, signers);
   }
 
+  /**
+   * Get the seeds for the PDA of a token ref given the various parameters.
+   *
+   * @param param0 
+   * @returns 
+   */
   tokenRefSeeds({ isPrimary, owner, name, collective }: { isPrimary: boolean, owner?: PublicKey, name?: PublicKey, collective?: PublicKey }): Buffer[] {
     const str = Buffer.from("token-ref", "utf-8");
     if (isPrimary || !collective) {
@@ -588,20 +712,25 @@ export class SplTokenCollective {
     }
   }
 
+  /**
+   * Instructions to create everything around a social token... metadata, bonding curves, etc.
+   *
+   * @param param0 
+   * @returns 
+   */
   async createSocialTokenInstructions({
     ignoreIfExists = false,
     payer = this.wallet.publicKey,
     collective = SplTokenCollective.OPEN_COLLECTIVE_ID,
     name,
     owner,
-    tokenName,
-    symbol,
+    targetMintKeypair = anchor.web3.Keypair.generate(),
+    metadata,
     nameClass,
     nameParent,
-    curve,
     tokenBondingParams,
     isPrimary = name ? false : true
-  }: CreateSocialTokenArgs): Promise<
+  }: ICreateSocialTokenArgs): Promise<
     BigInstructionResult<{
       tokenRef: PublicKey;
       reverseTokenRef: PublicKey;
@@ -612,6 +741,7 @@ export class SplTokenCollective {
       owner = this.wallet.publicKey;
     }
 
+    const curve = tokenBondingParams.curve;
     const programId = this.programId;
     const provider = this.provider;
     const instructions1: TransactionInstruction[] = [];
@@ -628,7 +758,6 @@ export class SplTokenCollective {
 
     // create mint with payer as auth
     console.log("Creating social token mint...");
-    const targetMintKeypair = anchor.web3.Keypair.generate();
     signers1.push(targetMintKeypair);
     const targetMint = targetMintKeypair.publicKey;
 
@@ -665,21 +794,32 @@ export class SplTokenCollective {
         [Buffer.from("token-metadata-authority", "utf-8"), reverseTokenRef.toBuffer()],
         programId
       );
-    const tokenMetadata = await createMetadata(
-      new Data({
-        name: tokenName,
-        symbol: owner ? (symbol || tokenName.slice(0,10)) : "UNCLAIMED",
-        uri: "https://wumbo-token-metadata.s3.us-east-2.amazonaws.com/unclaimed.json",
-        sellerFeeBasisPoints: 0,
-        // @ts-ignore
-        creators: null,
-      }),
-      owner ? owner.toBase58() : tokenMetadataUpdateAuthority.toBase58(),
-      targetMint.toBase58(),
-      payer.toBase58(),
-      instructions1,
-      payer.toBase58()
-    );
+
+    // @ts-ignore
+    let uri = config.unclaimedTokenMetadataSettings?.uri;
+    if (!metadata.useCollectiveDefaultUri) {
+      const { files, txid } = await this.splTokenMetadata.presignCreateArweaveUrl(metadata);
+      uri = await this.splTokenMetadata.getArweaveUrl({
+        txid,
+        files,
+        mint: targetMint!,
+        uploadUrl: metadata.uploadUrl
+      })
+    }
+
+    const { instructions: metadataInstructions, signers: metadataSigners, output: { metadata: tokenMetadata } } = await this.splTokenMetadata.createMetadataInstructions({
+      mint: targetMint!,
+      authority: owner ? owner : tokenMetadataUpdateAuthority,
+      data: new Data({
+        name: metadata.name,
+        symbol: metadata.symbol,
+        uri,
+        creators: metadata.creators ? metadata.creators : null,
+        sellerFeeBasisPoints: 0
+      })
+    })
+    instructions1.push(...metadataInstructions)
+    signers1.push(...metadataSigners)
 
     // Set mint authority to token bondings authority
     const [targetMintAuthority, targetMintAuthorityBumpSeed] = await PublicKey.findProgramAddress(
@@ -819,7 +959,12 @@ export class SplTokenCollective {
     };
   }
 
-  async createSocialToken(args: CreateSocialTokenArgs): Promise<{
+  /**
+   * Run {@link createSocialTokenInstructions}
+   * @param args 
+   * @returns 
+   */
+  async createSocialToken(args: ICreateSocialTokenArgs): Promise<{
     tokenRef: PublicKey;
     reverseTokenRef: PublicKey;
     tokenBonding: PublicKey;
