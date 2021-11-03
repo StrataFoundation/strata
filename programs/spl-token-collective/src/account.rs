@@ -116,8 +116,8 @@ pub struct InitializeOwnedSocialTokenV0<'info> {
     init,
     seeds = [
         b"token-ref",
-        initialize_args.collective.key().as_ref(),
         owner.key().as_ref(),
+        &token_ref_final_seed(&initialize_args.collective.key(), args.is_primary)
     ],
     bump = args.token_ref_bump_seed,
     payer = payer,
@@ -160,8 +160,8 @@ pub struct InitializeUnclaimedSocialTokenV0<'info> {
     init,
     seeds = [
         b"token-ref",
+        name.key().as_ref(),
         initialize_args.collective.key().as_ref(),
-        name.key().as_ref()
     ],
     bump = args.token_ref_bump_seed,
     payer = payer,
@@ -270,6 +270,14 @@ pub struct UpdateTokenBondingV0Wrapper<'info> {
   pub sell_target_royalties: Box<Account<'info, TokenAccount>>,
 }
 
+fn token_ref_final_seed<'a>(collective: &'a Pubkey, is_primary: bool) -> Vec<u8> {
+  if is_primary {
+    Pubkey::default().as_ref().to_vec()
+  } else { 
+    collective.as_ref().to_vec()
+  }
+}
+
 #[derive(Accounts)]
 #[instruction(args: ClaimSocialTokenV0Args)]
 pub struct ClaimSocialTokenV0<'info> {
@@ -282,8 +290,8 @@ pub struct ClaimSocialTokenV0<'info> {
     has_one = token_metadata,
     seeds = [
         b"token-ref",
-        collective.key().as_ref(),
-        name.key().as_ref()
+        name.key().as_ref(),
+        collective.key().as_ref()
     ],
     bump = token_ref.bump_seed,
     close = payer
@@ -293,8 +301,8 @@ pub struct ClaimSocialTokenV0<'info> {
     init,
     seeds = [
         b"token-ref",
-        collective.key().as_ref(),
-        owner.key().as_ref()
+        owner.key().as_ref(),
+        &token_ref_final_seed(&collective.key(), args.is_primary)
     ],
     bump = args.token_ref_bump_seed,
     payer = payer,

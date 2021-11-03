@@ -362,7 +362,7 @@ describe("spl-token-bonding", () => {
     it("correctly rewards with base royalties", async () => {
       await createCurve(20, 0, 0, 0);
 
-      const { instructions, signers } = await tokenBondingProgram.buyV0Instructions({
+      const { instructions, signers } = await tokenBondingProgram.buyInstructions({
         tokenBonding,
         desiredTargetAmount: new BN(100),
         slippage: 0.05,
@@ -381,7 +381,7 @@ describe("spl-token-bonding", () => {
     it("correctly rewards with target royalties", async () => {
       await createCurve(0, 20, 0, 0);
 
-      const { instructions, signers } = await tokenBondingProgram.buyV0Instructions({
+      const { instructions, signers } = await tokenBondingProgram.buyInstructions({
         tokenBonding,
         desiredTargetAmount: new BN(100),
         slippage: 0.05,

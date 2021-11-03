@@ -3,6 +3,7 @@ use anchor_lang::{prelude::*, solana_program::system_program};
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct ClaimSocialTokenV0Args {
+  pub is_primary: bool, // Is this the primary social token for this wallet?
   pub token_ref_bump_seed: u8,
 }
 
@@ -59,6 +60,7 @@ pub struct TokenBondingSettingsV0 {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default, Copy)]
 pub struct InitializeSocialTokenV0Args {
+  pub is_primary: bool,
   pub name_parent: Option<Pubkey>,
   pub name_class: Option<Pubkey>,
   pub collective_bump_seed: u8,
