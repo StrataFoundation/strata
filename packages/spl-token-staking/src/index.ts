@@ -180,6 +180,7 @@ export class SplTokenStaking {
     );
 
     instructions.push(await this.instruction.initializeTokenStakingV0(
+      // @ts-ignore
       {
         periodUnit,
         period,
@@ -233,7 +234,7 @@ export class SplTokenStaking {
     const tokenStakingAccount = await this.program.account.tokenStakingV0.fetch(tokenStaking);
 
     let voucherNumberToUse = voucherNumber || 0;
-    const getVoucher: () => Promise<[PublicKey, Number]> = () => {
+    const getVoucher: () => Promise<[PublicKey, number]> = () => {
       const pad = Buffer.alloc(2);
       new BN(voucherNumberToUse, 16, 'le').toBuffer().copy(pad)
       return PublicKey.findProgramAddress(
@@ -313,8 +314,7 @@ export class SplTokenStaking {
           bumpSeed,
           holdingAuthorityBumpSeed,
           holdingBumpSeed,
-          ataBumpSeed,
-          stakingInfoBumpSeed
+          ataBumpSeed
         },
         {
           accounts: {

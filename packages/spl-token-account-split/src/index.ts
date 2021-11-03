@@ -115,7 +115,7 @@ export class SplTokenAccountSplit {
     const programId = this.programId;
 
     let slotNumberToUse = slotNumber || 0;
-    const getSplit: () => Promise<[PublicKey, Number]> = () => {
+    const getSplit: () => Promise<[PublicKey, number]> = () => {
       const pad = Buffer.alloc(2);
       new BN(slotNumberToUse, 16, "le").toBuffer().copy(pad);
       return PublicKey.findProgramAddress(
@@ -172,7 +172,7 @@ export class SplTokenAccountSplit {
     instructions.push(
       await this.instruction.initializeTokenAccountSplitV0(
         {
-          slotNumber,
+          slotNumber: slotNumberToUse,
           tokenAccountAuthorityBumpSeed,
           bumpSeed,
         },
