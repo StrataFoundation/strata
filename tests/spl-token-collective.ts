@@ -5,7 +5,7 @@ import ChaiAsPromised from "chai-as-promised";
 import { SplTokenCollective } from "../packages/spl-token-collective";
 import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import { PeriodUnit, SplTokenStaking } from "../packages/spl-token-staking/dist/lib";
-import { decodeMetadata, percent } from "@strata-foundation/spl-utils";
+import { decodeMetadata, percent, SplTokenMetadata } from "@strata-foundation/spl-utils";
 import { SplTokenAccountSplit } from "../packages/spl-token-account-split/src";
 import { Token } from "@solana/spl-token";
 import { TokenUtils } from "./utils/token";
@@ -28,7 +28,8 @@ describe("spl-token-collective", () => {
   const tokenCollectiveProgram = new SplTokenCollective({
     provider,
     program,
-    splTokenBondingProgram
+    splTokenBondingProgram,
+    splTokenMetadata: new SplTokenMetadata({ provider })
   });
 
   let config = {
@@ -64,11 +65,12 @@ describe("spl-token-collective", () => {
       tokenCollectiveProgram.wallet.publicKey,
       1
     )
-    collective = await tokenCollectiveProgram.createCollective({
+    const { collective: collectiveRet } = await tokenCollectiveProgram.createCollective({
       mint: wumMint,
       authority: tokenCollectiveProgram.wallet.publicKey,
       config
     });
+    collective = collectiveRet;
     curve = await splTokenBondingProgram.initializeCurve({
       config: new ExponentialCurveConfig({
         c: 1,
@@ -108,6 +110,7 @@ describe("spl-token-collective", () => {
       nameTx.partialSign(nameClass);
       await provider.send(nameTx);
       const { tokenRef, reverseTokenRef } = await tokenCollectiveProgram.createSocialToken({
+        isPrimary: false,
         collective,
         name,
         nameClass: nameClass.publicKey,
@@ -154,7 +157,8 @@ describe("spl-token-collective", () => {
       await tokenCollectiveProgram.claimSocialToken({
         tokenRef: unclaimedTokenRef,
         owner: provider.wallet.publicKey,
-        symbol: 'foop'
+        symbol: 'foop',
+        isPrimary: false
       });
       await splTokenBondingProgram.buy({
         tokenBonding: tokenRef.tokenBonding,
@@ -177,13 +181,14 @@ describe("spl-token-collective", () => {
         tokenCollectiveProgram.wallet.publicKey,
         1
       )
-      collective = await tokenCollectiveProgram.createCollective({
+      const { collective: collectiveRet } = await tokenCollectiveProgram.createCollective({
         mint: wumMint,
-        isOpen: false,
         authority: tokenCollectiveProgram.wallet.publicKey,
         config
       });
+      collective = collectiveRet;
       const { tokenRef, reverseTokenRef } = await tokenCollectiveProgram.createSocialToken({
+        isPrimary: false,
         collective,
         owner: tokenCollectiveProgram.wallet.publicKey,
         tokenName: 'Whaddup',

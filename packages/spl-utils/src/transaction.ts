@@ -55,6 +55,12 @@ export async function sendInstructions(
   }
 }
 
+type Truthy<T> = T extends false | '' | 0 | null | undefined ? never : T; // from lodash
+
+function truthy<T>(value: T): value is Truthy<T> {
+  return !!value;
+}
+
 export async function sendMultipleInstructions(
   idlErrors: Map<number, string>,
   provider: Provider, 
@@ -65,16 +71,18 @@ export async function sendMultipleInstructions(
   const recentBlockhash = (await provider.connection.getRecentBlockhash('confirmed')).blockhash
   const txns = instructionGroups.map((instructions, index) => {
     const signers = signerGroups[index];
-    const tx = new Transaction({
-      feePayer: payer || provider.wallet.publicKey,
-      recentBlockhash
-    });
-    tx.add(...instructions)
-    if (signers.length > 0) {
-      tx.partialSign(...signers);
+    if (instructions.length > 0) {
+      const tx = new Transaction({
+        feePayer: payer || provider.wallet.publicKey,
+        recentBlockhash
+      });
+      tx.add(...instructions)
+      if (signers.length > 0) {
+        tx.partialSign(...signers);
+      }
+      return tx;
     }
-    return tx;
-  })
+  }).filter(truthy)
 
   const txnsSigned = await provider.wallet.signAllTransactions(txns);
 

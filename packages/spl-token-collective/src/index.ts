@@ -51,7 +51,8 @@ export interface TokenBondingParams {
 }
 
 export interface CreateSocialTokenArgs {
-  ignoreIfExists: boolean; // If this social token already exists, don't throw an error
+  isPrimary?: boolean; // Is this the primary social token for this wallet? Defaults to true
+  ignoreIfExists?: boolean; // If this social token already exists, don't throw an error
   payer?: PublicKey;
   collective?: PublicKey; // Defaults to open collective
   name?: PublicKey; // Either these or owner needs to be provided
@@ -66,6 +67,7 @@ export interface CreateSocialTokenArgs {
 }
 
 export interface ClaimSocialTokenArgs {
+  isPrimary?: boolean; // Is this the primary social token for this wallet?
   payer?: PublicKey;
   owner: PublicKey;
   tokenRef: PublicKey;
@@ -401,7 +403,8 @@ export class SplTokenCollective {
     buyTargetRoyalties,
     sellBaseRoyalties,
     sellTargetRoyalties,
-    ignoreMissingName
+    ignoreMissingName,
+    isPrimary = true
   }: ClaimSocialTokenArgs): Promise<InstructionResult<null>> {
     const tokenRefAcct = await this.account.tokenRefV0.fetch(tokenRef);
     const tokenBondingAcct = await this.splTokenBondingProgram.account.tokenBondingV0.fetch(tokenRefAcct.tokenBonding);
@@ -481,7 +484,7 @@ export class SplTokenCollective {
       );
 
     const [newTokenRef, tokenRefBumpSeed] = await PublicKey.findProgramAddress(
-      [Buffer.from("token-ref", "utf-8"), tokenRefAcct.collective.toBuffer(), owner.toBuffer()],
+      this.tokenRefSeeds({ isPrimary, collective: tokenRefAcct.collective, owner }),
       this.programId
     );
 
@@ -499,6 +502,7 @@ export class SplTokenCollective {
 
     instructions.push(await this.instruction.claimSocialTokenV0({
       tokenRefBumpSeed,
+      isPrimary
     }, {
       accounts: {
         payer,
@@ -567,6 +571,23 @@ export class SplTokenCollective {
     await this.sendInstructions(instructions, signers);
   }
 
+  tokenRefSeeds({ isPrimary, owner, name, collective }: { isPrimary: boolean, owner?: PublicKey, name?: PublicKey, collective?: PublicKey }): Buffer[] {
+    const str = Buffer.from("token-ref", "utf-8");
+    if (isPrimary || !collective) {
+      if (!owner) {
+        throw new Error("Owner is required for a primary token refs");
+      }
+
+      return [str, owner!.toBuffer(), PublicKey.default.toBuffer()]
+    } else {
+      if (!collective) {
+        throw new Error("Collective is required for non-primary token refs");
+      }
+
+      return [str, (name || owner)!.toBuffer(), collective.toBuffer()]
+    }
+  }
+
   async createSocialTokenInstructions({
     ignoreIfExists = false,
     payer = this.wallet.publicKey,
@@ -578,7 +599,8 @@ export class SplTokenCollective {
     nameClass,
     nameParent,
     curve,
-    tokenBondingParams
+    tokenBondingParams,
+    isPrimary = name ? false : true
   }: CreateSocialTokenArgs): Promise<
     BigInstructionResult<{
       tokenRef: PublicKey;
@@ -600,7 +622,7 @@ export class SplTokenCollective {
 
     // Token refs
     const [tokenRef, tokenRefBumpSeed] = await PublicKey.findProgramAddress(
-      [Buffer.from("token-ref", "utf-8"), collective.toBuffer(), (name || owner)!.toBuffer()],
+      this.tokenRefSeeds({ isPrimary, collective, owner, name }),
       programId
     );
 
@@ -725,6 +747,7 @@ export class SplTokenCollective {
     signers2.push(...bondingSigners);
 
     const initializeArgs = {
+      isPrimary,
       collective,
       tokenMetadata: new PublicKey(tokenMetadata),
       tokenBonding,
@@ -740,6 +763,7 @@ export class SplTokenCollective {
       clock: SYSVAR_CLOCK_PUBKEY
     }
     const args = {
+      isPrimary,
       nameClass: nameClass || null,
       nameParent: nameParent || null,
       collectiveBumpSeed: collectiveAcct.bumpSeed,
