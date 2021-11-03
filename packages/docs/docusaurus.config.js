@@ -42,7 +42,30 @@ const config = {
     ],
   ],
 
-  plugins: ["./src/plugins/webpack-loader"],
+  plugins: [
+    "./src/plugins/webpack-loader",
+    [
+      'docusaurus-plugin-typedoc',
+
+      // Plugin / TypeDoc options
+      {
+        id: 'bonding',
+        entryPoints: ['../spl-token-bonding/src/index.ts'],
+        tsconfig: '../spl-token-bonding/tsconfig.json',
+        out: 'api/spl-token-bonding'
+      },
+    ],
+    [
+      'docusaurus-plugin-typedoc',
+      // Plugin / TypeDoc options
+      {
+        id: 'collective',
+        entryPoints: ['../spl-token-collective/src/index.ts'],
+        tsconfig: '../spl-token-collective/tsconfig.json',
+        out: 'api/spl-token-collective'
+      },
+    ]
+  ],
   stylesheets: [
     {
       href: "https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/katex.min.css",
@@ -72,7 +95,7 @@ const config = {
             type: 'doc',
             docId: 'getting_started',
             position: 'left',
-            label: 'Tutorial',
+            label: 'Docs',
           },
           {to: '/blog', label: 'Blog', position: 'left'},
           {

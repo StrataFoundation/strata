@@ -1,56 +1,44 @@
 import * as anchor from "@project-serum/anchor";
+import { IdlTypes, Program, Provider } from "@project-serum/anchor";
 import {
-  SYSVAR_CLOCK_PUBKEY,
-  SYSVAR_RENT_PUBKEY,
-  Account,
-  PublicKey,
-  SystemProgram,
-  Transaction,
-  TransactionInstruction,
-  Signer,
-  SystemInstruction,
-  Keypair,
-} from "@solana/web3.js";
-import {
-  getMintInfo,
-  createMintInstructions,
-  createTokenAccountInstrs,
-  connection,
-  getTokenAccount,
+  createMintInstructions, getMintInfo, getTokenAccount
 } from "@project-serum/common";
-import BN, { max, min } from "bn.js";
-import { Program, IdlTypes, Provider, IdlAccounts } from "@project-serum/anchor";
-import {
-  SplTokenBondingIDL,
-  TokenBondingV0,
-  SplTokenBondingIDLJson,
-  CurveV0,
-  ProgramStateV0,
-} from "./generated/spl-token-bonding";
 import {
   AccountInfo,
-  AccountLayout,
-  NATIVE_MINT,
-  MintInfo,
-  TOKEN_PROGRAM_ID,
-  Token,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
+  AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo, NATIVE_MINT, Token, TOKEN_PROGRAM_ID
 } from "@solana/spl-token";
-import { amountAsNum, asDecimal, Curve, fromCurve } from "./curves";
+import {
+  Keypair, PublicKey, Signer, SystemProgram, SYSVAR_CLOCK_PUBKEY,
+  SYSVAR_RENT_PUBKEY, TransactionInstruction
+} from "@solana/web3.js";
 import { createMetadata, Data, InstructionResult, percent, sendInstructions } from "@strata-foundation/spl-utils";
-import { TypeDef } from "@project-serum/anchor/dist/cjs/program/namespace/types";
+import BN from "bn.js";
+import { amountAsNum, asDecimal, ICurve, fromCurve } from "./curves";
+import {
+  CurveV0,
+  ProgramStateV0, SplTokenBondingIDL
+} from "./generated/spl-token-bonding";
 
-export * from "./generated/spl-token-bonding";
 export * from "./curves";
+export * from "./generated/spl-token-bonding";
 
-interface CurveConfig {
+/**
+ * The curve config required by the smart contract is unwieldy, implementors of `CurveConfig` wrap the interface
+ */
+interface ICurveConfig {
   toRawConfig(): CurveV0
 }
 
-interface PrimitiveCurve {
+interface IPrimitiveCurve {
   toRawPrimitiveConfig(): any
 }
 
+/**
+ * Convert a number to a 12 decimal fixed precision u128
+ * 
+ * @param num Number to convert to a 12 decimal fixed precision BN
+ * @returns 
+ */
 export function toU128(num: number | BN): BN {
   if (BN.isBN(num)) {
     return num;
@@ -64,7 +52,10 @@ export function toU128(num: number | BN): BN {
   return new BN(`${beforeDec || ""}${(afteDec || "").slice(0, 12).padEnd(12, "0")}`)
 }
 
-export class ExponentialCurveConfig implements CurveConfig, PrimitiveCurve {
+/**
+ * Curve configuration for c(S^(pow/frac)) + b
+ */
+export class ExponentialCurveConfig implements ICurveConfig, IPrimitiveCurve {
   c: BN;
   b: BN;
   pow: number;
@@ -118,10 +109,13 @@ export class ExponentialCurveConfig implements CurveConfig, PrimitiveCurve {
   }
 }
 
-export class TimeCurveConfig implements CurveConfig {
-  curves: { curve: PrimitiveCurve, offset: BN }[] = [];
+/**
+ * Curve configuration that allows the curve to change parameters at discrete time offsets from the go live date
+ */
+export class TimeCurveConfig implements ICurveConfig {
+  curves: { curve: IPrimitiveCurve, offset: BN }[] = [];
 
-  addCurve(timeOffset: number, curve: PrimitiveCurve): TimeCurveConfig {
+  addCurve(timeOffset: number, curve: IPrimitiveCurve): TimeCurveConfig {
     if (this.curves.length == 0 && timeOffset != 0) {
       throw new Error("First time offset must be 0");
     }
@@ -150,55 +144,141 @@ export class TimeCurveConfig implements CurveConfig {
 }
 
 
-export interface InitializeCurveArgs {
-  config: CurveConfig;
+export interface IInitializeCurveArgs {
+  /** The configuration for the shape of curve */
+  config: ICurveConfig;
+  /** The payer to create this curve, defaults to provider.wallet */
   payer?: PublicKey;
 }
 
-export interface CreateTokenBondingArgs {
+export interface ICreateTokenBondingArgs {
+  /** The payer to create this token bonding, defaults to provider.wallet */
   payer?: PublicKey;
+  /** The shape of the bonding curve. Must be created using {@link SplTokenBonding.initializeCurve} */
   curve: PublicKey;
+  /** The base mint that the `targetMint` will be priced in terms of. `baseMint` tokens will fill the bonding curve reserves */
   baseMint: PublicKey;
+  /** 
+   * The mint this bonding curve will create on `buy`. If not provided, specify `targetMintDecimals` and it will create one for you
+   * 
+   * It can be useful to pass the mint in if you're creating a bonding curve for an existing mint. Keep in mind,
+   * the authority on this mint will need to be set to:
+   * ```js
+   * PublicKey.findProgramAddress(
+      [
+        Buffer.from("target-authority", "utf-8"),
+        targetMint!.toBuffer()
+      ],
+      this.programId
+    )
+   * ```
+   */
   targetMint?: PublicKey; // If not provided, will create one with `targetMintDecimals`
-  targetMintDecimals?: number; // If target mint not provded, create with these decimals
-  buyBaseRoyalties?: PublicKey; // If not provided, create an Associated Token Account with baseRoyaltiesOwner
-  buyBaseRoyaltiesOwner?: PublicKey; // If base royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
-  buyTargetRoyalties?: PublicKey; // If not provided, create an Associated Token Account with targetRoyaltiesOwner
-  buyTargetRoyaltiesOwner?: PublicKey; // If target royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
-  sellBaseRoyalties?: PublicKey; // If not provided, create an Associated Token Account with baseRoyaltiesOwner
-  sellBaseRoyaltiesOwner?: PublicKey; // If base royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
-  sellTargetRoyalties?: PublicKey; // If not provided, create an Associated Token Account with targetRoyaltiesOwner
-  sellTargetRoyaltiesOwner?: PublicKey; // If target royalties not provided, will create it with this owner. Otherwise, will use wallet.publicKey
+  /**
+   * **Default:** New generated keypair
+   * 
+   * Pass in the keypair to use for the mint. Useful if you want a vanity keypair
+   */
+  targetMintKeypair?: anchor.web3.Keypair,
+  /** If `targetMint` is not defined, will create a mint with this number of decimals */
+  targetMintDecimals?: number;
+  /** 
+   * Account to store royalties in terms of `baseMint` tokens when the {@link SplTokenBonding.buy} command is issued
+   * 
+   * If not provided, will create an Associated Token Account with `buyBaseRoyaltiesOwner`
+   */
+  buyBaseRoyalties?: PublicKey;
+  /** Only required when `buyBaseRoyalties` is undefined. The owner of the `buyBaseRoyalties` account. **Default:** `provider.wallet` */
+  buyBaseRoyaltiesOwner?: PublicKey;
+  /** 
+   * Account to store royalties in terms of `targetMint` tokens when the {@link SplTokenBonding.buy} command is issued
+   * 
+   * If not provided, will create an Associated Token Account with `buyTargetRoyaltiesOwner`
+   */
+  buyTargetRoyalties?: PublicKey;
+  /** Only required when `buyTargetRoyalties` is undefined. The owner of the `buyTargetRoyalties` account. **Default:** `provider.wallet` */
+  buyTargetRoyaltiesOwner?: PublicKey;
+  /** 
+   * Account to store royalties in terms of `baseMint` tokens when the {@link SplTokenBonding.sell} command is issued
+   * 
+   * If not provided, will create an Associated Token Account with `sellBaseRoyaltiesOwner`
+   */
+  sellBaseRoyalties?: PublicKey;
+  /** Only required when `sellBaseRoyalties` is undefined. The owner of the `sellBaseRoyalties` account. **Default:** `provider.wallet` */
+  sellBaseRoyaltiesOwner?: PublicKey;
+  /** 
+   * Account to store royalties in terms of `targetMint` tokens when the {@link SplTokenBonding.sell} command is issued
+   * 
+   * If not provided, will create an Associated Token Account with `sellTargetRoyaltiesOwner`
+   */
+  sellTargetRoyalties?: PublicKey; 
+  /** Only required when `sellTargetRoyalties` is undefined. The owner of the `sellTargetRoyalties` account. **Default:** `provider.wallet` */
+  sellTargetRoyaltiesOwner?: PublicKey;
   authority?: PublicKey;
-  baseStorage?: PublicKey; // Base storage account. If provided, will create a bonding curve with Sell disabled, and all proceeds will go to this account.
+  /**
+   * The reserves of the bonding curve. When {@link SplTokenBonding.buy} is called, `baseMint` tokens are stored here.
+   * When {@link SplTokenBonding.sell} is called, `baseMint` tokens are returned to the callee from this account
+   * 
+   * Optionally, this account can have an authority _not_ owned by the spl-token-bonding program. In this case, a bonding curve
+   * is created with {@link SplTokenBonding.sell} disabled. This allows the bonding curve contract to be used like a
+   * marketplace to sell a new token
+   * 
+   * **Default:** creates this account for you, owned by the token bonding program
+   */
+  baseStorage?: PublicKey;
+  /** Number from 0 to 100 */
   buyBaseRoyaltyPercentage: number;
+  /** Number from 0 to 100 */
   buyTargetRoyaltyPercentage: number;
+  /** Number from 0 to 100 */
   sellBaseRoyaltyPercentage: number;
+  /** Number from 0 to 100 */
   sellTargetRoyaltyPercentage: number;
+  /** Maximum `targetMint` tokens this bonding curve will mint before disabling {@link SplTokenBonding.buy}. **Default:** infinite */
   mintCap?: BN;
+  /** Maximum `targetMint` tokens that can be purchased in a single call to {@link SplTokenBonding.buy}. Useful for limiting volume. **Default:** 0 */
   purchaseCap?: BN;
+  /** The date this bonding curve will go live. Before this date, {@link SplTokenBonding.buy} and {@link SplTokenBonding.sell} are disabled. **Default:** 1 second ago */
   goLiveDate?: Date;
+  /** The date this bonding curve will shut down. After this date, {@link SplTokenBonding.buy} and {@link SplTokenBonding.sell} are disabled. **Default:** null */
   freezeBuyDate?: Date;
+  /** Should this bonding curve be frozen initially? It can be unfrozen using {@link SplTokenBonding.updateTokenBonding}. **Default:** false */
   buyFrozen?: boolean;
-  index?: number; // Multiple bonding curves can exist for a given target mint. 0 is reserved for the one where the curve owns mint authority
+  /**
+   * Multiple bonding curves can exist for a given target mint.
+   * 0 is reserved for the one where the program owns mint authority and can mint new tokens. All other curves may exist as
+   * markeplace curves
+   */
+  index?: number;
 }
 
-export interface UpdateTokenBondingArgs {
+export interface IUpdateTokenBondingArgs {
+  /** The bonding curve to update */
   tokenBonding: PublicKey;
+  /** Number from 0 to 100. **Default:** current */
   buyBaseRoyaltyPercentage?: number;
+  /** Number from 0 to 100. **Default:** current */
   buyTargetRoyaltyPercentage?: number;
+  /** Number from 0 to 100. **Default:** current */
   sellBaseRoyaltyPercentage?: number;
+  /** Number from 0 to 100. **Default:** current */
   sellTargetRoyaltyPercentage?: number;
+  /** A new account to store royalties. **Default:** current */
   buyBaseRoyalties?: PublicKey;
+  /** A new account to store royalties. **Default:** current */
   buyTargetRoyalties?: PublicKey;
+  /** A new account to store royalties. **Default:** current */
   sellBaseRoyalties?: PublicKey;
+  /** A new account to store royalties. **Default:** current */
   sellTargetRoyalties?: PublicKey;
   authority?: PublicKey | null;
+  /** Should this bonding curve be frozen, disabling buy and sell? It can be unfrozen using {@link SplTokenBonding.updateTokenBonding}. **Default:** current */
   buyFrozen?: boolean;
 }
 
-export interface BuyArgs {
+export interface IBuyArgs {
   tokenBonding: PublicKey;
+  /** The payer to run this transaction, defaults to provider.wallet */
   payer?: PublicKey;
   source?: PublicKey; // Will use ATA of sourceAuthority if not provided
   destination?: PublicKey; // Will use ATA of sourceAuthority if not provided
@@ -208,14 +288,15 @@ export interface BuyArgs {
   slippage: number; // Decimal number. max price will be (1 + slippage) * price_for_desired_target_amount
 }
 
-export interface SellArgs {
+export interface ISellArgs {
   tokenBonding: PublicKey;
+  /** The payer to run this transaction, defaults to provider.wallet */
   payer?: PublicKey;
-  source?: PublicKey; // Will use ATA of sourceAuthority if not provided
-  destination?: PublicKey; // Will use ATA of sourceAuthority if not provided
-  sourceAuthority?: PublicKey; // Wallet public key if not provided
-  targetAmount: BN | number;
-  slippage: number; // Decimal number. max price will be (1 + slippage) * price_for_desired_target_amount
+  source?: PublicKey; /** `targetMint` source account to sell from. **Default:** ATA of sourceAuthority */
+  destination?: PublicKey; /** `baseMint` destination for tokens from the reserve. **Default:** ATA of wallet */
+  sourceAuthority?: PublicKey; /** **Default:** wallet */
+  targetAmount: BN | number; /** The amount of `targetMint` tokens to sell. */
+  slippage: number; /* Decimal number. max price will be (1 + slippage) * price_for_desired_target_amount */
 }
 
 function toNumber(numberOrBn: BN | number, mint: MintInfo): number {
@@ -285,6 +366,11 @@ export class SplTokenBonding {
     return sendInstructions(this.errors, this.provider, instructions, signers, payer)
   }
 
+  /**
+   * This is an admin function run once to initialize the smart contract.
+   * 
+   * @returns Instructions needed to create sol storage
+   */
   async initializeSolStorageInstructions(): Promise<InstructionResult<null>> {
     const exists = await this.getState();
     if (exists) {
@@ -379,6 +465,9 @@ export class SplTokenBonding {
     }
   }
 
+  /**
+   * Admin command run once to initialize the smart contract
+   */
   async initializeSolStorage(): Promise<void> {
     const {
       instructions,
@@ -389,10 +478,16 @@ export class SplTokenBonding {
     }
   }
 
+  /**
+   * Create a curve shape for use in a TokenBonding instance
+   *
+   * @param param0
+   * @returns 
+   */
   async initializeCurveInstructions({
     payer = this.wallet.publicKey,
     config: curveConfig,
-  }: InitializeCurveArgs): Promise<InstructionResult<{ curve: PublicKey }>> {
+  }: IInitializeCurveArgs): Promise<InstructionResult<{ curve: PublicKey }>> {
     const curve = curveConfig.toRawConfig();
     const curveKeypair = anchor.web3.Keypair.generate();
     return {
@@ -420,7 +515,12 @@ export class SplTokenBonding {
     };
   }
 
-  async initializeCurve(args: InitializeCurveArgs): Promise<PublicKey> {
+  /**
+   * See {@link initializeCurve}
+   * @param args 
+   * @returns 
+   */
+  async initializeCurve(args: IInitializeCurveArgs): Promise<PublicKey> {
     const {
       output: { curve },
       instructions,
@@ -434,6 +534,15 @@ export class SplTokenBonding {
     return curve;
   }
 
+  /**
+   * Get the PDA key of a TokenBonding given the target mint and index
+   * 
+   * `index` = 0 is the default bonding curve that can mint `targetMint`. All other curves are curves that allow burning of `targetMint` for some different base.
+   * 
+   * @param targetMint 
+   * @param index 
+   * @returns 
+   */
   async tokenBondingKey(targetMint: PublicKey, index: number): Promise<[PublicKey, number]> {
     const pad = Buffer.alloc(2);
     new BN(index, 16, 'le').toBuffer().copy(pad)
@@ -443,6 +552,11 @@ export class SplTokenBonding {
     );
   }
 
+  /**
+   * Get the PDA key of the account that should be the authority on the base storage (reserve) account of a bonding curve that doesn't have sell frozen.
+   * @param tokenBonding 
+   * @returns 
+   */
   async baseStorageAuthorityKey(tokenBonding: PublicKey): Promise<[PublicKey, number]> {
     return PublicKey.findProgramAddress(
       [Buffer.from("storage-authority", "utf-8"), tokenBonding.toBuffer()],
@@ -450,6 +564,12 @@ export class SplTokenBonding {
     );
   }
 
+  /**
+   * Create a bonding curve
+   *
+   * @param param0 
+   * @returns 
+   */
   async createTokenBondingInstructions({
     authority = this.wallet.publicKey,
     payer = this.wallet.publicKey,
@@ -474,9 +594,10 @@ export class SplTokenBonding {
     goLiveDate = new Date(new Date().valueOf() - 1000), // 1 secs ago
     freezeBuyDate,
     targetMintDecimals,
+    targetMintKeypair = Keypair.generate(),
     buyFrozen = false,
     index
-  }: CreateTokenBondingArgs): Promise<InstructionResult<{ 
+  }: ICreateTokenBondingArgs): Promise<InstructionResult<{ 
     tokenBonding: PublicKey, 
     targetMint: PublicKey,
     buyBaseRoyalties: PublicKey,
@@ -494,7 +615,6 @@ export class SplTokenBonding {
         throw new Error("Cannot define mint without decimals ");
       }
     }
-    const programId = this.programId;
     const provider = this.provider;
     const state = (await this.getState())!;
     if (baseMint.equals(NATIVE_MINT)) {
@@ -505,7 +625,6 @@ export class SplTokenBonding {
     const signers = [];
     let shouldCreateMint = false;
     if (!targetMint) {
-      const targetMintKeypair = anchor.web3.Keypair.generate();
       signers.push(targetMintKeypair);
       targetMint = targetMintKeypair.publicKey;
       shouldCreateMint = true;
@@ -739,11 +858,22 @@ export class SplTokenBonding {
     };
   }
 
+  /**
+   * General utility function to check if an account exists
+   * @param account
+   * @returns 
+   */
   async accountExists(account: anchor.web3.PublicKey): Promise<boolean> {
     return Boolean(await this.provider.connection.getAccountInfo(account));
   }
 
-  async createTokenBonding(args: CreateTokenBondingArgs): Promise<PublicKey> {
+  /**
+   * Runs {@link `createTokenBondingInstructions`}
+   *
+   * @param args 
+   * @returns 
+   */
+  async createTokenBonding(args: ICreateTokenBondingArgs): Promise<PublicKey> {
     const {
       output: { tokenBonding },
       instructions,
@@ -753,6 +883,12 @@ export class SplTokenBonding {
     return tokenBonding;
   }
 
+  /**
+   * Update a bonding curve.
+   *
+   * @param param0 
+   * @returns 
+   */
   async updateTokenBondingInstructions({
     tokenBonding,
     buyBaseRoyaltyPercentage,
@@ -765,7 +901,7 @@ export class SplTokenBonding {
     sellTargetRoyalties,
     authority,
     buyFrozen,
-  }: UpdateTokenBondingArgs): Promise<InstructionResult<null>> {
+  }: IUpdateTokenBondingArgs): Promise<InstructionResult<null>> {
     const tokenBondingAcct = await this.account.tokenBondingV0.fetch(tokenBonding);
     if (!tokenBondingAcct.authority) {
       throw new Error("Cannot update a token bonding account that has no authority");
@@ -800,11 +936,21 @@ export class SplTokenBonding {
     };
   }
 
-  async updateTokenBonding(args: UpdateTokenBondingArgs): Promise<void> {
+  /**
+   * Runs {@link updateTokenBonding}
+   * @param args 
+   */
+  async updateTokenBonding(args: IUpdateTokenBondingArgs): Promise<void> {
     const { instructions, signers } = await this.updateTokenBondingInstructions(args);
     await this.sendInstructions(instructions, signers);
   }
 
+  /**
+   * Create a temporary account with `amount` twSOL, the token bonding wrapped sol mint.
+   * 
+   * @param param0 
+   * @returns 
+   */
   async createTemporaryWSolAccount({
     payer,
     owner,
@@ -894,6 +1040,12 @@ export class SplTokenBonding {
     };
   }
 
+  /**
+   * Issue a command to buy `targetMint` tokens with `baseMint` tokens.
+   * 
+   * @param param0 
+   * @returns 
+   */
   async buyInstructions({
     tokenBonding,
     source,
@@ -903,7 +1055,7 @@ export class SplTokenBonding {
     baseAmount,
     slippage,
     payer = this.wallet.publicKey
-  }: BuyArgs): Promise<InstructionResult<null>> {
+  }: IBuyArgs): Promise<InstructionResult<null>> {
     const state = (await this.getState())!;
     const tokenBondingAcct = await this.account.tokenBondingV0.fetch(tokenBonding);
     // @ts-ignore
@@ -1046,7 +1198,11 @@ export class SplTokenBonding {
     };
   }
 
-  async buy(args: BuyArgs): Promise<void> {
+  /**
+   * Runs {@link buy}
+   * @param args 
+   */
+  async buy(args: IBuyArgs): Promise<void> {
     const { instructions, signers } = await this.buyInstructions(args);
     await this.sendInstructions(instructions, signers);
   }
@@ -1063,6 +1219,12 @@ export class SplTokenBonding {
     return this.account.programStateV0.fetchNullable(stateAddress)
   }
 
+  /**
+   * Instructions to burn `targetMint` tokens in exchange for `baseMint` tokens
+   *
+   * @param param0 
+   * @returns 
+   */
   async sellInstructions({
     tokenBonding,
     source,
@@ -1071,7 +1233,7 @@ export class SplTokenBonding {
     targetAmount,
     slippage,
     payer = this.wallet.publicKey
-  }: SellArgs): Promise<InstructionResult<null>> {
+  }: ISellArgs): Promise<InstructionResult<null>> {
     const state = (await this.getState())!;
     const tokenBondingAcct = await this.account.tokenBondingV0.fetch(tokenBonding);
     if (tokenBondingAcct.sellFrozen) {
@@ -1192,12 +1354,22 @@ export class SplTokenBonding {
     };
   }
 
-  async sell(args: SellArgs): Promise<void> {
+  /**
+   * Runs {@link sell}
+   * @param args 
+   */
+  async sell(args: ISellArgs): Promise<void> {
     const { instructions, signers } = await this.sellInstructions(args);
     await this.sendInstructions(instructions, signers);
   }
 
-  async getPricing(tokenBonding: PublicKey): Promise<Curve> {
+  /**
+   * Get a class capable of displaying pricing information or this token bonding at its current reserve and supply
+   * 
+   * @param tokenBonding 
+   * @returns 
+   */
+  async getPricing(tokenBonding: PublicKey): Promise<ICurve> {
     const tokenBondingAcct = await this.account.tokenBondingV0.fetch(tokenBonding);
     const targetMint = await getMintInfo(this.provider, tokenBondingAcct.targetMint);
     const baseMint = await getMintInfo(this.provider, tokenBondingAcct.baseMint);
@@ -1206,7 +1378,16 @@ export class SplTokenBonding {
     return this.getCurve(tokenBondingAcct.curve, baseStorage, baseMint, targetMint);
   }
 
-  async getCurve(key: PublicKey, baseStorage: AccountInfo, baseMint: MintInfo, targetMint: MintInfo): Promise<Curve> {
+  /**
+   * Given some reserves and supply, get a pricing model for a curve at `key`.
+   *
+   * @param key 
+   * @param baseStorage 
+   * @param baseMint 
+   * @param targetMint 
+   * @returns 
+   */
+  async getCurve(key: PublicKey, baseStorage: AccountInfo, baseMint: MintInfo, targetMint: MintInfo): Promise<ICurve> {
     const curve = await this.account.curveV0.fetch(key);
     // @ts-ignore
     return fromCurve(curve, baseStorage, baseMint, targetMint);

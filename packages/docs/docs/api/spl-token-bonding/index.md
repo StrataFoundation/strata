@@ -1,3 +1,12 @@
+---
+id: "index"
+title: "@strata-foundation/spl-token-bonding"
+slug: "/api/spl-token-bonding/"
+sidebar_label: "Readme"
+sidebar_position: 0
+custom_edit_url: null
+---
+
 # Strata
 
 This series of smart contracts serves to standardizing and indexing all social tokens.
@@ -66,4 +75,4 @@ Use passing when the account has utility outside of this contract. For example a
 
 Use initializing for actual program data. For example, for the bonding curve or for the Wumbo token ref. This way users can directly lookup the account via PDA. 
 
-You should also use initializing on Token accounts that are exclusively for the program, for example a holding account in token staking. 
+You should also use initializing on Token accounts that are exclusively for the program, for example a holding account in token staking.

@@ -164,12 +164,17 @@ Now, create a social token within the collective:
 ```js async name=token deps=collective
 var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
   isPrimary: false, // Creates a social token explicitly associated with the collective by pda, instead of the wallet alone.
-  curve,
   collective,
-  tokenName: "My Test Token",
-  symbol: "TEST",
+  metadata: {
+    tokenName: "My Test Token",
+    symbol: "TEST",
+    image: "https://ibb.co/sRpBwYh",
+    // Because this is dev, we need to provide the metaplex dev upload file url
+    uploadUrl: "https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2"
+  },
   ignoreIfExists: true, // If a Social Token already exists for this wallet, ignore.
   tokenBondingParams: {
+    curve,
     buyBaseRoyaltyPercentage: 0,
     buyTargetRoyaltyPercentage: 5,
     sellBaseRoyaltyPercentage: 0,
@@ -206,13 +211,18 @@ Now, let's create an unclaimed social token
 
 ```js async name=unclaimed deps=collective,name
 var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
-  curve,
   collective,
   name, // Associate the social token with the created name
-  tokenName: "My Test Token",
-  symbol: "TEST",
+  metadata: {
+    tokenName: "My Test Token",
+    symbol: "TEST",
+    image: "https://ibb.co/sRpBwYh",
+    // Because this is dev, we need to provide the metaplex dev upload file url
+    uploadUrl: "https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2"
+  },
   ignoreIfExists: true, // If a Social Token already exists for this name, ignore.
   tokenBondingParams: {
+    curve,
     buyBaseRoyaltyPercentage: 0,
     buyTargetRoyaltyPercentage: 5,
     sellBaseRoyaltyPercentage: 0,

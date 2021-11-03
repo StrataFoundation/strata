@@ -1,23 +1,18 @@
 import * as anchor from "@project-serum/anchor";
-import {
-  SYSVAR_CLOCK_PUBKEY,
-  SYSVAR_RENT_PUBKEY,
-  PublicKey,
-  SystemProgram,
-  Transaction,
-  TransactionInstruction,
-  Signer,
-} from "@solana/web3.js";
-import { getMintInfo, createMintInstructions } from "@project-serum/common";
-import BN from "bn.js";
 import { Program, Provider } from "@project-serum/anchor";
-import { PeriodUnit, SplTokenStakingIDL, TokenStakingV0 } from "./generated/spl-token-staking";
-import { MintInfo, TOKEN_PROGRAM_ID, Token, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { createMintInstructions, getMintInfo } from "@project-serum/common";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import {
+  PublicKey, Signer, SystemProgram, SYSVAR_CLOCK_PUBKEY,
+  SYSVAR_RENT_PUBKEY, TransactionInstruction
+} from "@solana/web3.js";
 import { InstructionResult, sendInstructions } from "@strata-foundation/spl-utils";
+import BN from "bn.js";
+import { PeriodUnit, SplTokenStakingIDL, TokenStakingV0 } from "./generated/spl-token-staking";
 
 export * from "./generated/spl-token-staking";
 
-interface CreateTokenStakingArgs {
+interface ICreateTokenStakingArgs {
   authority?: PublicKey;
   baseMint: PublicKey;
   periodUnit: any;
@@ -28,7 +23,7 @@ interface CreateTokenStakingArgs {
   targetMintDecimals: number;
 }
 
-interface StakeArgs {
+interface IStakeArgs {
   tokenStaking: PublicKey;
   amount: BN;
   lockupPeriods: BN;
@@ -37,12 +32,12 @@ interface StakeArgs {
   voucherNumber?: number;
 }
 
-interface UnstakeArgs {
+interface IUnstakeArgs {
   tokenStaking: PublicKey;
   stakingVoucher: PublicKey;
 }
 
-interface CollectArgs {
+interface ICollectArgs {
   payer?: PublicKey; // Not necessary unless there's an ATA that needs to be created for the destination
   tokenStaking: PublicKey;
   stakingVoucher: PublicKey;
@@ -142,7 +137,7 @@ export class SplTokenStaking {
     rewardPercentPerPeriodPerLockupPeriod,
     targetMintDecimals,
     targetMint
-  }: CreateTokenStakingArgs): Promise<
+  }: ICreateTokenStakingArgs): Promise<
     InstructionResult<{ tokenStaking: PublicKey; tokenStakingBumpSeed: number; targetMint: PublicKey }>
   > {
     const programId = this.programId;
@@ -217,7 +212,7 @@ export class SplTokenStaking {
     };
   }
 
-  async createTokenStaking(args: CreateTokenStakingArgs): Promise<PublicKey> {
+  async createTokenStaking(args: ICreateTokenStakingArgs): Promise<PublicKey> {
     const {
       output: { tokenStaking },
       instructions,
@@ -234,7 +229,7 @@ export class SplTokenStaking {
     lockupPeriods,
     owner = this.wallet.publicKey,
     payer = this.wallet.publicKey,
-  }: StakeArgs): Promise<InstructionResult<{ stakingVoucher: PublicKey }>> {
+  }: IStakeArgs): Promise<InstructionResult<{ stakingVoucher: PublicKey }>> {
     const tokenStakingAccount = await this.program.account.tokenStakingV0.fetch(tokenStaking);
 
     let voucherNumberToUse = voucherNumber || 0;
@@ -350,7 +345,7 @@ export class SplTokenStaking {
     };
   }
 
-  async stake(args: StakeArgs): Promise<PublicKey> {
+  async stake(args: IStakeArgs): Promise<PublicKey> {
     const {
       output: { stakingVoucher },
       instructions,
@@ -364,7 +359,7 @@ export class SplTokenStaking {
     tokenStaking,
     stakingVoucher,
     payer = this.wallet.publicKey,
-  }: CollectArgs): Promise<InstructionResult<{ destination: PublicKey }>> {
+  }: ICollectArgs): Promise<InstructionResult<{ destination: PublicKey }>> {
     const staking = await this.account.tokenStakingV0.fetch(tokenStaking);
     const voucher = await this.account.stakingVoucherV0.fetch(stakingVoucher);
     const destination = await Token.getAssociatedTokenAddress(
@@ -431,7 +426,7 @@ export class SplTokenStaking {
     };
   }
 
-  async collect(args: CollectArgs): Promise<PublicKey> {
+  async collect(args: ICollectArgs): Promise<PublicKey> {
     const {
       output: { destination },
       instructions,
@@ -445,7 +440,7 @@ export class SplTokenStaking {
   async unstakeInstructions({
     tokenStaking,
     stakingVoucher,
-  }: UnstakeArgs): Promise<InstructionResult<null>> {
+  }: IUnstakeArgs): Promise<InstructionResult<null>> {
     const staking = await this.account.tokenStakingV0.fetch(tokenStaking);
     const voucher = await this.account.stakingVoucherV0.fetch(stakingVoucher);
     const destination = await Token.getAssociatedTokenAddress(
@@ -503,7 +498,7 @@ export class SplTokenStaking {
     };
   }
 
-  async unstake(args: UnstakeArgs): Promise<void> {
+  async unstake(args: IUnstakeArgs): Promise<void> {
     const { instructions, signers } = await this.unstakeInstructions(args);
     await this.sendInstructions(instructions, signers);
   }

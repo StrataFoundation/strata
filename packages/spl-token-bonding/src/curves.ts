@@ -23,7 +23,7 @@ export function amountAsNum(amount: u64, mint: MintInfo): number {
   return amount.div(decimals).toNumber() + decimal;
 }
 
-export function fromCurve(curve: any, baseStorage: AccountInfo, baseMint: MintInfo, targetMint: MintInfo): Curve {
+export function fromCurve(curve: any, baseStorage: AccountInfo, baseMint: MintInfo, targetMint: MintInfo): ICurve {
   switch (Object.keys(curve.definition)[0]) {
     case "timeV0": 
       const curv = curve.definition.timeV0.curves[0].curve.exponentialCurveV0
@@ -33,7 +33,7 @@ export function fromCurve(curve: any, baseStorage: AccountInfo, baseMint: MintIn
   throw new Error("Curve not found")
 }
 
-export interface Curve {
+export interface ICurve {
   current(): number
   locked(): number
   sellTargetAmount(targetAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number): number
@@ -43,7 +43,7 @@ export interface Curve {
   buyTargetAmountRootEstimates(targetAmountNum: number,  targetRoyaltiesPercent: number): number[]
 }
 
-export class ExponentialCurve implements Curve {
+export class ExponentialCurve implements ICurve {
   c: number;
   b: number;
   k: number;

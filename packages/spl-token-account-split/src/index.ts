@@ -1,15 +1,15 @@
 import * as anchor from '@project-serum/anchor';
-import { SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Account, PublicKey, SystemProgram, Transaction, TransactionInstruction, Signer } from '@solana/web3.js';
-import { getMintInfo, createMintInstructions, createTokenAccountInstrs, getTokenAccount } from "@project-serum/common";
-import BN from "bn.js"
 import { Program, Provider } from '@project-serum/anchor';
-import { SplTokenAccountSplitIDL, TokenAccountSplitV0 } from './generated/spl-token-account-split';
-import { MintInfo, TOKEN_PROGRAM_ID, Token, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { createTokenAccountInstrs, getTokenAccount } from "@project-serum/common";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { PublicKey, Signer, SystemProgram, SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js';
 import { SplTokenStaking } from '@strata-foundation/spl-token-staking';
 import { InstructionResult, sendInstructions } from '@strata-foundation/spl-utils';
+import BN from "bn.js";
+import { SplTokenAccountSplitIDL } from './generated/spl-token-account-split';
 export * from "./generated/spl-token-account-split";
 
-interface CreateTokenAccountSplitArgs {
+interface ICreateTokenAccountSplitArgs {
   payer?: PublicKey;
   slotNumber?: number;
   tokenStaking: PublicKey;
@@ -17,7 +17,7 @@ interface CreateTokenAccountSplitArgs {
   mint?: PublicKey;
 }
 
-interface CollectTokenArgs {
+interface ICollectTokenArgs {
   payer?: PublicKey; // Not necessary unless there's an ATA that needs to be created for the destination
   tokenAccountSplit: PublicKey;
   stakingRewardsAmount: BN;
@@ -78,7 +78,7 @@ export class SplTokenAccountSplit {
     slotNumber,
     mint,
     payer = this.wallet.publicKey,
-  }: CreateTokenAccountSplitArgs): Promise<InstructionResult<{ tokenAccountSplit: PublicKey, tokenAccount: PublicKey }>> {
+  }: ICreateTokenAccountSplitArgs): Promise<InstructionResult<{ tokenAccountSplit: PublicKey, tokenAccount: PublicKey }>> {
     const programId = this.programId;
 
     let slotNumberToUse = slotNumber || 0;
@@ -162,7 +162,7 @@ export class SplTokenAccountSplit {
     }
   }
 
-  async createTokenAccountSplit(args: CreateTokenAccountSplitArgs): Promise<{ tokenAccountSplit: PublicKey, tokenAccount: PublicKey }> {
+  async createTokenAccountSplit(args: ICreateTokenAccountSplitArgs): Promise<{ tokenAccountSplit: PublicKey, tokenAccount: PublicKey }> {
     const { output, instructions, signers } = await this.createTokenAccountSplitInstructions(args);
     await this.sendInstructions(instructions, signers);
     return output;
@@ -176,7 +176,7 @@ export class SplTokenAccountSplit {
     source,
     destination,
     sourceAuthority = this.wallet.publicKey
-  }: CollectTokenArgs): Promise<InstructionResult<null>> {
+  }: ICollectTokenArgs): Promise<InstructionResult<null>> {
     const tokenAccountSplitAcct = await this.account.tokenAccountSplitV0.fetch(tokenAccountSplit);
     const tokenStakingAcct = await this.splTokenStakingProgram.account.tokenStakingV0.fetch(tokenAccountSplitAcct.tokenStaking);
     const tokenAccount = await getTokenAccount(this.provider, tokenAccountSplitAcct.tokenAccount);
@@ -243,7 +243,7 @@ export class SplTokenAccountSplit {
     }
   }
 
-  async collectTokens(args: CollectTokenArgs): Promise<void> {
+  async collectTokens(args: ICollectTokenArgs): Promise<void> {
     const { instructions, signers } = await this.collectTokensInstructions(args);
     await this.sendInstructions(instructions, signers);
   }

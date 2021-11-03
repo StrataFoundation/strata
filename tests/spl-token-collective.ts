@@ -1,19 +1,14 @@
+import { createNameRegistry, getHashedName, getNameAccountKey, NameRegistryState } from "@bonfida/spl-name-service";
 import * as anchor from "@project-serum/anchor";
-import { Keypair, PublicKey, Transaction, sendAndConfirmTransaction } from "@solana/web3.js";
+import { BN } from "@project-serum/anchor";
+import { createMint } from "@project-serum/common";
+import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
+import { ExponentialCurveConfig, SplTokenBonding } from "@strata-foundation/spl-token-bonding";
+import { decodeMetadata, SplTokenMetadata } from "@strata-foundation/spl-utils";
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
 import { SplTokenCollective } from "../packages/spl-token-collective";
-import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
-import { PeriodUnit, SplTokenStaking } from "../packages/spl-token-staking/dist/lib";
-import { decodeMetadata, percent, SplTokenMetadata } from "@strata-foundation/spl-utils";
-import { SplTokenAccountSplit } from "../packages/spl-token-account-split/src";
-import { Token } from "@solana/spl-token";
 import { TokenUtils } from "./utils/token";
-import { createMint } from "@project-serum/common";
-import { createNameRegistry, getHashedName, getNameAccountKey, NameRegistryState } from "@bonfida/spl-name-service";
-import { BN, IdlTypes } from "@project-serum/anchor";
-import { getMetadata } from "@strata-foundation/spl-utils";
-import { ExponentialCurveConfig } from "@strata-foundation/spl-token-bonding";
 
 use(ChaiAsPromised);
 
@@ -50,6 +45,7 @@ describe("spl-token-collective", () => {
     },
     unclaimedTokenMetadataSettings: {
       symbol: "UNCLAIMED",
+      uri: "https://wumbo-token-metadata.s3.us-east-2.amazonaws.com/open.json",
       nameIsNameServiceName: true
     }
   }
@@ -114,9 +110,13 @@ describe("spl-token-collective", () => {
         collective,
         name,
         nameClass: nameClass.publicKey,
-        tokenName,
-        curve,
+        metadata: {
+          name: tokenName,
+          symbol: tokenName.slice(0, 5),
+          useCollectiveDefaultUri: true
+        },
         tokenBondingParams: {
+          curve,
           buyBaseRoyaltyPercentage: 10,
           buyTargetRoyaltyPercentage: 5,
           sellBaseRoyaltyPercentage: 0,
@@ -191,9 +191,13 @@ describe("spl-token-collective", () => {
         isPrimary: false,
         collective,
         owner: tokenCollectiveProgram.wallet.publicKey,
-        tokenName: 'Whaddup',
-        curve,
+        metadata: {
+          name: "Whaddup",
+          symbol: "WHAD",
+          useCollectiveDefaultUri: true
+        },
         tokenBondingParams: {
+          curve,
           buyBaseRoyaltyPercentage: 0,
           buyTargetRoyaltyPercentage: 0,
           sellBaseRoyaltyPercentage: 0,
