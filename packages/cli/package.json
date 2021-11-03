@@ -1,6 +1,5 @@
 {
     "name": "@strata-foundation/cli",
-    "private": true,
     "description": "Bootstrapping wumbo",
     "repository": {
         "type": "git",
