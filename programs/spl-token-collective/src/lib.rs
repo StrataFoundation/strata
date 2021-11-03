@@ -98,6 +98,8 @@ pub mod spl_token_collective {
       reverse_token_ref.owner = Some(ctx.accounts.owner.key());
       reverse_token_ref.is_claimed = true;
       token_ref.is_claimed = true;
+      token_ref.is_primary = args.is_primary;
+      reverse_token_ref.is_primary = args.is_primary;
 
       Ok(())
     }
@@ -148,6 +150,9 @@ pub mod spl_token_collective {
       reverse_token_ref.owner = args.name_class;
       reverse_token_ref.is_claimed = false;
       token_ref.is_claimed = false;
+      reverse_token_ref.is_primary = false;
+      token_ref.is_primary = false;
+
 
       Ok(())
     }
@@ -227,6 +232,8 @@ pub mod spl_token_collective {
       reverse_token_ref.name = None;
       new_token_ref.is_claimed = true;
       reverse_token_ref.is_claimed = true;
+      new_token_ref.is_primary = args.is_primary;
+      reverse_token_ref.is_primary = args.is_primary;
 
       let token_bonding = ctx.accounts.token_bonding.clone();
 

@@ -772,10 +772,10 @@ export class SplTokenBonding {
     }
 
     const args: IdlTypes<SplTokenBondingIDL>["UpdateTokenBondingV0Args"] = {
-      buyBaseRoyaltyPercentage: buyBaseRoyaltyPercentage || tokenBondingAcct.buyBaseRoyaltyPercentage,
-      buyTargetRoyaltyPercentage: buyTargetRoyaltyPercentage || tokenBondingAcct.buyTargetRoyaltyPercentage,
-      sellBaseRoyaltyPercentage: sellBaseRoyaltyPercentage || tokenBondingAcct.sellBaseRoyaltyPercentage,
-      sellTargetRoyaltyPercentage: sellTargetRoyaltyPercentage || tokenBondingAcct.sellTargetRoyaltyPercentage,
+      buyBaseRoyaltyPercentage: percent(buyBaseRoyaltyPercentage) || tokenBondingAcct.buyBaseRoyaltyPercentage,
+      buyTargetRoyaltyPercentage: percent(buyTargetRoyaltyPercentage) || tokenBondingAcct.buyTargetRoyaltyPercentage,
+      sellBaseRoyaltyPercentage: percent(sellBaseRoyaltyPercentage) || tokenBondingAcct.sellBaseRoyaltyPercentage,
+      sellTargetRoyaltyPercentage: percent(sellTargetRoyaltyPercentage) || tokenBondingAcct.sellTargetRoyaltyPercentage,
       tokenBondingAuthority: authority === null ? null : authority! || tokenBondingAcct.authority as PublicKey,
       buyFrozen: typeof buyFrozen === "undefined" ? tokenBondingAcct.buyFrozen as boolean : buyFrozen
     };
@@ -981,9 +981,6 @@ export class SplTokenBonding {
       }
     }
 
-    console.log(maxPrice);
-    
-
     let lastInstructions = [];
     if (!source) {
       if (tokenBondingAcct.baseMint.equals(state.wrappedSolMint)) {
@@ -1021,7 +1018,6 @@ export class SplTokenBonding {
       buyWithBase,
       rootEstimates: rootEstimates?.map(toU128)
     };
-    console.log(args);
     const accounts = {
       accounts: {
         tokenBonding,

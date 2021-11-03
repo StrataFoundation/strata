@@ -48,7 +48,11 @@ entity Wallet {
 }
 
 entity TokenRef {
-  ["token-ref", collective, owner | name]
+  ["token-ref", owner, Pubkey::default] PRIMARY
+  -- 
+  ["token-ref", name, collective]
+  --
+  ["token-ref", owner, collective]
   --
   ["reverse-token-ref", collective, tokenBonding]
   --
@@ -59,6 +63,7 @@ entity TokenRef {
   name
   owner
   is_claimed
+  is_primary
 }
 
 entity Name {
@@ -158,6 +163,7 @@ Now, create a social token within the collective:
 
 ```js async name=token deps=collective
 var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
+  isPrimary: false, // Creates a social token explicitly associated with the collective by pda, instead of the wallet alone.
   curve,
   collective,
   tokenName: "My Test Token",
@@ -174,6 +180,8 @@ var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
 var tokenBondingAcct = await tokenBondingSdk.account.tokenBondingV0.fetch(tokenBonding);
 var tokenRefAcct = await tokenCollectiveSdk.account.tokenRefV0.fetch(tokenRef);
 ```
+
+Notice that we created a non-primary social token here. Most wallets will have one social token. For ease of lookup, social tokens refs are a PDA of the owner alone. In the case where one wallet belongs to several collectives, they should choose one `isPrimary` token that is used for lookups on storefronts. 
 
 ## Unclaimed Creation
 
