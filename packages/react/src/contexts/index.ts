@@ -1,2 +1,2 @@
-export * from "./connectionContext";
+export * from "./strataSdkContext";
 export * from "./accountContext";

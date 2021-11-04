@@ -1,24 +1,25 @@
 import React, { FC, ReactNode, createContext, useMemo, useEffect } from "react";
 import { AccountInfo, Commitment, PublicKey } from "@solana/web3.js";
-import { AccountFetchCache } from "../utlis";
-import { useConnection } from "../hooks";
+import { AccountFetchCache } from "../utils";
 import { DEFAULT_COMMITMENT } from "../constants";
+import { useConnection } from "@solana/wallet-adapter-react";
 
 export interface IAccountProviderProps {
   children: ReactNode;
+  commitment: Commitment;
 }
 
 export const AccountContext = createContext<AccountFetchCache>(
   {} as AccountFetchCache
 );
 
-export const AccountProvider: FC<IAccountProviderProps> = ({ children }) => {
-  const connection = useConnection();
+export const AccountProvider: FC<IAccountProviderProps> = ({ children, commitment = DEFAULT_COMMITMENT }) => {
+  const { connection } = useConnection();
   const cache = useMemo(() => {
     return new AccountFetchCache({
       connection,
       delay: 500,
-      commitment: DEFAULT_COMMITMENT,
+      commitment,
     });
   }, [connection]);
 

@@ -1,6 +1,6 @@
 {
   "name": "@strata-foundation/spl-utils",
-  "version": "0.3.0",
+  "version": "0.3.4",
   "description": "Utils shared across spl suite",
   "publishConfig": {
     "access": "public",
@@ -10,6 +10,14 @@
     "type": "git",
     "url": "https://github.com/StrataFoundation/strata"
   },
+  "main": "dist/lib/index.js",
+  "types": "dist/lib/index.d.ts",
+  "exports": {
+    ".": "./dist/lib/index.js"
+  },
+  "files": [
+    "dist/lib/**/*"
+  ],
   "scripts": {
     "build": "yarn run copy-files && tsc --project tsconfig.json",
     "copy-files": "copyfiles -u 1 src/**/*.js dist/lib",

@@ -1,12 +1,5 @@
-/**
- * Copyright (c) Facebook, Inc. and its affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- */
-
 import React from 'react';
-import { usePrograms } from '../../hooks/programs';
+import { useStrataSdks } from '@strata-foundation/react';
 import { BN } from "bn.js";
 import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
@@ -31,6 +24,7 @@ function BrowserOnlyAsyncButton(props) {
 
 // Add react-live imports you need here
 const ReactLiveScope = {
+  useStrataSdks,
   sendMultipleInstructions,
   createNameRegistry,
   getHashedName,
@@ -40,7 +34,6 @@ const ReactLiveScope = {
   AccountLayout,
   TOKEN_PROGRAM_ID,
   AsyncButton: BrowserOnlyAsyncButton,
-  usePrograms,
   BN,
   SplTokenBonding,
   Keypair,

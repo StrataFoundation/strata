@@ -1,21 +1,20 @@
-import Root from "@theme/Root";
 import "./bufferFill";
-import React, { FC, useMemo } from "react";
+import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import {
   ConnectionProvider,
-  WalletProvider,
+  WalletProvider
 } from "@solana/wallet-adapter-react";
-import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
+import { StrataSdksProvider } from "@strata-foundation/react";
 import {
   getLedgerWallet,
   getPhantomWallet,
   getSlopeWallet,
   getSolflareWallet,
   getSolletExtensionWallet,
-  getSolletWallet,
-  getTorusWallet,
+  getSolletWallet
 } from "@solana/wallet-adapter-wallets";
 import { clusterApiUrl } from "@solana/web3.js";
+import React, { FC, useMemo } from "react";
 import { VariablesProvider } from "./variables";
 
 // Default styles that can be overridden by your app
@@ -54,7 +53,9 @@ export const Wallet: FC = ({ children }) => {
 export default ({ children }) => (
   <>
     <Wallet>
-      <VariablesProvider>{children}</VariablesProvider>
+      <StrataSdksProvider>
+        <VariablesProvider>{children}</VariablesProvider>
+      </StrataSdksProvider>
     </Wallet>
   </>
 );

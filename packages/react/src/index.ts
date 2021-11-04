@@ -1,4 +1,5 @@
 import path from "path";
+import "./bufferFill";
 const rootDir = path.join(__dirname, "../../..");
 
 require("dotenv").config({

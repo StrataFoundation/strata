@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react";
 import { PublicKey, AccountInfo } from "@solana/web3.js";
-import { ParsedAccountBase } from "@oyster/common";
 import { useAccountFetchCache } from "../hooks";
+
+export interface ParsedAccountBase {
+  pubkey: PublicKey;
+  account: AccountInfo<Buffer>;
+  info: any; // TODO: change to unkown
+}
 
 export interface UseAccountState<T> {
   loading: boolean;

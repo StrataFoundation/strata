@@ -9,11 +9,10 @@ import {
   WalletMultiButton,
 } from "@solana/wallet-adapter-react-ui";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { usePrograms } from "../../hooks/programs";
+import { useStrataSdks, useProvider } from "@strata-foundation/react";
 import { parse } from "esprima";
 import BN from "bn.js";
 import { useVariablesContext } from "../Root/variables";
-import { useProvider } from "@site/src/hooks/provider";
 import BrowserOnly from "@docusaurus/BrowserOnly";
 
 function wrapAndCollectVars(code: string, injectedVars): string {
@@ -71,7 +70,7 @@ const AsyncButton = ({ code, scope, name, deps }) => {
   const [variables, setVariables] = useState<any>(null);
   const [error, setError] = useState<Error>();
   const { connected, publicKey } = useWallet();
-  const { tokenCollectiveSdk, tokenBondingSdk } = usePrograms();
+  const { tokenCollectiveSdk, tokenBondingSdk } = useStrataSdks();
   const { connection } = useConnection();
   const provider = useProvider();
 

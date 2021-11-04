@@ -55,7 +55,7 @@ Let's create a Social Token named TEST within the Open Collective that gives us 
 var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
   ignoreIfExists: true, // If a Social Token already exists for this wallet, ignore.
   metadata: {
-    tokenName: "My Test Token",
+    name: "My Test Token",
     symbol: "TEST",
     image: "https://ibb.co/sRpBwYh",
     // Because this is dev, we need to provide the metaplex dev upload file url

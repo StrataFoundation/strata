@@ -162,7 +162,7 @@ export class AccountFetchCache {
       });
 
       return { keys, array };
-    } catch (e) {
+    } catch (e: any) {
       currentBatch.forEach((key) => this.pendingCallbacks.get(key)!(null, e));
       throw e;
     }

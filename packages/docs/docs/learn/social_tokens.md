@@ -166,7 +166,7 @@ var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
   isPrimary: false, // Creates a social token explicitly associated with the collective by pda, instead of the wallet alone.
   collective,
   metadata: {
-    tokenName: "My Test Token",
+    name: "My Test Token",
     symbol: "TEST",
     image: "https://ibb.co/sRpBwYh",
     // Because this is dev, we need to provide the metaplex dev upload file url
@@ -214,7 +214,7 @@ var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
   collective,
   name, // Associate the social token with the created name
   metadata: {
-    tokenName: "My Test Token",
+    name: "My Test Token",
     symbol: "TEST",
     image: "https://ibb.co/sRpBwYh",
     // Because this is dev, we need to provide the metaplex dev upload file url

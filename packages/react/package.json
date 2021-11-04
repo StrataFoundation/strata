@@ -1,26 +1,43 @@
 {
   "name": "@strata-foundation/react",
-  "version": "0.0.0",
+  "version": "0.3.4",
   "description": "React utils for strata foundation",
   "source": "src/index.ts",
-  "main": "dist/main.js",
-  "module": "dist/module.js",
-  "types": "dist/types.d.ts",
+  "main": "dist/lib/index.js",
+  "types": "dist/lib/index.d.ts",
+  "exports": {
+    ".": "./dist/lib"
+  },
   "scripts": {
-    "watch": "parcel watch",
-    "build": "parcel build"
+    "build": "yarn run copy-files && tsc --project tsconfig.json",
+    "watch": "yarn run copy-files && tsc --watch --project tsconfig.json",
+    "copy-files": "copyfiles -u 1 src/**/*.js dist/lib",
+    "style": "prettier --write \"src/**/*.{ts,tsx}\""
   },
   "dependencies": {
-    "@oyster/common": "^0.0.2",
     "dotenv": "^10.0.0",
     "path": "^0.12.7",
-    "react-async-hook": "^4.0.0"
+    "react-async-hook": "^4.0.0",
+    "@parcel/transformer-react-refresh-wrap": "^2.0.0",
+    "@solana/wallet-adapter-base": "^0.7.0",
+    "@solana/wallet-adapter-react": "^0.13.1",
+    "@solana/wallet-adapter-react-ui": "^0.6.0",
+    "@solana/wallet-adapter-wallets": "^0.11.1",
+    "@solana/web3.js": "^1.29.2",
+    "@strata-foundation/spl-token-bonding": "^0.3.4",
+    "@strata-foundation/spl-token-collective": "^0.3.4",
+    "@strata-foundation/spl-utils": "^0.3.4",
+    "buffer": "^6.0.3",
+    "@solana/spl-token": "^0.1.8",
+    "@project-serum/anchor": "^0.18.0",
+    "eventemitter3": "^4.0.7"
   },
   "peerDependencies": {
     "react": "^16.8 || ^17 || ^18",
     "react-dom": "^16.8 || ^17 || ^18"
   },
   "devDependencies": {
+    "@parcel/transformer-typescript-types": "^2.0.0",
     "@types/node": "^16.11.6",
     "@types/react": "^17.0.33",
     "@types/react-dom": "^17.0.10",
