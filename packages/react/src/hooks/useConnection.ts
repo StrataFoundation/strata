@@ -7,5 +7,5 @@ export const useConnection = () => {
     throw new Error("useConnection must be used within ConnectionProvider");
   }
 
-  return context.connection;
+  return context;
 };

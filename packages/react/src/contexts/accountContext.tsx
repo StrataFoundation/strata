@@ -13,7 +13,7 @@ export const AccountContext = createContext<AccountFetchCache>(
 );
 
 export const AccountProvider: FC<IAccountProviderProps> = ({ children }) => {
-  const connection = useConnection();
+  const { connection } = useConnection();
   const cache = useMemo(() => {
     return new AccountFetchCache({
       connection,

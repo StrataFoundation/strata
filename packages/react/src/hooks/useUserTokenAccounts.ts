@@ -4,6 +4,6 @@ import { useConnection } from "../hooks";
 import { getUserTokenAccounts } from "../utlis";
 
 export const useUserTokenAccounts = (owner?: PublicKey) => {
-  const connection = useConnection();
+  const { connection } = useConnection();
   return useAsync(getUserTokenAccounts, [connection, owner]);
 };
