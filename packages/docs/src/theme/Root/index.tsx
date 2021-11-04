@@ -2,7 +2,7 @@ import "./bufferFill";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import {
   ConnectionProvider,
-  WalletProvider
+  WalletProvider,
 } from "@solana/wallet-adapter-react";
 import { StrataSdksProvider } from "@strata-foundation/react";
 import {
@@ -11,7 +11,7 @@ import {
   getSlopeWallet,
   getSolflareWallet,
   getSolletExtensionWallet,
-  getSolletWallet
+  getSolletWallet,
 } from "@solana/wallet-adapter-wallets";
 import { clusterApiUrl } from "@solana/web3.js";
 import React, { FC, useMemo } from "react";

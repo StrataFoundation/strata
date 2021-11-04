@@ -5,3 +5,4 @@ export * from "./useAccountFetchCache";
 export * from "./useAccount";
 export * from "./useUserTokenAccounts";
 export * from "./useProvider";
+export * from "./usePublicKey";
