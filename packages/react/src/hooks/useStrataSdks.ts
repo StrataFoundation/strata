@@ -9,7 +9,7 @@ export function useStrataSdks(): IStrataSdksReactState {
   const context = React.useContext(StrataSdksContext);
 
   if (context === undefined) {
-    throw new Error("usePrograms must be used within StrataProgramsProvider");
+    throw new Error("useStrataSdks must be used within StrataProgramsProvider");
   }
 
   return context;

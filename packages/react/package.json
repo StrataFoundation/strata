@@ -12,7 +12,8 @@
     "build": "yarn run copy-files && tsc --project tsconfig.json",
     "watch": "yarn run copy-files && tsc --watch --project tsconfig.json",
     "copy-files": "copyfiles -u 1 src/**/*.js dist/lib",
-    "style": "prettier --write \"src/**/*.{ts,tsx}\""
+    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "precommit": "yarn format"
   },
   "dependencies": {
     "dotenv": "^10.0.0",
