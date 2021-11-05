@@ -383,22 +383,31 @@ export class SplTokenBonding {
   }
 
   curveDecoder: TypedAccountParser<ICurve> = (pubkey, account) => {
-    const coded = this.program.coder.accounts.decode<CurveV0>("CurveV0", account.data);
-    
+    const coded = this.program.coder.accounts.decode<CurveV0>(
+      "CurveV0",
+      account.data
+    );
+
     return {
       ...coded,
-      publicKey: pubkey
+      publicKey: pubkey,
     };
-  }
-  
-  tokenBondingDecoder: TypedAccountParser<ITokenBonding> = (pubkey, account) => {
-    const coded = this.program.coder.accounts.decode<ITokenBonding>("TokenBondingV0", account.data);
-    
+  };
+
+  tokenBondingDecoder: TypedAccountParser<ITokenBonding> = (
+    pubkey,
+    account
+  ) => {
+    const coded = this.program.coder.accounts.decode<ITokenBonding>(
+      "TokenBondingV0",
+      account.data
+    );
+
     return {
       ...coded,
-      publicKey: pubkey
+      publicKey: pubkey,
     };
-  }
+  };
 
   get programId() {
     return this.program.programId;

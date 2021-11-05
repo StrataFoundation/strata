@@ -60,3 +60,7 @@ export const VariablesProvider: React.FC = ({ children }) => {
 export const useVariablesContext = () => {
   return useContext(VariablesContext);
 };
+
+export const useVariables = () => {
+  return useVariablesContext().variables || {};
+};

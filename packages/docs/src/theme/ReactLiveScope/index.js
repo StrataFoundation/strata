@@ -10,6 +10,8 @@ import { TOKEN_PROGRAM_ID, AccountLayout } from "@solana/spl-token";
 import { sendMultipleInstructions } from "@strata-foundation/spl-utils";
 import { createNameRegistry, getHashedName, getNameAccountKey, NameRegistryState } from "@bonfida/spl-name-service";
 import BrowserOnly from '@docusaurus/BrowserOnly';
+import { useTokenMetadata, useTokenRef, useTokenBonding, useBondingPricing } from "@strata-foundation/react";
+import { useVariablesContext, useVariables } from "../Root/variables";
 
 function BrowserOnlyAsyncButton(props) {
   return (
@@ -24,6 +26,12 @@ function BrowserOnlyAsyncButton(props) {
 
 // Add react-live imports you need here
 const ReactLiveScope = {
+  useBondingPricing,
+  useTokenRef,
+  useTokenBonding,
+  useVariablesContext,
+  useVariables,
+  useTokenMetadata,
   useStrataSdks,
   sendMultipleInstructions,
   createNameRegistry,

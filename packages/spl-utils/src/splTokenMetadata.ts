@@ -57,10 +57,6 @@ function getImageFromMeta(meta?: any): string | undefined {
 }
 
 const imageFromJson = (newUri: string, extended: any) => {
-  if (!extended || extended?.properties?.files?.length === 0) {
-    return;
-  }
-
   const image = getImageFromMeta(extended)
   if (image) {
     const file = image.startsWith("http")

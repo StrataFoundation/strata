@@ -57,7 +57,7 @@ var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
   metadata: {
     name: "My Test Token",
     symbol: "TEST",
-    image: "https://ibb.co/sRpBwYh",
+    image: "https://i.ibb.co/zxWkRv1/doge.jpg",
     // Because this is dev, we need to provide the metaplex dev upload file url
     uploadUrl: "https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2"
   },

@@ -1,9 +1,8 @@
-import { AccountInfo as TokenAccountInfo, Token } from "@solana/spl-token";
-import { AccountInfo, PublicKey } from "@solana/web3.js";
+import { AccountInfo as TokenAccountInfo } from "@solana/spl-token";
+import { PublicKey } from "@solana/web3.js";
 import { useMemo } from "react";
-import { TokenAccountParser } from "../utils";
-import { useAccount } from "./useAccount";
 import { useAssociatedTokenAddress } from "./useAssociatedTokenAddress";
+import { useTokenAccount } from "./useTokenAccount";
 
 export interface AssociatedAccountState {
   associatedAccount?: TokenAccountInfo;
@@ -24,16 +23,11 @@ export function useAssociatedAccount(
 ): AssociatedAccountState {
   const { result: associatedTokenAddress, loading: associatedTokenLoading } =
     useAssociatedTokenAddress(walletOrAta, mint);
-  const parser = (pubkey: PublicKey, acct: AccountInfo<Buffer>): TokenAccountInfo | undefined => {
-    return TokenAccountParser(pubkey, acct)?.info;
-  }
-  const { info: associatedAccount, loading } = useAccount(
+  const { info: associatedAccount, loading } = useTokenAccount(
     associatedTokenAddress,
-    parser
   );
-  const { info: account, loading: loading2 } = useAccount(
+  const { info: account, loading: loading2 } = useTokenAccount(
     walletOrAta || undefined,
-    parser
   );
 
   const result = useMemo(() => {

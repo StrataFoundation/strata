@@ -36,7 +36,7 @@ async function run() {
     metadata: {
       name: "Open Collective",
       symbol: "OPEN", 
-      image: "https://ibb.co/sRpBwYh", // TODO: this is a dogecoin
+      image: "https://i.ibb.co/zxWkRv1/doge.jpg", // TODO: this is a dogecoin
       // Because this is dev, we need to provide the metaplex dev upload file url
       uploadUrl: "https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2"
     },

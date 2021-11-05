@@ -85,7 +85,7 @@ var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
   metadata: {
     name: "My Test Token",
     symbol: "TEST",
-    image: "https://ibb.co/sRpBwYh",
+    image: "https://i.ibb.co/zxWkRv1/doge.jpg",
     // Because this is dev, we need to provide the metaplex dev upload file url
     uploadUrl: "https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2"
   },
@@ -98,12 +98,38 @@ var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
 });
 ```
 
+```js
+ import { useTokenMetadata, useTokenRef, useBondingPricing } from "@strata-foundation/react";
+```
 ```jsx live
- import { useTokenMetadata } from "@strata-foundation/react";
 
  function TokenDisplay() {
-   const { image, metadata } = useTokenMetadata(tokenBonding);
+   const { tokenRef: tokenRefKey, tokenBonding: tokenBondingKey  } = useVariables(); // Getting tokenBonding from above
+   const { info: tokenRef, loading } = useTokenRef(tokenRefKey);
+   const { info: tokenBonding, loading: loadingTokenBonding } = useTokenBonding(tokenBondingKey);
+   const { image, metadata, loading: metaLoading } = useTokenMetadata(tokenRef && tokenRef.mint);
+   const { curve, loading: loadingPricing } = useBondingPricing(tokenBonding);
+   if (loading || metaLoading || loadingPricing || loadingTokenBonding) {
+     return <div>Loading...</div>
+   }
 
-   return <img src={image} />
+   return <div>
+    <img src={image} />
+    { metadata && <div>
+      <div><b>{metadata.data.name}</b></div>
+      <div>{metadata.data.symbol}</div>
+    </div> }
+    { curve && <div>
+      <div>
+        Current Price: { curve.current() }
+      </div>
+      <div>
+        Value Locked: { curve.locked() }
+      </div>
+      <div>
+        Price to buy 10: { curve.buyTargetAmount(10, tokenBonding.buyBaseRoyaltiesPercentage, tokenBonding.buyTargetRoyaltiesPercentage) }
+      </div>
+    </div> }
+   </div>
  }
 ```
