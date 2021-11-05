@@ -1,18 +1,21 @@
 import {
-  AccountInfo,
-  Connection,
+  AccountInfo, Commitment, Connection,
   PublicKey,
   SendOptions,
   Signer,
   Transaction,
-  TransactionInstruction,
+  TransactionInstruction
 } from "@solana/web3.js";
-import { getMultipleAccounts } from "./getMultipleAccounts";
 import { EventEmitter } from "./eventEmitter";
-import { Commitment } from "@solana/web3.js";
+import { getMultipleAccounts } from "./getMultipleAccounts";
 
 export const DEFAULT_CHUNK_SIZE = 99;
 export const DEFAULT_DELAY = 50;
+
+export type TypedAccountParser<T> = (
+  pubkey: PublicKey,
+  data: AccountInfo<Buffer>
+) => T;
 
 export interface ParsedAccountBase<T> {
   pubkey: PublicKey;

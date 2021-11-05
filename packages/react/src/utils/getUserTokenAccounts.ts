@@ -45,7 +45,7 @@ export interface TokenAccount {
 export const TokenAccountParser = (
   pubKey: PublicKey,
   info: AccountInfo<Buffer>,
-) => {
+): TokenAccount | undefined => {
   // Sometimes a wrapped sol account gets closed, goes to 0 length,
   // triggers an update over wss which triggers this guy to get called
   // since your UI already logged that pubkey as a token account. Check for length.
@@ -65,7 +65,7 @@ export const TokenAccountParser = (
   }
 };
 
-export const getUserTokenAccounts = async (
+export const getWalletTokenAccounts = async (
   connection: Connection,
   owner?: PublicKey
 ): Promise<TokenAccount[]> => {

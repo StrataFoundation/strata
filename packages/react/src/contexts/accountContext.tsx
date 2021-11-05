@@ -1,6 +1,6 @@
 import React, { FC, ReactNode, createContext, useMemo, useEffect } from "react";
 import { AccountInfo, Commitment, PublicKey } from "@solana/web3.js";
-import { AccountFetchCache } from "../utils";
+import { AccountFetchCache } from "@strata-foundation/spl-utils";
 import { DEFAULT_COMMITMENT } from "../constants";
 import { useConnection } from "@solana/wallet-adapter-react";
 

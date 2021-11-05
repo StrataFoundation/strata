@@ -54,7 +54,7 @@ entity TokenRef {
   --
   ["token-ref", owner, collective]
   --
-  ["reverse-token-ref", collective, tokenBonding]
+  ["reverse-token-ref", targetMint]
   --
   collective
   token_metadata

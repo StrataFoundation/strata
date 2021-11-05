@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { PublicKey, AccountInfo } from "@solana/web3.js";
 import { useAccountFetchCache } from "../hooks";
+import { TypedAccountParser } from "@strata-foundation/spl-utils";
 
 export interface ParsedAccountBase {
   pubkey: PublicKey;
@@ -14,11 +15,15 @@ export interface UseAccountState<T> {
   info?: T;
 }
 
-export type TypedAccountParser<T> = (
-  pubkey: PublicKey,
-  data: AccountInfo<Buffer>
-) => T;
-
+/**
+ * Generic hook to get a cached, auto updating, deserialized form of any Solana account. Massively saves on RPC usage by using
+ * the spl-utils accountFetchCache.
+ *
+ * @param key 
+ * @param parser 
+ * @param isStatic 
+ * @returns 
+ */
 export function useAccount<T>(
   key: undefined | PublicKey,
   parser?: TypedAccountParser<T>,

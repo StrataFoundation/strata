@@ -1,4 +1,16 @@
-import "./bufferFill";
+---
+sidebar_position: 1
+---
+
+# React
+
+The Strata SDK comes with a suite of useful ReactJS hooks.
+
+## Setup
+
+You'll want to set up [solana-wallet-adapter](https://github.com/solana-labs/wallet-adapter), the Strata SDK Provider, and the Strata AccountProvider (an intelligent caching layer on Solana's rpc).
+
+```jsx
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import {
   ConnectionProvider,
@@ -61,3 +73,37 @@ export default ({ children }) => (
     </Wallet>
   </>
 );
+```
+
+# Displaying a Social Token 
+
+Let's create a simple social token for testing, then display it:
+
+```jsx async name=create_social
+var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
+  ignoreIfExists: true, // If a Social Token already exists for this wallet, ignore.
+  metadata: {
+    name: "My Test Token",
+    symbol: "TEST",
+    image: "https://ibb.co/sRpBwYh",
+    // Because this is dev, we need to provide the metaplex dev upload file url
+    uploadUrl: "https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2"
+  },
+  tokenBondingParams: {
+    buyBaseRoyaltyPercentage: 0,
+    buyTargetRoyaltyPercentage: 10,
+    sellBaseRoyaltyPercentage: 0,
+    sellTargetRoyaltyPercentage: 0
+  }
+});
+```
+
+```jsx live
+ import { useTokenMetadata } from "@strata-foundation/react";
+
+ function TokenDisplay() {
+   const { image, metadata } = useTokenMetadata(tokenBonding);
+
+   return <img src={image} />
+ }
+```

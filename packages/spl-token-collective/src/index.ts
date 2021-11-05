@@ -1,43 +1,56 @@
 import * as anchor from "@project-serum/anchor";
 import { IdlTypes, Program, Provider } from "@project-serum/anchor";
-import { createMintInstructions } from "@project-serum/common";
+import { createMintInstructions } from "@project-serum/common";``
 import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
+  AccountInfo as TokenAccountInfo, ASSOCIATED_TOKEN_PROGRAM_ID,
   MintLayout,
   Token,
-  TOKEN_PROGRAM_ID,
+  TOKEN_PROGRAM_ID
 } from "@solana/spl-token";
 import {
-  PublicKey,
+  AccountInfo, PublicKey,
   Signer,
   SystemProgram,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
-  TransactionInstruction,
+  TransactionInstruction
 } from "@solana/web3.js";
 import {
   ICreateTokenBondingArgs,
-  SplTokenBonding,
+  SplTokenBonding
 } from "@strata-foundation/spl-token-bonding";
 import {
-  BigInstructionResult,
-  createMetadata,
-  Data,
+  BigInstructionResult, Data,
   decodeMetadata,
   extendBorsh,
+  getMetadata,
   ICreateArweaveUrlArgs,
   InstructionResult,
+  ITokenWithMeta,
   METADATA_PROGRAM_ID,
   percent,
   sendInstructions,
   sendMultipleInstructions,
   SplTokenMetadata,
-  updateMetadata,
+  TypedAccountParser,
+  updateMetadata
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
-import { SplTokenCollectiveIDL } from "./generated/spl-token-collective";
+import { CollectiveV0, SplTokenCollectiveIDL, TokenRefV0 } from "./generated/spl-token-collective";
 
 export * from "./generated/spl-token-collective";
+
+export interface ITokenWithMetaAndAccount extends ITokenWithMeta {
+  publicKey?: PublicKey;
+  tokenRef?: ITokenRef;
+  account?: TokenAccountInfo;
+}
+
+interface TokenAccount {
+  pubkey: PublicKey;
+  account: AccountInfo<Buffer>;
+  info: TokenAccountInfo;
+}
 
 extendBorsh();
 
@@ -176,6 +189,13 @@ export interface IClaimSocialTokenArgs {
    * **Default:** false
    */
   ignoreMissingName?: boolean; // Ignore missing name account,
+}
+
+interface ITokenRefKeyArgs {
+  isPrimary?: boolean;
+  owner?: PublicKey;
+  name?: PublicKey;
+  collective?: PublicKey;
 }
 
 export interface IRoyaltySetting {
@@ -332,6 +352,21 @@ function toIdlConfig(config: ICollectiveConfig): CollectiveConfigV0 {
   };
 }
 
+/**
+ * Unified tokenref interface wrapping the raw TokenRefV0
+ */
+export interface ITokenRef extends TokenRefV0 {
+  publicKey: PublicKey
+}
+
+/**
+ * Unified collective interface wrapping the raw CollectiveV0
+ */
+export interface ICollective extends CollectiveV0 {
+  publicKey: PublicKey
+}
+
+
 export class SplTokenCollective {
   program: Program<SplTokenCollectiveIDL>;
   splTokenBondingProgram: SplTokenBonding;
@@ -414,6 +449,38 @@ export class SplTokenCollective {
       acc.set(err.code, `${err.name}: ${err.msg}`);
       return acc;
     }, new Map<number, string>());
+  }
+
+  /**
+   * Account decoder to a unified TokenRef interface
+   * 
+   * @param pubkey 
+   * @param account 
+   * @returns 
+   */
+  tokenRefDecoder: TypedAccountParser<ITokenRef> = (pubkey, account) => {
+    const coded = this.program.coder.accounts.decode<ITokenRef>("TokenRefV0", account.data);
+    
+    return {
+      ...coded,
+      publicKey: pubkey
+    };
+  }
+
+    /**
+   * Account decoder to a unified Collective interface
+   * 
+   * @param pubkey 
+   * @param account 
+   * @returns 
+   */
+  collectiveDecoder: TypedAccountParser<ICollective> = (pubkey, account) => {
+    const coded = this.program.coder.accounts.decode<ICollective>("CollectiveV0", account.data);
+    
+    return {
+      ...coded,
+      publicKey: pubkey
+    };
   }
 
   sendInstructions(
@@ -699,7 +766,6 @@ export class SplTokenCollective {
     const [reverseTokenRef] = await PublicKey.findProgramAddress(
       [
         Buffer.from("reverse-token-ref", "utf-8"),
-        tokenRefAcct.collective.toBuffer(),
         tokenBondingAcct.targetMint.toBuffer(),
       ],
       this.programId
@@ -715,7 +781,7 @@ export class SplTokenCollective {
     );
 
     const [newTokenRef, tokenRefBumpSeed] = await PublicKey.findProgramAddress(
-      this.tokenRefSeeds({
+      SplTokenCollective.tokenRefSeeds({
         isPrimary,
         collective: tokenRefAcct.collective,
         owner,
@@ -827,17 +893,12 @@ export class SplTokenCollective {
    * @param param0
    * @returns
    */
-  tokenRefSeeds({
-    isPrimary,
+  static tokenRefSeeds({
     owner,
     name,
     collective,
-  }: {
-    isPrimary: boolean;
-    owner?: PublicKey;
-    name?: PublicKey;
-    collective?: PublicKey;
-  }): Buffer[] {
+    isPrimary = collective?.equals(PublicKey.default),
+  }: ITokenRefKeyArgs): Buffer[] {
     const str = Buffer.from("token-ref", "utf-8");
     if (isPrimary || !collective) {
       if (!owner) {
@@ -852,6 +913,23 @@ export class SplTokenCollective {
 
       return [str, (name || owner)!.toBuffer(), collective.toBuffer()];
     }
+  }
+
+  static async tokenRefKey(args: ITokenRefKeyArgs, programId: PublicKey = SplTokenCollective.ID): Promise<[PublicKey, number]> {
+    return PublicKey.findProgramAddress(
+      this.tokenRefSeeds(args),
+      programId
+    );
+  }
+
+  static async reverseTokenRefKey(mint: PublicKey, programId: PublicKey = SplTokenCollective.ID): Promise<[PublicKey, number]> {
+    return PublicKey.findProgramAddress(
+      [
+        Buffer.from("reverse-token-ref", "utf-8"),
+        mint.toBuffer(),
+      ],
+      programId
+    );
   }
 
   /**
@@ -896,7 +974,7 @@ export class SplTokenCollective {
 
     // Token refs
     const [tokenRef, tokenRefBumpSeed] = await PublicKey.findProgramAddress(
-      this.tokenRefSeeds({ isPrimary, collective, owner, name }),
+      SplTokenCollective.tokenRefSeeds({ isPrimary, collective, owner, name }),
       programId
     );
 
@@ -917,15 +995,7 @@ export class SplTokenCollective {
       ))
     );
 
-    const [reverseTokenRef, reverseTokenRefBumpSeed] =
-      await PublicKey.findProgramAddress(
-        [
-          Buffer.from("reverse-token-ref", "utf-8"),
-          collective.toBuffer(),
-          targetMint.toBuffer(),
-        ],
-        programId
-      );
+    const [reverseTokenRef, reverseTokenRefBumpSeed] = await SplTokenCollective.reverseTokenRefKey(targetMint)
 
     console.log(tokenRef);
     const existing = await this.account.tokenRefV0.fetchNullable(tokenRef);
@@ -1187,5 +1257,25 @@ export class SplTokenCollective {
     }
 
     return { tokenRef, reverseTokenRef, tokenBonding };
+  }
+
+  getUserTokensWithMeta(
+    tokenAccounts?: TokenAccount[]
+  ): Promise<ITokenWithMetaAndAccount[]> {
+    return Promise.all(
+      (tokenAccounts || []).map(async ({ pubkey, info }) => {
+        const metadataKey = await getMetadata(info.mint.toBase58());
+        const [reverseTokenRefKey] = await SplTokenCollective.reverseTokenRefKey(info.mint);
+        const account = await this.provider.connection.getAccountInfo(reverseTokenRefKey);
+        const tokenRef = account && this.tokenRefDecoder(reverseTokenRefKey, account);
+  
+        return {
+          ...(await this.splTokenMetadata.getTokenMetadata(new PublicKey(metadataKey))),
+          tokenRef: tokenRef || undefined,
+          publicKey: pubkey,
+          account: info,
+        };
+      })
+    );
   }
 }

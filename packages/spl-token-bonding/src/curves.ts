@@ -28,7 +28,7 @@ export function fromCurve(
   baseStorage: AccountInfo,
   baseMint: MintInfo,
   targetMint: MintInfo
-): ICurve {
+): IPricingCurve {
   switch (Object.keys(curve.definition)[0]) {
     case "timeV0":
       const curv = curve.definition.timeV0.curves[0].curve.exponentialCurveV0;
@@ -43,7 +43,7 @@ export function fromCurve(
   throw new Error("Curve not found");
 }
 
-export interface ICurve {
+export interface IPricingCurve {
   current(): number;
   locked(): number;
   sellTargetAmount(
@@ -71,7 +71,7 @@ export interface ICurve {
   ): number[];
 }
 
-export class ExponentialCurve implements ICurve {
+export class ExponentialCurve implements IPricingCurve {
   c: number;
   b: number;
   k: number;

@@ -6,7 +6,7 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
-import { truthy } from "../utlis";
+import { truthy } from "../utils";
 
 export interface IErrorHandlerProviderProps {
   children: ReactNode;
