@@ -8,12 +8,12 @@ Strata Protocol lets you effortlessly create Social Tokens and communities of So
 
 ## Initializing the SDK
 
-Every smart contract on Strata comes with an SDK. The two main smart contracts are `spl-collective` and `spl-token-bonding`.
+Every smart contract on Strata comes with an SDK. The two main smart contracts are `spl-token-collective` and `spl-token-bonding`.
 
 Let's get started by installing the sdks
 
 ```bash
-yarn add @strata-foundation/spl-collective @strata-foundation/spl-token-bonding
+yarn add @strata-foundation/spl-token-collective @strata-foundation/spl-token-bonding
 ```
 
 Now, we can initialize the sdks:
