@@ -3,7 +3,7 @@ import { AccountContext } from "../contexts";
 
 /**
  * Get the Strata account fetch cache to save on rcp calls. Generally, you want to use {@link useAccount}
- * @returns 
+ * @returns
  */
 export const useAccountFetchCache = () => {
   const context = useContext(AccountContext);

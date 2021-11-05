@@ -19,10 +19,10 @@ export interface UseAccountState<T> {
  * Generic hook to get a cached, auto updating, deserialized form of any Solana account. Massively saves on RPC usage by using
  * the spl-utils accountFetchCache.
  *
- * @param key 
- * @param parser 
- * @param isStatic 
- * @returns 
+ * @param key
+ * @param parser
+ * @param isStatic
+ * @returns
  */
 export function useAccount<T>(
   key: undefined | PublicKey,

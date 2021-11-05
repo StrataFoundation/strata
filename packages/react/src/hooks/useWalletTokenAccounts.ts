@@ -5,8 +5,8 @@ import { getWalletTokenAccounts } from "../utils";
 
 /**
  * Get all token accounts associated with this wallet
- * @param owner 
- * @returns 
+ * @param owner
+ * @returns
  */
 export const useWalletTokenAccounts = (owner?: PublicKey) => {
   const { connection } = useConnection();

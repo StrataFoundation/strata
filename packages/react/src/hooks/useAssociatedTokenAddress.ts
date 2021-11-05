@@ -24,11 +24,13 @@ export function useAssociatedTokenAddress(
       return;
     }
 
-    fetch(wallet, mint).then((result) => {
-      if (!state.result || result.toString() != state.result.toString()) {
-        setState({ result, loading: false });
-      }
-    }).catch(() => {});
+    fetch(wallet, mint)
+      .then((result) => {
+        if (!state.result || result.toString() != state.result.toString()) {
+          setState({ result, loading: false });
+        }
+      })
+      .catch(() => {});
   }, [wallet, mint]);
 
   return state;

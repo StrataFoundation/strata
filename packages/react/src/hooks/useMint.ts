@@ -4,7 +4,7 @@ import { ParsedAccountBase, useAccount } from "../hooks";
 
 const deserializeMint = (data: Buffer) => {
   if (data.length !== MintLayout.span) {
-    throw new Error('Not a valid Mint');
+    throw new Error("Not a valid Mint");
   }
 
   const mintInfo = MintLayout.decode(data);
@@ -44,5 +44,5 @@ export const MintParser = (pubKey: PublicKey, info: AccountInfo<Buffer>) => {
 };
 
 export function useMint(key?: PublicKey) {
-  return useAccount(key, MintParser).info?.info
+  return useAccount(key, MintParser).info?.info;
 }

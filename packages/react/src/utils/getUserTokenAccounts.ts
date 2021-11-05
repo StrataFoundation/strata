@@ -1,5 +1,10 @@
 import { AccountInfo, Connection, PublicKey } from "@solana/web3.js";
-import { u64, AccountLayout, TOKEN_PROGRAM_ID, AccountInfo as TokenAccountInfo } from "@solana/spl-token";
+import {
+  u64,
+  AccountLayout,
+  TOKEN_PROGRAM_ID,
+  AccountInfo as TokenAccountInfo,
+} from "@solana/spl-token";
 import { truthy } from "./truthy";
 
 export const deserializeAccount = (data: Buffer) => {
@@ -44,7 +49,7 @@ export interface TokenAccount {
 
 export const TokenAccountParser = (
   pubKey: PublicKey,
-  info: AccountInfo<Buffer>,
+  info: AccountInfo<Buffer>
 ): TokenAccount | undefined => {
   // Sometimes a wrapped sol account gets closed, goes to 0 length,
   // triggers an update over wss which triggers this guy to get called

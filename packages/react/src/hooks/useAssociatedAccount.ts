@@ -13,9 +13,9 @@ export interface AssociatedAccountState {
 /**
  * Get the associcated token account for this wallet, or the account itself is this address is already an ata
  *
- * @param walletOrAta 
- * @param mint 
- * @returns 
+ * @param walletOrAta
+ * @param mint
+ * @returns
  */
 export function useAssociatedAccount(
   walletOrAta: PublicKey | undefined | null,
@@ -24,23 +24,24 @@ export function useAssociatedAccount(
   const { result: associatedTokenAddress, loading: associatedTokenLoading } =
     useAssociatedTokenAddress(walletOrAta, mint);
   const { info: associatedAccount, loading } = useTokenAccount(
-    associatedTokenAddress,
+    associatedTokenAddress
   );
   const { info: account, loading: loading2 } = useTokenAccount(
-    walletOrAta || undefined,
+    walletOrAta || undefined
   );
 
   const result = useMemo(() => {
-    if (account?.mint === mint) { // The passed value is the ata
+    if (account?.mint === mint) {
+      // The passed value is the ata
       return account;
     } else {
-      return associatedAccount
+      return associatedAccount;
     }
-  }, [associatedAccount, account])
+  }, [associatedAccount, account]);
 
   return {
     associatedAccount: result,
     loading: loading || loading2,
-    associatedAccountKey: associatedTokenAddress
+    associatedAccountKey: associatedTokenAddress,
   };
 }

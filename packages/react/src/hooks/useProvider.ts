@@ -5,8 +5,8 @@ import { sendAndConfirmRawTransaction } from "@solana/web3.js";
 
 /**
  * Get an anchor provider with signTransaction wrapped so that it hits the wallet adapter from wallet-adapter-react.
- * 
- * @returns 
+ *
+ * @returns
  */
 export function useProvider(): Provider | undefined {
   const { connection } = useConnection();

@@ -8,11 +8,15 @@ export function useOwnedAmountForOwnerAndHandle(
   collective: PublicKey | undefined,
   tld?: PublicKey
 ): { amount: number | undefined; loading: boolean } {
-  const { info: tokenRef, loading: loadingRef } = useTwitterTokenRef(handle, collective, tld);
+  const { info: tokenRef, loading: loadingRef } = useTwitterTokenRef(
+    handle,
+    collective,
+    tld
+  );
   const amount = useUserOwnedAmount(owner, tokenRef?.mint);
 
   return {
     loading: loadingRef,
-    amount
-  }
+    amount,
+  };
 }

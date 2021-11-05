@@ -31,7 +31,7 @@ export async function getTwitterRegistryKey(
     twitterRootParentRegistryKey
   );
 
-  return twitterHandleRegistryKey
+  return twitterHandleRegistryKey;
 }
 
 export async function getTwitterRegistry(
@@ -39,11 +39,11 @@ export async function getTwitterRegistry(
   twitter_handle: string,
   twitterRootParentRegistryKey: PublicKey = TWITTER_ROOT_PARENT_REGISTRY_KEY
 ): Promise<NameRegistryState> {
-  const key = await getTwitterRegistryKey(twitter_handle, twitterRootParentRegistryKey)
-  const registry = NameRegistryState.retrieve(
-    connection,
-    key
+  const key = await getTwitterRegistryKey(
+    twitter_handle,
+    twitterRootParentRegistryKey
   );
+  const registry = NameRegistryState.retrieve(connection, key);
   return registry;
 }
 
@@ -64,7 +64,6 @@ export async function createVerifiedTwitterRegistry(
     undefined,
     twitterRootParentRegistryKey
   );
-
 
   let instructions = [
     createInstruction(
