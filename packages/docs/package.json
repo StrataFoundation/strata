@@ -1,6 +1,6 @@
 {
   "name": "docs",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
@@ -28,7 +28,7 @@
     "@solana/wallet-adapter-react-ui": "^0.6.0",
     "@solana/wallet-adapter-wallets": "^0.11.1",
     "@solana/web3.js": "^1.29.2",
-    "@strata-foundation/react": "^0.3.7",
+    "@strata-foundation/react": "^0.3.8",
     "@strata-foundation/spl-token-bonding": "^0.3.6",
     "@strata-foundation/spl-token-collective": "^0.3.6",
     "@svgr/webpack": "^5.5.0",
