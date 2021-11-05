@@ -23,7 +23,8 @@
     "mocha": "^8.1.0",
     "ts-mocha": "^8.0.0",
     "ts-node": "^10.2.1",
-    "typescript": "^4.4.3"
+    "typescript": "^4.4.3",
+    "prettier": "2.3.1"
   },
   "scripts": {
     "watch": "lerna run --parallel watch",
