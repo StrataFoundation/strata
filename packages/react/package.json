@@ -1,6 +1,6 @@
 {
   "name": "@strata-foundation/react",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "React utils for strata foundation",
   "source": "src/index.ts",
   "main": "dist/lib/index.js",
@@ -16,21 +16,21 @@
     "precommit": "yarn format"
   },
   "dependencies": {
-    "dotenv": "^10.0.0",
-    "path": "^0.12.7",
-    "react-async-hook": "^4.0.0",
+    "@project-serum/anchor": "^0.18.0",
+    "@solana/spl-token": "^0.1.8",
     "@solana/wallet-adapter-base": "^0.7.0",
     "@solana/wallet-adapter-react": "^0.13.1",
     "@solana/wallet-adapter-react-ui": "^0.6.0",
     "@solana/wallet-adapter-wallets": "^0.11.1",
     "@solana/web3.js": "^1.29.2",
-    "@strata-foundation/spl-token-bonding": "^0.3.4",
-    "@strata-foundation/spl-token-collective": "^0.3.4",
-    "@strata-foundation/spl-utils": "^0.3.4",
+    "@strata-foundation/spl-token-bonding": "^0.3.5",
+    "@strata-foundation/spl-token-collective": "^0.3.5",
+    "@strata-foundation/spl-utils": "^0.3.5",
     "buffer": "^6.0.3",
-    "@solana/spl-token": "^0.1.8",
-    "@project-serum/anchor": "^0.18.0",
-    "eventemitter3": "^4.0.7"
+    "dotenv": "^10.0.0",
+    "eventemitter3": "^4.0.7",
+    "path": "^0.12.7",
+    "react-async-hook": "^4.0.0"
   },
   "peerDependencies": {
     "react": "^16.8 || ^17 || ^18",
