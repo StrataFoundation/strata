@@ -17,4 +17,5 @@ export * from "./useWalletTokensWithMeta";
 export * from "./useTokenBonding";
 export * from "./useCurve";
 export * from "./bondingPricing";
-export * from "./useOwnedAmountOfTwitterHandle"
+export * from "./useOwnedAmountOfTwitterHandle";
+export * from "./useSolPrice";

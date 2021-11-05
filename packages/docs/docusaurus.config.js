@@ -64,6 +64,16 @@ const config = {
         tsconfig: '../spl-token-collective/tsconfig.json',
         out: 'api/spl-token-collective'
       },
+    ],
+    [
+      'docusaurus-plugin-typedoc',
+      // Plugin / TypeDoc options
+      {
+        id: 'react',
+        entryPoints: ['../react/src/index.ts'],
+        tsconfig: '../react/tsconfig.json',
+        out: 'api/react'
+      },
     ]
   ],
   stylesheets: [

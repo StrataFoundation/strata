@@ -108,7 +108,7 @@ var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
    const { info: tokenRef, loading } = useTokenRef(tokenRefKey);
    const { info: tokenBonding, loading: loadingTokenBonding } = useTokenBonding(tokenBondingKey);
    const { image, metadata, loading: metaLoading } = useTokenMetadata(tokenRef && tokenRef.mint);
-   const { curve, loading: loadingPricing } = useBondingPricing(tokenBonding);
+   const { curve, loading: loadingPricing } = useBondingPricing(tokenBondingKey);
    if (loading || metaLoading || loadingPricing || loadingTokenBonding) {
      return <div>Loading...</div>
    }
@@ -127,7 +127,7 @@ var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
         Value Locked: { curve.locked() }
       </div>
       <div>
-        Price to buy 10: { curve.buyTargetAmount(10, tokenBonding.buyBaseRoyaltiesPercentage, tokenBonding.buyTargetRoyaltiesPercentage) }
+        Price to buy 10: { curve.buyTargetAmount(10, tokenBonding.buyBaseRoyaltyPercentage, tokenBonding.buyTargetRoyaltyPercentage) }
       </div>
     </div> }
    </div>

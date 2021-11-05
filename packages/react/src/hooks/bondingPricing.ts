@@ -72,6 +72,13 @@ export interface PricingState {
   loading: boolean;
   curve?: IPricingCurve
 }
+/**
+ * Get an {@link IPricingCurve} Object that can estimate pricing on this bonding curve,
+ * in real time.
+ *
+ * @param tokenBonding 
+ * @returns 
+ */
 export function useBondingPricing(tokenBonding: PublicKey | undefined): PricingState {
   const { info: bonding, loading: bondingLoading  } = useTokenBonding(tokenBonding);
   const { info: curve, loading: curveLoading } = useCurve(bonding?.curve);
@@ -88,6 +95,13 @@ export function useBondingPricing(tokenBonding: PublicKey | undefined): PricingS
   };
 }
 
+/**
+ * Same as {@link useBondingPricing}, just from a mint instead of the token bonding key
+ *
+ * @param mint 
+ * @param index 
+ * @returns 
+ */
 export function useBondingPricingFromMint(mint: PublicKey | undefined, index?: number | undefined): PricingState {
   const { tokenBondingSdk } = useStrataSdks();
   const { result: key, loading } = useAsync(async (mint: PublicKey | undefined, index: number) => mint && tokenBondingSdk?.tokenBondingKey(mint, index), [
@@ -100,10 +114,6 @@ export function useBondingPricingFromMint(mint: PublicKey | undefined, index?: n
     ...bondingPricing,
     loading: bondingPricing.loading || loading
   }
-}
-
-export const useSolPrice = () => {
-  return useContext(SolPriceContext)
 }
 
 export const useMarketPrice = (marketAddress: PublicKey): number | undefined => {
