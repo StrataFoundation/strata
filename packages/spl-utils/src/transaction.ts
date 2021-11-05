@@ -1,5 +1,5 @@
 import { Provider } from "@project-serum/anchor";
-import { ProgramError } from "./error";
+import { ProgramError } from "./anchorError";
 import {
   PublicKey,
   Signer,

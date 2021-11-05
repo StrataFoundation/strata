@@ -1,6 +1,6 @@
 {
   "name": "docs",
-  "version": "0.3.4",
+  "version": "0.3.9",
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
@@ -28,8 +28,9 @@
     "@solana/wallet-adapter-react-ui": "^0.6.0",
     "@solana/wallet-adapter-wallets": "^0.11.1",
     "@solana/web3.js": "^1.29.2",
-    "@strata-foundation/spl-token-bonding": "^0.3.4",
-    "@strata-foundation/spl-token-collective": "^0.3.4",
+    "@strata-foundation/react": "^0.3.9",
+    "@strata-foundation/spl-token-bonding": "^0.3.9",
+    "@strata-foundation/spl-token-collective": "^0.3.9",
     "@svgr/webpack": "^5.5.0",
     "assert": "^2.0.0",
     "browserify-zlib": "^0.2.0",
@@ -45,6 +46,7 @@
     "path-browserify": "^1.0.1",
     "prism-react-renderer": "^1.2.1",
     "process": "^0.11.10",
+    "raw-loader": "^4.0.2",
     "react": "^17.0.1",
     "react-async-hook": "^4.0.0",
     "react-dom": "^17.0.1",

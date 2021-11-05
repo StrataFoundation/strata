@@ -1,0 +1,21 @@
+import { useRef, useEffect } from "react";
+
+export function useInterval(
+  callback: (...args: any[]) => void,
+  delay: number | null
+) {
+  const savedCallbackRef = useRef<(...args: any[]) => void>();
+
+  useEffect(() => {
+    savedCallbackRef.current = callback;
+  }, [callback]);
+
+  useEffect(() => {
+    const handler = (...args: any[]) => savedCallbackRef.current!(...args);
+
+    if (delay !== null) {
+      const intervalId = setInterval(handler, delay);
+      return () => clearInterval(intervalId);
+    }
+  }, [delay]);
+}

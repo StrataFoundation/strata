@@ -55,9 +55,9 @@ Let's create a Social Token named TEST within the Open Collective that gives us 
 var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
   ignoreIfExists: true, // If a Social Token already exists for this wallet, ignore.
   metadata: {
-    tokenName: "My Test Token",
+    name: "My Test Token",
     symbol: "TEST",
-    image: "https://ibb.co/sRpBwYh",
+    image: "https://i.ibb.co/zxWkRv1/doge.jpg",
     // Because this is dev, we need to provide the metaplex dev upload file url
     uploadUrl: "https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2"
   },
@@ -115,4 +115,10 @@ var testBalance = await getAssociatedAccountBalance(connection, publicKey, token
 
 ## Next Steps
 
-Interested in Learning More? Continue on with the rest of the tutorial take a deeper dive with more examples!
+Interested in using Strata with React? Checkout our [React Examples](./react).
+
+To gain a deeper understanding of the API through examples, check out the Learn pages on
+
+  * [Bonding Curves](./learn/bonding_curves)
+  * [Collectives](./learn/bonding_curves)
+  * [SOcial Tokens](./learn/bonding_curves)

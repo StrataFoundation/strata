@@ -10,6 +10,7 @@
     "module": "commonjs",
     "moduleResolution": "Node",
     "resolveJsonModule": true,
+    "allowJs": false,
     "skipLibCheck": true,
     "declaration": true,
     "declarationMap": true,

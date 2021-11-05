@@ -29,13 +29,15 @@ import {
   InstructionResult,
   percent,
   sendInstructions,
+  TypedAccountParser,
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
-import { amountAsNum, asDecimal, ICurve, fromCurve } from "./curves";
+import { amountAsNum, asDecimal, IPricingCurve, fromCurve } from "./curves";
 import {
   CurveV0,
   ProgramStateV0,
   SplTokenBondingIDL,
+  TokenBondingV0,
 } from "./generated/spl-token-bonding";
 
 export * from "./curves";
@@ -337,6 +339,20 @@ function toBN(numberOrBn: BN | number, mint: MintInfo): BN {
   }
 }
 
+/**
+ * Unified token bonding interface wrapping the raw TokenBondingV0
+ */
+export interface ITokenBonding extends TokenBondingV0 {
+  publicKey: PublicKey;
+}
+
+/**
+ * Unified curve interface wrapping the raw CurveV0
+ */
+export interface ICurve extends CurveV0 {
+  publicKey: PublicKey;
+}
+
 export class SplTokenBonding {
   program: Program<SplTokenBondingIDL>;
   provider: Provider;
@@ -365,6 +381,33 @@ export class SplTokenBonding {
     this.program = program;
     this.provider = provider;
   }
+
+  curveDecoder: TypedAccountParser<ICurve> = (pubkey, account) => {
+    const coded = this.program.coder.accounts.decode<CurveV0>(
+      "CurveV0",
+      account.data
+    );
+
+    return {
+      ...coded,
+      publicKey: pubkey,
+    };
+  };
+
+  tokenBondingDecoder: TypedAccountParser<ITokenBonding> = (
+    pubkey,
+    account
+  ) => {
+    const coded = this.program.coder.accounts.decode<ITokenBonding>(
+      "TokenBondingV0",
+      account.data
+    );
+
+    return {
+      ...coded,
+      publicKey: pubkey,
+    };
+  };
 
   get programId() {
     return this.program.programId;
@@ -1545,7 +1588,7 @@ export class SplTokenBonding {
    * @param tokenBonding
    * @returns
    */
-  async getPricing(tokenBonding: PublicKey): Promise<ICurve> {
+  async getPricing(tokenBonding: PublicKey): Promise<IPricingCurve> {
     const tokenBondingAcct = await this.account.tokenBondingV0.fetch(
       tokenBonding
     );
@@ -1584,7 +1627,7 @@ export class SplTokenBonding {
     baseStorage: AccountInfo,
     baseMint: MintInfo,
     targetMint: MintInfo
-  ): Promise<ICurve> {
+  ): Promise<IPricingCurve> {
     const curve = await this.account.curveV0.fetch(key);
     // @ts-ignore
     return fromCurve(curve, baseStorage, baseMint, targetMint);

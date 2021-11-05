@@ -6,3 +6,6 @@ target
 ./node_modules
 node_modules
 test-ledger
+.parcel-cache
+.env
+oyster-common

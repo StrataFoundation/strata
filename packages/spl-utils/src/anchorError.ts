@@ -1,60 +1,7 @@
 // TODO: Go back to anchor once they handle:
 // Error: Raw transaction 4nZwiENzNwKLfCBtDirAr5xE71GUqsNKsUNafSUHiEUkWhqbVgEmximswnDFp4ZFFy5C4NXJ75qCKP6nnWBSmFey failed ({"err":{"InstructionError":[4,{"Custom":1}]}})
 
-export class IdlError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "IdlError";
-  }
-}
-
-// An error from a user defined program.
-export class ProgramError extends Error {
-  constructor(readonly code: number, readonly msg: string, ...params: any[]) {
-    super(...params);
-  }
-
-  public static parse(
-    err: any,
-    idlErrors: Map<number, string>
-  ): ProgramError | null {
-    let errorCode: number | null = null;
-    if (err.InstructionError) {
-      if (err.InstructionError[1]?.Custom) {
-        errorCode = err.InstructionError[1].Custom;
-      }
-    }
-
-    if (errorCode == null) {
-      // TODO: don't rely on the error string. web3.js should preserve the error
-      //       code information instead of giving us an untyped string.
-      let components = err.toString().split("custom program error: ");
-      if (errorCode == null && components.length !== 2) {
-        return null;
-      }
-
-      try {
-        errorCode = parseInt(components[1]);
-      } catch (parseErr) {
-        return null;
-      }
-    }
-
-    let errorMsg = idlErrors.get(errorCode) || LangErrorMessage.get(errorCode) || SystemErrorMessage.get(errorCode);
-    if (errorMsg !== undefined) {
-      return new ProgramError(errorCode, errorMsg, errorCode + ': ' + errorMsg);
-    }
-
-    // Unable to parse the error. Just return the untranslated error.
-    return null;
-  }
-
-  public toString(): string {
-    return this.msg;
-  }
-}
-
-const LangErrorCode = {
+export const LangErrorCode = {
   // Instructions.
   InstructionMissing: 100,
   InstructionFallbackNotFound: 101,
@@ -99,7 +46,7 @@ const LangErrorCode = {
   Deprecated: 299,
 };
 
-const SystemErrorMessage = new Map([
+export const SystemErrorMessage = new Map([
   [
     1,
     "Insufficient balance."
@@ -148,7 +95,7 @@ const SystemErrorMessage = new Map([
   ]
 ]);
 
-const LangErrorMessage = new Map([
+export const LangErrorMessage = new Map([
   // Instructions.
   [
     LangErrorCode.InstructionMissing,
@@ -237,3 +184,48 @@ const LangErrorMessage = new Map([
     "The API being used is deprecated and should no longer be used",
   ],
 ]);
+
+// An error from a user defined program.
+export class ProgramError {
+  constructor(readonly code: number, readonly msg: string, ...params: any[]) {
+  }
+
+  public static parse(
+    err: any,
+    idlErrors: Map<number, string>
+  ): ProgramError | null {
+    let errorCode: number | null = null;
+    if (err.InstructionError) {
+      if (err.InstructionError[1]?.Custom) {
+        errorCode = err.InstructionError[1].Custom;
+      }
+    }
+
+    if (errorCode == null) {
+      // TODO: don't rely on the error string. web3.js should preserve the error
+      //       code information instead of giving us an untyped string.
+      let components = err.toString().split("custom program error: ");
+      if (errorCode == null && components.length !== 2) {
+        return null;
+      }
+
+      try {
+        errorCode = parseInt(components[1]);
+      } catch (parseErr) {
+        return null;
+      }
+    }
+
+    let errorMsg = idlErrors.get(errorCode) || LangErrorMessage.get(errorCode) || SystemErrorMessage.get(errorCode);
+    if (errorMsg !== undefined) {
+      return new ProgramError(errorCode, errorMsg, errorCode + ': ' + errorMsg);
+    }
+
+    // Unable to parse the error. Just return the untranslated error.
+    return null;
+  }
+
+  public toString(): string {
+    return this.msg;
+  }
+}

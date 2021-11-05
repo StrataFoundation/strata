@@ -1,0 +1,20 @@
+0 silly argv {
+0 silly argv   _: [ 'bootstrap' ],
+0 silly argv   lernaVersion: '4.0.0',
+0 silly argv   '$0': '/usr/local/bin/lerna'
+0 silly argv }
+1 notice cli v4.0.0
+2 verbose rootPath /Users/nprince/source/wumbo-programs
+3 error JSONError: Unexpected token "=" (0x3D) in JSON at position 845 while parsing near "...pl-utils\": \"^0.3.4\",=\n\n  },\n  \"peerDepen..." in ../react/package.json
+3 error
+3 error [0m [90m 23 |[39m     [32m"@strata-foundation/spl-token-bonding"[39m[33m:[39m [32m"^0.3.4"[39m[33m,[39m[0m
+3 error [0m [90m 24 |[39m     [32m"@strata-foundation/spl-token-collective"[39m[33m:[39m [32m"^0.3.4"[39m[33m,[39m[0m
+3 error [0m[31m[1m>[22m[39m[90m 25 |[39m     [32m"@strata-foundation/spl-utils"[39m[33m:[39m [32m"^0.3.4"[39m[33m,[39m[33m=[39m[0m
+3 error [0m [90m    |[39m                                              [31m[1m^[22m[39m[0m
+3 error [0m [90m 26 |[39m[0m
+3 error [0m [90m 27 |[39m   }[33m,[39m[0m
+3 error [0m [90m 28 |[39m   [32m"peerDependencies"[39m[33m:[39m {[0m
+3 error
+3 error     at parseJson (/Users/nprince/.config/yarn/global/node_modules/parse-json/index.js:29:21)
+3 error     at parse (/Users/nprince/.config/yarn/global/node_modules/load-json-file/index.js:15:9)
+3 error     at module.exports (/Users/nprince/.config/yarn/global/node_modules/load-json-file/index.js:18:47)

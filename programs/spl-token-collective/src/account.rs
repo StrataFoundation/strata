@@ -128,7 +128,6 @@ pub struct InitializeOwnedSocialTokenV0<'info> {
     init,
     seeds = [
         b"reverse-token-ref",
-        initialize_args.collective.key().as_ref(),
         initialize_args.token_bonding.target_mint.as_ref()
     ],
     constraint = verify_authority(initialize_args.token_bonding.authority, &[b"token-bonding-authority", reverse_token_ref.key().as_ref()], args.token_bonding_authority_bump_seed)?,
@@ -172,7 +171,6 @@ pub struct InitializeUnclaimedSocialTokenV0<'info> {
     init,
     seeds = [
         b"reverse-token-ref",
-        initialize_args.collective.key().as_ref(),
         initialize_args.token_bonding.target_mint.as_ref()
     ],
     bump = args.reverse_token_ref_bump_seed,
@@ -316,7 +314,6 @@ pub struct ClaimSocialTokenV0<'info> {
     has_one = token_metadata,
     seeds = [
         b"reverse-token-ref",
-        collective.key().as_ref(),
         token_bonding.target_mint.as_ref()
     ],
     bump = reverse_token_ref.bump_seed,

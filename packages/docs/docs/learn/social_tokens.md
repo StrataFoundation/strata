@@ -54,7 +54,7 @@ entity TokenRef {
   --
   ["token-ref", owner, collective]
   --
-  ["reverse-token-ref", collective, tokenBonding]
+  ["reverse-token-ref", targetMint]
   --
   collective
   token_metadata
@@ -129,7 +129,7 @@ var { collective, tokenBonding } = await tokenCollectiveSdk.createCollective({
   // metadata: {
   //   name: "My Collective",
   //   symbol: "tCOLL", 
-  //   image: "https://ibb.co/sRpBwYh",
+  //   image: "https://i.ibb.co/zxWkRv1/doge.jpg",
   //   // Because this is dev, we need to provide the metaplex dev upload file url
   //   uploadUrl: "https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2"
   // },
@@ -166,9 +166,9 @@ var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
   isPrimary: false, // Creates a social token explicitly associated with the collective by pda, instead of the wallet alone.
   collective,
   metadata: {
-    tokenName: "My Test Token",
+    name: "My Test Token",
     symbol: "TEST",
-    image: "https://ibb.co/sRpBwYh",
+    image: "https://i.ibb.co/zxWkRv1/doge.jpg",
     // Because this is dev, we need to provide the metaplex dev upload file url
     uploadUrl: "https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2"
   },
@@ -214,9 +214,9 @@ var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
   collective,
   name, // Associate the social token with the created name
   metadata: {
-    tokenName: "My Test Token",
+    name: "My Test Token",
     symbol: "TEST",
-    image: "https://ibb.co/sRpBwYh",
+    image: "https://i.ibb.co/zxWkRv1/doge.jpg",
     // Because this is dev, we need to provide the metaplex dev upload file url
     uploadUrl: "https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2"
   },
