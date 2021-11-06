@@ -98,7 +98,7 @@ const config = {
         title: 'Strata',
         logo: {
           alt: 'Strata Logo',
-          src: 'img/logo.svg',
+          src: 'img/logo.png',
         },
         items: [
           {
