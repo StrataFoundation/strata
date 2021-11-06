@@ -269,6 +269,7 @@ pub struct UpdateTokenBondingV0Wrapper<'info> {
 }
 
 fn token_ref_final_seed<'a>(collective: &'a Pubkey, is_primary: bool) -> Vec<u8> {
+  msg!("Is primary {}", is_primary);
   if is_primary {
     Pubkey::default().as_ref().to_vec()
   } else { 

@@ -38,14 +38,14 @@ What if the value of your token was not just from your own efforts, but was also
 You're stronger with your friends. A group of people can pool resources and bring about innovation on a larger scale.
 
 So how do we do that? At the heart of Strata are [Bonding Curves](/docs/learn/bonding_curves) that allow free and instant trading of a token without the need for an exchange or liquidity provider. 
-Because of this Automated Market Maker (AMM), your token's value is directly tied to that a base token's value. That base token is your *Collective*. Price your token in SOL, and your succss is bound to SOLs success, and SOLs success is yours.
+Because of this Automated Market Maker (AMM), your token's value is directly tied to that of a base token's value. That base token is your *Collective*. Price your token in SOL, and your succss is bound to SOLs success, and SOLs success is yours.
 
 :::info Collective
 A Collective is a group of Social Tokens bound to the same base token. This means that every Social Token owner is incentive aligned to increase not just the value of their token, but the value/utility of the Collective
 :::
 
 Imagine a group of artists forming a collective for their genre, pooling resources to create a custom marketplace.
-Imagine a decentralized autonomous organization (DAO) with a token, and a collective of contributors with tokens bound to the DAO token.
+Imagine a Decentralized Autonomous Organization (DAO) with a token, and a collective of contributors with tokens bound to the DAO token.
 Imagine the ability to bootstrap an entire economy around an idea.
 
 ## From Creator Economy to Collective Economy
@@ -60,26 +60,64 @@ The goal is for Strata to become a standard, similar to [Metaplex](https://metap
 
 ### Flexibility with Sane Defaults
 
-Strata is here provide infrastructure for the next wave of innovation in the Creator Economy. The most creative business models have yet to be discovered.
-As such, the protocol remains as non opinionated and prescriptive as possible. 
+The most creative business models have yet to be discovered.
+As such, the protocol remains as non opinionated and flexible as possible. 
 
-A large amount of customization is available to enable new and innovative models. 
+Powerful customization is at your fingertips, allowing you to create new and innovative business models. 
 From a large degree of freedom in bonding curve customization to the ability to tie social tokens to virtually anything;
 Strata is truly your canvas. You can customize everything from your curve's shape to its launch-time characteristics, to the royalties you collect.
 
-This might sound complicated, but with sane defaults you don't have to reach under the hood.
+This might sound complicated, but with sane defaults you don't have to reach under the hood. Don't believe us? Create a social token on devnet _right now_
+
+```jsx async name=create_social
+var { mint } = await tokenCollectiveSdk.createSocialToken({
+  ignoreIfExists: true, // If a Social Token already exists for this wallet, ignore.
+  metadata: {
+    name: "The I Love Strata Token",
+    symbol: "luvSTRAT",
+    image: "https://i.ibb.co/jWSsJW6/logo.png",
+    // Because this is dev, we need to provide the metaplex dev upload file url
+    uploadUrl: "https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2"
+  },
+  tokenBondingParams: {
+    buyBaseRoyaltyPercentage: 0,
+    buyTargetRoyaltyPercentage: 10,
+    sellBaseRoyaltyPercentage: 0,
+    sellTargetRoyaltyPercentage: 0
+  }
+});
+```
+Now display it in React!
+```jsx live
+ function TokenDisplay() {
+   const { mint } = useVariables(); // Getting mint from above
+   const { image, metadata, loading: metaLoading } = useTokenMetadata(mint);
+   if (metaLoading) {
+     return <div>Loading...</div>
+   }
+
+   return <div>
+    <img style={{ width: "50px", height: "50px" }} src={image} />
+    { metadata && <div>
+      <div><b>{metadata.data.name}</b></div>
+      <div>{metadata.data.symbol}</div>
+    </div> }
+   </div>
+ }
+```
 
 ## Next Steps
 
-Like what you've read? Build! From office hours to hands on assistance in our Discord, we'll be there to help you along the way! 
+Like what you've read? Build! We'll be there to help you along the way, from office hours to hands on assistance in our [Discord](https://discord.gg/XQhCFg77WM)! 
 
 <CTA />
 
-Not a dev? [Wum.bo](https://wum.bo) will be launching a chrome extension to create tokens with one-click right in Twitter. More integrations are on the way!
+Not a dev? [Wum.bo](https://wum.bo) will be launching a chrome extension to create tokens with one-click right in Twitter. 
+Or let us know what you want to build in our discord and we'll see if we can help!
 
 ### Join the Community
 
 We want to hear what you're building! Come follow us on twitter and join our discord. We'll be hosting regular office hours to get you started!
 
    * [Twitter](https://twitter.com/StrataProtocol)
-   * [Discord](https://twitter.com/StrataProtocol)
+   * [Discord](https://discord.gg/XQhCFg77WM)

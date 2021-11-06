@@ -776,13 +776,7 @@ export class SplTokenCollective {
       sellTargetRoyalties = defaultTargetRoyalties;
     }
 
-    const [reverseTokenRef] = await PublicKey.findProgramAddress(
-      [
-        Buffer.from("reverse-token-ref", "utf-8"),
-        tokenBondingAcct.targetMint.toBuffer(),
-      ],
-      this.programId
-    );
+    const [reverseTokenRef] = await SplTokenCollective.reverseTokenRefKey(tokenBondingAcct.targetMint);
 
     const tokenBondingAuthority = await PublicKey.createProgramAddress(
       [
@@ -913,7 +907,7 @@ export class SplTokenCollective {
     isPrimary = collective?.equals(PublicKey.default),
   }: ITokenRefKeyArgs): Buffer[] {
     const str = Buffer.from("token-ref", "utf-8");
-    if (isPrimary || !collective) {
+    if ((isPrimary || !collective) && !name) {
       if (!owner) {
         throw new Error("Owner is required for a primary token refs");
       }
@@ -968,6 +962,7 @@ export class SplTokenCollective {
       tokenRef: PublicKey;
       reverseTokenRef: PublicKey;
       tokenBonding: PublicKey;
+      mint: PublicKey;
     }>
   > {
     if (!owner && !name) {
@@ -992,7 +987,7 @@ export class SplTokenCollective {
     );
 
     // create mint with payer as auth
-    console.log("Creating social token mint...");
+    console.log(`Creating social token mint ${targetMintKeypair.publicKey.toBase58()}`);
     signers1.push(targetMintKeypair);
     const targetMint = targetMintKeypair.publicKey;
 
@@ -1011,14 +1006,16 @@ export class SplTokenCollective {
     const [reverseTokenRef, reverseTokenRefBumpSeed] =
       await SplTokenCollective.reverseTokenRefKey(targetMint);
 
-    console.log(tokenRef);
-    const existing = await this.account.tokenRefV0.fetchNullable(tokenRef);
+      console.log("tokenRef", tokenRef.toBase58());
+      console.log("reverse", reverseTokenRef.toBase58());
+      const existing = await this.account.tokenRefV0.fetchNullable(tokenRef);
     if (existing) {
       if (ignoreIfExists) {
         return {
           instructions: [],
           signers: [],
           output: {
+            mint: existing.mint,
             tokenRef,
             reverseTokenRef,
             tokenBonding: existing.tokenBonding,
@@ -1199,6 +1196,7 @@ export class SplTokenCollective {
       reverseTokenRefBumpSeed,
       tokenMetadataUpdateAuthorityBumpSeed,
     };
+    console.log(args);
 
     if (owner) {
       instructions2.push(
@@ -1238,7 +1236,7 @@ export class SplTokenCollective {
     }
 
     return {
-      output: { tokenRef, reverseTokenRef, tokenBonding },
+      output: { mint: targetMintKeypair.publicKey, tokenRef, reverseTokenRef, tokenBonding },
       instructions: [instructions1, instructions2],
       signers: [signers1, signers2],
     };
@@ -1253,9 +1251,10 @@ export class SplTokenCollective {
     tokenRef: PublicKey;
     reverseTokenRef: PublicKey;
     tokenBonding: PublicKey;
+    mint: PublicKey;
   }> {
     const {
-      output: { tokenRef, reverseTokenRef, tokenBonding },
+      output: { tokenRef, reverseTokenRef, tokenBonding, mint},
       instructions: instructionGroups,
       signers: signerGroups,
     } = await this.createSocialTokenInstructions(args);
@@ -1270,7 +1269,7 @@ export class SplTokenCollective {
       );
     }
 
-    return { tokenRef, reverseTokenRef, tokenBonding };
+    return { tokenRef, reverseTokenRef, tokenBonding, mint };
   }
 
   getUserTokensWithMeta(

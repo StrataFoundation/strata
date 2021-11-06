@@ -4,7 +4,7 @@ import { BN } from "@project-serum/anchor";
 import { createMint } from "@project-serum/common";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import { ExponentialCurveConfig, SplTokenBonding } from "@strata-foundation/spl-token-bonding";
-import { decodeMetadata, SplTokenMetadata } from "@strata-foundation/spl-utils";
+import { decodeMetadata, sendMultipleInstructions, SplTokenMetadata } from "@strata-foundation/spl-utils";
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
 import { SplTokenCollective } from "../packages/spl-token-collective";
@@ -173,6 +173,8 @@ describe("spl-token-collective", () => {
   describe("Claimed", () => {
     let claimedTokenRef: PublicKey;
     let claimedReverseTokenRef: PublicKey;
+    let ownerKeypair: Keypair = Keypair.generate();
+    let owner: PublicKey = ownerKeypair.publicKey;
  
     before(async () => {
       // Recreate to keep from conflicts from prev tests
@@ -187,10 +189,9 @@ describe("spl-token-collective", () => {
         config
       });
       collective = collectiveRet;
-      const { tokenRef, reverseTokenRef } = await tokenCollectiveProgram.createSocialToken({
-        isPrimary: false,
+      const { output: { tokenRef, reverseTokenRef }, instructions, signers } = await tokenCollectiveProgram.createSocialTokenInstructions({
         collective,
-        owner: tokenCollectiveProgram.wallet.publicKey,
+        owner,
         metadata: {
           name: "Whaddup",
           symbol: "WHAD",
@@ -206,23 +207,29 @@ describe("spl-token-collective", () => {
       })
       claimedTokenRef = tokenRef;
       claimedReverseTokenRef = reverseTokenRef;
+      await sendMultipleInstructions(
+        tokenCollectiveProgram.errors,
+        provider,
+        instructions,
+        [signers[0], [...signers[1], ownerKeypair]]
+      )
     });
 
     it("Creates a claimed social token", async () => {
       const reverseTokenRef = await tokenCollectiveProgram.account.tokenRefV0.fetch(claimedReverseTokenRef);
       expect(reverseTokenRef.isClaimed).to.be.true;
       // @ts-ignore
-      expect(reverseTokenRef.owner.toBase58()).to.equal(tokenCollectiveProgram.wallet.publicKey.toBase58());
+      expect(reverseTokenRef.owner.toBase58()).to.equal(ownerKeypair.publicKey.toBase58());
       expect(reverseTokenRef.name).to.be.null;
 
       const tokenRef = await tokenCollectiveProgram.account.tokenRefV0.fetch(claimedTokenRef);
       expect(tokenRef.isClaimed).to.be.true;
       // @ts-ignore
-      expect(tokenRef.owner.toBase58()).to.equal(tokenCollectiveProgram.wallet.publicKey.toBase58());
+      expect(tokenRef.owner.toBase58()).to.equal(ownerKeypair.publicKey.toBase58());
       expect(tokenRef.name).to.be.null;
       const tokenMetadataRaw = await provider.connection.getAccountInfo(tokenRef.tokenMetadata);
       const tokenMetadata = decodeMetadata(tokenMetadataRaw!.data);
-      expect(tokenMetadata.updateAuthority).to.equal(tokenCollectiveProgram.wallet.publicKey.toBase58())
+      expect(tokenMetadata.updateAuthority).to.equal(ownerKeypair.publicKey.toBase58())
     });
   });
 });
