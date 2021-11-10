@@ -22,5 +22,5 @@ export * from "./useSolPrice";
 export * from "./useFees";
 export * from "./useRentExemptAmount";
 export * from "./useEstimatedFees";
-export * from "./useBuyToken";
-export * from "./useSellToken";
+export * from "./useBuy";
+export * from "./useSell";
