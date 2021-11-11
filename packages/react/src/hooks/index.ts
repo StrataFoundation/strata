@@ -24,3 +24,4 @@ export * from "./useRentExemptAmount";
 export * from "./useEstimatedFees";
 export * from "./useBuy";
 export * from "./useSell";
+export * from "./useErrorHandler";
