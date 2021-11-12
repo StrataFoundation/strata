@@ -27,7 +27,7 @@ _defaults: &defaults
 
 _tests: &tests
   before_install:
-  - if [ ! -d $HOME/.local/share/solana ]; then sh -c "$(curl -sSfL https://release.solana.com/v${SOLANA_CLI_VERSION}/install)"; fi"
+  - if [ ! -d $HOME/.local/share/solana ]; then sh -c "$(curl -sSfL https://release.solana.com/v${SOLANA_CLI_VERSION}/install)"; fi
   - nvm install $NODE_VERSION
   - yarn install
   - npx lerna bootstrap
