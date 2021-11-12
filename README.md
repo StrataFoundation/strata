@@ -1,5 +1,7 @@
 # Strata
 
+View the live documentation [here](https://strataprotocol.com/docs)
+
 This series of smart contracts serves to standardizing and indexing all social tokens.
 
 Docs are located in `packages/docs`

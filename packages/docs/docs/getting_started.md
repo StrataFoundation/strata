@@ -43,7 +43,7 @@ getPrograms().catch(console.error);
 
 ## Creating a Social Token
 
-:::tip Live Code
+:::info Live Code
 You can run and edit all of the code blocks in this tutorial against Solana devnet! The above block contains all of the needed imports.
 
 Use `var` instead of `let` or `const` so that these blocks can be re-run

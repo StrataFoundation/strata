@@ -272,7 +272,7 @@ var royaltiesBalance = (await connection.getTokenAccountBalance(tokenBondingAcct
 
 Now, let's have the user claim the social token. We should see the funds move to their Associated Token Account:
 
-:::tip Owned By Name
+:::info Owned By Name
 When creating a collective that allows unclaimed tokens, be sure to include the `ownedByName` field in the royalties configuration for every account you want to transfer to the name owner.
 :::
 
