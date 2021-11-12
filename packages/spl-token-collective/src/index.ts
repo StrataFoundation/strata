@@ -130,7 +130,7 @@ export interface ICreateSocialTokenArgs {
    *
    * A primary social token is the social token people should see when they look up your wallet. While it's possible to belong to many
    * collectives, generally most people will have one social token.
-   * 
+   *
    * This can be changed at any time.
    */
   isPrimary?: boolean; //
@@ -893,11 +893,12 @@ export class SplTokenCollective {
     }
 
     if (isPrimary) {
-      const { instructions: setAsPrimaryInstrs } = await this.setAsPrimaryInstructions({
-        tokenRef,
-        payer,
-        owner
-      });
+      const { instructions: setAsPrimaryInstrs } =
+        await this.setAsPrimaryInstructions({
+          tokenRef,
+          payer,
+          owner,
+        });
       instructions.push(...setAsPrimaryInstrs);
     }
 
@@ -967,35 +968,43 @@ export class SplTokenCollective {
   async setAsPrimaryInstructions({
     payer = this.wallet.publicKey,
     tokenRef,
-    owner
-  }: ISetAsPrimaryArgs): Promise<InstructionResult<{ primaryTokenRef: PublicKey }>> {
+    owner,
+  }: ISetAsPrimaryArgs): Promise<
+    InstructionResult<{ primaryTokenRef: PublicKey }>
+  > {
     if (!owner) {
       // @ts-ignore
-      owner = (await this.account.tokenRefV0.fetch(tokenRef)).owner
+      owner = (await this.account.tokenRefV0.fetch(tokenRef)).owner;
     }
-    
-    const [primaryTokenRef, primaryTokenRefBumpSeed] = await PublicKey.findProgramAddress(
-      SplTokenCollective.tokenRefSeeds({ isPrimary: true, owner }),
-      this.programId
-    );
+
+    const [primaryTokenRef, primaryTokenRefBumpSeed] =
+      await PublicKey.findProgramAddress(
+        SplTokenCollective.tokenRefSeeds({ isPrimary: true, owner }),
+        this.programId
+      );
     return {
       signers: [],
-      instructions: [await this.instruction.setAsPrimaryV0({
-        bumpSeed: primaryTokenRefBumpSeed
-      }, {
-        accounts: {
-          payer,
-          owner: owner!,
-          tokenRef,
-          primaryTokenRef,
-          systemProgram: SystemProgram.programId,
-          rent: SYSVAR_RENT_PUBKEY,
-        }
-      })],
+      instructions: [
+        await this.instruction.setAsPrimaryV0(
+          {
+            bumpSeed: primaryTokenRefBumpSeed,
+          },
+          {
+            accounts: {
+              payer,
+              owner: owner!,
+              tokenRef,
+              primaryTokenRef,
+              systemProgram: SystemProgram.programId,
+              rent: SYSVAR_RENT_PUBKEY,
+            },
+          }
+        ),
+      ],
       output: {
-        primaryTokenRef
-      }
-    }
+        primaryTokenRef,
+      },
+    };
   }
 
   /**
@@ -1280,11 +1289,12 @@ export class SplTokenCollective {
       );
 
       if (isPrimary) {
-        const { instructions: setAsPrimaryInstrs } = await this.setAsPrimaryInstructions({
-          tokenRef,
-          payer,
-          owner
-        });
+        const { instructions: setAsPrimaryInstrs } =
+          await this.setAsPrimaryInstructions({
+            tokenRef,
+            payer,
+            owner,
+          });
         instructions3.push(...setAsPrimaryInstrs);
       }
     } else {

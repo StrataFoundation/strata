@@ -1,0 +1,39 @@
+dist: bionic
+language: rust
+rust:
+  - stable
+cache: cargo
+env:
+  global:
+    - NODE_VERSION="17.0.1"
+    - SOLANA_CLI_VERSION="1.8.0"
+    - NODE_VERSION="17.0.1"
+    - SOLANA_CLI_VERSION="1.7.11"
+git:
+  submodules: true
+
+_defaults: &defaults
+  before_install:
+  - rustup component add rustfmt clippy
+  - nvm install $NODE_VERSION
+  - sudo apt-get install -y pkg-config build-essential libudev-dev
+
+_tests: &tests
+  before_install:
+  - nvm install $NODE_VERSION
+  - yarn install
+  - npx lerna bootstrap
+  - sudo apt-get install -y pkg-config build-essential libudev-dev
+  - sh -c "$(curl -sSfL https://release.solana.com/v${SOLANA_CLI_VERSION}/install)"
+  - export PATH="/home/travis/.local/share/solana/install/active_release/bin:$PATH"
+  - yes | solana-keygen new
+  - cargo install --path $TRAVIS_BUILD_DIR/cli anchor-cli --locked
+
+jobs:
+  include:
+    - <<: *defaults
+      name: Build and test Contracts
+      script:
+        - anchor build
+        - yarn run build
+        - anchor test --skip-build
