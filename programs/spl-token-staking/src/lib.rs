@@ -259,7 +259,7 @@ pub mod spl_token_staking {
             staking.created_timestamp,
             &staking.period_unit,
             staking.period,
-            false,
+            true,
         );
         let staking_info = &mut ctx.accounts.staking_info;
 
