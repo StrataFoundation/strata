@@ -26,7 +26,7 @@ _tests: &tests
   - sh -c "$(curl -sSfL https://release.solana.com/v${SOLANA_CLI_VERSION}/install)"
   - export PATH="/home/travis/.local/share/solana/install/active_release/bin:$PATH"
   - yes | solana-keygen new
-  - cargo install --path $TRAVIS_BUILD_DIR/cli anchor-cli --locked
+  - cargo install anchor-cli --locked
 
 jobs:
   include:
