@@ -9,7 +9,7 @@ const plantuml = require("@akebifiky/remark-simple-plantuml");
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'Strata',
-  tagline: 'Strata Social Token Protocol',
+  tagline: 'Community first Social Tokens, powered by Solana',
   url: 'https://strataprotocol.com',
   baseUrl: '/',
   onBrokenLinks: 'throw',
@@ -27,13 +27,13 @@ const config = {
           rehypePlugins: [katex],
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
-          editUrl: 'https://github.com/facebook/docusaurus/edit/main/website/',
+          editUrl: 'https://github.com/StrataFoundation/strata/edit/master/packages/docs',
         },
         blog: {
           showReadingTime: true,
           // Please change this to your repo.
           editUrl:
-            'https://github.com/facebook/docusaurus/edit/main/website/blog/',
+            'https://github.com/StrataFoundation/strata/edit/master/packages/docs/blog',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
@@ -109,7 +109,7 @@ const config = {
           },
           {to: '/blog', label: 'Blog', position: 'left'},
           {
-            href: 'https://github.com/facebook/docusaurus',
+            href: 'https://github.com/StrataFoundation/strata',
             label: 'GitHub',
             position: 'right',
           },

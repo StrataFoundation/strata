@@ -9,13 +9,21 @@
  * Note: this is not a complete list of --ifm- variables.
  */
  :root {
-  --ifm-color-primary: #18d2e4;
-  --ifm-color-primary-dark: #16bdcd;
-  --ifm-color-primary-darker: #14b3c2;
-  --ifm-color-primary-darkest: #1193a0;
-  --ifm-color-primary-light: #2cd8e9;
-  --ifm-color-primary-lighter: #38daea;
-  --ifm-color-primary-lightest: #5ae1ee;
+  --ifm-color-secondary: #18d2e4;
+  --ifm-color-secondary-dark: #16bdcd;
+  --ifm-color-secondary-darker: #14b3c2;
+  --ifm-color-secondary-darkest: #1193a0;
+  --ifm-color-secondary-light: #2cd8e9;
+  --ifm-color-secondary-lighter: #38daea;
+  --ifm-color-secondary-lightest: #5ae1ee;
+
+  --ifm-color-primary: #f07733;
+  --ifm-color-primary-dark: #ee6518;
+  --ifm-color-primary-darker: #e65e11;
+  --ifm-color-primary-darkest: #be4d0e;
+  --ifm-color-primary-light: #f2894e;
+  --ifm-color-primary-lighter: #f3925c;
+  --ifm-color-primary-lightest: #f6ad84;
 
   --ifm-background-surface-color-dark: #23273B;
 
@@ -30,6 +38,16 @@
 
 html[data-theme='dark'] {
   --ifm-background-color: #23273B;
+
+  --ifm-heading-color: #FFFFFF;
+  --ifm-hero-text-color: #FFFFFF;
+}
+
+html[data-theme='light'] {
+  color: #23273B;
+
+  --ifm-heading-color: #23273B;
+  --ifm-hero-text-color: #23273B;
 }
 
 html[data-theme='dark'] .docusaurus-highlight-code-line {

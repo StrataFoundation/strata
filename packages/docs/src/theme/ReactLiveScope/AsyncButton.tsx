@@ -142,7 +142,7 @@ const AsyncButton = ({ code, scope, name, deps }) => {
       {connected && (
         <button
           disabled={fullLoading}
-          className={styles.runButton}
+          className="white button button--primary"
           onClick={wrappedExecWithDeps}
         >
           <FaPlay className={styles.buttonIcon} /> Run

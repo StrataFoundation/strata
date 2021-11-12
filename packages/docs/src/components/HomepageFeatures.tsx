@@ -20,7 +20,8 @@ const FeatureList: FeatureItem[] = [
     image: "/img/EasytoUse.png",
     description: (
       <>
-        Strata provides SDKs to launch Tokens in an instant. No Rust or Solana experience needed!
+        Strata provides SDKs to launch Tokens in an instant. No Rust or Solana
+        experience needed!
       </>
     ),
   },
@@ -29,7 +30,8 @@ const FeatureList: FeatureItem[] = [
     image: "/img/FreeandOpen.png",
     description: (
       <>
-        Strata is free to use and Open Source. Launch your token without someone else taking a cut!
+        Strata is free to use and Open Source. Launch your token without someone
+        else taking a cut!
       </>
     ),
   },

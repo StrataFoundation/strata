@@ -8,6 +8,11 @@
   text-align: center;
   position: relative;
   overflow: hidden;
+  background: linear-gradient(180deg, #18D2E4 -11.72%, #FFFFFF 100%);
+}
+
+html[data-theme='dark'] .heroBanner {
+  background: linear-gradient(180deg, #18D2E4 -11.72%, #23273B 100%);
 }
 
 @media screen and (max-width: 966px) {

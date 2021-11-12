@@ -121,4 +121,4 @@ To gain a deeper understanding of the API through examples, check out the Learn 
 
   * [Bonding Curves](./learn/bonding_curves)
   * [Collectives](./learn/bonding_curves)
-  * [SOcial Tokens](./learn/bonding_curves)
+  * [Social Tokens](./learn/bonding_curves)
