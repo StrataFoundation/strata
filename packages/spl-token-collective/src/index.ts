@@ -111,12 +111,27 @@ export interface ITokenBondingParams {
   sellTargetRoyaltiesOwner?: PublicKey;
 }
 
+/**
+ * Set this token as your primary token, so people can look you up without knowing the collective
+ */
+export interface ISetAsPrimaryArgs {
+  payer?: PublicKey;
+  tokenRef: PublicKey;
+  /**
+   * The owner of the `tokenRef`. **Default:** Owner from fetching tokenRef. You may need to provide this if setting
+   * primary in the same txn as creating the token ref.
+   */
+  owner?: PublicKey;
+}
+
 export interface ICreateSocialTokenArgs {
   /**
    * Is this the primary social token for this wallet? **Default:** true
    *
    * A primary social token is the social token people should see when they look up your wallet. While it's possible to belong to many
    * collectives, generally most people will have one social token.
+   * 
+   * This can be changed at any time.
    */
   isPrimary?: boolean; //
   /** If this social token already exists, don't throw an error. **Default:** false */
@@ -776,7 +791,9 @@ export class SplTokenCollective {
       sellTargetRoyalties = defaultTargetRoyalties;
     }
 
-    const [reverseTokenRef] = await SplTokenCollective.reverseTokenRefKey(tokenBondingAcct.targetMint);
+    const [reverseTokenRef] = await SplTokenCollective.reverseTokenRefKey(
+      tokenBondingAcct.targetMint
+    );
 
     const tokenBondingAuthority = await PublicKey.createProgramAddress(
       [
@@ -789,7 +806,6 @@ export class SplTokenCollective {
 
     const [newTokenRef, tokenRefBumpSeed] = await PublicKey.findProgramAddress(
       SplTokenCollective.tokenRefSeeds({
-        isPrimary,
         collective: tokenRefAcct.collective,
         owner,
       }),
@@ -876,6 +892,15 @@ export class SplTokenCollective {
       );
     }
 
+    if (isPrimary) {
+      const { instructions: setAsPrimaryInstrs } = await this.setAsPrimaryInstructions({
+        tokenRef,
+        payer,
+        owner
+      });
+      instructions.push(...setAsPrimaryInstrs);
+    }
+
     return {
       signers: [],
       instructions,
@@ -904,7 +929,7 @@ export class SplTokenCollective {
     owner,
     name,
     collective,
-    isPrimary = collective?.equals(PublicKey.default),
+    isPrimary,
   }: ITokenRefKeyArgs): Buffer[] {
     const str = Buffer.from("token-ref", "utf-8");
     if ((isPrimary || !collective) && !name) {
@@ -912,7 +937,7 @@ export class SplTokenCollective {
         throw new Error("Owner is required for a primary token refs");
       }
 
-      return [str, owner!.toBuffer(), PublicKey.default.toBuffer()];
+      return [str, owner!.toBuffer()];
     } else {
       if (!collective) {
         throw new Error("Collective is required for non-primary token refs");
@@ -937,6 +962,40 @@ export class SplTokenCollective {
       [Buffer.from("reverse-token-ref", "utf-8"), mint.toBuffer()],
       programId
     );
+  }
+
+  async setAsPrimaryInstructions({
+    payer = this.wallet.publicKey,
+    tokenRef,
+    owner
+  }: ISetAsPrimaryArgs): Promise<InstructionResult<{ primaryTokenRef: PublicKey }>> {
+    if (!owner) {
+      // @ts-ignore
+      owner = (await this.account.tokenRefV0.fetch(tokenRef)).owner
+    }
+    
+    const [primaryTokenRef, primaryTokenRefBumpSeed] = await PublicKey.findProgramAddress(
+      SplTokenCollective.tokenRefSeeds({ isPrimary: true, owner }),
+      this.programId
+    );
+    return {
+      signers: [],
+      instructions: [await this.instruction.setAsPrimaryV0({
+        bumpSeed: primaryTokenRefBumpSeed
+      }, {
+        accounts: {
+          payer,
+          owner: owner!,
+          tokenRef,
+          primaryTokenRef,
+          systemProgram: SystemProgram.programId,
+          rent: SYSVAR_RENT_PUBKEY,
+        }
+      })],
+      output: {
+        primaryTokenRef
+      }
+    }
   }
 
   /**
@@ -982,12 +1041,14 @@ export class SplTokenCollective {
 
     // Token refs
     const [tokenRef, tokenRefBumpSeed] = await PublicKey.findProgramAddress(
-      SplTokenCollective.tokenRefSeeds({ isPrimary, collective, owner, name }),
+      SplTokenCollective.tokenRefSeeds({ collective, owner, name }),
       programId
     );
 
     // create mint with payer as auth
-    console.log(`Creating social token mint ${targetMintKeypair.publicKey.toBase58()}`);
+    console.log(
+      `Creating social token mint ${targetMintKeypair.publicKey.toBase58()}`
+    );
     signers1.push(targetMintKeypair);
     const targetMint = targetMintKeypair.publicKey;
 
@@ -1006,9 +1067,9 @@ export class SplTokenCollective {
     const [reverseTokenRef, reverseTokenRefBumpSeed] =
       await SplTokenCollective.reverseTokenRefKey(targetMint);
 
-      console.log("tokenRef", tokenRef.toBase58());
-      console.log("reverse", reverseTokenRef.toBase58());
-      const existing = await this.account.tokenRefV0.fetchNullable(tokenRef);
+    console.log("tokenRef", tokenRef.toBase58());
+    console.log("reverse", reverseTokenRef.toBase58());
+    const existing = await this.account.tokenRefV0.fetchNullable(tokenRef);
     if (existing) {
       if (ignoreIfExists) {
         return {
@@ -1173,7 +1234,6 @@ export class SplTokenCollective {
     signers2.push(...bondingSigners);
 
     const initializeArgs = {
-      isPrimary,
       collective,
       tokenMetadata: new PublicKey(tokenMetadata),
       tokenBonding,
@@ -1189,7 +1249,6 @@ export class SplTokenCollective {
       clock: SYSVAR_CLOCK_PUBKEY,
     };
     const args = {
-      isPrimary,
       nameClass: nameClass || null,
       nameParent: nameParent || null,
       collectiveBumpSeed: collectiveAcct.bumpSeed,
@@ -1200,8 +1259,10 @@ export class SplTokenCollective {
     };
     console.log(args);
 
+    const instructions3: TransactionInstruction[] = [];
+    const signers3: Signer[] = [];
     if (owner) {
-      instructions2.push(
+      instructions3.push(
         await this.instruction.initializeOwnedSocialTokenV0(args, {
           accounts: {
             initializeArgs,
@@ -1217,8 +1278,17 @@ export class SplTokenCollective {
           },
         })
       );
+
+      if (isPrimary) {
+        const { instructions: setAsPrimaryInstrs } = await this.setAsPrimaryInstructions({
+          tokenRef,
+          payer,
+          owner
+        });
+        instructions3.push(...setAsPrimaryInstrs);
+      }
     } else {
-      instructions2.push(
+      instructions3.push(
         await this.instruction.initializeUnclaimedSocialTokenV0(args, {
           accounts: {
             initializeArgs,
@@ -1238,9 +1308,14 @@ export class SplTokenCollective {
     }
 
     return {
-      output: { mint: targetMintKeypair.publicKey, tokenRef, reverseTokenRef, tokenBonding },
-      instructions: [instructions1, instructions2],
-      signers: [signers1, signers2],
+      output: {
+        mint: targetMintKeypair.publicKey,
+        tokenRef,
+        reverseTokenRef,
+        tokenBonding,
+      },
+      instructions: [instructions1, instructions2, instructions3],
+      signers: [signers1, signers2, signers3],
     };
   }
 
@@ -1256,7 +1331,7 @@ export class SplTokenCollective {
     mint: PublicKey;
   }> {
     const {
-      output: { tokenRef, reverseTokenRef, tokenBonding, mint},
+      output: { tokenRef, reverseTokenRef, tokenBonding, mint },
       instructions: instructionGroups,
       signers: signerGroups,
     } = await this.createSocialTokenInstructions(args);

@@ -68,6 +68,29 @@ pub mod spl_token_collective {
         Ok(())
     }
 
+    pub fn set_as_primary_v0(
+      ctx: Context<SetAsPrimaryV0>,
+      args: SetAsPrimaryV0Args
+    ) -> ProgramResult {
+      let token_ref = &ctx.accounts.token_ref;
+      let primary_token_ref = &mut ctx.accounts.primary_token_ref;
+
+      primary_token_ref.collective = token_ref.collective;
+      primary_token_ref.token_metadata = token_ref.token_metadata;
+      primary_token_ref.mint = token_ref.mint;
+      primary_token_ref.token_bonding = token_ref.token_bonding;
+      primary_token_ref.name = token_ref.name;
+      primary_token_ref.owner = token_ref.owner;
+      primary_token_ref.is_claimed = token_ref.is_claimed;
+      primary_token_ref.is_primary = true;
+      primary_token_ref.bump_seed = args.bump_seed;
+      primary_token_ref.token_bonding_authority_bump_seed = token_ref.token_bonding_authority_bump_seed;
+      primary_token_ref.target_royalties_owner_bump_seed = token_ref.target_royalties_owner_bump_seed;
+      primary_token_ref.token_metadata_update_authority_bump_seed = token_ref.token_metadata_update_authority_bump_seed;
+
+      Ok(())
+    }
+
     pub fn initialize_owned_social_token_v0(
       ctx: Context<InitializeOwnedSocialTokenV0>,
       args: InitializeSocialTokenV0Args,
@@ -98,8 +121,6 @@ pub mod spl_token_collective {
       reverse_token_ref.owner = Some(ctx.accounts.owner.key());
       reverse_token_ref.is_claimed = true;
       token_ref.is_claimed = true;
-      token_ref.is_primary = args.is_primary;
-      reverse_token_ref.is_primary = args.is_primary;
 
       Ok(())
     }

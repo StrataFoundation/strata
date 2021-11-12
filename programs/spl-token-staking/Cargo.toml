@@ -15,8 +15,8 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = "0.17.0"
-anchor-spl = "0.17.0"
+anchor-lang = "0.18.0"
+anchor-spl = "0.18.0"
 spl-associated-token-account = { version = "1.0.3",  features = [ "no-entrypoint" ] }
 uint = "0.9"
 spl-token = "3.2.0"

@@ -245,20 +245,20 @@ export interface ICreateTokenBondingArgs {
   generalAuthority?: PublicKey | null;
   /**
    * Authority to swap or change the reserve account. **This authority is dangerous. Use with care**
-   * 
+   *
    * From a trust perspective, this authority should almost always be held by another program that handles migrating bonding
    * curves, instead of by an individual.
-   * 
+   *
    * **Default:** null. You most likely don't need this permission, if it is being set you should do so explicitly.
    */
   reserveAuthority?: PublicKey | null;
 
   /**
    * Authority to swap or change the underlying curve. **This authority is dangerous. Use with care**
-   * 
+   *
    * From a trust perspective, this authority should almost always be held by another program that handles migrating bonding
    * curves, instead of by an individual.
-   * 
+   *
    * **Default:** null. You most likely don't need this permission, if it is being set you should do so explicitly.
    */
   curveAuthority?: PublicKey | null;
@@ -1080,7 +1080,8 @@ export class SplTokenBonding {
       generalAuthority:
         generalAuthority === null
           ? null
-          : generalAuthority! || (tokenBondingAcct.generalAuthority as PublicKey),
+          : generalAuthority! ||
+            (tokenBondingAcct.generalAuthority as PublicKey),
       buyFrozen:
         typeof buyFrozen === "undefined"
           ? (tokenBondingAcct.buyFrozen as boolean)

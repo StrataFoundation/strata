@@ -46,7 +46,7 @@ pub struct InitializeCollectiveV0<'info> {
     mint.key().as_ref()], 
     payer=payer,
     bump=args.bump_seed, 
-    space=512
+    space=312
   )]
   pub collective: Box<Account<'info, CollectiveV0>>,
   #[account(
@@ -119,11 +119,11 @@ pub struct InitializeOwnedSocialTokenV0<'info> {
     seeds = [
         b"token-ref",
         owner.key().as_ref(),
-        &token_ref_final_seed(&initialize_args.collective.key(), args.is_primary)
+        initialize_args.collective.key().as_ref()
     ],
     bump = args.token_ref_bump_seed,
     payer = payer,
-    space = 512
+    space = 312
   )]
   pub token_ref: Box<Account<'info, TokenRefV0>>,
   #[account(
@@ -135,7 +135,7 @@ pub struct InitializeOwnedSocialTokenV0<'info> {
     constraint = verify_bonding_authorities(&initialize_args.token_bonding, &[b"token-bonding-authority", reverse_token_ref.key().as_ref()], args.token_bonding_authority_bump_seed)?,
     bump = args.reverse_token_ref_bump_seed,
     payer = payer,
-    space = 512,
+    space = 312,
   )]
   pub reverse_token_ref: Box<Account<'info, TokenRefV0>>,
   #[account(
@@ -155,8 +155,8 @@ pub struct InitializeUnclaimedSocialTokenV0<'info> {
     address = initialize_args.collective.authority.unwrap_or(Pubkey::default())
   )]
   pub authority: AccountInfo<'info>,
-  #[account(mut, signer)]
-  pub payer: AccountInfo<'info>,
+  #[account(mut)]
+  pub payer: Signer<'info>,
   #[account(
     init,
     seeds = [
@@ -166,7 +166,7 @@ pub struct InitializeUnclaimedSocialTokenV0<'info> {
     ],
     bump = args.token_ref_bump_seed,
     payer = payer,
-    space = 512
+    space = 312
   )]
   pub token_ref: Box<Account<'info, TokenRefV0>>,
   #[account(
@@ -177,7 +177,7 @@ pub struct InitializeUnclaimedSocialTokenV0<'info> {
     ],
     bump = args.reverse_token_ref_bump_seed,
     payer = payer,
-    space = 512,
+    space = 312,
     constraint = verify_bonding_authorities(&initialize_args.token_bonding, &[b"token-bonding-authority", reverse_token_ref.key().as_ref()], args.token_bonding_authority_bump_seed)?,
     constraint = verify_authority(Some(initialize_args.token_metadata.update_authority), &[b"token-metadata-authority", reverse_token_ref.key().as_ref()], args.token_metadata_update_authority_bump_seed)?,
   )]
@@ -198,6 +198,31 @@ pub struct InitializeUnclaimedSocialTokenV0<'info> {
     // Deserialize name account checked in token metadata constraint
   )]
   pub name: AccountInfo<'info>,
+  pub system_program: Program<'info, System>,
+  pub rent: Sysvar<'info, Rent>,
+}
+
+#[derive(Accounts)]
+#[instruction(args: SetAsPrimaryV0Args)]
+pub struct SetAsPrimaryV0<'info> {
+  #[account(mut)]
+  pub payer: Signer<'info>,
+  pub owner: Signer<'info>,
+  #[account(
+    constraint = owner.key() == token_ref.owner.ok_or::<ProgramError>(ErrorCode::IncorrectOwner.into())?
+  )]
+  pub token_ref: Account<'info, TokenRefV0>,
+  #[account(
+    init_if_needed,
+    seeds = [
+        b"token-ref",
+        owner.key().as_ref()
+    ],
+    bump = args.bump_seed,
+    payer = payer,
+    space = 312,
+  )]
+  pub primary_token_ref: Account<'info, TokenRefV0>,
   pub system_program: Program<'info, System>,
   pub rent: Sysvar<'info, Rent>,
 }
@@ -303,11 +328,11 @@ pub struct ClaimSocialTokenV0<'info> {
     seeds = [
         b"token-ref",
         owner.key().as_ref(),
-        &token_ref_final_seed(&collective.key(), args.is_primary)
+        collective.key().as_ref()
     ],
     bump = args.token_ref_bump_seed,
     payer = payer,
-    space = 512,
+    space = 312,
   )]
   pub new_token_ref: Box<Account<'info, TokenRefV0>>,
   #[account(
