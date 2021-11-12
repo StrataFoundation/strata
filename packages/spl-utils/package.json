@@ -25,6 +25,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx}\""
   },
   "dependencies": {
+    "@solana/web3.js": "^1.30.2",
     "bs58": "^4.0.1"
   },
   "devDependencies": {
