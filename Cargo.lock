@@ -1281,16 +1281,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "spl-bonding-presale"
-version = "0.1.0"
-dependencies = [
- "anchor-lang",
- "anchor-spl",
- "spl-token",
- "spl-token-bonding",
-]
-
-[[package]]
 name = "spl-name-service"
 version = "0.1.1"
 dependencies = [

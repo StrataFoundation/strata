@@ -24,7 +24,9 @@ pub struct CurveV0 {
 pub struct TokenBondingV0 {
   pub base_mint: Pubkey,
   pub target_mint: Pubkey,
-  pub authority: Option<Pubkey>,
+  pub general_authority: Option<Pubkey>,
+  pub reserve_authority: Option<Pubkey>,
+  pub curve_authority: Option<Pubkey>,
   pub base_storage: Pubkey,
   pub buy_base_royalties: Pubkey,
   pub buy_target_royalties: Pubkey,

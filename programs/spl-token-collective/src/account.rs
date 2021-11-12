@@ -101,6 +101,8 @@ pub struct InitializeSocialTokenV0<'info> {
   pub clock: Sysvar<'info, Clock>
 }
 
+
+
 #[derive(Accounts)]
 #[instruction(args: InitializeSocialTokenV0Args)]
 pub struct InitializeOwnedSocialTokenV0<'info> {
@@ -130,7 +132,7 @@ pub struct InitializeOwnedSocialTokenV0<'info> {
         b"reverse-token-ref",
         initialize_args.token_bonding.target_mint.as_ref()
     ],
-    constraint = verify_authority(initialize_args.token_bonding.authority, &[b"token-bonding-authority", reverse_token_ref.key().as_ref()], args.token_bonding_authority_bump_seed)?,
+    constraint = verify_bonding_authorities(&initialize_args.token_bonding, &[b"token-bonding-authority", reverse_token_ref.key().as_ref()], args.token_bonding_authority_bump_seed)?,
     bump = args.reverse_token_ref_bump_seed,
     payer = payer,
     space = 512,
@@ -176,7 +178,7 @@ pub struct InitializeUnclaimedSocialTokenV0<'info> {
     bump = args.reverse_token_ref_bump_seed,
     payer = payer,
     space = 512,
-    constraint = verify_authority(initialize_args.token_bonding.authority, &[b"token-bonding-authority", reverse_token_ref.key().as_ref()], args.token_bonding_authority_bump_seed)?,
+    constraint = verify_bonding_authorities(&initialize_args.token_bonding, &[b"token-bonding-authority", reverse_token_ref.key().as_ref()], args.token_bonding_authority_bump_seed)?,
     constraint = verify_authority(Some(initialize_args.token_metadata.update_authority), &[b"token-metadata-authority", reverse_token_ref.key().as_ref()], args.token_metadata_update_authority_bump_seed)?,
   )]
   pub reverse_token_ref: Box<Account<'info, TokenRefV0>>,
@@ -324,7 +326,7 @@ pub struct ClaimSocialTokenV0<'info> {
     mut,
     has_one = base_mint,
     has_one = target_mint,
-    constraint = token_bonding.authority.unwrap() == token_bonding_authority.key(),
+    constraint = token_bonding.general_authority.unwrap() == token_bonding_authority.key(),
     has_one = buy_base_royalties,
     has_one = buy_target_royalties,
     has_one = sell_base_royalties,

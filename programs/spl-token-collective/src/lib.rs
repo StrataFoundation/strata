@@ -263,7 +263,7 @@ pub mod spl_token_collective {
           token_bonding: ctx.accounts.token_bonding.to_account_info().clone(),
           base_mint: ctx.accounts.base_mint.to_account_info().clone(),
           target_mint: ctx.accounts.target_mint.to_account_info().clone(),
-          authority: ctx.accounts.token_bonding_authority.to_account_info().clone(),
+          general_authority: ctx.accounts.token_bonding_authority.to_account_info().clone(),
           buy_base_royalties: ctx.accounts.new_buy_base_royalties.to_account_info().clone(),
           buy_target_royalties: ctx.accounts.new_buy_target_royalties.to_account_info().clone(),
           sell_base_royalties: ctx.accounts.new_sell_base_royalties.to_account_info().clone(),
@@ -276,7 +276,7 @@ pub mod spl_token_collective {
           ],
         ]
       ), UpdateTokenBondingV0Args {
-        token_bonding_authority: token_bonding.authority,
+        general_authority: token_bonding.general_authority,
         buy_base_royalty_percentage: token_bonding.buy_base_royalty_percentage,
         buy_target_royalty_percentage: token_bonding.buy_target_royalty_percentage,
         sell_base_royalty_percentage: token_bonding.sell_base_royalty_percentage,
@@ -310,7 +310,7 @@ pub mod spl_token_collective {
         ctx.accounts.token_bonding_program.clone(),
         UpdateTokenBondingV0 {
           token_bonding: ctx.accounts.token_bonding.to_account_info().clone(),
-          authority: ctx.accounts.token_bonding_authority.to_account_info().clone(),
+          general_authority: ctx.accounts.token_bonding_authority.to_account_info().clone(),
           base_mint: ctx.accounts.base_mint.to_account_info().clone(),
           target_mint: ctx.accounts.target_mint.to_account_info().clone(),
           buy_base_royalties: ctx.accounts.buy_base_royalties.to_account_info().clone(),
@@ -325,7 +325,7 @@ pub mod spl_token_collective {
           ],
         ]
       ), UpdateTokenBondingV0Args {
-        token_bonding_authority: token_bonding.authority,
+        general_authority: token_bonding.general_authority,
         buy_base_royalty_percentage: args.buy_base_royalty_percentage,
         buy_target_royalty_percentage: args.buy_target_royalty_percentage,
         sell_base_royalty_percentage: args.sell_base_royalty_percentage,

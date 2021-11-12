@@ -1137,7 +1137,9 @@ export class SplTokenCollective {
       curve: curveToUse,
       baseMint: collectiveAcct.mint,
       targetMint,
-      authority: tokenBondingAuthority,
+      generalAuthority: tokenBondingAuthority,
+      reserveAuthority: tokenBondingAuthority,
+      curveAuthority: tokenBondingAuthority,
       // @ts-ignore
       buyBaseRoyaltiesOwner: tokenBondingSettings?.buyBaseRoyalties.ownedByName
         ? standinRoyaltiesOwner

@@ -18,6 +18,12 @@ pub fn verify_authority(authority: Option<Pubkey>, seeds: &[&[u8]], bump: u8) ->
   Ok(true)
 }
 
+pub fn verify_bonding_authorities(bonding: &TokenBondingV0, seeds: &[&[u8]], bump: u8) -> Result<bool, ProgramError> {
+  Ok(verify_authority(bonding.general_authority, seeds, bump)? &&
+  verify_authority(bonding.curve_authority, seeds, bump)? &&
+  verify_authority(bonding.reserve_authority, seeds, bump)?)
+}
+
 pub fn get_seeds_and_key(
   program_id: &Pubkey,
   hashed_name: Vec<u8>, // Hashing is done off-chain
