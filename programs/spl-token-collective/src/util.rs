@@ -101,10 +101,6 @@ pub fn verify_token_bonding_royalties<'info>(
   }
 }
 
-pub fn verify_presale<'info>(config: &CollectiveConfigV0, remaining_accounts: &[AccountInfo<'info>]) -> ProgramResult {
-  Ok(())
-}
-
 pub fn verify_token_bonding_defaults<'info>(defaults: &TokenBondingSettingsV0, token_bonding: &Account<'info, TokenBondingV0>) -> ProgramResult {
   let valid = defaults.curve.map_or(true, |curve| token_bonding.curve == curve) &&
     defaults.min_buy_base_royalty_percentage.map_or(true, |min| token_bonding.buy_base_royalty_percentage >= min) &&
