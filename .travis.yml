@@ -31,7 +31,7 @@ _tests: &tests
 
 jobs:
   include:
-    - <<: *defaults
+    - <<: *tests
       name: Build and test Contracts
       script:
         - anchor build
