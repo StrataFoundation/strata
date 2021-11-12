@@ -22,11 +22,11 @@ build-metadata = "cd deps/metaplex/rust/token-metadata/program && pwd && cargo b
 
 [[test.genesis]]
 address = "namesLPneVptA9Z5rqUDD9tMTWEJwofgaYwp8cawRkX"
-program = "./deps/solana-program-library/name-service/program/target/deploy/spl_name_service.so"
+program = "./deps/solana-program-library/target/deploy/spl_name_service.so"
 
 [[test.genesis]]
 address = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
-program = "./deps/metaplex/rust/token-metadata/program target/deploy/spl_token_metadata.so"
+program = "./deps/metaplex/rust/target/deploy/spl_token_metadata.so"
 
 [workspace]
 members = ["programs/spl-token-account-split", "programs/spl-token-bonding", "programs/spl-token-collective", "programs/spl-token-staking"]
