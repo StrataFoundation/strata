@@ -34,6 +34,7 @@ jobs:
     - <<: *tests
       name: Build and test Contracts
       script:
+        - anchor build-deps
         - anchor build
         - yarn run build
         - anchor test --skip-build
