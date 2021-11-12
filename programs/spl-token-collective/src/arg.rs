@@ -14,6 +14,11 @@ pub struct InitializeCollectiveV0Args {
     pub config: CollectiveConfigV0
 }
 
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
+pub struct UpdateCollectiveV0Args {
+    pub authority: Option<Pubkey>,
+    pub config: CollectiveConfigV0
+}
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct CollectiveConfigV0 {
@@ -60,7 +65,6 @@ pub struct TokenBondingSettingsV0 {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default, Copy)]
 pub struct InitializeSocialTokenV0Args {
-  pub is_primary: bool,
   pub name_parent: Option<Pubkey>,
   pub name_class: Option<Pubkey>,
   pub collective_bump_seed: u8,
@@ -81,4 +85,9 @@ pub struct UpdateTokenBondingV0ArgsWrapper {
   pub sell_base_royalty_percentage: u32,
   pub sell_target_royalty_percentage: u32,
   pub buy_frozen: bool,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
+pub struct SetAsPrimaryV0Args {
+ pub bump_seed: u8 
 }

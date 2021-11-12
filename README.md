@@ -1,5 +1,7 @@
 # Strata
 
+View the live documentation [here](https://strataprotocol.com/docs)
+
 This series of smart contracts serves to standardizing and indexing all social tokens.
 
 Docs are located in `packages/docs`
@@ -27,7 +29,13 @@ env ANCHOR_WALLET=~/.config/solana/id.json ANCHOR_PROVIDER_URL=https://api.devne
 anchor run build-deps
 ```
 
-# On Initializing vs Passing
+## Test
+
+```
+anchor test
+```
+
+## Development Philosophy: On Initializing vs Passing
 
 In Solana programs, you can either
 
@@ -67,3 +75,18 @@ Use passing when the account has utility outside of this contract. For example a
 Use initializing for actual program data. For example, for the bonding curve or for the Wumbo token ref. This way users can directly lookup the account via PDA. 
 
 You should also use initializing on Token accounts that are exclusively for the program, for example a holding account in token staking. 
+
+## Contribution
+
+Thank you for your interest in contributing to Strata! All contributions are welcome no
+matter how big or small. This includes (but is not limited to) filing issues,
+adding documentation, fixing bugs, creating examples, and implementing features.
+
+If you'd like to contribute, please claim an issue by commenting, forking, and
+opening a pull request, even if empty. This allows the maintainers to track who
+is working on what issue as to not overlap work.
+
+For simple documentation changes, feel free to just open a pull request.
+
+If you're considering larger changes or self motivated features, please file an issue
+and engage with the maintainers in [Discord](https://discord.gg/XQhCFg77WM).

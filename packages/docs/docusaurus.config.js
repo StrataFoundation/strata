@@ -9,14 +9,14 @@ const plantuml = require("@akebifiky/remark-simple-plantuml");
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'Strata',
-  tagline: 'Strata Collectives',
-  url: 'https://your-docusaurus-test-site.com',
+  tagline: 'Community first Social Tokens, powered by Solana',
+  url: 'https://strataprotocol.com',
   baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
-  organizationName: 'emergent', // Usually your GitHub org/user name.
-  projectName: 'emergent', // Usually your repo name.
+  organizationName: 'StrataFoundation', // Usually your GitHub org/user name.
+  projectName: 'strata', // Usually your repo name.
   presets: [
     [
       '@docusaurus/preset-classic',
@@ -27,13 +27,13 @@ const config = {
           rehypePlugins: [katex],
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
-          editUrl: 'https://github.com/facebook/docusaurus/edit/main/website/',
+          editUrl: 'https://github.com/StrataFoundation/strata/edit/master/packages/docs',
         },
         blog: {
           showReadingTime: true,
           // Please change this to your repo.
           editUrl:
-            'https://github.com/facebook/docusaurus/edit/main/website/blog/',
+            'https://github.com/StrataFoundation/strata/edit/master/packages/docs/blog',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
@@ -109,7 +109,7 @@ const config = {
           },
           {to: '/blog', label: 'Blog', position: 'left'},
           {
-            href: 'https://github.com/facebook/docusaurus',
+            href: 'https://github.com/StrataFoundation/strata',
             label: 'GitHub',
             position: 'right',
           },
@@ -131,16 +131,12 @@ const config = {
             title: 'Community',
             items: [
               {
-                label: 'Stack Overflow',
-                href: 'https://stackoverflow.com/questions/tagged/docusaurus',
-              },
-              {
                 label: 'Discord',
-                href: 'https://discordapp.com/invite/docusaurus',
+                href: 'https://discord.gg/XQhCFg77WM',
               },
               {
                 label: 'Twitter',
-                href: 'https://twitter.com/docusaurus',
+                href: 'https://twitter.com/StrataProtocol',
               },
             ],
           },
@@ -153,12 +149,12 @@ const config = {
               },
               {
                 label: 'GitHub',
-                href: 'https://github.com/facebook/docusaurus',
+                href: 'https://github.com/StrataFoundation/strata',
               },
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Strata.`,
+        copyright: `Copyright © ${new Date().getFullYear()} Strata, Inc.`,
       },
       prism: {
         theme: lightCodeTheme,

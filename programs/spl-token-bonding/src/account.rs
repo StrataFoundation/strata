@@ -203,7 +203,7 @@ pub struct CloseTokenBondingV0<'info> {
   #[account(
     mut,
     close = refund,
-    constraint = token_bonding.authority.ok_or::<ProgramError>(ErrorCode::NoAuthority.into())? == authority.key(),
+    constraint = token_bonding.general_authority.ok_or::<ProgramError>(ErrorCode::NoAuthority.into())? == general_authority.key(),
     has_one = target_mint,
     has_one = base_storage
   )]
@@ -215,7 +215,7 @@ pub struct CloseTokenBondingV0<'info> {
     //   2. Sell is frozen
     constraint = token_bonding.sell_frozen || target_mint.supply == 0
   )]
-  pub authority: AccountInfo<'info>,
+  pub general_authority: AccountInfo<'info>,
 
   #[account(
     mut,
@@ -234,13 +234,13 @@ pub struct CloseTokenBondingV0<'info> {
 pub struct UpdateTokenBondingV0<'info> {
   #[account(
     mut,
-    constraint = token_bonding.authority.ok_or::<ProgramError>(ErrorCode::NoAuthority.into())? == authority.key(),
+    constraint = token_bonding.general_authority.ok_or::<ProgramError>(ErrorCode::NoAuthority.into())? == general_authority.key(),
     has_one = base_mint,
     has_one = target_mint
   )]
   pub token_bonding: Box<Account<'info, TokenBondingV0>>,
   #[account(signer)]
-  pub authority: AccountInfo<'info>,
+  pub general_authority: AccountInfo<'info>,
 
   #[account(
     constraint = *base_mint.to_account_info().owner == token::ID

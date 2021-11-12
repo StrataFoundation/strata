@@ -238,7 +238,30 @@ export interface ICreateTokenBondingArgs {
   sellTargetRoyalties?: PublicKey;
   /** Only required when `sellTargetRoyalties` is undefined. The owner of the `sellTargetRoyalties` account. **Default:** `provider.wallet` */
   sellTargetRoyaltiesOwner?: PublicKey;
-  authority?: PublicKey;
+  /**
+   * General authority to change things like royalty percentages and freeze the curve. This is the least dangerous authority
+   * **Default:** Wallet public key. Pass null to explicitly not set this authority.
+   */
+  generalAuthority?: PublicKey | null;
+  /**
+   * Authority to swap or change the reserve account. **This authority is dangerous. Use with care**
+   *
+   * From a trust perspective, this authority should almost always be held by another program that handles migrating bonding
+   * curves, instead of by an individual.
+   *
+   * **Default:** null. You most likely don't need this permission, if it is being set you should do so explicitly.
+   */
+  reserveAuthority?: PublicKey | null;
+
+  /**
+   * Authority to swap or change the underlying curve. **This authority is dangerous. Use with care**
+   *
+   * From a trust perspective, this authority should almost always be held by another program that handles migrating bonding
+   * curves, instead of by an individual.
+   *
+   * **Default:** null. You most likely don't need this permission, if it is being set you should do so explicitly.
+   */
+  curveAuthority?: PublicKey | null;
   /**
    * The reserves of the bonding curve. When {@link SplTokenBonding.buy} is called, `baseMint` tokens are stored here.
    * When {@link SplTokenBonding.sell} is called, `baseMint` tokens are returned to the callee from this account
@@ -295,7 +318,7 @@ export interface IUpdateTokenBondingArgs {
   sellBaseRoyalties?: PublicKey;
   /** A new account to store royalties. **Default:** current */
   sellTargetRoyalties?: PublicKey;
-  authority?: PublicKey | null;
+  generalAuthority?: PublicKey | null;
   /** Should this bonding curve be frozen, disabling buy and sell? It can be unfrozen using {@link SplTokenBonding.updateTokenBonding}. **Default:** current */
   buyFrozen?: boolean;
 }
@@ -628,7 +651,7 @@ export class SplTokenBonding {
       return curve;
     }
 
-    await this.sendInstructions(instructions, signers);
+    await this.sendInstructions(instructions, signers, args.payer);
     return curve;
   }
 
@@ -674,7 +697,9 @@ export class SplTokenBonding {
    * @returns
    */
   async createTokenBondingInstructions({
-    authority = this.wallet.publicKey,
+    generalAuthority = this.wallet.publicKey,
+    curveAuthority = null,
+    reserveAuthority = null,
     payer = this.wallet.publicKey,
     curve,
     baseMint,
@@ -941,7 +966,9 @@ export class SplTokenBonding {
             percent(sellTargetRoyaltyPercentage) || 0,
           mintCap: mintCap || null,
           purchaseCap: purchaseCap || null,
-          tokenBondingAuthority: authority,
+          generalAuthority,
+          curveAuthority,
+          reserveAuthority,
           bumpSeed,
           baseStorageAuthority,
           baseStorageAuthorityBumpSeed,
@@ -1005,7 +1032,7 @@ export class SplTokenBonding {
       instructions,
       signers,
     } = await this.createTokenBondingInstructions(args);
-    await this.sendInstructions(instructions, signers);
+    await this.sendInstructions(instructions, signers, args.payer);
     return tokenBonding;
   }
 
@@ -1025,13 +1052,13 @@ export class SplTokenBonding {
     buyTargetRoyalties,
     sellBaseRoyalties,
     sellTargetRoyalties,
-    authority,
+    generalAuthority,
     buyFrozen,
   }: IUpdateTokenBondingArgs): Promise<InstructionResult<null>> {
     const tokenBondingAcct = await this.account.tokenBondingV0.fetch(
       tokenBonding
     );
-    if (!tokenBondingAcct.authority) {
+    if (!tokenBondingAcct.generalAuthority) {
       throw new Error(
         "Cannot update a token bonding account that has no authority"
       );
@@ -1050,10 +1077,11 @@ export class SplTokenBonding {
       sellTargetRoyaltyPercentage:
         percent(sellTargetRoyaltyPercentage) ||
         tokenBondingAcct.sellTargetRoyaltyPercentage,
-      tokenBondingAuthority:
-        authority === null
+      generalAuthority:
+        generalAuthority === null
           ? null
-          : authority! || (tokenBondingAcct.authority as PublicKey),
+          : generalAuthority! ||
+            (tokenBondingAcct.generalAuthority as PublicKey),
       buyFrozen:
         typeof buyFrozen === "undefined"
           ? (tokenBondingAcct.buyFrozen as boolean)
@@ -1067,7 +1095,7 @@ export class SplTokenBonding {
         await this.instruction.updateTokenBondingV0(args, {
           accounts: {
             tokenBonding,
-            authority: (tokenBondingAcct.authority as PublicKey)!,
+            generalAuthority: (tokenBondingAcct.generalAuthority as PublicKey)!,
             baseMint: tokenBondingAcct.baseMint,
             targetMint: tokenBondingAcct.targetMint,
             buyTargetRoyalties:
@@ -1398,7 +1426,7 @@ export class SplTokenBonding {
    */
   async buy(args: IBuyArgs): Promise<void> {
     const { instructions, signers } = await this.buyInstructions(args);
-    await this.sendInstructions(instructions, signers);
+    await this.sendInstructions(instructions, signers, args.payer);
   }
 
   async getState(): Promise<ProgramStateV0 | null> {
@@ -1579,7 +1607,7 @@ export class SplTokenBonding {
    */
   async sell(args: ISellArgs): Promise<void> {
     const { instructions, signers } = await this.sellInstructions(args);
-    await this.sendInstructions(instructions, signers);
+    await this.sendInstructions(instructions, signers, args.payer);
   }
 
   /**

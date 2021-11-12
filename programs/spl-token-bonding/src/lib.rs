@@ -150,7 +150,9 @@ pub mod spl_token_bonding {
       bonding.base_mint = ctx.accounts.base_mint.key();
       bonding.base_mint = ctx.accounts.base_mint.key();
       bonding.target_mint = ctx.accounts.target_mint.key();
-      bonding.authority = args.token_bonding_authority;
+      bonding.general_authority = args.general_authority;
+      bonding.reserve_authority = args.reserve_authority;
+      bonding.curve_authority = args.curve_authority;
       bonding.base_storage = ctx.accounts.base_storage.key();
       bonding.buy_base_royalties = ctx.accounts.buy_base_royalties.key();
       bonding.buy_target_royalties = ctx.accounts.buy_target_royalties.key();
@@ -239,7 +241,7 @@ pub mod spl_token_bonding {
       bonding.buy_target_royalty_percentage = args.buy_target_royalty_percentage;
       bonding.sell_base_royalty_percentage = args.sell_base_royalty_percentage;
       bonding.sell_target_royalty_percentage = args.sell_target_royalty_percentage;
-      bonding.authority = args.token_bonding_authority;
+      bonding.general_authority = args.general_authority;
       bonding.buy_frozen = args.buy_frozen;
       bonding.buy_target_royalties = ctx.accounts.buy_target_royalties.key();
       bonding.buy_base_royalties = ctx.accounts.buy_base_royalties.key();

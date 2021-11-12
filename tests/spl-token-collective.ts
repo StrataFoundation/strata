@@ -77,6 +77,21 @@ describe("spl-token-collective", () => {
     })
   })
 
+  describe("collective", () => {
+    it("allows updating the collective", async () => {
+      await tokenCollectiveProgram.updateCollective({
+        collective,
+        config: {
+          ...config,
+          isOpen: true
+        }
+      })
+
+      const collectiveAcct = await tokenCollectiveProgram.account.collectiveV0.fetch(collective);
+      expect(collectiveAcct.config.isOpen).to.be.true;
+    })
+  })
+
   describe("Unclaimed", () => {
     let unclaimedTokenRef: PublicKey;
     let unclaimedReverseTokenRef: PublicKey;
@@ -106,7 +121,6 @@ describe("spl-token-collective", () => {
       nameTx.partialSign(nameClass);
       await provider.send(nameTx);
       const { tokenRef, reverseTokenRef } = await tokenCollectiveProgram.createSocialToken({
-        isPrimary: false,
         collective,
         name,
         nameClass: nameClass.publicKey,
@@ -211,7 +225,7 @@ describe("spl-token-collective", () => {
         tokenCollectiveProgram.errors,
         provider,
         instructions,
-        [signers[0], [...signers[1], ownerKeypair]]
+        [signers[0], signers[1], [...signers[2], ownerKeypair]]
       )
     });
 

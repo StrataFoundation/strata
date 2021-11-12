@@ -15,7 +15,9 @@ pub struct InitializeTokenBondingV0Args {
   pub mint_cap: Option<u64>,
   // The maximum target tokens per purchase
   pub purchase_cap: Option<u64>,
-  pub token_bonding_authority: Option<Pubkey>,
+  pub general_authority: Option<Pubkey>,
+  pub reserve_authority: Option<Pubkey>,
+  pub curve_authority: Option<Pubkey>,
   pub base_storage_authority: Option<Pubkey>,
   pub buy_frozen: bool,
   pub index: u16, // A given target mint can have multiple curves associated with it. Index 0 is reserved for the primary curve that holds mint authority
@@ -26,7 +28,7 @@ pub struct InitializeTokenBondingV0Args {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct UpdateTokenBondingV0Args {
-  pub token_bonding_authority: Option<Pubkey>,
+  pub general_authority: Option<Pubkey>,
   /// Percentage of purchases that go to the founder
   /// Percentage Value is (founder_reward_percentage / u32.MAX_VALUE) * 100
   pub buy_base_royalty_percentage: u32,

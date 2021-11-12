@@ -1,0 +1,47 @@
+dist: bionic
+language: rust
+rust:
+  - stable
+cache:
+  directories:
+    - $HOME/.cache/yarn
+    - $HOME/.cargo
+    - $TRAVIS_BUILD_DIR/target
+    - $HOME/.local/share/solana
+    - $TRAVIS_BUILD_DIR/deps/solana-program-library/target
+    - $TRAVIS_BUILD_DIR/deps/metaplex/rust/target
+env:
+  global:
+    - NODE_VERSION="17.0.1"
+    - SOLANA_CLI_VERSION="1.8.0"
+    - NODE_VERSION="17.0.1"
+    - ANCHOR_VERSION="0.18.0"
+git:
+  submodules: true
+
+_defaults: &defaults
+  before_install:
+  - rustup component add rustfmt clippy
+  - nvm install $NODE_VERSION
+  - sudo apt-get install -y pkg-config build-essential libudev-dev
+
+_tests: &tests
+  before_install:
+  - if [ ! -d $HOME/.local/share/solana ]; then sh -c "$(curl -sSfL https://release.solana.com/v${SOLANA_CLI_VERSION}/install)"; fi
+  - nvm install $NODE_VERSION
+  - yarn install
+  - npx lerna bootstrap
+  - sudo apt-get install -y pkg-config build-essential libudev-dev
+  - export PATH="/home/travis/.local/share/solana/install/active_release/bin:$PATH"
+  - yes | solana-keygen new
+  - cargo install --git https://github.com/project-serum/anchor --tag v${ANCHOR_VERSION} anchor-cli --locked
+
+jobs:
+  include:
+    - <<: *tests
+      name: Build and test Contracts
+      script:
+        - anchor run build-deps
+        - anchor build
+        - yarn run build-programs
+        - anchor test

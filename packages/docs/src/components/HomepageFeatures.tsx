@@ -17,31 +17,30 @@ type FeatureItem = {
 const FeatureList: FeatureItem[] = [
   {
     title: "Easy to Use",
-    image: "/img/undraw_docusaurus_mountain.svg",
+    image: "/img/EasytoUse.png",
     description: (
       <>
-        Strata was designed from the ground up to be easily installed and used
-        to get your website up and running quickly.
+        Strata provides SDKs to launch Tokens in an instant. No Rust or Solana
+        experience needed!
       </>
     ),
   },
   {
-    title: "Focus on What Matters",
-    image: "/img/undraw_docusaurus_tree.svg",
+    title: "Free and Open",
+    image: "/img/FreeandOpen.png",
     description: (
       <>
-        Strata lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
+        Strata is free to use and Open Source. Launch your token without someone
+        else taking a cut!
       </>
     ),
   },
   {
-    title: "Powered by React",
-    image: "/img/undraw_docusaurus_react.svg",
+    title: "Build Quickly with React",
+    image: "/img/BuildwithReact.png",
     description: (
       <>
-        Extend or customize your website layout by reusing React. Strata can be
-        extended while reusing the same header and footer.
+        Strata comes with hooks and helpers to make coding using React a breeze.
       </>
     ),
   },
