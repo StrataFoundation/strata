@@ -42,4 +42,4 @@ jobs:
         - anchor run build-deps
         - anchor build
         - yarn run build
-        - anchor test --skip-build
+        - anchor test
