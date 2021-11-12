@@ -48,7 +48,7 @@ entity Wallet {
 }
 
 entity TokenRef {
-  ["token-ref", owner, Pubkey::default] PRIMARY
+  ["token-ref", owner] PRIMARY
   -- 
   ["token-ref", name, collective]
   --
