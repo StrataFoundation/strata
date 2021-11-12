@@ -8,6 +8,8 @@ cache:
     - $HOME/.cargo
     - $TRAVIS_BUILD_DIR/target
     - $HOME/.local/share/solana
+    - $TRAVIS_BUILD_DIR/deps/solana-program-library/name-service/program/target
+    - $TRAVIS_BUILD_DIR/deps/metaplex/rust/token-metadata/program
 env:
   global:
     - NODE_VERSION="17.0.1"

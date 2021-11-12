@@ -62,6 +62,16 @@ pub struct InitializeCollectiveV0<'info> {
   pub rent: Sysvar<'info, Rent>,
 }
 
+#[derive(Accounts)]
+#[instruction(args: UpdateCollectiveV0Args)]
+pub struct UpdateCollectiveV0<'info> {
+  #[account(
+    mut,
+    constraint = authority.key() == collective.authority.ok_or::<ProgramError>(ErrorCode::InvalidAuthority.into())?
+  )]
+  pub collective: Box<Account<'info, CollectiveV0>>,
+  pub authority: Signer<'info>,
+}
 
 #[derive(Accounts)]
 pub struct InitializeSocialTokenV0<'info> {

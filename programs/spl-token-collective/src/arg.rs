@@ -14,6 +14,11 @@ pub struct InitializeCollectiveV0Args {
     pub config: CollectiveConfigV0
 }
 
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
+pub struct UpdateCollectiveV0Args {
+    pub authority: Option<Pubkey>,
+    pub config: CollectiveConfigV0
+}
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct CollectiveConfigV0 {

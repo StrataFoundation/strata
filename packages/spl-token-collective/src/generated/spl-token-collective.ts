@@ -49,6 +49,29 @@ export const SplTokenCollectiveIDLJson: Idl & {
       ],
     },
     {
+      name: "updateCollectiveV0",
+      accounts: [
+        {
+          name: "collective",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "authority",
+          isMut: false,
+          isSigner: true,
+        },
+      ],
+      args: [
+        {
+          name: "args",
+          type: {
+            defined: "UpdateCollectiveV0Args",
+          },
+        },
+      ],
+    },
+    {
       name: "setAsPrimaryV0",
       accounts: [
         {
@@ -691,6 +714,26 @@ export const SplTokenCollectiveIDLJson: Idl & {
       },
     },
     {
+      name: "UpdateCollectiveV0Args",
+      type: {
+        kind: "struct",
+        fields: [
+          {
+            name: "authority",
+            type: {
+              option: "publicKey",
+            },
+          },
+          {
+            name: "config",
+            type: {
+              defined: "CollectiveConfigV0",
+            },
+          },
+        ],
+      },
+    },
+    {
       name: "CollectiveConfigV0",
       type: {
         kind: "struct",
@@ -1049,6 +1092,14 @@ export type SplTokenCollectiveIDL = {
       args: [{ name: "args"; type: { defined: "InitializeCollectiveV0Args" } }];
     },
     {
+      name: "updateCollectiveV0";
+      accounts: [
+        { name: "collective"; isMut: true; isSigner: false },
+        { name: "authority"; isMut: false; isSigner: true }
+      ];
+      args: [{ name: "args"; type: { defined: "UpdateCollectiveV0Args" } }];
+    },
+    {
       name: "setAsPrimaryV0";
       accounts: [
         { name: "payer"; isMut: true; isSigner: true },
@@ -1233,6 +1284,16 @@ export type SplTokenCollectiveIDL = {
         kind: "struct";
         fields: [
           { name: "bumpSeed"; type: "u8" },
+          { name: "authority"; type: { option: "publicKey" } },
+          { name: "config"; type: { defined: "CollectiveConfigV0" } }
+        ];
+      };
+    },
+    {
+      name: "UpdateCollectiveV0Args";
+      type: {
+        kind: "struct";
+        fields: [
           { name: "authority"; type: { option: "publicKey" } },
           { name: "config"; type: { defined: "CollectiveConfigV0" } }
         ];

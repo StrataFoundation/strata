@@ -1,7 +1,6 @@
 import * as anchor from "@project-serum/anchor";
 import { IdlTypes, Program, Provider } from "@project-serum/anchor";
 import { createMintInstructions } from "@project-serum/common";
-``;
 import {
   AccountInfo as TokenAccountInfo,
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -45,6 +44,7 @@ import {
   SplTokenCollectiveIDL,
   TokenRefV0,
 } from "./generated/spl-token-collective";
+``;
 
 export * from "./generated/spl-token-collective";
 
@@ -122,6 +122,21 @@ export interface ISetAsPrimaryArgs {
    * primary in the same txn as creating the token ref.
    */
   owner?: PublicKey;
+}
+
+/**
+ * Update this collective
+ */
+export interface IUpdateCollectiveArgs {
+  payer?: PublicKey;
+  collective: PublicKey;
+  /**
+   * The authority `collective`. **Default:** Authority from fetching the collective.
+   *
+   * Explicitly pass null to set the authority to none
+   */
+  authority?: PublicKey | null;
+  config: ICollectiveConfig;
 }
 
 export interface ICreateSocialTokenArgs {
@@ -917,7 +932,7 @@ export class SplTokenCollective {
     const { instructions, signers } = await this.claimSocialTokenInstructions(
       args
     );
-    await this.sendInstructions(instructions, signers);
+    await this.sendInstructions(instructions, signers, args.payer);
   }
 
   /**
@@ -965,6 +980,12 @@ export class SplTokenCollective {
     );
   }
 
+  /**
+   * Get instructions to set this tokenRef as our primary token ref (lookups to "token-ref", owner pda find this tokenRef)
+   *
+   * @param param0
+   * @returns
+   */
   async setAsPrimaryInstructions({
     payer = this.wallet.publicKey,
     tokenRef,
@@ -1005,6 +1026,66 @@ export class SplTokenCollective {
         primaryTokenRef,
       },
     };
+  }
+
+  /**
+   * Run {@link setAsPrimaryInstructions}
+   * @param args
+   */
+  async setAsPrimary(
+    args: ISetAsPrimaryArgs
+  ): Promise<{ primaryTokenRef: PublicKey }> {
+    const { instructions, signers, output } =
+      await this.setAsPrimaryInstructions(args);
+    await this.sendInstructions(instructions, signers, args.payer);
+    return output;
+  }
+
+  /**
+   * Get instructions to update this collective
+   *
+   * @param param0
+   * @returns
+   */
+  async updateCollectiveInstructions({
+    collective,
+    authority,
+    config,
+  }: IUpdateCollectiveArgs): Promise<InstructionResult<null>> {
+    if (typeof authority == "undefined") {
+      // @ts-ignore
+      authority = (await this.account.collectiveV0.fetch(collective)).authority;
+    }
+    return {
+      signers: [],
+      instructions: [
+        await this.instruction.updateCollectiveV0(
+          // @ts-ignore
+          {
+            config: toIdlConfig(config),
+            authority,
+          },
+          {
+            accounts: {
+              collective,
+              authority,
+            },
+          }
+        ),
+      ],
+      output: null,
+    };
+  }
+
+  /**
+   * Run {@link updateCollectiveInstructions}
+   * @param args
+   */
+  async updateCollective(args: IUpdateCollectiveArgs): Promise<null> {
+    const { instructions, signers, output } =
+      await this.updateCollectiveInstructions(args);
+    await this.sendInstructions(instructions, signers, args.payer);
+    return output;
   }
 
   /**

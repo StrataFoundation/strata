@@ -17,13 +17,28 @@ test-with-build = "anchor run build && anchor test --skip-build"
 #
 build = "anchor run build-deps && anchor build"
 build-deps = "anchor run build-name-service && anchor run build-metadata"
-build-name-service = "cd deps/solana-program-library && pwd && cargo build-bpf && cd ../../"
-build-metadata = "cd deps/metaplex/rust && pwd && cargo build-bpf && cd ../../../"
+build-name-service = "cd deps/solana-program-library/name-service/program && pwd && cargo build-bpf && cd ../../../../"
+build-metadata = "cd deps/metaplex/rust/token-metadata/program && pwd && cargo build-bpf && cd ../../../"
 
 [[test.genesis]]
 address = "namesLPneVptA9Z5rqUDD9tMTWEJwofgaYwp8cawRkX"
-program = "./deps/solana-program-library/target/deploy/spl_name_service.so"
+program = "./deps/solana-program-library/name-service/target/deploy/spl_name_service.so"
 
 [[test.genesis]]
 address = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
 program = "./deps/metaplex/rust/target/deploy/spl_token_metadata.so"
+
+[workspace]
+members = ["programs/spl-token-account-split", "programs/spl-token-bonding", "programs/spl-token-collective", "programs/spl-token-staking"]
+
+[programs.mainnet]
+spl-token-account-split = "Sp1it1Djn2NmQvXLPnGM4zAXArxuchvSdytNt5n76Hm"
+spl-token-bonding = "TBondz6ZwSM5fs4v2GpnVBMuwoncPkFLFR9S422ghhN"
+spl-token-collective = "WumbodN8t7wcDPCY2nGszs4x6HRtL5mJcTR519Qr6m7"
+spl-token-staking = "TStakXwvzEZiK6PSNpXuNx6wEsKc93NtSaMxmcqG6qP"
+
+[programs.localnet]
+spl-token-account-split = "Sp1it1Djn2NmQvXLPnGM4zAXArxuchvSdytNt5n76Hm"
+spl-token-bonding = "TBondz6ZwSM5fs4v2GpnVBMuwoncPkFLFR9S422ghhN"
+spl-token-collective = "WumbodN8t7wcDPCY2nGszs4x6HRtL5mJcTR519Qr6m7"
+spl-token-staking = "TStakXwvzEZiK6PSNpXuNx6wEsKc93NtSaMxmcqG6qP"

@@ -37,7 +37,7 @@ export async function sendInstructions(
   provider: Provider, 
   instructions: TransactionInstruction[], 
   signers: Signer[],
-  payer?: PublicKey
+  payer: PublicKey = provider.wallet.publicKey
 ): Promise<string> {
   const tx = new Transaction();
   tx.feePayer = payer || provider.wallet.publicKey;

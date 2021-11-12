@@ -77,6 +77,21 @@ describe("spl-token-collective", () => {
     })
   })
 
+  describe("collective", () => {
+    it("allows updating the collective", async () => {
+      await tokenCollectiveProgram.updateCollective({
+        collective,
+        config: {
+          ...config,
+          isOpen: true
+        }
+      })
+
+      const collectiveAcct = await tokenCollectiveProgram.account.collectiveV0.fetch(collective);
+      expect(collectiveAcct.config.isOpen).to.be.true;
+    })
+  })
+
   describe("Unclaimed", () => {
     let unclaimedTokenRef: PublicKey;
     let unclaimedReverseTokenRef: PublicKey;

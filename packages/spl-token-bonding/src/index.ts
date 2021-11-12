@@ -651,7 +651,7 @@ export class SplTokenBonding {
       return curve;
     }
 
-    await this.sendInstructions(instructions, signers);
+    await this.sendInstructions(instructions, signers, args.payer);
     return curve;
   }
 
@@ -1032,7 +1032,7 @@ export class SplTokenBonding {
       instructions,
       signers,
     } = await this.createTokenBondingInstructions(args);
-    await this.sendInstructions(instructions, signers);
+    await this.sendInstructions(instructions, signers, args.payer);
     return tokenBonding;
   }
 
@@ -1426,7 +1426,7 @@ export class SplTokenBonding {
    */
   async buy(args: IBuyArgs): Promise<void> {
     const { instructions, signers } = await this.buyInstructions(args);
-    await this.sendInstructions(instructions, signers);
+    await this.sendInstructions(instructions, signers, args.payer);
   }
 
   async getState(): Promise<ProgramStateV0 | null> {
@@ -1607,7 +1607,7 @@ export class SplTokenBonding {
    */
   async sell(args: ISellArgs): Promise<void> {
     const { instructions, signers } = await this.sellInstructions(args);
-    await this.sendInstructions(instructions, signers);
+    await this.sendInstructions(instructions, signers, args.payer);
   }
 
   /**
