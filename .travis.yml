@@ -2,7 +2,12 @@ dist: bionic
 language: rust
 rust:
   - stable
-cache: cargo
+cache:
+  directories:
+    - $HOME/.cache/yarn
+    - $HOME/.cargo
+    - $TRAVIS_BUILD_DIR/target
+    - $HOME/.local/share/solana
 env:
   global:
     - NODE_VERSION="17.0.1"
@@ -34,7 +39,7 @@ jobs:
     - <<: *tests
       name: Build and test Contracts
       script:
-        - anchor build-deps
+        - anchor run build-deps
         - anchor build
         - yarn run build
         - anchor test --skip-build
