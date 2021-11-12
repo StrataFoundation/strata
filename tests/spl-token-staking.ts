@@ -30,7 +30,7 @@ describe('spl-token-staking', () => {
       authority: provider.wallet.publicKey,
       baseMint,
       periodUnit: PeriodUnit.SECOND,
-      period: 5,
+      period: 8,
       targetMintDecimals: 2,
       rewardPercentPerPeriodPerLockupPeriod: 4294967295 // 100%
     })
