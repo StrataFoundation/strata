@@ -41,6 +41,9 @@ html[data-theme='dark'] {
 
   --ifm-heading-color: #FFFFFF;
   --ifm-hero-text-color: #FFFFFF;
+
+  --ifm-color-success-dark: rgb(64, 168, 151);
+  --ifm-color-success-contrast-background: rgb(0, 74, 62);
 }
 
 html[data-theme='light'] {
