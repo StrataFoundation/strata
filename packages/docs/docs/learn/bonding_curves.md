@@ -28,7 +28,7 @@ $$
 
 When a `Target` token is purchased, the price in `Base` tokens goes into a `Reserve` account. When a `Target` token is sold, it is burned and `Base` tokens are returned from the `Reserve`
 
-## Pricing the Bonding Curve
+## Pricing the Bonding Curve  
 
 You can find the price for some number of tokens $n$ at any given supply $S_0$ by taking the area under the curve (don't worry, the sdk takes care of this for you)
 

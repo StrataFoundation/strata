@@ -410,7 +410,7 @@ export class SplTokenCollective {
   splTokenMetadata: SplTokenMetadata;
   provider: Provider;
 
-  static ID = new PublicKey("WumbodN8t7wcDPCY2nGszs4x6HRtL5mJcTR519Qr6m7");
+  static ID = new PublicKey("TCo1sP6RwuCuyHPHjxgzcrq4dX4BKf9oRQ3aJMcdFry");
   static OPEN_COLLECTIVE_ID = new PublicKey(
     "AHzARGg7AqQ37YQzZmXJjzfj5N9cA9rAi9ZWrcJsHBD6"
   );
