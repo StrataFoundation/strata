@@ -43,5 +43,5 @@ jobs:
       script:
         - anchor run build-deps
         - anchor build
-        - yarn run build
+        - yarn run build-programs
         - anchor test
