@@ -1,6 +1,6 @@
 {
   "name": "@strata-foundation/spl-utils",
-  "version": "0.3.9",
+  "version": "0.3.10",
   "description": "Utils shared across spl suite",
   "publishConfig": {
     "access": "public",
@@ -25,6 +25,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx}\""
   },
   "dependencies": {
+    "@solana/web3.js": "^1.30.2",
     "bs58": "^4.0.1"
   },
   "devDependencies": {
