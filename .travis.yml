@@ -8,6 +8,7 @@ env:
     - NODE_VERSION="17.0.1"
     - SOLANA_CLI_VERSION="1.8.0"
     - NODE_VERSION="17.0.1"
+    - ANCHOR_VERSION="0.18.0"
 git:
   submodules: true
 
@@ -26,7 +27,7 @@ _tests: &tests
   - sh -c "$(curl -sSfL https://release.solana.com/v${SOLANA_CLI_VERSION}/install)"
   - export PATH="/home/travis/.local/share/solana/install/active_release/bin:$PATH"
   - yes | solana-keygen new
-  - cargo install anchor-cli --locked
+  -cargo install --git https://github.com/project-serum/anchor --tag v${ANCHOR_VERSION} anchor-cli --locked
 
 jobs:
   include:
