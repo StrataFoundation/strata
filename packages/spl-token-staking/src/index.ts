@@ -101,13 +101,21 @@ export class SplTokenStaking {
   }
 
   getTotalTargetSupply(targetMint: MintInfo, staking: TokenStakingV0): number {
-    return (
-      targetMint.supply.toNumber() +
-      staking.targetAmountUnredeemed.toNumber() +
-      staking.targetAmountPerPeriod.toNumber() *
-        (this.getPeriod(staking, Date.now() / 1000) -
-          this.getPeriod(staking, staking.lastCalculatedTimestamp.toNumber()))
-    );
+    try {
+      return (
+        targetMint.supply.toNumber() +
+        staking.targetAmountUnredeemed.toNumber() +
+        staking.targetAmountPerPeriod.toNumber() *
+          (this.getPeriod(staking, Date.now() / 1000) -
+            this.getPeriod(staking, staking.lastCalculatedTimestamp.toNumber()))
+      );
+    } catch(e: any) {
+      console.log("Get total target supply failed, logging params")
+      console.log(targetMint.supply.toString(10))
+      console.log(staking.targetAmountUnredeemed.toString(10))
+      console.log(staking.targetAmountPerPeriod.toString(10))
+      throw e;
+    }
   }
 
   async getTotalTargetSupplyFromKey(tokenStaking: PublicKey): Promise<number> {

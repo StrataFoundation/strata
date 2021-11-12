@@ -30,7 +30,7 @@ describe('spl-token-staking', () => {
       authority: provider.wallet.publicKey,
       baseMint,
       periodUnit: PeriodUnit.SECOND,
-      period: 8,
+      period: 10,
       targetMintDecimals: 2,
       rewardPercentPerPeriodPerLockupPeriod: 4294967295 // 100%
     })
@@ -43,7 +43,7 @@ describe('spl-token-staking', () => {
 
   it('Initializes a stake instance and a stake', async () => {
     const tokenStakingAccount = await tokenStakingProgram.account.tokenStakingV0.fetch(tokenStaking)
-    expect(tokenStakingAccount.period).to.equal(8)
+    expect(tokenStakingAccount.period).to.equal(10)
     expect(tokenStakingAccount.rewardPercentPerPeriodPerLockupPeriod).to.equal(4294967295)
   });
 
