@@ -43,7 +43,7 @@ html[data-theme='dark'] {
   --ifm-hero-text-color: #FFFFFF;
 
   --ifm-color-success-dark: rgb(64, 168, 151);
-  --ifm-color-success-contrast-background: rgb(0, 74, 62);
+  --ifm-color-success-contrast-background: rgb(53, 81, 76);
 }
 
 html[data-theme='light'] {
