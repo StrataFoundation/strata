@@ -1072,7 +1072,7 @@ export const SplTokenCollectiveIDLJson: Idl & {
     },
   ],
   metadata: {
-    address: "WumbodN8t7wcDPCY2nGszs4x6HRtL5mJcTR519Qr6m7",
+    address: "TCo1sP6RwuCuyHPHjxgzcrq4dX4BKf9oRQ3aJMcdFry",
   },
 };
 export type SplTokenCollectiveIDL = {
@@ -1444,7 +1444,7 @@ export type SplTokenCollectiveIDL = {
     },
     { code: 306; name: "IncorrectOwner"; msg: "Incorrect owner on account" }
   ];
-  metadata: { address: "WumbodN8t7wcDPCY2nGszs4x6HRtL5mJcTR519Qr6m7" };
+  metadata: { address: "TCo1sP6RwuCuyHPHjxgzcrq4dX4BKf9oRQ3aJMcdFry" };
 };
 
 export type CollectiveV0 = IdlAccounts<SplTokenCollectiveIDL>["collectiveV0"];

@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1]
+
 ### Added
   - A new token ref at pda "token-ref", owner as the primary token ref
   - SetAsPrimaryV0 endpoint and related sdk updates
@@ -13,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Ability to `updateCollective` to change both the config and authority.
 
 ### Changed
-  - 
+  - Token collective now lives at TCo1sP6RwuCuyHPHjxgzcrq4dX4BKf9oRQ3aJMcdFry
 
 ### Removed
   - ["token-ref", owner, Pubkey::default] as the primary token ref

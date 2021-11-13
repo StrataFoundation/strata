@@ -74,6 +74,7 @@ export interface ICreateCollectiveArgs {
     /** The metaplex file upload url to use. For devnet, needs to be uploadFile2, prod is uploadFileProd2 url. TODO: Once small file support is added, switch to uploadFile4 */
     uploadUrl?: string;
   };
+  metadataUri?: string /** Override the above by providing an existing link to the json metadata */;
   /**
    * If `mint` is not provided, create a bonding curve automatically for this collective.
    */
@@ -181,6 +182,7 @@ export interface ICreateSocialTokenArgs {
      */
     uploadUrl?: string;
   };
+  metadataUri?: string /** Override the above by providing an existing link to the json metadata */;
   /** The wallet to create this social token under, defaults to `provider.wallet` */
   owner?: PublicKey;
   /**
@@ -410,15 +412,15 @@ export class SplTokenCollective {
   splTokenMetadata: SplTokenMetadata;
   provider: Provider;
 
-  static ID = new PublicKey("WumbodN8t7wcDPCY2nGszs4x6HRtL5mJcTR519Qr6m7");
+  static ID = new PublicKey("TCo1sP6RwuCuyHPHjxgzcrq4dX4BKf9oRQ3aJMcdFry");
   static OPEN_COLLECTIVE_ID = new PublicKey(
-    "AHzARGg7AqQ37YQzZmXJjzfj5N9cA9rAi9ZWrcJsHBD6"
+    "8rS2G8X85Ko3Yb2kZg6q894vnBZw6AeWmU23veNUAu7q"
   );
   static OPEN_COLLECTIVE_BONDING_ID = new PublicKey(
-    "6UuF2yvHg8Xpj36uydNMiZCNtj2XcTMuY2gMggRzmRPq"
+    "FURpKZG2iPY5NXUvzb4A4JWt61CopLVEzqPYwoerEewC"
   );
   static OPEN_COLLECTIVE_MINT_ID = new PublicKey(
-    "8K1Z1yG1iP2CJz8ZinXLBbbACuZoR1Euc1M33oiKYMPJ"
+    "openQPYpSNGhxMBPeMdftdpJzEFksd94giFKuhH7A5a"
   );
 
   static async init(
@@ -554,6 +556,7 @@ export class SplTokenCollective {
     config,
     bonding,
     metadata,
+    metadataUri,
   }: ICreateCollectiveArgs): Promise<
     BigInstructionResult<{ collective: PublicKey; tokenBonding?: PublicKey }>
   > {
@@ -564,15 +567,16 @@ export class SplTokenCollective {
     let metadataAdded = false;
     const addMetadata = async () => {
       if (metadata && !metadataAdded) {
-        const { files, txid } =
-          await this.splTokenMetadata.presignCreateArweaveUrl(metadata);
-        const uri = await this.splTokenMetadata.getArweaveUrl({
-          txid,
-          files,
-          mint: mint!,
-          uploadUrl: metadata.uploadUrl,
-        });
-
+        if (!metadataUri) {
+          const { files, txid } =
+            await this.splTokenMetadata.presignCreateArweaveUrl(metadata);
+          metadataUri = await this.splTokenMetadata.getArweaveUrl({
+            txid,
+            files,
+            mint: mint!,
+            uploadUrl: metadata.uploadUrl,
+          });
+        }
         const { instructions: metadataInstructions, signers: metadataSigners } =
           await this.splTokenMetadata.createMetadataInstructions({
             mint: mint!,
@@ -580,7 +584,7 @@ export class SplTokenCollective {
             data: new Data({
               name: metadata.name,
               symbol: metadata.symbol,
-              uri,
+              uri: metadataUri,
               creators: metadata.creators ? metadata.creators : null,
               sellerFeeBasisPoints: 0,
             }),
@@ -1102,6 +1106,7 @@ export class SplTokenCollective {
     owner,
     targetMintKeypair = anchor.web3.Keypair.generate(),
     metadata,
+    metadataUri,
     nameClass,
     nameParent,
     tokenBondingParams,
@@ -1188,8 +1193,8 @@ export class SplTokenCollective {
       );
 
     // @ts-ignore
-    let uri = config.unclaimedTokenMetadataSettings?.uri;
-    if (!metadata.useCollectiveDefaultUri) {
+    let uri = metadataUri || config.unclaimedTokenMetadataSettings?.uri;
+    if (!metadata.useCollectiveDefaultUri && !metadataUri) {
       const { files, txid } =
         await this.splTokenMetadata.presignCreateArweaveUrl(metadata);
       uri = await this.splTokenMetadata.getArweaveUrl({

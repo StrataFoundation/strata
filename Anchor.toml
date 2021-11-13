@@ -34,11 +34,11 @@ members = ["programs/spl-token-account-split", "programs/spl-token-bonding", "pr
 [programs.mainnet]
 spl_token_account_split = "Sp1it1Djn2NmQvXLPnGM4zAXArxuchvSdytNt5n76Hm"
 spl_token_bonding = "TBondz6ZwSM5fs4v2GpnVBMuwoncPkFLFR9S422ghhN"
-spl_token_collective = "WumbodN8t7wcDPCY2nGszs4x6HRtL5mJcTR519Qr6m7"
+spl_token_collective = "TCo1sP6RwuCuyHPHjxgzcrq4dX4BKf9oRQ3aJMcdFry"
 spl_token_staking = "TStakXwvzEZiK6PSNpXuNx6wEsKc93NtSaMxmcqG6qP"
 
 [programs.localnet]
 spl_token_account_split = "Sp1it1Djn2NmQvXLPnGM4zAXArxuchvSdytNt5n76Hm"
 spl_token_bonding = "TBondz6ZwSM5fs4v2GpnVBMuwoncPkFLFR9S422ghhN"
-spl_token_collective = "WumbodN8t7wcDPCY2nGszs4x6HRtL5mJcTR519Qr6m7"
+spl_token_collective = "TCo1sP6RwuCuyHPHjxgzcrq4dX4BKf9oRQ3aJMcdFry"
 spl_token_staking = "TStakXwvzEZiK6PSNpXuNx6wEsKc93NtSaMxmcqG6qP"
