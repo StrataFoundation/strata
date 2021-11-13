@@ -73,3 +73,9 @@ Where c is a constant that will help set the initial price.
 ## Changing Curves
 
 The above math has one interesting property. We can define a curve in terms of a price relation, current `Reserve`, and current `Supply`. This means that, without changing tokens, we can change the shape of our curve. The new invariant will be satisfied for the new curve, and any future purchases or sales will need to follow the new invariant.
+
+## Royalties that go back to Holders
+
+A poewrful model that comes from this feature is having a way to reward all token holders. A simple way to see this at work is to put a 5% buy and sell royalty in terms of the `Base` token that goes back into the `Reserve`.
+
+This setup allows holders to improve their position via transaction fees, encouraging circulation of the token.
