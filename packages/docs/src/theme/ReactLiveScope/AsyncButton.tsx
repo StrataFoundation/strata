@@ -14,6 +14,7 @@ import { parse } from "esprima";
 import BN from "bn.js";
 import { useVariablesContext } from "../Root/variables";
 import BrowserOnly from "@docusaurus/BrowserOnly";
+import clsx from "clsx";
 
 function wrapAndCollectVars(code: string, injectedVars): string {
   const wrapped = `(async function() {
@@ -142,7 +143,7 @@ const AsyncButton = ({ code, scope, name, deps }) => {
       {connected && (
         <button
           disabled={fullLoading}
-          className="white button button--primary"
+          className={clsx(styles.runButton, "white button button--primary")}
           onClick={wrappedExecWithDeps}
         >
           <FaPlay className={styles.buttonIcon} /> Run

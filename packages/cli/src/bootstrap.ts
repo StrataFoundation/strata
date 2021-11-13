@@ -35,15 +35,16 @@ async function run() {
   const { collective, tokenBonding } = await tokenCollectiveSdk.createCollective({
     metadata: {
       name: "Open Collective",
-      symbol: "OPEN", 
-      image: "https://i.ibb.co/zxWkRv1/doge.jpg", // TODO: this is a dogecoin
-      // Because this is dev, we need to provide the metaplex dev upload file url
-      uploadUrl: "https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2"
+      symbol: "OPEN"
     },
+    metadataUri: "https://strata-token-metadata.s3.us-east-2.amazonaws.com/open.json",
     bonding: {
       targetMintKeypair: openMintKeypair,
       curve,
       baseMint: new PublicKey("So11111111111111111111111111111111111111112"),
+      // TODO: If in prod, don't take these authorities
+      reserveAuthority: provider.wallet.publicKey,
+      curveAuthority: provider.wallet.publicKey,
       targetMintDecimals: 9,
       buyBaseRoyaltyPercentage: 0,
       buyTargetRoyaltyPercentage: 0,

@@ -4,6 +4,10 @@
   justify-content: space-between;
 }
 
+.runButton {
+  height: 35px;
+}
+
 .buttonIcon {
   margin-top:-1px;
   width: 12px;
