@@ -20,9 +20,9 @@
     "dependencies": {
         "@project-serum/common": "^0.0.1-beta.3",
         "@solana/web3.js": "^1.29.2",
-        "@strata-foundation/spl-token-account-split": "^0.4.0",
+        "@strata-foundation/spl-token-account-split": "^0.4.1",
         "@strata-foundation/spl-token-bonding": "^0.4.0",
-        "@strata-foundation/spl-token-collective": "^0.4.0",
+        "@strata-foundation/spl-token-collective": "^0.4.1",
         "@strata-foundation/spl-token-staking": "^0.4.0",
         "@strata-foundation/spl-utils": "^0.4.0",
         "bn.js": "^5.2.0",
@@ -35,5 +35,5 @@
         "typescript": "^4.3.4"
     },
     "gitHead": "9a64fbd7484a63f4e039008a2494573e8bf99229",
-    "version": "0.4.0"
+    "version": "0.4.1"
 }

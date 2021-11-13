@@ -1,6 +1,6 @@
 {
     "name": "@strata-foundation/spl-token-account-split",
-    "version": "0.4.0",
+    "version": "0.4.1",
     "description": "Interface to the spl-token-account-split smart contract",
     "repository": {
         "type": "git",
