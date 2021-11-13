@@ -4,9 +4,9 @@ sidebar_position: 1
 
 # Bonding Curves
 
-At the heart of Strata is the ability to buy and sell a new token without a liquidity provider. This is accomplished via a Bonding Curve. A Bonding Curve is an Automated Market Maker (AMM) that sets the price of a token relative to the supply of that token. 
+At the heart of Strata is the ability to buy and sell a new token without a liquidity provider. This is accomplished via a Bonding Curve. A Bonding Curve is an Automated Market Maker (AMM) that sets the price of a token relative to the supply of that token. The result is similar to how Poker Chips work at a Casino -- put USD into the cash register and you get some chips. Give the chips back, and you get USD back. The USD in the cash register always matches the supply of chips. The main difference is that the chips get more expensive as the number circulating increases.
 
-Every bonding curve consists of a `Base` Token and a `Target` token. The `Base` token is the token we set the price relative to, the `Target` token is the token the Automated Market Maker sells.
+Every bonding curve consists of a `Base` Token (USD in our poker example) and a `Target` token (the chips). The `Base` token is the token we set the price relative to, the `Target` token is the token the Automated Market Maker sells.
 
 A simple example might be
 
@@ -26,7 +26,7 @@ $$
 0.01 * 100 = 1
 $$
 
-When a `Target` token is purchased, the price in `Base` tokens goes into a `Reserve` account. When a `Target` token is sold, it is burned and `Base` tokens are returned from the `Reserve`
+When a `Target` token is purchased, the price in `Base` tokens goes into a `Reserve` account (the cash register). When a `Target` token is sold, it is burned and `Base` tokens are returned from the `Reserve`
 
 ## Pricing the Bonding Curve  
 
@@ -39,6 +39,8 @@ $$
 Visualizing this calculation, we can see the reserves, $R$, of the `Base` token when the supply of the target token is $100$ on the curve $P = \sqrt{S}$
 
 ![Visualization](./visualization.png)
+
+This pricing assumes that the reserves do not change outside of buying and selling. But what happens if someone were to burn tokens without asking for any reserves, or directly send tokens to the reserve? Find out more in [Advanced Bonding Curves](./advanced_bonding_curves)
 
 ## Royalties
 
