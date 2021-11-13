@@ -110,7 +110,6 @@ pub mod spl_token_collective {
     let initialize_args = &ctx.accounts.initialize_args;
     let config = &initialize_args.collective.config;
     let token_bonding_settings = config.claimed_token_bonding_settings.as_ref();
-    verify_presale(config, ctx.remaining_accounts)?;
     if token_bonding_settings.is_some() {
       verify_token_bonding_defaults(&token_bonding_settings.unwrap(), &initialize_args.token_bonding)?;
       verify_token_bonding_royalties(
@@ -145,7 +144,6 @@ pub mod spl_token_collective {
     let config = &initialize_args.collective.config;
     let token_bonding_settings_opt = config.unclaimed_token_bonding_settings.as_ref();
     let token_metadata_settings_opt = config.unclaimed_token_metadata_settings.as_ref();
-    verify_presale(config, ctx.remaining_accounts)?;
     if token_bonding_settings_opt.is_some() {
       verify_token_bonding_defaults(&token_bonding_settings_opt.unwrap(), &initialize_args.token_bonding)?;
       verify_token_bonding_royalties(
