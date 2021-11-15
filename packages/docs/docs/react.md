@@ -10,23 +10,28 @@ The Strata SDK comes with a suite of useful ReactJS hooks.
 
 You'll want to set up [solana-wallet-adapter](https://github.com/solana-labs/wallet-adapter), the Strata SDK Provider, and the Strata AccountProvider (an intelligent caching layer on Solana's rpc).
 
+You can also use our [create-react-app Strata Starter Repo](https://github.com/StrataFoundation/react-strata-starter)
+
 ```jsx
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import {
   ConnectionProvider,
-  WalletProvider,
+  WalletProvider
 } from "@solana/wallet-adapter-react";
-import { StrataSdksProvider, AccountProvider } from "@strata-foundation/react";
+import {
+  WalletModalProvider, WalletMultiButton
+} from '@solana/wallet-adapter-react-ui';
 import {
   getLedgerWallet,
   getPhantomWallet,
   getSlopeWallet,
   getSolflareWallet,
   getSolletExtensionWallet,
-  getSolletWallet,
+  getSolletWallet
 } from "@solana/wallet-adapter-wallets";
 import { clusterApiUrl } from "@solana/web3.js";
-import React, { FC, useMemo } from "react";
+import { AccountProvider, StrataSdksProvider, useBondingPricing, useStrataSdks, useTokenBonding, useTokenMetadata, useTokenRef } from "@strata-foundation/react";
+import React, { useMemo } from "react";
 
 // Default styles that can be overridden by your app
 require("@solana/wallet-adapter-react-ui/styles.css");
