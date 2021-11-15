@@ -17,22 +17,21 @@ import {
 import {
   Keypair,
   PublicKey,
-  Signer,
   SystemProgram,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
 } from "@solana/web3.js";
 import {
+  AnchorSdk,
   createMetadata,
   Data,
   InstructionResult,
   percent,
-  sendInstructions,
   TypedAccountParser,
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
-import { amountAsNum, asDecimal, IPricingCurve, fromCurve } from "./curves";
+import { amountAsNum, asDecimal, fromCurve, IPricingCurve } from "./curves";
 import {
   CurveV0,
   ProgramStateV0,
@@ -173,6 +172,16 @@ export interface IInitializeCurveArgs {
   config: ICurveConfig;
   /** The payer to create this curve, defaults to provider.wallet */
   payer?: PublicKey;
+}
+
+export interface ICreateTokenBondingOutput {
+  tokenBonding: PublicKey;
+  targetMint: PublicKey;
+  buyBaseRoyalties: PublicKey;
+  buyTargetRoyalties: PublicKey;
+  sellBaseRoyalties: PublicKey;
+  sellTargetRoyalties: PublicKey;
+  baseStorage: PublicKey;
 }
 
 export interface ICreateTokenBondingArgs {
@@ -346,6 +355,26 @@ export interface ISellArgs {
   slippage: number /* Decimal number. max price will be (1 + slippage) * price_for_desired_target_amount */;
 }
 
+export interface IBuyBondingWrappedSolArgs {
+  amount:
+    | BN
+    | number /** The amount of wSOL to buy. If a number, multiplied out to get lamports. If BN, it's lamports */;
+  destination?: PublicKey /** The destination twSOL account. **Default:** ATA of owner */;
+  source?: PublicKey /** The source of non-wrapped SOL */;
+  payer?: PublicKey;
+}
+
+export interface ISellBondingWrappedSolArgs {
+  amount:
+    | BN
+    | number /** The amount of wSOL to buy. If a number, multiplied out to get lamports. If BN, it's lamports */;
+  source?: PublicKey /** The twSOL source account. **Default:** ATA of owner */;
+  destination?: PublicKey /** The destination to send the actual SOL lamports. **Default:** provider wallet */;
+  owner?: PublicKey /** The owner of the twSOL source account. **Default:** provider wallet */;
+  payer?: PublicKey;
+  all?: boolean /** Sell all and close this account? **Default:** false */;
+}
+
 function toNumber(numberOrBn: BN | number, mint: MintInfo): number {
   if (BN.isBN(numberOrBn)) {
     return amountAsNum(numberOrBn, mint);
@@ -376,9 +405,7 @@ export interface ICurve extends CurveV0 {
   publicKey: PublicKey;
 }
 
-export class SplTokenBonding {
-  program: Program<SplTokenBondingIDL>;
-  provider: Provider;
+export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
   state: ProgramStateV0 | undefined;
 
   static ID = new PublicKey("TBondz6ZwSM5fs4v2GpnVBMuwoncPkFLFR9S422ghhN");
@@ -401,8 +428,7 @@ export class SplTokenBonding {
   }
 
   constructor(provider: Provider, program: Program<SplTokenBondingIDL>) {
-    this.program = program;
-    this.provider = provider;
+    super({ provider, program });
   }
 
   curveDecoder: TypedAccountParser<ICurve> = (pubkey, account) => {
@@ -431,47 +457,6 @@ export class SplTokenBonding {
       publicKey: pubkey,
     };
   };
-
-  get programId() {
-    return this.program.programId;
-  }
-
-  get rpc() {
-    return this.program.rpc;
-  }
-
-  get instruction() {
-    return this.program.instruction;
-  }
-
-  get wallet() {
-    return this.provider.wallet;
-  }
-
-  get account() {
-    return this.program.account;
-  }
-
-  get errors() {
-    return this.program.idl.errors.reduce((acc, err) => {
-      acc.set(err.code, `${err.name}: ${err.msg}`);
-      return acc;
-    }, new Map<number, string>());
-  }
-
-  sendInstructions(
-    instructions: TransactionInstruction[],
-    signers: Signer[],
-    payer?: PublicKey
-  ): Promise<string> {
-    return sendInstructions(
-      this.errors,
-      this.provider,
-      instructions,
-      signers,
-      payer
-    );
-  }
 
   /**
    * This is an admin function run once to initialize the smart contract.
@@ -588,12 +573,8 @@ export class SplTokenBonding {
   /**
    * Admin command run once to initialize the smart contract
    */
-  async initializeSolStorage(): Promise<void> {
-    const { instructions, signers } =
-      await this.initializeSolStorageInstructions();
-    if (instructions.length > 0) {
-      await this.sendInstructions(instructions, signers);
-    }
+  initializeSolStorage(): Promise<null> {
+    return this.execute(this.initializeSolStorageInstructions());
   }
 
   /**
@@ -642,17 +623,7 @@ export class SplTokenBonding {
    * @returns
    */
   async initializeCurve(args: IInitializeCurveArgs): Promise<PublicKey> {
-    const {
-      output: { curve },
-      instructions,
-      signers,
-    } = await this.initializeCurveInstructions(args);
-    if (instructions.length == 0) {
-      return curve;
-    }
-
-    await this.sendInstructions(instructions, signers, args.payer);
-    return curve;
+    return (await this.execute(this.initializeCurveInstructions(args))).curve;
   }
 
   /**
@@ -726,15 +697,7 @@ export class SplTokenBonding {
     buyFrozen = false,
     index,
   }: ICreateTokenBondingArgs): Promise<
-    InstructionResult<{
-      tokenBonding: PublicKey;
-      targetMint: PublicKey;
-      buyBaseRoyalties: PublicKey;
-      buyTargetRoyalties: PublicKey;
-      sellBaseRoyalties: PublicKey;
-      sellTargetRoyalties: PublicKey;
-      baseStorage: PublicKey;
-    }>
+    InstructionResult<ICreateTokenBondingOutput>
   > {
     if (!targetMint) {
       if (sellTargetRoyalties || buyTargetRoyalties) {
@@ -1026,14 +989,10 @@ export class SplTokenBonding {
    * @param args
    * @returns
    */
-  async createTokenBonding(args: ICreateTokenBondingArgs): Promise<PublicKey> {
-    const {
-      output: { tokenBonding },
-      instructions,
-      signers,
-    } = await this.createTokenBondingInstructions(args);
-    await this.sendInstructions(instructions, signers, args.payer);
-    return tokenBonding;
+  createTokenBonding(
+    args: ICreateTokenBondingArgs
+  ): Promise<ICreateTokenBondingOutput> {
+    return this.execute(this.createTokenBondingInstructions(args), args.payer);
   }
 
   /**
@@ -1117,10 +1076,186 @@ export class SplTokenBonding {
    * @param args
    */
   async updateTokenBonding(args: IUpdateTokenBondingArgs): Promise<void> {
-    const { instructions, signers } = await this.updateTokenBondingInstructions(
-      args
+    await this.execute(this.updateTokenBondingInstructions(args));
+  }
+
+  /**
+   * Instructions to buy twSOL from normal SOL.
+   *
+   * We wrap SOL so that the bonding contract isn't soaking up a bunch o SOL and damaging the security of the network.
+   * The plan is to create a DAO for Strata that will govern what happens with this SOL.
+   *
+   * @param param0
+   * @returns
+   */
+  async buyBondingWrappedSolInstructions({
+    payer = this.wallet.publicKey,
+    destination,
+    source = this.wallet.publicKey,
+    amount,
+  }: IBuyBondingWrappedSolArgs): Promise<InstructionResult<null>> {
+    const state = (await this.getState())!;
+    const stateAddress = (
+      await PublicKey.findProgramAddress(
+        [Buffer.from("state", "utf-8")],
+        this.programId
+      )
+    )[0];
+    const mintAuthority = (
+      await PublicKey.findProgramAddress(
+        [Buffer.from("wrapped-sol-authority", "utf-8")],
+        this.programId
+      )
+    )[0];
+    const mint = await getMintInfo(this.provider, state.wrappedSolMint);
+
+    let usedAta = false;
+    if (!destination) {
+      destination = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        state.wrappedSolMint,
+        source
+      );
+      usedAta = true;
+    }
+    const instructions = [];
+
+    if (usedAta && !(await this.accountExists(destination))) {
+      instructions.push(
+        Token.createAssociatedTokenAccountInstruction(
+          ASSOCIATED_TOKEN_PROGRAM_ID,
+          TOKEN_PROGRAM_ID,
+          state.wrappedSolMint,
+          destination,
+          source,
+          payer
+        )
+      );
+    }
+
+    instructions.push(
+      await this.instruction.buyWrappedSolV0(
+        {
+          amount: toBN(amount, mint),
+        },
+        {
+          accounts: {
+            state: stateAddress,
+            wrappedSolMint: state.wrappedSolMint,
+            mintAuthority: mintAuthority,
+            solStorage: state.solStorage,
+            source,
+            destination,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          },
+        }
+      )
     );
-    await this.sendInstructions(instructions, signers);
+
+    return {
+      signers: [],
+      output: null,
+      instructions,
+    };
+  }
+
+  /**
+   * Invoke `buyBondingWrappedSol` instructions
+   * @param args
+   * @returns
+   */
+  buyBondingWrappedSol(args: IBuyBondingWrappedSolArgs): Promise<null> {
+    return this.execute(
+      this.buyBondingWrappedSolInstructions(args),
+      args.payer
+    );
+  }
+
+  /**
+   * Instructions to sell twSOL back into normal SOL.
+   *
+   * @param param0
+   * @returns
+   */
+  async sellBondingWrappedSolInstructions({
+    source,
+    owner = this.wallet.publicKey,
+    destination = this.wallet.publicKey,
+    amount,
+    all = false,
+  }: ISellBondingWrappedSolArgs): Promise<InstructionResult<null>> {
+    const state = (await this.getState())!;
+    const stateAddress = (
+      await PublicKey.findProgramAddress(
+        [Buffer.from("state", "utf-8")],
+        this.programId
+      )
+    )[0];
+    const mint = await getMintInfo(this.provider, state.wrappedSolMint);
+
+    if (!source) {
+      source = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        state.wrappedSolMint,
+        owner
+      );
+    }
+
+    const instructions = [];
+
+    instructions.push(
+      await this.instruction.sellWrappedSolV0(
+        {
+          amount: toBN(amount, mint),
+          all,
+        },
+        {
+          accounts: {
+            state: stateAddress,
+            wrappedSolMint: state.wrappedSolMint,
+            solStorage: state.solStorage,
+            source,
+            owner,
+            destination,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          },
+        }
+      )
+    );
+
+    if (all) {
+      instructions.push(
+        Token.createCloseAccountInstruction(
+          TOKEN_PROGRAM_ID,
+          source,
+          destination,
+          owner,
+          []
+        )
+      );
+    }
+
+    return {
+      signers: [],
+      output: null,
+      instructions,
+    };
+  }
+
+  /**
+   * Execute `sellBondingWrappedSolInstructions`
+   * @param args
+   * @returns
+   */
+  async sellBondingWrappedSol(args: ISellBondingWrappedSolArgs): Promise<null> {
+    return this.execute(
+      this.sellBondingWrappedSolInstructions(args),
+      args.payer
+    );
   }
 
   /**
@@ -1142,29 +1277,14 @@ export class SplTokenBonding {
     firstInstructions: TransactionInstruction[];
     lastInstructions: TransactionInstruction[];
   }> {
-    const stateAddress = (
-      await PublicKey.findProgramAddress(
-        [Buffer.from("state", "utf-8")],
-        this.programId
-      )
-    )[0];
-
-    const mintAuthority = (
-      await PublicKey.findProgramAddress(
-        [Buffer.from("wrapped-sol-authority", "utf-8")],
-        this.programId
-      )
-    )[0];
-
-    const balanceNeeded = await Token.getMinBalanceRentForExemptAccount(
-      this.provider.connection
-    );
     const state = (await this.getState())!;
     const mint = await getMintInfo(this.provider, state.wrappedSolMint);
 
     // Create a new account
     const newAccount = anchor.web3.Keypair.generate();
-
+    const balanceNeeded = await Token.getMinBalanceRentForExemptAccount(
+      this.provider.connection
+    );
     return {
       firstInstructions: [
         SystemProgram.createAccount({
@@ -1180,51 +1300,22 @@ export class SplTokenBonding {
           newAccount.publicKey,
           owner
         ),
-        await this.instruction.buyWrappedSolV0(
-          {
-            amount: toBN(amount, mint).add(new BN(1)), // In case of rounding errors
-          },
-          {
-            accounts: {
-              state: stateAddress,
-              wrappedSolMint: state.wrappedSolMint,
-              mintAuthority: mintAuthority,
-              solStorage: state.solStorage,
-              source: owner,
-              destination: newAccount.publicKey,
-              tokenProgram: TOKEN_PROGRAM_ID,
-              systemProgram: SystemProgram.programId,
-            },
-          }
-        ),
+        ...(
+          await this.buyBondingWrappedSolInstructions({
+            destination: newAccount.publicKey,
+            amount: toBN(amount, mint).add(new BN(1)), // In case of rounding errors,
+            source: owner,
+          })
+        ).instructions,
       ],
-      lastInstructions: [
-        await this.instruction.sellWrappedSolV0(
-          {
-            all: true,
-            amount: toBN(amount, mint),
-          },
-          {
-            accounts: {
-              state: stateAddress,
-              wrappedSolMint: state.wrappedSolMint,
-              solStorage: state.solStorage,
-              source: newAccount.publicKey,
-              owner,
-              destination: newAccount.publicKey,
-              tokenProgram: TOKEN_PROGRAM_ID,
-              systemProgram: SystemProgram.programId,
-            },
-          }
-        ),
-        Token.createCloseAccountInstruction(
-          TOKEN_PROGRAM_ID,
-          newAccount.publicKey,
+      lastInstructions: (
+        await this.sellBondingWrappedSolInstructions({
+          source: newAccount.publicKey,
           owner,
-          owner,
-          []
-        ),
-      ],
+          all: true,
+          amount: toBN(amount, mint),
+        })
+      ).instructions,
       signer: newAccount,
     };
   }
@@ -1425,8 +1516,7 @@ export class SplTokenBonding {
    * @param args
    */
   async buy(args: IBuyArgs): Promise<void> {
-    const { instructions, signers } = await this.buyInstructions(args);
-    await this.sendInstructions(instructions, signers, args.payer);
+    await this.execute(this.buyInstructions(args), args.payer);
   }
 
   async getState(): Promise<ProgramStateV0 | null> {
@@ -1606,8 +1696,7 @@ export class SplTokenBonding {
    * @param args
    */
   async sell(args: ISellArgs): Promise<void> {
-    const { instructions, signers } = await this.sellInstructions(args);
-    await this.sendInstructions(instructions, signers, args.payer);
+    await this.execute(this.sellInstructions(args), args.payer);
   }
 
   /**

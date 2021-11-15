@@ -22,6 +22,7 @@ import {
   SplTokenBonding,
 } from "@strata-foundation/spl-token-bonding";
 import {
+  AnchorSdk,
   BigInstructionResult,
   Data,
   decodeMetadata,
@@ -32,8 +33,6 @@ import {
   ITokenWithMeta,
   METADATA_PROGRAM_ID,
   percent,
-  sendInstructions,
-  sendMultipleInstructions,
   SplTokenMetadata,
   TypedAccountParser,
   updateMetadata,
@@ -44,7 +43,6 @@ import {
   SplTokenCollectiveIDL,
   TokenRefV0,
 } from "./generated/spl-token-collective";
-``;
 
 export * from "./generated/spl-token-collective";
 
@@ -406,11 +404,9 @@ export interface ICollective extends CollectiveV0 {
   publicKey: PublicKey;
 }
 
-export class SplTokenCollective {
-  program: Program<SplTokenCollectiveIDL>;
+export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
   splTokenBondingProgram: SplTokenBonding;
   splTokenMetadata: SplTokenMetadata;
-  provider: Provider;
 
   static ID = new PublicKey("TCo1sP6RwuCuyHPHjxgzcrq4dX4BKf9oRQ3aJMcdFry");
   static OPEN_COLLECTIVE_ID = new PublicKey(
@@ -457,37 +453,9 @@ export class SplTokenCollective {
     splTokenBondingProgram: SplTokenBonding;
     splTokenMetadata: SplTokenMetadata;
   }) {
-    this.provider = opts.provider;
-    this.program = opts.program;
+    super(opts);
     this.splTokenBondingProgram = opts.splTokenBondingProgram;
     this.splTokenMetadata = opts.splTokenMetadata;
-  }
-
-  get programId() {
-    return this.program.programId;
-  }
-
-  get rpc() {
-    return this.program.rpc;
-  }
-
-  get instruction() {
-    return this.program.instruction;
-  }
-
-  get wallet() {
-    return this.provider.wallet;
-  }
-
-  get account() {
-    return this.program.account;
-  }
-
-  get errors() {
-    return this.program.idl.errors.reduce((acc, err) => {
-      acc.set(err.code, `${err.name}: ${err.msg}`);
-      return acc;
-    }, new Map<number, string>());
   }
 
   /**
@@ -527,20 +495,6 @@ export class SplTokenCollective {
       publicKey: pubkey,
     };
   };
-
-  sendInstructions(
-    instructions: TransactionInstruction[],
-    signers: Signer[],
-    payer?: PublicKey
-  ): Promise<string> {
-    return sendInstructions(
-      this.errors,
-      this.provider,
-      instructions,
-      signers,
-      payer
-    );
-  }
 
   /**
    * Instructions to create a Collective
@@ -698,20 +652,10 @@ export class SplTokenCollective {
    * @param args
    * @returns
    */
-  async createCollective(
+  createCollective(
     args: ICreateCollectiveArgs
   ): Promise<{ collective: PublicKey; tokenBonding?: PublicKey }> {
-    const { output, instructions, signers } =
-      await this.createCollectiveInstructions(args);
-    await sendMultipleInstructions(
-      this.errors,
-      this.provider,
-      instructions,
-      signers,
-      args.payer
-    );
-
-    return output;
+    return this.executeBig(this.createCollectiveInstructions(args), args.payer);
   }
 
   /**
@@ -933,10 +877,7 @@ export class SplTokenCollective {
    * @param args
    */
   async claimSocialToken(args: IClaimSocialTokenArgs): Promise<void> {
-    const { instructions, signers } = await this.claimSocialTokenInstructions(
-      args
-    );
-    await this.sendInstructions(instructions, signers, args.payer);
+    await this.execute(this.claimSocialTokenInstructions(args));
   }
 
   /**
@@ -1036,13 +977,10 @@ export class SplTokenCollective {
    * Run {@link setAsPrimaryInstructions}
    * @param args
    */
-  async setAsPrimary(
+  setAsPrimary(
     args: ISetAsPrimaryArgs
   ): Promise<{ primaryTokenRef: PublicKey }> {
-    const { instructions, signers, output } =
-      await this.setAsPrimaryInstructions(args);
-    await this.sendInstructions(instructions, signers, args.payer);
-    return output;
+    return this.execute(this.setAsPrimaryInstructions(args));
   }
 
   /**
@@ -1085,11 +1023,8 @@ export class SplTokenCollective {
    * Run {@link updateCollectiveInstructions}
    * @param args
    */
-  async updateCollective(args: IUpdateCollectiveArgs): Promise<null> {
-    const { instructions, signers, output } =
-      await this.updateCollectiveInstructions(args);
-    await this.sendInstructions(instructions, signers, args.payer);
-    return output;
+  updateCollective(args: IUpdateCollectiveArgs): Promise<null> {
+    return this.execute(this.updateCollectiveInstructions(args));
   }
 
   /**
@@ -1426,23 +1361,10 @@ export class SplTokenCollective {
     tokenBonding: PublicKey;
     mint: PublicKey;
   }> {
-    const {
-      output: { tokenRef, reverseTokenRef, tokenBonding, mint },
-      instructions: instructionGroups,
-      signers: signerGroups,
-    } = await this.createSocialTokenInstructions(args);
-
-    if (instructionGroups.length > 0) {
-      await sendMultipleInstructions(
-        this.errors,
-        this.provider,
-        instructionGroups,
-        signerGroups,
-        args.payer
-      );
-    }
-
-    return { tokenRef, reverseTokenRef, tokenBonding, mint };
+    return this.executeBig(
+      this.createSocialTokenInstructions(args),
+      args.payer
+    );
   }
 
   getUserTokensWithMeta(

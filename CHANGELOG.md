@@ -4,7 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.5.0]
+### Added
+  - `AnchorSdk` abstract class to remove boilerplate rom sdks
+
+### Changed
+
+  - `createTokenBonding` now returns an object with multiple keys, instead of just the bonding instance
+
+### Removed
+
+  - spl-token-account-split. Working on a proper fanout wallet.
+
 
 ## [0.4.1]
 
