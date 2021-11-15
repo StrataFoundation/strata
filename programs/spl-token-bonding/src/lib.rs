@@ -97,7 +97,7 @@ pub mod spl_token_bonding {
           ctx.accounts.token_program.to_account_info().clone(), 
           Burn {
             mint: ctx.accounts.wrapped_sol_mint.to_account_info().clone(),
-            to: ctx.accounts.destination.to_account_info().clone(),
+            to: ctx.accounts.source.to_account_info().clone(),
             authority: ctx.accounts.owner.to_account_info().clone()
           }
         ),

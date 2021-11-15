@@ -98,7 +98,7 @@ async function run() {
       frac: 1
     })
   });
-  const bonding = await tokenBondingSdk.createTokenBonding({
+  const { tokenBonding: bonding } = await tokenBondingSdk.createTokenBonding({
     curve,
     baseMint: NATIVE_MINT,
     targetMint: bwum,

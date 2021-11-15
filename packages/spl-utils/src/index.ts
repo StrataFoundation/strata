@@ -7,3 +7,4 @@ export * from "./splTokenMetadata";
 export * from "./accountFetchCache";
 export * from "./anchorError";
 export * from "./fees";
+export * from "./AnchorSdk";

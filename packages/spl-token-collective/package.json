@@ -29,7 +29,6 @@
     "@bonfida/spl-name-service": "^0.1.22",
     "@project-serum/common": "^0.0.1-beta.3",
     "@solana/web3.js": "^1.29.2",
-    "@strata-foundation/spl-token-account-split": "^0.4.1",
     "@strata-foundation/spl-token-bonding": "^0.4.0",
     "@strata-foundation/spl-token-staking": "^0.4.0",
     "@strata-foundation/spl-utils": "^0.4.0",

@@ -131,7 +131,7 @@ describe("spl-token-bonding", () => {
         })
       });
 
-      tokenBonding = await tokenBondingProgram.createTokenBonding({
+      const { tokenBonding: tokenBondingOut } = await tokenBondingProgram.createTokenBonding({
         curve,
         baseMint,
         targetMintDecimals: DECIMALS,
@@ -142,6 +142,7 @@ describe("spl-token-bonding", () => {
         sellTargetRoyaltyPercentage: 0,
         mintCap: new BN(1000), // 10.0
       });
+      tokenBonding = tokenBondingOut;
       tokenBondingAcct = (await tokenBondingProgram.account.tokenBondingV0.fetch(
         tokenBonding
       )) as TokenBondingV0;
@@ -277,7 +278,7 @@ describe("spl-token-bonding", () => {
         )
       });
 
-      tokenBonding = await tokenBondingProgram.createTokenBonding({
+      ({ tokenBonding } = await tokenBondingProgram.createTokenBonding({
         curve,
         baseMint,
         targetMintDecimals: DECIMALS,
@@ -287,7 +288,7 @@ describe("spl-token-bonding", () => {
         sellBaseRoyaltyPercentage: 0,
         sellTargetRoyaltyPercentage: 0,
         mintCap: new BN(1000), // 10.0
-      });
+      }));
       tokenBondingAcct = (await tokenBondingProgram.account.tokenBondingV0.fetch(
         tokenBonding
       )) as TokenBondingV0;
@@ -342,7 +343,7 @@ describe("spl-token-bonding", () => {
     });
 
     async function createCurve(buyBaseRoyaltyPercentage: number, buyTargetRoyaltyPercentage: number, sellBaseRoyaltyPercentage: number, sellTargetRoyaltyPercentage: number) {
-      tokenBonding = await tokenBondingProgram.createTokenBonding({
+      ({ tokenBonding } = await tokenBondingProgram.createTokenBonding({
         curve,
         baseMint,
         targetMintDecimals: DECIMALS,
@@ -352,7 +353,7 @@ describe("spl-token-bonding", () => {
         sellBaseRoyaltyPercentage,
         sellTargetRoyaltyPercentage,
         mintCap: new BN(1000), // 10.0
-      });
+      }));
       tokenBondingAcct = (await tokenBondingProgram.account.tokenBondingV0.fetch(
         tokenBonding
       )) as TokenBondingV0;
@@ -402,7 +403,7 @@ describe("spl-token-bonding", () => {
       await tokenUtils.createAtaAndMint(provider, baseMint, 100_00);
       const curve = await tokenBondingProgram.initializeCurve(c);
 
-      const tokenBonding = await tokenBondingProgram.createTokenBonding({
+      const { tokenBonding } = await tokenBondingProgram.createTokenBonding({
         curve,
         baseMint,
         targetMintDecimals: 2,
@@ -471,7 +472,7 @@ describe("spl-token-bonding", () => {
         })
       });
 
-      tokenBonding = await tokenBondingProgram.createTokenBonding({
+      ({ tokenBonding } = await tokenBondingProgram.createTokenBonding({
         curve,
         baseMint,
         targetMintDecimals: DECIMALS,
@@ -481,7 +482,7 @@ describe("spl-token-bonding", () => {
         sellBaseRoyaltyPercentage: 0,
         sellTargetRoyaltyPercentage: 0,
         mintCap: new BN(1000), // 10.0
-      });
+      }));
       tokenBondingAcct = (await tokenBondingProgram.account.tokenBondingV0.fetch(
         tokenBonding
       )) as TokenBondingV0;
@@ -563,7 +564,7 @@ describe("spl-token-bonding", () => {
         // @ts-ignore
         curve = await tokenBondingProgram.initializeCurve(curveSpec);
 
-        tokenBonding = await tokenBondingProgram.createTokenBonding({
+        ({ tokenBonding } = await tokenBondingProgram.createTokenBonding({
           curve,
           baseMint,
           targetMintDecimals: DECIMALS,
@@ -572,7 +573,7 @@ describe("spl-token-bonding", () => {
           buyTargetRoyaltyPercentage: 0,
           sellBaseRoyaltyPercentage: 0,
           sellTargetRoyaltyPercentage: 0
-        });
+        }));
 
         await tokenBondingProgram.buy({
           tokenBonding,

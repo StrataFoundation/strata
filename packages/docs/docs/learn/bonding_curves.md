@@ -134,7 +134,7 @@ import { PublicKey } from "@solana/web3.js";
 ```
 
 ```js async name=bonding deps=curve
-var tokenBonding = await tokenBondingSdk.createTokenBonding({
+var { tokenBonding } = await tokenBondingSdk.createTokenBonding({
   curve,
   baseMint: new PublicKey("So11111111111111111111111111111111111111112"),
   targetMintDecimals: 2,

@@ -3,10 +3,10 @@ import { Program, Provider } from "@project-serum/anchor";
 import { createMintInstructions, getMintInfo } from "@project-serum/common";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import {
-  PublicKey, Signer, SystemProgram, SYSVAR_CLOCK_PUBKEY,
-  SYSVAR_RENT_PUBKEY, TransactionInstruction
+  PublicKey, SystemProgram, SYSVAR_CLOCK_PUBKEY,
+  SYSVAR_RENT_PUBKEY
 } from "@solana/web3.js";
-import { InstructionResult, sendInstructions } from "@strata-foundation/spl-utils";
+import { AnchorSdk, InstructionResult } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
 import { PeriodUnit, SplTokenStakingIDL, TokenStakingV0 } from "./generated/spl-token-staking";
 
@@ -43,33 +43,9 @@ interface ICollectArgs {
   stakingVoucher: PublicKey;
 }
 
-export class SplTokenStaking {
-  program: Program<SplTokenStakingIDL>;
-  provider: Provider;
-
+export class SplTokenStaking extends AnchorSdk<SplTokenStakingIDL> {
   constructor(provider: Provider, program: Program<SplTokenStakingIDL>) {
-    this.program = program;
-    this.provider = provider;
-  }
-
-  get programId() {
-    return this.program.programId;
-  }
-
-  get rpc() {
-    return this.program.rpc;
-  }
-
-  get instruction() {
-    return this.program.instruction;
-  }
-
-  get wallet() {
-    return this.provider.wallet;
-  }
-
-  get account() {
-    return this.program.account;
+    super({ provider, program })
   }
 
   get defaults(): {
@@ -123,17 +99,6 @@ export class SplTokenStaking {
     const mintInfo = await getMintInfo(this.provider, staking.targetMint);
     // @ts-ignore
     return this.getTotalTargetSupply(mintInfo, staking);
-  }
-
-  get errors() {
-    return this.program.idl.errors.reduce((acc, err) => {
-      acc.set(err.code, `${err.name}: ${err.msg}`);
-      return acc;
-    }, new Map<number, string>())
-  }
-
-  sendInstructions(instructions: TransactionInstruction[], signers: Signer[], payer?: PublicKey): Promise<string> {
-    return sendInstructions(this.errors, this.provider, instructions, signers, payer)
   }
 
   async createTokenStakingInstructions({

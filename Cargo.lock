@@ -1322,16 +1322,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "spl-token-account-split"
-version = "0.4.1"
-dependencies = [
- "anchor-lang",
- "anchor-spl",
- "spl-token",
- "spl-token-staking",
-]
-
-[[package]]
 name = "spl-token-bonding"
 version = "0.4.1"
 dependencies = [
@@ -1355,7 +1345,6 @@ dependencies = [
  "spl-associated-token-account",
  "spl-name-service",
  "spl-token",
- "spl-token-account-split",
  "spl-token-bonding",
  "spl-token-metadata",
  "uint",
