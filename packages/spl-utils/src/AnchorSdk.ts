@@ -1,46 +1,35 @@
-import { Idl, Program, Provider } from "@project-serum/anchor";
+import { AccountNamespace, Idl, InstructionNamespace, Program, Provider, RpcNamespace } from "@project-serum/anchor";
+import { AllInstructions } from "@project-serum/anchor/dist/cjs/program/namespace/types";
+import { Wallet } from "@project-serum/common";
 import { PublicKey, Signer, TransactionInstruction } from "@solana/web3.js";
-import { BigInstructionResult, InstructionResult } from ".";
-import { sendInstructions, sendMultipleInstructions } from "./transaction";
+import { BigInstructionResult, InstructionResult, sendInstructions, sendMultipleInstructions } from "./transaction";
 
 export abstract class AnchorSdk<IDL extends Idl> {
   program: Program<IDL>;
   provider: Provider;
+  programId: PublicKey;
+  rpc: RpcNamespace<IDL, AllInstructions<IDL>>;
+  instruction: InstructionNamespace<IDL, IDL["instructions"][number]>;
+  wallet: Wallet;
+  account: AccountNamespace<IDL>;
+  errors: Map<number, string> | undefined;
 
   static ID: PublicKey;
 
   constructor(args: { provider: Provider; program: Program<IDL> }) {
     this.program = args.program;
     this.provider = args.provider;
-  }
-
-
-  get programId() {
-    return this.program.programId;
-  }
-
-  get rpc() {
-    return this.program.rpc;
-  }
-
-  get instruction() {
-    return this.program.instruction;
-  }
-
-  get wallet() {
-    return this.provider.wallet;
-  }
-
-  get account() {
-    return this.program.account;
-  }
-
-  get errors() {
-    return this.program.idl.errors?.reduce((acc, err) => {
+    this.programId = args.program.programId;
+    this.rpc = args.program.rpc;
+    this.instruction = args.program.instruction;
+    this.wallet = args.provider.wallet;
+    this.account = args.program.account;
+    this.errors = args.program.idl.errors?.reduce((acc, err) => {
       acc.set(err.code, `${err.name}: ${err.msg}`);
       return acc;
     }, new Map<number, string>());
   }
+
 
   sendInstructions(
     instructions: TransactionInstruction[],
