@@ -303,4 +303,12 @@ export class SplTokenMetadata {
       }
     }
   }
+
+  async createMetadata(args: ICreateMetadataInstructionsArgs): Promise<{metadata: PublicKey}> {
+    const { instructions, signers, output } = await this.createMetadataInstructions(args);
+
+    await this.sendInstructions(instructions, signers, args.payer);
+
+    return output;
+  }
 }

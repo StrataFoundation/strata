@@ -1123,6 +1123,12 @@ export class SplTokenBonding {
     await this.sendInstructions(instructions, signers);
   }
 
+  async buyWrappedSolInstructions({
+
+  }: IBuyWrappedSolArgs): Promise<InstructionResult<null>> {
+
+  }
+
   /**
    * Create a temporary account with `amount` twSOL, the token bonding wrapped sol mint.
    *
