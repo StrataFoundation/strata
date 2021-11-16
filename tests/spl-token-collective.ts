@@ -70,7 +70,7 @@ describe("spl-token-collective", () => {
     curve = await splTokenBondingProgram.initializeCurve({
       config: new ExponentialCurveConfig({
         c: 1,
-        b: 0.1,
+        b: 0,
         pow: 1,
         frac: 1
       })

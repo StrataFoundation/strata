@@ -54,6 +54,32 @@ interface IPrimitiveCurve {
 }
 
 /**
+ * Convert a number to a string avoiding scientific notation
+ * @param n
+ * @returns
+ */
+function toFixedSpecial(num: number, n: number): string {
+  var str = num.toFixed(n);
+  if (str.indexOf("e+") === -1) return str;
+
+  // if number is in scientific notation, pick (b)ase and (p)ower
+  str = str
+    .replace(".", "")
+    .split("e+")
+    .reduce(function (b: any, p: any) {
+      // @ts-ignore
+      return b + Array(p - b.length + 2).join(0);
+    });
+
+  if (n > 0) {
+    // @ts-ignore
+    str += "." + Array(n + 1).join(0);
+  }
+
+  return str;
+}
+
+/**
  * Convert a number to a 12 decimal fixed precision u128
  *
  * @param num Number to convert to a 12 decimal fixed precision BN
@@ -64,14 +90,7 @@ export function toU128(num: number | BN): BN {
     return num;
   }
 
-  const [beforeDec, afteDec] = num.toString().split(".");
-  if (isNaN(Number(beforeDec)) || !isFinite(Number(beforeDec))) {
-    return new BN(0);
-  }
-
-  return new BN(
-    `${beforeDec || ""}${(afteDec || "").slice(0, 12).padEnd(12, "0")}`
-  );
+  return new BN(toFixedSpecial(num, 12).replace(".", ""));
 }
 
 /**
@@ -98,6 +117,12 @@ export class ExponentialCurveConfig implements ICurveConfig, IPrimitiveCurve {
     this.b = toU128(b);
     this.pow = pow;
     this.frac = frac;
+
+    if (this.b.gt(new BN(0)) && this.c.gt(new BN(0))) {
+      throw new Error(
+        "Unsupported: Cannot define an exponential function with `b`, the math to go from base to target amount becomes too hard."
+      );
+    }
   }
 
   toRawPrimitiveConfig(): any {
@@ -1093,7 +1118,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     destination,
     source = this.wallet.publicKey,
     amount,
-  }: IBuyBondingWrappedSolArgs): Promise<InstructionResult<null>> {
+  }: IBuyBondingWrappedSolArgs): Promise<
+    InstructionResult<{ destination: PublicKey }>
+  > {
     const state = (await this.getState())!;
     const stateAddress = (
       await PublicKey.findProgramAddress(
@@ -1156,7 +1183,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
 
     return {
       signers: [],
-      output: null,
+      output: {
+        destination,
+      },
       instructions,
     };
   }
@@ -1166,7 +1195,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
    * @param args
    * @returns
    */
-  buyBondingWrappedSol(args: IBuyBondingWrappedSolArgs): Promise<null> {
+  buyBondingWrappedSol(
+    args: IBuyBondingWrappedSolArgs
+  ): Promise<{ destination: PublicKey }> {
     return this.execute(
       this.buyBondingWrappedSolInstructions(args),
       args.payer
@@ -1658,8 +1689,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       minimumPrice: new BN(minPrice),
       rootEstimates: curve
         .buyTargetAmountRootEstimates(
-          targetAmountNum,
-          tokenBondingAcct.sellTargetRoyaltyPercentage
+          -targetAmountNum *
+            (1 - asDecimal(tokenBondingAcct.sellTargetRoyaltyPercentage)),
+          0
         )
         .map(toU128),
     };

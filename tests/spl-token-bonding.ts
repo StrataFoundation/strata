@@ -36,11 +36,11 @@ describe("spl-token-bonding", () => {
       const curve = new ExponentialCurve(
       {
         c: new BN(1000000000000), // c = 1
-        b: new BN(100000000000), // b = 0.1
+        b: new BN(0),
         // @ts-ignore
-        pow: new BN(1),
+        pow: 1,
         // @ts-ignore
-        frac: new BN(2)
+        frac: 2
       }, {
         address: PublicKey.default,
         mint: PublicKey.default,
@@ -68,18 +68,18 @@ describe("spl-token-bonding", () => {
       });
 
       const baseAmount = curve.buyTargetAmount(10, percent(5), percent(5));
-      expect(baseAmount).to.be.closeTo(25.07426349820264, 0.005);
+      expect(baseAmount).to.be.closeTo(23.96623025761275, 0.005);
     });
 
     it("is the same forward and backward when supply and reserves are nonzero", () => {
       const curve = new ExponentialCurve(
       {
         c: new BN(1000000000000), // c = 1
-        b: new BN(100000000000), // b = 0.1
+        b: new BN(0), // b = 0
         // @ts-ignore
-        pow: new BN(1),
+        pow: 1,
         // @ts-ignore
-        frac: new BN(2)
+        frac: 2
       }, {
         address: PublicKey.default,
         mint: PublicKey.default,
@@ -125,7 +125,7 @@ describe("spl-token-bonding", () => {
       curve = await tokenBondingProgram.initializeCurve({
         config: new ExponentialCurveConfig({
           c: 1,
-          b: 0.1,
+          b: 0,
           pow: 1,
           frac: 1
         })
@@ -159,7 +159,7 @@ describe("spl-token-bonding", () => {
       // @ts-ignore
       expect(c.exponentialCurveV0.c.toNumber()).to.equal(1000000000000);
       // @ts-ignore
-      expect(c.exponentialCurveV0.b.toNumber()).to.equal(100000000000);
+      expect(c.exponentialCurveV0.b.toNumber()).to.equal(0);
     });
 
     it("allows updating token bonding", async () => {
@@ -264,7 +264,7 @@ describe("spl-token-bonding", () => {
           new ExponentialCurveConfig({
             c: 0,
             b: 1,
-            pow: 1,
+            pow: 0,
             frac: 1
           })
         ).addCurve(
@@ -437,23 +437,6 @@ describe("spl-token-bonding", () => {
       });
       await tokenUtils.expectAtaBalance(me, baseMint, 95);
     });
-
-    it("allows a constant product price", async () => {
-      const { tokenBonding, baseMint } = await create({
-        config: new ExponentialCurveConfig({
-          c: 5,
-          b: 7.5,
-          pow: 1,
-          frac: 1
-        })
-      });
-      await tokenBondingProgram.buy({
-        tokenBonding,
-        desiredTargetAmount: new BN(100),
-        slippage: 0.05,
-      });
-      await tokenUtils.expectAtaBalance(me, baseMint, 90);
-    });
   });
 
   describe("with sol base mint", async () => {
@@ -466,7 +449,7 @@ describe("spl-token-bonding", () => {
       curve = await tokenBondingProgram.initializeCurve({
         config: new ExponentialCurveConfig({
           c: 1,
-          b: 0.1,
+          b: 0,
           pow: 1,
           frac: 1
         })

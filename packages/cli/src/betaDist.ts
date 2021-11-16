@@ -1,12 +1,13 @@
 import * as anchor from "@project-serum/anchor";
 import { Provider } from "@project-serum/anchor";
-import { createMint } from "@project-serum/common";
+import { createMint, getTokenAccount } from "@project-serum/common";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, NATIVE_MINT, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import { ExponentialCurveConfig, SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
 import { Data, getMetadata, SplTokenMetadata } from "@strata-foundation/spl-utils";
 import fs from "fs";
+import BN from "bn.js";
 
 async function mintTo(
   provider: Provider,
@@ -36,7 +37,7 @@ async function mintTo(
     Token.createMintToInstruction(
       TOKEN_PROGRAM_ID,
       mint,
-      destination,
+      ata,
       provider.wallet.publicKey,
       [],
       amount
@@ -57,15 +58,15 @@ async function createTestBwum(provider: Provider): Promise<PublicKey> {
   await splTokenMetadata.createMetadata({
     data: new Data({
       name: 'Net bWUM Test',
-      symbol: 'nbwumTest',
+      symbol: 'nbwum',
       uri: "https://wumbo-token-metadata.s3.us-east-2.amazonaws.com/bwum.json",
       creators: null,
       sellerFeeBasisPoints: 0
     }),
     mint: bwum
   });
-  await mintTo(provider, bwum, 80, betaWumDest1);
-  await mintTo(provider, bwum, 20, betaWumDest2);
+  await mintTo(provider, bwum, 80 * Math.pow(10, 9), betaWumDest1);
+  await mintTo(provider, bwum, 20 * Math.pow(10, 9), betaWumDest2);
 
   return bwum;
 }
@@ -94,7 +95,7 @@ async function run() {
     config: new ExponentialCurveConfig({
       c: 0,
       b: 1,
-      pow: 1,
+      pow: 0,
       frac: 1
     })
   });
@@ -112,9 +113,35 @@ async function run() {
   });
   console.log(`Created bonding ${bonding.toBase58()}`);
 
+  const wSolBalance = (await provider.connection.getAccountInfo(wSolAcct))!.lamports
   const bondingAcct = await tokenBondingSdk.account.tokenBondingV0.fetch(bonding);
+  console.log(`Transferring ${wSolBalance} lamports to the reserves`);
   
-
+  const { instructions, signers, output: { destination } } = await tokenBondingSdk.buyBondingWrappedSolInstructions({
+    amount: new BN(wSolBalance)
+  });
+  instructions.unshift(
+    Token.createCloseAccountInstruction(
+      TOKEN_PROGRAM_ID,
+      wSolAcct,
+      me,
+      me,
+      []
+    )
+  );
+  instructions.push(
+    Token.createTransferInstruction(
+      TOKEN_PROGRAM_ID,
+      destination,
+      bondingAcct.baseStorage,
+      me,
+      [],
+      wSolBalance
+    )
+  )
+  await tokenBondingSdk.sendInstructions(instructions, signers, me);
+  const reservesBalance = (await getTokenAccount(provider, bondingAcct.baseStorage)).amount;
+  console.log(`Reserves Balance: ${reservesBalance}`)
 }
 
 run().catch(e => {

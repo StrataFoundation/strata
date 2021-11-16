@@ -1,4 +1,4 @@
-use crate::precise_number::{InnerUint, PreciseNumber};
+use crate::precise_number::{InnerUint, ONE, ONE_PREC, PreciseNumber, one};
 use crate::error::ErrorCode;
 use anchor_lang::{prelude::*};
 use anchor_spl::token::Mint;
@@ -27,7 +27,7 @@ pub fn precise_supply(mint: &Account<Mint>) -> PreciseNumber {
 
 fn get_pow_10(decimals: u8) -> PreciseNumber {
   match decimals {
-    0 => PreciseNumber::new(0),
+    0 => PreciseNumber::new(1),
     1 => PreciseNumber::new(10),
     2 => PreciseNumber::new(100),
     3 => PreciseNumber::new(1000),
@@ -44,10 +44,29 @@ fn get_pow_10(decimals: u8) -> PreciseNumber {
   }.unwrap()
 }
 
+fn get_u128_pow_10(decimals: u8) -> u128 {
+  match decimals {
+    0 => 1,
+    1 => 10,
+    2 => 100,
+    3 => 1000,
+    4 => 10000,
+    5 => 100000,
+    6 => 1000000,
+    7 => 10000000,
+    8 => 100000000,
+    9 => 1000000000,
+    10 => 10000000000,
+    11 => 100000000000,
+    12 => 1000000000000,
+    _ => unreachable!()
+  }
+}
+
 pub fn precise_supply_amt(amt: u64, mint: &Account<Mint>) -> PreciseNumber {
   PreciseNumber {
-      value: InnerUint::from(amt as u128)
-  }.checked_mul(&get_pow_10(12_u8 - mint.decimals)).unwrap()
+    value: InnerUint::from(amt).checked_mul(InnerUint::from(get_u128_pow_10(12_u8 - mint.decimals))).unwrap().checked_mul(InnerUint::from(1_000_000_000_000u64)).unwrap()
+  }
 }
 
 pub fn to_mint_amount(amt: &PreciseNumber, mint: &Account<Mint>, ceil: bool) -> u64 {

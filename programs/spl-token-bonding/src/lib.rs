@@ -468,19 +468,13 @@ pub mod spl_token_bonding {
         true,
         args.root_estimates
       ).or_arith_error()?;
-
       let base_royalties_prec = base_royalties_percent.checked_mul(&reclaimed_prec).or_arith_error()?;
 
       let reclaimed_prec = reclaimed_prec.checked_sub(&base_royalties_prec).or_arith_error()?;
       let reclaimed = to_mint_amount(
         &reclaimed_prec,
         base_mint,
-        true
-      );
-      let total_reclaimed = to_mint_amount(
-        &reclaimed_prec,
-        base_mint,
-        true
+        false
       );
       let base_royalties = to_mint_amount(
         &base_royalties_prec,
@@ -493,7 +487,7 @@ pub mod spl_token_bonding {
         false
       );
 
-      msg!("Total reclaimed is {}, with {} to base royalties, {} to target royalties", total_reclaimed, base_royalties, target_royalties);
+      msg!("Total reclaimed is {}, with {} to base royalties, {} to target royalties", reclaimed, base_royalties, target_royalties);
       if reclaimed < args.minimum_price {
         msg!("Err: Minimum price was {}, reclaimed was {}", args.minimum_price, reclaimed);
         return Err(ErrorCode::PriceTooLow.into());

@@ -1071,9 +1071,6 @@ export const SplTokenCollectiveIDLJson: Idl & {
       msg: "Incorrect owner on account",
     },
   ],
-  metadata: {
-    address: "TCo1sP6RwuCuyHPHjxgzcrq4dX4BKf9oRQ3aJMcdFry",
-  },
 };
 export type SplTokenCollectiveIDL = {
   version: "0.0.0";
@@ -1444,7 +1441,6 @@ export type SplTokenCollectiveIDL = {
     },
     { code: 306; name: "IncorrectOwner"; msg: "Incorrect owner on account" }
   ];
-  metadata: { address: "TCo1sP6RwuCuyHPHjxgzcrq4dX4BKf9oRQ3aJMcdFry" };
 };
 
 export type CollectiveV0 = IdlAccounts<SplTokenCollectiveIDL>["collectiveV0"];

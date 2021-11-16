@@ -15,7 +15,8 @@
     "scripts": {
         "copy-files": "copyfiles -u 1 src/**/*.js dist/lib",
         "watch": "yarn run copy-files && node src/idlToTs",
-        "bootstrap": "tsc && node dist/lib/bootstrap"
+        "bootstrap": "tsc && node dist/lib/bootstrap",
+        "beta-dist": "tsc && node dist/lib/betaDist"
     },
     "dependencies": {
         "@project-serum/common": "^0.0.1-beta.3",

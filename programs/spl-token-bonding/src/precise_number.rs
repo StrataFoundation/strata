@@ -1,16 +1,18 @@
 //! Defines PreciseNumber, a U256 wrapper with float-like operations
 // Stolen from SPL math, but changing inner unit
 
-use anchor_lang::prelude::msg;
+use anchor_lang::{prelude::msg, solana_program::log::sol_log_compute_units};
 
-use crate::curve::{ONE_PREC, ZERO_PREC};
 use crate::uint::U256;
 
 // Allows for easy swapping between different internal representations
 pub type InnerUint = U256;
 
+pub static ONE_PREC: PreciseNumber =  PreciseNumber { value: one() };
+pub static ZERO_PREC: PreciseNumber =  PreciseNumber { value: zero() };
+
 /// The representation of the number one as a precise number as 10^12
-pub const ONE: u64 = 1_000_000_000_000;
+pub const ONE: u128 = 1_000_000_000_000_000_000_000_000;
 
 /// Struct encapsulating a fixed-point number that allows for decimal calculations
 #[derive(Clone, Debug, PartialEq)]
@@ -19,10 +21,11 @@ pub struct PreciseNumber {
     pub value: InnerUint,
 }
 
-/// The precise-number 1 as a InnerUint
+/// The precise-number 1 as a InnerUint. 24 decimals of precision
 #[inline]
 pub const fn one() -> InnerUint {
-  U256([1_000_000_000_000_u64, 0_u64, 0_u64, 0_u64])
+  // InnerUint::from(1_000_000_000_000_000_000_000_000_u128)
+  U256([0x1BCECCEDA1000000_u64, 0xD3C2_u64, 0_u64, 0_u64])
     // InnerUint::from(ONE)
 }
 
@@ -45,7 +48,7 @@ impl PreciseNumber {
     /// smaller than this number, or we reach the maxmium number of iterations,
     /// the calculation ends.
     fn precision() -> InnerUint {
-        InnerUint::from(100)
+        InnerUint::from(100_000_000_000_000_u64)
     }
 
     fn zero() -> Self {
@@ -366,7 +369,10 @@ impl PreciseNumber {
     }
 
     pub fn pow_frac_approximation(&self, pow: u8, frac: u8, guess: Self) -> Option<Self> {
-      self.checked_pow(pow as u128)?.newtonian_root_approximation(&PreciseNumber::new(frac as u128)?, guess, Self::MAX_APPROXIMATION_ITERATIONS)
+      let pow_result = self.checked_pow(pow as u128)?;
+      let root_result = pow_result.newtonian_root_approximation(&PreciseNumber::new(frac as u128)?, guess, Self::MAX_APPROXIMATION_ITERATIONS);
+
+      root_result
     }
 
     /// Approximate the square root using Newton's method.  Based on testing,
@@ -392,7 +398,7 @@ mod tests {
     use proptest::prelude::*;
 
     fn check_pow_approximation(base: InnerUint, exponent: InnerUint, expected: InnerUint) {
-        let precision = InnerUint::from(5_000_000); // correct to at least 3 decimal places
+        let precision = InnerUint::from(5_000_000_000000000000_u64); // correct to at least 3 decimal places
         let base = PreciseNumber { value: base };
         let exponent = PreciseNumber { value: exponent };
         let root = base
@@ -407,14 +413,14 @@ mod tests {
         let one = one();
         // square root
         check_pow_approximation(one / 4, one / 2, one / 2); // 1/2
-        check_pow_approximation(one * 11 / 10, one / 2, InnerUint::from(1_048808848161u128)); // 1.048808848161
+        check_pow_approximation(one * 11 / 10, one / 2, InnerUint::from(1_048808848161_000000000000u128)); // 1.048808848161
 
         // 5th root
-        check_pow_approximation(one * 4 / 5, one * 2 / 5, InnerUint::from(914610103850u128));
+        check_pow_approximation(one * 4 / 5, one * 2 / 5, InnerUint::from(914610103850_000000000000u128));
         // 0.91461010385
 
         // 10th root
-        check_pow_approximation(one / 2, one * 4 / 50, InnerUint::from(946057646730u128));
+        check_pow_approximation(one / 2, one * 4 / 50, InnerUint::from(946057646730_000000000000u128));
         // 0.94605764673
     }
 
@@ -434,20 +440,20 @@ mod tests {
     #[test]
     fn test_pow_fraction() {
         let one = one();
-        let precision = InnerUint::from(50_000_000); // correct to at least 3 decimal places
+        let precision = InnerUint::from(50_000_000_000_000_000_000_u128); // correct to at least 3 decimal places
         let less_precision = precision * 1_000; // correct to at least 1 decimal place
         check_pow_fraction(one, one, one, precision);
         check_pow_fraction(
             one * 20 / 13,
             one * 50 / 3,
-            InnerUint::from(1312_534484739100u128),
+            InnerUint::from(1312_534484739100_000000000000u128),
             precision,
         ); // 1312.5344847391
-        check_pow_fraction(one * 2 / 7, one * 49 / 4, InnerUint::from(2163), precision);
+        check_pow_fraction(one * 2 / 7, one * 49 / 4, InnerUint::from(2163_000000000000u128), precision);
         check_pow_fraction(
             one * 5000 / 5100,
             one / 9,
-            InnerUint::from(997802126900u128),
+            InnerUint::from(997802126900_000000000000u128),
             precision,
         ); // 0.99780212695
            // results get less accurate as the base gets further from 1, so allow
@@ -455,13 +461,13 @@ mod tests {
         check_pow_fraction(
             one * 2,
             one * 27 / 5,
-            InnerUint::from(42_224253144700u128),
+            InnerUint::from(42_224253144700_000000000000u128),
             less_precision,
         ); // 42.2242531447
         check_pow_fraction(
             one * 18 / 10,
             one * 11 / 3,
-            InnerUint::from(8_629769290500u128),
+            InnerUint::from(8_629769290500_000000000000u128),
             less_precision,
         ); // 8.629769290
     }
@@ -529,7 +535,7 @@ mod tests {
 
     fn check_square_root(check: &PreciseNumber) {
         let epsilon = PreciseNumber {
-            value: InnerUint::from(10),
+            value: InnerUint::from(10_000000000000_u64),
         }; // correct within 11 decimals
         let one = PreciseNumber::one();
         let one_plus_epsilon = one.checked_add(&epsilon).unwrap();

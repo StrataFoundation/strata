@@ -1127,9 +1127,6 @@ export const SplTokenBondingIDLJson: Idl & { metadata?: { address: string } } =
         msg: "Use token bonding wrapped sol via buy_wrapped_sol, sell_wrapped_sol commands. We may one day provide liquid staking rewards on this stored sol.",
       },
     ],
-    metadata: {
-      address: "TBondz6ZwSM5fs4v2GpnVBMuwoncPkFLFR9S422ghhN",
-    },
   };
 export type SplTokenBondingIDL = {
   version: "0.0.0";
@@ -1563,7 +1560,6 @@ export type SplTokenBondingIDL = {
       msg: "Use token bonding wrapped sol via buy_wrapped_sol, sell_wrapped_sol commands. We may one day provide liquid staking rewards on this stored sol.";
     }
   ];
-  metadata: { address: "TBondz6ZwSM5fs4v2GpnVBMuwoncPkFLFR9S422ghhN" };
 };
 
 export type PrimitiveCurve = Record<string, Record<string, any>>;
