@@ -30,7 +30,6 @@ export function useAccount<T>(
   isStatic: Boolean = false // Set if the accounts data will never change, optimisation to lower websocket usage.
 ): UseAccountState<T> {
   const cache = useAccountFetchCache();
-  // @ts-ignore for helping to debug
   const [state, setState] = useState<UseAccountState<T>>({
     loading: true,
   });

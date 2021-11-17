@@ -37,7 +37,7 @@ export function useAssociatedAccount(
     } else {
       return associatedAccount;
     }
-  }, [associatedAccount, account]);
+  }, [associatedAccount, account, mint]);
 
   return {
     associatedAccount: result,

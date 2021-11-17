@@ -11,21 +11,15 @@ import {
   getSolletExtensionWallet,
   getSolletWallet,
 } from "@solana/wallet-adapter-wallets";
-import { clusterApiUrl } from "@solana/web3.js";
 import React, { FC, useMemo } from "react";
+import { useEndpoint } from "./Endpoint";
 
 // Default styles that can be overridden by your app
 require("@solana/wallet-adapter-react-ui/styles.css");
 
-export const Wallet = ({
-  children,
-  network = WalletAdapterNetwork.Devnet,
-}: {
-  children?: React.ReactNode;
-  network: WalletAdapterNetwork;
-}) => {
+export const Wallet = ({ children }: { children?: React.ReactNode }) => {
   // You can also provide a custom RPC endpoint
-  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+  const { endpoint } = useEndpoint();
 
   // @solana/wallet-adapter-wallets includes all the adapters but supports tree shaking --
   // Only the wallets you configure here will be compiled into your application
@@ -35,10 +29,10 @@ export const Wallet = ({
       getSlopeWallet(),
       getSolflareWallet(),
       getLedgerWallet(),
-      getSolletWallet({ network }),
-      getSolletExtensionWallet({ network }),
+      getSolletWallet({}),
+      getSolletExtensionWallet({}),
     ],
-    [network]
+    []
   );
 
   return (
