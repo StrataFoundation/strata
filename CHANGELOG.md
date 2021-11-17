@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.4]
+### Changed
+
+  - Pass `metadata.uri` instead of `metadataUri` to bypass arweave uploads
+  - Use the newest arweave upload url. Does not currently work in devnet so:
+  - Bypass arweave upload in all tutorials
+
+
 ## [0.5.0]
 ### Added
   - `AnchorSdk` abstract class to remove boilerplate rom sdks
