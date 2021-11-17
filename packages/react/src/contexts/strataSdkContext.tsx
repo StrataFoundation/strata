@@ -40,17 +40,18 @@ async function getSdks(provider: Provider | undefined): Promise<IStrataSdks> {
 export const StrataSdksProvider: React.FC = ({ children }) => {
   const provider = useProvider();
   const { result, loading, error } = useAsync(getSdks, [provider]);
-  const sdks = useMemo(() => ({
-    tokenCollectiveSdk: result?.tokenCollectiveSdk,
-    tokenBondingSdk: result?.tokenBondingSdk,
-    error,
-    loading,
-  }), [result, loading, error]);
+  const sdks = useMemo(
+    () => ({
+      tokenCollectiveSdk: result?.tokenCollectiveSdk,
+      tokenBondingSdk: result?.tokenBondingSdk,
+      error,
+      loading,
+    }),
+    [result, loading, error]
+  );
 
   return (
-    <StrataSdksContext.Provider
-      value={sdks}
-    >
+    <StrataSdksContext.Provider value={sdks}>
       {children}
     </StrataSdksContext.Provider>
   );

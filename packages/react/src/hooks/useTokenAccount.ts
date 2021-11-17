@@ -13,7 +13,5 @@ const parser = (
 export function useTokenAccount(
   address: PublicKey | undefined
 ): UseAccountState<TokenAccountInfo | undefined> {
-
-
   return useAccount(address, parser);
 }

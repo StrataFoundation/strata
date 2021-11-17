@@ -39,7 +39,10 @@ export function useTokenMetadata(
     [token?.toBase58()]
   );
   const metadataAccountKey = usePublicKey(metadataAccountKeyStr);
-  const parser = useMemo(() => (_: any, acct: any) => decodeMetadata(acct.data), []);
+  const parser = useMemo(
+    () => (_: any, acct: any) => decodeMetadata(acct.data),
+    []
+  );
 
   const { info: metadata, loading: accountLoading } = useAccount(
     metadataAccountKey,
