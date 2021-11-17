@@ -80,7 +80,7 @@ async function run() {
 
   const tokenBondingSdk = await SplTokenBonding.init(provider);
   await tokenBondingSdk.initializeSolStorage();
-  const bwum = await createTestBwum(provider);
+  const bwum = new PublicKey("HvdnoodTaRSaB7AEtm7QaDveqW9M3r4hmoNaqTggQkVp");
   console.log(`Using bwum ${bwum.toBase58()}`);
 
   const wSolAcct = await Token.getAssociatedTokenAddress(
