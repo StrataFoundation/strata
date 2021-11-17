@@ -129,11 +129,7 @@ export class ExponentialCurve implements IPricingCurve {
     const R = amountAsNum(this.baseStorage.amount, this.baseMint);
 
     if (R == 0 || S == 0) {
-      if (this.b == 0 && this.c != 0) {
-        return [Math.pow(targetAmountNum, 1 + this.k), 1];
-      }
-
-      return [0, 0];
+      return [Math.pow(dS, 1 + this.k), 1];
     } else {
       /*
         (R / S^(1 + k)) ((S + dS)^(1 + k) - S^(1 + k))
@@ -158,26 +154,32 @@ export class ExponentialCurve implements IPricingCurve {
   ): number {
     // Calculate with the actual target amount they will need to get the target amount after royalties
     const dS = targetAmountNum * (1 / (1 - asDecimal(targetRoyaltiesPercent)));
-    if (
-      this.baseStorage.amount.toNumber() == 0 ||
-      this.targetMint.supply.toNumber() == 0
-    ) {
+    const R = amountAsNum(this.baseStorage.amount, this.baseMint);
+    const S = supplyAsNum(this.targetMint);
+    if (R == 0 || S == 0) {
       // b dS + (c dS^(1 + k))/(1 + k)
       return (
         (this.b * dS + (this.c * Math.pow(dS, 1 + this.k)) / (1 + this.k)) *
         (1 / (1 - asDecimal(baseRoyaltiesPercent)))
       );
     } else {
-      /*
-        (R / S^(1 + k)) ((S + dS)(S + dS)^k - S^(1 + k))
-      */
-      const R = amountAsNum(this.baseStorage.amount, this.baseMint);
-      const S = supplyAsNum(this.targetMint);
-      return (
-        ((R / Math.pow(S, 1 + this.k)) *
-          ((S + dS) * Math.pow(S + dS, this.k) - Math.pow(S, 1 + this.k))) /
-        (1 - asDecimal(baseRoyaltiesPercent))
-      );
+      if (this.b == 0 && this.c != 0) {
+        /*
+          (R / S^(1 + k)) ((S + dS)(S + dS)^k - S^(1 + k))
+        */
+        return (
+          ((R / Math.pow(S, 1 + this.k)) *
+            ((S + dS) * Math.pow(S + dS, this.k) - Math.pow(S, 1 + this.k))) /
+          (1 - asDecimal(baseRoyaltiesPercent))
+        );
+      } else if (this.c == 0) {
+        // R dS / S
+        return ((R * dS) / S) * (1 / (1 - asDecimal(baseRoyaltiesPercent)));
+      } else {
+        throw new Error(
+          "Cannot convert base amount to target amount when both b and k are defined on an exponential curve. The math is too hard"
+        );
+      }
     }
   }
 
@@ -224,8 +226,8 @@ export class ExponentialCurve implements IPricingCurve {
             supplyAsNum(this.targetMint)) *
           (1 - asDecimal(targetRoyaltiesPercent))
         );
-      } else if (this.k == 0) {
-        return dR / this.b;
+      } else if (this.c == 0) {
+        return (dR / this.b) * (1 - asDecimal(targetRoyaltiesPercent));
       }
 
       throw new Error(
@@ -234,17 +236,26 @@ export class ExponentialCurve implements IPricingCurve {
     } else {
       const R = amountAsNum(this.baseStorage.amount, this.baseMint);
       const S = supplyAsNum(this.targetMint);
-      /*
-       * dS = -S + ((S^(1 + k) (R + dR))/R)^(1/(1 + k))
-       */
-      return (
-        (-S +
-          Math.pow(
-            (Math.pow(S, 1 + this.k) * (R + dR)) / R,
-            1 / (1 + this.k)
-          )) *
-        (1 - asDecimal(targetRoyaltiesPercent))
-      );
+      if (this.b == 0) {
+        /*
+         * dS = -S + ((S^(1 + k) (R + dR))/R)^(1/(1 + k))
+         */
+        return (
+          (-S +
+            Math.pow(
+              (Math.pow(S, 1 + this.k) * (R + dR)) / R,
+              1 / (1 + this.k)
+            )) *
+          (1 - asDecimal(targetRoyaltiesPercent))
+        );
+      } else if (this.c == 0) {
+        // dS = S dR / R
+        return ((S * dR) / R) * (1 - asDecimal(targetRoyaltiesPercent));
+      } else {
+        throw new Error(
+          "Cannot convert base amount to target amount when both b and k are defined on an exponential curve. The math is too hard"
+        );
+      }
     }
   }
 }

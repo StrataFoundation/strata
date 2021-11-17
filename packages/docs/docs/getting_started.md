@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Getting Started
 
-Strata Protocol lets you effortlessly create Social Tokens and communities of Social Tokens (Collectives) on Solana!
+The Strata Protocol lets you effortlessly create Social Tokens and communities of Social Tokens (Collectives) on Solana!
 
 ## Initializing the SDK
 

@@ -4,7 +4,7 @@ import { useProvider } from "../hooks/useProvider";
 import { Provider } from "@project-serum/anchor";
 import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
-import React from "react";
+import React, { useMemo } from "react";
 import { SplTokenMetadata } from "@strata-foundation/spl-utils";
 
 export const StrataSdksContext = React.createContext<IStrataSdksReactState>({
@@ -22,14 +22,24 @@ export interface IStrataSdksReactState extends IStrataSdks {
   loading: boolean;
 }
 
+async function tryProm<A>(prom: Promise<A>): Promise<A | undefined> {
+  try {
+    return await prom;
+  } catch (e) {
+    console.error(e);
+  }
+
+  return undefined;
+}
+
 async function getSdks(provider: Provider | undefined): Promise<IStrataSdks> {
   if (!provider) {
     return {};
   }
 
-  const tokenCollective = await SplTokenCollective.init(provider);
-  const tokenBonding = await SplTokenBonding.init(provider);
-  const splTokenMetdataSdk = await SplTokenMetadata.init(provider);
+  const tokenCollective = await tryProm(SplTokenCollective.init(provider));
+  const tokenBonding = await tryProm(SplTokenBonding.init(provider));
+  const splTokenMetdataSdk = await tryProm(SplTokenMetadata.init(provider));
   return {
     tokenCollectiveSdk: tokenCollective,
     tokenBondingSdk: tokenBonding,
@@ -40,16 +50,18 @@ async function getSdks(provider: Provider | undefined): Promise<IStrataSdks> {
 export const StrataSdksProvider: React.FC = ({ children }) => {
   const provider = useProvider();
   const { result, loading, error } = useAsync(getSdks, [provider]);
+  const sdks = useMemo(
+    () => ({
+      tokenCollectiveSdk: result?.tokenCollectiveSdk,
+      tokenBondingSdk: result?.tokenBondingSdk,
+      error,
+      loading,
+    }),
+    [result, loading, error]
+  );
 
   return (
-    <StrataSdksContext.Provider
-      value={{
-        tokenCollectiveSdk: result?.tokenCollectiveSdk,
-        tokenBondingSdk: result?.tokenBondingSdk,
-        error,
-        loading,
-      }}
-    >
+    <StrataSdksContext.Provider value={sdks}>
       {children}
     </StrataSdksContext.Provider>
   );

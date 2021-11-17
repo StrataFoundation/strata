@@ -1,20 +1,22 @@
-import React, { useEffect, useState } from "react";
-import ReactJson from "react-json-view";
-import styles from "./styles.module.css";
-import { FaPlay } from "react-icons/fa";
-import { PublicKey } from "@solana/web3.js";
+import BrowserOnly from "@docusaurus/BrowserOnly";
+import { useEndpoint } from "@site/src/contexts/Endpoint";
+import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import {
   WalletModalProvider,
-  WalletDisconnectButton,
   WalletMultiButton,
 } from "@solana/wallet-adapter-react-ui";
-import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { useStrataSdks, useProvider } from "@strata-foundation/react";
-import { parse } from "esprima";
+import { PublicKey } from "@solana/web3.js";
+import { useProvider, useStrataSdks } from "@strata-foundation/react";
 import BN from "bn.js";
-import { useVariablesContext } from "../Root/variables";
-import BrowserOnly from "@docusaurus/BrowserOnly";
 import clsx from "clsx";
+import { parse } from "esprima";
+import React, { useEffect, useState } from "react";
+import { FaPlay } from "react-icons/fa";
+import ReactJson from "react-json-view";
+import { useVariablesContext } from "../Root/variables";
+import styles from "./styles.module.css";
+import { clusterApiUrl } from "@solana/web3.js";
 
 function wrapAndCollectVars(code: string, injectedVars): string {
   const wrapped = `(async function() {
@@ -74,6 +76,7 @@ const AsyncButton = ({ code, scope, name, deps }) => {
   const { tokenCollectiveSdk, tokenBondingSdk } = useStrataSdks();
   const { connection } = useConnection();
   const provider = useProvider();
+  const { endpoint, setEndpoint } = useEndpoint();
 
   var vars = {}; // Outer variable, not stored.
   async function exec(globalVariables: any) {
@@ -123,6 +126,21 @@ const AsyncButton = ({ code, scope, name, deps }) => {
   }
 
   const fullLoading = loading || !tokenBondingSdk || !tokenCollectiveSdk;
+
+  if (endpoint.includes("mainnet")) {
+    return (
+      <div className={styles.container}>
+        <button
+          onClick={() => {
+            setEndpoint(clusterApiUrl(WalletAdapterNetwork.Devnet));
+          }}
+          className="white button button--primary"
+        >
+          Switch to Devnet
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>

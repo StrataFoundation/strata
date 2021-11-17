@@ -30,8 +30,6 @@ export function useAccount<T>(
   isStatic: Boolean = false // Set if the accounts data will never change, optimisation to lower websocket usage.
 ): UseAccountState<T> {
   const cache = useAccountFetchCache();
-  // @ts-ignore for helping to debug
-  window.cache = cache;
   const [state, setState] = useState<UseAccountState<T>>({
     loading: true,
   });
@@ -91,7 +89,7 @@ export function useAccount<T>(
     return () => {
       dispose();
     };
-  }, [cache, id]);
+  }, [cache, id, parser]);
 
   return state;
 }
