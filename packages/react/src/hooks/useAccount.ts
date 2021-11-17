@@ -31,7 +31,6 @@ export function useAccount<T>(
 ): UseAccountState<T> {
   const cache = useAccountFetchCache();
   // @ts-ignore for helping to debug
-  window.cache = cache;
   const [state, setState] = useState<UseAccountState<T>>({
     loading: true,
   });

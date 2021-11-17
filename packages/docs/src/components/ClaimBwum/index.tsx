@@ -16,6 +16,7 @@ import {
 } from "@strata-foundation/react";
 import React from "react";
 import styles from "./styles.module.css";
+import BrowserOnly from "@docusaurus/BrowserOnly";
 
 const TOKEN_BONDING = "B8kzSwXLfmZMeLzekExz2e8vefoU1UqgGnZ8NZRYkeou";
 
@@ -77,12 +78,14 @@ export const Claim = React.memo(() => {
 
 export const ClaimBwum: React.FC = () => {
   return (
-    <Wallet network={WalletAdapterNetwork.Mainnet}>
-      <StrataSdksProvider>
-        <AccountProvider>
-          <Claim />
-        </AccountProvider>
-      </StrataSdksProvider>
-    </Wallet>
+    <BrowserOnly fallback={<div>...</div>}>
+      { () => <Wallet network={WalletAdapterNetwork.Mainnet}>
+        <StrataSdksProvider>
+          <AccountProvider>
+            <Claim />
+          </AccountProvider>
+        </StrataSdksProvider>
+      </Wallet> }
+    </BrowserOnly>
   );
 };
