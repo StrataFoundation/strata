@@ -22,14 +22,24 @@ export interface IStrataSdksReactState extends IStrataSdks {
   loading: boolean;
 }
 
+async function tryProm<A>(prom: Promise<A>): Promise<A | undefined> {
+  try {
+    return await prom;
+  } catch (e) {
+    console.error(e);
+  }
+
+  return undefined;
+}
+
 async function getSdks(provider: Provider | undefined): Promise<IStrataSdks> {
   if (!provider) {
     return {};
   }
 
-  const tokenCollective = await SplTokenCollective.init(provider);
-  const tokenBonding = await SplTokenBonding.init(provider);
-  const splTokenMetdataSdk = await SplTokenMetadata.init(provider);
+  const tokenCollective = await tryProm(SplTokenCollective.init(provider));
+  const tokenBonding = await tryProm(SplTokenBonding.init(provider));
+  const splTokenMetdataSdk = await tryProm(SplTokenMetadata.init(provider));
   return {
     tokenCollectiveSdk: tokenCollective,
     tokenBondingSdk: tokenBonding,

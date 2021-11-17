@@ -17,8 +17,7 @@ import {
 import React from "react";
 import styles from "./styles.module.css";
 
-const TOKEN_BONDING = "GhQn6AvJqL7NgUiWAf8uEn9yRVnbWjLtn1BP4vJKqW2R";
-// const TOKEN_BONDING = null;
+const TOKEN_BONDING = "B8kzSwXLfmZMeLzekExz2e8vefoU1UqgGnZ8NZRYkeou";
 
 export const Claim = React.memo(() => {
   const tokenBondingKey = usePublicKey(TOKEN_BONDING);
@@ -35,6 +34,7 @@ export const Claim = React.memo(() => {
   if (error) {
     console.error(error);
   }
+  console.log(tokenBonding?.targetMint.toBase58());
 
   return (
     <div className={styles.container}>
@@ -77,7 +77,7 @@ export const Claim = React.memo(() => {
 
 export const ClaimBwum: React.FC = () => {
   return (
-    <Wallet network={WalletAdapterNetwork.Devnet}>
+    <Wallet network={WalletAdapterNetwork.Mainnet}>
       <StrataSdksProvider>
         <AccountProvider>
           <Claim />
