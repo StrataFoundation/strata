@@ -79,13 +79,15 @@ export const Claim = React.memo(() => {
 export const ClaimBwum: React.FC = () => {
   return (
     <BrowserOnly fallback={<div>...</div>}>
-      { () => <Wallet network={WalletAdapterNetwork.Mainnet}>
-        <StrataSdksProvider>
-          <AccountProvider>
-            <Claim />
-          </AccountProvider>
-        </StrataSdksProvider>
-      </Wallet> }
+      {() => (
+        <Wallet network={WalletAdapterNetwork.Mainnet}>
+          <StrataSdksProvider>
+            <AccountProvider>
+              <Claim />
+            </AccountProvider>
+          </StrataSdksProvider>
+        </Wallet>
+      )}
     </BrowserOnly>
   );
 };
