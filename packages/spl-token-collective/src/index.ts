@@ -36,7 +36,7 @@ import {
   SplTokenMetadata,
   TypedAccountParser,
   updateMetadata,
-  ArweaveEnv
+  ArweaveEnv,
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
 import {
@@ -175,8 +175,8 @@ export interface ICreateSocialTokenArgs {
      *
      * **Default:** false
      */
-     useCollectiveDefaultUri?: boolean;
-     uri?: string /** Don't do an arweave upload, just use this url for the json token metadata */;
+    useCollectiveDefaultUri?: boolean;
+    uri?: string /** Don't do an arweave upload, just use this url for the json token metadata */;
     /**
      * The metaplex file upload env to use. For devnet, needs to be "devnet"
      */
@@ -526,7 +526,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
           const { files, txid } =
             await this.splTokenMetadata.presignCreateArweaveUrl({
               ...metadata,
-              env: metadata.env
+              env: metadata.env,
             });
           metadataUri = await this.splTokenMetadata.getArweaveUrl({
             txid,
