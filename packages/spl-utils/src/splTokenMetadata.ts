@@ -3,7 +3,7 @@ import { getMintInfo } from "@project-serum/common";
 import { AccountInfo as TokenAccountInfo, MintInfo } from "@solana/spl-token";
 import { PublicKey, Signer, TransactionInstruction } from "@solana/web3.js";
 import { decodeMasterEdition, InstructionResult, MetadataKey, METADATA_PROGRAM_ID, sendInstructions } from ".";
-import { ARWEAVE_UPLOAD_URL, getFilesWithMetadata, prepPayForFilesInstructions, uploadToArweave } from "./arweave";
+import { ARWEAVE_UPLOAD_URL, getFilesWithMetadata, prepPayForFilesInstructions, uploadToArweave, ArweaveEnv } from "./arweave";
 import { createMetadata, Creator, Data, decodeEdition, decodeMetadata, EDITION, Edition, IMetadataExtension, MasterEditionV1, MasterEditionV2, Metadata, MetadataCategory, METADATA_PREFIX } from "./metadata";
 
 export interface ICreateArweaveUrlArgs {
@@ -13,7 +13,9 @@ export interface ICreateArweaveUrlArgs {
   description?: string;
   image?: string;
   creators?: Creator[],
-  files?: File[]
+  files?: Map<string, Buffer>,
+  env: ArweaveEnv,
+  uploadUrl: string
 }
 
 export interface ICreateMetadataInstructionsArgs {
@@ -207,9 +209,11 @@ export class SplTokenMetadata {
     description = "",
     image,
     creators,
-    files = [],
-    payer = this.provider.wallet.publicKey
-  }: ICreateArweaveUrlArgs): Promise<InstructionResult<{ files: File[] }>> {
+    files = new Map(),
+    payer = this.provider.wallet.publicKey,
+    env,
+    uploadUrl
+  }: ICreateArweaveUrlArgs): Promise<InstructionResult<{ files: Map<string, Buffer> }>> {
     const metadata = {
       name,
       symbol,
@@ -224,10 +228,12 @@ export class SplTokenMetadata {
       creators: creators ? creators : null,
       sellerFeeBasisPoints: 0,
     };
-    const realFiles = getFilesWithMetadata(files, metadata);
+    const realFiles = await getFilesWithMetadata(files, metadata);
     const prepayTxnInstructions = await prepPayForFilesInstructions(
       payer,
-      realFiles
+      realFiles,
+      uploadUrl,
+      env,
     );
 
     return {
@@ -239,7 +245,7 @@ export class SplTokenMetadata {
     }
   }
 
-  async presignCreateArweaveUrl(args: ICreateArweaveUrlArgs): Promise<{ files: File[], txid: string }> {
+  async presignCreateArweaveUrl(args: ICreateArweaveUrlArgs): Promise<{ files: Map<string, Buffer>, txid: string }> {
     const {
       output: { files },
       instructions,
@@ -256,14 +262,16 @@ export class SplTokenMetadata {
   async getArweaveUrl({
     txid,
     mint,
-    files = [],
-    uploadUrl = ARWEAVE_UPLOAD_URL
-  }: { uploadUrl?: string, txid: string, mint: PublicKey, files?: File[] }): Promise<string> {
+    files = new Map(),
+    uploadUrl = ARWEAVE_UPLOAD_URL,
+    env = "mainnet-beta"
+  }: { env: ArweaveEnv, uploadUrl?: string, txid: string, mint: PublicKey, files?: Map<string, Buffer> }): Promise<string> {
     const result = await uploadToArweave(
       txid,
       mint,
       files,
-      uploadUrl
+      uploadUrl,
+      env
     );
 
     const metadataFile = result.messages?.find(
@@ -272,8 +280,10 @@ export class SplTokenMetadata {
     console.log(JSON.stringify(metadataFile, null, 2));
 
     if (!metadataFile) {
-      throw new Error("Metdata file not found");
+      throw new Error("Metadata file not found");
     }
+
+    debugger;
 
     // Use the uploaded arweave files in token metadata
     return`https://arweave.net/${metadataFile.transactionId}`;

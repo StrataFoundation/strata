@@ -91,7 +91,7 @@ var { mint } = await tokenCollectiveSdk.createSocialToken({
     symbol: "luvSTRAT",
     image: "https://i.ibb.co/jWSsJW6/logo.png",
     // Because this is dev, we need to provide the metaplex dev upload file url
-    uploadUrl: "https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2"
+    env: "devnet"
   },
   tokenBondingParams: {
     buyBaseRoyaltyPercentage: 0,

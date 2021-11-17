@@ -131,7 +131,7 @@ var { collective, tokenBonding } = await tokenCollectiveSdk.createCollective({
   //   symbol: "tCOLL", 
   //   image: "https://i.ibb.co/zxWkRv1/doge.jpg",
   //   // Because this is dev, we need to provide the metaplex dev upload file url
-  //   uploadUrl: "https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2"
+  //   env: "devnet"
   // },
   bonding: {
     curve,
@@ -170,7 +170,7 @@ var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
     symbol: "TEST",
     image: "https://i.ibb.co/zxWkRv1/doge.jpg",
     // Because this is dev, we need to provide the metaplex dev upload file url
-    uploadUrl: "https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2"
+    env: "devnet"
   },
   ignoreIfExists: true, // If a Social Token already exists for this wallet, ignore.
   tokenBondingParams: {
@@ -218,7 +218,7 @@ var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
     symbol: "TEST",
     image: "https://i.ibb.co/zxWkRv1/doge.jpg",
     // Because this is dev, we need to provide the metaplex dev upload file url
-    uploadUrl: "https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2"
+    env: "devnet"
   },
   ignoreIfExists: true, // If a Social Token already exists for this name, ignore.
   tokenBondingParams: {

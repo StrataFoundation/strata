@@ -1,5 +1,4 @@
 import "./bufferFill";
-import "./wdyr";
 import { Wallet } from "@site/src/contexts/Wallet";
 import { EndpointProvider } from "@site/src/contexts/Endpoint";
 import { AccountProvider, StrataSdksProvider } from "@strata-foundation/react";

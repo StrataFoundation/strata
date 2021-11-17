@@ -40,7 +40,7 @@ var { collective, tokenBonding } = await tokenCollectiveSdk.createCollective({
     symbol: "tCOLL", 
     image: "https://i.ibb.co/zxWkRv1/doge.jpg",
     // Because this is dev, we need to provide the metaplex dev upload file url
-    uploadUrl: "https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2"
+    env: "devnet"
   },
   bonding: {
     curve,
@@ -109,7 +109,7 @@ var { collective, tokenBonding } = await tokenCollectiveSdk.createCollective({
     symbol: "tCOLL", 
     image: "https://i.ibb.co/zxWkRv1/doge.jpg",
     // Because this is dev, we need to provide the metaplex dev upload file url
-    uploadUrl: "https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2"
+    env: "devnet"
   },
   bonding: {
     curve,

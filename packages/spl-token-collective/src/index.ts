@@ -36,6 +36,7 @@ import {
   SplTokenMetadata,
   TypedAccountParser,
   updateMetadata,
+  ArweaveEnv
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
 import {
@@ -69,8 +70,8 @@ export interface ICreateCollectiveArgs {
    * Reccommended to always fill this out so that your token displays with a name, symbol, and image.
    */
   metadata?: ICreateArweaveUrlArgs & {
-    /** The metaplex file upload url to use. For devnet, needs to be uploadFile2, prod is uploadFileProd2 url. TODO: Once small file support is added, switch to uploadFile4 */
-    uploadUrl?: string;
+    /** The arweave env to use when uploading */
+    env?: ArweaveEnv;
   };
   metadataUri?: string /** Override the above by providing an existing link to the json metadata */;
   /**
@@ -176,9 +177,9 @@ export interface ICreateSocialTokenArgs {
      */
     useCollectiveDefaultUri?: boolean;
     /**
-     * The metaplex file upload url to use. For devnet, needs to be uploadFile2, prod is uploadFileProd2 url. TODO: Once small file support is added, switch to uploadFile4
+     * The metaplex file upload env to use. For devnet, needs to be "devnet"
      */
-    uploadUrl?: string;
+    env?: ArweaveEnv;
   };
   metadataUri?: string /** Override the above by providing an existing link to the json metadata */;
   /** The wallet to create this social token under, defaults to `provider.wallet` */
@@ -523,12 +524,15 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       if (metadata && !metadataAdded) {
         if (!metadataUri) {
           const { files, txid } =
-            await this.splTokenMetadata.presignCreateArweaveUrl(metadata);
+            await this.splTokenMetadata.presignCreateArweaveUrl({
+              ...metadata,
+              env: metadata.env
+            });
           metadataUri = await this.splTokenMetadata.getArweaveUrl({
             txid,
             files,
             mint: mint!,
-            uploadUrl: metadata.uploadUrl,
+            env: metadata.env,
           });
         }
         const { instructions: metadataInstructions, signers: metadataSigners } =
@@ -1129,14 +1133,14 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
 
     // @ts-ignore
     let uri = metadataUri || config.unclaimedTokenMetadataSettings?.uri;
-    if (!metadata.useCollectiveDefaultUri && !metadataUri) {
+    if (!metadata.useCollectiveDefaultUri || !metadataUri) {
       const { files, txid } =
         await this.splTokenMetadata.presignCreateArweaveUrl(metadata);
       uri = await this.splTokenMetadata.getArweaveUrl({
         txid,
         files,
         mint: targetMint!,
-        uploadUrl: metadata.uploadUrl,
+        env: metadata.env,
       });
     }
 
