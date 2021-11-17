@@ -91,7 +91,7 @@ export function useAccount<T>(
     return () => {
       dispose();
     };
-  }, [cache, id]);
+  }, [cache, id, parser]);
 
   return state;
 }

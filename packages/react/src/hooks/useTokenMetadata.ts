@@ -13,6 +13,7 @@ import { useClaimedTokenRef } from "./tokenRef";
 import { useAccount } from "./useAccount";
 import { useAssociatedAccount } from "./useAssociatedAccount";
 import { useMint } from "./useMint";
+import { useMemo } from "react";
 
 export interface IUseTokenMetadataResult extends ITokenWithMetaAndAccount {
   loading: boolean;
@@ -38,10 +39,11 @@ export function useTokenMetadata(
     [token?.toBase58()]
   );
   const metadataAccountKey = usePublicKey(metadataAccountKeyStr);
+  const parser = useMemo(() => (_: any, acct: any) => decodeMetadata(acct.data), []);
 
   const { info: metadata, loading: accountLoading } = useAccount(
     metadataAccountKey,
-    (_, acct) => decodeMetadata(acct.data)
+    parser
   );
 
   const { tokenMetdataSdk: splTokenMetdataSdk } = useStrataSdks();

@@ -6,7 +6,7 @@ import BN from "bn.js";
 import { useStrataSdks } from "./";
 
 export const useSell = (): [
-  (tokenBonding: PublicKey, amount: number, maxPrice: number) => Promise<void>,
+  (tokenBonding: PublicKey, amount: number, slippage: number) => Promise<void>,
   { data: any; loading: boolean; error: Error | undefined }
 ] => {
   const { connected, publicKey } = useWallet();
@@ -14,7 +14,7 @@ export const useSell = (): [
 
   const {
     result: data,
-    execute: buy,
+    execute: sell,
     error,
     loading,
   } = useAsyncCallback(async (tokenBonding, amount, slippage) => {
@@ -27,5 +27,5 @@ export const useSell = (): [
     });
   });
 
-  return [buy, { data, loading: sdkLoading || loading, error }];
+  return [sell, { data, loading: sdkLoading || loading, error }];
 };
