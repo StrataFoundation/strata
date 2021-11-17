@@ -55,11 +55,9 @@ Let's create a Social Token named TEST within the Open Collective that gives us 
 var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
   ignoreIfExists: true, // If a Social Token already exists for this wallet, ignore.
   metadata: {
-    name: "My Test Token",
-    symbol: "TEST",
-    image: "https://i.ibb.co/zxWkRv1/doge.jpg",
-    // Because this is dev, we need to provide the metaplex dev upload file url
-    env: "devnet"
+    name: "Learning Strata Token",
+    symbol: "luvSTRAT",
+    uri: "https://strataprotocol.com/luvSTRAT.json",
   },
   tokenBondingParams: {
     buyBaseRoyaltyPercentage: 0,

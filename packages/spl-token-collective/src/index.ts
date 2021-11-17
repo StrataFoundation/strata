@@ -72,8 +72,8 @@ export interface ICreateCollectiveArgs {
   metadata?: ICreateArweaveUrlArgs & {
     /** The arweave env to use when uploading */
     env?: ArweaveEnv;
+    uri?: string /** Don't do an arweave upload, just use this url for the json token metadata */;
   };
-  metadataUri?: string /** Override the above by providing an existing link to the json metadata */;
   /**
    * If `mint` is not provided, create a bonding curve automatically for this collective.
    */
@@ -175,13 +175,13 @@ export interface ICreateSocialTokenArgs {
      *
      * **Default:** false
      */
-    useCollectiveDefaultUri?: boolean;
+     useCollectiveDefaultUri?: boolean;
+     uri?: string /** Don't do an arweave upload, just use this url for the json token metadata */;
     /**
      * The metaplex file upload env to use. For devnet, needs to be "devnet"
      */
     env?: ArweaveEnv;
   };
-  metadataUri?: string /** Override the above by providing an existing link to the json metadata */;
   /** The wallet to create this social token under, defaults to `provider.wallet` */
   owner?: PublicKey;
   /**
@@ -511,13 +511,13 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     config,
     bonding,
     metadata,
-    metadataUri,
   }: ICreateCollectiveArgs): Promise<
     BigInstructionResult<{ collective: PublicKey; tokenBonding?: PublicKey }>
   > {
     const programId = this.programId;
     const instructions: TransactionInstruction[] = [];
     const signers: Signer[] = [];
+    let metadataUri = metadata?.uri;
 
     let metadataAdded = false;
     const addMetadata = async () => {
@@ -1045,7 +1045,6 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     owner,
     targetMintKeypair = anchor.web3.Keypair.generate(),
     metadata,
-    metadataUri,
     nameClass,
     nameParent,
     tokenBondingParams,
@@ -1058,6 +1057,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       mint: PublicKey;
     }>
   > {
+    let metadataUri = metadata?.uri;
     if (!owner && !name) {
       owner = this.wallet.publicKey;
     }
@@ -1133,7 +1133,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
 
     // @ts-ignore
     let uri = metadataUri || config.unclaimedTokenMetadataSettings?.uri;
-    if (!metadata.useCollectiveDefaultUri || !metadataUri) {
+    if (!metadata.useCollectiveDefaultUri && !metadataUri) {
       const { files, txid } =
         await this.splTokenMetadata.presignCreateArweaveUrl(metadata);
       uri = await this.splTokenMetadata.getArweaveUrl({

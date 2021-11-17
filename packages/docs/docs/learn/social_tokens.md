@@ -125,14 +125,11 @@ var curve = await tokenBondingSdk.initializeCurve({
 
 // Create a collective around the Target of the above token bonding
 var { collective, tokenBonding } = await tokenCollectiveSdk.createCollective({
-  // Commented to avoid uploading to arweave. You should always include this.
-  // metadata: {
-  //   name: "My Collective",
-  //   symbol: "tCOLL", 
-  //   image: "https://i.ibb.co/zxWkRv1/doge.jpg",
-  //   // Because this is dev, we need to provide the metaplex dev upload file url
-  //   env: "devnet"
-  // },
+  metadata: {
+    name: "My Collective",
+    symbol: "tCOLL",
+    uri: "https://strataprotocol.com/tCOLL.json",
+  },
   bonding: {
     curve,
     baseMint: new PublicKey("So11111111111111111111111111111111111111112"),
@@ -166,11 +163,9 @@ var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
   isPrimary: false, // Creates a social token explicitly associated with the collective by pda, instead of the wallet alone.
   collective,
   metadata: {
-    name: "My Test Token",
-    symbol: "TEST",
-    image: "https://i.ibb.co/zxWkRv1/doge.jpg",
-    // Because this is dev, we need to provide the metaplex dev upload file url
-    env: "devnet"
+    name: "Learning Strata Token",
+    symbol: "luvSTRAT",
+    uri: "https://strataprotocol.com/luvSTRAT.json",
   },
   ignoreIfExists: true, // If a Social Token already exists for this wallet, ignore.
   tokenBondingParams: {
@@ -214,11 +209,9 @@ var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
   collective,
   name, // Associate the social token with the created name
   metadata: {
-    name: "My Test Token",
-    symbol: "TEST",
-    image: "https://i.ibb.co/zxWkRv1/doge.jpg",
-    // Because this is dev, we need to provide the metaplex dev upload file url
-    env: "devnet"
+    name: "Learning Strata Token",
+    symbol: "luvSTRAT",
+    uri: "https://strataprotocol.com/luvSTRAT.json",
   },
   ignoreIfExists: true, // If a Social Token already exists for this name, ignore.
   tokenBondingParams: {
