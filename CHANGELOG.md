@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.5.5]
 
 ### Added
-  - Abili
+  - Ability to update metadata
+
+### Removed
+
+  - Ability to upload to arweave directly from SplTokenCollective. This should be done separately, and passed via the `metadata.uri` field.
+
 ## [0.5.4]
 ### Changed
 
