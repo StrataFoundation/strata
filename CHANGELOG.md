@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0]
+
+Minor version bumping it because the below changes included some interface changes, and should have been at least a minor bump
+
+### Added
+  - React components, starting with `Swap` to `react` package
+
 ## [0.5.5]
 
 ### Added
