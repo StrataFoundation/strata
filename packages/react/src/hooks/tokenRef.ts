@@ -18,15 +18,11 @@ import {
 import { UseAccountState } from "./useAccount";
 import { IUseTokenMetadataResult, useTokenMetadata } from "./useTokenMetadata";
 
-export const WUMBO_TWITTER_TLD = new PublicKey(
-  "Fhqd3ostRQQE65hzoA7xFMgT9kge2qPnsTNAKuL2yrnx"
-);
-
 export async function getTwitterClaimedTokenRefKey(
   connection: Connection,
   handle: string,
   collective: PublicKey = PublicKey.default,
-  tld: PublicKey = WUMBO_TWITTER_TLD
+  tld: PublicKey
 ): Promise<PublicKey> {
   const owner = (await getTwitterRegistry(connection, handle, tld)).owner;
 
@@ -44,7 +40,7 @@ export async function getTwitterClaimedTokenRefKey(
 export async function getTwitterUnclaimedTokenRefKey(
   handle: string,
   collective: PublicKey = SplTokenCollective.OPEN_COLLECTIVE_ID,
-  tld: PublicKey = WUMBO_TWITTER_TLD
+  tld: PublicKey
 ): Promise<PublicKey> {
   const name = await getTwitterRegistryKey(handle, tld);
 
@@ -63,7 +59,7 @@ export async function getTwitterUnclaimedTokenRefKey(
 export const useUnclaimedTwitterTokenRefKey = (
   name: string | undefined,
   collective: PublicKey | undefined = SplTokenCollective.OPEN_COLLECTIVE_ID,
-  tld: PublicKey = WUMBO_TWITTER_TLD
+  tld: PublicKey
 ): { result: PublicKey | undefined; loading: boolean } => {
   const { connection } = useConnection();
   const { result: key, loading } = useAsync(
@@ -80,7 +76,7 @@ export const useUnclaimedTwitterTokenRefKey = (
 export const useClaimedTwitterTokenRefKey = (
   name: string | undefined,
   collective: PublicKey = PublicKey.default,
-  tld: PublicKey = WUMBO_TWITTER_TLD
+  tld: PublicKey
 ): { result: PublicKey | undefined; loading: boolean } => {
   const { connection } = useConnection();
   const { result: key, loading } = useAsync(
@@ -172,10 +168,10 @@ export function useClaimedTokenRef(
 export const useTwitterTokenRef = (
   name: string | undefined,
   collective: PublicKey | undefined,
-  tld: PublicKey = WUMBO_TWITTER_TLD
+  tld: PublicKey
 ): UseAccountState<ITokenRef> => {
   const { result: claimedKey, loading: twitterLoading } =
-    useClaimedTwitterTokenRefKey(name, tld);
+    useClaimedTwitterTokenRefKey(name, collective, tld);
   const { result: unclaimedKey, loading: claimedLoading } =
     useUnclaimedTwitterTokenRefKey(name, collective, tld);
   const claimed = useTokenRef(claimedKey);
