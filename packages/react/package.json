@@ -41,6 +41,8 @@
     "path": "^0.12.7",
     "react-async-hook": "^4.0.0",
     "react-hook-form": "^7.19.5",
+    "react-hot-toast": "^2.1.1",
+    "react-icons": "^4.3.1",
     "yup": "^0.32.11"
   },
   "peerDependencies": {
