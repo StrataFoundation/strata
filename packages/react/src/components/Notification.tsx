@@ -1,6 +1,10 @@
 import {
-  Alert, AlertDescription, AlertIcon,
-  AlertTitle, Box, CloseButton
+  Alert,
+  AlertDescription,
+  AlertIcon,
+  AlertTitle,
+  Box,
+  CloseButton,
 } from "@chakra-ui/react";
 import React from "react";
 

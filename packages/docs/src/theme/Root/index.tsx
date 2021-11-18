@@ -1,7 +1,13 @@
 import "./bufferFill";
 import { Wallet } from "@site/src/contexts/Wallet";
 import { EndpointProvider } from "@site/src/contexts/Endpoint";
-import { AccountProvider, StrataSdksProvider, Notification, ErrorHandlerProvider, ThemeProvider } from "@strata-foundation/react";
+import {
+  AccountProvider,
+  StrataSdksProvider,
+  Notification,
+  ErrorHandlerProvider,
+  ThemeProvider,
+} from "@strata-foundation/react";
 import React from "react";
 import { VariablesProvider } from "./variables";
 import toast, { Toaster } from "react-hot-toast";
@@ -49,9 +55,7 @@ export default ({ children }) => {
     <>
       <EndpointProvider>
         <ThemeProvider>
-          <ErrorHandlerProvider
-            onError={onError}
-          >
+          <ErrorHandlerProvider onError={onError}>
             <Wallet>
               <StrataSdksProvider>
                 <AccountProvider>
@@ -73,4 +77,4 @@ export default ({ children }) => {
       </EndpointProvider>
     </>
   );
-}
+};

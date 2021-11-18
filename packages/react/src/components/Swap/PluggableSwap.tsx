@@ -26,10 +26,10 @@ interface ISwapProps
     ISwapFormProps,
     "onConnectWallet" | "onFlipTokens" | "onBuyBase"
   > {
-    tokenBondingKey: PublicKey;
-    action: "buy" | "sell";
-    onSuccess(args: { ticker: string; mint: PublicKey, amount: number }): void
-  }
+  tokenBondingKey: PublicKey;
+  action: "buy" | "sell";
+  onSuccess(args: { ticker: string; mint: PublicKey; amount: number }): void;
+}
 
 export const PluggableSwap = ({
   onConnectWallet,
@@ -37,7 +37,7 @@ export const PluggableSwap = ({
   onBuyBase,
   onSuccess,
   tokenBondingKey,
-  action
+  action,
 }: ISwapProps) => {
   const [buy, { loading: buyLoading, error: buyError }] = useBuy();
   const [sell, { loading: sellLoading, error: sellError }] = useSell();
@@ -49,7 +49,8 @@ export const PluggableSwap = ({
   );
   const isBuying = action === "buy";
 
-  const { info: tokenBonding, loading: tokenBondingLoading } = useTokenBonding(tokenBondingKey);
+  const { info: tokenBonding, loading: tokenBondingLoading } =
+    useTokenBonding(tokenBondingKey);
 
   const {
     image: baseImage,
@@ -64,7 +65,6 @@ export const PluggableSwap = ({
     error: targetMetaError,
   } = useTokenMetadata(tokenBonding?.targetMint);
 
-
   const { loading: curveLoading, curve } = useBondingPricing(
     tokenBonding?.publicKey
   );
@@ -72,7 +72,9 @@ export const PluggableSwap = ({
 
   const { amount: ownedSol, loading: solLoading } = useSolOwnedAmount();
   const ownedBaseNormal = useOwnedAmount(tokenBonding?.baseMint);
-  const isBaseSol = tokenBonding?.baseMint.equals(SplTokenBonding.WRAPPED_SOL_MINT);
+  const isBaseSol = tokenBonding?.baseMint.equals(
+    SplTokenBonding.WRAPPED_SOL_MINT
+  );
   const ownedBase = isBaseSol ? ownedSol : ownedBaseNormal;
   const ownedTarget = useOwnedAmount(tokenBonding?.targetMint);
   const { handleErrors } = useErrorHandler();
@@ -158,7 +160,7 @@ export const PluggableSwap = ({
         onSuccess({
           mint: publicKey,
           amount: values.bottomAmount,
-          ticker: isBuying ? target.ticker : base.ticker
+          ticker: isBuying ? target.ticker : base.ticker,
         });
       } catch (e: any) {
         setInternalError(e);

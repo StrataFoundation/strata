@@ -8,7 +8,10 @@ import { sendAndConfirmRawTransaction } from "@solana/web3.js";
  *
  * @returns
  */
-export function useProvider(): { provider: Provider | undefined, awaitingApproval: boolean } {
+export function useProvider(): {
+  provider: Provider | undefined;
+  awaitingApproval: boolean;
+} {
   const { connection } = useConnection();
   const { adapter } = useWallet();
   const [awaitingApproval, setAwaitingApproval] = React.useState(false);
@@ -38,7 +41,11 @@ export function useProvider(): { provider: Provider | undefined, awaitingApprova
             signed.partialSign(kp!);
           });
         const rawTx = signed.serialize();
-        const txId = await sendAndConfirmRawTransaction(connection, rawTx, opts);
+        const txId = await sendAndConfirmRawTransaction(
+          connection,
+          rawTx,
+          opts
+        );
         return txId;
       } finally {
         setAwaitingApproval(false);

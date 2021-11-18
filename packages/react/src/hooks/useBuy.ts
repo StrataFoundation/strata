@@ -6,7 +6,11 @@ import BN from "bn.js";
 import { useStrataSdks } from "./";
 
 export const useBuy = (): [
-  (tokenBonding: PublicKey, baseAmount: number, slippage: number) => Promise<void>,
+  (
+    tokenBonding: PublicKey,
+    baseAmount: number,
+    slippage: number
+  ) => Promise<void>,
   { data: any; loading: boolean; error: Error | undefined }
 ] => {
   const { connected, publicKey } = useWallet();

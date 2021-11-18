@@ -1,21 +1,36 @@
 import {
-  Box, Button, Center, Divider, Flex, HStack, Icon, IconButton, Input,
+  Box,
+  Button,
+  Center,
+  Divider,
+  Flex,
+  HStack,
+  Icon,
+  IconButton,
+  Input,
   InputGroup,
-  InputRightElement, Link, Menu,
-  MenuButton, ScaleFade, Text, Tooltip, VStack
+  InputRightElement,
+  Link,
+  Menu,
+  MenuButton,
+  ScaleFade,
+  Text,
+  Tooltip,
+  VStack,
 } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
-import { IPricingCurve, ITokenBonding, SplTokenBonding } from "@strata-foundation/spl-token-bonding";
+import {
+  IPricingCurve,
+  ITokenBonding,
+  SplTokenBonding,
+} from "@strata-foundation/spl-token-bonding";
 import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { RiArrowUpDownFill, RiInformationLine } from "react-icons/ri";
 import * as yup from "yup";
-import {
-  useFtxPayLink,
-  useProvider
-} from "../../hooks";
+import { useFtxPayLink, useProvider } from "../../hooks";
 
 export interface ISwapFormValues {
   topAmount: number;
@@ -143,7 +158,7 @@ export const SwapForm = ({
           tokenBonding.buyBaseRoyaltyPercentage,
           tokenBonding.buyTargetRoyaltyPercentage
         );
-  
+
         setValue("bottomAmount", roundToDecimals(buyMax, 9));
         setRate(`${roundToDecimals(buyMax / topAmount, 9)}`);
       } else {
@@ -152,11 +167,11 @@ export const SwapForm = ({
           tokenBonding.sellBaseRoyaltyPercentage,
           tokenBonding.sellTargetRoyaltyPercentage
         );
-  
+
         setValue("bottomAmount", roundToDecimals(sellMax, 9));
         setRate(`${roundToDecimals(sellMax / topAmount, 9)}`);
       }
-      
+
       setFee(`${feeAmount}`);
     } else {
       reset({ slippage: slippage });
@@ -416,7 +431,12 @@ export const SwapForm = ({
                 </Tooltip>
               </HStack>
               <Flex>
-                {humanReadablePercentage(isBuying ? tokenBonding.buyBaseRoyaltyPercentage : tokenBonding.sellBaseRoyaltyPercentage)}%
+                {humanReadablePercentage(
+                  isBuying
+                    ? tokenBonding.buyBaseRoyaltyPercentage
+                    : tokenBonding.sellBaseRoyaltyPercentage
+                )}
+                %
               </Flex>
             </Flex>
             <Flex justify="space-between" alignItems="center">
@@ -439,7 +459,12 @@ export const SwapForm = ({
                 </Tooltip>
               </HStack>
               <Flex>
-                {humanReadablePercentage(isBuying ? tokenBonding.buyTargetRoyaltyPercentage : tokenBonding.sellTargetRoyaltyPercentage)}%
+                {humanReadablePercentage(
+                  isBuying
+                    ? tokenBonding.buyTargetRoyaltyPercentage
+                    : tokenBonding.sellTargetRoyaltyPercentage
+                )}
+                %
               </Flex>
             </Flex>
           </VStack>

@@ -27,8 +27,8 @@ export const ErrorHandlerProvider: FC<IErrorHandlerProviderProps> = ({
 }) => {
   const handleErrors = useCallback(
     async (...errors: (Error | undefined)[]) => {
-      const actualErrors = [...new Set(errors.filter(truthy))]
-      actualErrors.map((onError))
+      const actualErrors = [...new Set(errors.filter(truthy))];
+      actualErrors.map(onError);
     },
     [onError]
   );

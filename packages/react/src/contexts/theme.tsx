@@ -52,7 +52,5 @@ export const theme = extendTheme({
 
 export const ThemeProvider: FC = ({ children }) => (
   // @ts-ignore
-  <ChakraThemeProvider theme={theme}>
-    {children}
-  </ChakraThemeProvider>
+  <ChakraThemeProvider theme={theme}>{children}</ChakraThemeProvider>
 );
