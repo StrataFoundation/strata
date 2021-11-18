@@ -89,7 +89,7 @@ export function useAccount<T>(
     return () => {
       dispose();
     };
-  }, [cache, id, parser]);
+  }, [cache, id, !parser]); // only trigger on change to parser if it wasn't defined before.
 
   return state;
 }

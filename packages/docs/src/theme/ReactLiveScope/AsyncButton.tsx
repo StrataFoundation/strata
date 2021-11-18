@@ -75,7 +75,7 @@ const AsyncButton = ({ code, scope, name, deps }) => {
   const { connected, publicKey } = useWallet();
   const sdks = useStrataSdks();
   const { connection } = useConnection();
-  const provider = useProvider();
+  const { provider } = useProvider();
   const { endpoint, setEndpoint } = useEndpoint();
 
   var vars = {}; // Outer variable, not stored.

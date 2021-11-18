@@ -3,7 +3,10 @@ import { PublicKey } from "@solana/web3.js";
 import { ITokenWithMetaAndAccount } from "@strata-foundation/spl-token-collective";
 import {
   decodeMetadata,
+  Edition,
   getMetadata,
+  MasterEditionV1,
+  MasterEditionV2,
   Metadata,
   SplTokenMetadata,
 } from "@strata-foundation/spl-utils";
@@ -19,6 +22,8 @@ export interface IUseTokenMetadataResult extends ITokenWithMetaAndAccount {
   loading: boolean;
   error: Error | undefined;
 }
+
+const parser = (_: any, acct: any) => decodeMetadata(acct.data);
 
 /**
  * Get the token account and all metaplex + token collective metadata around the token
@@ -39,10 +44,6 @@ export function useTokenMetadata(
     [token?.toBase58()]
   );
   const metadataAccountKey = usePublicKey(metadataAccountKeyStr);
-  const parser = useMemo(
-    () => (_: any, acct: any) => decodeMetadata(acct.data),
-    []
-  );
 
   const { info: metadata, loading: accountLoading } = useAccount(
     metadataAccountKey,
@@ -50,12 +51,15 @@ export function useTokenMetadata(
   );
 
   const { tokenMetdataSdk: splTokenMetdataSdk } = useStrataSdks();
-  const getEditionInfo = splTokenMetdataSdk
+  const getEditionInfo: (metadata: Metadata | undefined) => Promise<{
+    edition?: Edition;
+    masterEdition?: MasterEditionV1 | MasterEditionV2;
+  }> = splTokenMetdataSdk
     ? splTokenMetdataSdk.getEditionInfo
-    : () => Promise.resolve([]);
+    : () => Promise.resolve({});
   const { result: editionInfo } = useAsync(
     async (metadata: Metadata | undefined) =>
-      (await splTokenMetdataSdk?.getEditionInfo(metadata)) || [],
+      (await getEditionInfo(metadata)) || [],
     [metadata]
   );
 

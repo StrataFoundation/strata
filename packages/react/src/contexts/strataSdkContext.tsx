@@ -48,7 +48,7 @@ async function getSdks(provider: Provider | undefined): Promise<IStrataSdks> {
 }
 
 export const StrataSdksProvider: React.FC = ({ children }) => {
-  const provider = useProvider();
+  const { provider } = useProvider();
   const { result, loading, error } = useAsync(getSdks, [provider]);
   const sdks = useMemo(
     () => ({

@@ -85,7 +85,7 @@ Strata is truly your canvas. You can customize everything from your curve's shap
 This might sound complicated, but with sane defaults you don't have to reach under the hood. Don't believe us? Create a social token on devnet _right now_
 
 ```jsx async name=create_social
-var { mint } = await tokenCollectiveSdk.createSocialToken({
+var { tokenBonding } = await tokenCollectiveSdk.createSocialToken({
   ignoreIfExists: true, // If a Social Token already exists for this wallet, ignore.
   metadata: {
     name: "Learning Strata Token",
@@ -103,19 +103,13 @@ var { mint } = await tokenCollectiveSdk.createSocialToken({
 Now display it in React!
 ```jsx live
  function TokenDisplay() {
-   const { mint } = useVariables(); // Getting mint from above
-   const { image, metadata, loading: metaLoading } = useTokenMetadata(mint);
-   if (metaLoading) {
-     return <div>Loading...</div>
+   const { tokenBonding } = useVariables(); // Getting token bonding from above code;
+   
+   if (tokenBonding) {
+      return <Swap tokenBondingKey={tokenBonding} />
    }
 
-   return <div>
-    <img style={{ width: "50px", height: "50px" }} src={image} />
-    { metadata && <div>
-      <div><b>{metadata.data.name}</b></div>
-      <div>{metadata.data.symbol}</div>
-    </div> }
-   </div>
+   return <div>Please run the code block above</div>
  }
 ```
 

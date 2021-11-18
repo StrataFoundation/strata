@@ -6,7 +6,11 @@ import BN from "bn.js";
 import { useStrataSdks } from "./";
 
 export const useBuy = (): [
-  (tokenBonding: PublicKey, amount: number, maxPrice: number) => Promise<void>,
+  (
+    tokenBonding: PublicKey,
+    baseAmount: number,
+    slippage: number
+  ) => Promise<void>,
   { data: any; loading: boolean; error: Error | undefined }
 ] => {
   const { connected, publicKey } = useWallet();
@@ -22,7 +26,7 @@ export const useBuy = (): [
 
     await tokenBondingSdk!.buy({
       tokenBonding,
-      desiredTargetAmount: new BN(Math.floor(amount * Math.pow(10, 9))),
+      baseAmount: amount,
       slippage,
     });
   });

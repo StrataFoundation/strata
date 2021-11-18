@@ -31,7 +31,7 @@ import {
 } from "@solana/wallet-adapter-wallets";
 import { Data } from "@strata-foundation/spl-utils";
 import { clusterApiUrl } from "@solana/web3.js";
-import { AccountProvider, StrataSdksProvider, useBondingPricing, useStrataSdks, useTokenBonding, useTokenMetadata, useTokenRef } from "@strata-foundation/react";
+import { ThemeProvider, AccountProvider, StrataSdksProvider, useBondingPricing, useStrataSdks, useTokenBonding, useTokenMetadata, useTokenRef, ErrorHandlerProvider } from "@strata-foundation/react";
 import React, { useMemo } from "react";
 
 // Default styles that can be overridden by your app
@@ -68,15 +68,17 @@ export const Wallet: FC = ({ children }) => {
 };
 
 export default ({ children }) => (
-  <>
-    <Wallet>
-      <StrataSdksProvider>
-        <AccountProvider>
-          {children}
-        </AccountProvider>
-      </StrataSdksProvider>
-    </Wallet>
-  </>
+  <ThemeProvider>
+    <ErrorHandlerProvider>
+      <Wallet>
+        <StrataSdksProvider>
+          <AccountProvider>
+            {children}
+          </AccountProvider>
+        </StrataSdksProvider>
+      </Wallet>
+    </ErrorHandlerProvider>
+  </ThemeProvider>
 );
 ```
 
@@ -100,6 +102,26 @@ metadata: {
   }
 });
 ```
+
+Now display it in React! We can use an advanced, pre-canned trade form:
+
+```js
+ import { Swap } from "@strata-foundation/react";
+```
+
+```jsx live
+ function TokenDisplay() {
+   const { tokenBonding } = useVariables(); // Getting token bonding from above code;
+   
+   if (tokenBonding) {
+      return <Swap tokenBondingKey={tokenBonding} />
+   }
+
+   return <div>Please run the code block above</div>
+ }
+```
+
+Or, we can render it ourselves using hooks:
 
 ```js
  import { useTokenMetadata, useTokenRef, useBondingPricing } from "@strata-foundation/react";

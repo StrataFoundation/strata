@@ -56,3 +56,11 @@ html[data-theme='light'] {
 html[data-theme='dark'] .docusaurus-highlight-code-line {
   background-color: #23273B;
 }
+
+.chakra-button {
+  border: none;
+}
+
+.chakra-text {
+  margin: 0;
+}

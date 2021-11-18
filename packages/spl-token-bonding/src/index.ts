@@ -434,6 +434,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
   state: ProgramStateV0 | undefined;
 
   static ID = new PublicKey("TBondz6ZwSM5fs4v2GpnVBMuwoncPkFLFR9S422ghhN");
+  static WRAPPED_SOL_MINT = new PublicKey(
+    "Gjzxxh8UbFyrA4meWLSXGEA8UXeoMPZaFkCxn3WCo7V4"
+  );
 
   static async init(
     provider: Provider,

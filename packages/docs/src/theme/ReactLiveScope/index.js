@@ -24,6 +24,17 @@ function BrowserOnlyAsyncButton(props) {
   );
 }
 
+function Swap(props) {
+  return (
+    <BrowserOnly fallback={<div>...</div>}>
+      {() => {
+        const Component = require("@strata-foundation/react").Swap;
+        return <Component {...props} />;
+      }}
+    </BrowserOnly>
+  );
+}
+
 // Add react-live imports you need here
 const ReactLiveScope = {
   Data,
@@ -42,6 +53,7 @@ const ReactLiveScope = {
   React,
   AccountLayout,
   TOKEN_PROGRAM_ID,
+  Swap,
   AsyncButton: BrowserOnlyAsyncButton,
   BN,
   SplTokenBonding,
