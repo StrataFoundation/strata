@@ -16,7 +16,6 @@ import { useClaimedTokenRef } from "./tokenRef";
 import { useAccount } from "./useAccount";
 import { useAssociatedAccount } from "./useAssociatedAccount";
 import { useMint } from "./useMint";
-import { useMemo } from "react";
 
 export interface IUseTokenMetadataResult extends ITokenWithMetaAndAccount {
   loading: boolean;
@@ -50,12 +49,12 @@ export function useTokenMetadata(
     parser
   );
 
-  const { tokenMetdataSdk: splTokenMetdataSdk } = useStrataSdks();
+  const { tokenMetadataSdk: splTokenMetadataSdk } = useStrataSdks();
   const getEditionInfo: (metadata: Metadata | undefined) => Promise<{
     edition?: Edition;
     masterEdition?: MasterEditionV1 | MasterEditionV2;
-  }> = splTokenMetdataSdk
-    ? splTokenMetdataSdk.getEditionInfo
+  }> = splTokenMetadataSdk
+    ? splTokenMetadataSdk.getEditionInfo
     : () => Promise.resolve({});
   const { result: editionInfo } = useAsync(
     async (metadata: Metadata | undefined) =>

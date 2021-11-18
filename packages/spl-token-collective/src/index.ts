@@ -301,7 +301,7 @@ function undefinedToNull(obj: any | undefined): any | null {
   return obj;
 }
 
-function toIdlTokenMetdataSettings(
+function toIdlTokenMetadataSettings(
   settings: ITokenMetadataSettings | undefined
 ): TokenMetadataSettingsV0 {
   return {
@@ -377,7 +377,7 @@ function toIdlConfig(config: ICollectiveConfig): CollectiveConfigV0 {
       config.claimedTokenBondingSettings
     ),
     // @ts-ignore
-    unclaimedTokenMetadataSettings: toIdlTokenMetdataSettings(
+    unclaimedTokenMetadataSettings: toIdlTokenMetadataSettings(
       config.unclaimedTokenMetadataSettings
     ),
   };

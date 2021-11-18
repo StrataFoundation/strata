@@ -1,6 +1,6 @@
 {
   "name": "@strata-foundation/spl-token-collective",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Interface to the spl-token-collective smart contract",
   "publishConfig": {
     "access": "public",
