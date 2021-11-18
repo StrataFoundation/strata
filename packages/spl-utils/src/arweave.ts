@@ -15,7 +15,7 @@ export const AR_SOL_HOLDER_ID = new PublicKey(
 export const ARWEAVE_UPLOAD_URL = process.env.REACT_APP_ARWEAVE_UPLOAD_URL || "https://us-central1-metaplex-studios.cloudfunctions.net/uploadFile";
 // export const ARWEAVE_UPLOAD_URL = process.env.REACT_APP_ARWEAVE_UPLOAD_URL || "https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile4";
 
-export const MEMO_ID = new PublicKey(
+const MEMO_ID = new PublicKey(
   'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr',
 );
 
