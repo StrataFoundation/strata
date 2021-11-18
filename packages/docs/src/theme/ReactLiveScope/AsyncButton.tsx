@@ -124,7 +124,8 @@ const AsyncButton = ({ code, scope, name, deps }) => {
     throw error;
   }
 
-  const fullLoading = loading || !sdks.tokenBondingSdk || !sdks.tokenCollectiveSdk;
+  const fullLoading =
+    loading || !sdks.tokenBondingSdk || !sdks.tokenCollectiveSdk;
 
   if (endpoint.includes("mainnet")) {
     return (
@@ -143,7 +144,9 @@ const AsyncButton = ({ code, scope, name, deps }) => {
 
   return (
     <div className={styles.container}>
-      {(!sdks.tokenBondingSdk || !sdks.tokenCollectiveSdk) && <div>Loading SDK...</div>}
+      {(!sdks.tokenBondingSdk || !sdks.tokenCollectiveSdk) && (
+        <div>Loading SDK...</div>
+      )}
       {loading && !runningThisCommand && (
         <div>Running previous commands...</div>
       )}

@@ -173,7 +173,7 @@ export interface ICreateSocialTokenArgs {
      * If the collective has a default URI configured, you can just not pass this
      * **Default:** {@link ICollectiveConfig.unclaimedTokenMetadataSettings.uri} */
     uri?: string;
-  },
+  };
   /** The wallet to create this social token under, defaults to `provider.wallet` */
   owner?: PublicKey;
   /**
@@ -1114,9 +1114,11 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     let uri = metadataUri || config.unclaimedTokenMetadataSettings?.uri;
 
     if (!uri) {
-      throw new Error("Must pass metadata.uri or it must be defined on the collective config");
+      throw new Error(
+        "Must pass metadata.uri or it must be defined on the collective config"
+      );
     }
-    
+
     const {
       instructions: metadataInstructions,
       signers: metadataSigners,
