@@ -5,15 +5,16 @@ tags: [welcome, vision]
 authors: [noah,bry]
 ---
 
+Strata is a protocol for Community driven Social Tokens, powered by [Solana](https://solana.com/). It is the fastest and least expensive way to create, manage, and build economies of Social Tokens
 
-Built on [Solana](https://solana.com/), the Strata Protocol is the fastest and least expensive way to create, manage, and build economies of Social Tokens.
-
-We are here to give builders the primitives they need to launch the **Cooperation Economy**. 
+Strata is for builders and entrepreneurs, providing primitives to launch their own token-driven business models. 
 
 The goal is simple: make it easier for talented people to work together on launching productive networks and communities. 
-Strata Social Tokens empower the individual, while Strata Collectives make it possible to pool resources to build powerful shared incentive structures.
+Strata Social Tokens empower the individual, while Strata Collectives make it possible to pool resources to build powerful shared incentive structures. This will fuel not just the Creator Economy, but a new
+ **Cooperation Economy**. 
 
-### Want to go straight to the code?
+
+### Want to go straight to building?
 import Link from '@docusaurus/Link';
 
 export const CTA = () => <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "12px" }}>
@@ -87,11 +88,9 @@ This might sound complicated, but with sane defaults you don't have to reach und
 var { mint } = await tokenCollectiveSdk.createSocialToken({
   ignoreIfExists: true, // If a Social Token already exists for this wallet, ignore.
   metadata: {
-    name: "The I Love Strata Token",
+    name: "Learning Strata Token",
     symbol: "luvSTRAT",
-    image: "https://i.ibb.co/jWSsJW6/logo.png",
-    // Because this is dev, we need to provide the metaplex dev upload file url
-    uploadUrl: "https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2"
+    uri: "https://strataprotocol.com/luvSTRAT.json",
   },
   tokenBondingParams: {
     buyBaseRoyaltyPercentage: 0,

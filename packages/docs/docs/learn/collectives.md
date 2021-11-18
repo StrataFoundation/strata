@@ -37,10 +37,8 @@ var curve = await tokenBondingSdk.initializeCurve({
 var { collective, tokenBonding } = await tokenCollectiveSdk.createCollective({
   metadata: {
     name: "My Collective",
-    symbol: "tCOLL", 
-    image: "https://i.ibb.co/zxWkRv1/doge.jpg",
-    // Because this is dev, we need to provide the metaplex dev upload file url
-    uploadUrl: "https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2"
+    symbol: "tCOLL",
+    uri: "https://strataprotocol.com/tCOLL.json",
   },
   bonding: {
     curve,
@@ -107,9 +105,7 @@ var { collective, tokenBonding } = await tokenCollectiveSdk.createCollective({
   metadata: {
     name: "My Restrictive Collective",
     symbol: "tCOLL", 
-    image: "https://i.ibb.co/zxWkRv1/doge.jpg",
-    // Because this is dev, we need to provide the metaplex dev upload file url
-    uploadUrl: "https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2"
+    uri: "https://strataprotocol.com/tCOLL.json"
   },
   bonding: {
     curve,

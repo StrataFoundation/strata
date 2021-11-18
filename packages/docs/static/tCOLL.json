@@ -1,0 +1,7 @@
+{
+  "name": "The I Love Strata Token",
+  "sumbol": "luvSTRAT",
+  "description": "The token of the Open Collective, a Strata collective that anyone can join for free",
+  "image": "https://strata-token-metadata.s3.us-east-2.amazonaws.com/logo.png",
+  "seller_fee_basis_points": 0
+}

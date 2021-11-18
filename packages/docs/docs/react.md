@@ -86,12 +86,10 @@ Let's create a simple social token for testing, then display it:
 ```jsx async name=create_social
 var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
   ignoreIfExists: true, // If a Social Token already exists for this wallet, ignore.
-  metadata: {
-    name: "My Test Token",
-    symbol: "TEST",
-    image: "https://i.ibb.co/zxWkRv1/doge.jpg",
-    // Because this is dev, we need to provide the metaplex dev upload file url
-    uploadUrl: "https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile2"
+metadata: {
+    name: "Learning Strata Token",
+    symbol: "luvSTRAT",
+    uri: "https://strataprotocol.com/luvSTRAT.json",
   },
   tokenBondingParams: {
     buyBaseRoyaltyPercentage: 0,

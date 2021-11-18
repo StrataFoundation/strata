@@ -36,6 +36,7 @@ import {
   SplTokenMetadata,
   TypedAccountParser,
   updateMetadata,
+  ArweaveEnv,
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
 import {
@@ -69,10 +70,10 @@ export interface ICreateCollectiveArgs {
    * Reccommended to always fill this out so that your token displays with a name, symbol, and image.
    */
   metadata?: ICreateArweaveUrlArgs & {
-    /** The metaplex file upload url to use. For devnet, needs to be uploadFile2, prod is uploadFileProd2 url. TODO: Once small file support is added, switch to uploadFile4 */
-    uploadUrl?: string;
+    /** The arweave env to use when uploading */
+    env?: ArweaveEnv;
+    uri?: string /** Don't do an arweave upload, just use this url for the json token metadata */;
   };
-  metadataUri?: string /** Override the above by providing an existing link to the json metadata */;
   /**
    * If `mint` is not provided, create a bonding curve automatically for this collective.
    */
@@ -175,12 +176,12 @@ export interface ICreateSocialTokenArgs {
      * **Default:** false
      */
     useCollectiveDefaultUri?: boolean;
+    uri?: string /** Don't do an arweave upload, just use this url for the json token metadata */;
     /**
-     * The metaplex file upload url to use. For devnet, needs to be uploadFile2, prod is uploadFileProd2 url. TODO: Once small file support is added, switch to uploadFile4
+     * The metaplex file upload env to use. For devnet, needs to be "devnet"
      */
-    uploadUrl?: string;
+    env?: ArweaveEnv;
   };
-  metadataUri?: string /** Override the above by providing an existing link to the json metadata */;
   /** The wallet to create this social token under, defaults to `provider.wallet` */
   owner?: PublicKey;
   /**
@@ -510,25 +511,28 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     config,
     bonding,
     metadata,
-    metadataUri,
   }: ICreateCollectiveArgs): Promise<
     BigInstructionResult<{ collective: PublicKey; tokenBonding?: PublicKey }>
   > {
     const programId = this.programId;
     const instructions: TransactionInstruction[] = [];
     const signers: Signer[] = [];
+    let metadataUri = metadata?.uri;
 
     let metadataAdded = false;
     const addMetadata = async () => {
       if (metadata && !metadataAdded) {
         if (!metadataUri) {
           const { files, txid } =
-            await this.splTokenMetadata.presignCreateArweaveUrl(metadata);
+            await this.splTokenMetadata.presignCreateArweaveUrl({
+              ...metadata,
+              env: metadata.env,
+            });
           metadataUri = await this.splTokenMetadata.getArweaveUrl({
             txid,
             files,
             mint: mint!,
-            uploadUrl: metadata.uploadUrl,
+            env: metadata.env,
           });
         }
         const { instructions: metadataInstructions, signers: metadataSigners } =
@@ -1041,7 +1045,6 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     owner,
     targetMintKeypair = anchor.web3.Keypair.generate(),
     metadata,
-    metadataUri,
     nameClass,
     nameParent,
     tokenBondingParams,
@@ -1054,6 +1057,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       mint: PublicKey;
     }>
   > {
+    let metadataUri = metadata?.uri;
     if (!owner && !name) {
       owner = this.wallet.publicKey;
     }
@@ -1136,7 +1140,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
         txid,
         files,
         mint: targetMint!,
-        uploadUrl: metadata.uploadUrl,
+        env: metadata.env,
       });
     }
 
