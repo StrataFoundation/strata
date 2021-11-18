@@ -24,7 +24,7 @@ import * as anchor from "@project-serum/anchor";
 import { BN } from "bn.js";
 import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
-import { getAssociatedAccountBalance } from "@strata-foundation/spl-utils";
+import { getAssociatedAccountBalance, SplTokenMetadata } from "@strata-foundation/spl-utils";
 
 anchor.setProvider(anchor.Provider.local());
 const provider = anchor.getProvider();
@@ -33,9 +33,11 @@ const tokenCollectiveSdk, tokenBondingSdk;
 async function getPrograms() {
   tokenCollectiveSdk = await SplTokenCollective.init(provider);
   tokenBondingSdk = await SplTokenBonding.init(provider);
+  tokenMetadataSdk = await SplTokenMetadata.init(provider);
   return {
     tokenCollectiveSdk,
-    tokenBondingSdk
+    tokenBondingSdk,
+    tokenMetadataSdk
   }
 }
 getPrograms().catch(console.error);

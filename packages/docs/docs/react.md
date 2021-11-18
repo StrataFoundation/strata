@@ -29,6 +29,7 @@ import {
   getSolletExtensionWallet,
   getSolletWallet
 } from "@solana/wallet-adapter-wallets";
+import { Data } from "@strata-foundation/spl-utils";
 import { clusterApiUrl } from "@solana/web3.js";
 import { AccountProvider, StrataSdksProvider, useBondingPricing, useStrataSdks, useTokenBonding, useTokenMetadata, useTokenRef } from "@strata-foundation/react";
 import React, { useMemo } from "react";
@@ -134,4 +135,21 @@ metadata: {
     </div> }
    </div>
  }
+```
+
+We can use the token metadata sdk to update the token symbol, name, and image:
+
+```jsx async name=update deps=create_social
+var tokenRefAcct = await tokenCollectiveSdk.account.tokenRefV0.fetch(tokenRef);
+
+await tokenMetadataSdk.updateMetadata({
+  metadata: tokenRefAcct.tokenMetadata,
+  data: new Data({
+    name: "Learned Strata Token",
+    symbol: "learnStrat",
+    uri: "https://strataprotocol.com/learnSTRAT.json",
+    sellerFeeBasisPoint: 0,
+    creators: null
+  })
+})
 ```

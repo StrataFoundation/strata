@@ -54,6 +54,7 @@ export const StrataSdksProvider: React.FC = ({ children }) => {
     () => ({
       tokenCollectiveSdk: result?.tokenCollectiveSdk,
       tokenBondingSdk: result?.tokenBondingSdk,
+      tokenMetadataSdk: result?.tokenMetdataSdk,
       error,
       loading,
     }),

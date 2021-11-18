@@ -69,10 +69,10 @@ export interface ICreateCollectiveArgs {
    *
    * Reccommended to always fill this out so that your token displays with a name, symbol, and image.
    */
-  metadata?: ICreateArweaveUrlArgs & {
-    /** The arweave env to use when uploading */
-    env?: ArweaveEnv;
-    uri?: string /** Don't do an arweave upload, just use this url for the json token metadata */;
+  metadata?: {
+    name: string;
+    symbol: string;
+    uri: string;
   };
   /**
    * If `mint` is not provided, create a bonding curve automatically for this collective.
@@ -166,22 +166,14 @@ export interface ICreateSocialTokenArgs {
    *
    * Reccommended to fill this out so that your token displays with a name, symbol, and image.
    */
-  metadata: ICreateArweaveUrlArgs & {
-    /**
-     * Getting a uri for token metadata is a process that involves a separate transaction and an upload to arweave.
-     *
-     * To save time and effort, this will use the {@link ICollectiveConfig.unclaimedTokenMetadataSettings.uri}. While the name and symbol will not match properly, the name
-     * and symbol on chain will be correct.
-     *
-     * **Default:** false
-     */
-    useCollectiveDefaultUri?: boolean;
-    uri?: string /** Don't do an arweave upload, just use this url for the json token metadata */;
-    /**
-     * The metaplex file upload env to use. For devnet, needs to be "devnet"
-     */
-    env?: ArweaveEnv;
-  };
+  metadata: {
+    name: string;
+    symbol: string;
+    /** Getting a URI for token metadata can be an expensive process that involves a separate transaction
+     * If the collective has a default URI configured, you can just not pass this
+     * **Default:** {@link ICollectiveConfig.unclaimedTokenMetadataSettings.uri} */
+    uri?: string;
+  },
   /** The wallet to create this social token under, defaults to `provider.wallet` */
   owner?: PublicKey;
   /**
@@ -522,19 +514,6 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     let metadataAdded = false;
     const addMetadata = async () => {
       if (metadata && !metadataAdded) {
-        if (!metadataUri) {
-          const { files, txid } =
-            await this.splTokenMetadata.presignCreateArweaveUrl({
-              ...metadata,
-              env: metadata.env,
-            });
-          metadataUri = await this.splTokenMetadata.getArweaveUrl({
-            txid,
-            files,
-            mint: mint!,
-            env: metadata.env,
-          });
-        }
         const { instructions: metadataInstructions, signers: metadataSigners } =
           await this.splTokenMetadata.createMetadataInstructions({
             mint: mint!,
@@ -542,8 +521,8 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
             data: new Data({
               name: metadata.name,
               symbol: metadata.symbol,
-              uri: metadataUri,
-              creators: metadata.creators ? metadata.creators : null,
+              uri: metadata.uri,
+              creators: null,
               sellerFeeBasisPoints: 0,
             }),
           });
@@ -1133,17 +1112,11 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
 
     // @ts-ignore
     let uri = metadataUri || config.unclaimedTokenMetadataSettings?.uri;
-    if (!metadata.useCollectiveDefaultUri && !metadataUri) {
-      const { files, txid } =
-        await this.splTokenMetadata.presignCreateArweaveUrl(metadata);
-      uri = await this.splTokenMetadata.getArweaveUrl({
-        txid,
-        files,
-        mint: targetMint!,
-        env: metadata.env,
-      });
-    }
 
+    if (!uri) {
+      throw new Error("Must pass metadata.uri or it must be defined on the collective config");
+    }
+    
     const {
       instructions: metadataInstructions,
       signers: metadataSigners,
@@ -1155,7 +1128,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
         name: metadata.name,
         symbol: metadata.symbol,
         uri,
-        creators: metadata.creators ? metadata.creators : null,
+        creators: null,
         sellerFeeBasisPoints: 0,
       }),
     });
