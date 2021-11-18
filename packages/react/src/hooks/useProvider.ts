@@ -8,9 +8,10 @@ import { sendAndConfirmRawTransaction } from "@solana/web3.js";
  *
  * @returns
  */
-export function useProvider(): Provider | undefined {
+export function useProvider(): { provider: Provider | undefined, awaitingApproval: boolean } {
   const { connection } = useConnection();
   const { adapter } = useWallet();
+  const [awaitingApproval, setAwaitingApproval] = React.useState(false);
   const provider = React.useMemo(() => {
     // Let adapter be null, it'll fail if anyone issues transaction commands but will let fetch go through
     // @ts-ignore
@@ -28,19 +29,24 @@ export function useProvider(): Provider | undefined {
       tx.recentBlockhash = (
         await this.connection.getRecentBlockhash(opts.preflightCommitment)
       ).blockhash;
-      const signed = await this.wallet.signTransaction(tx);
-      signers
-        .filter((s) => s !== undefined)
-        .forEach((kp) => {
-          signed.partialSign(kp!);
-        });
-      const rawTx = signed.serialize();
-      const txId = await sendAndConfirmRawTransaction(connection, rawTx, opts);
-      return txId;
+      setAwaitingApproval(true);
+      try {
+        const signed = await this.wallet.signTransaction(tx);
+        signers
+          .filter((s) => s !== undefined)
+          .forEach((kp) => {
+            signed.partialSign(kp!);
+          });
+        const rawTx = signed.serialize();
+        const txId = await sendAndConfirmRawTransaction(connection, rawTx, opts);
+        return txId;
+      } finally {
+        setAwaitingApproval(false);
+      }
     };
 
     return provider;
   }, [connection, adapter]);
 
-  return provider;
+  return { provider, awaitingApproval };
 }

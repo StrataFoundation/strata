@@ -50,6 +50,7 @@
     "react": "^17.0.1",
     "react-async-hook": "^4.0.0",
     "react-dom": "^17.0.1",
+    "react-hot-toast": "^2.1.1",
     "react-icons": "^4.3.1",
     "react-json-view": "^1.21.3",
     "rehype-katex": "4",

@@ -14,7 +14,6 @@ export interface IErrorHandlerProviderProps {
 }
 
 export interface IErrorHandlerContextState {
-  errors: null | (Error | undefined)[];
   handleErrors: (...errors: (Error | undefined)[]) => void;
 }
 
@@ -26,23 +25,17 @@ export const ErrorHandlerProvider: FC<IErrorHandlerProviderProps> = ({
   children,
   onError = (error: Error) => console.log(error),
 }) => {
-  const [errors, setErrors] = useState<(Error | undefined)[]>([]);
-
   const handleErrors = useCallback(
     async (...errors: (Error | undefined)[]) => {
-      setErrors(errors);
+      const actualErrors = [...new Set(errors.filter(truthy))]
+      actualErrors.map((onError))
     },
-    [setErrors]
+    [onError]
   );
-
-  useEffect(() => {
-    errors.filter(truthy).map(onError);
-  }, [errors, truthy, onError]);
 
   return (
     <ErrorHandlerContext.Provider
       value={{
-        errors,
         handleErrors,
       }}
     >
