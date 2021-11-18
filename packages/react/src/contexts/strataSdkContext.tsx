@@ -14,7 +14,7 @@ export const StrataSdksContext = React.createContext<IStrataSdksReactState>({
 export interface IStrataSdks {
   tokenBondingSdk?: SplTokenBonding;
   tokenCollectiveSdk?: SplTokenCollective;
-  tokenMetdataSdk?: SplTokenMetadata;
+  tokenMetadataSdk?: SplTokenMetadata;
 }
 
 export interface IStrataSdksReactState extends IStrataSdks {
@@ -39,11 +39,11 @@ async function getSdks(provider: Provider | undefined): Promise<IStrataSdks> {
 
   const tokenCollective = await tryProm(SplTokenCollective.init(provider));
   const tokenBonding = await tryProm(SplTokenBonding.init(provider));
-  const splTokenMetdataSdk = await tryProm(SplTokenMetadata.init(provider));
+  const splTokenMetadataSdk = await tryProm(SplTokenMetadata.init(provider));
   return {
     tokenCollectiveSdk: tokenCollective,
     tokenBondingSdk: tokenBonding,
-    tokenMetdataSdk: splTokenMetdataSdk,
+    tokenMetadataSdk: splTokenMetadataSdk,
   };
 }
 
@@ -54,7 +54,7 @@ export const StrataSdksProvider: React.FC = ({ children }) => {
     () => ({
       tokenCollectiveSdk: result?.tokenCollectiveSdk,
       tokenBondingSdk: result?.tokenBondingSdk,
-      tokenMetadataSdk: result?.tokenMetdataSdk,
+      tokenMetadataSdk: result?.tokenMetadataSdk,
       error,
       loading,
     }),
