@@ -73,7 +73,7 @@ const AsyncButton = ({ code, scope, name, deps }) => {
   const [variables, setVariables] = useState<any>(null);
   const [error, setError] = useState<Error>();
   const { connected, publicKey } = useWallet();
-  const { tokenCollectiveSdk, tokenBondingSdk } = useStrataSdks();
+  const sdks = useStrataSdks();
   const { connection } = useConnection();
   const provider = useProvider();
   const { endpoint, setEndpoint } = useEndpoint();
@@ -88,8 +88,7 @@ const AsyncButton = ({ code, scope, name, deps }) => {
       }
       const injectedVars = {
         provider,
-        tokenCollectiveSdk,
-        tokenBondingSdk,
+        ...sdks,
         publicKey,
         ...scope,
         ...globalVariables,
@@ -119,13 +118,14 @@ const AsyncButton = ({ code, scope, name, deps }) => {
 
   useEffect(() => {
     register(name, deps.filter(Boolean), exec);
-  }, [publicKey, tokenBondingSdk, tokenCollectiveSdk]);
+  }, [publicKey, ...Object.values(sdks)]);
 
   if (error) {
     throw error;
   }
 
-  const fullLoading = loading || !tokenBondingSdk || !tokenCollectiveSdk;
+  const fullLoading =
+    loading || !sdks.tokenBondingSdk || !sdks.tokenCollectiveSdk;
 
   if (endpoint.includes("mainnet")) {
     return (
@@ -144,7 +144,9 @@ const AsyncButton = ({ code, scope, name, deps }) => {
 
   return (
     <div className={styles.container}>
-      {(!tokenBondingSdk || !tokenCollectiveSdk) && <div>Loading SDK...</div>}
+      {(!sdks.tokenBondingSdk || !sdks.tokenCollectiveSdk) && (
+        <div>Loading SDK...</div>
+      )}
       {loading && !runningThisCommand && (
         <div>Running previous commands...</div>
       )}

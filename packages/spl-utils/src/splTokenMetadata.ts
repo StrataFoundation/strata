@@ -2,7 +2,7 @@ import { Provider } from "@project-serum/anchor";
 import { getMintInfo } from "@project-serum/common";
 import { AccountInfo as TokenAccountInfo, MintInfo } from "@solana/spl-token";
 import { PublicKey, Signer, TransactionInstruction } from "@solana/web3.js";
-import { decodeMasterEdition, InstructionResult, MetadataKey, METADATA_PROGRAM_ID, sendInstructions } from ".";
+import { decodeMasterEdition, InstructionResult, MetadataKey, METADATA_PROGRAM_ID, sendInstructions, updateMetadata } from ".";
 import { ARWEAVE_UPLOAD_URL, getFilesWithMetadata, prepPayForFilesInstructions, uploadToArweave, ArweaveEnv } from "./arweave";
 import { createMetadata, Creator, Data, decodeEdition, decodeMetadata, EDITION, Edition, IMetadataExtension, MasterEditionV1, MasterEditionV2, Metadata, MetadataCategory, METADATA_PREFIX } from "./metadata";
 
@@ -22,6 +22,13 @@ export interface ICreateMetadataInstructionsArgs {
   data: Data;
   authority?: PublicKey;
   mint: PublicKey;
+  payer?: PublicKey;
+}
+
+export interface IUpdateMetadataInstructionsArgs {
+  data?: Data | null;
+  authority?: PublicKey | null;
+  metadata: PublicKey;
   payer?: PublicKey;
 }
 
@@ -179,6 +186,11 @@ export class SplTokenMetadata {
     };
   }
 
+  async getMetadata(metadataKey: PublicKey): Promise<Metadata | null> {
+    const metadataAcc = await this.provider.connection.getAccountInfo(metadataKey)
+    return metadataAcc && decodeMetadata(metadataAcc.data);
+  }
+
   async getTokenMetadata(
     metadataKey: PublicKey
   ): Promise<ITokenWithMeta> {
@@ -316,6 +328,40 @@ export class SplTokenMetadata {
 
   async createMetadata(args: ICreateMetadataInstructionsArgs): Promise<{metadata: PublicKey}> {
     const { instructions, signers, output } = await this.createMetadataInstructions(args);
+
+    await this.sendInstructions(instructions, signers, args.payer);
+
+    return output;
+  }
+
+  async updateMetadataInstructions({
+    data,
+    authority,
+    metadata
+  }: IUpdateMetadataInstructionsArgs): Promise<InstructionResult<{ metadata: PublicKey }>> {
+    const instructions: TransactionInstruction[] = [];
+    const metadataAcct = await this.getMetadata(metadata);
+    await updateMetadata(
+      data == null ? undefined : typeof data === "undefined" ? metadataAcct?.data : data,
+      authority == null ? undefined : typeof authority === "undefined" ? metadataAcct?.updateAuthority : authority.toBase58(),
+      undefined,
+      metadataAcct!.mint,
+      metadataAcct!.updateAuthority,
+      instructions,
+      metadata.toBase58()
+    );
+
+    return {
+      instructions,
+      signers: [],
+      output: {
+        metadata
+      }
+    }
+  }
+
+  async updateMetadata(args: IUpdateMetadataInstructionsArgs): Promise<{metadata: PublicKey}> {
+    const { instructions, signers, output } = await this.updateMetadataInstructions(args);
 
     await this.sendInstructions(instructions, signers, args.payer);
 

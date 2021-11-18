@@ -127,7 +127,6 @@ describe("spl-token-collective", () => {
         metadata: {
           name: tokenName,
           symbol: tokenName.slice(0, 5),
-          useCollectiveDefaultUri: true
         },
         tokenBondingParams: {
           curve,
@@ -209,7 +208,6 @@ describe("spl-token-collective", () => {
         metadata: {
           name: "Whaddup",
           symbol: "WHAD",
-          useCollectiveDefaultUri: true
         },
         tokenBondingParams: {
           curve,

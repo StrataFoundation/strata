@@ -7,7 +7,7 @@ import { getAssociatedAccountBalance } from "@strata-foundation/spl-utils";
 import { ExponentialCurveConfig, TimeCurveConfig } from "@strata-foundation/spl-token-bonding";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, AccountLayout } from "@solana/spl-token";
-import { sendMultipleInstructions } from "@strata-foundation/spl-utils";
+import { Data, sendMultipleInstructions } from "@strata-foundation/spl-utils";
 import { createNameRegistry, getHashedName, getNameAccountKey, NameRegistryState } from "@bonfida/spl-name-service";
 import BrowserOnly from '@docusaurus/BrowserOnly';
 import { useTokenMetadata, useTokenRef, useTokenBonding, useBondingPricing } from "@strata-foundation/react";
@@ -26,6 +26,7 @@ function BrowserOnlyAsyncButton(props) {
 
 // Add react-live imports you need here
 const ReactLiveScope = {
+  Data,
   useBondingPricing,
   useTokenRef,
   useTokenBonding,
