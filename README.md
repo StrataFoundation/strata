@@ -17,10 +17,12 @@ git submodule init
 git submodule update
 ```
 
-## Bootstrap the Open Collective
+## Lerna Setup
+
+Strata uses Lerna to make it easier to develope on our JS SDKs.
 
 ```
-env ANCHOR_WALLET=~/.config/solana/id.json ANCHOR_PROVIDER_URL=https://api.devnet.solana.com yarn run bootstrap
+lerna bootstrap
 ```
 
 ## Build the deps
@@ -34,6 +36,15 @@ anchor run build-deps
 ```
 anchor test
 ```
+
+## Bootstrap the Open Collective
+
+If you wish to use this on devnet, first the open collective needs to be created. This has already been run for devent, but putting it here for the sake of completeness
+
+```
+env ANCHOR_WALLET=~/.config/solana/id.json ANCHOR_PROVIDER_URL=https://api.devnet.solana.com yarn run bootstrap
+```
+
 
 ## Development Philosophy: On Initializing vs Passing
 
