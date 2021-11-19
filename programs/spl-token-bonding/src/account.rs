@@ -171,7 +171,7 @@ pub struct InitializeTokenBondingV0<'info> {
   pub base_storage: Box<Account<'info, TokenAccount>>,
 
   #[account(
-    constraint = buy_base_royalties.mint == base_mint.key()
+    constraint = buy_base_royalties.mint == base_mint.key(),
   )]
   pub buy_base_royalties: Box<Account<'info, TokenAccount>>,
 
@@ -296,9 +296,11 @@ pub struct BuyV0<'info> {
   #[account(mut)]
   pub base_storage: Box<Account<'info, TokenAccount>>,
   #[account(mut)]
-  pub buy_base_royalties: Box<Account<'info, TokenAccount>>,
+  // Token account could have been closed. Royalties are not sent if the account has been closed, but we also don't want to fail to parse here
+  pub buy_base_royalties: AccountInfo<'info>,
   #[account(mut)]
-  pub buy_target_royalties: Box<Account<'info, TokenAccount>>,
+  // Token account could have been closed. Royalties are not sent if the account has been closed, but we also don't want to fail to parse here
+  pub buy_target_royalties: AccountInfo<'info>,
   #[account(mut)]
   pub source: Box<Account<'info, TokenAccount>>,
   pub source_authority: Signer<'info>,
@@ -328,9 +330,11 @@ pub struct SellV0<'info> {
   #[account(mut)]
   pub base_storage: Box<Account<'info, TokenAccount>>,
   #[account(mut)]
-  pub sell_base_royalties: Box<Account<'info, TokenAccount>>,
+  // Token account could have been closed. Royalties are not sent if the account has been closed, but we also don't want to fail to parse here
+  pub sell_base_royalties: AccountInfo<'info>,
   #[account(mut)]
-  pub sell_target_royalties: Box<Account<'info, TokenAccount>>,
+  // Token account could have been closed. Royalties are not sent if the account has been closed, but we also don't want to fail to parse here
+  pub sell_target_royalties: AccountInfo<'info>,
 
   #[account()]
   pub base_storage_authority: AccountInfo<'info>,
