@@ -220,7 +220,7 @@ describe("spl-token-bonding", () => {
           slippage: 0.05,
         })
         throw "Shouldn't get here"
-      } catch (e) {
+      } catch (e: any) {
         console.log(e);
         expect(e.toString()).to.equal("PassedMintCap: Passed the mint cap")
       }

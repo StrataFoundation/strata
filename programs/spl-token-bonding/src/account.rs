@@ -242,14 +242,9 @@ pub struct UpdateTokenBondingV0<'info> {
   #[account(signer)]
   pub general_authority: AccountInfo<'info>,
 
-  #[account(
-    constraint = *base_mint.to_account_info().owner == token::ID
-  )]
+  #[account()]
   pub base_mint: Box<Account<'info, Mint>>,
-  #[account(
-    constraint = target_mint.is_initialized,
-    constraint = *target_mint.to_account_info().owner == *base_mint.to_account_info().owner
-  )]
+  #[account()]
   pub target_mint: Box<Account<'info, Mint>>,
   #[account(
     constraint = buy_base_royalties.mint == base_mint.key()
@@ -304,11 +299,9 @@ pub struct BuyV0<'info> {
   pub buy_base_royalties: Box<Account<'info, TokenAccount>>,
   #[account(mut)]
   pub buy_target_royalties: Box<Account<'info, TokenAccount>>,
-
   #[account(mut)]
   pub source: Box<Account<'info, TokenAccount>>,
-  #[account(signer)]
-  pub source_authority: AccountInfo<'info>,
+  pub source_authority: Signer<'info>,
   #[account(mut)]
   pub destination: Box<Account<'info, TokenAccount>>,
   pub token_program: Program<'info, Token>,
@@ -318,9 +311,12 @@ pub struct BuyV0<'info> {
 #[derive(Accounts)]
 pub struct SellV0<'info> {
   #[account(
+    has_one = base_mint,
     has_one = target_mint,
     has_one = base_storage,
-    has_one = curve
+    has_one = curve,
+    has_one = sell_base_royalties,
+    has_one = sell_target_royalties,
   )]
   pub token_bonding: Box<Account<'info, TokenBondingV0>>,
   #[account()]
