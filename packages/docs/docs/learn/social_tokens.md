@@ -187,27 +187,111 @@ Notice that we created a non-primary social token here. Most wallets will have o
 
 Now, let's add an unclaimed token to the collective. You can read more about unclaimed tokens in [collectives](./collectives)
 
-First, create a testing name. Note that the name does not have to exist yet for us to create a token:
+Unclaimed tokens make use of the [spl-name-service](https://spl.solana.com/name-service).
+
+The name service allows you to create unique strings on chain owned by a particular wallet. A name consists of
+
+  * **Class** - The name class must sign the issuance of a name.  
+  * **Owner** - The owner of this name
+  * **Parent** - The parent name of this name. In practice, this can be used like a class hierarchy.
+  * **Parent Owner** - The parent name has an owner. If a name has a parent, the parent's owner must also sign the issuance of this name.
+
+This might seem a little abstract, so let's go with an example. Let's say we want to associate unclaimed tokens with twitter users. When a twitter user verifies they own their handle, we let them claim the token.
+We want to gate who can claim ownership of a twitter handle, so we will assign a verifier keypair as the name class that must approve issuance.
+
+While this example is focused on twitter, this could just as easily work for usernames on your own website. This is a generic framework for onboarding social tokens that users can later claim using their wallet.
+
+This is what we will build:
+
+
+```plantuml
+@startuml
+Anyone --> Solana: Create Token for <name>
+
+User --> VerifierService: Authentication Request for <name>
+VerifierService --> User: Presigned Create <name> Txn
+User --> Solana: Create <name> Txn
+User --> Solana: Claim Token Txn
+@enduml
+```
+
+
+First, we create a name parent that is our twitter tld
+
+:::note TLD
+We often refer to a name parent as the Top Level Domain (TLD). In the case of twitter, we have a twitter top level domain that all twitter handles are under.
+:::
 
 ```js
-import { createNameRegistry, getHashedName, getNameAccountKey, NameRegistryState } from "@bonfida/spl-name-service";
-import { Keypair } from "@solana/web3.js";
+import { Numberu64, NAME_PROGRAM_ID, createInstruction, createNameRegistry, getNameAccountKey, getHashedName, NameRegistryState } from "@solana/spl-name-service";
+import { Keypair, SystemProgram, sendAndConfirmRawTransaction } from "@solana/web3.js";
+```
+```jsx async name=tld
+ // Make this name unique to verifier so others can run this tutorial
+var verifier = Keypair.generate();
+var name = "twitter-" + verifier.publicKey.toBase58();
+var twitterTld = await getNameAccountKey(await getHashedName(name));
+
+if (!(await provider.connection.getAccountInfo(twitterTld))) {
+  const nameTx = new Transaction({
+    recentBlockhash: (await connection.getRecentBlockhash()).blockhash
+  })
+  nameTx.instructions.push(
+    await createNameRegistry(
+      connection,
+      name,
+      NameRegistryState.HEADER_LEN,
+      provider.wallet.publicKey, // Payer
+      verifier.publicKey // Owner
+    )
+  )
+  await provider.send(nameTx)
+}
 ```
 
-```js async name=name
-var nameOwner = Keypair.generate();
-var nameStr = "test-" + nameOwner.publicKey.toBase58();
-var hashedName = await getHashedName(nameStr);
-// Create a name with our wallet as the name class
-var name = await getNameAccountKey(hashedName, publicKey)
+Now we have a top level domain. Every twitter handle must be verified by us, and exist under this top level domain:
+
+```jsx async name=name deps=tld
+var nameOwner = Keypair.generate(); // This wallet will eventually own this twitter handle
+var twitterHandle = "test-" + nameOwner.publicKey.toBase58();
+var hashedTwitterHandle = await getHashedName(twitterHandle);
+var twitterName = await getNameAccountKey(
+  hashedTwitterHandle,
+  undefined, // No class
+  twitterTld // Every twitter handle is under our tld
+)
 ```
 
-Now, let's create an unclaimed social token 
+Anyone can try to create this name, but without the verifier, the transaction will fail:
+
+```jsx async name=fail deps=name
+var nameTx = new Transaction()
+nameTx.instructions.push(
+  await createNameRegistry(
+    connection,
+    twitterHandle,
+    NameRegistryState.HEADER_LEN,
+    publicKey, // payer
+    nameOwner.publicKey, // owner
+    await connection.getMinimumBalanceForRentExemption(NameRegistryState.HEADER_LEN), // lamports
+    undefined, // no class
+    twitterTld // parent
+  )
+)
+// Explicitly don't have the verifier sign this, it should fail
+var txid = await provider.send(nameTx);
+```
+
+Let's create an unclaimed token for the twitter handle  `"test-..."`:
+
+:::note Uncreated Name
+The name service name for the user does not have to exist for us to create a token for them. We can lazily create the name when the user wants to claim their token. This also allows us to pass the fees for the name creation on to the user.
+:::
 
 ```js async name=unclaimed deps=collective,name
 var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
   collective,
-  name, // Associate the social token with the created name
+  name: twitterName, // Associate the social token with the created name
   metadata: {
     name: "Learning Strata Token",
     symbol: "luvSTRAT",
@@ -225,22 +309,47 @@ var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
 var tokenBondingAcct = await tokenBondingSdk.account.tokenBondingV0.fetch(tokenBonding);
 ```
 
-Now, let's create the name with the new wallet as the owner
-```js async name=create_name deps=name
-if (!(await connection.getAccountInfo(name))) {
-  var nameTx = new Transaction()
-  nameTx.instructions.push(
-    await createNameRegistry(
-      connection,
-      nameStr,
-      NameRegistryState.HEADER_LEN,
-      publicKey, // payer
-      nameOwner.publicKey, // owner
-      10000000,
-      publicKey // class
-    )
-  )
-  var txid = await provider.send(nameTx);
+Now, we create a service that is able to verify the user owns the twitter handle. When the service verifies this twitter handle, it returns a presigned transaction:
+
+:::note Verifier Key
+You should keep your verifier key secret, but it will need to be passed in to your server that gate keeps twitter handle creation
+:::
+
+```jsx async name=presign deps=name
+var space = 1000; // Extra space to store things on the name
+var instructions = [createInstruction(
+  NAME_PROGRAM_ID, // name program id
+  SystemProgram.programId, // system program id
+  twitterName, // name to create
+  nameOwner.publicKey, // name owner
+  provider.wallet.publicKey, // Fee payer, normally we'd make the person claiming the handle pay
+  hashedTwitterHandle,
+  new Numberu64(await connection.getMinimumBalanceForRentExemption(space)), // lamports
+  new Numberu32(space), // Space for extra data on the name service name
+  undefined, // Name class, there is none here
+  twitterTld, // Name parent.
+  verifier.publicKey // Name owner. Twitter verifier acts as owner of the parent
+)];
+var transaction = new Transaction({ 
+  recentBlockhash: (await provider.connection.getRecentBlockhash()).blockhash,
+  feePayer: provider.wallet.publicKey 
+});
+transaction.add(...instructions);
+transaction.partialSign(verifier);
+
+var presignedTransaction = transaction.serialize({ requireAllSignatures: false, verifySignatures: false }).toJSON()
+```
+
+:::note Reverse Twitter
+The above lets us go from a twitter handle to a wallet. What if we'd like to go from a wallet to a twitter handle? You should look at appending an instruction similar to the [reverse-twitter-registry](https://github.com/solana-labs/solana-program-library/blob/f83240a8684bc20cbf9c592fa2453c7a2103076b/name-service/js/src/twitter.ts#L401)
+:::
+
+Now, let's create the name using the presigned transaction
+```js async name=create_name deps=presign
+if (!(await connection.getAccountInfo(twitterName))) {
+  const tx = Transaction.from(presignedTransaction.data);
+  const signed = await provider.wallet.signTransaction(tx);
+  await sendAndConfirmRawTransaction(connection, signed.serialize());
 }
 ```
 

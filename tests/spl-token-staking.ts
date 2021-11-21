@@ -84,7 +84,7 @@ describe('spl-token-staking', () => {
       try {
         await tokenStakingProgram.unstake({ tokenStaking, stakingVoucher })
         throw "Shouldn't get here";
-      } catch (e) {
+      } catch (e: any) {
         expect(e.toString()).to.equal("LockupNotPassed: This voucher is still in the lockup period");
       }
     })
@@ -94,7 +94,7 @@ describe('spl-token-staking', () => {
       try {
         await tokenStakingProgram.unstake({ tokenStaking, stakingVoucher })
         throw "Shouldn't get here"
-      } catch (e) {
+      } catch (e: any) {
         expect(e.toString()).to.equal("CollectBeforeUnstake: You must collect on this voucher before unstaking it. You should do both in the same transaction")
       }
     })
