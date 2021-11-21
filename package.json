@@ -8,7 +8,6 @@
   "description": "Wum.bo Token Staking tests",
   "license": "MIT",
   "author": "Wum.bo Inc.",
-  "type": "module",
   "devDependencies": {
     "@parcel/packager-ts": "^2.0.0",
     "@parcel/transformer-typescript-types": "^2.0.0",

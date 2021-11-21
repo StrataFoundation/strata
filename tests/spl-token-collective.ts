@@ -220,7 +220,7 @@ describe("spl-token-collective", () => {
       claimedTokenRef = tokenRef;
       claimedReverseTokenRef = reverseTokenRef;
       await sendMultipleInstructions(
-        tokenCollectiveProgram.errors,
+        tokenCollectiveProgram.errors || new Map(),
         provider,
         instructions,
         [signers[0], signers[1], [...signers[2], ownerKeypair]]
