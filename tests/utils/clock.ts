@@ -7,7 +7,7 @@ export async function sleep(ts: number) {
 }
 
 export async function getClockTime(connection: Connection): Promise<bigint> {
-  const clock = await connection.getAccountInfo(SYSVAR_CLOCK_PUBKEY);
+  const clock = (await connection.getAccountInfo(SYSVAR_CLOCK_PUBKEY))!;
   return clock.data.readBigInt64LE(8 * 4);
 }
 

@@ -1,4 +1,4 @@
-›use anchor_lang::{prelude::*, solana_program, solana_program::{system_program, system_instruction, program::{invoke_signed, invoke}}};
+use anchor_lang::{prelude::*, solana_program, solana_program::{system_program, system_instruction, program::{invoke_signed, invoke}}};
 use anchor_spl::token::{self, set_authority, SetAuthority, Burn, Transfer, MintTo};
 use crate::{error::ErrorCode, curve::*, account::*, arg::*, util::*};
 
@@ -15,7 +15,9 @@ declare_id!("TBondz6ZwSM5fs4v2GpnVBMuwoncPkFLFR9S422ghhN");
 
 #[program]
 pub mod spl_token_bonding {
-    use super::*;
+  use std::borrow::{Borrow, BorrowMut};
+  use anchor_spl::token::TokenAccount;
+  use super::*;
 
     pub fn initialize_sol_storage_v0(
       ctx: Context<InitializeSolStorageV0>,
@@ -273,8 +275,19 @@ pub mod spl_token_bonding {
         return Err(ErrorCode::BuyFrozen.into());
       }
 
-      let base_royalties_percent = get_percent(token_bonding.buy_base_royalty_percentage)?;
-      let target_royalties_percent = get_percent(token_bonding.buy_target_royalty_percentage)?;
+      let base_royalties_data = ctx.accounts.buy_base_royalties.try_borrow_data()?;
+      let target_royalties_data = ctx.accounts.buy_target_royalties.try_borrow_data()?;
+      let base_royalties_closed = TokenAccount::try_deserialize(
+        &mut base_royalties_data.as_ref()
+      ).is_err();
+      let target_royalties_closed = TokenAccount::try_deserialize(
+        &mut target_royalties_data.as_ref()
+      ).is_err();
+      drop(base_royalties_data);
+      drop(target_royalties_data);
+
+      let base_royalties_percent = get_percent(if base_royalties_closed { 0 } else { token_bonding.buy_base_royalty_percentage })?;
+      let target_royalties_percent = get_percent(if target_royalties_closed{ 0 } else { token_bonding.buy_target_royalty_percentage })?;
 
       let price: u64;
       let total_amount: u64;
@@ -375,8 +388,8 @@ pub mod spl_token_bonding {
       let token_program = ctx.accounts.token_program.to_account_info();
       let source = ctx.accounts.source.to_account_info();
       let base_storage_account = ctx.accounts.base_storage.to_account_info();
-      let base_royalties_account = ctx.accounts.buy_base_royalties.to_account_info();
-      let target_royalties_account = ctx.accounts.buy_target_royalties.to_account_info();
+      let base_royalties_account = ctx.accounts.buy_base_royalties.clone().to_account_info();
+      let target_royalties_account = ctx.accounts.buy_target_royalties.clone().to_account_info();
       let target_mint_authority = ctx.accounts.target_mint_authority.to_account_info();
       let source_authority = ctx.accounts.source_authority.to_account_info();
       let mint_signer_seeds: &[&[&[u8]]] = &[&[
@@ -385,15 +398,17 @@ pub mod spl_token_bonding {
         &[token_bonding.target_mint_authority_bump_seed]
       ]];
 
-      msg!("Paying out {} base royalties", base_royalties);
-      token::transfer(CpiContext::new(
-        token_program.clone(), 
-        Transfer {
-          from: source.clone(),
-          to: base_royalties_account.clone(),
-          authority: source_authority.clone()
-        }
-      ), base_royalties)?;
+      if base_royalties > 0 {
+        msg!("Paying out {} base royalties", base_royalties);
+        token::transfer(CpiContext::new(
+          token_program.clone(),
+          Transfer {
+            from: source.clone(),
+            to: base_royalties_account.clone(),
+            authority: source_authority.clone()
+          }
+        ), base_royalties)?;
+      }
 
       msg!("Paying out {} to base storage", price);
       token::transfer(CpiContext::new(
@@ -405,19 +420,21 @@ pub mod spl_token_bonding {
         }
       ), price)?;
 
-      msg!("Minting {} to target royalties", target_royalties);
-      token::mint_to(
-        CpiContext::new_with_signer(
-          token_program.clone(), 
-          MintTo {
-            mint: target_mint.to_account_info().clone(),
-            to: target_royalties_account.clone(),
-            authority: target_mint_authority.clone()
-          },
-          mint_signer_seeds
-        ),
-        target_royalties
-      )?;
+      if target_royalties > 0 {
+        msg!("Minting {} to target royalties", target_royalties);
+        token::mint_to(
+          CpiContext::new_with_signer(
+            token_program.clone(),
+            MintTo {
+              mint: target_mint.to_account_info().clone(),
+              to: target_royalties_account.clone(),
+              authority: target_mint_authority.clone()
+            },
+            mint_signer_seeds
+          ),
+          target_royalties
+        )?;
+      }
 
       msg!("Minting {} to destination", total_amount - target_royalties);
       token::mint_to(
@@ -455,8 +472,19 @@ pub mod spl_token_bonding {
         return Err(ErrorCode::SellDisabled.into());
       }
 
-      let base_royalties_percent = get_percent(token_bonding.sell_base_royalty_percentage)?;
-      let target_royalties_percent = get_percent(token_bonding.sell_target_royalty_percentage)?;
+      let base_royalties_data = ctx.accounts.sell_base_royalties.try_borrow_data()?;
+      let target_royalties_data = ctx.accounts.sell_target_royalties.try_borrow_data()?;
+      let base_royalties_closed = TokenAccount::try_deserialize(
+        &mut base_royalties_data.as_ref()
+      ).is_err();
+      let target_royalties_closed = TokenAccount::try_deserialize(
+        &mut target_royalties_data.as_ref()
+      ).is_err();
+      drop(base_royalties_data);
+      drop(target_royalties_data);
+
+      let base_royalties_percent = get_percent(if base_royalties_closed { 0 } else { token_bonding.sell_base_royalty_percentage })?;
+      let target_royalties_percent = get_percent(if target_royalties_closed{ 0 } else { token_bonding.sell_target_royalty_percentage })?;
 
       let target_royalties_prec = target_royalties_percent.checked_mul(&amount_prec).or_arith_error()?;
       let amount_minus_royalties_prec = amount_prec.checked_sub(&target_royalties_prec).or_arith_error()?;
@@ -512,15 +540,17 @@ pub mod spl_token_bonding {
         authority: source_authority.clone()
       }), amount)?;
 
-      msg!("Paying out {} to target royalties", target_royalties);
-      token::transfer(CpiContext::new(
-        token_program.clone(), 
-        Transfer {
-          from: source.clone(),
-          to: ctx.accounts.sell_target_royalties.to_account_info().clone(),
-          authority: source_authority.clone()
-        }
-      ), target_royalties)?;
+      if target_royalties > 0 {
+        msg!("Paying out {} to target royalties", target_royalties);
+        token::transfer(CpiContext::new(
+          token_program.clone(),
+          Transfer {
+            from: source.clone(),
+            to: ctx.accounts.sell_target_royalties.to_account_info().clone(),
+            authority: source_authority.clone()
+          }
+        ), target_royalties)?;
+      }
 
       msg!("Paying out {} from base storage, {}", reclaimed, ctx.accounts.base_storage.amount);
       token::transfer(CpiContext::new_with_signer(
@@ -535,18 +565,20 @@ pub mod spl_token_bonding {
         ]
       ), reclaimed)?;
 
-      msg!("Paying out {} from base storage to base royalties", base_royalties);
-      token::transfer(CpiContext::new_with_signer(
-        token_program.clone(), 
-        Transfer {
-          from: base_storage_account.clone(),
-          to: ctx.accounts.sell_base_royalties.to_account_info().clone(),
-          authority: base_storage_authority.clone()
-        },
-        &[
-          &storage_authority_seeds
-        ]
-      ), base_royalties)?;
+      if base_royalties > 0 {
+        msg!("Paying out {} from base storage to base royalties", base_royalties);
+        token::transfer(CpiContext::new_with_signer(
+          token_program.clone(),
+          Transfer {
+            from: base_storage_account.clone(),
+            to: ctx.accounts.sell_base_royalties.to_account_info().clone(),
+            authority: base_storage_authority.clone()
+          },
+          &[
+            &storage_authority_seeds
+          ]
+        ), base_royalties)?;
+      }
 
       Ok(())
     }

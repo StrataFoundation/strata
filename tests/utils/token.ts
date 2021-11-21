@@ -10,6 +10,9 @@ export class TokenUtils {
   }
 
   async expectBalance(account: PublicKey, balance: number) {
+    if (!(await this.provider.connection.getAccountInfo(account))) {
+      return 0;
+    }
     const actual = await this.provider.connection.getTokenAccountBalance(account);
     expect(actual.value.uiAmount).to.equal(balance);
   }

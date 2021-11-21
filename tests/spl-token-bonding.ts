@@ -1,7 +1,7 @@
 import * as anchor from "@project-serum/anchor";
 import { BN } from "@project-serum/anchor";
 import { createMint } from "@project-serum/common";
-import { NATIVE_MINT } from "@solana/spl-token";
+import {NATIVE_MINT, Token, TOKEN_PROGRAM_ID} from "@solana/spl-token";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
@@ -321,6 +321,93 @@ describe("spl-token-bonding", () => {
     })
   })
 
+  describe("edge cases", () => {
+    let baseMint: PublicKey;
+    let curve: PublicKey;
+    let tokenBonding: PublicKey;
+    let tokenBondingAcct: TokenBondingV0;
+    let buyBaseRoyalties: PublicKey;
+    let sellBaseRoyalties: PublicKey;
+    let buyTargetRoyalties: PublicKey;
+    let sellTargetRoyalties: PublicKey;
+    const INITIAL_BALANCE = 1000;
+    const DECIMALS = 2;
+    beforeEach(async () => {
+      baseMint = await createMint(provider, me, DECIMALS);
+      await tokenUtils.createAtaAndMint(provider, baseMint, INITIAL_BALANCE, newWallet.publicKey);
+      curve = await tokenBondingProgram.initializeCurve({
+        config: new ExponentialCurveConfig({
+          c: 0,
+          b: 1,
+          pow: 0,
+          frac: 1
+        })
+      });
+
+      ({ tokenBonding, buyBaseRoyalties, sellBaseRoyalties, buyTargetRoyalties, sellTargetRoyalties } = await tokenBondingProgram.createTokenBonding({
+        curve,
+        baseMint,
+        targetMintDecimals: DECIMALS,
+        generalAuthority: me,
+        buyBaseRoyaltyPercentage: 10,
+        sellBaseRoyaltyPercentage: 10,
+        buyTargetRoyaltyPercentage: 10,
+        sellTargetRoyaltyPercentage: 10,
+        mintCap: new BN(1000), // 10.0
+      }));
+      tokenBondingAcct = (await tokenBondingProgram.account.tokenBondingV0.fetch(
+        tokenBonding
+      )) as TokenBondingV0;
+    });
+
+    it("does not send royalties when the royalty account is closed", async () => {
+      await tokenBondingProgram.sendInstructions([Token.createCloseAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        buyBaseRoyalties,
+        me,
+        me,
+        []
+      ), Token.createCloseAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        buyTargetRoyalties,
+        me,
+        me,
+        []
+      ), Token.createCloseAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        sellBaseRoyalties,
+        me,
+        me,
+        []
+      ), Token.createCloseAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        sellTargetRoyalties,
+        me,
+        me,
+        []
+      )], [])
+      const { instructions, signers } = await tokenBondingProgram.buyInstructions({
+        tokenBonding,
+        desiredTargetAmount: new BN(100),
+        slippage: 0.5,
+        sourceAuthority: newWallet.publicKey
+      });
+      await tokenBondingProgram.sendInstructions(instructions, [...signers, newWallet])
+
+      const { instructions: instructions2, signers: signers2 } = await tokenBondingProgram.sellInstructions({
+        tokenBonding,
+        targetAmount: new BN(111), // We acquired extra tokens above because the royalties went back to us.
+        slippage: 0.5,
+        sourceAuthority: newWallet.publicKey
+      });
+      await tokenBondingProgram.sendInstructions(instructions2, [...signers2, newWallet])
+
+      await tokenUtils.expectAtaBalance(newWallet.publicKey, tokenBondingAcct.targetMint, 0);
+      await tokenUtils.expectAtaBalance(me, tokenBondingAcct.baseMint, 0)
+      await tokenUtils.expectAtaBalance(me, tokenBondingAcct.targetMint, 0)
+    })
+  })
+
   describe("royalties", () => {
     let baseMint: PublicKey;
     let curve: PublicKey;
@@ -473,7 +560,7 @@ describe("spl-token-bonding", () => {
 
     it("allows buy/sell", async () => {
       // Also ensure zero sum.
-      const initLamports = (await provider.connection.getAccountInfo(me))
+      const initLamports = (await provider.connection.getAccountInfo(me))!
         .lamports;
       await tokenBondingProgram.buy({
         tokenBonding,
@@ -501,7 +588,7 @@ describe("spl-token-bonding", () => {
 
       await tokenUtils.expectBalance(tokenBondingAcct.baseStorage, 0);
       await tokenUtils.expectAtaBalance(me, tokenBondingAcct.targetMint, 0);
-      const lamports = (await provider.connection.getAccountInfo(me)).lamports;
+      const lamports = (await provider.connection.getAccountInfo(me))!.lamports;
       expect(lamports).to.within(100000000, initLamports);
     });
   });
