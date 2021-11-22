@@ -83,7 +83,7 @@ var curve = await tokenBondingSdk.initializeCurve({
       frac: 2
     })
 });
-var curveAcct = await tokenBondingSdk.account.curveV0.fetch(curve);
+var curveAcct = await tokenBondingSdk.getCurve(curve);
 ```
 
 ### Advanced Curves
@@ -121,7 +121,7 @@ var timeCurve = await tokenBondingSdk.initializeCurve({
       })
     )
 });
-var timeCurveAcct = await tokenBondingSdk.account.curveV0.fetch(timeCurve);
+var timeCurveAcct = await tokenBondingSdk.getCurve(timeCurve);
 ```
 
 ## Bonding
@@ -143,7 +143,7 @@ var { tokenBonding } = await tokenBondingSdk.createTokenBonding({
   sellBaseRoyaltyPercentage: 0,
   sellTargetRoyaltyPercentage: 0
 })
-var tokenBondingAcct = await tokenBondingSdk.account.tokenBondingV0.fetch(tokenBonding);
+var tokenBondingAcct = await tokenBondingSdk.getTokenBonding(tokenBonding);
 ```
 
 Now, we can buy and sell on that curve:
@@ -197,5 +197,5 @@ await tokenBondingSdk.updateTokenBonding({
   sellTargetRoyaltyPercentage: 0,
   sellBaseRoyalties: tokenBondingAcct.baseStorage,
 });
-var tokenBondingAcct = await tokenBondingSdk.account.tokenBondingV0.fetch(tokenBonding);
+var tokenBondingAcct = await tokenBondingSdk.getTokenBonding(tokenBonding);
 ```

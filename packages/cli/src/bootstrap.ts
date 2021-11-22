@@ -42,6 +42,7 @@ async function run() {
       targetMintKeypair: openMintKeypair,
       curve,
       baseMint: new PublicKey("So11111111111111111111111111111111111111112"),
+      index: 0,
       // TODO: If in prod, don't take these authorities
       reserveAuthority: provider.wallet.publicKey,
       curveAuthority: provider.wallet.publicKey,

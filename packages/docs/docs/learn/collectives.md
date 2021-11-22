@@ -53,8 +53,8 @@ var { collective, tokenBonding } = await tokenCollectiveSdk.createCollective({
   config: {}
 });
 
-var tokenBondingAcct = await tokenBondingSdk.account.tokenBondingV0.fetch(tokenBonding);
-var collectiveAcct = await tokenCollectiveSdk.account.collectiveV0.fetch(collective);
+var tokenBondingAcct = await tokenBondingSdk.getTokenBonding(tokenBonding);
+var collectiveAcct = await tokenCollectiveSdk.getCollective(collective);
 ```
 
 ## Configuration
@@ -159,8 +159,8 @@ var { collective, tokenBonding } = await tokenCollectiveSdk.createCollective({
   }
 });
 
-var tokenBondingAcct = await tokenBondingSdk.account.tokenBondingV0.fetch(tokenBonding);
-var collectiveAcct = await tokenCollectiveSdk.account.collectiveV0.fetch(collective);
+var tokenBondingAcct = await tokenBondingSdk.getTokenBonding(tokenBonding);
+var collectiveAcct = await tokenCollectiveSdk.getCollective(collective);
 ```
 
 ## Movement and Curve Changes (not yet implemented)

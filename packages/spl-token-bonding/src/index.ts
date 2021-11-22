@@ -486,6 +486,14 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     };
   };
 
+  getTokenBonding(tokenBondingKey: PublicKey): Promise<ITokenBonding | null> {
+    return this.getAccount(tokenBondingKey, this.tokenBondingDecoder);
+  }
+
+  getCurve(curveKey: PublicKey): Promise<ICurve | null> {
+    return this.getAccount(curveKey, this.curveDecoder);
+  }
+
   /**
    * This is an admin function run once to initialize the smart contract.
    *
@@ -663,15 +671,16 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
    * @param index
    * @returns
    */
-  async tokenBondingKey(
+  static async tokenBondingKey(
     targetMint: PublicKey,
-    index: number
+    index: number = 0,
+    programId: PublicKey = SplTokenBonding.ID
   ): Promise<[PublicKey, number]> {
     const pad = Buffer.alloc(2);
     new BN(index, 16, "le").toBuffer().copy(pad);
     return PublicKey.findProgramAddress(
       [Buffer.from("token-bonding", "utf-8"), targetMint!.toBuffer(), pad],
-      this.programId
+      programId
     );
   }
 
@@ -756,7 +765,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     // Find the proper bonding index to use that isn't taken.
     let indexToUse = index || 0;
     const getTokenBonding: () => Promise<[PublicKey, Number]> = () => {
-      return this.tokenBondingKey(targetMint!, indexToUse);
+      return SplTokenBonding.tokenBondingKey(targetMint!, indexToUse);
     };
     const getTokenBondingAccount = async () => {
       return this.provider.connection.getAccountInfo(
@@ -789,7 +798,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       );
     }
 
-    const [tokenBonding, bumpSeed] = await this.tokenBondingKey(
+    const [tokenBonding, bumpSeed] = await SplTokenBonding.tokenBondingKey(
       targetMint!,
       indexToUse
     );
@@ -1042,9 +1051,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     generalAuthority,
     buyFrozen,
   }: IUpdateTokenBondingArgs): Promise<InstructionResult<null>> {
-    const tokenBondingAcct = await this.account.tokenBondingV0.fetch(
+    const tokenBondingAcct = (await this.getTokenBonding(
       tokenBonding
-    );
+    ))!;
     if (!tokenBondingAcct.generalAuthority) {
       throw new Error(
         "Cannot update a token bonding account that has no authority"
@@ -1371,9 +1380,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     payer = this.wallet.publicKey,
   }: IBuyArgs): Promise<InstructionResult<null>> {
     const state = (await this.getState())!;
-    const tokenBondingAcct = await this.account.tokenBondingV0.fetch(
+    const tokenBondingAcct = (await this.getTokenBonding(
       tokenBonding
-    );
+    ))!;
     // @ts-ignore
     const targetMint = await getMintInfo(
       this.provider,
@@ -1388,7 +1397,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       tokenBondingAcct.baseStorage
     );
     // @ts-ignore
-    const curve = await this.getCurve(
+    const curve = await this.getPricingCurve(
       tokenBondingAcct.curve,
       baseStorage,
       baseMint,
@@ -1583,9 +1592,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     payer = this.wallet.publicKey,
   }: ISellArgs): Promise<InstructionResult<null>> {
     const state = (await this.getState())!;
-    const tokenBondingAcct = await this.account.tokenBondingV0.fetch(
+    const tokenBondingAcct = (await this.getTokenBonding(
       tokenBonding
-    );
+    ))!;
     if (tokenBondingAcct.sellFrozen) {
       throw new Error("Sell is frozen on this bonding curve");
     }
@@ -1604,7 +1613,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       tokenBondingAcct.baseStorage
     );
     // @ts-ignore
-    const curve = await this.getCurve(
+    const curve = await this.getPricingCurve(
       tokenBondingAcct.curve,
       baseStorage,
       baseMint,
@@ -1741,9 +1750,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
    * @returns
    */
   async getPricing(tokenBonding: PublicKey): Promise<IPricingCurve> {
-    const tokenBondingAcct = await this.account.tokenBondingV0.fetch(
+    const tokenBondingAcct = (await this.getTokenBonding(
       tokenBonding
-    );
+    ))!;
     const targetMint = await getMintInfo(
       this.provider,
       tokenBondingAcct.targetMint
@@ -1757,7 +1766,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       tokenBondingAcct.baseStorage
     );
 
-    return this.getCurve(
+    return this.getPricingCurve(
       tokenBondingAcct.curve,
       baseStorage,
       baseMint,
@@ -1774,13 +1783,13 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
    * @param targetMint
    * @returns
    */
-  async getCurve(
+  async getPricingCurve(
     key: PublicKey,
     baseStorage: AccountInfo,
     baseMint: MintInfo,
     targetMint: MintInfo
   ): Promise<IPricingCurve> {
-    const curve = await this.account.curveV0.fetch(key);
+    const curve = await this.getCurve(key);
     // @ts-ignore
     return fromCurve(curve, baseStorage, baseMint, targetMint);
   }

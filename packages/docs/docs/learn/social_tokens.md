@@ -152,8 +152,8 @@ var { collective, tokenBonding } = await tokenCollectiveSdk.createCollective({
 });
 
 var collectiveTokenBonding = tokenBonding;
-var collectiveAcct = await tokenCollectiveSdk.account.collectiveV0.fetch(collective);
-var collectiveBondingAcct = await tokenBondingSdk.account.tokenBondingV0.fetch(tokenBonding);
+var collectiveAcct = await tokenCollectiveSdk.getCollective(collective);
+var collectiveBondingAcct = await tokenBondingSdk.getTokenBonding(tokenBonding);
 ```
 
 Now, create a social token within the collective:
@@ -177,8 +177,8 @@ var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
   }
 });
 
-var tokenBondingAcct = await tokenBondingSdk.account.tokenBondingV0.fetch(tokenBonding);
-var tokenRefAcct = await tokenCollectiveSdk.account.tokenRefV0.fetch(tokenRef);
+var tokenBondingAcct = await tokenBondingSdk.getTokenBonding(tokenBonding);
+var tokenRefAcct = await tokenCollectiveSdk.getTokenRef(tokenRef);
 ```
 
 Notice that we created a non-primary social token here. Most wallets will have one social token. For ease of lookup, social tokens refs are a PDA of the owner alone. In the case where one wallet belongs to several collectives, they should choose one `isPrimary` token that is used for lookups on storefronts. 
@@ -306,7 +306,7 @@ var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
     sellTargetRoyaltyPercentage: 0
   }
 });
-var tokenBondingAcct = await tokenBondingSdk.account.tokenBondingV0.fetch(tokenBonding);
+var tokenBondingAcct = await tokenBondingSdk.getTokenBonding(tokenBonding);
 ```
 
 Now, we create a service that is able to verify the user owns the twitter handle. When the service verifies this twitter handle, it returns a presigned transaction:

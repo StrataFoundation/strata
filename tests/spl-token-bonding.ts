@@ -143,13 +143,13 @@ describe("spl-token-bonding", () => {
         mintCap: new BN(1000), // 10.0
       });
       tokenBonding = tokenBondingOut;
-      tokenBondingAcct = (await tokenBondingProgram.account.tokenBondingV0.fetch(
+      tokenBondingAcct = (await tokenBondingProgram.getTokenBonding(
         tokenBonding
       )) as TokenBondingV0;
     });
 
     it("succesfully creates the curve", async () => {
-      const curveAcct = await tokenBondingProgram.account.curveV0.fetch(curve);
+      const curveAcct = await tokenBondingProgram.getCurve(curve);
       // @ts-ignore
       const c = curveAcct.definition.timeV0.curves[0].curve;
       // @ts-ignore
@@ -163,7 +163,7 @@ describe("spl-token-bonding", () => {
     });
 
     it("allows updating token bonding", async () => {
-      let tokenBondingNow = await tokenBondingProgram.account.tokenBondingV0.fetch(tokenBonding);
+      let tokenBondingNow = (await tokenBondingProgram.getTokenBonding(tokenBonding))!;
       expect(tokenBondingNow.buyTargetRoyaltyPercentage).to.equal(percent(10));
       expect(tokenBondingNow.buyBaseRoyaltyPercentage).to.equal(percent(5));
       expect(tokenBondingNow.buyFrozen).to.equal(false);
@@ -176,28 +176,28 @@ describe("spl-token-bonding", () => {
         tokenBonding,
         buyTargetRoyaltyPercentage: 15,
       });
-      tokenBondingNow = await tokenBondingProgram.account.tokenBondingV0.fetch(tokenBonding);
+      tokenBondingNow = (await tokenBondingProgram.getTokenBonding(tokenBonding))!;
       expect(tokenBondingNow.buyTargetRoyaltyPercentage).to.equal(percent(15));
 
       await tokenBondingProgram.updateTokenBonding({
         tokenBonding,
         buyBaseRoyaltyPercentage: 10,
       });
-      tokenBondingNow = await tokenBondingProgram.account.tokenBondingV0.fetch(tokenBonding);
+      tokenBondingNow = (await tokenBondingProgram.getTokenBonding(tokenBonding))!;
       expect(tokenBondingNow.buyBaseRoyaltyPercentage).to.equal(percent(10));
 
       await tokenBondingProgram.updateTokenBonding({
         tokenBonding,
         buyFrozen: true,
       });
-      tokenBondingNow = await tokenBondingProgram.account.tokenBondingV0.fetch(tokenBonding);
+      tokenBondingNow = (await tokenBondingProgram.getTokenBonding(tokenBonding))!;
       expect(tokenBondingNow.buyFrozen).to.equal(true);
 
       await tokenBondingProgram.updateTokenBonding({
         tokenBonding,
         generalAuthority: null,
       });
-      tokenBondingNow = await tokenBondingProgram.account.tokenBondingV0.fetch(tokenBonding);
+      tokenBondingNow = (await tokenBondingProgram.getTokenBonding(tokenBonding))!;
       expect(tokenBondingNow.generalAuthority).to.equal(null);
     });
 
@@ -289,7 +289,7 @@ describe("spl-token-bonding", () => {
         sellTargetRoyaltyPercentage: 0,
         mintCap: new BN(1000), // 10.0
       }));
-      tokenBondingAcct = (await tokenBondingProgram.account.tokenBondingV0.fetch(
+      tokenBondingAcct = (await tokenBondingProgram.getTokenBonding(
         tokenBonding
       )) as TokenBondingV0;
     })
@@ -355,7 +355,7 @@ describe("spl-token-bonding", () => {
         sellTargetRoyaltyPercentage: 10,
         mintCap: new BN(1000), // 10.0
       }));
-      tokenBondingAcct = (await tokenBondingProgram.account.tokenBondingV0.fetch(
+      tokenBondingAcct = (await tokenBondingProgram.getTokenBonding(
         tokenBonding
       )) as TokenBondingV0;
     });
@@ -441,7 +441,7 @@ describe("spl-token-bonding", () => {
         sellTargetRoyaltyPercentage,
         mintCap: new BN(1000), // 10.0
       }));
-      tokenBondingAcct = (await tokenBondingProgram.account.tokenBondingV0.fetch(
+      tokenBondingAcct = (await tokenBondingProgram.getTokenBonding(
         tokenBonding
       )) as TokenBondingV0;
     }
@@ -553,7 +553,7 @@ describe("spl-token-bonding", () => {
         sellTargetRoyaltyPercentage: 0,
         mintCap: new BN(1000), // 10.0
       }));
-      tokenBondingAcct = (await tokenBondingProgram.account.tokenBondingV0.fetch(
+      tokenBondingAcct = (await tokenBondingProgram.getTokenBonding(
         tokenBonding
       )) as TokenBondingV0;
     });
@@ -669,7 +669,7 @@ describe("spl-token-bonding", () => {
           slippage: 0.5,
         });
 
-        const tokenBondingAcct = (await tokenBondingProgram.account.tokenBondingV0.fetch(
+        const tokenBondingAcct = (await tokenBondingProgram.getTokenBonding(
           tokenBonding
         )) as TokenBondingV0;
 

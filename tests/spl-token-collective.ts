@@ -87,7 +87,7 @@ describe("spl-token-collective", () => {
         }
       })
 
-      const collectiveAcct = await tokenCollectiveProgram.account.collectiveV0.fetch(collective);
+      const collectiveAcct = (await tokenCollectiveProgram.getCollective(collective))!;
       expect(collectiveAcct.config.isOpen).to.be.true;
     })
   })
@@ -145,13 +145,13 @@ describe("spl-token-collective", () => {
     });
 
     it("Creates an unclaimed social token", async () => {
-      const reverseTokenRef = await tokenCollectiveProgram.account.tokenRefV0.fetch(unclaimedReverseTokenRef);
+      const reverseTokenRef = (await tokenCollectiveProgram.getTokenRef(unclaimedReverseTokenRef))!;
       expect(reverseTokenRef.isClaimed).to.be.false;
       // @ts-ignore
       expect(reverseTokenRef.name.toBase58()).to.equal(name.toBase58());
       expect((reverseTokenRef.owner as PublicKey).toBase58()).to.equal(nameClass.publicKey.toBase58());
 
-      const tokenRef = await tokenCollectiveProgram.account.tokenRefV0.fetch(unclaimedTokenRef);
+      const tokenRef = (await tokenCollectiveProgram.getTokenRef(unclaimedTokenRef))!;
       expect(tokenRef.isClaimed).to.be.false;
       // @ts-ignore
       expect(tokenRef.name.toBase58()).to.equal(name.toBase58());
@@ -159,8 +159,8 @@ describe("spl-token-collective", () => {
     });
 
     it("Allows claiming, which by default sets new rewards to my account and transfers rewards from any accounts with owned_by_name", async () => {
-      const tokenRef = await tokenCollectiveProgram.account.tokenRefV0.fetch(unclaimedTokenRef);
-      const tokenBonding = await splTokenBondingProgram.account.tokenBondingV0.fetch(tokenRef.tokenBonding);
+      const tokenRef = (await tokenCollectiveProgram.getTokenRef(unclaimedTokenRef))!;
+      const tokenBonding = (await splTokenBondingProgram.getTokenBonding(tokenRef.tokenBonding))!;
       await tokenUtils.createAtaAndMint(provider, wumMint, 2000000);
       await splTokenBondingProgram.buy({
         tokenBonding: tokenRef.tokenBonding,
@@ -228,13 +228,13 @@ describe("spl-token-collective", () => {
     });
 
     it("Creates a claimed social token", async () => {
-      const reverseTokenRef = await tokenCollectiveProgram.account.tokenRefV0.fetch(claimedReverseTokenRef);
+      const reverseTokenRef = (await tokenCollectiveProgram.getTokenRef(claimedReverseTokenRef))!;
       expect(reverseTokenRef.isClaimed).to.be.true;
       // @ts-ignore
       expect(reverseTokenRef.owner.toBase58()).to.equal(ownerKeypair.publicKey.toBase58());
       expect(reverseTokenRef.name).to.be.null;
 
-      const tokenRef = await tokenCollectiveProgram.account.tokenRefV0.fetch(claimedTokenRef);
+      const tokenRef = (await tokenCollectiveProgram.getTokenRef(claimedTokenRef))!;
       expect(tokenRef.isClaimed).to.be.true;
       // @ts-ignore
       expect(tokenRef.owner.toBase58()).to.equal(ownerKeypair.publicKey.toBase58());

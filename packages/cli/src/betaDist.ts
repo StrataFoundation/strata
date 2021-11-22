@@ -114,7 +114,7 @@ async function run() {
   console.log(`Created bonding ${bonding.toBase58()}`);
 
   const wSolBalance = (await provider.connection.getAccountInfo(wSolAcct))!.lamports
-  const bondingAcct = await tokenBondingSdk.account.tokenBondingV0.fetch(bonding);
+  const bondingAcct = (await tokenBondingSdk.getTokenBonding(bonding))!;
   console.log(`Transferring ${wSolBalance} lamports to the reserves`);
   
   const { instructions, signers, output: { destination } } = await tokenBondingSdk.buyBondingWrappedSolInstructions({
