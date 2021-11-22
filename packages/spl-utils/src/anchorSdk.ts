@@ -2,6 +2,7 @@ import { AccountNamespace, Idl, InstructionNamespace, Program, Provider, RpcName
 import { AllInstructions } from "@project-serum/anchor/dist/cjs/program/namespace/types";
 import { Wallet } from "@project-serum/common";
 import { PublicKey, Signer, TransactionInstruction } from "@solana/web3.js";
+import { TypedAccountParser } from ".";
 import { BigInstructionResult, InstructionResult, sendInstructions, sendMultipleInstructions } from "./transaction";
 
 export abstract class AnchorSdk<IDL extends Idl> {
@@ -28,6 +29,16 @@ export abstract class AnchorSdk<IDL extends Idl> {
       acc.set(err.code, `${err.name}: ${err.msg}`);
       return acc;
     }, new Map<number, string>());
+  }
+
+  protected async getAccount<T>(key: PublicKey, decoder: TypedAccountParser<T>): Promise<T | null> {
+    const account = await this.provider.connection.getAccountInfo(key);
+
+    if (account) {
+      return decoder(key, account);
+    }
+    
+    return null;
   }
 
 

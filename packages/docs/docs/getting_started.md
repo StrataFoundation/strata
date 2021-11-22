@@ -73,9 +73,9 @@ var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
 We can fetch the accounts we just created
 
 ```jsx async name=fetch deps=create_social
-var tokenRefAcct = await tokenCollectiveSdk.account.tokenRefV0.fetch(tokenRef);
-var tokenBondingAcct = await tokenBondingSdk.account.tokenBondingV0.fetch(tokenBonding);
-var curve = await tokenBondingSdk.account.curveV0.fetch(tokenBondingAcct.curve);
+var tokenRefAcct = await tokenCollectiveSdk.getTokenRef(tokenRef);
+var tokenBondingAcct = await tokenBondingSdk.getTokenBonding(tokenBonding);
+var curve = await tokenBondingSdk.getCurve(tokenBondingAcct.curve);
 ```
 
 ## Buying a Social Token

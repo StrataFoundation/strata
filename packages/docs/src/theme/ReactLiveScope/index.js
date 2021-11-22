@@ -12,6 +12,7 @@ import { Numberu32, Numberu64, createInstruction, createNameRegistry, getHashedN
 import BrowserOnly from '@docusaurus/BrowserOnly';
 import { useTokenMetadata, useTokenRef, useTokenBonding, useBondingPricing } from "@strata-foundation/react";
 import { useVariablesContext, useVariables } from "../Root/variables";
+import { getMintInfo, getTokenAccount } from "@project-serum/common";
 
 function BrowserOnlyAsyncButton(props) {
   return (
@@ -37,6 +38,8 @@ function Swap(props) {
 
 // Add react-live imports you need here
 const ReactLiveScope = {
+  getMintInfo,
+  getTokenAccount,
   Numberu32,
   sendAndConfirmRawTransaction,
   Numberu64,

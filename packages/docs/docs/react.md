@@ -162,7 +162,7 @@ Or, we can render it ourselves using hooks:
 We can use the token metadata sdk to update the token symbol, name, and image:
 
 ```jsx async name=update deps=create_social
-var tokenRefAcct = await tokenCollectiveSdk.account.tokenRefV0.fetch(tokenRef);
+var tokenRefAcct = await tokenCollectiveSdk.getTokenRef(tokenRef);
 
 await tokenMetadataSdk.updateMetadata({
   metadata: tokenRefAcct.tokenMetadata,

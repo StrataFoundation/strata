@@ -393,8 +393,10 @@ export interface ITokenRef extends TokenRefV0 {
 /**
  * Unified collective interface wrapping the raw CollectiveV0
  */
+// @ts-ignore
 export interface ICollective extends CollectiveV0 {
   publicKey: PublicKey;
+  config: CollectiveConfigV0;
 }
 
 export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
@@ -403,10 +405,10 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
 
   static ID = new PublicKey("TCo1sP6RwuCuyHPHjxgzcrq4dX4BKf9oRQ3aJMcdFry");
   static OPEN_COLLECTIVE_ID = new PublicKey(
-    "8rS2G8X85Ko3Yb2kZg6q894vnBZw6AeWmU23veNUAu7q"
+    "Dqe1nFRkTGvimkimmWnxekBa97rCnTetEekCrGFVPVhd"
   );
   static OPEN_COLLECTIVE_BONDING_ID = new PublicKey(
-    "FURpKZG2iPY5NXUvzb4A4JWt61CopLVEzqPYwoerEewC"
+    "8P533JdGaPv1h7JnVQT5RgbDvgg1vFyNUtg4P6z3etxF"
   );
   static OPEN_COLLECTIVE_MINT_ID = new PublicKey(
     "openQPYpSNGhxMBPeMdftdpJzEFksd94giFKuhH7A5a"
@@ -489,6 +491,14 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     };
   };
 
+  getCollective(collectiveKey: PublicKey): Promise<ICollective | null> {
+    return this.getAccount(collectiveKey, this.collectiveDecoder);
+  }
+
+  getTokenRef(tokenRefKey: PublicKey): Promise<ITokenRef | null> {
+    return this.getAccount(tokenRefKey, this.tokenRefDecoder);
+  }
+
   /**
    * Instructions to create a Collective
    *
@@ -534,7 +544,8 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     };
 
     if (!mint) {
-      const targetMintKeypair = anchor.web3.Keypair.generate();
+      const targetMintKeypair =
+        bonding?.targetMintKeypair || anchor.web3.Keypair.generate();
       signers.push(targetMintKeypair);
       mint = targetMintKeypair.publicKey;
       instructions.push(
@@ -660,11 +671,10 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     ignoreMissingName,
     isPrimary = true,
   }: IClaimSocialTokenArgs): Promise<InstructionResult<null>> {
-    const tokenRefAcct = await this.account.tokenRefV0.fetch(tokenRef);
-    const tokenBondingAcct =
-      await this.splTokenBondingProgram.account.tokenBondingV0.fetch(
-        tokenRefAcct.tokenBonding
-      );
+    const tokenRefAcct = (await this.getTokenRef(tokenRef))!;
+    const tokenBondingAcct = (await this.splTokenBondingProgram.getTokenBonding(
+      tokenRefAcct.tokenBonding
+    ))!;
     const name = tokenRefAcct.name! as PublicKey;
     const instructions = [];
 
@@ -923,7 +933,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
   > {
     if (!owner) {
       // @ts-ignore
-      owner = (await this.account.tokenRefV0.fetch(tokenRef)).owner;
+      owner = (await this.getTokenRef(tokenRef)).owner;
     }
 
     const [primaryTokenRef, primaryTokenRefBumpSeed] =
@@ -979,7 +989,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
   }: IUpdateCollectiveArgs): Promise<InstructionResult<null>> {
     if (typeof authority == "undefined") {
       // @ts-ignore
-      authority = (await this.account.collectiveV0.fetch(collective)).authority;
+      authority = (await this.getCollective(collective)).authority;
     }
     return {
       signers: [],
@@ -1047,10 +1057,8 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     const instructions1: TransactionInstruction[] = [];
     const signers1: Signer[] = [];
 
-    const collectiveAcct = await this.program.account.collectiveV0.fetch(
-      collective
-    );
-    const config = collectiveAcct.config;
+    const collectiveAcct = (await this.getCollective(collective))!;
+    const config = collectiveAcct.config as CollectiveConfigV0;
 
     // Token refs
     const [tokenRef, tokenRefBumpSeed] = await PublicKey.findProgramAddress(

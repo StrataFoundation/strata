@@ -3,7 +3,11 @@ import { Order } from "@project-serum/serum/lib/market";
 import { MintInfo, u64 } from "@solana/spl-token";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Connection, PublicKey } from "@solana/web3.js";
-import { fromCurve, IPricingCurve } from "@strata-foundation/spl-token-bonding";
+import {
+  fromCurve,
+  IPricingCurve,
+  SplTokenBonding,
+} from "@strata-foundation/spl-token-bonding";
 import React, { useEffect, useMemo, useState } from "react";
 import { useAsync } from "react-async-hook";
 import { useCurve, useSolPrice, useTokenBonding } from ".";
@@ -125,10 +129,9 @@ export function useBondingPricingFromMint(
   mint: PublicKey | undefined,
   index?: number | undefined
 ): PricingState {
-  const { tokenBondingSdk } = useStrataSdks();
   const { result: key, loading } = useAsync(
     async (mint: PublicKey | undefined, index: number) =>
-      mint && tokenBondingSdk?.tokenBondingKey(mint, index),
+      mint && SplTokenBonding.tokenBondingKey(mint, index),
     [mint, index || 0]
   );
   const bondingPricing = useBondingPricing(key && key[0]);
