@@ -2,7 +2,7 @@
 sidebar_position: 4
 ---
 
-# Getting Around
+# Fetching Data
 
 In [Social Tokens](./social_tokens), we learned about the on chain structure of Strata:
 
@@ -114,7 +114,7 @@ The list goes on. Every one of these has a public key.
 Solana has the idea of a Public Key that is deterministically derived from a set of inputs. This is called a Program Derived Address (PDA)
 
 :::note PDA
-A [Program Derived Address](https://docs.solana.com/developing/programming-model/calling-between-programs#program-derived-addresses) is an addres that can be deterministically derived from a smart contract and a set of inputs. The smart contract "owns" this address, and can sign for operations involving this address.
+A [Program Derived Address](https://docs.solana.com/developing/programming-model/calling-between-programs#program-derived-addresses) is an address that can be deterministically derived from a smart contract and a set of inputs. The smart contract "owns" this address, and can sign for operations involving this address.
 :::
 
 These deterministically derived addresses give us another tool. Don't have the Public key for a TokenRef on hand? Get it from the wallet of the token holder:
@@ -133,7 +133,7 @@ var tokenRef = (await tokenCollectiveSdk.getTokenRef(tokenRefKey))
 ```
 
 :::note React
-Most of the calls calls in this guide have React hook equivalents. For example, `useTokenRef`, `useTokenBonding`, `useClaimedTokenRefKey`, etc. Be sure to take a look at the [React Guide](/docs/react) and [React API](http://localhost:3000/docs/api/react/modules#functions)
+Most of the calls in this guide have React hook equivalents. For example, `useTokenRef`, `useTokenBonding`, `useClaimedTokenRefKey`, etc. Be sure to take a look at the [React Guide](/docs/react) and [React API](http://localhost:3000/docs/api/react/modules#functions)
 :::
 
 ## The Star Schema: TokenRefs
@@ -162,7 +162,9 @@ You can get to a token ref if you know any of the following sets of information:
    * **mint** - The Mint of the social token
 
 All of these can be accessed from `SplTokenCollective.tokenRefKey` and `SplTokenCollective.reverseTokenRefKey`:
-
+```js
+import { getNameAccountKey, getHashedName } from "@solana/spl-name-service";
+```
 ```js async deps=token
 var primaryTokenRef = (await SplTokenCollective.tokenRefKey({
   owner: provider.wallet.publicKey,
@@ -170,6 +172,10 @@ var primaryTokenRef = (await SplTokenCollective.tokenRefKey({
 }))[0];
 var collectiveTokenRef = (await SplTokenCollective.tokenRefKey({
   owner: provider.wallet.publicKey,
+  collective: tokenRef.collective
+}))[0];
+var unclaimedCollectiveTokenRef = (await SplTokenCollective.tokenRefKey({
+  name: await getNameAccountKey(await getHashedName("some-name")),
   collective: tokenRef.collective
 }))[0];
 var mintTokenRef = (await SplTokenCollective.reverseTokenRefKey(tokenRef.mint))[0];
