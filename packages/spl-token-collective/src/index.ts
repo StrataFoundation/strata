@@ -544,7 +544,8 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     };
 
     if (!mint) {
-      const targetMintKeypair = bonding?.targetMintKeypair || anchor.web3.Keypair.generate();
+      const targetMintKeypair =
+        bonding?.targetMintKeypair || anchor.web3.Keypair.generate();
       signers.push(targetMintKeypair);
       mint = targetMintKeypair.publicKey;
       instructions.push(
@@ -671,10 +672,9 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     isPrimary = true,
   }: IClaimSocialTokenArgs): Promise<InstructionResult<null>> {
     const tokenRefAcct = (await this.getTokenRef(tokenRef))!;
-    const tokenBondingAcct =
-      (await this.splTokenBondingProgram.getTokenBonding(
-        tokenRefAcct.tokenBonding
-      ))!;
+    const tokenBondingAcct = (await this.splTokenBondingProgram.getTokenBonding(
+      tokenRefAcct.tokenBonding
+    ))!;
     const name = tokenRefAcct.name! as PublicKey;
     const instructions = [];
 
@@ -1057,9 +1057,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     const instructions1: TransactionInstruction[] = [];
     const signers1: Signer[] = [];
 
-    const collectiveAcct = (await this.getCollective(
-      collective
-    ))!;
+    const collectiveAcct = (await this.getCollective(collective))!;
     const config = collectiveAcct.config as CollectiveConfigV0;
 
     // Token refs

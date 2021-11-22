@@ -1051,9 +1051,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     generalAuthority,
     buyFrozen,
   }: IUpdateTokenBondingArgs): Promise<InstructionResult<null>> {
-    const tokenBondingAcct = (await this.getTokenBonding(
-      tokenBonding
-    ))!;
+    const tokenBondingAcct = (await this.getTokenBonding(tokenBonding))!;
     if (!tokenBondingAcct.generalAuthority) {
       throw new Error(
         "Cannot update a token bonding account that has no authority"
@@ -1380,9 +1378,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     payer = this.wallet.publicKey,
   }: IBuyArgs): Promise<InstructionResult<null>> {
     const state = (await this.getState())!;
-    const tokenBondingAcct = (await this.getTokenBonding(
-      tokenBonding
-    ))!;
+    const tokenBondingAcct = (await this.getTokenBonding(tokenBonding))!;
     // @ts-ignore
     const targetMint = await getMintInfo(
       this.provider,
@@ -1592,9 +1588,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     payer = this.wallet.publicKey,
   }: ISellArgs): Promise<InstructionResult<null>> {
     const state = (await this.getState())!;
-    const tokenBondingAcct = (await this.getTokenBonding(
-      tokenBonding
-    ))!;
+    const tokenBondingAcct = (await this.getTokenBonding(tokenBonding))!;
     if (tokenBondingAcct.sellFrozen) {
       throw new Error("Sell is frozen on this bonding curve");
     }
@@ -1750,9 +1744,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
    * @returns
    */
   async getPricing(tokenBonding: PublicKey): Promise<IPricingCurve> {
-    const tokenBondingAcct = (await this.getTokenBonding(
-      tokenBonding
-    ))!;
+    const tokenBondingAcct = (await this.getTokenBonding(tokenBonding))!;
     const targetMint = await getMintInfo(
       this.provider,
       tokenBondingAcct.targetMint

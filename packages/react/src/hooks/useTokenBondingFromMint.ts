@@ -1,5 +1,8 @@
 import { PublicKey } from "@solana/web3.js";
-import { ITokenBonding, SplTokenBonding } from "@strata-foundation/spl-token-bonding";
+import {
+  ITokenBonding,
+  SplTokenBonding,
+} from "@strata-foundation/spl-token-bonding";
 import { useAsync } from "react-async-hook";
 import { UseAccountState, useStrataSdks, useTokenBonding } from "./";
 

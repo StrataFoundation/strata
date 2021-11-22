@@ -3,7 +3,11 @@ import { Order } from "@project-serum/serum/lib/market";
 import { MintInfo, u64 } from "@solana/spl-token";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Connection, PublicKey } from "@solana/web3.js";
-import { fromCurve, IPricingCurve, SplTokenBonding } from "@strata-foundation/spl-token-bonding";
+import {
+  fromCurve,
+  IPricingCurve,
+  SplTokenBonding,
+} from "@strata-foundation/spl-token-bonding";
 import React, { useEffect, useMemo, useState } from "react";
 import { useAsync } from "react-async-hook";
 import { useCurve, useSolPrice, useTokenBonding } from ".";
