@@ -295,8 +295,6 @@ export interface IUpdateTokenBondingViaCollectiveArgs
     | "sellBaseRoyalties"
     | "sellTargetRoyalties"
   > {
-  /** The owning wallet of this social token. **Default:**: `provider.wallet` */
-  owner?: PublicKey;
   /** The token ref of the token we are updating bonding for */
   tokenRef: PublicKey;
 }
@@ -1401,7 +1399,6 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
    * @returns
    */
   async updateTokenBondingInstructions({
-    owner = this.wallet.publicKey,
     tokenRef,
     buyBaseRoyaltyPercentage,
     buyTargetRoyaltyPercentage,
@@ -1409,16 +1406,11 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     sellTargetRoyaltyPercentage,
     buyFrozen,
   }: IUpdateTokenBondingViaCollectiveArgs): Promise<InstructionResult<null>> {
-    const tokenRefAcct = await this.account.tokenRefV0.fetch(tokenRef);
-
-    const collectiveAcct = await this.account.collectiveV0.fetch(
-      tokenRefAcct.collective
-    );
-
-    const tokenBondingAcct =
-      await this.splTokenBondingProgram.account.tokenBondingV0.fetch(
-        tokenRefAcct.tokenBonding
-      );
+    const tokenRefAcct = (await this.getTokenRef(tokenRef))!;
+    const collectiveAcct = (await this.getCollective(tokenRefAcct.collective))!;
+    const tokenBondingAcct = (await this.splTokenBondingProgram.getTokenBonding(
+      tokenRefAcct.tokenBonding
+    ))!;
 
     if (!tokenBondingAcct.generalAuthority) {
       throw new Error(
@@ -1457,6 +1449,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       instructions: [
         await this.instruction.updateTokenBondingV0(args, {
           accounts: {
+            owner: tokenRefAcct.owner as PublicKey,
             collective: tokenRefAcct.collective,
             authority:
               (collectiveAcct.authority as PublicKey | undefined) ||
@@ -1465,7 +1458,6 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
             tokenBonding: tokenRefAcct.tokenBonding,
             tokenBondingAuthority:
               tokenBondingAcct.generalAuthority as PublicKey,
-            owner: owner,
             tokenBondingProgram: this.splTokenBondingProgram.programId,
             baseMint: tokenBondingAcct.baseMint,
             targetMint: tokenBondingAcct.targetMint,

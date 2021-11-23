@@ -727,7 +727,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     sellTargetRoyaltyPercentage,
     mintCap,
     purchaseCap,
-    goLiveDate = new Date(new Date().valueOf() - 1000), // 1 secs ago
+    goLiveDate = new Date(new Date().valueOf() - 10000), // 10 secs ago
     freezeBuyDate,
     targetMintDecimals,
     targetMintKeypair = Keypair.generate(),
