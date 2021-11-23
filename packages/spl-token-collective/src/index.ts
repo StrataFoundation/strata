@@ -287,7 +287,7 @@ export interface ICollectiveConfig {
 }
 
 export interface IUpdateTokenBondingViaCollectiveArgs
-  extends IUpdateTokenBondingArgs {
+  extends Omit<IUpdateTokenBondingArgs, "generalAuthority"> {
   /** The token ref of the token we are updating bonding for */
   tokenRef: PublicKey;
 }
