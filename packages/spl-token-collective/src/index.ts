@@ -19,6 +19,7 @@ import {
 } from "@solana/web3.js";
 import {
   ICreateTokenBondingArgs,
+  IUpdateTokenBondingArgs,
   SplTokenBonding,
 } from "@strata-foundation/spl-token-bonding";
 import {
@@ -28,7 +29,6 @@ import {
   decodeMetadata,
   extendBorsh,
   getMetadata,
-  ICreateArweaveUrlArgs,
   InstructionResult,
   ITokenWithMeta,
   METADATA_PROGRAM_ID,
@@ -36,7 +36,6 @@ import {
   SplTokenMetadata,
   TypedAccountParser,
   updateMetadata,
-  ArweaveEnv,
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
 import {
@@ -285,6 +284,21 @@ export interface ICollectiveConfig {
   claimedTokenBondingSettings?: ITokenBondingSettings;
   /** Settings for token metadata of unclaimed tokens */
   unclaimedTokenMetadataSettings?: ITokenMetadataSettings;
+}
+
+export interface IUpdateTokenBondingViaCollectiveArgs
+  extends Omit<
+    IUpdateTokenBondingArgs,
+    | "tokenBonding"
+    | "buyBaseRoyalties"
+    | "buyTargetRoyalties"
+    | "sellBaseRoyalties"
+    | "sellTargetRoyalties"
+  > {
+  /** The owning wallet of this social token. **Default:**: `provider.wallet` */
+  owner?: PublicKey;
+  /** The token ref of the token we are updating bonding for */
+  tokenRef: PublicKey;
 }
 
 type CollectiveConfigV0 = IdlTypes<SplTokenCollectiveIDL>["CollectiveConfigV0"];
@@ -1378,5 +1392,102 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
         };
       })
     );
+  }
+
+  /**
+   * Update a bonding cruve.
+   *
+   * @param args
+   * @returns
+   */
+  async updateTokenBondingInstructions({
+    owner = this.wallet.publicKey,
+    tokenRef,
+    buyBaseRoyaltyPercentage,
+    buyTargetRoyaltyPercentage,
+    sellBaseRoyaltyPercentage,
+    sellTargetRoyaltyPercentage,
+    buyFrozen,
+  }: IUpdateTokenBondingViaCollectiveArgs): Promise<InstructionResult<null>> {
+    const tokenRefAcct = await this.account.tokenRefV0.fetch(tokenRef);
+
+    const collectiveAcct = await this.account.collectiveV0.fetch(
+      tokenRefAcct.collective
+    );
+
+    const tokenBondingAcct =
+      await this.splTokenBondingProgram.account.tokenBondingV0.fetch(
+        tokenRefAcct.tokenBonding
+      );
+
+    if (!tokenBondingAcct.generalAuthority) {
+      throw new Error(
+        "Cannot update a token bonding account that has no authority"
+      );
+    }
+
+    const [reverseTokenRef] = await SplTokenCollective.reverseTokenRefKey(
+      tokenBondingAcct.targetMint
+    );
+
+    const args: IdlTypes<SplTokenCollectiveIDL>["UpdateTokenBondingV0ArgsWrapper"] =
+      {
+        tokenBondingAuthority: tokenBondingAcct.generalAuthority as PublicKey,
+        buyBaseRoyaltyPercentage:
+          percent(buyBaseRoyaltyPercentage) ||
+          tokenBondingAcct.buyBaseRoyaltyPercentage,
+        buyTargetRoyaltyPercentage:
+          percent(buyTargetRoyaltyPercentage) ||
+          tokenBondingAcct.buyTargetRoyaltyPercentage,
+        sellBaseRoyaltyPercentage:
+          percent(sellBaseRoyaltyPercentage) ||
+          tokenBondingAcct.sellBaseRoyaltyPercentage,
+        sellTargetRoyaltyPercentage:
+          percent(sellTargetRoyaltyPercentage) ||
+          tokenBondingAcct.sellTargetRoyaltyPercentage,
+        buyFrozen:
+          typeof buyFrozen === "undefined"
+            ? (tokenBondingAcct.buyFrozen as boolean)
+            : buyFrozen,
+      };
+
+    return {
+      output: null,
+      signers: [],
+      instructions: [
+        await this.instruction.updateTokenBondingV0(args, {
+          accounts: {
+            collective: tokenRefAcct.collective,
+            authority:
+              (collectiveAcct.authority as PublicKey | undefined) ||
+              PublicKey.default,
+            reverseTokenRef: reverseTokenRef,
+            tokenBonding: tokenRefAcct.tokenBonding,
+            tokenBondingAuthority:
+              tokenBondingAcct.generalAuthority as PublicKey,
+            owner: owner,
+            tokenBondingProgram: this.splTokenBondingProgram.programId,
+            baseMint: tokenBondingAcct.baseMint,
+            targetMint: tokenBondingAcct.targetMint,
+            buyBaseRoyalties: tokenBondingAcct.buyBaseRoyalties,
+            buyTargetRoyalties: tokenBondingAcct.buyTargetRoyalties,
+            sellBaseRoyalties: tokenBondingAcct.sellBaseRoyalties,
+            sellTargetRoyalties: tokenBondingAcct.sellTargetRoyalties,
+          },
+        }),
+      ],
+    };
+  }
+
+  /**
+   * Runs {@link `updateTokenBondingInstructions`}
+   *
+   * @param args
+   * @retruns
+   */
+  async updateTokenBonding(
+    args: IUpdateTokenBondingViaCollectiveArgs
+  ): Promise<void> {
+    await this.execute(this.updateTokenBondingInstructions(args));
   }
 }
