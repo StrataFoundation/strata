@@ -320,6 +320,7 @@ describe("spl-token-collective", () => {
           buyBaseRoyaltyPercentage: 5,
           sellBaseRoyaltyPercentage: 10,
           sellTargetRoyaltyPercentage: 5,
+          buyFrozen: true,
         });
 
       await tokenCollectiveProgram.sendInstructions(instructions, [
@@ -335,6 +336,7 @@ describe("spl-token-collective", () => {
       expect(tokenBondingNow.buyBaseRoyaltyPercentage).to.equal(percent(5));
       expect(tokenBondingNow.sellBaseRoyaltyPercentage).to.equal(percent(10));
       expect(tokenBondingNow.sellTargetRoyaltyPercentage).to.equal(percent(5));
+      expect(tokenBondingNow.buyFrozen).to.equal(true);
     });
   });
 });

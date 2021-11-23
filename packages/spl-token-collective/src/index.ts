@@ -287,14 +287,7 @@ export interface ICollectiveConfig {
 }
 
 export interface IUpdateTokenBondingViaCollectiveArgs
-  extends Omit<
-    IUpdateTokenBondingArgs,
-    | "tokenBonding"
-    | "buyBaseRoyalties"
-    | "buyTargetRoyalties"
-    | "sellBaseRoyalties"
-    | "sellTargetRoyalties"
-  > {
+  extends IUpdateTokenBondingArgs {
   /** The token ref of the token we are updating bonding for */
   tokenRef: PublicKey;
 }
@@ -1404,6 +1397,10 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     buyTargetRoyaltyPercentage,
     sellBaseRoyaltyPercentage,
     sellTargetRoyaltyPercentage,
+    buyBaseRoyalties,
+    buyTargetRoyalties,
+    sellBaseRoyalties,
+    sellTargetRoyalties,
     buyFrozen,
   }: IUpdateTokenBondingViaCollectiveArgs): Promise<InstructionResult<null>> {
     const tokenRefAcct = (await this.getTokenRef(tokenRef))!;
@@ -1461,10 +1458,14 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
             tokenBondingProgram: this.splTokenBondingProgram.programId,
             baseMint: tokenBondingAcct.baseMint,
             targetMint: tokenBondingAcct.targetMint,
-            buyBaseRoyalties: tokenBondingAcct.buyBaseRoyalties,
-            buyTargetRoyalties: tokenBondingAcct.buyTargetRoyalties,
-            sellBaseRoyalties: tokenBondingAcct.sellBaseRoyalties,
-            sellTargetRoyalties: tokenBondingAcct.sellTargetRoyalties,
+            buyBaseRoyalties:
+              buyBaseRoyalties || tokenBondingAcct.buyBaseRoyalties,
+            buyTargetRoyalties:
+              buyTargetRoyalties || tokenBondingAcct.buyTargetRoyalties,
+            sellBaseRoyalties:
+              sellBaseRoyalties || tokenBondingAcct.sellBaseRoyalties,
+            sellTargetRoyalties:
+              sellTargetRoyalties || tokenBondingAcct.sellTargetRoyalties,
           },
         }),
       ],
