@@ -226,7 +226,9 @@ export function useSocialTokenMetadata(
   owner: PublicKey | undefined
 ): IUseSocialTokenMetadataResult {
   const { info: tokenRef, loading } = useClaimedTokenRef(owner);
-  const { info: tokenBonding } = useTokenBonding(tokenRef?.tokenBonding || undefined);
+  const { info: tokenBonding } = useTokenBonding(
+    tokenRef?.tokenBonding || undefined
+  );
 
   return {
     ...useTokenMetadata(tokenBonding?.targetMint),

@@ -289,7 +289,10 @@ export interface ICollectiveConfig {
 }
 
 export interface IUpdateTokenBondingViaCollectiveArgs
-  extends Omit<Omit<IUpdateTokenBondingArgs, "generalAuthority">, "tokenBonding"> {
+  extends Omit<
+    Omit<IUpdateTokenBondingArgs, "generalAuthority">,
+    "tokenBonding"
+  > {
   /** The token ref of the token we are updating bonding for */
   tokenRef: PublicKey;
 }
@@ -582,7 +585,9 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       await addMetadata();
     }
 
-    const [collective, collectiveBump] = await SplTokenCollective.collectiveKey(mint)
+    const [collective, collectiveBump] = await SplTokenCollective.collectiveKey(
+      mint
+    );
 
     instructions.push(
       await this.instruction.initializeCollectiveV0(
@@ -679,7 +684,9 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
   }: IClaimSocialTokenArgs): Promise<InstructionResult<null>> {
     const tokenRefAcct = (await this.getTokenRef(tokenRef))!;
     if (!tokenRefAcct.tokenBonding) {
-      throw new Error("Claiming token ref without token bonding not yet supported");
+      throw new Error(
+        "Claiming token ref without token bonding not yet supported"
+      );
     }
     const tokenBondingAcct = (await this.splTokenBondingProgram.getTokenBonding(
       tokenRefAcct.tokenBonding
@@ -1078,7 +1085,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     const signers1: Signer[] = [];
 
     if (!collective) {
-      collective = (await SplTokenCollective.collectiveKey(mint!))[0]
+      collective = (await SplTokenCollective.collectiveKey(mint!))[0];
     }
 
     const collectiveAcct = (await this.getCollective(collective))!;
@@ -1427,9 +1434,13 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
   }: IUpdateTokenBondingViaCollectiveArgs): Promise<InstructionResult<null>> {
     const tokenRefAcct = (await this.getTokenRef(tokenRef))!;
     if (!tokenRefAcct.tokenBonding) {
-      throw new Error("Cannot update token bonding on a token ref that has no token bonding");
+      throw new Error(
+        "Cannot update token bonding on a token ref that has no token bonding"
+      );
     }
-    const collectiveAcct = tokenRefAcct.collective && (await this.getCollective(tokenRefAcct.collective))!;
+    const collectiveAcct =
+      tokenRefAcct.collective &&
+      (await this.getCollective(tokenRefAcct.collective))!;
     const tokenBondingAcct = (await this.splTokenBondingProgram.getTokenBonding(
       tokenRefAcct.tokenBonding
     ))!;
@@ -1474,7 +1485,8 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
             owner: tokenRefAcct.owner as PublicKey,
             collective: tokenRefAcct.collective || PublicKey.default,
             authority:
-              (collectiveAcct && (collectiveAcct.authority as PublicKey | undefined)) ||
+              (collectiveAcct &&
+                (collectiveAcct.authority as PublicKey | undefined)) ||
               PublicKey.default,
             reverseTokenRef: reverseTokenRef,
             tokenBonding: tokenRefAcct.tokenBonding,
