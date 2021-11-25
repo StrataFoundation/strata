@@ -27,16 +27,16 @@ pub fn initialize_social_token_v0<'info>(
   reverse_token_ref: &mut Account<TokenRefV0>,
   args: InitializeSocialTokenV0Args,
 ) -> ProgramResult {
-  token_ref.collective = accounts.collective.key();
-  token_ref.token_bonding = accounts.token_bonding.key();
+  token_ref.collective = if accounts.collective.collective.is_some() { Some(accounts.collective.key()) } else { None };
+  token_ref.token_bonding = Some(accounts.token_bonding.key());
   token_ref.mint = accounts.token_bonding.target_mint;
   token_ref.bump_seed = args.token_ref_bump_seed;
   token_ref.token_metadata_update_authority_bump_seed = args.token_metadata_update_authority_bump_seed;
   token_ref.token_bonding_authority_bump_seed = args.token_bonding_authority_bump_seed;
   token_ref.token_metadata = accounts.token_metadata.key();
 
-  reverse_token_ref.collective = accounts.collective.key();
-  reverse_token_ref.token_bonding = accounts.token_bonding.key();
+  reverse_token_ref.collective = token_ref.collective;
+  reverse_token_ref.token_bonding = Some(accounts.token_bonding.key());
   reverse_token_ref.bump_seed = args.reverse_token_ref_bump_seed;
   reverse_token_ref.mint = accounts.token_bonding.target_mint;
 
@@ -108,8 +108,7 @@ pub mod spl_token_collective {
     args: InitializeSocialTokenV0Args,
   ) -> ProgramResult {
     let initialize_args = &ctx.accounts.initialize_args;
-    let config = &initialize_args.collective.config;
-    let token_bonding_settings = config.claimed_token_bonding_settings.as_ref();
+    let token_bonding_settings = &initialize_args.collective.collective.as_ref().and_then(|c| c.config.claimed_token_bonding_settings.as_ref());
     if token_bonding_settings.is_some() {
       verify_token_bonding_defaults(&token_bonding_settings.unwrap(), &initialize_args.token_bonding)?;
       verify_token_bonding_royalties(
@@ -141,9 +140,9 @@ pub mod spl_token_collective {
     args: InitializeSocialTokenV0Args,
   ) -> ProgramResult {
     let initialize_args = &ctx.accounts.initialize_args;
-    let config = &initialize_args.collective.config;
-    let token_bonding_settings_opt = config.unclaimed_token_bonding_settings.as_ref();
-    let token_metadata_settings_opt = config.unclaimed_token_metadata_settings.as_ref();
+    let config = initialize_args.collective.collective.as_ref().map(|c| &c.config);
+    let token_bonding_settings_opt = config.and_then(|c| c.unclaimed_token_bonding_settings.as_ref());
+    let token_metadata_settings_opt = config.and_then(|c| c.unclaimed_token_metadata_settings.as_ref());
     if token_bonding_settings_opt.is_some() {
       verify_token_bonding_defaults(&token_bonding_settings_opt.unwrap(), &initialize_args.token_bonding)?;
       verify_token_bonding_royalties(
@@ -315,8 +314,7 @@ pub mod spl_token_collective {
       buy_frozen: token_bonding.buy_frozen,
     })?;
 
-    let config = &ctx.accounts.collective.config;
-    let token_bonding_settings_opt = config.unclaimed_token_bonding_settings.as_ref();
+    let token_bonding_settings_opt = &ctx.accounts.collective.collective.as_ref().and_then(|c| c.config.unclaimed_token_bonding_settings.as_ref());
     if token_bonding_settings_opt.is_some() {
       verify_token_bonding_defaults(&token_bonding_settings_opt.unwrap(), &ctx.accounts.token_bonding)?;
       verify_token_bonding_royalties(

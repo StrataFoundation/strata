@@ -101,11 +101,11 @@ export const useClaimedTwitterTokenRefKey = (
 
 export const useClaimedTokenRefKey = (
   owner: PublicKey | undefined,
-  collective: PublicKey = PublicKey.default
+  mint: PublicKey = PublicKey.default
 ): PublicKey | undefined => {
   const { result } = useAsync(
     async (owner: PublicKey | undefined) =>
-      owner && SplTokenCollective.tokenRefKey({ owner, collective }),
+      owner && SplTokenCollective.tokenRefKey({ owner, mint }),
     [owner]
   );
 
@@ -226,7 +226,7 @@ export function useSocialTokenMetadata(
   owner: PublicKey | undefined
 ): IUseSocialTokenMetadataResult {
   const { info: tokenRef, loading } = useClaimedTokenRef(owner);
-  const { info: tokenBonding } = useTokenBonding(tokenRef?.tokenBonding);
+  const { info: tokenBonding } = useTokenBonding(tokenRef?.tokenBonding || undefined);
 
   return {
     ...useTokenMetadata(tokenBonding?.targetMint),

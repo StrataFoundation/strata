@@ -6,7 +6,6 @@ import {
 } from "@bonfida/spl-name-service";
 import * as anchor from "@project-serum/anchor";
 import { BN } from "@project-serum/anchor";
-import { publicKey } from "@project-serum/anchor/dist/cjs/utils";
 import { createMint } from "@project-serum/common";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import {
@@ -192,11 +191,11 @@ describe("spl-token-collective", () => {
         unclaimedTokenRef
       ))!;
       const tokenBonding = (await splTokenBondingProgram.getTokenBonding(
-        tokenRef.tokenBonding
+        tokenRef.tokenBonding!
       ))!;
       await tokenUtils.createAtaAndMint(provider, wumMint, 2000000);
       await splTokenBondingProgram.buy({
-        tokenBonding: tokenRef.tokenBonding,
+        tokenBonding: tokenRef.tokenBonding!,
         desiredTargetAmount: new BN(100_000000000),
         slippage: 0.1,
       });
@@ -207,7 +206,7 @@ describe("spl-token-collective", () => {
         isPrimary: false,
       });
       await splTokenBondingProgram.buy({
-        tokenBonding: tokenRef.tokenBonding,
+        tokenBonding: tokenRef.tokenBonding!,
         desiredTargetAmount: new BN(100_000000000),
         slippage: 0.1,
       });
@@ -299,13 +298,13 @@ describe("spl-token-collective", () => {
     });
 
     it("Allows updating token bonding", async () => {
-      const reverseTokenRef = await tokenCollectiveProgram.getTokenRef(
+      const reverseTokenRef = (await tokenCollectiveProgram.getTokenRef(
         claimedReverseTokenRef
-      );
+      ))!;
 
-      let tokenBondingNow = await splTokenBondingProgram.getTokenBonding(
-        reverseTokenRef.tokenBonding
-      );
+      let tokenBondingNow = (await splTokenBondingProgram.getTokenBonding(
+        reverseTokenRef.tokenBonding!
+      ))!;
 
       expect(tokenBondingNow.buyTargetRoyaltyPercentage).to.equal(percent(0));
       expect(tokenBondingNow.buyBaseRoyaltyPercentage).to.equal(percent(0));
@@ -328,9 +327,9 @@ describe("spl-token-collective", () => {
         ownerKeypair,
       ]);
 
-      tokenBondingNow = await splTokenBondingProgram.getTokenBonding(
-        reverseTokenRef.tokenBonding
-      );
+      tokenBondingNow = (await splTokenBondingProgram.getTokenBonding(
+        reverseTokenRef.tokenBonding!
+      ))!;
 
       expect(tokenBondingNow.buyTargetRoyaltyPercentage).to.equal(percent(10));
       expect(tokenBondingNow.buyBaseRoyaltyPercentage).to.equal(percent(5));
