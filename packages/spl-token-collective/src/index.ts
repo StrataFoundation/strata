@@ -152,8 +152,10 @@ export interface ICreateSocialTokenArgs {
   ignoreIfExists?: boolean;
   /** The payer for this account and txn */
   payer?: PublicKey;
-  /** The collective to create this social token under. **Default:**: the Open Collective*/
+  /** The collective to create this social token under. Ignored if baseMint is provided */
   collective?: PublicKey;
+  /** The base mint to create this token under. **Default:** The Open Collective */
+  baseMint?: PublicKey;
   /** The spl-name-service name to associate with this account. Will create an unclaimed social token. */
   name?: PublicKey;
   /** The spl-name-service name class associated with name above, if provided */
@@ -225,7 +227,7 @@ interface ITokenRefKeyArgs {
   isPrimary?: boolean;
   owner?: PublicKey;
   name?: PublicKey;
-  collective?: PublicKey;
+  mint?: PublicKey;
 }
 
 export interface IRoyaltySetting {
@@ -767,7 +769,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
 
     const [newTokenRef, tokenRefBumpSeed] = await PublicKey.findProgramAddress(
       SplTokenCollective.tokenRefSeeds({
-        collective: tokenRefAcct.collective,
+        mint: tokenRefAcct.mint,
         owner,
       }),
       this.programId
@@ -887,22 +889,22 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
   static tokenRefSeeds({
     owner,
     name,
-    collective,
+    mint,
     isPrimary,
   }: ITokenRefKeyArgs): Buffer[] {
     const str = Buffer.from("token-ref", "utf-8");
-    if ((isPrimary || !collective) && !name) {
+    if ((isPrimary || !mint) && !name) {
       if (!owner) {
         throw new Error("Owner is required for a primary token refs");
       }
 
       return [str, owner!.toBuffer()];
     } else {
-      if (!collective) {
-        throw new Error("Collective is required for non-primary token refs");
+      if (!mint) {
+        throw new Error("Mint is required for non-primary token refs");
       }
 
-      return [str, (name || owner)!.toBuffer(), collective.toBuffer()];
+      return [str, (name || owner)!.toBuffer(), mint.toBuffer()];
     }
   }
 
@@ -1034,7 +1036,8 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
   async createSocialTokenInstructions({
     ignoreIfExists = false,
     payer = this.wallet.publicKey,
-    collective = SplTokenCollective.OPEN_COLLECTIVE_ID,
+    collective,
+    baseMint,
     name,
     owner,
     targetMintKeypair = anchor.web3.Keypair.generate(),
@@ -1067,7 +1070,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
 
     // Token refs
     const [tokenRef, tokenRefBumpSeed] = await PublicKey.findProgramAddress(
-      SplTokenCollective.tokenRefSeeds({ collective, owner, name }),
+      SplTokenCollective.tokenRefSeeds({ mint, owner, name }),
       programId
     );
 

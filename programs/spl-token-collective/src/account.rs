@@ -37,6 +37,48 @@ pub fn close_token_account<'a, 'b, 'c, 'info>(
     )
 }
 
+#[derive(Clone)]
+struct OptionalCollectiveV0 {
+  collective: Option<CollectiveV0>
+}
+
+impl AccountDeserialize for OptionalCollectiveV0 {
+  fn try_deserialize(buf: &mut &[u8]) -> core::result::Result<Self, ProgramError> {
+    if buf.len() == 0 {
+      Ok(OptionalCollectiveV0 {
+        collective: None
+      })
+    } else {
+      Ok(OptionalCollectiveV0 {
+        collective: Some(CollectiveV0::try_deserialize(buf)?)
+      })
+    }
+  }
+
+  fn try_deserialize_unchecked(buf: &mut &[u8]) -> core::result::Result<Self, ProgramError> {
+    if buf.len() == 0 {
+      Ok(OptionalCollectiveV0 {
+        collective: None
+      })
+    } else {
+      Ok(OptionalCollectiveV0 {
+        collective: Some(CollectiveV0::try_deserialize_unchecked(buf)?)
+      })
+    }
+  }
+}
+
+impl AccountSerialize for OptionalCollectiveV0 {
+  fn try_serialize<W: std::io::Write>(&self, writer: &mut W) -> core::result::Result<(), ProgramError> {
+    CollectiveV0::try_serialize(&self.collective.to_owned().unwrap(), writer)
+  }
+}
+
+impl Owner for OptionalCollectiveV0 {
+  fn owner() -> Pubkey {
+    crate::id()
+  }
+}
 
 #[derive(Accounts)]
 #[instruction(args: InitializeCollectiveV0Args)]
@@ -77,10 +119,13 @@ pub struct UpdateCollectiveV0<'info> {
 pub struct InitializeSocialTokenV0<'info> {
   #[account(mut, signer)]
   pub payer: AccountInfo<'info>,
-  #[account(seeds = [b"collective", collective.mint.as_ref()], bump = collective.bump_seed)]
-  pub collective: Box<Account<'info, CollectiveV0>>,
   #[account(
-    constraint = token_bonding.base_mint.key() == collective.mint.key(),
+    seeds = [b"collective", base_mint.key().as_ref()], 
+    bump,
+    constraint = collective.collective.is_none() || token_bonding.base_mint.key() == collective.collective.unwrap().mint.key(),
+  )]
+  pub collective: Box<Account<'info, OptionalCollectiveV0>>,
+  #[account(
     has_one = base_mint,
     has_one = target_mint,
     has_one = buy_base_royalties,
@@ -118,8 +163,8 @@ pub struct InitializeSocialTokenV0<'info> {
 pub struct InitializeOwnedSocialTokenV0<'info> {
   pub initialize_args: InitializeSocialTokenV0<'info>,
   #[account(
-    address = initialize_args.collective.authority.unwrap_or(Pubkey::default()),
-    constraint = initialize_args.collective.config.is_open || authority.is_signer
+    address = initialize_args.collective.collective.and_then(|c| c.authority).unwrap_or(Pubkey::default()),
+    constraint = initialize_args.collective.collective.map(|c| c.config.is_open).unwrap_or(true) || authority.is_signer
   )]
   pub authority: AccountInfo<'info>,
   #[account(mut, signer)]
@@ -129,7 +174,7 @@ pub struct InitializeOwnedSocialTokenV0<'info> {
     seeds = [
         b"token-ref",
         owner.key().as_ref(),
-        initialize_args.collective.key().as_ref()
+        initialize_args.base_mint.key().as_ref()
     ],
     bump = args.token_ref_bump_seed,
     payer = payer,
@@ -162,7 +207,8 @@ pub struct InitializeUnclaimedSocialTokenV0<'info> {
   pub initialize_args: InitializeSocialTokenV0<'info>,
   #[account(
     signer,
-    address = initialize_args.collective.authority.unwrap_or(Pubkey::default())
+    address = initialize_args.collective.collective.and_then(|c| c.authority).unwrap_or(Pubkey::default()),
+    constraint = initialize_args.collective.collective.map(|c| c.config.is_open).unwrap_or(true) || authority.is_signer
   )]
   pub authority: AccountInfo<'info>,
   #[account(mut)]
@@ -172,7 +218,7 @@ pub struct InitializeUnclaimedSocialTokenV0<'info> {
     seeds = [
         b"token-ref",
         name.key().as_ref(),
-        initialize_args.collective.key().as_ref(),
+        initialize_args.base_mint.key().as_ref(),
     ],
     bump = args.token_ref_bump_seed,
     payer = payer,
@@ -248,7 +294,8 @@ pub struct UpdateTokenBondingV0Wrapper<'info> {
   )]
   pub authority: AccountInfo<'info>,
   #[account(
-    has_one = token_bonding,
+    // For now, social tokens without a bonding curve are not supported. We may support them later
+    constraint = reverse_token_ref.token_bonding.unwrap() == token_bonding.key(),
     has_one = collective,
     constraint = owner.key() == reverse_token_ref.owner.ok_or::<ProgramError>(ErrorCode::IncorrectOwner.into())?
   )]
@@ -322,12 +369,13 @@ pub struct ClaimSocialTokenV0<'info> {
   #[account(
     mut,
     has_one = collective,
-    has_one = token_bonding,
+    // For now, social tokens without a bonding curve are not supported. We may support them later
+    constraint = token_ref.token_bonding.unwrap() == token_bonding.key(),
     has_one = token_metadata,
     seeds = [
         b"token-ref",
         name.key().as_ref(),
-        collective.key().as_ref()
+        base_mint.key().as_ref()
     ],
     bump = token_ref.bump_seed,
     close = payer
@@ -338,7 +386,7 @@ pub struct ClaimSocialTokenV0<'info> {
     seeds = [
         b"token-ref",
         owner.key().as_ref(),
-        collective.key().as_ref()
+        base_mint.key().as_ref()
     ],
     bump = args.token_ref_bump_seed,
     payer = payer,
@@ -348,7 +396,8 @@ pub struct ClaimSocialTokenV0<'info> {
   #[account(
     mut,
     has_one = collective,
-    has_one = token_bonding,
+    // For now, social tokens without a bonding curve are not supported. We may support them later
+    constraint = reverse_token_ref.token_bonding.unwrap() == token_bonding.key(),
     has_one = token_metadata,
     seeds = [
         b"reverse-token-ref",

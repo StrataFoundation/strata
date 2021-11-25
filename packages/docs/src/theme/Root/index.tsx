@@ -53,7 +53,7 @@ export default ({ children }) => {
 
   return (
     <>
-      <EndpointProvider>
+      <EndpointProvider initialEndpoint="http://127.0.0.1:8899">
         <ThemeProvider>
           <ErrorHandlerProvider onError={onError}>
             <Wallet>

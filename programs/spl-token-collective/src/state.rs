@@ -14,10 +14,10 @@ pub struct CollectiveV0 {
 #[account]
 #[derive(Default)]
 pub struct TokenRefV0 {
-    pub collective: Pubkey,
+    pub collective: Option<Pubkey>,
     pub token_metadata: Pubkey,
     pub mint: Pubkey,
-    pub token_bonding: Pubkey,
+    pub token_bonding: Option<Pubkey>,
     pub name: Option<Pubkey>,
     pub owner: Option<Pubkey>, // Either the owner wallet, or the name class. Name class on unclaimed has the authority to opt out, etc.
     pub is_claimed: bool,
