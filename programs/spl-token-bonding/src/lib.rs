@@ -126,24 +126,8 @@ pub mod spl_token_bonding {
       if ctx.accounts.base_storage.mint == spl_token::native_mint::ID {
         return Err(ErrorCode::WrappedSolNotAllowed.into())
       }
-      let (mint_pda, target_mint_authority_bump_seed) = Pubkey::find_program_address(
-        &[
-          TARGET_MINT_AUTHORITY_PREFIX.as_bytes(), 
-          ctx.accounts.target_mint.key().as_ref()
-        ], 
-        ctx.program_id
-      );
+
       let target_mint = &ctx.accounts.target_mint;
-      if args.base_storage_authority.is_some() {
-        let (base_storage_authority_pda, base_storage_authority_bump_seed) = Pubkey::find_program_address(
-          &[b"storage-authority", ctx.accounts.token_bonding.key().as_ref()], 
-          ctx.program_id
-        );
-        if args.base_storage_authority_bump_seed.unwrap() != base_storage_authority_bump_seed 
-            || args.base_storage_authority.unwrap() != base_storage_authority_pda {
-          return Err(ErrorCode::InvalidBaseStorageAuthority.into())
-        }  
-      }
 
       let bonding = &mut ctx.accounts.token_bonding;
       bonding.go_live_unix_time = args.go_live_unix_time;
@@ -170,13 +154,10 @@ pub mod spl_token_bonding {
       // We need to own the mint authority if this bonding curve supports buying.
       // This can be a sell only bonding curve
       bonding.buy_frozen = args.buy_frozen
-        || mint_pda != target_mint.mint_authority.ok_or::<ProgramError>(ErrorCode::NoMintAuthority.into())?
-        || (target_mint.freeze_authority.is_some() && mint_pda != target_mint.freeze_authority.ok_or::<ProgramError>(ErrorCode::NoMintAuthority.into())?)
-        || target_mint_authority_bump_seed != args.target_mint_authority_bump_seed;
-      bonding.sell_frozen = args.base_storage_authority.is_none();
+        || bonding.key() != target_mint.mint_authority.ok_or::<ProgramError>(ErrorCode::NoMintAuthority.into())?
+        || (target_mint.freeze_authority.is_some() && bonding.key() != target_mint.freeze_authority.ok_or::<ProgramError>(ErrorCode::NoMintAuthority.into())?);
+      bonding.sell_frozen = ctx.accounts.base_storage.owner != bonding.key();
       bonding.bump_seed = args.bump_seed;
-      bonding.base_storage_authority_bump_seed = args.base_storage_authority_bump_seed;
-      bonding.target_mint_authority_bump_seed = args.target_mint_authority_bump_seed;
       bonding.index = args.index;
 
       Ok(())
@@ -186,50 +167,43 @@ pub mod spl_token_bonding {
       ctx: Context<CloseTokenBondingV0>
     ) -> ProgramResult {
       let token_bonding = &mut ctx.accounts.token_bonding;
-      if token_bonding.base_storage_authority_bump_seed.is_some() {
-        let auth_str: &[u8] = b"storage-authority";
-        let bump = &[token_bonding.base_storage_authority_bump_seed.unwrap()];
-        let bonding_ref = token_bonding.to_account_info().key.as_ref();
-        let storage_authority_seeds: Vec<&[u8]> = vec![auth_str, bonding_ref, bump];
-  
-        let base_storage_authority = Pubkey::create_program_address(&storage_authority_seeds, &ctx.program_id)?;
-        if ctx.accounts.base_storage.owner == base_storage_authority {
-          close_token_account(CpiContext::new_with_signer(
-            ctx.accounts.token_program.to_account_info().clone(),
-            CloseTokenAccount {
-                from: ctx.accounts.base_storage.to_account_info().clone(),
-                to: ctx.accounts.refund.to_account_info().clone(),
-                authority: ctx
-                    .accounts
-                    .base_storage_authority
-                    .to_account_info()
-                    .clone(),
-            },
-            &[&storage_authority_seeds],
-          ))?;
-        }
+      let bonding_seeds: &[&[&[u8]]] = &[
+        &[
+          b"token-bonding",
+          ctx.accounts.target_mint.to_account_info().key.as_ref(),
+          &token_bonding.index.to_le_bytes(),
+          &[token_bonding.bump_seed]
+        ]
+      ];
+
+      if ctx.accounts.base_storage.owner == token_bonding.key() {
+        close_token_account(CpiContext::new_with_signer(
+          ctx.accounts.token_program.to_account_info().clone(),
+          CloseTokenAccount {
+              from: ctx.accounts.base_storage.to_account_info().clone(),
+              to: ctx.accounts.refund.to_account_info().clone(),
+              authority: token_bonding.to_account_info().clone()
+          },
+          bonding_seeds
+        ))?;
       }
 
       msg!("Setting mint authority to none");
-      set_authority(
-        CpiContext::new_with_signer(
-          ctx.accounts.token_program.to_account_info().clone(), 
-          SetAuthority {
-            current_authority: ctx.accounts.target_mint_authority.to_account_info().clone(),
-            account_or_mint: ctx.accounts.target_mint.to_account_info().clone()
-          },
-          &[
-            &[
-              TARGET_MINT_AUTHORITY_PREFIX.as_bytes(), 
-              ctx.accounts.target_mint.key().as_ref(),
-              &[ctx.accounts.token_bonding.target_mint_authority_bump_seed]
-            ]
-          ]
-        ),
-        spl_token::instruction::AuthorityType::MintTokens,
-        None,
-      )?;
-
+      if ctx.accounts.target_mint.mint_authority.is_some() && ctx.accounts.target_mint.mint_authority.unwrap() == token_bonding.key() {
+        set_authority(
+          CpiContext::new_with_signer(
+            ctx.accounts.token_program.to_account_info().clone(), 
+            SetAuthority {
+              current_authority: ctx.accounts.token_bonding.to_account_info().clone(),
+              account_or_mint: ctx.accounts.target_mint.to_account_info().clone()
+            },
+            bonding_seeds
+          ),
+          spl_token::instruction::AuthorityType::MintTokens,
+          None,
+        )?;
+      }
+      
       Ok(())
     }
 
@@ -390,12 +364,13 @@ pub mod spl_token_bonding {
       let base_storage_account = ctx.accounts.base_storage.to_account_info();
       let base_royalties_account = ctx.accounts.buy_base_royalties.clone().to_account_info();
       let target_royalties_account = ctx.accounts.buy_target_royalties.clone().to_account_info();
-      let target_mint_authority = ctx.accounts.target_mint_authority.to_account_info();
+      let target_mint_authority = token_bonding.to_account_info().clone();
       let source_authority = ctx.accounts.source_authority.to_account_info();
       let mint_signer_seeds: &[&[&[u8]]] = &[&[
-        TARGET_MINT_AUTHORITY_PREFIX.as_bytes(), 
+        b"token-bonding", 
         ctx.accounts.target_mint.to_account_info().key.as_ref(),
-        &[token_bonding.target_mint_authority_bump_seed]
+        &token_bonding.index.to_le_bytes(),
+        &[token_bonding.bump_seed]
       ]];
 
       if base_royalties > 0 {
@@ -524,14 +499,8 @@ pub mod spl_token_bonding {
       let token_program = ctx.accounts.token_program.to_account_info();
       let source = ctx.accounts.source.to_account_info();
       let base_storage_account = ctx.accounts.base_storage.to_account_info();
-      let base_storage_authority = ctx.accounts.base_storage_authority.to_account_info();
       let source_authority = ctx.accounts.source_authority.to_account_info();
       let destination = ctx.accounts.destination.to_account_info();
-
-      let auth_str: &[u8] = b"storage-authority";
-      let bump = &[token_bonding.base_storage_authority_bump_seed.unwrap()];
-      let bonding_ref = token_bonding.to_account_info().key.as_ref();
-      let storage_authority_seeds: Vec<&[u8]> = vec![auth_str, bonding_ref, bump];
 
       msg!("Burning {}", amount);
       token::burn(CpiContext::new(token_program.clone(), Burn {
@@ -552,17 +521,25 @@ pub mod spl_token_bonding {
         ), target_royalties)?;
       }
 
+      
+      let bonding_seeds: &[&[&[u8]]] = &[
+        &[
+          b"token-bonding",
+          ctx.accounts.target_mint.to_account_info().key.as_ref(),
+          &token_bonding.index.to_le_bytes(),
+          &[token_bonding.bump_seed]
+        ]
+      ];
+
       msg!("Paying out {} from base storage, {}", reclaimed, ctx.accounts.base_storage.amount);
       token::transfer(CpiContext::new_with_signer(
         token_program.clone(), 
         Transfer {
           from: base_storage_account.clone(),
           to: destination.clone(),
-          authority: base_storage_authority.clone()
+          authority: ctx.accounts.token_bonding.to_account_info().clone()
         },
-        &[
-          &storage_authority_seeds
-        ]
+        bonding_seeds
       ), reclaimed)?;
 
       if base_royalties > 0 {
@@ -572,11 +549,9 @@ pub mod spl_token_bonding {
           Transfer {
             from: base_storage_account.clone(),
             to: ctx.accounts.sell_base_royalties.to_account_info().clone(),
-            authority: base_storage_authority.clone()
+            authority: ctx.accounts.token_bonding.to_account_info().clone()
           },
-          &[
-            &storage_authority_seeds
-          ]
+          bonding_seeds
         ), base_royalties)?;
       }
 

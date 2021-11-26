@@ -220,16 +220,7 @@ export interface ICreateTokenBondingArgs {
    * The mint this bonding curve will create on `buy`. If not provided, specify `targetMintDecimals` and it will create one for you
    * 
    * It can be useful to pass the mint in if you're creating a bonding curve for an existing mint. Keep in mind,
-   * the authority on this mint will need to be set to:
-   * ```js
-   * PublicKey.findProgramAddress(
-      [
-        Buffer.from("target-authority", "utf-8"),
-        targetMint!.toBuffer()
-      ],
-      this.programId
-    )
-   * ```
+   * the authority on this mint will need to be set to the token bonding pda
    */
   targetMint?: PublicKey; // If not provided, will create one with `targetMintDecimals`
   /**
@@ -685,20 +676,6 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
   }
 
   /**
-   * Get the PDA key of the account that should be the authority on the base storage (reserve) account of a bonding curve that doesn't have sell frozen.
-   * @param tokenBonding
-   * @returns
-   */
-  async baseStorageAuthorityKey(
-    tokenBonding: PublicKey
-  ): Promise<[PublicKey, number]> {
-    return PublicKey.findProgramAddress(
-      [Buffer.from("storage-authority", "utf-8"), tokenBonding.toBuffer()],
-      this.programId
-    );
-  }
-
-  /**
    * Create a bonding curve
    *
    * @param param0
@@ -781,37 +758,25 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       indexToUse = index;
     }
 
-    const [targetMintAuthority, targetMintAuthorityBumpSeed] =
-      await PublicKey.findProgramAddress(
-        [Buffer.from("target-authority", "utf-8"), targetMint!.toBuffer()],
-        this.programId
-      );
-
-    if (shouldCreateMint) {
-      instructions.push(
-        ...(await createMintInstructions(
-          provider,
-          targetMintAuthority,
-          targetMint,
-          targetMintDecimals
-        ))
-      );
-    }
 
     const [tokenBonding, bumpSeed] = await SplTokenBonding.tokenBondingKey(
       targetMint!,
       indexToUse
     );
 
-    let baseStorageAuthority: PublicKey | null = null;
-    const [baseStorageAuthorityRes, baseStorageAuthorityBumpSeedRes] =
-      await this.baseStorageAuthorityKey(tokenBonding);
-    const baseStorageAuthorityBumpSeed = baseStorageAuthorityBumpSeedRes;
+    if (shouldCreateMint) {
+      instructions.push(
+        ...(await createMintInstructions(
+          provider,
+          tokenBonding,
+          targetMint,
+          targetMintDecimals
+        ))
+      );
+    }
 
     // This is a buy/sell bonding curve. Create the program owned base storage account
     if (!baseStorage) {
-      baseStorageAuthority = baseStorageAuthorityRes;
-
       const baseStorageKeypair = anchor.web3.Keypair.generate();
       signers.push(baseStorageKeypair);
       baseStorage = baseStorageKeypair.publicKey;
@@ -831,7 +796,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           TOKEN_PROGRAM_ID,
           baseMint,
           baseStorage,
-          baseStorageAuthority
+          tokenBonding
         )
       );
     }
@@ -970,9 +935,6 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           curveAuthority,
           reserveAuthority,
           bumpSeed,
-          baseStorageAuthority,
-          baseStorageAuthorityBumpSeed,
-          targetMintAuthorityBumpSeed,
           buyFrozen,
         },
         {
@@ -1400,15 +1362,6 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       targetMint
     );
 
-    const targetMintAuthority = await PublicKey.createProgramAddress(
-      [
-        Buffer.from("target-authority", "utf-8"),
-        tokenBondingAcct.targetMint.toBuffer(),
-        new BN(tokenBondingAcct.targetMintAuthorityBumpSeed).toBuffer(),
-      ],
-      this.programId
-    );
-
     const instructions = [];
     const signers = [];
     if (!destination) {
@@ -1529,7 +1482,6 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         curve: tokenBondingAcct.curve,
         baseMint: tokenBondingAcct.baseMint,
         targetMint: tokenBondingAcct.targetMint,
-        targetMintAuthority,
         baseStorage: tokenBondingAcct.baseStorage,
         buyBaseRoyalties: tokenBondingAcct.buyBaseRoyalties,
         buyTargetRoyalties: tokenBondingAcct.buyTargetRoyalties,
@@ -1612,18 +1564,6 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       baseStorage,
       baseMint,
       targetMint
-    );
-
-    let baseStorageAuthority;
-    baseStorageAuthority = await PublicKey.createProgramAddress(
-      [
-        Buffer.from("storage-authority", "utf-8"),
-        tokenBonding.toBuffer(),
-        new BN(
-          tokenBondingAcct.baseStorageAuthorityBumpSeed as number
-        ).toBuffer(),
-      ],
-      this.programId
     );
 
     const instructions = [];
@@ -1711,7 +1651,6 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         baseStorage: tokenBondingAcct.baseStorage,
         sellBaseRoyalties: tokenBondingAcct.sellBaseRoyalties,
         sellTargetRoyalties: tokenBondingAcct.sellTargetRoyalties,
-        baseStorageAuthority,
         source,
         sourceAuthority,
         destination,

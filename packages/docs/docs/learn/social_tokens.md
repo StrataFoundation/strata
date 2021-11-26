@@ -48,13 +48,13 @@ entity Wallet {
 }
 
 entity TokenRef {
-  ["token-ref", owner] PRIMARY
+  ["owner-token-ref", owner] PRIMARY
   -- 
-  ["token-ref", name, collective]
+  ["owner-token-ref", name, collective]
   --
-  ["token-ref", owner, collective]
+  ["owner-token-ref", owner, collective]
   --
-  ["reverse-token-ref", targetMint]
+  ["mint-token-ref", targetMint]
   --
   collective
   token_metadata
@@ -159,7 +159,7 @@ var collectiveBondingAcct = await tokenBondingSdk.getTokenBonding(tokenBonding);
 Now, create a social token within the collective:
 
 ```js async name=token deps=collective
-var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
+var { ownerTokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
   isPrimary: false, // Creates a social token explicitly associated with the collective by pda, instead of the wallet alone.
   collective,
   metadata: {
@@ -178,7 +178,7 @@ var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
 });
 
 var tokenBondingAcct = await tokenBondingSdk.getTokenBonding(tokenBonding);
-var tokenRefAcct = await tokenCollectiveSdk.getTokenRef(tokenRef);
+var ownerTokenRefAcct = await tokenCollectiveSdk.getTokenRef(ownerTokenRef);
 ```
 
 Notice that we created a non-primary social token here. Most wallets will have one social token. For ease of lookup, social tokens refs are a PDA of the owner alone. In the case where one wallet belongs to several collectives, they should choose one `isPrimary` token that is used for lookups on storefronts. 
@@ -289,7 +289,7 @@ The name service name for the user does not have to exist for us to create a tok
 :::
 
 ```js async name=unclaimed deps=collective,name
-var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
+var { ownerTokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
   collective,
   name: twitterName, // Associate the social token with the created name
   metadata: {
@@ -380,7 +380,7 @@ When creating a collective that allows unclaimed tokens, be sure to include the 
 
 ```js async name=claim deps=buy,create_name
 var { instructions, signers } = await tokenCollectiveSdk.claimSocialTokenInstructions({
-  tokenRef,
+  ownerTokenRef,
   owner: nameOwner.publicKey,
   symbol: "CLM",
 });

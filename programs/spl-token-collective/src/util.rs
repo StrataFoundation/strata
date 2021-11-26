@@ -4,24 +4,18 @@ use crate::arg::*;
 use spl_token_bonding::state::TokenBondingV0;
 use anchor_spl::token::{TokenAccount};
 
-pub fn verify_authority(authority: Option<Pubkey>, seeds: &[&[u8]], bump: u8) -> Result<bool, ProgramError> {
-  let (key, canonical_bump) = Pubkey::find_program_address(seeds, &crate::id());
-
-  if bump != canonical_bump {
-    return Err(ErrorCode::InvalidBump.into());
-  }
-
-  if key != authority.ok_or::<ProgramError>(ErrorCode::NoAuthority.into())? {
+pub fn verify_authority(authority: Option<Pubkey>, key: &Pubkey) -> Result<bool, ProgramError> {
+  if *key != authority.ok_or::<ProgramError>(ErrorCode::NoAuthority.into())? {
     return Err(ErrorCode::InvalidAuthority.into());
   }
 
   Ok(true)
 }
 
-pub fn verify_bonding_authorities(bonding: &TokenBondingV0, seeds: &[&[u8]], bump: u8) -> Result<bool, ProgramError> {
-  Ok(verify_authority(bonding.general_authority, seeds, bump)? &&
-  verify_authority(bonding.curve_authority, seeds, bump)? &&
-  verify_authority(bonding.reserve_authority, seeds, bump)?)
+pub fn verify_bonding_authorities(bonding: &TokenBondingV0, mint_token_ref_key: &Pubkey) -> Result<bool, ProgramError> {
+  Ok(verify_authority(bonding.general_authority, mint_token_ref_key)? &&
+  verify_authority(bonding.curve_authority, mint_token_ref_key)? &&
+  verify_authority(bonding.reserve_authority, mint_token_ref_key)?)
 }
 
 pub fn get_seeds_and_key(

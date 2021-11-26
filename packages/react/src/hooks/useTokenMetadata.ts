@@ -16,6 +16,7 @@ import { useClaimedTokenRef } from "./tokenRef";
 import { useAccount } from "./useAccount";
 import { useAssociatedAccount } from "./useAssociatedAccount";
 import { useMint } from "./useMint";
+import { useMintTokenRef } from "index";
 
 export interface IUseTokenMetadataResult extends ITokenWithMetaAndAccount {
   loading: boolean;
@@ -76,9 +77,9 @@ export function useTokenMetadata(
   } = useAsync(SplTokenMetadata.getImage, [metadata?.data.uri]);
   const mint = useMint(token);
 
-  const { info: tokenRef } = useClaimedTokenRef(wallet.publicKey || undefined);
+  const { info: mintTokenRef } = useMintTokenRef(token);
   return {
-    tokenRef,
+    tokenRef: mintTokenRef,
     loading: Boolean(
       token && (loading || accountLoading || dataLoading || imageLoading)
     ),

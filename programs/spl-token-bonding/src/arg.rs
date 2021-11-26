@@ -18,12 +18,9 @@ pub struct InitializeTokenBondingV0Args {
   pub general_authority: Option<Pubkey>,
   pub reserve_authority: Option<Pubkey>,
   pub curve_authority: Option<Pubkey>,
-  pub base_storage_authority: Option<Pubkey>,
   pub buy_frozen: bool,
   pub index: u16, // A given target mint can have multiple curves associated with it. Index 0 is reserved for the primary curve that holds mint authority
   pub bump_seed: u8,
-  pub target_mint_authority_bump_seed: u8,
-  pub base_storage_authority_bump_seed: Option<u8>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]

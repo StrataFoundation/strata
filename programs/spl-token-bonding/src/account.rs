@@ -4,8 +4,6 @@ use crate::state::*;
 use crate::error::ErrorCode;
 use anchor_spl::{token, token::{Mint, Token, TokenAccount}};
 
-pub static TARGET_MINT_AUTHORITY_PREFIX: &str = "target-authority";
-               
 #[derive(Accounts)]
 pub struct CloseTokenAccount<'info> {
     pub from: AccountInfo<'info>,
@@ -145,14 +143,7 @@ pub struct InitializeTokenBondingV0<'info> {
     seeds = [b"token-bonding", target_mint.key().as_ref(), &args.index.to_le_bytes()],
     bump = args.bump_seed,
     // Index 0 is reserved for the primary bonding curve, the one with which new tokens can be minted
-    constraint = args.index != 0 || target_mint.mint_authority.unwrap() == Pubkey::create_program_address(
-      &[
-        TARGET_MINT_AUTHORITY_PREFIX.as_bytes(), 
-        target_mint.key().as_ref(),
-        &[args.target_mint_authority_bump_seed]
-      ],
-      &crate::id()
-    )?,
+    constraint = args.index != 0 || target_mint.mint_authority.unwrap() == token_bonding.key(),
     payer = payer,
     space = 512
   )]
@@ -164,7 +155,6 @@ pub struct InitializeTokenBondingV0<'info> {
   pub target_mint: Box<Account<'info, Mint>>,
   #[account(
     constraint = base_storage.mint == base_mint.key(),
-    constraint = args.base_storage_authority.is_none() || base_storage.owner == args.base_storage_authority.unwrap(),
     constraint = base_storage.delegate.is_none(),
     constraint = base_storage.close_authority.is_none(),
   )]
@@ -218,14 +208,11 @@ pub struct CloseTokenBondingV0<'info> {
   pub general_authority: AccountInfo<'info>,
 
   #[account(
-    mut,
-    constraint = target_mint.mint_authority.unwrap() == target_mint_authority.key(),
+    mut
   )]
   pub target_mint: Box<Account<'info, Mint>>,
-  pub target_mint_authority: AccountInfo<'info>,
-  #[account(constraint = base_storage.owner == base_storage_authority.key())]
+  #[account(mut)]
   pub base_storage: Box<Account<'info, TokenAccount>>,
-  pub base_storage_authority: AccountInfo<'info>,
   pub token_program: Program<'info, Token>,
 }
 
@@ -285,14 +272,6 @@ pub struct BuyV0<'info> {
   pub base_mint: Box<Account<'info, Mint>>,
   #[account(mut)]
   pub target_mint: Box<Account<'info, Mint>>,
-  #[account(
-    seeds = [
-      TARGET_MINT_AUTHORITY_PREFIX.as_bytes(), 
-      token_bonding.target_mint.as_ref()
-    ],
-    bump = token_bonding.target_mint_authority_bump_seed
-  )]
-  pub target_mint_authority: AccountInfo<'info>,
   #[account(mut)]
   pub base_storage: Box<Account<'info, TokenAccount>>,
   #[account(mut)]
@@ -335,9 +314,6 @@ pub struct SellV0<'info> {
   #[account(mut)]
   // Token account could have been closed. Royalties are not sent if the account has been closed, but we also don't want to fail to parse here
   pub sell_target_royalties: AccountInfo<'info>,
-
-  #[account()]
-  pub base_storage_authority: AccountInfo<'info>,
 
   #[account(mut)]
   pub source: Box<Account<'info, TokenAccount>>,

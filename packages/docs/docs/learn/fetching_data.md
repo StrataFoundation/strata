@@ -37,13 +37,13 @@ entity Wallet {
 }
 
 entity TokenRef {
-  ["token-ref", owner] PRIMARY
+  ["owner-token-ref", owner] PRIMARY
   -- 
-  ["token-ref", name, collective]
+  ["owner-token-ref", name, collective]
   --
-  ["token-ref", owner, collective]
+  ["owner-token-ref", owner, collective]
   --
-  ["reverse-token-ref", targetMint]
+  ["mint-token-ref", targetMint]
   --
   collective
   token_metadata
@@ -121,7 +121,7 @@ These deterministically derived addresses give us another tool. Don't have the P
 
 ```js async name=owner
 // Get the primary social token for your wallet.
-var tokenRefKey = (await SplTokenCollective.tokenRefKey({
+var tokenRefKey = (await SplTokenCollective.ownerTokenRefKey({
   owner: provider.wallet.publicKey,
   isPrimary: true
 }))[0]
@@ -161,24 +161,24 @@ You can get to a token ref if you know any of the following sets of information:
    * **name, collective** - An unclaimed social token registered to a name service name within a collective
    * **mint** - The Mint of the social token
 
-All of these can be accessed from `SplTokenCollective.tokenRefKey` and `SplTokenCollective.reverseTokenRefKey`:
+All of these can be accessed from `SplTokenCollective.ownerTokenRefKey` and `SplTokenCollective.mintTokenRefKey`:
 ```js
 import { getNameAccountKey, getHashedName } from "@solana/spl-name-service";
 ```
 ```js async deps=token
-var primaryTokenRef = (await SplTokenCollective.tokenRefKey({
+var primaryTokenRef = (await SplTokenCollective.ownerTokenRefKey({
   owner: provider.wallet.publicKey,
   isPrimary: true
 }))[0];
-var collectiveTokenRef = (await SplTokenCollective.tokenRefKey({
+var collectiveTokenRef = (await SplTokenCollective.ownerTokenRefKey({
   owner: provider.wallet.publicKey,
   collective: tokenRef.collective
 }))[0];
-var unclaimedCollectiveTokenRef = (await SplTokenCollective.tokenRefKey({
+var unclaimedCollectiveTokenRef = (await SplTokenCollective.ownerTokenRefKey({
   name: await getNameAccountKey(await getHashedName("some-name")),
   collective: tokenRef.collective
 }))[0];
-var mintTokenRef = (await SplTokenCollective.reverseTokenRefKey(tokenRef.mint))[0];
+var mintTokenRef = (await SplTokenCollective.mintTokenRefKey(tokenRef.mint))[0];
 ```
 
 ## Token Bonding
@@ -200,7 +200,7 @@ Want to go from a mint to the wallet of the user this social token represents? G
 
 ```js
 var mint = new PublicKey("....");
-var mintTokenRefKey = (await SplTokenCollective.reverseTokenRefKey())[0];
+var mintTokenRefKey = (await SplTokenCollective.mintTokenRefKey(mint))[0];
 var tokenRef = await tokenCollectiveSdk.getTokenRef(tokenRef.mint);
 var wallet = tokenRef.owner;
 ```

@@ -175,31 +175,28 @@ pub struct InitializeOwnedSocialTokenV0<'info> {
   #[account(
     init,
     seeds = [
-        b"token-ref",
+        b"owner-token-ref",
         owner.key().as_ref(),
         initialize_args.base_mint.key().as_ref()
     ],
-    bump = args.token_ref_bump_seed,
+    bump = args.owner_token_ref_bump_seed,
     payer = payer,
     space = 312
   )]
-  pub token_ref: Box<Account<'info, TokenRefV0>>,
+  pub owner_token_ref: Box<Account<'info, TokenRefV0>>,
   #[account(
     init,
     seeds = [
-        b"reverse-token-ref",
+        b"mint-token-ref",
         initialize_args.token_bonding.target_mint.as_ref()
     ],
-    constraint = verify_bonding_authorities(&initialize_args.token_bonding, &[b"token-bonding-authority", reverse_token_ref.key().as_ref()], args.token_bonding_authority_bump_seed)?,
-    bump = args.reverse_token_ref_bump_seed,
+    constraint = verify_bonding_authorities(&initialize_args.token_bonding, &mint_token_ref.key())?,
+    bump = args.mint_token_ref_bump_seed,
     payer = payer,
     space = 312,
   )]
-  pub reverse_token_ref: Box<Account<'info, TokenRefV0>>,
-  #[account(
-    signer
-  )]
-  pub owner: AccountInfo<'info>,
+  pub mint_token_ref: Box<Account<'info, TokenRefV0>>,
+  pub owner: Signer<'info>,
   pub system_program: Program<'info, System>,
   pub rent: Sysvar<'info, Rent>,
 }
@@ -219,28 +216,28 @@ pub struct InitializeUnclaimedSocialTokenV0<'info> {
   #[account(
     init,
     seeds = [
-        b"token-ref",
+        b"owner-token-ref",
         name.key().as_ref(),
         initialize_args.base_mint.key().as_ref(),
     ],
-    bump = args.token_ref_bump_seed,
+    bump = args.owner_token_ref_bump_seed,
     payer = payer,
     space = 312
   )]
-  pub token_ref: Box<Account<'info, TokenRefV0>>,
+  pub owner_token_ref: Box<Account<'info, TokenRefV0>>,
   #[account(
     init,
     seeds = [
-        b"reverse-token-ref",
+        b"mint-token-ref",
         initialize_args.token_bonding.target_mint.as_ref()
     ],
-    bump = args.reverse_token_ref_bump_seed,
+    bump = args.mint_token_ref_bump_seed,
     payer = payer,
     space = 312,
-    constraint = verify_bonding_authorities(&initialize_args.token_bonding, &[b"token-bonding-authority", reverse_token_ref.key().as_ref()], args.token_bonding_authority_bump_seed)?,
-    constraint = verify_authority(Some(initialize_args.token_metadata.update_authority), &[b"token-metadata-authority", reverse_token_ref.key().as_ref()], args.token_metadata_update_authority_bump_seed)?,
+    constraint = verify_bonding_authorities(&initialize_args.token_bonding, &mint_token_ref.key())?,
+    constraint = verify_authority(Some(initialize_args.token_metadata.update_authority), &mint_token_ref.key())?,
   )]
-  pub reverse_token_ref: Box<Account<'info, TokenRefV0>>,
+  pub mint_token_ref: Box<Account<'info, TokenRefV0>>,
   #[account(
     constraint = (
       token_metadata.data.creators.is_none() &&
@@ -268,13 +265,13 @@ pub struct SetAsPrimaryV0<'info> {
   pub payer: Signer<'info>,
   pub owner: Signer<'info>,
   #[account(
-    constraint = owner.key() == token_ref.owner.ok_or::<ProgramError>(ErrorCode::IncorrectOwner.into())?
+    constraint = owner.key() == owner_token_ref.owner.ok_or::<ProgramError>(ErrorCode::IncorrectOwner.into())?
   )]
-  pub token_ref: Account<'info, TokenRefV0>,
+  pub owner_token_ref: Account<'info, TokenRefV0>,
   #[account(
     init_if_needed,
     seeds = [
-        b"token-ref",
+        b"owner-token-ref",
         owner.key().as_ref()
     ],
     bump = args.bump_seed,
@@ -298,28 +295,18 @@ pub struct UpdateTokenBondingV0Wrapper<'info> {
   pub authority: AccountInfo<'info>,
   #[account(
     // For now, social tokens without a bonding curve are not supported. We may support them later
-    constraint = reverse_token_ref.token_bonding.ok_or::<ProgramError>(ErrorCode::NoBonding.into())? == token_bonding.key(),
-    constraint = reverse_token_ref.collective.is_none() || collective.key() == reverse_token_ref.collective.unwrap() @ ErrorCode::InvalidCollective,
-    constraint = owner.key() == reverse_token_ref.owner.ok_or::<ProgramError>(ErrorCode::IncorrectOwner.into())?
+    constraint = mint_token_ref.token_bonding.ok_or::<ProgramError>(ErrorCode::NoBonding.into())? == token_bonding.key(),
+    constraint = mint_token_ref.collective.is_none() || collective.key() == mint_token_ref.collective.unwrap() @ ErrorCode::InvalidCollective,
+    constraint = owner_token_ref_authority.key() == mint_token_ref.authority.ok_or::<ProgramError>(ErrorCode::IncorrectOwner.into())?,
   )]
-  pub reverse_token_ref: Box<Account<'info, TokenRefV0>>,
+  pub mint_token_ref: Box<Account<'info, TokenRefV0>>,
   #[account(
     mut,
     has_one = base_mint,
     has_one = target_mint
   )]
   pub token_bonding: Box<Account<'info, TokenBondingV0>>,
-  #[account(
-    seeds = [
-      b"token-bonding-authority", reverse_token_ref.key().as_ref()
-    ],
-    bump = reverse_token_ref.token_bonding_authority_bump_seed
-  )]
-  pub token_bonding_authority: AccountInfo<'info>,
-  #[account(
-    signer,
-  )]
-  pub owner: AccountInfo<'info>,
+  pub owner_token_ref_authority: Signer<'info>,
 
   #[account(address = spl_token_bonding::id())]
   pub token_bonding_program: AccountInfo<'info>,
@@ -355,7 +342,7 @@ pub struct UpdateTokenBondingV0Wrapper<'info> {
   pub sell_target_royalties: Box<Account<'info, TokenAccount>>,
 }
 
-fn token_ref_final_seed<'a>(collective: &'a Pubkey, is_primary: bool) -> Vec<u8> {
+fn owner_token_ref_final_seed<'a>(collective: &'a Pubkey, is_primary: bool) -> Vec<u8> {
   msg!("Is primary {}", is_primary);
   if is_primary {
     Pubkey::default().as_ref().to_vec()
@@ -371,49 +358,49 @@ pub struct ClaimSocialTokenV0<'info> {
   pub collective: Box<Account<'info, OptionalCollectiveV0>>,
   #[account(
     mut,
-    constraint = token_ref.collective.is_none() || collective.key() == token_ref.collective.unwrap() @ ErrorCode::InvalidCollective,
+    constraint = owner_token_ref.collective.is_none() || collective.key() == owner_token_ref.collective.unwrap() @ ErrorCode::InvalidCollective,
     // For now, social tokens without a bonding curve are not supported. We may support them later
-    constraint = reverse_token_ref.token_bonding.ok_or::<ProgramError>(ErrorCode::NoBonding.into())? == token_bonding.key(),
+    constraint = mint_token_ref.token_bonding.ok_or::<ProgramError>(ErrorCode::NoBonding.into())? == token_bonding.key(),
     has_one = token_metadata,
     seeds = [
-        b"token-ref",
+        b"owner-token-ref",
         name.key().as_ref(),
         base_mint.key().as_ref()
     ],
-    bump = token_ref.bump_seed,
+    bump = owner_token_ref.bump_seed,
     close = payer
   )]
-  pub token_ref: Account<'info, TokenRefV0>,
+  pub owner_token_ref: Account<'info, TokenRefV0>,
   #[account(
     init,
     seeds = [
-        b"token-ref",
+        b"owner-token-ref",
         owner.key().as_ref(),
         base_mint.key().as_ref()
     ],
-    bump = args.token_ref_bump_seed,
+    bump = args.owner_token_ref_bump_seed,
     payer = payer,
     space = 312,
   )]
   pub new_token_ref: Box<Account<'info, TokenRefV0>>,
   #[account(
     mut,
-    constraint = reverse_token_ref.collective.is_none() || collective.key() == reverse_token_ref.collective.unwrap() @ ErrorCode::InvalidCollective,
+    constraint = mint_token_ref.collective.is_none() || collective.key() == mint_token_ref.collective.unwrap() @ ErrorCode::InvalidCollective,
     // For now, social tokens without a bonding curve are not supported. We may support them later
-    constraint = reverse_token_ref.token_bonding.unwrap() == token_bonding.key(),
+    constraint = mint_token_ref.token_bonding.unwrap() == token_bonding.key(),
     has_one = token_metadata,
     seeds = [
-        b"reverse-token-ref",
+        b"mint-token-ref",
         token_bonding.target_mint.as_ref()
     ],
-    bump = reverse_token_ref.bump_seed,
+    bump = mint_token_ref.bump_seed,
   )]
-  pub reverse_token_ref: Box<Account<'info, TokenRefV0>>,
+  pub mint_token_ref: Box<Account<'info, TokenRefV0>>,
   #[account(
     mut,
     has_one = base_mint,
     has_one = target_mint,
-    constraint = token_bonding.general_authority.unwrap() == token_bonding_authority.key(),
+    constraint = token_bonding.general_authority.unwrap() == mint_token_ref.key(),
     has_one = buy_base_royalties,
     has_one = buy_target_royalties,
     has_one = sell_base_royalties,
@@ -423,29 +410,13 @@ pub struct ClaimSocialTokenV0<'info> {
   #[account(mut)]
   pub token_metadata: Account<'info, Metadata>,
   #[account(
-    seeds = [
-      b"token-bonding-authority", reverse_token_ref.key().as_ref()
-    ],
-    bump = token_ref.token_bonding_authority_bump_seed
-  )]
-  pub token_bonding_authority: AccountInfo<'info>,
-  #[account(
-    seeds = [
-      b"token-metadata-authority", reverse_token_ref.key().as_ref()
-    ],
-    bump = token_ref.token_metadata_update_authority_bump_seed
-  )]
-  pub metadata_update_authority: AccountInfo<'info>,
-
-  #[account(
     has_one = owner
   )]
   pub name: Box<Account<'info, NameRecordHeader>>,
   #[account(
-    mut,
-    signer,
+    mut
   )]
-  pub owner: AccountInfo<'info>,
+  pub owner: Signer<'info>,
 
   pub base_mint: Box<Account<'info, Mint>>,
   pub target_mint: Box<Account<'info, Mint>>,
