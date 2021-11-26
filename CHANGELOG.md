@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htmlq).
 
 ## [1.0.0]
+### Added
+
+  - Token ref now has an authority set on it. This controls change to the bonding curve, separate from the owner. This allows a token ref to be associated with a wallet, but controlled by governance.
+
 ### Changed
 
   - Social tokens (tokenRefs) may now have no collective
@@ -12,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Token refs PDAs are now based on the base mint of their bonding curve, instead of the collective
   - **Switch from token-ref to owner-token-ref, and reverse-token-ref to mint-token-ref. This affects all pdas, and API naming semantics.** 
   - Switch all authorities to concrete accounts. For example, token bonding's mint authority is now the token bonding itself. This makes for easier lookups, and makes the on chain data more descriptive.
+
 
 ## [0.7.0]
 ### Added
