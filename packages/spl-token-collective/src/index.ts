@@ -618,7 +618,9 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     const signers2 = [];
     let tokenBonding: PublicKey | undefined;
     if (bonding) {
-      tokenBonding = (await SplTokenBonding.tokenBondingKey(mint, bonding.index || 0))[0]
+      tokenBonding = (
+        await SplTokenBonding.tokenBondingKey(mint, bonding.index || 0)
+      )[0];
       // Set back to token bonding's authority
       instructions2.push(
         Token.createSetAuthorityInstruction(
@@ -682,7 +684,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     sellTargetRoyalties,
     ignoreMissingName,
     isPrimary = true,
-    authority = this.wallet.publicKey
+    authority = this.wallet.publicKey,
   }: IClaimSocialTokenArgs): Promise<InstructionResult<null>> {
     const ownerTokenRefAcct = (await this.getTokenRef(ownerTokenRef))!;
     if (!ownerTokenRefAcct.tokenBonding) {
@@ -769,13 +771,14 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       tokenBondingAcct.targetMint
     );
 
-    const [newTokenRef, ownerTokenRefBumpSeed] = await PublicKey.findProgramAddress(
-      SplTokenCollective.ownerTokenRefSeeds({
-        mint: tokenBondingAcct.baseMint,
-        owner,
-      }),
-      this.programId
-    );
+    const [newTokenRef, ownerTokenRefBumpSeed] =
+      await PublicKey.findProgramAddress(
+        SplTokenCollective.ownerTokenRefSeeds({
+          mint: tokenBondingAcct.baseMint,
+          owner,
+        }),
+        this.programId
+      );
 
     const [royaltiesOwner] = await PublicKey.findProgramAddress(
       [
@@ -790,7 +793,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
         {
           ownerTokenRefBumpSeed,
           isPrimary,
-          authority
+          authority,
         },
         {
           accounts: {
@@ -914,7 +917,10 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     args: ITokenRefKeyArgs,
     programId: PublicKey = SplTokenCollective.ID
   ): Promise<[PublicKey, number]> {
-    return PublicKey.findProgramAddress(this.ownerTokenRefSeeds(args), programId);
+    return PublicKey.findProgramAddress(
+      this.ownerTokenRefSeeds(args),
+      programId
+    );
   }
 
   static async mintTokenRefKey(
@@ -1048,7 +1054,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     nameParent,
     tokenBondingParams,
     isPrimary = name ? false : true,
-    authority
+    authority,
   }: ICreateSocialTokenArgs): Promise<
     BigInstructionResult<{
       ownerTokenRef: PublicKey;
@@ -1083,10 +1089,11 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     }
 
     // Token refs
-    const [ownerTokenRef, ownerTokenRefBumpSeed] = await PublicKey.findProgramAddress(
-      SplTokenCollective.ownerTokenRefSeeds({ mint, owner, name }),
-      programId
-    );
+    const [ownerTokenRef, ownerTokenRefBumpSeed] =
+      await PublicKey.findProgramAddress(
+        SplTokenCollective.ownerTokenRefSeeds({ mint, owner, name }),
+        programId
+      );
 
     // create mint with payer as auth
     console.log(
@@ -1140,7 +1147,9 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       );
     }
 
-    const tokenBonding = (await SplTokenBonding.tokenBondingKey(targetMint, 0))[0]
+    const tokenBonding = (
+      await SplTokenBonding.tokenBondingKey(targetMint, 0)
+    )[0];
 
     const {
       instructions: metadataInstructions,
@@ -1359,8 +1368,9 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     return Promise.all(
       (tokenAccounts || []).map(async ({ pubkey, info }) => {
         const metadataKey = await getMetadata(info.mint.toBase58());
-        const [mintTokenRefKey] =
-          await SplTokenCollective.mintTokenRefKey(info.mint);
+        const [mintTokenRefKey] = await SplTokenCollective.mintTokenRefKey(
+          info.mint
+        );
         const account = await this.provider.connection.getAccountInfo(
           mintTokenRefKey
         );

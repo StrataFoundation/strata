@@ -26,14 +26,16 @@ export async function getTwitterClaimedTokenRefKey(
   connection: Connection,
   handle: string,
   mint: PublicKey | undefined = undefined,
-  tld: PublicKey = WUMBO_TWITTER_TLD,
+  tld: PublicKey = WUMBO_TWITTER_TLD
 ): Promise<PublicKey> {
   const owner = (await getTwitterRegistry(connection, handle, tld)).owner;
 
-  return (await SplTokenCollective.ownerTokenRefKey({
-    owner,
-    mint
-  }))[0];
+  return (
+    await SplTokenCollective.ownerTokenRefKey({
+      owner,
+      mint,
+    })
+  )[0];
 }
 export async function getTwitterUnclaimedTokenRefKey(
   handle: string,
@@ -42,10 +44,12 @@ export async function getTwitterUnclaimedTokenRefKey(
 ): Promise<PublicKey> {
   const name = await getTwitterRegistryKey(handle, tld);
 
-  return (await SplTokenCollective.ownerTokenRefKey({
-    name,
-    mint
-  }))[0]
+  return (
+    await SplTokenCollective.ownerTokenRefKey({
+      name,
+      mint,
+    })
+  )[0];
 }
 
 export const useUnclaimedTwitterTokenRefKey = (

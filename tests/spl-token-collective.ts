@@ -139,7 +139,7 @@ describe("spl-token-collective", () => {
       );
       nameTx.partialSign(nameClass);
       await provider.send(nameTx);
-      const { tokenRef, reverseTokenRef } =
+      const { ownerTokenRef, mintTokenRef } =
         await tokenCollectiveProgram.createSocialToken({
           collective,
           name,
@@ -156,8 +156,8 @@ describe("spl-token-collective", () => {
             sellTargetRoyaltyPercentage: 0,
           },
         });
-      unclaimedTokenRef = tokenRef;
-      unclaimedReverseTokenRef = reverseTokenRef;
+      unclaimedTokenRef = ownerTokenRef;
+      unclaimedReverseTokenRef = mintTokenRef;
     }
 
     before(async () => {
@@ -165,48 +165,48 @@ describe("spl-token-collective", () => {
     });
 
     it("Creates an unclaimed social token", async () => {
-      const reverseTokenRef = (await tokenCollectiveProgram.getTokenRef(
+      const mintTokenRef = (await tokenCollectiveProgram.getTokenRef(
         unclaimedReverseTokenRef
       ))!;
-      expect(reverseTokenRef.isClaimed).to.be.false;
+      expect(mintTokenRef.isClaimed).to.be.false;
       // @ts-ignore
-      expect(reverseTokenRef.name.toBase58()).to.equal(name.toBase58());
-      expect((reverseTokenRef.owner as PublicKey).toBase58()).to.equal(
+      expect(mintTokenRef.name.toBase58()).to.equal(name.toBase58());
+      expect((mintTokenRef.owner as PublicKey).toBase58()).to.equal(
         nameClass.publicKey.toBase58()
       );
 
-      const tokenRef = (await tokenCollectiveProgram.getTokenRef(
+      const ownerTokenRef = (await tokenCollectiveProgram.getTokenRef(
         unclaimedTokenRef
       ))!;
-      expect(tokenRef.isClaimed).to.be.false;
+      expect(ownerTokenRef.isClaimed).to.be.false;
       // @ts-ignore
-      expect(tokenRef.name.toBase58()).to.equal(name.toBase58());
-      expect((tokenRef.owner as PublicKey).toBase58()).to.equal(
+      expect(ownerTokenRef.name.toBase58()).to.equal(name.toBase58());
+      expect((ownerTokenRef.owner as PublicKey).toBase58()).to.equal(
         nameClass.publicKey.toBase58()
       );
     });
 
     it("Allows claiming, which by default sets new rewards to my account and transfers rewards from any accounts with owned_by_name", async () => {
-      const tokenRef = (await tokenCollectiveProgram.getTokenRef(
+      const ownerTokenRef = (await tokenCollectiveProgram.getTokenRef(
         unclaimedTokenRef
       ))!;
       const tokenBonding = (await splTokenBondingProgram.getTokenBonding(
-        tokenRef.tokenBonding!
+        ownerTokenRef.tokenBonding!
       ))!;
       await tokenUtils.createAtaAndMint(provider, wumMint, 2000000);
       await splTokenBondingProgram.buy({
-        tokenBonding: tokenRef.tokenBonding!,
+        tokenBonding: ownerTokenRef.tokenBonding!,
         desiredTargetAmount: new BN(100_000000000),
         slippage: 0.1,
       });
       await tokenCollectiveProgram.claimSocialToken({
-        tokenRef: unclaimedTokenRef,
+        ownerTokenRef: unclaimedTokenRef,
         owner: provider.wallet.publicKey,
         symbol: "foop",
         isPrimary: false,
       });
       await splTokenBondingProgram.buy({
-        tokenBonding: tokenRef.tokenBonding!,
+        tokenBonding: ownerTokenRef.tokenBonding!,
         desiredTargetAmount: new BN(100_000000000),
         slippage: 0.1,
       });
@@ -240,12 +240,13 @@ describe("spl-token-collective", () => {
         });
       collective = collectiveRet;
       const {
-        output: { tokenRef, reverseTokenRef },
+        output: { ownerTokenRef, mintTokenRef },
         instructions,
         signers,
       } = await tokenCollectiveProgram.createSocialTokenInstructions({
         collective,
         owner,
+        authority: provider.wallet.publicKey,
         metadata: {
           name: "Whaddup",
           symbol: "WHAD",
@@ -258,8 +259,8 @@ describe("spl-token-collective", () => {
           sellTargetRoyaltyPercentage: 0,
         },
       });
-      claimedTokenRef = tokenRef;
-      claimedReverseTokenRef = reverseTokenRef;
+      claimedTokenRef = ownerTokenRef;
+      claimedReverseTokenRef = mintTokenRef;
       await sendMultipleInstructions(
         tokenCollectiveProgram.errors || new Map(),
         provider,
@@ -269,27 +270,27 @@ describe("spl-token-collective", () => {
     });
 
     it("Creates a claimed social token", async () => {
-      const reverseTokenRef = (await tokenCollectiveProgram.getTokenRef(
+      const mintTokenRef = (await tokenCollectiveProgram.getTokenRef(
         claimedReverseTokenRef
       ))!;
-      expect(reverseTokenRef.isClaimed).to.be.true;
+      expect(mintTokenRef.isClaimed).to.be.true;
       // @ts-ignore
-      expect(reverseTokenRef.owner.toBase58()).to.equal(
+      expect(mintTokenRef.owner.toBase58()).to.equal(
         ownerKeypair.publicKey.toBase58()
       );
-      expect(reverseTokenRef.name).to.be.null;
+      expect(mintTokenRef.name).to.be.null;
 
-      const tokenRef = (await tokenCollectiveProgram.getTokenRef(
+      const ownerTokenRef = (await tokenCollectiveProgram.getTokenRef(
         claimedTokenRef
       ))!;
-      expect(tokenRef.isClaimed).to.be.true;
+      expect(ownerTokenRef.isClaimed).to.be.true;
       // @ts-ignore
-      expect(tokenRef.owner.toBase58()).to.equal(
+      expect(ownerTokenRef.owner.toBase58()).to.equal(
         ownerKeypair.publicKey.toBase58()
       );
-      expect(tokenRef.name).to.be.null;
+      expect(ownerTokenRef.name).to.be.null;
       const tokenMetadataRaw = await provider.connection.getAccountInfo(
-        tokenRef.tokenMetadata
+        ownerTokenRef.tokenMetadata
       );
       const tokenMetadata = decodeMetadata(tokenMetadataRaw!.data);
       expect(tokenMetadata.updateAuthority).to.equal(
@@ -298,12 +299,12 @@ describe("spl-token-collective", () => {
     });
 
     it("Allows updating token bonding", async () => {
-      const reverseTokenRef = (await tokenCollectiveProgram.getTokenRef(
+      const mintTokenRef = (await tokenCollectiveProgram.getTokenRef(
         claimedReverseTokenRef
       ))!;
 
       let tokenBondingNow = (await splTokenBondingProgram.getTokenBonding(
-        reverseTokenRef.tokenBonding!
+        mintTokenRef.tokenBonding!
       ))!;
 
       expect(tokenBondingNow.buyTargetRoyaltyPercentage).to.equal(percent(0));
@@ -312,23 +313,18 @@ describe("spl-token-collective", () => {
       expect(tokenBondingNow.sellBaseRoyaltyPercentage).to.equal(percent(0));
       expect(tokenBondingNow.buyFrozen).to.equal(false);
 
-      let { signers, instructions } =
-        await tokenCollectiveProgram.updateTokenBondingInstructions({
-          tokenRef: reverseTokenRef.publicKey,
-          buyTargetRoyaltyPercentage: 10,
-          buyBaseRoyaltyPercentage: 5,
-          sellBaseRoyaltyPercentage: 10,
-          sellTargetRoyaltyPercentage: 5,
-          buyFrozen: true,
-        });
+      await tokenCollectiveProgram.updateTokenBonding({
+        ownerTokenRef: mintTokenRef.publicKey,
+        buyTargetRoyaltyPercentage: 10,
+        buyBaseRoyaltyPercentage: 5,
+        sellBaseRoyaltyPercentage: 10,
+        sellTargetRoyaltyPercentage: 5,
+        buyFrozen: true,
+      });
 
-      await tokenCollectiveProgram.sendInstructions(instructions, [
-        ...signers,
-        ownerKeypair,
-      ]);
 
       tokenBondingNow = (await splTokenBondingProgram.getTokenBonding(
-        reverseTokenRef.tokenBonding!
+        mintTokenRef.tokenBonding!
       ))!;
 
       expect(tokenBondingNow.buyTargetRoyaltyPercentage).to.equal(percent(10));

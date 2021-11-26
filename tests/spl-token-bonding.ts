@@ -268,7 +268,7 @@ describe("spl-token-bonding", () => {
             frac: 1
           })
         ).addCurve(
-          10, // 10 seconds
+          15, // 20 seconds
           new ExponentialCurveConfig({
             c: 1,
             b: 0,
@@ -306,7 +306,7 @@ describe("spl-token-bonding", () => {
         INITIAL_BALANCE / Math.pow(10, DECIMALS) - 1
       );
 
-      await waitForUnixTime(provider.connection, BigInt(tokenBondingAcct.goLiveUnixTime.toNumber() + 10));
+      await waitForUnixTime(provider.connection, BigInt(tokenBondingAcct.goLiveUnixTime.toNumber() + 15));
       await tokenBondingProgram.sell({
         tokenBonding,
         targetAmount: new BN(50),

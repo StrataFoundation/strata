@@ -54,7 +54,7 @@ Use `var` instead of `let` or `const` so that these blocks can be re-run
 Let's create a Social Token named TEST within the Open Collective that gives us 10% of every TEST token minted in royalties.
 
 ```jsx async name=create_social
-var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
+var { ownerTokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
   ignoreIfExists: true, // If a Social Token already exists for this wallet, ignore.
   metadata: {
     name: "Learning Strata Token",
@@ -73,7 +73,7 @@ var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
 We can fetch the accounts we just created
 
 ```jsx async name=fetch deps=create_social
-var tokenRefAcct = await tokenCollectiveSdk.getTokenRef(tokenRef);
+var ownerTokenRefAcct = await tokenCollectiveSdk.getTokenRef(ownerTokenRef);
 var tokenBondingAcct = await tokenBondingSdk.getTokenBonding(tokenBonding);
 var curve = await tokenBondingSdk.getCurve(tokenBondingAcct.curve);
 ```

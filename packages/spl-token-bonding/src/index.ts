@@ -216,9 +216,9 @@ export interface ICreateTokenBondingArgs {
   curve: PublicKey;
   /** The base mint that the `targetMint` will be priced in terms of. `baseMint` tokens will fill the bonding curve reserves */
   baseMint: PublicKey;
-  /** 
+  /**
    * The mint this bonding curve will create on `buy`. If not provided, specify `targetMintDecimals` and it will create one for you
-   * 
+   *
    * It can be useful to pass the mint in if you're creating a bonding curve for an existing mint. Keep in mind,
    * the authority on this mint will need to be set to the token bonding pda
    */
@@ -757,7 +757,6 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     } else {
       indexToUse = index;
     }
-
 
     const [tokenBonding, bumpSeed] = await SplTokenBonding.tokenBondingKey(
       targetMint!,
