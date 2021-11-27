@@ -25,38 +25,30 @@ export const WUMBO_TWITTER_TLD = new PublicKey(
 export async function getTwitterClaimedTokenRefKey(
   connection: Connection,
   handle: string,
-  collective: PublicKey = PublicKey.default,
+  mint: PublicKey | undefined = undefined,
   tld: PublicKey = WUMBO_TWITTER_TLD
 ): Promise<PublicKey> {
   const owner = (await getTwitterRegistry(connection, handle, tld)).owner;
 
   return (
-    await PublicKey.findProgramAddress(
-      [
-        Buffer.from("token-ref", "utf-8"),
-        owner.toBuffer(),
-        collective.toBuffer(),
-      ],
-      SplTokenCollective.ID
-    )
+    await SplTokenCollective.ownerTokenRefKey({
+      owner,
+      mint,
+    })
   )[0];
 }
 export async function getTwitterUnclaimedTokenRefKey(
   handle: string,
-  collective: PublicKey = SplTokenCollective.OPEN_COLLECTIVE_ID,
+  mint: PublicKey = SplTokenCollective.OPEN_COLLECTIVE_MINT_ID,
   tld: PublicKey = WUMBO_TWITTER_TLD
 ): Promise<PublicKey> {
   const name = await getTwitterRegistryKey(handle, tld);
 
   return (
-    await PublicKey.findProgramAddress(
-      [
-        Buffer.from("token-ref", "utf-8"),
-        name.toBuffer(),
-        collective.toBuffer(),
-      ],
-      SplTokenCollective.ID
-    )
+    await SplTokenCollective.ownerTokenRefKey({
+      name,
+      mint,
+    })
   )[0];
 }
 
@@ -101,11 +93,11 @@ export const useClaimedTwitterTokenRefKey = (
 
 export const useClaimedTokenRefKey = (
   owner: PublicKey | undefined,
-  collective: PublicKey = PublicKey.default
+  mint: PublicKey = PublicKey.default
 ): PublicKey | undefined => {
   const { result } = useAsync(
     async (owner: PublicKey | undefined) =>
-      owner && SplTokenCollective.tokenRefKey({ owner, collective }),
+      owner && SplTokenCollective.ownerTokenRefKey({ owner, mint }),
     [owner]
   );
 
@@ -124,7 +116,7 @@ export function useTokenRefFromBonding(
   const bonding = useTokenBonding(tokenBonding);
   const { result: key } = useAsync(
     async (bonding: TokenBondingV0 | undefined) =>
-      bonding && SplTokenCollective.reverseTokenRefKey(bonding.targetMint),
+      bonding && SplTokenCollective.mintTokenRefKey(bonding.targetMint),
     [bonding.info]
   );
   return useTokenRef(key && key[0]);
@@ -136,12 +128,12 @@ export function useTokenRefFromBonding(
  * @param mint
  * @returns
  */
-export function useReverseTokenRef(
+export function useMintTokenRef(
   mint: PublicKey | undefined
 ): UseAccountState<ITokenRef> {
   const { result: key } = useAsync(
     async (mint: PublicKey | undefined) =>
-      mint && SplTokenCollective.reverseTokenRefKey(mint),
+      mint && SplTokenCollective.mintTokenRefKey(mint),
     [mint]
   );
   return useTokenRef(key && key[0]);
@@ -226,7 +218,9 @@ export function useSocialTokenMetadata(
   owner: PublicKey | undefined
 ): IUseSocialTokenMetadataResult {
   const { info: tokenRef, loading } = useClaimedTokenRef(owner);
-  const { info: tokenBonding } = useTokenBonding(tokenRef?.tokenBonding);
+  const { info: tokenBonding } = useTokenBonding(
+    tokenRef?.tokenBonding || undefined
+  );
 
   return {
     ...useTokenMetadata(tokenBonding?.targetMint),

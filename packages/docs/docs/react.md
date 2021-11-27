@@ -87,7 +87,7 @@ export default ({ children }) => (
 Let's create a simple social token for testing, then display it:
 
 ```jsx async name=create_social
-var { tokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
+var { ownerTokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
   ignoreIfExists: true, // If a Social Token already exists for this wallet, ignore.
 metadata: {
     name: "Learning Strata Token",
@@ -129,10 +129,10 @@ Or, we can render it ourselves using hooks:
 ```jsx live
 
  function TokenDisplay() {
-   const { tokenRef: tokenRefKey, tokenBonding: tokenBondingKey  } = useVariables(); // Getting tokenBonding from above
-   const { info: tokenRef, loading } = useTokenRef(tokenRefKey);
+   const { ownerTokenRef: ownerTokenRefKey, tokenBonding: tokenBondingKey  } = useVariables(); // Getting tokenBonding from above
+   const { info: ownerTokenRef, loading } = useTokenRef(ownerTokenRefKey);
    const { info: tokenBonding, loading: loadingTokenBonding } = useTokenBonding(tokenBondingKey);
-   const { image, metadata, loading: metaLoading } = useTokenMetadata(tokenRef && tokenRef.mint);
+   const { image, metadata, loading: metaLoading } = useTokenMetadata(ownerTokenRef && ownerTokenRef.mint);
    const { curve, loading: loadingPricing } = useBondingPricing(tokenBondingKey);
    if (loading || metaLoading || loadingPricing || loadingTokenBonding) {
      return <div>Loading...</div>
@@ -162,10 +162,10 @@ Or, we can render it ourselves using hooks:
 We can use the token metadata sdk to update the token symbol, name, and image:
 
 ```jsx async name=update deps=create_social
-var tokenRefAcct = await tokenCollectiveSdk.getTokenRef(tokenRef);
+var ownerTokenRefAcct = await tokenCollectiveSdk.getTokenRef(ownerTokenRef);
 
 await tokenMetadataSdk.updateMetadata({
-  metadata: tokenRefAcct.tokenMetadata,
+  metadata: ownerTokenRefAcct.tokenMetadata,
   data: new Data({
     name: "Learned Strata Token",
     symbol: "learnStrat",

@@ -121,6 +121,11 @@ export const SplTokenCollectiveIDLJson: Idl & {
           name: "initializeArgs",
           accounts: [
             {
+              name: "authority",
+              isMut: false,
+              isSigner: false,
+            },
+            {
               name: "payer",
               isMut: true,
               isSigner: true,
@@ -188,22 +193,17 @@ export const SplTokenCollectiveIDLJson: Idl & {
           ],
         },
         {
-          name: "authority",
-          isMut: false,
-          isSigner: false,
-        },
-        {
           name: "payer",
           isMut: true,
           isSigner: true,
         },
         {
-          name: "tokenRef",
+          name: "ownerTokenRef",
           isMut: true,
           isSigner: false,
         },
         {
-          name: "reverseTokenRef",
+          name: "mintTokenRef",
           isMut: true,
           isSigner: false,
         },
@@ -239,6 +239,11 @@ export const SplTokenCollectiveIDLJson: Idl & {
           name: "initializeArgs",
           accounts: [
             {
+              name: "authority",
+              isMut: false,
+              isSigner: false,
+            },
+            {
               name: "payer",
               isMut: true,
               isSigner: true,
@@ -306,22 +311,17 @@ export const SplTokenCollectiveIDLJson: Idl & {
           ],
         },
         {
-          name: "authority",
-          isMut: false,
-          isSigner: true,
-        },
-        {
           name: "payer",
           isMut: true,
           isSigner: true,
         },
         {
-          name: "tokenRef",
+          name: "ownerTokenRef",
           isMut: true,
           isSigner: false,
         },
         {
-          name: "reverseTokenRef",
+          name: "mintTokenRef",
           isMut: true,
           isSigner: false,
         },
@@ -369,7 +369,7 @@ export const SplTokenCollectiveIDLJson: Idl & {
           isSigner: false,
         },
         {
-          name: "tokenRef",
+          name: "ownerTokenRef",
           isMut: true,
           isSigner: false,
         },
@@ -379,7 +379,7 @@ export const SplTokenCollectiveIDLJson: Idl & {
           isSigner: false,
         },
         {
-          name: "reverseTokenRef",
+          name: "mintTokenRef",
           isMut: true,
           isSigner: false,
         },
@@ -391,16 +391,6 @@ export const SplTokenCollectiveIDLJson: Idl & {
         {
           name: "tokenMetadata",
           isMut: true,
-          isSigner: false,
-        },
-        {
-          name: "tokenBondingAuthority",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "metadataUpdateAuthority",
-          isMut: false,
           isSigner: false,
         },
         {
@@ -464,11 +454,6 @@ export const SplTokenCollectiveIDLJson: Idl & {
           isSigner: false,
         },
         {
-          name: "royaltiesOwner",
-          isMut: false,
-          isSigner: false,
-        },
-        {
           name: "tokenBondingProgram",
           isMut: false,
           isSigner: false,
@@ -517,7 +502,7 @@ export const SplTokenCollectiveIDLJson: Idl & {
           isSigner: false,
         },
         {
-          name: "reverseTokenRef",
+          name: "mintTokenRef",
           isMut: false,
           isSigner: false,
         },
@@ -527,12 +512,7 @@ export const SplTokenCollectiveIDLJson: Idl & {
           isSigner: false,
         },
         {
-          name: "tokenBondingAuthority",
-          isMut: false,
-          isSigner: false,
-        },
-        {
-          name: "owner",
+          name: "tokenRefAuthority",
           isMut: false,
           isSigner: true,
         },
@@ -618,7 +598,9 @@ export const SplTokenCollectiveIDLJson: Idl & {
         fields: [
           {
             name: "collective",
-            type: "publicKey",
+            type: {
+              option: "publicKey",
+            },
           },
           {
             name: "tokenMetadata",
@@ -630,7 +612,9 @@ export const SplTokenCollectiveIDLJson: Idl & {
           },
           {
             name: "tokenBonding",
-            type: "publicKey",
+            type: {
+              option: "publicKey",
+            },
           },
           {
             name: "name",
@@ -640,6 +624,12 @@ export const SplTokenCollectiveIDLJson: Idl & {
           },
           {
             name: "owner",
+            type: {
+              option: "publicKey",
+            },
+          },
+          {
+            name: "authority",
             type: {
               option: "publicKey",
             },
@@ -657,15 +647,7 @@ export const SplTokenCollectiveIDLJson: Idl & {
             type: "u8",
           },
           {
-            name: "tokenBondingAuthorityBumpSeed",
-            type: "u8",
-          },
-          {
             name: "targetRoyaltiesOwnerBumpSeed",
-            type: "u8",
-          },
-          {
-            name: "tokenMetadataUpdateAuthorityBumpSeed",
             type: "u8",
           },
         ],
@@ -683,7 +665,13 @@ export const SplTokenCollectiveIDLJson: Idl & {
             type: "bool",
           },
           {
-            name: "tokenRefBumpSeed",
+            name: "authority",
+            type: {
+              option: "publicKey",
+            },
+          },
+          {
+            name: "ownerTokenRefBumpSeed",
             type: "u8",
           },
         ],
@@ -933,6 +921,12 @@ export const SplTokenCollectiveIDLJson: Idl & {
         kind: "struct",
         fields: [
           {
+            name: "authority",
+            type: {
+              option: "publicKey",
+            },
+          },
+          {
             name: "nameParent",
             type: {
               option: "publicKey",
@@ -949,19 +943,11 @@ export const SplTokenCollectiveIDLJson: Idl & {
             type: "u8",
           },
           {
-            name: "tokenBondingAuthorityBumpSeed",
+            name: "ownerTokenRefBumpSeed",
             type: "u8",
           },
           {
-            name: "tokenRefBumpSeed",
-            type: "u8",
-          },
-          {
-            name: "reverseTokenRefBumpSeed",
-            type: "u8",
-          },
-          {
-            name: "tokenMetadataUpdateAuthorityBumpSeed",
+            name: "mintTokenRefBumpSeed",
             type: "u8",
           },
         ],
@@ -1070,6 +1056,16 @@ export const SplTokenCollectiveIDLJson: Idl & {
       name: "IncorrectOwner",
       msg: "Incorrect owner on account",
     },
+    {
+      code: 307,
+      name: "NoBonding",
+      msg: "Token is not on a bonding curve",
+    },
+    {
+      code: 308,
+      name: "InvalidCollective",
+      msg: "Invalid collective",
+    },
   ],
   metadata: {
     address: "TCo1sP6RwuCuyHPHjxgzcrq4dX4BKf9oRQ3aJMcdFry",
@@ -1117,6 +1113,7 @@ export type SplTokenCollectiveIDL = {
         {
           name: "initializeArgs";
           accounts: [
+            { name: "authority"; isMut: false; isSigner: false },
             { name: "payer"; isMut: true; isSigner: true },
             { name: "collective"; isMut: false; isSigner: false },
             { name: "tokenBonding"; isMut: false; isSigner: false },
@@ -1132,10 +1129,9 @@ export type SplTokenCollectiveIDL = {
             { name: "clock"; isMut: false; isSigner: false }
           ];
         },
-        { name: "authority"; isMut: false; isSigner: false },
         { name: "payer"; isMut: true; isSigner: true },
-        { name: "tokenRef"; isMut: true; isSigner: false },
-        { name: "reverseTokenRef"; isMut: true; isSigner: false },
+        { name: "ownerTokenRef"; isMut: true; isSigner: false },
+        { name: "mintTokenRef"; isMut: true; isSigner: false },
         { name: "owner"; isMut: false; isSigner: true },
         { name: "systemProgram"; isMut: false; isSigner: false },
         { name: "rent"; isMut: false; isSigner: false }
@@ -1150,6 +1146,7 @@ export type SplTokenCollectiveIDL = {
         {
           name: "initializeArgs";
           accounts: [
+            { name: "authority"; isMut: false; isSigner: false },
             { name: "payer"; isMut: true; isSigner: true },
             { name: "collective"; isMut: false; isSigner: false },
             { name: "tokenBonding"; isMut: false; isSigner: false },
@@ -1165,10 +1162,9 @@ export type SplTokenCollectiveIDL = {
             { name: "clock"; isMut: false; isSigner: false }
           ];
         },
-        { name: "authority"; isMut: false; isSigner: true },
         { name: "payer"; isMut: true; isSigner: true },
-        { name: "tokenRef"; isMut: true; isSigner: false },
-        { name: "reverseTokenRef"; isMut: true; isSigner: false },
+        { name: "ownerTokenRef"; isMut: true; isSigner: false },
+        { name: "mintTokenRef"; isMut: true; isSigner: false },
         { name: "tokenMetadata"; isMut: false; isSigner: false },
         { name: "name"; isMut: false; isSigner: false },
         { name: "systemProgram"; isMut: false; isSigner: false },
@@ -1183,13 +1179,11 @@ export type SplTokenCollectiveIDL = {
       accounts: [
         { name: "payer"; isMut: false; isSigner: true },
         { name: "collective"; isMut: false; isSigner: false },
-        { name: "tokenRef"; isMut: true; isSigner: false },
+        { name: "ownerTokenRef"; isMut: true; isSigner: false },
         { name: "newTokenRef"; isMut: true; isSigner: false },
-        { name: "reverseTokenRef"; isMut: true; isSigner: false },
+        { name: "mintTokenRef"; isMut: true; isSigner: false },
         { name: "tokenBonding"; isMut: true; isSigner: false },
         { name: "tokenMetadata"; isMut: true; isSigner: false },
-        { name: "tokenBondingAuthority"; isMut: false; isSigner: false },
-        { name: "metadataUpdateAuthority"; isMut: false; isSigner: false },
         { name: "name"; isMut: false; isSigner: false },
         { name: "owner"; isMut: true; isSigner: true },
         { name: "baseMint"; isMut: false; isSigner: false },
@@ -1202,7 +1196,6 @@ export type SplTokenCollectiveIDL = {
         { name: "newBuyTargetRoyalties"; isMut: true; isSigner: false },
         { name: "newSellBaseRoyalties"; isMut: true; isSigner: false },
         { name: "newSellTargetRoyalties"; isMut: true; isSigner: false },
-        { name: "royaltiesOwner"; isMut: false; isSigner: false },
         { name: "tokenBondingProgram"; isMut: false; isSigner: false },
         { name: "tokenProgram"; isMut: false; isSigner: false },
         { name: "tokenMetadataProgram"; isMut: false; isSigner: false },
@@ -1216,10 +1209,9 @@ export type SplTokenCollectiveIDL = {
       accounts: [
         { name: "collective"; isMut: false; isSigner: false },
         { name: "authority"; isMut: false; isSigner: false },
-        { name: "reverseTokenRef"; isMut: false; isSigner: false },
+        { name: "mintTokenRef"; isMut: false; isSigner: false },
         { name: "tokenBonding"; isMut: true; isSigner: false },
-        { name: "tokenBondingAuthority"; isMut: false; isSigner: false },
-        { name: "owner"; isMut: false; isSigner: true },
+        { name: "tokenRefAuthority"; isMut: false; isSigner: true },
         { name: "tokenBondingProgram"; isMut: false; isSigner: false },
         { name: "baseMint"; isMut: false; isSigner: false },
         { name: "targetMint"; isMut: false; isSigner: false },
@@ -1251,18 +1243,17 @@ export type SplTokenCollectiveIDL = {
       type: {
         kind: "struct";
         fields: [
-          { name: "collective"; type: "publicKey" },
+          { name: "collective"; type: { option: "publicKey" } },
           { name: "tokenMetadata"; type: "publicKey" },
           { name: "mint"; type: "publicKey" },
-          { name: "tokenBonding"; type: "publicKey" },
+          { name: "tokenBonding"; type: { option: "publicKey" } },
           { name: "name"; type: { option: "publicKey" } },
           { name: "owner"; type: { option: "publicKey" } },
+          { name: "authority"; type: { option: "publicKey" } },
           { name: "isClaimed"; type: "bool" },
           { name: "isPrimary"; type: "bool" },
           { name: "bumpSeed"; type: "u8" },
-          { name: "tokenBondingAuthorityBumpSeed"; type: "u8" },
-          { name: "targetRoyaltiesOwnerBumpSeed"; type: "u8" },
-          { name: "tokenMetadataUpdateAuthorityBumpSeed"; type: "u8" }
+          { name: "targetRoyaltiesOwnerBumpSeed"; type: "u8" }
         ];
       };
     }
@@ -1274,7 +1265,8 @@ export type SplTokenCollectiveIDL = {
         kind: "struct";
         fields: [
           { name: "isPrimary"; type: "bool" },
-          { name: "tokenRefBumpSeed"; type: "u8" }
+          { name: "authority"; type: { option: "publicKey" } },
+          { name: "ownerTokenRefBumpSeed"; type: "u8" }
         ];
       };
     },
@@ -1375,13 +1367,12 @@ export type SplTokenCollectiveIDL = {
       type: {
         kind: "struct";
         fields: [
+          { name: "authority"; type: { option: "publicKey" } },
           { name: "nameParent"; type: { option: "publicKey" } },
           { name: "nameClass"; type: { option: "publicKey" } },
           { name: "collectiveBumpSeed"; type: "u8" },
-          { name: "tokenBondingAuthorityBumpSeed"; type: "u8" },
-          { name: "tokenRefBumpSeed"; type: "u8" },
-          { name: "reverseTokenRefBumpSeed"; type: "u8" },
-          { name: "tokenMetadataUpdateAuthorityBumpSeed"; type: "u8" }
+          { name: "ownerTokenRefBumpSeed"; type: "u8" },
+          { name: "mintTokenRefBumpSeed"; type: "u8" }
         ];
       };
     },
@@ -1442,7 +1433,9 @@ export type SplTokenCollectiveIDL = {
       name: "InvalidTokenMetadataSettings";
       msg: "Unclaimed token had invalid metadata settings to join this collective";
     },
-    { code: 306; name: "IncorrectOwner"; msg: "Incorrect owner on account" }
+    { code: 306; name: "IncorrectOwner"; msg: "Incorrect owner on account" },
+    { code: 307; name: "NoBonding"; msg: "Token is not on a bonding curve" },
+    { code: 308; name: "InvalidCollective"; msg: "Invalid collective" }
   ];
   metadata: { address: "TCo1sP6RwuCuyHPHjxgzcrq4dX4BKf9oRQ3aJMcdFry" };
 };

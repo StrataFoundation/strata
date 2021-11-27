@@ -77,7 +77,7 @@ import { ExponentialCurveConfig } from "@strata-foundation/spl-token-bonding";
 ```js async name=curve
 var curve = await tokenBondingSdk.initializeCurve({
       config: new ExponentialCurveConfig({
-      c: 0.001,
+      c: 0.01,
       b: 0,
       pow: 1,
       frac: 2
@@ -106,8 +106,8 @@ var timeCurve = await tokenBondingSdk.initializeCurve({
   config: new TimeCurveConfig().addCurve(
       0,
       new ExponentialCurveConfig({
-        c: 0,
-        b: 1,
+        c: 1,
+        b: 0,
         pow: 1,
         frac: 1
       })

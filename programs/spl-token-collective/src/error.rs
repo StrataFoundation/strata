@@ -21,5 +21,11 @@ pub enum ErrorCode {
     InvalidTokenMetadataSettings,
 
     #[msg("Incorrect owner on account")]
-    IncorrectOwner
+    IncorrectOwner,
+
+    #[msg("Token is not on a bonding curve")]
+    NoBonding,
+
+    #[msg("Invalid collective")]
+    InvalidCollective
 }

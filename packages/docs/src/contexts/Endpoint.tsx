@@ -20,7 +20,7 @@ export const EndpointProvider = ({
   initialEndpoint = clusterApiUrl(WalletAdapterNetwork.Devnet),
 }: {
   children?: React.ReactNode;
-  initialEndpoint: string;
+  initialEndpoint?: string;
 }) => {
   const [stateEndpoint, setEndpoint] =
     React.useState<WalletAdapterNetwork>(initialEndpoint);

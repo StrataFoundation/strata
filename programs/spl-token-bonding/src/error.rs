@@ -42,5 +42,8 @@ pub enum ErrorCode {
   BuyFrozen,
 
   #[msg("Use token bonding wrapped sol via buy_wrapped_sol, sell_wrapped_sol commands. We may one day provide liquid staking rewards on this stored sol.")]
-  WrappedSolNotAllowed
+  WrappedSolNotAllowed,
+
+  #[msg("The provided curve is invalid")]
+  InvalidCurve
 }

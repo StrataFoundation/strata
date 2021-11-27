@@ -10,9 +10,8 @@ import {
   Metadata,
   SplTokenMetadata,
 } from "@strata-foundation/spl-utils";
-import { usePublicKey, useStrataSdks } from ".";
 import { useAsync } from "react-async-hook";
-import { useClaimedTokenRef } from "./tokenRef";
+import { useMintTokenRef, usePublicKey, useStrataSdks } from ".";
 import { useAccount } from "./useAccount";
 import { useAssociatedAccount } from "./useAssociatedAccount";
 import { useMint } from "./useMint";
@@ -76,9 +75,9 @@ export function useTokenMetadata(
   } = useAsync(SplTokenMetadata.getImage, [metadata?.data.uri]);
   const mint = useMint(token);
 
-  const { info: tokenRef } = useClaimedTokenRef(wallet.publicKey || undefined);
+  const { info: mintTokenRef } = useMintTokenRef(token);
   return {
-    tokenRef,
+    tokenRef: mintTokenRef,
     loading: Boolean(
       token && (loading || accountLoading || dataLoading || imageLoading)
     ),

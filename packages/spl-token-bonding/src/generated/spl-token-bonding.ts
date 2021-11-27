@@ -303,18 +303,8 @@ export const SplTokenBondingIDLJson: Idl & { metadata?: { address: string } } =
             isSigner: false,
           },
           {
-            name: "targetMintAuthority",
-            isMut: false,
-            isSigner: false,
-          },
-          {
             name: "baseStorage",
-            isMut: false,
-            isSigner: false,
-          },
-          {
-            name: "baseStorageAuthority",
-            isMut: false,
+            isMut: true,
             isSigner: false,
           },
           {
@@ -399,11 +389,6 @@ export const SplTokenBondingIDLJson: Idl & { metadata?: { address: string } } =
           {
             name: "targetMint",
             isMut: true,
-            isSigner: false,
-          },
-          {
-            name: "targetMintAuthority",
-            isMut: false,
             isSigner: false,
           },
           {
@@ -492,11 +477,6 @@ export const SplTokenBondingIDLJson: Idl & { metadata?: { address: string } } =
           {
             name: "sellTargetRoyalties",
             isMut: true,
-            isSigner: false,
-          },
-          {
-            name: "baseStorageAuthority",
-            isMut: false,
             isSigner: false,
           },
           {
@@ -772,12 +752,6 @@ export const SplTokenBondingIDLJson: Idl & { metadata?: { address: string } } =
               },
             },
             {
-              name: "baseStorageAuthority",
-              type: {
-                option: "publicKey",
-              },
-            },
-            {
               name: "buyFrozen",
               type: "bool",
             },
@@ -788,16 +762,6 @@ export const SplTokenBondingIDLJson: Idl & { metadata?: { address: string } } =
             {
               name: "bumpSeed",
               type: "u8",
-            },
-            {
-              name: "targetMintAuthorityBumpSeed",
-              type: "u8",
-            },
-            {
-              name: "baseStorageAuthorityBumpSeed",
-              type: {
-                option: "u8",
-              },
             },
           ],
         },
@@ -1126,6 +1090,11 @@ export const SplTokenBondingIDLJson: Idl & { metadata?: { address: string } } =
         name: "WrappedSolNotAllowed",
         msg: "Use token bonding wrapped sol via buy_wrapped_sol, sell_wrapped_sol commands. We may one day provide liquid staking rewards on this stored sol.",
       },
+      {
+        code: 314,
+        name: "InvalidCurve",
+        msg: "The provided curve is invalid",
+      },
     ],
     metadata: {
       address: "TBondz6ZwSM5fs4v2GpnVBMuwoncPkFLFR9S422ghhN",
@@ -1216,9 +1185,7 @@ export type SplTokenBondingIDL = {
         { name: "tokenBonding"; isMut: true; isSigner: false },
         { name: "generalAuthority"; isMut: false; isSigner: true },
         { name: "targetMint"; isMut: true; isSigner: false },
-        { name: "targetMintAuthority"; isMut: false; isSigner: false },
-        { name: "baseStorage"; isMut: false; isSigner: false },
-        { name: "baseStorageAuthority"; isMut: false; isSigner: false },
+        { name: "baseStorage"; isMut: true; isSigner: false },
         { name: "tokenProgram"; isMut: false; isSigner: false }
       ];
       args: [];
@@ -1244,7 +1211,6 @@ export type SplTokenBondingIDL = {
         { name: "curve"; isMut: false; isSigner: false },
         { name: "baseMint"; isMut: false; isSigner: false },
         { name: "targetMint"; isMut: true; isSigner: false },
-        { name: "targetMintAuthority"; isMut: false; isSigner: false },
         { name: "baseStorage"; isMut: true; isSigner: false },
         { name: "buyBaseRoyalties"; isMut: true; isSigner: false },
         { name: "buyTargetRoyalties"; isMut: true; isSigner: false },
@@ -1266,7 +1232,6 @@ export type SplTokenBondingIDL = {
         { name: "baseStorage"; isMut: true; isSigner: false },
         { name: "sellBaseRoyalties"; isMut: true; isSigner: false },
         { name: "sellTargetRoyalties"; isMut: true; isSigner: false },
-        { name: "baseStorageAuthority"; isMut: false; isSigner: false },
         { name: "source"; isMut: true; isSigner: false },
         { name: "sourceAuthority"; isMut: false; isSigner: true },
         { name: "destination"; isMut: true; isSigner: false },
@@ -1350,12 +1315,9 @@ export type SplTokenBondingIDL = {
           { name: "generalAuthority"; type: { option: "publicKey" } },
           { name: "reserveAuthority"; type: { option: "publicKey" } },
           { name: "curveAuthority"; type: { option: "publicKey" } },
-          { name: "baseStorageAuthority"; type: { option: "publicKey" } },
           { name: "buyFrozen"; type: "bool" },
           { name: "index"; type: "u16" },
-          { name: "bumpSeed"; type: "u8" },
-          { name: "targetMintAuthorityBumpSeed"; type: "u8" },
-          { name: "baseStorageAuthorityBumpSeed"; type: { option: "u8" } }
+          { name: "bumpSeed"; type: "u8" }
         ];
       };
     },
@@ -1561,7 +1523,8 @@ export type SplTokenBondingIDL = {
       code: 313;
       name: "WrappedSolNotAllowed";
       msg: "Use token bonding wrapped sol via buy_wrapped_sol, sell_wrapped_sol commands. We may one day provide liquid staking rewards on this stored sol.";
-    }
+    },
+    { code: 314; name: "InvalidCurve"; msg: "The provided curve is invalid" }
   ];
   metadata: { address: "TBondz6ZwSM5fs4v2GpnVBMuwoncPkFLFR9S422ghhN" };
 };

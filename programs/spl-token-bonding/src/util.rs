@@ -1,5 +1,7 @@
+use crate::arg::{PiecewiseCurve, TimeCurveV0};
 use crate::precise_number::{InnerUint, ONE, ONE_PREC, PreciseNumber, one};
 use crate::error::ErrorCode;
+use crate::PrimitiveCurve;
 use anchor_lang::{prelude::*};
 use anchor_spl::token::Mint;
 
@@ -83,4 +85,24 @@ pub fn to_mint_amount(amt: &PreciseNumber, mint: &Account<Mint>, ceil: bool) -> 
   };
   
   post_round.to_imprecise().unwrap() as u64
+}
+
+
+pub fn primitive_curve_is_valid(curve: &PrimitiveCurve) -> bool {
+  match curve {
+    &PrimitiveCurve::ExponentialCurveV0 { frac, c, b, pow } =>
+      frac > 0 && ((b == 0 && c != 0) || c == 0)
+  }
+}
+
+pub fn curve_is_valid(curve: &PiecewiseCurve) -> bool {
+  match curve {
+    PiecewiseCurve::TimeV0 { curves } =>
+      // All inner curves are valid
+      curves.iter().all(|c| primitive_curve_is_valid(&c.curve) && c.offset >= 0) &&
+        // The first curve starts at time 0
+        curves.get(0).map(|c| c.offset).unwrap_or(1) == 0 && 
+        // The curves list is ordered by offset
+        curves.windows(2).all(|c| c[0].offset <= c[1].offset)
+  }
 }
