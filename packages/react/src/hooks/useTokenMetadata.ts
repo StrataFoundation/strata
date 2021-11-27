@@ -8,7 +8,7 @@ import {
   MasterEditionV1,
   MasterEditionV2,
   Metadata,
-  SplTokenMetadata
+  SplTokenMetadata,
 } from "@strata-foundation/spl-utils";
 import { useAsync } from "react-async-hook";
 import { useMintTokenRef, usePublicKey, useStrataSdks } from ".";
