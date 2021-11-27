@@ -692,14 +692,16 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
         "Claiming token ref without token bonding not yet supported"
       );
     }
-  
+
     const tokenBondingAcct = (await this.splTokenBondingProgram.getTokenBonding(
       tokenRefAcct.tokenBonding
     ))!;
-    const ownerTokenRef = (await SplTokenCollective.ownerTokenRefKey({
-      mint: tokenBondingAcct.baseMint,
-      name: tokenRefAcct.name as PublicKey
-    }))[0]
+    const ownerTokenRef = (
+      await SplTokenCollective.ownerTokenRefKey({
+        mint: tokenBondingAcct.baseMint,
+        name: tokenRefAcct.name as PublicKey,
+      })
+    )[0];
     const name = tokenRefAcct.name! as PublicKey;
     const instructions = [];
 
@@ -946,10 +948,11 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       owner = (await this.getTokenRef(tokenRef)).owner;
     }
 
-    const [primaryTokenRef, primaryTokenRefBumpSeed] = await SplTokenCollective.ownerTokenRefKey({
-      isPrimary: true,
-      owner
-    });
+    const [primaryTokenRef, primaryTokenRefBumpSeed] =
+      await SplTokenCollective.ownerTokenRefKey({
+        isPrimary: true,
+        owner,
+      });
 
     return {
       signers: [],
@@ -1253,7 +1256,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     const initializeArgs = {
       authority:
         (collectiveAcct.authority as PublicKey | undefined) ||
-          PublicKey.default,
+        PublicKey.default,
       collective,
       tokenMetadata: new PublicKey(tokenMetadata),
       tokenBonding,
@@ -1285,7 +1288,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
         await this.instruction.initializeOwnedSocialTokenV0(args, {
           accounts: {
             initializeArgs,
-            
+
             owner,
             payer,
             ownerTokenRef,
