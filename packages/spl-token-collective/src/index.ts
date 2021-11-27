@@ -780,14 +780,6 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
         this.programId
       );
 
-    const [royaltiesOwner] = await PublicKey.findProgramAddress(
-      [
-        Buffer.from("standin-royalties-owner", "utf-8"),
-        mintTokenRef.toBuffer(),
-      ],
-      this.programId
-    );
-
     instructions.push(
       await this.instruction.claimSocialTokenV0(
         {
@@ -816,7 +808,6 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
             newBuyTargetRoyalties: buyTargetRoyalties,
             newSellBaseRoyalties: sellBaseRoyalties,
             newSellTargetRoyalties: sellTargetRoyalties,
-            royaltiesOwner,
             tokenProgram: TOKEN_PROGRAM_ID,
             tokenBondingProgram: this.splTokenBondingProgram.programId,
             tokenMetadataProgram: METADATA_PROGRAM_ID,
@@ -1180,14 +1171,6 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       )
     );
 
-    const [standinRoyaltiesOwner] = await PublicKey.findProgramAddress(
-      [
-        Buffer.from("standin-royalties-owner", "utf-8"),
-        mintTokenRef.toBuffer(),
-      ],
-      programId
-    );
-
     // Create token bonding
     const instructions2: TransactionInstruction[] = [];
     const tokenBondingSettings = owner
@@ -1229,22 +1212,22 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       curveAuthority: mintTokenRef,
       // @ts-ignore
       buyBaseRoyaltiesOwner: tokenBondingSettings?.buyBaseRoyalties.ownedByName
-        ? standinRoyaltiesOwner
+        ? mintTokenRef
         : undefined,
       // @ts-ignore
       sellBaseRoyaltiesOwner: tokenBondingSettings?.sellBaseRoyalties
         .ownedByName
-        ? standinRoyaltiesOwner
+        ? mintTokenRef
         : undefined,
       // @ts-ignore
       buyTargetRoyaltiesOwner: tokenBondingSettings?.buyTargetRoyalties
         .ownedByName
-        ? standinRoyaltiesOwner
+        ? mintTokenRef
         : undefined,
       // @ts-ignore
       sellTargetRoyaltiesOwner: tokenBondingSettings?.sellTargetRoyalties
         .ownedByName
-        ? standinRoyaltiesOwner
+        ? mintTokenRef
         : undefined,
       // @ts-ignore
       buyBaseRoyalties: tokenBondingSettings?.buyBaseRoyalties?.address,

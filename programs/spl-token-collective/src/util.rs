@@ -63,18 +63,13 @@ pub fn verify_name(name: &AccountInfo, name_class: Option<Pubkey>, name_parent: 
 pub fn verify_token_bonding_royalties<'info>(
   defaults: &TokenBondingSettingsV0, 
   token_bonding: &Account<'info, TokenBondingV0>, 
-  reverse_token_ref_key: &Pubkey,
+  mint_token_ref_key: &Pubkey,
   buy_base_royalties: &Account<'info, TokenAccount>,
   buy_target_royalties: &Account<'info, TokenAccount>,
   sell_base_royalties: &Account<'info, TokenAccount>,
   sell_target_royalties: &Account<'info, TokenAccount>,
   claimed: bool
 ) -> ProgramResult {
-  let (standin_royalties_owner, _) = Pubkey::find_program_address(
-    &[b"standin-royalties-owner", reverse_token_ref_key.as_ref()],
-    &crate::id()
-  );
-
   let valid = (!claimed || (
       defaults.buy_base_royalties.address.map_or(true, |royalty| royalty == token_bonding.buy_base_royalties) &&
       defaults.buy_target_royalties.address.map_or(true, |royalty| royalty == token_bonding.buy_target_royalties) &&
@@ -82,10 +77,10 @@ pub fn verify_token_bonding_royalties<'info>(
       defaults.sell_target_royalties.address.map_or(true, |royalty| royalty == token_bonding.sell_target_royalties)
     )) &&
     (claimed || (
-      (!defaults.buy_base_royalties.owned_by_name || buy_base_royalties.owner == standin_royalties_owner) &&
-      (!defaults.buy_target_royalties.owned_by_name || buy_target_royalties.owner == standin_royalties_owner) &&
-      (!defaults.sell_base_royalties.owned_by_name || sell_base_royalties.owner == standin_royalties_owner) &&
-      (!defaults.sell_target_royalties.owned_by_name || sell_target_royalties.owner == standin_royalties_owner)
+      (!defaults.buy_base_royalties.owned_by_name || buy_base_royalties.owner == *mint_token_ref_key) &&
+      (!defaults.buy_target_royalties.owned_by_name || buy_target_royalties.owner == *mint_token_ref_key) &&
+      (!defaults.sell_base_royalties.owned_by_name || sell_base_royalties.owner == *mint_token_ref_key) &&
+      (!defaults.sell_target_royalties.owned_by_name || sell_target_royalties.owner == *mint_token_ref_key)
     ));
 
   if valid {

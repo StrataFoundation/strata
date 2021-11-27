@@ -195,7 +195,6 @@ pub mod spl_token_collective {
     let data = &ctx.accounts.token_metadata.data;
     let token_program = &ctx.accounts.token_program;
     let owner = &ctx.accounts.owner;
-    let royalties_owner = ctx.accounts.royalties_owner.to_account_info();
 
     let royalty_accounts = vec![
       [&mut ctx.accounts.buy_base_royalties, &mut ctx.accounts.new_buy_base_royalties], 
@@ -203,12 +202,11 @@ pub mod spl_token_collective {
       [&mut ctx.accounts.sell_base_royalties, &mut ctx.accounts.new_sell_base_royalties], 
       [&mut ctx.accounts.sell_target_royalties, &mut ctx.accounts.new_sell_target_royalties], 
     ];
-    let (standin_royalties_owner, standin_royalties_bump_seed) = Pubkey::find_program_address(
-      &[b"standin-royalties-owner", mint_token_ref.to_account_info().key.as_ref()],
-      &self::id()
-    );
     let seeds: &[&[&[u8]]] = &[
-      &[b"standin-royalties-owner", mint_token_ref.to_account_info().key.as_ref(), &[standin_royalties_bump_seed]]
+      &[
+        b"mint-token-ref", ctx.accounts.target_mint.to_account_info().key.as_ref(),
+        &[mint_token_ref.bump_seed]
+      ],
     ];
     msg!("Closing standin royalties accounts");
     let mut i = 0;
@@ -219,14 +217,14 @@ pub mod spl_token_collective {
         i+=1;
       }
       
-      if old_royalty_account.owner == standin_royalties_owner {
+      if old_royalty_account.owner == mint_token_ref.key() {
         transfer(
           CpiContext::new_with_signer(
               token_program.to_account_info().clone(),
               Transfer {
                 from: old_royalty_account.to_account_info().clone(),
                 to: new_royalty_account.to_account_info().clone(),
-                authority: royalties_owner.clone()
+                authority: mint_token_ref.to_account_info().clone()
               },
               seeds
           ),
@@ -237,7 +235,7 @@ pub mod spl_token_collective {
           CloseTokenAccount {
             from: old_royalty_account.to_account_info().clone(),
             to: owner.to_account_info().clone(),
-            authority: royalties_owner.clone()
+            authority: mint_token_ref.to_account_info().clone()
           },
           seeds
         ))?;

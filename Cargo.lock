@@ -1328,7 +1328,6 @@ dependencies = [
  "anchor-lang",
  "anchor-spl",
  "proptest",
- "spl-associated-token-account",
  "spl-token",
  "uint",
 ]

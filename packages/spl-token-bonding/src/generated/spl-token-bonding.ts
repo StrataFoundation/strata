@@ -1090,6 +1090,11 @@ export const SplTokenBondingIDLJson: Idl & { metadata?: { address: string } } =
         name: "WrappedSolNotAllowed",
         msg: "Use token bonding wrapped sol via buy_wrapped_sol, sell_wrapped_sol commands. We may one day provide liquid staking rewards on this stored sol.",
       },
+      {
+        code: 314,
+        name: "InvalidCurve",
+        msg: "The provided curve is invalid",
+      },
     ],
     metadata: {
       address: "TBondz6ZwSM5fs4v2GpnVBMuwoncPkFLFR9S422ghhN",
@@ -1518,7 +1523,8 @@ export type SplTokenBondingIDL = {
       code: 313;
       name: "WrappedSolNotAllowed";
       msg: "Use token bonding wrapped sol via buy_wrapped_sol, sell_wrapped_sol commands. We may one day provide liquid staking rewards on this stored sol.";
-    }
+    },
+    { code: 314; name: "InvalidCurve"; msg: "The provided curve is invalid" }
   ];
   metadata: { address: "TBondz6ZwSM5fs4v2GpnVBMuwoncPkFLFR9S422ghhN" };
 };

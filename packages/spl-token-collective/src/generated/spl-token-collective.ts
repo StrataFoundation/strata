@@ -454,11 +454,6 @@ export const SplTokenCollectiveIDLJson: Idl & {
           isSigner: false,
         },
         {
-          name: "royaltiesOwner",
-          isMut: false,
-          isSigner: false,
-        },
-        {
           name: "tokenBondingProgram",
           isMut: false,
           isSigner: false,
@@ -1201,7 +1196,6 @@ export type SplTokenCollectiveIDL = {
         { name: "newBuyTargetRoyalties"; isMut: true; isSigner: false },
         { name: "newSellBaseRoyalties"; isMut: true; isSigner: false },
         { name: "newSellTargetRoyalties"; isMut: true; isSigner: false },
-        { name: "royaltiesOwner"; isMut: false; isSigner: false },
         { name: "tokenBondingProgram"; isMut: false; isSigner: false },
         { name: "tokenProgram"; isMut: false; isSigner: false },
         { name: "tokenMetadataProgram"; isMut: false; isSigner: false },

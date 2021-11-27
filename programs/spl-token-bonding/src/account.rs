@@ -2,6 +2,7 @@ use anchor_lang::{prelude::*, solana_program, solana_program::{system_program, s
 use crate::arg::*;
 use crate::state::*;
 use crate::error::ErrorCode;
+use crate::util::*;
 use anchor_spl::{token, token::{Mint, Token, TokenAccount}};
 
 #[derive(Accounts)]
@@ -148,6 +149,9 @@ pub struct InitializeTokenBondingV0<'info> {
     space = 512
   )]
   pub token_bonding: Box<Account<'info, TokenBondingV0>>,
+  #[account(
+    constraint = base_mint.is_initialized
+  )]
   pub base_mint: Box<Account<'info, Mint>>,
   #[account(
     constraint = target_mint.is_initialized
@@ -167,7 +171,7 @@ pub struct InitializeTokenBondingV0<'info> {
 
   #[account(
     constraint = buy_target_royalties.mint == target_mint.key()
-  )] // Will init for you, since target mint doesn't exist yet.
+  )]
   pub buy_target_royalties: Box<Account<'info, TokenAccount>>,
 
   #[account(
@@ -228,10 +232,7 @@ pub struct UpdateTokenBondingV0<'info> {
   pub token_bonding: Box<Account<'info, TokenBondingV0>>,
   #[account(signer)]
   pub general_authority: AccountInfo<'info>,
-
-  #[account()]
   pub base_mint: Box<Account<'info, Mint>>,
-  #[account()]
   pub target_mint: Box<Account<'info, Mint>>,
   #[account(
     constraint = buy_base_royalties.mint == base_mint.key()
@@ -266,9 +267,7 @@ pub struct BuyV0<'info> {
     has_one = curve
   )]
   pub token_bonding: Box<Account<'info, TokenBondingV0>>,
-  #[account()]
   pub curve: Box<Account<'info, CurveV0>>,
-  #[account()]
   pub base_mint: Box<Account<'info, Mint>>,
   #[account(mut)]
   pub target_mint: Box<Account<'info, Mint>>,
@@ -300,9 +299,7 @@ pub struct SellV0<'info> {
     has_one = sell_target_royalties,
   )]
   pub token_bonding: Box<Account<'info, TokenBondingV0>>,
-  #[account()]
   pub curve: Box<Account<'info, CurveV0>>,
-  #[account()]
   pub base_mint: Box<Account<'info, Mint>>,
   #[account(mut)]
   pub target_mint: Box<Account<'info, Mint>>,

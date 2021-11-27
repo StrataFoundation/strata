@@ -113,6 +113,10 @@ pub mod spl_token_bonding {
       ctx: Context<InitializeCurveV0>,
       args: CreateCurveV0Args
     ) -> ProgramResult {
+      if !curve_is_valid(&args.definition) {
+        return Err(ErrorCode::InvalidCurve.into())
+      }
+
       let curve = &mut ctx.accounts.curve;
       curve.definition = args.definition;
 
@@ -133,7 +137,6 @@ pub mod spl_token_bonding {
       bonding.go_live_unix_time = args.go_live_unix_time;
       bonding.created_at_unix_time = ctx.accounts.clock.unix_timestamp;
       bonding.freeze_buy_unix_time = args.freeze_buy_unix_time;
-      bonding.base_mint = ctx.accounts.base_mint.key();
       bonding.base_mint = ctx.accounts.base_mint.key();
       bonding.target_mint = ctx.accounts.target_mint.key();
       bonding.general_authority = args.general_authority;
@@ -507,7 +510,7 @@ pub mod spl_token_bonding {
         mint: target_mint.to_account_info().clone(),
         to: source.clone(),
         authority: source_authority.clone()
-      }), amount)?;
+      }), amount - target_royalties)?;
 
       if target_royalties > 0 {
         msg!("Paying out {} to target royalties", target_royalties);

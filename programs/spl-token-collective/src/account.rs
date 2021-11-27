@@ -438,8 +438,6 @@ pub struct ClaimSocialTokenV0<'info> {
   #[account(mut)]
   pub new_sell_target_royalties: Box<Account<'info, TokenAccount>>,
 
-  pub royalties_owner: AccountInfo<'info>,
-
   #[account(address = spl_token_bonding::id())]
   pub token_bonding_program: AccountInfo<'info>,
   pub token_program: Program<'info, Token>,
