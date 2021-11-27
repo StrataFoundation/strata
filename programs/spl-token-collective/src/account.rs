@@ -74,12 +74,6 @@ impl AccountSerialize for OptionalCollectiveV0 {
   }
 }
 
-impl Owner for OptionalCollectiveV0 {
-  fn owner() -> Pubkey {
-    crate::id()
-  }
-}
-
 #[derive(Accounts)]
 #[instruction(args: InitializeCollectiveV0Args)]
 pub struct InitializeCollectiveV0<'info> {
@@ -117,6 +111,7 @@ pub struct UpdateCollectiveV0<'info> {
 
 #[derive(Accounts)]
 pub struct InitializeSocialTokenV0<'info> {
+  pub authority: UncheckedAccount<'info>,
   #[account(mut, signer)]
   pub payer: AccountInfo<'info>,
   #[account(
@@ -124,10 +119,9 @@ pub struct InitializeSocialTokenV0<'info> {
       b"collective", 
       base_mint.key().as_ref()
    ],
-    bump, 
-    constraint = collective.collective.is_none() || token_bonding.base_mint.key() == collective.collective.as_ref().unwrap().mint.key(),
+    bump
   )]
-  pub collective: Box<Account<'info, OptionalCollectiveV0>>,
+  pub collective: UncheckedAccount<'info>,
   #[account(
     has_one = base_mint,
     has_one = target_mint,
@@ -165,11 +159,6 @@ pub struct InitializeSocialTokenV0<'info> {
 #[instruction(args: InitializeSocialTokenV0Args)]
 pub struct InitializeOwnedSocialTokenV0<'info> {
   pub initialize_args: InitializeSocialTokenV0<'info>,
-  #[account(
-    address = initialize_args.collective.collective.as_ref().and_then(|c| c.authority).unwrap_or(Pubkey::default()),
-    constraint = initialize_args.collective.collective.as_ref().map(|c| c.config.is_open).unwrap_or(true) || authority.is_signer
-  )]
-  pub authority: AccountInfo<'info>,
   #[account(mut, signer)]
   pub payer: AccountInfo<'info>,
   #[account(
@@ -205,12 +194,6 @@ pub struct InitializeOwnedSocialTokenV0<'info> {
 #[instruction(args: InitializeSocialTokenV0Args)]
 pub struct InitializeUnclaimedSocialTokenV0<'info> {
   pub initialize_args: InitializeSocialTokenV0<'info>,
-  #[account(
-    signer,
-    address = initialize_args.collective.collective.as_ref().and_then(|c| c.authority).unwrap_or(Pubkey::default()),
-    constraint = initialize_args.collective.collective.as_ref().map(|c| c.config.is_open).unwrap_or(true) || authority.is_signer
-  )]
-  pub authority: AccountInfo<'info>,
   #[account(mut)]
   pub payer: Signer<'info>,
   #[account(
@@ -265,9 +248,9 @@ pub struct SetAsPrimaryV0<'info> {
   pub payer: Signer<'info>,
   pub owner: Signer<'info>,
   #[account(
-    constraint = owner.key() == owner_token_ref.owner.ok_or::<ProgramError>(ErrorCode::IncorrectOwner.into())?
+    constraint = owner.key() == token_ref.owner.ok_or::<ProgramError>(ErrorCode::IncorrectOwner.into())?
   )]
-  pub owner_token_ref: Account<'info, TokenRefV0>,
+  pub token_ref: Account<'info, TokenRefV0>,
   #[account(
     init_if_needed,
     seeds = [
@@ -297,7 +280,7 @@ pub struct UpdateTokenBondingV0Wrapper<'info> {
     // For now, social tokens without a bonding curve are not supported. We may support them later
     constraint = mint_token_ref.token_bonding.ok_or::<ProgramError>(ErrorCode::NoBonding.into())? == token_bonding.key(),
     constraint = mint_token_ref.collective.is_none() || collective.key() == mint_token_ref.collective.unwrap() @ ErrorCode::InvalidCollective,
-    constraint = owner_token_ref_authority.key() == mint_token_ref.authority.ok_or::<ProgramError>(ErrorCode::IncorrectOwner.into())?,
+    constraint = token_ref_authority.key() == mint_token_ref.authority.ok_or::<ProgramError>(ErrorCode::IncorrectOwner.into())?,
   )]
   pub mint_token_ref: Box<Account<'info, TokenRefV0>>,
   #[account(
@@ -306,7 +289,7 @@ pub struct UpdateTokenBondingV0Wrapper<'info> {
     has_one = target_mint
   )]
   pub token_bonding: Box<Account<'info, TokenBondingV0>>,
-  pub owner_token_ref_authority: Signer<'info>,
+  pub token_ref_authority: Signer<'info>,
 
   #[account(address = spl_token_bonding::id())]
   pub token_bonding_program: AccountInfo<'info>,
@@ -342,20 +325,11 @@ pub struct UpdateTokenBondingV0Wrapper<'info> {
   pub sell_target_royalties: Box<Account<'info, TokenAccount>>,
 }
 
-fn owner_token_ref_final_seed<'a>(collective: &'a Pubkey, is_primary: bool) -> Vec<u8> {
-  msg!("Is primary {}", is_primary);
-  if is_primary {
-    Pubkey::default().as_ref().to_vec()
-  } else { 
-    collective.as_ref().to_vec()
-  }
-}
-
 #[derive(Accounts)]
 #[instruction(args: ClaimSocialTokenV0Args)]
 pub struct ClaimSocialTokenV0<'info> {
   pub payer: Signer<'info>,
-  pub collective: Box<Account<'info, OptionalCollectiveV0>>,
+  pub collective: UncheckedAccount<'info>,
   #[account(
     mut,
     constraint = owner_token_ref.collective.is_none() || collective.key() == owner_token_ref.collective.unwrap() @ ErrorCode::InvalidCollective,

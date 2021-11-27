@@ -50,9 +50,9 @@ entity Wallet {
 entity TokenRef {
   ["owner-token-ref", owner] PRIMARY
   -- 
-  ["owner-token-ref", name, collective]
+  ["owner-token-ref", name, collective_mint]
   --
-  ["owner-token-ref", owner, collective]
+  ["owner-token-ref", owner, collective_mint]
   --
   ["mint-token-ref", targetMint]
   --
@@ -380,7 +380,7 @@ When creating a collective that allows unclaimed tokens, be sure to include the 
 
 ```js async name=claim deps=buy,create_name
 var { instructions, signers } = await tokenCollectiveSdk.claimSocialTokenInstructions({
-  ownerTokenRef,
+  tokenRef: ownerTokenRef,
   owner: nameOwner.publicKey,
   symbol: "CLM",
 });

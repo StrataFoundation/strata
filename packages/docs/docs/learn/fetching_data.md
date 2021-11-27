@@ -39,9 +39,9 @@ entity Wallet {
 entity TokenRef {
   ["owner-token-ref", owner] PRIMARY
   -- 
-  ["owner-token-ref", name, collective]
+  ["owner-token-ref", name, collective_mint]
   --
-  ["owner-token-ref", owner, collective]
+  ["owner-token-ref", owner, collective_mint]
   --
   ["mint-token-ref", targetMint]
   --
@@ -172,11 +172,11 @@ var primaryTokenRef = (await SplTokenCollective.ownerTokenRefKey({
 }))[0];
 var collectiveTokenRef = (await SplTokenCollective.ownerTokenRefKey({
   owner: provider.wallet.publicKey,
-  collective: tokenRef.collective
+  mint: collective.mint
 }))[0];
 var unclaimedCollectiveTokenRef = (await SplTokenCollective.ownerTokenRefKey({
   name: await getNameAccountKey(await getHashedName("some-name")),
-  collective: tokenRef.collective
+  mint: collective.mint
 }))[0];
 var mintTokenRef = (await SplTokenCollective.mintTokenRefKey(tokenRef.mint))[0];
 ```

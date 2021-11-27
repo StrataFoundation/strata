@@ -157,7 +157,7 @@ pub mod spl_token_bonding {
       // We need to own the mint authority if this bonding curve supports buying.
       // This can be a sell only bonding curve
       bonding.buy_frozen = args.buy_frozen
-        || bonding.key() != target_mint.mint_authority.ok_or::<ProgramError>(ErrorCode::NoMintAuthority.into())?
+        || bonding.key() != target_mint.mint_authority.unwrap_or(Pubkey::default())
         || (target_mint.freeze_authority.is_some() && bonding.key() != target_mint.freeze_authority.ok_or::<ProgramError>(ErrorCode::NoMintAuthority.into())?);
       bonding.sell_frozen = ctx.accounts.base_storage.owner != bonding.key();
       bonding.bump_seed = args.bump_seed;
@@ -317,7 +317,7 @@ pub mod spl_token_bonding {
           ctx.accounts.clock.unix_timestamp - token_bonding.go_live_unix_time,
           &base_amount,
           &target_supply,
-          &total_price_prec,
+          &price_prec,
           args.root_estimates
         ).or_arith_error()?;
 
@@ -367,7 +367,7 @@ pub mod spl_token_bonding {
       let base_storage_account = ctx.accounts.base_storage.to_account_info();
       let base_royalties_account = ctx.accounts.buy_base_royalties.clone().to_account_info();
       let target_royalties_account = ctx.accounts.buy_target_royalties.clone().to_account_info();
-      let target_mint_authority = token_bonding.to_account_info().clone();
+      let target_mint_authority = token_bonding.to_account_info();
       let source_authority = ctx.accounts.source_authority.to_account_info();
       let mint_signer_seeds: &[&[&[u8]]] = &[&[
         b"token-bonding", 

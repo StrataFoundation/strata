@@ -200,7 +200,7 @@ describe("spl-token-collective", () => {
         slippage: 0.1,
       });
       await tokenCollectiveProgram.claimSocialToken({
-        ownerTokenRef: unclaimedTokenRef,
+        tokenRef: unclaimedTokenRef,
         owner: provider.wallet.publicKey,
         symbol: "foop",
         isPrimary: false,
@@ -314,7 +314,7 @@ describe("spl-token-collective", () => {
       expect(tokenBondingNow.buyFrozen).to.equal(false);
 
       await tokenCollectiveProgram.updateTokenBonding({
-        ownerTokenRef: mintTokenRef.publicKey,
+        tokenRef: mintTokenRef.publicKey,
         buyTargetRoyaltyPercentage: 10,
         buyBaseRoyaltyPercentage: 5,
         sellBaseRoyaltyPercentage: 10,
