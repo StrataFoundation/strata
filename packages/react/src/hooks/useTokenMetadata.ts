@@ -30,14 +30,14 @@ const parser = (_: any, acct: any) => decodeMetadata(acct.data);
  * @returns
  */
 export function useTokenMetadata(
-  token: PublicKey | undefined
+  token: PublicKey | undefined | null
 ): IUseTokenMetadataResult {
   const {
     result: metadataAccountKeyStr,
     loading,
     error,
   } = useAsync(
-    async (token: string | undefined) =>
+    async (token: string | undefined | null) =>
       token ? getMetadata(token) : undefined,
     [token?.toBase58()]
   );

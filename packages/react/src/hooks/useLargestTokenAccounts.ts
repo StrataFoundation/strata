@@ -7,7 +7,7 @@ import {
 import { useConnection } from "@solana/wallet-adapter-react";
 
 export const useLargestTokenAccounts = (
-  tokenMint: PublicKey | undefined
+  tokenMint: PublicKey | undefined | null
 ): {
   loading: boolean;
   result: RpcResponseAndContext<TokenAccountBalancePair[]> | undefined;

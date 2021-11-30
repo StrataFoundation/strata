@@ -9,7 +9,7 @@ import { sendAndConfirmRawTransaction } from "@solana/web3.js";
  * @returns
  */
 export function useProvider(): {
-  provider: Provider | undefined;
+  provider: Provider | undefined | null;
   awaitingApproval: boolean;
 } {
   const { connection } = useConnection();

@@ -3,7 +3,7 @@ import { ICurve } from "@strata-foundation/spl-token-bonding";
 import { useAccount, UseAccountState, useStrataSdks } from ".";
 
 export function useCurve(
-  curve: PublicKey | undefined
+  curve: PublicKey | undefined | null
 ): UseAccountState<ICurve> {
   const { tokenBondingSdk } = useStrataSdks();
 
