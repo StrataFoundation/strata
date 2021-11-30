@@ -27,5 +27,8 @@ pub enum ErrorCode {
     NoBonding,
 
     #[msg("Invalid collective")]
-    InvalidCollective
+    InvalidCollective,
+
+    #[msg("Invalid name authority passed")]
+    InvalidNameAuthority,
 }
