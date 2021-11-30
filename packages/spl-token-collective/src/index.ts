@@ -229,9 +229,9 @@ export interface IClaimSocialTokenArgs {
 
 interface ITokenRefKeyArgs {
   isPrimary?: boolean;
-  owner?: PublicKey;
-  name?: PublicKey;
-  mint?: PublicKey;
+  owner?: PublicKey | null;
+  name?: PublicKey | null;
+  mint?: PublicKey | null;
 }
 
 export interface IRoyaltySetting {

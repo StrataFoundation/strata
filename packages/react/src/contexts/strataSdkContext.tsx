@@ -32,7 +32,9 @@ async function tryProm<A>(prom: Promise<A>): Promise<A | undefined> {
   return undefined;
 }
 
-async function getSdks(provider: Provider | undefined): Promise<IStrataSdks> {
+async function getSdks(
+  provider: Provider | undefined | null
+): Promise<IStrataSdks> {
   if (!provider) {
     return {};
   }

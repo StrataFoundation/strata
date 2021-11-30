@@ -39,7 +39,7 @@ export async function getTwitterClaimedTokenRefKey(
 }
 export async function getTwitterUnclaimedTokenRefKey(
   handle: string,
-  mint: PublicKey = SplTokenCollective.OPEN_COLLECTIVE_MINT_ID,
+  mint: PublicKey | null = SplTokenCollective.OPEN_COLLECTIVE_MINT_ID,
   tld: PublicKey = WUMBO_TWITTER_TLD
 ): Promise<PublicKey> {
   const name = await getTwitterRegistryKey(handle, tld);
