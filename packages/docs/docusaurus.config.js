@@ -8,8 +8,8 @@ const plantuml = require("@akebifiky/remark-simple-plantuml");
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'Strata',
-  tagline: 'Community first Social Tokens, powered by Solana',
+  title: 'Strata Protocol',
+  tagline: 'Launch a tokenized econonomy around a person, idea, or collective in seconds',
   url: 'https://strataprotocol.com',
   baseUrl: '/',
   onBrokenLinks: 'throw',
