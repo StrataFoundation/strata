@@ -30,6 +30,8 @@ const config = {
           editUrl: 'https://github.com/StrataFoundation/strata/edit/master/packages/docs',
         },
         blog: {
+          remarkPlugins: [math, plantuml],
+          rehypePlugins: [katex],
           showReadingTime: true,
           // Please change this to your repo.
           editUrl:
