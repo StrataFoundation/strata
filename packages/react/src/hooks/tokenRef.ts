@@ -25,7 +25,7 @@ export const WUMBO_TWITTER_TLD = new PublicKey(
 export async function getTwitterClaimedTokenRefKey(
   connection: Connection,
   handle: string,
-  mint: PublicKey | undefined = undefined,
+  mint: PublicKey | undefined | null = undefined,
   tld: PublicKey = WUMBO_TWITTER_TLD
 ): Promise<PublicKey> {
   const owner = (await getTwitterRegistry(connection, handle, tld)).owner;
@@ -39,7 +39,7 @@ export async function getTwitterClaimedTokenRefKey(
 }
 export async function getTwitterUnclaimedTokenRefKey(
   handle: string,
-  mint: PublicKey = SplTokenCollective.OPEN_COLLECTIVE_MINT_ID,
+  mint: PublicKey | null = SplTokenCollective.OPEN_COLLECTIVE_MINT_ID,
   tld: PublicKey = WUMBO_TWITTER_TLD
 ): Promise<PublicKey> {
   const name = await getTwitterRegistryKey(handle, tld);
@@ -53,13 +53,19 @@ export async function getTwitterUnclaimedTokenRefKey(
 }
 
 export const useUnclaimedTwitterTokenRefKey = (
-  name: string | undefined,
-  collective: PublicKey | undefined = SplTokenCollective.OPEN_COLLECTIVE_ID,
+  name: string | undefined | null,
+  collective:
+    | PublicKey
+    | undefined
+    | null = SplTokenCollective.OPEN_COLLECTIVE_ID,
   tld: PublicKey = WUMBO_TWITTER_TLD
 ): { result: PublicKey | undefined; loading: boolean } => {
   const { connection } = useConnection();
   const { result: key, loading } = useAsync(
-    async (name: string | undefined, collective: PublicKey | undefined) => {
+    async (
+      name: string | undefined | null,
+      collective: PublicKey | undefined | null
+    ) => {
       if (connection && name) {
         return getTwitterUnclaimedTokenRefKey(name, collective, tld);
       }
@@ -70,7 +76,7 @@ export const useUnclaimedTwitterTokenRefKey = (
 };
 
 export const useClaimedTwitterTokenRefKey = (
-  name: string | undefined,
+  name: string | undefined | null,
   collective: PublicKey = PublicKey.default,
   tld: PublicKey = WUMBO_TWITTER_TLD
 ): { result: PublicKey | undefined; loading: boolean } => {
@@ -78,7 +84,7 @@ export const useClaimedTwitterTokenRefKey = (
   const { result: key, loading } = useAsync(
     async (
       connection: Connection | undefined,
-      name: string | undefined,
+      name: string | undefined | null,
       collective: PublicKey,
       tld: PublicKey
     ) => {
@@ -92,11 +98,11 @@ export const useClaimedTwitterTokenRefKey = (
 };
 
 export const useClaimedTokenRefKey = (
-  owner: PublicKey | undefined,
+  owner: PublicKey | undefined | null,
   mint: PublicKey = PublicKey.default
 ): PublicKey | undefined => {
   const { result } = useAsync(
-    async (owner: PublicKey | undefined) =>
+    async (owner: PublicKey | undefined | null) =>
       owner && SplTokenCollective.ownerTokenRefKey({ owner, mint }),
     [owner]
   );
@@ -111,11 +117,11 @@ export const useClaimedTokenRefKey = (
  * @returns
  */
 export function useTokenRefFromBonding(
-  tokenBonding: PublicKey | undefined
+  tokenBonding: PublicKey | undefined | null
 ): UseAccountState<ITokenRef> {
   const bonding = useTokenBonding(tokenBonding);
   const { result: key } = useAsync(
-    async (bonding: TokenBondingV0 | undefined) =>
+    async (bonding: TokenBondingV0 | undefined | null) =>
       bonding && SplTokenCollective.mintTokenRefKey(bonding.targetMint),
     [bonding.info]
   );
@@ -129,10 +135,10 @@ export function useTokenRefFromBonding(
  * @returns
  */
 export function useMintTokenRef(
-  mint: PublicKey | undefined
+  mint: PublicKey | undefined | null
 ): UseAccountState<ITokenRef> {
   const { result: key } = useAsync(
-    async (mint: PublicKey | undefined) =>
+    async (mint: PublicKey | undefined | null) =>
       mint && SplTokenCollective.mintTokenRefKey(mint),
     [mint]
   );
@@ -145,7 +151,7 @@ export function useMintTokenRef(
  * @returns
  */
 export function useClaimedTokenRef(
-  owner: PublicKey | undefined
+  owner: PublicKey | undefined | null
 ): UseAccountState<ITokenRef> {
   const key = useClaimedTokenRefKey(owner);
   return useTokenRef(key);
@@ -162,8 +168,8 @@ export function useClaimedTokenRef(
  * @returns
  */
 export const useTwitterTokenRef = (
-  name: string | undefined,
-  collective: PublicKey | undefined,
+  name: string | undefined | null,
+  collective: PublicKey | undefined | null,
   tld: PublicKey = WUMBO_TWITTER_TLD
 ): UseAccountState<ITokenRef> => {
   const { result: claimedKey, loading: twitterLoading } =
@@ -215,7 +221,7 @@ export interface IUseSocialTokenMetadataResult extends IUseTokenMetadataResult {
  * @returns
  */
 export function useSocialTokenMetadata(
-  owner: PublicKey | undefined
+  owner: PublicKey | undefined | null
 ): IUseSocialTokenMetadataResult {
   const { info: tokenRef, loading } = useClaimedTokenRef(owner);
   const { info: tokenBonding } = useTokenBonding(

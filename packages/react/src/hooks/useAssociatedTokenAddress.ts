@@ -16,7 +16,7 @@ const fetch = (wallet: PublicKey, mint: PublicKey) =>
   );
 export function useAssociatedTokenAddress(
   wallet: PublicKey | undefined | null,
-  mint: PublicKey | undefined
+  mint: PublicKey | undefined | null
 ): AssocState {
   const [state, setState] = useState<AssocState>({ loading: true });
   useEffect(() => {

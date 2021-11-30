@@ -3,7 +3,7 @@ import { ITokenRef } from "@strata-foundation/spl-token-collective";
 import { useAccount, UseAccountState, useStrataSdks } from ".";
 
 export function useTokenRef(
-  tokenRef: PublicKey | undefined
+  tokenRef: PublicKey | undefined | null
 ): UseAccountState<ITokenRef> {
   const { tokenCollectiveSdk } = useStrataSdks();
 

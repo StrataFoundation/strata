@@ -25,7 +25,7 @@ export interface UseAccountState<T> {
  * @returns
  */
 export function useAccount<T>(
-  key: undefined | PublicKey,
+  key: null | undefined | PublicKey,
   parser?: TypedAccountParser<T>,
   isStatic: Boolean = false // Set if the accounts data will never change, optimisation to lower websocket usage.
 ): UseAccountState<T> {

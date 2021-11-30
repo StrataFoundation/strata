@@ -7,7 +7,7 @@ import { useAsync } from "react-async-hook";
 import { UseAccountState, useStrataSdks, useTokenBonding } from "./";
 
 export function useTokenBondingFromMint(
-  mint: PublicKey | undefined,
+  mint: PublicKey | undefined | null,
   index?: number
 ): UseAccountState<ITokenBonding> & { error?: Error } {
   const {
@@ -15,7 +15,7 @@ export function useTokenBondingFromMint(
     loading,
     error,
   } = useAsync(
-    async (mint: PublicKey | undefined, index: number) =>
+    async (mint: PublicKey | undefined | null, index: number) =>
       mint && SplTokenBonding.tokenBondingKey(mint, index),
     [mint, index || 0]
   );

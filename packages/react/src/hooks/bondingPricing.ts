@@ -14,7 +14,6 @@ import { useCurve, useSolPrice, useTokenBonding } from ".";
 import { useAccount } from "./useAccount";
 import { useAssociatedAccount } from "./useAssociatedAccount";
 import { useMint } from "./useMint";
-import { useStrataSdks } from "./useStrataSdks";
 import { useTokenAccount } from "./useTokenAccount";
 
 const SERUM_PROGRAM_ID = new PublicKey(
@@ -54,8 +53,8 @@ export function useSolOwnedAmount(): { amount: number; loading: boolean } {
 }
 
 export function useUserOwnedAmount(
-  wallet: PublicKey | undefined,
-  token: PublicKey | undefined
+  wallet: PublicKey | undefined | null,
+  token: PublicKey | undefined | null
 ): number | undefined {
   const { associatedAccount } = useAssociatedAccount(wallet, token);
   const mint = useMint(token);
@@ -71,7 +70,7 @@ export function useUserOwnedAmount(
 }
 
 export function useOwnedAmount(
-  token: PublicKey | undefined
+  token: PublicKey | undefined | null
 ): number | undefined {
   const { publicKey } = useWallet();
   return useUserOwnedAmount(publicKey || undefined, token);
@@ -89,7 +88,7 @@ export interface PricingState {
  * @returns
  */
 export function useBondingPricing(
-  tokenBonding: PublicKey | undefined
+  tokenBonding: PublicKey | undefined | null
 ): PricingState {
   const { info: bonding, loading: bondingLoading } =
     useTokenBonding(tokenBonding);
@@ -126,11 +125,11 @@ export function useBondingPricing(
  * @returns
  */
 export function useBondingPricingFromMint(
-  mint: PublicKey | undefined,
+  mint: PublicKey | undefined | null,
   index?: number | undefined
 ): PricingState {
   const { result: key, loading } = useAsync(
-    async (mint: PublicKey | undefined, index: number) =>
+    async (mint: PublicKey | undefined | null, index: number) =>
       mint && SplTokenBonding.tokenBondingKey(mint, index),
     [mint, index || 0]
   );
@@ -172,7 +171,9 @@ export const useMarketPrice = (
   return price;
 };
 
-export function useFiatPrice(token: PublicKey | undefined): number | undefined {
+export function useFiatPrice(
+  token: PublicKey | undefined | null
+): number | undefined {
   const solPrice = useSolPrice();
   const { curve } = useBondingPricingFromMint(token);
 

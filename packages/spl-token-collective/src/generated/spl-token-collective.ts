@@ -1067,9 +1067,6 @@ export const SplTokenCollectiveIDLJson: Idl & {
       msg: "Invalid collective",
     },
   ],
-  metadata: {
-    address: "TCo1sP6RwuCuyHPHjxgzcrq4dX4BKf9oRQ3aJMcdFry",
-  },
 };
 export type SplTokenCollectiveIDL = {
   version: "0.0.0";
@@ -1437,7 +1434,6 @@ export type SplTokenCollectiveIDL = {
     { code: 307; name: "NoBonding"; msg: "Token is not on a bonding curve" },
     { code: 308; name: "InvalidCollective"; msg: "Invalid collective" }
   ];
-  metadata: { address: "TCo1sP6RwuCuyHPHjxgzcrq4dX4BKf9oRQ3aJMcdFry" };
 };
 
 export type CollectiveV0 = IdlAccounts<SplTokenCollectiveIDL>["collectiveV0"];

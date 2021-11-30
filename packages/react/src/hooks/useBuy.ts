@@ -2,7 +2,6 @@ import { useAsyncCallback } from "react-async-hook";
 import { PublicKey } from "@solana/web3.js";
 import { WalletNotConnectedError } from "@solana/wallet-adapter-base";
 import { useWallet } from "@solana/wallet-adapter-react";
-import BN from "bn.js";
 import { useStrataSdks } from "./";
 
 export const useBuy = (): [

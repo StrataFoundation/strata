@@ -3,9 +3,9 @@ import { useUserOwnedAmount } from "./bondingPricing";
 import { useTwitterTokenRef } from "./tokenRef";
 
 export function useOwnedAmountForOwnerAndHandle(
-  owner: PublicKey | undefined,
-  handle: string | undefined,
-  collective: PublicKey | undefined,
+  owner: PublicKey | undefined | null,
+  handle: string | undefined | null,
+  collective: PublicKey | undefined | null,
   tld?: PublicKey
 ): { amount: number | undefined; loading: boolean } {
   const { info: tokenRef, loading: loadingRef } = useTwitterTokenRef(

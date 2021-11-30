@@ -19,14 +19,14 @@ export interface AssociatedAccountState {
  */
 export function useAssociatedAccount(
   walletOrAta: PublicKey | undefined | null,
-  mint: PublicKey | undefined
+  mint: PublicKey | undefined | null
 ): AssociatedAccountState {
-  const { result: associatedTokenAddress, loading: associatedTokenLoading } =
+  const { result: associatedTokenAddress, loading: loading } =
     useAssociatedTokenAddress(walletOrAta, mint);
-  const { info: associatedAccount, loading } = useTokenAccount(
+  const { info: associatedAccount, loading: loading2 } = useTokenAccount(
     associatedTokenAddress
   );
-  const { info: account, loading: loading2 } = useTokenAccount(
+  const { info: account, loading: loading3 } = useTokenAccount(
     walletOrAta || undefined
   );
 
@@ -41,7 +41,7 @@ export function useAssociatedAccount(
 
   return {
     associatedAccount: result,
-    loading: loading || loading2,
+    loading: loading || loading2 || loading3,
     associatedAccountKey: associatedTokenAddress,
   };
 }

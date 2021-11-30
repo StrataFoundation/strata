@@ -43,6 +43,6 @@ export const MintParser = (pubKey: PublicKey, info: AccountInfo<Buffer>) => {
   return details;
 };
 
-export function useMint(key?: PublicKey) {
+export function useMint(key: PublicKey | undefined | null) {
   return useAccount(key, MintParser).info?.info;
 }
