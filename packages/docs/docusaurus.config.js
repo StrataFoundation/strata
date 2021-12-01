@@ -9,7 +9,7 @@ const plantuml = require("@akebifiky/remark-simple-plantuml");
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'Strata Protocol',
-  tagline: 'Launch a tokenized econonomy around a person, idea, or collective in seconds',
+  tagline: 'Launch a token around a person, idea, or collective in minutes',
   url: 'https://strataprotocol.com',
   baseUrl: '/',
   onBrokenLinks: 'throw',
