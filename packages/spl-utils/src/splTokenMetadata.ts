@@ -41,8 +41,8 @@ export interface ICreateArweaveUrlArgs {
   image?: string;
   creators?: Creator[];
   files?: Map<string, Buffer>;
-  env: ArweaveEnv;
-  uploadUrl: string;
+  env?: ArweaveEnv;
+  uploadUrl?: string;
 }
 
 export interface ICreateMetadataInstructionsArgs {
@@ -271,8 +271,8 @@ export class SplTokenMetadata {
     creators,
     files = new Map(),
     payer = this.provider.wallet.publicKey,
-    env,
-    uploadUrl,
+    env = "mainnet-beta",
+    uploadUrl = ARWEAVE_UPLOAD_URL,
   }: ICreateArweaveUrlArgs): Promise<
     InstructionResult<{ files: Map<string, Buffer> }>
   > {
@@ -327,8 +327,8 @@ export class SplTokenMetadata {
     txid,
     mint,
     files = new Map(),
-    uploadUrl = ARWEAVE_UPLOAD_URL,
     env = "mainnet-beta",
+    uploadUrl = ARWEAVE_UPLOAD_URL,
   }: {
     env: ArweaveEnv;
     uploadUrl?: string;
