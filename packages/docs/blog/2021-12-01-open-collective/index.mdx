@@ -96,19 +96,17 @@ other collectives that take royalties provide greater utility.
 
 ## OPEN Fair Launch
 
-**These parameters are not finalized**
-
 The OPEN token will launch on a bonding curve with the formula 
 
 $$
-  P = c * \sqrt{S}
+  P = c * S^k
 $$
 
-This plot visualizes the formula when $c = 1$
+**Choices for k and c have not yet been finalized**
+
+This plot visualizes the formula when $c = 1$ and $k = 0.5$
 
 ![Visualization](0.5x.png)
-
-This bonding curve shape rewards early adopters, but does not lend itself to large price swings once the token is more established.
 
 ### Reward Early Adopters, not Bots
 
@@ -126,27 +124,3 @@ After day 1, the curve begins to steepen:
 Over time, the curve steepens to its final shape:
 
 ![Final Curve Shape](./final.png)
-
-## OPEN Curve Characteristics
-
-The OPEN Curve will open with a price of 0.001 SOL with a formula of
-
-$$P = 0.001$$
-
-On Day 2, the price will be
-
-$$P = c * S^{1/8}$$
-
-Where $c$ is a constant dependent on how many tokens have sold, ensuring the area under the curve is the same as before.
-
-On Day 8, the price will be
-
-$$P = c * S^{1/4}$$
-
-On Day 15, the price will be
-
-$$P = c * S^{3/8}$$
-
-On Day 30, the price will be
-
-$$P = c * S^{1/2}$$
