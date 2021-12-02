@@ -1,6 +1,8 @@
 # Strata
 
-View the live documentation [here](https://strataprotocol.com/docs)
+What is strata? Check out our [Hello World](https://strataprotocol.com/blog/welcome)
+
+View the live documentation [here](https://strataprotocol.com/docs/getting_started)
 
 This series of smart contracts serves to standardizing and indexing all social tokens.
 
