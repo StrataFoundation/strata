@@ -48,7 +48,7 @@ pub fn get_seeds_and_key(
   (name_account_key, seeds_vec)
 }
 
-pub fn get_name<'info>(name_parent: &UncheckedAccount<'info>) -> Result<NameRecordHeader, ProgramError> {
+pub fn get_name<'info>(name_parent: &AccountInfo<'info>) -> Result<NameRecordHeader, ProgramError> {
   let mut data: &[u8] = &name_parent.data.try_borrow().map_err(|_| ProgramError::AccountBorrowFailed)?;
   NameRecordHeader::try_deserialize(&mut data)
 }

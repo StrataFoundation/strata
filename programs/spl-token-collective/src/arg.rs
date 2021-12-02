@@ -93,7 +93,7 @@ pub struct SetAsPrimaryV0Args {
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct OptOutUnclaimedV0Args {
+pub struct ChangeOptStatusUnclaimedV0Args {
   pub hashed_name: Vec<u8>,
   pub is_opted_out: bool
 }

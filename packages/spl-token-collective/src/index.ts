@@ -1,3 +1,4 @@
+import { getHashedName, NameRegistryState } from "@solana/spl-name-service";
 import * as anchor from "@project-serum/anchor";
 import { IdlTypes, Program, Provider } from "@project-serum/anchor";
 import { createMintInstructions } from "@project-serum/common";
@@ -6,7 +7,7 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   MintLayout,
   Token,
-  TOKEN_PROGRAM_ID,
+  TOKEN_PROGRAM_ID
 } from "@solana/spl-token";
 import {
   AccountInfo,
@@ -15,12 +16,12 @@ import {
   SystemProgram,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
-  TransactionInstruction,
+  TransactionInstruction
 } from "@solana/web3.js";
 import {
   ICreateTokenBondingArgs,
   IUpdateTokenBondingArgs,
-  SplTokenBonding,
+  SplTokenBonding
 } from "@strata-foundation/spl-token-bonding";
 import {
   AnchorSdk,
@@ -35,14 +36,14 @@ import {
   percent,
   SplTokenMetadata,
   TypedAccountParser,
-  updateMetadata,
+  updateMetadata
 } from "@strata-foundation/spl-utils";
-import BN from "bn.js";
 import {
   CollectiveV0,
   SplTokenCollectiveIDL,
-  TokenRefV0,
+  TokenRefV0
 } from "./generated/spl-token-collective";
+import { deserializeUnchecked } from "borsh";
 
 export * from "./generated/spl-token-collective";
 
@@ -225,6 +226,19 @@ export interface IClaimSocialTokenArgs {
    * **Default:** false
    */
   ignoreMissingName?: boolean; // Ignore missing name account,
+}
+
+export interface IOptOutArgs {
+  /** The payer for this txn */
+  payer?: PublicKey;
+  /** The token ref of the token we are opting out of */
+  tokenRef: PublicKey;
+  /** The string name stored on chain if this is an unclaimed token */
+  handle?: string;
+  /** The name class of the name on chain. Must be provided if the name wasn't actually created */
+  nameClass?: PublicKey;
+  /** The name parent of the name on chain. Must be provided if the name wasn't actually created */
+  nameParent?: PublicKey;
 }
 
 interface ITokenRefKeyArgs {
@@ -1485,4 +1499,125 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
   ): Promise<void> {
     await this.execute(this.updateTokenBondingInstructions(args));
   }
+
+  async getOptionalNameRecord(name: PublicKey | undefined): Promise<NameRegistryState | null> {
+    if (!name || name.equals(PublicKey.default)) {
+      return null;
+    }
+
+    let nameAccountRaw = await this.provider.connection.getAccountInfo(name);
+    if (nameAccountRaw) {
+      return deserializeUnchecked(NameRegistryState.schema, NameRegistryState, nameAccountRaw.data)
+    }
+
+    return null;
+  }
+
+  /**
+   * Opt out a social token
+   *
+   * @param args
+   * @returns
+   */
+     async optOutInstructions({
+      tokenRef,
+      handle,
+      nameClass,
+      nameParent
+    }: IOptOutArgs): Promise<InstructionResult<null>> {
+      const tokenRefAcct = (await this.getTokenRef(tokenRef))!;
+      if (!tokenRefAcct.tokenBonding) {
+        throw new Error(
+          "Cannot currently opt out on a token ref that has no token bonding"
+        );
+      }
+
+      const nameAcct = await this.getOptionalNameRecord(tokenRefAcct.name as PublicKey);
+      if (!nameClass && nameAcct) {
+        nameClass = nameAcct.class;
+      }
+
+      if (!nameParent && nameAcct) {
+        nameParent = nameAcct.parentName;
+      }
+
+      let nameParentAcct = await this.getOptionalNameRecord(nameParent);
+
+      const tokenBondingAcct = (await this.splTokenBondingProgram.getTokenBonding(
+        tokenRefAcct.tokenBonding
+      ))!;
+
+      const [mintTokenRef] = await SplTokenCollective.mintTokenRefKey(
+        tokenBondingAcct.targetMint
+      );
+
+      const [ownerTokenRef] = await SplTokenCollective.ownerTokenRefKey({
+        name: tokenRefAcct.name as PublicKey | undefined,
+        owner: tokenRefAcct.isClaimed ? tokenRefAcct.owner as PublicKey : undefined,
+        mint: tokenBondingAcct?.baseMint
+      });
+
+      const instructions = [];
+      if (tokenRefAcct.isClaimed) {
+        throw new Error("Opt out is not yet supported for claimed tokens")
+      } else {
+        if (!handle) {
+          throw new Error("Handle must be provided for opting out of unclaimed tokens");
+        }
+
+        instructions.push(
+          await this.instruction.changeOptStatusUnclaimedV0({ 
+            hashedName: await getHashedName(handle!),
+            isOptedOut: true
+          }, {
+            accounts: {
+              ownerTokenRef,
+              mintTokenRef,
+              name: tokenRefAcct.name as PublicKey,
+              tokenBondingUpdateAccounts: {
+                tokenBonding: tokenRefAcct.tokenBonding! as PublicKey,
+                baseMint: tokenBondingAcct.baseMint,
+                targetMint: tokenBondingAcct.targetMint,
+                buyBaseRoyalties: tokenBondingAcct.buyBaseRoyalties,
+                sellBaseRoyalties: tokenBondingAcct.sellBaseRoyalties,
+                buyTargetRoyalties: tokenBondingAcct.buyTargetRoyalties,
+                sellTargetRoyalties: tokenBondingAcct.sellTargetRoyalties
+              },
+              tokenBondingProgram: this.splTokenBondingProgram.programId
+            },
+            remainingAccounts: [{ 
+              pubkey: nameClass || PublicKey.default,
+              isWritable: false,
+              isSigner: !!nameClass && !nameClass.equals(PublicKey.default)
+            }, { 
+              pubkey: nameParent || PublicKey.default,
+              isWritable: false,
+              isSigner: false
+            }, { 
+              pubkey: nameParentAcct?.owner || PublicKey.default,
+              isWritable: false,
+              isSigner: !!nameParent && !nameParent.equals(PublicKey.default)
+            }]
+          })
+        )
+      }
+  
+      return {
+        output: null,
+        signers: [],
+        instructions
+      };
+    }
+  
+    /**
+     * Runs {@link `optOutInstructions`}
+     *
+     * @param args
+     * @retruns
+     */
+    async optOut(
+      args: IOptOutArgs
+    ): Promise<void> {
+      await this.execute(this.optOutInstructions(args), args.payer);
+    }
 }

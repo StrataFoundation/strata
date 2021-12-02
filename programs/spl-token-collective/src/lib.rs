@@ -402,12 +402,34 @@ pub mod spl_token_collective {
     Ok(())
   }
 
-  pub fn opt_out_unclaimed_v0(ctx: Context<ChangeOptStatusUnclaimedV0>) -> ProgramResult {
+  pub fn change_opt_status_unclaimed_v0(ctx: Context<ChangeOptStatusUnclaimedV0>, args: ChangeOptStatusUnclaimedV0Args) -> ProgramResult {
+    let name_class = &ctx.remaining_accounts[0];
+    let name_parent = &ctx.remaining_accounts[1];
+    let name_parent_owner = &ctx.remaining_accounts[1];
+    let valid_authority = get_seeds_and_key(
+      &spl_name_service::ID,
+      args.hashed_name,
+      Some(name_class.key()),
+      Some(name_parent.key()),
+    ).0 == ctx.accounts.name.key() &&
+    // No class, or is a signer
+    (name_class.key() == Pubkey::default() || name_class.is_signer) &&
+    // No parent, or parent owner is a signer (just plug parent owner into owner field)
+    (name_parent.key() == Pubkey::default() || 
+      (name_parent_owner.key() == get_name(name_parent)?.owner) &&
+      name_parent_owner.is_signer
+    );
+
+    // Even if the name was never actually created, verify the name class and name parent are accurate
+    if !valid_authority {
+      return Err(ErrorCode::InvalidNameAuthority.into())
+    }
+
     ctx.accounts.owner_token_ref.is_opted_out = true;
     ctx.accounts.mint_token_ref.is_opted_out = true;
 
-    let static_args = ctx.accounts.token_bonding_update_accounts;
-    let token_bonding = static_args.token_bonding;
+    let static_args = &ctx.accounts.token_bonding_update_accounts;
+    let token_bonding = &static_args.token_bonding;
     let seeds: &[&[&[u8]]] = &[
       &[
         b"mint-token-ref", static_args.target_mint.to_account_info().key.as_ref(),

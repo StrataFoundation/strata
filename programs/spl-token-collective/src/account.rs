@@ -383,6 +383,7 @@ pub struct ClaimSocialTokenV0<'info> {
 #[derive(Accounts)]
 pub struct StaticUpdateTokenBondingV0<'info> {
   #[account(
+    mut,
     has_one = base_mint,
     has_one = target_mint,
     has_one = buy_base_royalties,
@@ -400,9 +401,10 @@ pub struct StaticUpdateTokenBondingV0<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(args: OptOutUnclaimedV0Args)]
+#[instruction(args: ChangeOptStatusUnclaimedV0Args)]
 pub struct ChangeOptStatusUnclaimedV0<'info> {
   #[account(
+    mut,
     seeds = [
       b"owner-token-ref",
       name.key().as_ref(),
@@ -412,6 +414,7 @@ pub struct ChangeOptStatusUnclaimedV0<'info> {
   )]
   pub owner_token_ref: Account<'info, TokenRefV0>,
   #[account(
+    mut,
     seeds = [
       b"mint-token-ref",
       token_bonding_update_accounts.target_mint.key().as_ref()
@@ -422,27 +425,10 @@ pub struct ChangeOptStatusUnclaimedV0<'info> {
   #[account(
     constraint = mint_token_ref.name.is_none() || (
       // name is the name on the token ref
-      mint_token_ref.name.unwrap() == name.key() &&
-      // Even if the name was never actually created, verify the name class and name parent are accurate
-      get_seeds_and_key(
-        &spl_name_service::ID,
-        args.hashed_name,
-        Some(name_class.key()),
-        Some(name_parent.key()),
-      ).0 == name.key() &&
-      // No class, or is a signer
-      (name_class.key() == Pubkey::default() || name_class.is_signer) &&
-      // No parent, or parent owner is a signer (just plug parent owner into owner field)
-      (name_parent.key() == Pubkey::default() || 
-        (name_parent_owner.key() == get_name(&name_parent)?.owner) &&
-        name_parent_owner.is_signer
-      )
+      mint_token_ref.name.unwrap() == name.key()
     ) @ ErrorCode::InvalidNameAuthority
   )]
   pub name: UncheckedAccount<'info>,
-  pub name_class: UncheckedAccount<'info>,
-  pub name_parent: UncheckedAccount<'info>,
-  pub name_parent_owner: UncheckedAccount<'info>,
   pub token_bonding_update_accounts: StaticUpdateTokenBondingV0<'info>,
   #[account(address = spl_token_bonding::id())]
   pub token_bonding_program: AccountInfo<'info>,
