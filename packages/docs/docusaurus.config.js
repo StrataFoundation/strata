@@ -156,7 +156,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Strata, Inc.`,
+        copyright: `Copyright © ${new Date().getFullYear()} Strata Foundation.`,
       },
       prism: {
         theme: lightCodeTheme,
