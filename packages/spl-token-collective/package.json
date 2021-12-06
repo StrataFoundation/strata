@@ -1,6 +1,6 @@
 {
   "name": "@strata-foundation/spl-token-collective",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Interface to the spl-token-collective smart contract",
   "publishConfig": {
     "access": "public",
@@ -26,8 +26,8 @@
     "precommit": "yarn format"
   },
   "dependencies": {
-    "@project-serum/anchor": "^0.18.0",
     "@bonfida/spl-name-service": "^0.1.22",
+    "@project-serum/anchor": "^0.18.0",
     "@project-serum/common": "^0.0.1-beta.3",
     "@solana/web3.js": "^1.29.2",
     "@strata-foundation/spl-token-bonding": "^1.2.1",
