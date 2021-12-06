@@ -404,6 +404,7 @@ export interface ITokenRef extends TokenRefV0 {
   publicKey: PublicKey;
   tokenBonding: PublicKey | null;
   collective: PublicKey | null;
+  owner: PublicKey | null;
 }
 
 /**
