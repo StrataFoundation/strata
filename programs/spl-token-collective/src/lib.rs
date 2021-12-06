@@ -25,7 +25,7 @@ pub fn initialize_social_token_v0<'info>(
   accounts: &mut InitializeSocialTokenV0,
   owner_token_ref: &mut Account<TokenRefV0>,
   mint_token_ref: &mut Account<TokenRefV0>,
-  args: InitializeSocialTokenV0Args,
+  args: &InitializeSocialTokenV0Args,
 ) -> ProgramResult {
   let c = get_collective(accounts.collective.clone());
   let collective = c.as_ref();
@@ -143,7 +143,7 @@ pub mod spl_token_collective {
       )?;
     }
 
-    initialize_social_token_v0(&mut ctx.accounts.initialize_args, &mut ctx.accounts.owner_token_ref, &mut ctx.accounts.mint_token_ref, args)?;
+    initialize_social_token_v0(&mut ctx.accounts.initialize_args, &mut ctx.accounts.owner_token_ref, &mut ctx.accounts.mint_token_ref, &args)?;
     let owner_token_ref = &mut ctx.accounts.owner_token_ref;
     let mint_token_ref = &mut ctx.accounts.mint_token_ref;
 
@@ -193,16 +193,16 @@ pub mod spl_token_collective {
       }
     }
 
-    initialize_social_token_v0(&mut ctx.accounts.initialize_args, &mut ctx.accounts.owner_token_ref,&mut ctx.accounts.mint_token_ref, args)?;
+    initialize_social_token_v0(&mut ctx.accounts.initialize_args, &mut ctx.accounts.owner_token_ref, &mut ctx.accounts.mint_token_ref, &args)?;
     let owner_token_ref = &mut ctx.accounts.owner_token_ref;
     let mint_token_ref = &mut ctx.accounts.mint_token_ref;
 
     owner_token_ref.name = Some(ctx.accounts.name.key());
     mint_token_ref.name = Some(ctx.accounts.name.key());
     owner_token_ref.owner = args.name_class;
-    mint_token_ref.owner = args.name_class;
-    owner_token_ref.authority = args.name_class;
-    mint_token_ref.authority = args.name_class;
+    mint_token_ref.owner = owner_token_ref.owner;
+    owner_token_ref.authority = owner_token_ref.owner;
+    mint_token_ref.authority = owner_token_ref.owner;
     mint_token_ref.is_claimed = false;
     owner_token_ref.is_claimed = false;
     mint_token_ref.is_primary = false;

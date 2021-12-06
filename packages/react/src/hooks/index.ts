@@ -11,6 +11,7 @@ export * from "./useAssociatedAccount";
 export * from "./useAssociatedTokenAddress";
 export * from "./useMint";
 export * from "./useTokenRef";
+export * from "./useTokenAccount";
 export * from "./useTokenMetadata";
 export * from "./useWalletTokenAccounts";
 export * from "./useWalletTokensWithMeta";
