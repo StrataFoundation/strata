@@ -154,16 +154,12 @@ export const SwapForm = ({
   useEffect(() => {
     if (topAmount && topAmount >= 0 && tokenBonding && pricing) {
       if (isBuying) {
-        const buyMax = pricing.buyWithBaseAmount(
-          +topAmount
-        );
+        const buyMax = pricing.buyWithBaseAmount(+topAmount);
 
         setValue("bottomAmount", roundToDecimals(buyMax, 9));
         setRate(`${roundToDecimals(buyMax / topAmount, 9)}`);
       } else {
-        const sellMax = pricing.sellTargetAmount(
-          +topAmount
-        );
+        const sellMax = pricing.sellTargetAmount(+topAmount);
 
         setValue("bottomAmount", roundToDecimals(sellMax, 9));
         setRate(`${roundToDecimals(sellMax / topAmount, 9)}`);
@@ -175,7 +171,15 @@ export const SwapForm = ({
       setRate("--");
       setFee("--");
     }
-  }, [topAmount, feeAmount, setValue, setRate, tokenBonding, pricing, slippage]);
+  }, [
+    topAmount,
+    feeAmount,
+    setValue,
+    setRate,
+    tokenBonding,
+    pricing,
+    slippage,
+  ]);
 
   return (
     <Box ref={formRef} w="full">

@@ -2,8 +2,9 @@ import { MintInfo, u64 } from "@solana/spl-token";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import {
-  BondingPricing, ITokenBonding,
-  SplTokenBonding
+  BondingPricing,
+  ITokenBonding,
+  SplTokenBonding,
 } from "@strata-foundation/spl-token-bonding";
 import React, { useEffect, useMemo, useState } from "react";
 import { useAsync } from "react-async-hook";
@@ -11,7 +12,6 @@ import { useStrataSdks } from "./index";
 import { useAccount } from "./useAccount";
 import { useAssociatedAccount } from "./useAssociatedAccount";
 import { useMint } from "./useMint";
-
 
 export function supplyAsNum(mint: MintInfo): number {
   return amountAsNum(mint.supply, mint);
@@ -81,20 +81,33 @@ export function useBondingPricing(
   tokenBonding: PublicKey | undefined | null
 ): PricingState {
   const { tokenBondingSdk } = useStrataSdks();
-  const getPricing = async (tokenBondingSdk: SplTokenBonding | undefined, key: PublicKey | null | undefined) => tokenBondingSdk && key && tokenBondingSdk.getPricing(key)
+  const getPricing = async (
+    tokenBondingSdk: SplTokenBonding | undefined,
+    key: PublicKey | null | undefined
+  ) => tokenBondingSdk && key && tokenBondingSdk.getPricing(key);
 
-  const { result: pricing, loading, error } = useAsync(getPricing, [tokenBondingSdk, tokenBonding]);
-  const tokenBondingAcct = useMemo(() => pricing?.hierarchy?.tokenBonding, [pricing]);
+  const {
+    result: pricing,
+    loading,
+    error,
+  } = useAsync(getPricing, [tokenBondingSdk, tokenBonding]);
+  const tokenBondingAcct = useMemo(
+    () => pricing?.hierarchy?.tokenBonding,
+    [pricing]
+  );
 
   return {
     pricing: pricing || undefined,
     tokenBonding: tokenBondingAcct,
     loading,
-    error
+    error,
   };
 }
 
-const tokenBondingKey = async (mint: PublicKey | undefined | null, index: number): Promise<PublicKey | null | undefined> =>
+const tokenBondingKey = async (
+  mint: PublicKey | undefined | null,
+  index: number
+): Promise<PublicKey | null | undefined> =>
   mint && (await SplTokenBonding.tokenBondingKey(mint, index))[0];
 
 /**
@@ -108,10 +121,10 @@ export function useBondingPricingFromMint(
   mint: PublicKey | undefined | null,
   index?: number | undefined
 ): PricingState {
-  const { result: key, loading } = useAsync(
-    tokenBondingKey,
-    [mint, index || 0]
-  );
+  const { result: key, loading } = useAsync(tokenBondingKey, [
+    mint,
+    index || 0,
+  ]);
   const bondingPricing = useBondingPricing(key);
 
   return {

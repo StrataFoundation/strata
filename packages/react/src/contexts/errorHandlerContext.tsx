@@ -28,8 +28,10 @@ export const ErrorHandlerProvider: FC<IErrorHandlerProviderProps> = ({
   const sentErrors = new Set();
   const handleErrors = useCallback(
     async (...errors: (Error | undefined)[]) => {
-      const actualErrors = [...new Set(errors.filter(truthy))].filter(e => !sentErrors.has(e));
-      actualErrors.forEach(sentErrors.add.bind(sentErrors))
+      const actualErrors = [...new Set(errors.filter(truthy))].filter(
+        (e) => !sentErrors.has(e)
+      );
+      actualErrors.forEach(sentErrors.add.bind(sentErrors));
       actualErrors.map(onError);
     },
     [onError]

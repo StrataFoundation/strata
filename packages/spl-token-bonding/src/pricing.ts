@@ -5,22 +5,22 @@ import { BondingHierarchy } from ".";
  * Traverse a bonding hierarchy, executing func and accumulating
  * the results until destination token
  *
- * @param param0 
- * @returns 
+ * @param param0
+ * @returns
  */
 function reduce<A>({
   hierarchy,
   func,
   initial,
-  destination
-} : {
-  hierarchy?: BondingHierarchy,
-  func: (acc: A, current: BondingHierarchy) => A,
-  initial: A,
-  destination: PublicKey
+  destination,
+}: {
+  hierarchy?: BondingHierarchy;
+  func: (acc: A, current: BondingHierarchy) => A;
+  initial: A;
+  destination: PublicKey;
 }): A {
   if (!hierarchy) {
-    return initial
+    return initial;
   }
 
   let current: BondingHierarchy | undefined = hierarchy;
@@ -28,7 +28,9 @@ function reduce<A>({
   while (!current!.tokenBonding.baseMint.equals(destination)) {
     current = current!.parent;
     if (!current) {
-      throw new Error(`Base mint ${destination.toBase58()} is not in the hierarchy for ${hierarchy.tokenBonding.publicKey.toBase58()}`)
+      throw new Error(
+        `Base mint ${destination.toBase58()} is not in the hierarchy for ${hierarchy.tokenBonding.publicKey.toBase58()}`
+      );
     }
     value = func(value, current);
   }
@@ -40,29 +42,31 @@ function reduce<A>({
  * Traverse a bonding hierarchy, executing func and accumulating
  * the results until destination token starting from parent going to children
  *
- * @param param0 
- * @returns 
+ * @param param0
+ * @returns
  */
- function reduceFromParent<A>({
+function reduceFromParent<A>({
   hierarchy,
   func,
   initial,
-  destination
-} : {
-  hierarchy?: BondingHierarchy,
-  func: (acc: A, current: BondingHierarchy) => A,
-  initial: A,
-  destination: PublicKey
+  destination,
+}: {
+  hierarchy?: BondingHierarchy;
+  func: (acc: A, current: BondingHierarchy) => A;
+  initial: A;
+  destination: PublicKey;
 }): A {
   if (!hierarchy) {
-    return initial
+    return initial;
   }
 
   let current: BondingHierarchy | undefined = hierarchy;
   while (!current!.tokenBonding.baseMint.equals(destination)) {
     current = current!.parent;
     if (!current) {
-      throw new Error(`Base mint ${destination.toBase58()} is not in the hierarchy for ${hierarchy.tokenBonding.publicKey.toBase58()}`)
+      throw new Error(
+        `Base mint ${destination.toBase58()} is not in the hierarchy for ${hierarchy.tokenBonding.publicKey.toBase58()}`
+      );
     }
   }
   destination = hierarchy.tokenBonding.targetMint;
@@ -87,22 +91,22 @@ export class BondingPricing {
     return reduce({
       hierarchy: this.hierarchy,
       func: (acc: number, current: BondingHierarchy) => {
-        return acc * current.pricingCurve.current()
+        return acc * current.pricingCurve.current();
       },
       initial: 1,
-      destination: baseMint
-    })
+      destination: baseMint,
+    });
   }
 
   locked(baseMint: PublicKey = this.hierarchy.tokenBonding.baseMint): number {
     return reduce({
       hierarchy: this.hierarchy.parent,
       func: (acc: number, current: BondingHierarchy) => {
-        return acc * current.pricingCurve.current()
+        return acc * current.pricingCurve.current();
       },
       initial: this.hierarchy.pricingCurve.locked(),
-      destination: baseMint
-    })
+      destination: baseMint,
+    });
   }
 
   sellTargetAmount(
@@ -113,14 +117,14 @@ export class BondingPricing {
       hierarchy: this.hierarchy,
       func: (acc: number, current: BondingHierarchy) => {
         return current.pricingCurve.sellTargetAmount(
-          acc, 
-          current.tokenBonding.sellBaseRoyaltyPercentage, 
+          acc,
+          current.tokenBonding.sellBaseRoyaltyPercentage,
           current.tokenBonding.sellTargetRoyaltyPercentage
-        )
+        );
       },
       initial: targetAmountNum,
-      destination: baseMint
-    })
+      destination: baseMint,
+    });
   }
 
   buyTargetAmount(
@@ -131,14 +135,14 @@ export class BondingPricing {
       hierarchy: this.hierarchy,
       func: (acc: number, current: BondingHierarchy) => {
         return current.pricingCurve.buyTargetAmount(
-          acc, 
-          current.tokenBonding.buyBaseRoyaltyPercentage, 
+          acc,
+          current.tokenBonding.buyBaseRoyaltyPercentage,
           current.tokenBonding.buyTargetRoyaltyPercentage
-        )
+        );
       },
       initial: targetAmountNum,
-      destination: baseMint
-    })
+      destination: baseMint,
+    });
   }
 
   buyWithBaseAmount(
@@ -149,13 +153,13 @@ export class BondingPricing {
       hierarchy: this.hierarchy,
       func: (acc: number, current: BondingHierarchy) => {
         return current.pricingCurve.buyWithBaseAmount(
-          acc, 
-          current.tokenBonding.buyBaseRoyaltyPercentage, 
+          acc,
+          current.tokenBonding.buyBaseRoyaltyPercentage,
           current.tokenBonding.buyTargetRoyaltyPercentage
-        )
+        );
       },
       initial: baseAmountNum,
-      destination: baseMint
-    })
+      destination: baseMint,
+    });
   }
 }

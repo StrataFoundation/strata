@@ -1,6 +1,6 @@
 import { PublicKey } from "@solana/web3.js";
 import { useSolPrice } from "./useSolPrice";
-import { useBondingPricingFromMint } from "./bondingPricing"
+import { useBondingPricingFromMint } from "./bondingPricing";
 import { NATIVE_MINT } from "@solana/spl-token";
 import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import { useEffect, useState } from "react";
@@ -14,7 +14,10 @@ export function usePriceInSol(
   const [price, setPrice] = useState<number>();
 
   useEffect(() => {
-    if (token?.equals(NATIVE_MINT) || token?.equals(SplTokenBonding.WRAPPED_SOL_MINT)) {
+    if (
+      token?.equals(NATIVE_MINT) ||
+      token?.equals(SplTokenBonding.WRAPPED_SOL_MINT)
+    ) {
       setPrice(1);
     } else if (pricing) {
       try {

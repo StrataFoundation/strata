@@ -93,9 +93,7 @@ export const PluggableSwap = ({
         ? amountAsNum(tokenBonding.purchaseCap as u64, targetMint)
         : Number.POSITIVE_INFINITY;
 
-      const maxSpend = pricing.buyTargetAmount(
-        purchaseCap
-      );
+      const maxSpend = pricing.buyTargetAmount(purchaseCap);
 
       setSpendCap(maxSpend);
     }

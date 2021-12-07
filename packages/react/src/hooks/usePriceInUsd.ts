@@ -8,5 +8,5 @@ export function usePriceInUsd(
   const solPrice = useSolPrice();
   const solAmount = usePriceInSol(token);
 
-  return solAmount && solPrice && (solAmount * solPrice);
+  return solAmount && solPrice && solAmount * solPrice;
 }

@@ -8,7 +8,10 @@ interface AssocState {
   loading: boolean;
   result?: PublicKey;
 }
-const fetch = async (wallet: PublicKey | undefined | null, mint: PublicKey | undefined | null): Promise<PublicKey | undefined> => {
+const fetch = async (
+  wallet: PublicKey | undefined | null,
+  mint: PublicKey | undefined | null
+): Promise<PublicKey | undefined> => {
   if (!wallet || !mint) {
     return undefined;
   }
@@ -19,7 +22,7 @@ const fetch = async (wallet: PublicKey | undefined | null, mint: PublicKey | und
     mint,
     wallet
   );
-}
+};
 
 export function useAssociatedTokenAddress(
   wallet: PublicKey | undefined | null,
