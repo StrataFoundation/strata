@@ -99,7 +99,7 @@ export const useClaimedTwitterTokenRefKey = (
 
 export const useClaimedTokenRefKey = (
   owner: PublicKey | undefined | null,
-  mint: PublicKey | undefined | null
+  mint?: PublicKey | undefined | null
 ): PublicKey | undefined => {
   const { result } = useAsync(
     async (owner: PublicKey | undefined | null) =>
