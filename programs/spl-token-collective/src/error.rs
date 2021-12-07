@@ -27,5 +27,8 @@ pub enum ErrorCode {
     NoBonding,
 
     #[msg("Invalid collective")]
-    InvalidCollective
+    InvalidCollective,
+
+    #[msg("Unclaimed tokens cannot have a go live date in the future. They must be immediately live.")]
+    UnclaimedNotLive
 }

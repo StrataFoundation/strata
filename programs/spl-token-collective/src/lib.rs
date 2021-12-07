@@ -180,6 +180,10 @@ pub mod spl_token_collective {
       )?;
     }
 
+    if initialize_args.token_bonding.go_live_unix_time > initialize_args.clock.unix_timestamp {
+      return Err(ErrorCode::UnclaimedNotLive.into())
+    }
+
     if token_metadata_settings_opt.is_some() {
       let token_metadata_settings = token_metadata_settings_opt.unwrap();
       let token_metadata = &ctx.accounts.token_metadata;

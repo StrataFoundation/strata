@@ -38,8 +38,10 @@ import {
   SplTokenBondingIDL,
   TokenBondingV0,
 } from "./generated/spl-token-bonding";
+import { BondingPricing } from "./pricing";
 
 export * from "./curves";
+export * from "./pricing";
 export * from "./generated/spl-token-bonding";
 
 /**
@@ -88,6 +90,10 @@ function toFixedSpecial(num: number, n: number): string {
 export function toU128(num: number | BN): BN {
   if (BN.isBN(num)) {
     return num;
+  }
+
+  if(num == Infinity) {
+    return new BN(0)
   }
 
   return new BN(toFixedSpecial(num, 12).replace(".", ""));
@@ -352,12 +358,30 @@ export interface IBuyArgs {
   tokenBonding: PublicKey;
   /** The payer to run this transaction, defaults to provider.wallet */
   payer?: PublicKey;
-  source?: PublicKey; // Will use ATA of sourceAuthority if not provided
-  destination?: PublicKey; // Will use ATA of sourceAuthority if not provided
-  sourceAuthority?: PublicKey; // Wallet public key if not provided
-  desiredTargetAmount?: BN | number; // Must prrovide either base amount or desired target amount
+  /** The source account to purchase with. **Default:** ata of `sourceAuthority` */
+  source?: PublicKey;
+  /** The source destination to purchase to. **Default:** ata of `sourceAuthority` */
+  destination?: PublicKey; 
+  /** The wallet funding the purchase. **Default:** Provider wallet */
+  sourceAuthority?: PublicKey;
+  /** Must provide either base amount or desired target amount */
+  desiredTargetAmount?: BN | number;
   baseAmount?: BN | number;
-  slippage: number; // Decimal number. max price will be (1 + slippage) * price_for_desired_target_amount
+  /** Decimal number. max price will be (1 + slippage) * price_for_desired_target_amount */
+  slippage: number;
+}
+
+export interface IBuyWithBaseArgs {
+  baseMint: PublicKey;
+  targetMint: PublicKey;
+  /** The payer to run this transaction, defaults to provider.wallet */
+  payer?: PublicKey;
+  /** The wallet funding the purchase. **Default:** Provider wallet */
+  sourceAuthority?: PublicKey;
+  /** The amount of baseMint to purchase with */
+  baseAmount: BN | number;
+  /** The slippage PER TRANSACTION */
+  slippage: number;
 }
 
 export interface ISellArgs {
@@ -1509,6 +1533,54 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     await this.execute(this.buyInstructions(args), args.payer);
   }
 
+  async buyWithBase({
+    payer = this.wallet.publicKey,
+    sourceAuthority = this.wallet.publicKey,
+    baseMint,
+    targetMint,
+    baseAmount,
+    slippage
+  }: IBuyWithBaseArgs): Promise<{ targetAmount: number }> {
+    const hierarchy = await this.getBondingHierarchy((await SplTokenBonding.tokenBondingKey(targetMint))[0], baseMint);
+    let current = hierarchy;
+    let highestParent = hierarchy;
+    while (current) {
+      highestParent = current;
+      current = current?.parent;
+    }
+
+    current = highestParent;
+    while (current) {
+      const tokenBonding = current.tokenBonding;
+      const ata = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        tokenBonding.targetMint,
+        sourceAuthority
+      );
+      const preBalance = await this.accountExists(ata) && await (await getTokenAccount(this.provider, ata)).amount;
+      await this.buy({
+        payer,
+        sourceAuthority,
+        baseAmount,
+        tokenBonding: tokenBonding.publicKey,
+        slippage
+      });
+      const postBalance = await (await getTokenAccount(this.provider, ata)).amount;
+      baseAmount = postBalance.sub(preBalance || new BN(0));
+
+      current = current.child;
+    }
+    const targetMintInfo = await getMintInfo(
+      this.provider,
+      targetMint
+    );
+
+    return {
+      targetAmount: toNumber(baseAmount, targetMintInfo)
+    };
+  }
+
   async getState(): Promise<ProgramStateV0 | null> {
     if (this.state) {
       return this.state;
@@ -1681,7 +1753,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
    * @param tokenBonding
    * @returns
    */
-  async getPricing(tokenBonding: PublicKey): Promise<IPricingCurve> {
+  async getBondingPricingCurve(tokenBonding: PublicKey): Promise<IPricingCurve> {
     const tokenBondingAcct = (await this.getTokenBonding(tokenBonding))!;
     const targetMint = await getMintInfo(
       this.provider,
@@ -1723,4 +1795,48 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     // @ts-ignore
     return fromCurve(curve, baseStorage, baseMint, targetMint);
   }
+
+  async getPricing(tokenBondingKey: PublicKey | undefined): Promise<BondingPricing> {
+    return new BondingPricing({
+      hierarchy: (await this.getBondingHierarchy(tokenBondingKey))!
+    })
+  }
+  
+  /**
+   * Fetch the token bonding curve and all of its direct ancestors
+   *
+   * @param tokenBondingKey 
+   * @returns 
+   */
+  async getBondingHierarchy(tokenBondingKey: PublicKey | undefined, stopAtMint?: PublicKey | undefined): Promise<BondingHierarchy | undefined> {
+    if (stopAtMint?.equals(NATIVE_MINT)) {
+      stopAtMint = SplTokenBonding.WRAPPED_SOL_MINT
+    }
+    
+    if (!tokenBondingKey) {
+      return
+    }
+    const tokenBonding = await this.getTokenBonding(tokenBondingKey);
+    if (!tokenBonding) {
+      return
+    }
+
+    const pricingCurve = await this.getBondingPricingCurve(tokenBondingKey);
+
+    const parentKey = (await SplTokenBonding.tokenBondingKey(tokenBonding.baseMint))[0];
+    const ret = {
+      parent: stopAtMint?.equals(tokenBonding.baseMint) ? undefined : await this.getBondingHierarchy(parentKey, stopAtMint),
+      tokenBonding,
+      pricingCurve
+    };
+    (ret.parent || {} as any).child = ret;
+    return ret;
+  }
+}
+
+export type BondingHierarchy = {
+  parent?: BondingHierarchy;
+  child?: BondingHierarchy;
+  tokenBonding: ITokenBonding;
+  pricingCurve: IPricingCurve
 }

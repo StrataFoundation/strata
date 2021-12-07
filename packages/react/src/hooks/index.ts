@@ -27,4 +27,7 @@ export * from "./useBuy";
 export * from "./useSell";
 export * from "./useErrorHandler";
 export * from "./useFtxPayLink";
+export * from "./usePriceInSol";
+export * from "./usePriceInUsd";
 export * from "./useTokenBondingFromMint";
+export * from "./useMarketPrice";

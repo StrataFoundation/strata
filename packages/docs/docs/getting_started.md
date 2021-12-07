@@ -102,6 +102,19 @@ await tokenBondingSdk.buy({
 var testBalance = await getAssociatedAccountBalance(connection, publicKey, tokenBondingAcct.targetMint);
 ```
 
+We can also do the last two steps all at once:
+
+```jsx async name=buy_all deps=fetch
+
+var { targetAmount } = await tokenBondingSdk.buyWithBase({
+  baseMint: NATIVE_MINT,
+  targetMint: tokenBondingAcct.targetMint,
+  baseAmount: 0.01,
+  slippage: 0.05
+})
+var testBalance = await getAssociatedAccountBalance(connection, publicKey, tokenBondingAcct.targetMint);
+```
+
 We can also sell those tokens
 
 ```jsx async name=sell_target deps=fetch

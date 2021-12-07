@@ -65,7 +65,7 @@ export const PluggableSwap = ({
     error: targetMetaError,
   } = useTokenMetadata(tokenBonding?.targetMint);
 
-  const { loading: curveLoading, curve } = useBondingPricing(
+  const { loading: curveLoading, pricing } = useBondingPricing(
     tokenBonding?.publicKey
   );
   const targetMint = useMint(tokenBonding?.targetMint);
@@ -88,20 +88,18 @@ export const PluggableSwap = ({
   );
 
   useEffect(() => {
-    if (tokenBonding && targetMint && curve) {
+    if (tokenBonding && targetMint && pricing) {
       const purchaseCap = tokenBonding.purchaseCap
         ? amountAsNum(tokenBonding.purchaseCap as u64, targetMint)
         : Number.POSITIVE_INFINITY;
 
-      const maxSpend = curve.buyTargetAmount(
-        purchaseCap,
-        tokenBonding.buyBaseRoyaltyPercentage,
-        tokenBonding.buyTargetRoyaltyPercentage
+      const maxSpend = pricing.buyTargetAmount(
+        purchaseCap
       );
 
       setSpendCap(maxSpend);
     }
-  }, [tokenBonding, targetMint, curve, setSpendCap]);
+  }, [tokenBonding, targetMint, pricing, setSpendCap]);
 
   if (
     targetMetaLoading ||
@@ -110,7 +108,7 @@ export const PluggableSwap = ({
     curveLoading ||
     solLoading ||
     !tokenBonding ||
-    !curve ||
+    !pricing ||
     !baseMeta
   ) {
     return <Spinner />;
@@ -177,7 +175,7 @@ export const PluggableSwap = ({
       onBuyBase={onBuyBase}
       onSubmit={handleSubmit}
       tokenBonding={tokenBonding}
-      curve={curve}
+      pricing={pricing}
       base={isBuying ? base : target}
       target={isBuying ? target : base}
       ownedBase={isBuying ? ownedBase || 0 : ownedTarget || 0}
