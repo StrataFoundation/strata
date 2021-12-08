@@ -21,7 +21,6 @@ export function usePriceInSol(
       setPrice(1);
     } else if (pricing) {
       try {
-        console.log(pricing?.current(SplTokenBonding.WRAPPED_SOL_MINT));
         setPrice(pricing?.current(SplTokenBonding.WRAPPED_SOL_MINT));
       } catch (e) {
         console.warn(`Token ${token} cannot be priced in terms of SOL`);
