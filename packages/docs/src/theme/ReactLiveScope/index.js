@@ -6,7 +6,7 @@ import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
 import { getAssociatedAccountBalance } from "@strata-foundation/spl-utils";
 import { ExponentialCurveConfig, TimeCurveConfig } from "@strata-foundation/spl-token-bonding";
 import { sendAndConfirmRawTransaction, Keypair, PublicKey, Transaction, SystemProgram } from "@solana/web3.js";
-import { TOKEN_PROGRAM_ID, AccountLayout } from "@solana/spl-token";
+import { TOKEN_PROGRAM_ID, AccountLayout, NATIVE_MINT } from "@solana/spl-token";
 import { Data, sendMultipleInstructions } from "@strata-foundation/spl-utils";
 import { Numberu32, Numberu64, createInstruction, createNameRegistry, getHashedName, getNameAccountKey, NameRegistryState, NAME_PROGRAM_ID } from "@solana/spl-name-service";
 import BrowserOnly from '@docusaurus/BrowserOnly';
@@ -38,6 +38,7 @@ function Swap(props) {
 
 // Add react-live imports you need here
 const ReactLiveScope = {
+  NATIVE_MINT,
   getMintInfo,
   getTokenAccount,
   Numberu32,

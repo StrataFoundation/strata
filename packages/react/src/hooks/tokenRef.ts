@@ -77,7 +77,7 @@ export const useUnclaimedTwitterTokenRefKey = (
 
 export const useClaimedTwitterTokenRefKey = (
   name: string | undefined | null,
-  collective: PublicKey = PublicKey.default,
+  collective?: PublicKey | null,
   tld: PublicKey = WUMBO_TWITTER_TLD
 ): { result: PublicKey | undefined; loading: boolean } => {
   const { connection } = useConnection();
@@ -85,7 +85,7 @@ export const useClaimedTwitterTokenRefKey = (
     async (
       connection: Connection | undefined,
       name: string | undefined | null,
-      collective: PublicKey,
+      collective: PublicKey | undefined | null,
       tld: PublicKey
     ) => {
       if (connection && name) {
@@ -169,13 +169,17 @@ export function useClaimedTokenRef(
  */
 export const useTwitterTokenRef = (
   name: string | undefined | null,
-  collective: PublicKey | undefined | null,
+  collective?: PublicKey | null,
   tld: PublicKey = WUMBO_TWITTER_TLD
 ): UseAccountState<ITokenRef> => {
   const { result: claimedKey, loading: twitterLoading } =
-    useClaimedTwitterTokenRefKey(name, tld);
+    useClaimedTwitterTokenRefKey(name, collective, tld);
   const { result: unclaimedKey, loading: claimedLoading } =
-    useUnclaimedTwitterTokenRefKey(name, collective, tld);
+    useUnclaimedTwitterTokenRefKey(
+      name,
+      collective || SplTokenCollective.OPEN_COLLECTIVE_ID,
+      tld
+    );
   const claimed = useTokenRef(claimedKey);
   const unclaimed = useTokenRef(unclaimedKey);
 

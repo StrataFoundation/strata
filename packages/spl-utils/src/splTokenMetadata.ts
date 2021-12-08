@@ -83,7 +83,7 @@ const routeCDN = (uri: string) => {
   return result;
 };
 
-function getImageFromMeta(meta?: any): string | undefined {
+export function getImageFromMeta(meta?: any): string | undefined {
   if (meta?.image) {
     return meta?.image;
   } else {

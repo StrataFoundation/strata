@@ -5,7 +5,8 @@ import {NATIVE_MINT, Token, TOKEN_PROGRAM_ID} from "@solana/spl-token";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
-import { ExponentialCurve, ExponentialCurveConfig, SplTokenBonding, TimeCurveConfig, TokenBondingV0 } from "../packages/spl-token-bonding/src";
+import { ExponentialCurve, ExponentialCurveConfig, ITokenBonding, SplTokenBonding, TimeCurveConfig, TokenBondingV0 } from "../packages/spl-token-bonding/src";
+import { BondingPricing } from "../packages/spl-token-bonding/src/pricing";
 import { waitForUnixTime } from './utils/clock';
 import { TokenUtils } from "./utils/token";
 
@@ -678,4 +679,102 @@ describe("spl-token-bonding", () => {
       })
     });
   });
+
+  describe("nested curves", () => {
+    let baseMint: PublicKey;
+    let tokenBonding: PublicKey;
+    let tokenBondingAcct: ITokenBonding;
+    const INITIAL_BALANCE = 100000000;
+    const DECIMALS = 2;
+    let targetAmount: number;
+    let pricing: BondingPricing;
+
+    const curves = [
+      {
+        config: new ExponentialCurveConfig({
+          c: 0,
+          b: 2,
+          pow: 0,
+          frac: 1
+        })
+      },
+      {
+        config: new ExponentialCurveConfig({
+          c: 0,
+          b: 5,
+          pow: 0,
+          frac: 1
+        })
+      },
+      {
+        config: new ExponentialCurveConfig({
+          c: 0,
+          b: 2,
+          pow: 0,
+          frac: 1
+        })
+      }
+    ]
+
+    before(async () => {
+      baseMint = await createMint(provider, me, DECIMALS);
+      await tokenUtils.createAtaAndMint(provider, baseMint, INITIAL_BALANCE);
+
+      let currentBaseMint = baseMint;
+      for (const curveSpec of curves) {
+        // @ts-ignore
+        const curve = await tokenBondingProgram.initializeCurve(curveSpec);
+        let targetMint;
+        ({ tokenBonding, targetMint } = await tokenBondingProgram.createTokenBonding({
+          curve,
+          baseMint: currentBaseMint,
+          targetMintDecimals: DECIMALS,
+          generalAuthority: me,
+          buyBaseRoyaltyPercentage: 0,
+          buyTargetRoyaltyPercentage: 0,
+          sellBaseRoyaltyPercentage: 0,
+          sellTargetRoyaltyPercentage: 0
+        }));
+        currentBaseMint = targetMint;
+      }
+
+      tokenBondingAcct = (await tokenBondingProgram.getTokenBonding(tokenBonding))!;
+
+      // 100 -> 50 --> 50/5 (10) -> 10/2 (5)
+      ({ targetAmount } = await tokenBondingProgram.buyWithBase({
+        baseMint,
+        targetMint: tokenBondingAcct.targetMint,
+        baseAmount: 100,
+        slippage: 0.5
+      }));
+      pricing = await tokenBondingProgram.getPricing(tokenBonding);
+    })
+
+    it("correctly bought up to the target", async () => {
+      expect(targetAmount).to.eq(5)
+    })
+
+    describe("pricing", () => {
+      it("can display the current price in terms of the base token", () => {
+        expect(pricing.current(baseMint)).to.eq(2 * 5 * 2)
+      })
+
+      it("can display the tvl in terms of the base token", () => {
+        expect(pricing.locked(baseMint)).to.eq(5 * 2 * 5 * 2)
+      })
+
+      it("can tell what amount of base I will get for selling target", () => {
+        expect(pricing.sellTargetAmount(2, baseMint)).to.eq(2 * 2 * 5 * 2)
+      })
+
+
+      it("can tell what amount of base I will need to buy a target amount", () => {
+        expect(pricing.buyTargetAmount(2, baseMint)).to.eq(2 * 2 * 5 * 2)
+      })
+
+      it("can tell what amount of target I will get for a given base amount", () => {
+        expect(pricing.buyWithBaseAmount(100, baseMint)).to.eq(5)
+      })
+    })
+  })
 });

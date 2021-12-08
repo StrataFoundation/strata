@@ -26,6 +26,7 @@ import {
   ITokenBonding,
   SplTokenBonding,
 } from "@strata-foundation/spl-token-bonding";
+import { BondingPricing } from "@strata-foundation/spl-token-bonding/dist/lib/pricing";
 import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { RiArrowUpDownFill, RiInformationLine } from "react-icons/ri";
@@ -61,7 +62,7 @@ export interface ISwapFormProps {
   onBuyBase: (tokenBonding: PublicKey) => void;
   onSubmit: (values: ISwapFormValues) => Promise<void>;
   tokenBonding: ITokenBonding;
-  curve: IPricingCurve;
+  pricing: BondingPricing;
   base: {
     name: string;
     ticker: string;
@@ -91,7 +92,7 @@ export const SwapForm = ({
   onBuyBase,
   onSubmit,
   tokenBonding,
-  curve,
+  pricing,
   base,
   target,
   ownedBase,
@@ -151,22 +152,14 @@ export const SwapForm = ({
   };
 
   useEffect(() => {
-    if (topAmount && topAmount >= 0 && tokenBonding && curve) {
+    if (topAmount && topAmount >= 0 && tokenBonding && pricing) {
       if (isBuying) {
-        const buyMax = curve.buyWithBaseAmount(
-          +topAmount,
-          tokenBonding.buyBaseRoyaltyPercentage,
-          tokenBonding.buyTargetRoyaltyPercentage
-        );
+        const buyMax = pricing.buyWithBaseAmount(+topAmount);
 
         setValue("bottomAmount", roundToDecimals(buyMax, 9));
         setRate(`${roundToDecimals(buyMax / topAmount, 9)}`);
       } else {
-        const sellMax = curve.sellTargetAmount(
-          +topAmount,
-          tokenBonding.sellBaseRoyaltyPercentage,
-          tokenBonding.sellTargetRoyaltyPercentage
-        );
+        const sellMax = pricing.sellTargetAmount(+topAmount);
 
         setValue("bottomAmount", roundToDecimals(sellMax, 9));
         setRate(`${roundToDecimals(sellMax / topAmount, 9)}`);
@@ -178,7 +171,15 @@ export const SwapForm = ({
       setRate("--");
       setFee("--");
     }
-  }, [topAmount, feeAmount, setValue, setRate, tokenBonding, curve, slippage]);
+  }, [
+    topAmount,
+    feeAmount,
+    setValue,
+    setRate,
+    tokenBonding,
+    pricing,
+    slippage,
+  ]);
 
   return (
     <Box ref={formRef} w="full">
