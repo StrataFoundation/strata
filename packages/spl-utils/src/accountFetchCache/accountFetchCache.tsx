@@ -108,7 +108,8 @@ export class AccountFetchCache {
 
   async requeryMissing(instructions: TransactionInstruction[]) {
     const writeableAccounts = instructions
-      .flatMap((i) => i.keys.filter((k) => k.isWritable))
+      .flatMap((i) => i.keys)
+      .filter((k) => k.isWritable)
       .map((a) => a.pubkey.toBase58());
     const affectedAccounts = writeableAccounts.filter((acct) =>
       this.missingAccounts.has(acct)
@@ -116,12 +117,13 @@ export class AccountFetchCache {
     await Promise.all(
       affectedAccounts.map(async (account) => {
         const parser = this.missingAccounts.get(account);
-        const found = await this.searchAndWatch(
+        const [found, dispose] = await this.searchAndWatch(
           new PublicKey(account),
           parser,
           this.statics.has(account),
           true
         );
+        dispose();
         if (found) {
           this.missingAccounts.delete(account);
         }
@@ -138,7 +140,7 @@ export class AccountFetchCache {
             this.missingAccounts.get(account),
             this.statics.has(account),
             true
-          )
+          ).then(([_, dispose]) => dispose()) // Dispose immediately, this isn't watching.
         )
       );
     } catch (e) {
