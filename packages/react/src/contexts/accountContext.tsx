@@ -37,7 +37,8 @@ export const AccountProvider: FC<IAccountProviderProps> = ({
         return oldGetAccountInfo(publicKey, commitment);
       }
 
-      return cache.search(publicKey).then((i) => {
+      return cache.searchAndWatch(publicKey).then(([i, dispose]) => {
+        setTimeout(dispose, 30 * 1000); // Cache the account for 30 seconds
         if (i) {
           return i.account;
         }

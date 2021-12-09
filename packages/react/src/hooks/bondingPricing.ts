@@ -6,6 +6,7 @@ import {
   ITokenBonding,
   SplTokenBonding,
 } from "@strata-foundation/spl-token-bonding";
+import { useTokenAccount, useTokenBonding } from "./index";
 import React, { useEffect, useMemo, useState } from "react";
 import { useAsync } from "react-async-hook";
 import { useStrataSdks } from "./index";
@@ -81,20 +82,20 @@ export function useBondingPricing(
   tokenBonding: PublicKey | undefined | null
 ): PricingState {
   const { tokenBondingSdk } = useStrataSdks();
+  const { info: tokenBondingAcct } = useTokenBonding(tokenBonding);
+  const { info: reserves } = useTokenAccount(tokenBondingAcct?.baseStorage);
   const getPricing = async (
     tokenBondingSdk: SplTokenBonding | undefined,
-    key: PublicKey | null | undefined
+    key: PublicKey | null | undefined,
+    reserves: any // Make the pricing be re-fetched whenever the reserves change. This doesn't account for
+    // collective changes, but will due for now. TODO: Account for collective changes too
   ) => tokenBondingSdk && key && tokenBondingSdk.getPricing(key);
 
   const {
     result: pricing,
     loading,
     error,
-  } = useAsync(getPricing, [tokenBondingSdk, tokenBonding]);
-  const tokenBondingAcct = useMemo(
-    () => pricing?.hierarchy?.tokenBonding,
-    [pricing]
-  );
+  } = useAsync(getPricing, [tokenBondingSdk, tokenBonding, reserves]);
 
   return {
     pricing: pricing || undefined,

@@ -115,7 +115,7 @@ export const PluggableSwap = ({
   const baseInfo = {
     name: baseMeta?.data.name || "",
     ticker: baseMeta?.data.symbol || "",
-    icon: <Avatar size="sm" src={baseImage} />,
+    icon: <Avatar w="100%" h="100%" size="sm" src={baseImage} />,
     publicKey: tokenBonding.baseMint,
   };
   const base = isBaseSol
@@ -130,7 +130,7 @@ export const PluggableSwap = ({
   const target = {
     name: targetMeta?.data.name || "",
     ticker: targetMeta?.data.symbol || "",
-    icon: <Avatar size="sm" src={targetImage} />,
+    icon: <Avatar w="100%" h="100%" size="sm" src={targetImage} />,
     publicKey: tokenBonding.targetMint,
   };
 

@@ -1,15 +1,14 @@
 import { PublicKey } from "@solana/web3.js";
-import { WUMBO_TWITTER_TLD } from "../hooks";
 import { useUserOwnedAmount } from "./bondingPricing";
-import { useTwitterTokenRef } from "./tokenRef";
+import { useTokenRefForName } from "./tokenRef";
 
-export function useOwnedAmountForOwnerAndHandle(
+export function useOwnedAmountOfNameForOwner(
   owner: PublicKey | undefined | null,
   handle: string | undefined | null,
-  collective?: PublicKey | undefined | null,
-  tld: PublicKey = WUMBO_TWITTER_TLD
+  collective: PublicKey | null,
+  tld: PublicKey
 ): { amount: number | undefined; loading: boolean } {
-  const { info: tokenRef, loading: loadingRef } = useTwitterTokenRef(
+  const { info: tokenRef, loading: loadingRef } = useTokenRefForName(
     handle,
     collective,
     tld

@@ -1066,6 +1066,11 @@ export const SplTokenCollectiveIDLJson: Idl & {
       name: "InvalidCollective",
       msg: "Invalid collective",
     },
+    {
+      code: 309,
+      name: "UnclaimedNotLive",
+      msg: "Unclaimed tokens cannot have a go live date in the future. They must be immediately live.",
+    },
   ],
   metadata: {
     address: "TCo1sP6RwuCuyHPHjxgzcrq4dX4BKf9oRQ3aJMcdFry",
@@ -1435,7 +1440,12 @@ export type SplTokenCollectiveIDL = {
     },
     { code: 306; name: "IncorrectOwner"; msg: "Incorrect owner on account" },
     { code: 307; name: "NoBonding"; msg: "Token is not on a bonding curve" },
-    { code: 308; name: "InvalidCollective"; msg: "Invalid collective" }
+    { code: 308; name: "InvalidCollective"; msg: "Invalid collective" },
+    {
+      code: 309;
+      name: "UnclaimedNotLive";
+      msg: "Unclaimed tokens cannot have a go live date in the future. They must be immediately live.";
+    }
   ];
   metadata: { address: "TCo1sP6RwuCuyHPHjxgzcrq4dX4BKf9oRQ3aJMcdFry" };
 };

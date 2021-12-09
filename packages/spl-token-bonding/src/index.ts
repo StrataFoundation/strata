@@ -1808,10 +1808,13 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
 
   async getPricing(
     tokenBondingKey: PublicKey | undefined
-  ): Promise<BondingPricing> {
-    return new BondingPricing({
-      hierarchy: (await this.getBondingHierarchy(tokenBondingKey))!,
-    });
+  ): Promise<BondingPricing | undefined> {
+    const hierarchy = await this.getBondingHierarchy(tokenBondingKey);
+    if (hierarchy) {
+      return new BondingPricing({
+        hierarchy: hierarchy,
+      });
+    }
   }
 
   /**

@@ -1,15 +1,10 @@
 import { Provider } from "@project-serum/anchor";
-import { ProgramError } from "./anchorError";
 import {
   PublicKey,
-  Signer,
-  SystemProgram,
-  SYSVAR_CLOCK_PUBKEY,
-  SYSVAR_RENT_PUBKEY,
-  Transaction,
-  TransactionInstruction,
-  sendAndConfirmRawTransaction
+  Signer, Transaction,
+  TransactionInstruction
 } from "@solana/web3.js";
+import { ProgramError } from "./anchorError";
 
 async function promiseAllInOrder<T>(it: (() => Promise<T>)[]): Promise<Iterable<T>> {
   let ret: T[] = [];
@@ -77,19 +72,24 @@ export async function sendMultipleInstructions(
         recentBlockhash
       });
       tx.add(...instructions)
+      // https://github.com/solana-labs/solana/issues/21722
+      // I wouldn't wish this bug on my worst enemies. If we don't do this hack, any time our txns are signed, then serialized, then deserialized,
+      // then reserialized, they will break.
+      const fixedTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
       if (signers.length > 0) {
-        tx.partialSign(...signers);
+        fixedTx.partialSign(...signers);
       }
-      return tx;
-    }
-  }).filter(truthy)
 
-  const txnsSigned = await provider.wallet.signAllTransactions(txns);
+      return fixedTx;
+    }
+  }).filter(truthy);
+
+  const txnsSigned = (await provider.wallet.signAllTransactions(txns)).map(tx => tx.serialize());
 
   console.log("Sending multiple transactions...")
   try {
     return await promiseAllInOrder(txnsSigned.map((txn) => async () => {
-      const txid = await provider.connection.sendRawTransaction(txn.serialize(), {
+      const txid = await provider.connection.sendRawTransaction(txn, {
         skipPreflight: true
       })
       const result = await provider.connection.confirmTransaction(txid, "confirmed");

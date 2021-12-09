@@ -33,7 +33,6 @@ export function useAccount<T>(
   const [state, setState] = useState<UseAccountState<T>>({
     loading: true,
   });
-
   const parsedAccountBaseParser = (
     pubkey: PublicKey,
     data: AccountInfo<Buffer>
@@ -49,6 +48,13 @@ export function useAccount<T>(
   const id = typeof key === "string" ? key : key?.toBase58();
 
   useEffect(() => {
+    // Occassionally, dispose can get called while the cache promise is still going.
+    // In that case, we want to dispose immediately.
+    let shouldDisposeImmediately = false;
+    let disposeWatch = () => {
+      shouldDisposeImmediately = true;
+    };
+
     if (!id) {
       setState({ loading: false });
       return;
@@ -58,7 +64,12 @@ export function useAccount<T>(
 
     cache
       .searchAndWatch(id, parsedAccountBaseParser, isStatic)
-      .then((acc) => {
+      .then(([acc, dispose]) => {
+        if (shouldDisposeImmediately) {
+          dispose();
+          shouldDisposeImmediately = false;
+        }
+        disposeWatch = dispose;
         if (acc) {
           setState({
             loading: false,
@@ -74,7 +85,7 @@ export function useAccount<T>(
         setState({ loading: false });
       });
 
-    const dispose = cache.emitter.onCache((e) => {
+    const disposeEmitter = cache.emitter.onCache((e) => {
       const event = e;
       if (event.id === id && !event.isNew) {
         cache.query(id, parsedAccountBaseParser).then((acc) => {
@@ -87,7 +98,8 @@ export function useAccount<T>(
       }
     });
     return () => {
-      dispose();
+      disposeEmitter();
+      setTimeout(disposeWatch, 30 * 1000); // Keep cached accounts around for 30s in case a rerender is causing reuse
     };
   }, [cache, id, !parser]); // only trigger on change to parser if it wasn't defined before.
 
