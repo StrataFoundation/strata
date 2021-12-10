@@ -33,6 +33,7 @@ export class AccountFetchCache {
   chunkSize: number;
   delay: number;
   commitment: Commitment;
+  accountWatchersCount = new Map<string, number>();
   accountChangeListeners = new Map<string, number>();
   statics = new Set<string>();
   missingAccounts = new Map<string, AccountParser<unknown> | undefined>();
@@ -107,7 +108,8 @@ export class AccountFetchCache {
 
   async requeryMissing(instructions: TransactionInstruction[]) {
     const writeableAccounts = instructions
-      .flatMap((i) => i.keys.filter((k) => k.isWritable))
+      .flatMap((i) => i.keys)
+      .filter((k) => k.isWritable)
       .map((a) => a.pubkey.toBase58());
     const affectedAccounts = writeableAccounts.filter((acct) =>
       this.missingAccounts.has(acct)
@@ -115,12 +117,13 @@ export class AccountFetchCache {
     await Promise.all(
       affectedAccounts.map(async (account) => {
         const parser = this.missingAccounts.get(account);
-        const found = await this.searchAndWatch(
+        const [found, dispose] = await this.searchAndWatch(
           new PublicKey(account),
           parser,
           this.statics.has(account),
           true
         );
+        dispose();
         if (found) {
           this.missingAccounts.delete(account);
         }
@@ -137,7 +140,7 @@ export class AccountFetchCache {
             this.missingAccounts.get(account),
             this.statics.has(account),
             true
-          )
+          ).then(([_, dispose]) => dispose()) // Dispose immediately, this isn't watching.
         )
       );
     } catch (e) {
@@ -206,7 +209,7 @@ export class AccountFetchCache {
     parser?: AccountParser<T> | undefined,
     isStatic: Boolean = false, // optimization, set if the data will never change
     forceRequery = false
-  ): Promise<ParsedAccountBase<T> | undefined> {
+  ): Promise<[ParsedAccountBase<T> | undefined, () => void]> {
     let id: PublicKey;
     if (typeof pubKey === "string") {
       id = new PublicKey(pubKey);
@@ -216,13 +219,13 @@ export class AccountFetchCache {
     const address = id.toBase58();
 
     const data = await this.search(pubKey, parser, isStatic, forceRequery);
-    this.watch(id, parser, !!data);
+    const dispose = this.watch(id, parser, !!data);
     const cacheEntry = this.genericCache.get(address);
     if (!this.genericCache.has(address) || cacheEntry != data) {
       this.updateCache<T>(address, data || null);
     }
 
-    return data;
+    return [data, dispose];
   }
 
   async updateCache<T>(id: string, data: ParsedAccountBase<T> | null) {
@@ -310,9 +313,11 @@ export class AccountFetchCache {
     id: PublicKey,
     parser?: AccountParser<T> | undefined,
     exists: Boolean = true
-  ): void {
+  ): () => void {
     const address = id.toBase58();
     const isStatic = this.statics.has(address);
+    let oldCount = (this.accountWatchersCount.get(address) || 0) + 1;
+    this.accountWatchersCount.set(address, oldCount)
 
     if (exists && !isStatic) {
       // Only websocket watch accounts that exist
@@ -334,6 +339,20 @@ export class AccountFetchCache {
         address,
         parser || this.missingAccounts.get(address)
       );
+    }
+
+    return () => {
+      const newCount = this.accountWatchersCount.get(address)! - 1;
+      this.accountWatchersCount.set(address, newCount);
+
+      if (newCount <= 0) {
+        const subscriptionId = this.accountChangeListeners.get(address)
+        if (subscriptionId) {
+          this.accountChangeListeners.delete(address)
+          this.connection.removeAccountChangeListener(subscriptionId);
+        }
+        this.missingAccounts.delete(address);
+      }
     }
   }
 

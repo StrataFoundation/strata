@@ -4,11 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htmlq).
 
-#[1.2.4]
+#[Unreleased]
 ### Changed
   * getPricing -> getPricingCurve in favor of a new getPricing that can price bonding in terms of any token in the hierarchy.
   * useBondingPricing now returns the above
   * usePrice hooks changed to usePriceInUsd and usePriceInSol. These will recursively traverse a social token hierarchy to get its usd price
+  * Almost all hooks in tokenRef pertaining to twitter have been changed to be generic name references.
 
 ### Added
   * Ability to opt out

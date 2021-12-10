@@ -1,11 +1,11 @@
-import { useAsync } from "react-async-hook";
-import { useProvider } from "../hooks/useProvider";
-
 import { Provider } from "@project-serum/anchor";
 import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
-import React, { useMemo } from "react";
 import { SplTokenMetadata } from "@strata-foundation/spl-utils";
+import React, { useMemo } from "react";
+import { useAsync } from "react-async-hook";
+import { useProvider } from "../hooks/useProvider";
+import { ProviderContextProvider } from "./providerContext";
 
 export const StrataSdksContext = React.createContext<IStrataSdksReactState>({
   loading: true,
@@ -49,7 +49,7 @@ async function getSdks(
   };
 }
 
-export const StrataSdksProvider: React.FC = ({ children }) => {
+export const StrataSdksProviderRaw: React.FC = ({ children }) => {
   const { provider } = useProvider();
   const { result, loading, error } = useAsync(getSdks, [provider]);
   const sdks = useMemo(
@@ -60,12 +60,20 @@ export const StrataSdksProvider: React.FC = ({ children }) => {
       error,
       loading,
     }),
-    [result, loading, error]
+    [result, loading, error, provider]
   );
 
   return (
     <StrataSdksContext.Provider value={sdks}>
       {children}
     </StrataSdksContext.Provider>
+  );
+};
+
+export const StrataSdksProvider: React.FC = ({ children }) => {
+  return (
+    <ProviderContextProvider>
+      <StrataSdksProviderRaw>{children}</StrataSdksProviderRaw>
+    </ProviderContextProvider>
   );
 };

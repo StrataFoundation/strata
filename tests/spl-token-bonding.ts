@@ -1,8 +1,8 @@
 import * as anchor from "@project-serum/anchor";
 import { BN } from "@project-serum/anchor";
-import { createMint } from "@project-serum/common";
+import { connection, createMint } from "@project-serum/common";
 import {NATIVE_MINT, Token, TOKEN_PROGRAM_ID} from "@solana/spl-token";
-import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
+import { Keypair, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
 import { ExponentialCurve, ExponentialCurveConfig, ITokenBonding, SplTokenBonding, TimeCurveConfig, TokenBondingV0 } from "../packages/spl-token-bonding/src";
