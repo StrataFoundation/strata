@@ -1,96 +1,117 @@
-import React, { useState, useEffect } from "react";
-import { u64, AccountLayout } from "@solana/spl-token";
-import {
-  useBuy,
-  useSell,
-  useMint,
-  useBondingPricing,
-  useOwnedAmount,
-  useSolOwnedAmount,
-  amountAsNum,
-  useEstimatedFees,
-  useTokenMetadata,
-  useErrorHandler,
-  useTokenBonding,
-} from "../../hooks";
-import { Spinner } from "../Spinner";
-import { SolanaIcon } from "../icons";
-
-import { ISwapFormValues, ISwapFormProps, SwapForm } from "./SwapForm";
-import { PublicKey } from "@solana/web3.js";
 import { Avatar } from "@chakra-ui/avatar";
-import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
+import { MenuItem, MenuList, Text, Center } from "@chakra-ui/react";
+import { AccountLayout, u64 } from "@solana/spl-token";
+import { PublicKey } from "@solana/web3.js";
+import { BondingHierarchy, ISwapArgs, SplTokenBonding } from "@strata-foundation/spl-token-bonding";
+import React, { useEffect, useState } from "react";
+import {
+  amountAsNum, useBondingPricing, useErrorHandler, useEstimatedFees, useMint, useOwnedAmount,
+  useSolOwnedAmount, useTokenBonding, useTokenMetadata
+} from "../../hooks";
+import { truthy } from "../../utils";
+import { SolanaIcon } from "../icons";
+import { Spinner } from "../Spinner";
+import { ISwapFormProps, ISwapFormValues, SwapForm } from "./SwapForm";
 
 interface ISwapProps
   extends Pick<
     ISwapFormProps,
-    "onConnectWallet" | "onFlipTokens" | "onBuyBase"
+    "onConnectWallet"
   > {
   tokenBondingKey: PublicKey;
-  action: "buy" | "sell";
-  onSuccess(args: { ticker: string; mint: PublicKey; amount: number }): void;
+  tradingMints: { base?: PublicKey; target?: PublicKey };
+  onTradingMintsChange(mints: { base: PublicKey; target: PublicKey }): void;
+  swap(args: ISwapArgs & { ticker: string }): void;
+  loading: boolean
+}
+
+function getMints(hierarchy: BondingHierarchy | undefined): PublicKey[] {
+  if (!hierarchy) {
+    return [];
+  }
+
+  return [hierarchy.tokenBonding.baseMint, ...getMints(hierarchy.parent)]
+}
+
+function MintMenuItem({ mint, onClick }: { mint: PublicKey, onClick: () => void }) {
+  const { image, metadata } = useTokenMetadata(mint);
+  const isSol = mint.equals(SplTokenBonding.WRAPPED_SOL_MINT);
+  
+  return <MenuItem onClick={onClick}>
+    <Center
+      w={8}
+      h={8}
+      color="white"
+      bg="indigo.500"
+      rounded="full"
+      mr="12px"
+    >
+      {isSol ?
+        <SolanaIcon w={8} h={8} /> : <Avatar w={"100%"} h={"100%"} size="sm" src={image} />}
+    </Center>
+    { isSol ? <Text>SOL</Text> : <Text>{ metadata?.data.symbol }</Text> }
+  </MenuItem>
 }
 
 export const PluggableSwap = ({
   onConnectWallet,
-  onFlipTokens,
-  onBuyBase,
-  onSuccess,
   tokenBondingKey,
-  action,
+  tradingMints,
+  onTradingMintsChange,
+  loading,
+  swap
 }: ISwapProps) => {
-  const [buy, { loading: buyLoading, error: buyError }] = useBuy();
-  const [sell, { loading: sellLoading, error: sellError }] = useSell();
   const [internalError, setInternalError] = useState<Error | undefined>();
   const [spendCap, setSpendCap] = useState<number>(0);
   const { amount: feeAmount, error: feeError } = useEstimatedFees(
     AccountLayout.span,
     1
   );
-  const isBuying = action === "buy";
 
   const { info: tokenBonding, loading: tokenBondingLoading } =
-    useTokenBonding(tokenBondingKey);
+  useTokenBonding(tokenBondingKey);
+  const { base: baseMint, target: targetMint } = tradingMints;
 
   const {
     image: baseImage,
     metadata: baseMeta,
     loading: baseMetaLoading,
     error: baseMetaError,
-  } = useTokenMetadata(tokenBonding?.baseMint);
+  } = useTokenMetadata(baseMint);
   const {
     image: targetImage,
     metadata: targetMeta,
     loading: targetMetaLoading,
     error: targetMetaError,
-  } = useTokenMetadata(tokenBonding?.targetMint);
+  } = useTokenMetadata(targetMint);
 
   const { loading: curveLoading, pricing } = useBondingPricing(
     tokenBonding?.publicKey
   );
-  const targetMint = useMint(tokenBonding?.targetMint);
+  const targetMintAcct = useMint(targetMint);
+  const allMints = [tokenBonding?.targetMint, ...getMints(pricing?.hierarchy)].filter(truthy);
 
   const { amount: ownedSol, loading: solLoading } = useSolOwnedAmount();
-  const ownedBaseNormal = useOwnedAmount(tokenBonding?.baseMint);
-  const isBaseSol = tokenBonding?.baseMint.equals(
+  const ownedBaseNormal = useOwnedAmount(baseMint);
+  const isBaseSol = baseMint?.equals(
+    SplTokenBonding.WRAPPED_SOL_MINT
+  );
+  const isTargetSol = targetMint?.equals(
     SplTokenBonding.WRAPPED_SOL_MINT
   );
   const ownedBase = isBaseSol ? ownedSol : ownedBaseNormal;
-  const ownedTarget = useOwnedAmount(tokenBonding?.targetMint);
   const { handleErrors } = useErrorHandler();
   handleErrors(
     baseMetaError,
     targetMetaError,
-    buyError,
     feeError,
-    sellError,
     internalError
   );
 
   useEffect(() => {
-    if (tokenBonding && targetMint && pricing) {
+    if (tokenBonding && targetMintAcct && pricing) {
       const purchaseCap = tokenBonding.purchaseCap
-        ? amountAsNum(tokenBonding.purchaseCap as u64, targetMint)
+        ? amountAsNum(tokenBonding.purchaseCap as u64, targetMintAcct)
         : Number.POSITIVE_INFINITY;
 
       const maxSpend = pricing.buyTargetAmount(purchaseCap);
@@ -107,7 +128,9 @@ export const PluggableSwap = ({
     solLoading ||
     !tokenBonding ||
     !pricing ||
-    !baseMeta
+    !baseMeta ||
+    !baseMint ||
+    !targetMint
   ) {
     return <Spinner />;
   }
@@ -116,48 +139,34 @@ export const PluggableSwap = ({
     name: baseMeta?.data.name || "",
     ticker: baseMeta?.data.symbol || "",
     icon: <Avatar w="100%" h="100%" size="sm" src={baseImage} />,
-    publicKey: tokenBonding.baseMint,
+    publicKey: baseMint,
   };
-  const base = isBaseSol
-    ? {
-        name: "SOL",
-        ticker: "SOL",
-        icon: <SolanaIcon w="full" h="full" />,
-        publicKey: SplTokenBonding.WRAPPED_SOL_MINT,
-      }
-    : baseInfo;
-
-  const target = {
+  const targetInfo = {
     name: targetMeta?.data.name || "",
     ticker: targetMeta?.data.symbol || "",
     icon: <Avatar w="100%" h="100%" size="sm" src={targetImage} />,
-    publicKey: tokenBonding.targetMint,
+    publicKey: targetMint,
   };
+  const solInfo = {
+    name: "SOL",
+    ticker: "SOL",
+    icon: <SolanaIcon w="full" h="full" />,
+    publicKey: SplTokenBonding.WRAPPED_SOL_MINT,
+  }
+  const base = isBaseSol ? solInfo : baseInfo;
+  const target = isTargetSol ? solInfo : targetInfo;
 
   const handleSubmit = async (values: ISwapFormValues) => {
-    const { publicKey } = isBuying ? target : base;
-
     if (values.topAmount) {
       try {
-        if (isBuying) {
-          await buy(
-            tokenBonding.publicKey,
-            +values.topAmount,
-            +values.slippage / 100
-          );
-        } else {
-          await sell(
-            tokenBonding.publicKey,
-            +values.topAmount,
-            +values.slippage / 100
-          );
-        }
-
-        onSuccess({
-          mint: publicKey,
-          amount: values.bottomAmount,
-          ticker: isBuying ? target.ticker : base.ticker,
-        });
+        console.log(`Swapping ${baseMint.toBase58()} to ${targetMint.toBase58()}`)
+        await swap({
+          baseAmount: +values.topAmount,
+          baseMint,
+          targetMint,
+          slippage: +values.slippage / 100,
+          ticker: target.ticker
+        })
       } catch (e: any) {
         setInternalError(e);
       }
@@ -166,19 +175,59 @@ export const PluggableSwap = ({
 
   return (
     <SwapForm
-      action={action}
-      isSubmitting={buyLoading || sellLoading}
+      isSubmitting={loading}
       onConnectWallet={onConnectWallet}
-      onFlipTokens={onFlipTokens}
-      onBuyBase={onBuyBase}
+      onFlipTokens={() => {
+        onTradingMintsChange({
+          base: targetMint,
+          target: baseMint
+        });
+      }}
+      onBuyBase={() => {
+        const tokenBonding = pricing.hierarchy.findTarget(baseMint);
+        onTradingMintsChange({
+          base: tokenBonding.baseMint,
+          target: tokenBonding.targetMint
+        });
+      }}
       onSubmit={handleSubmit}
       tokenBonding={tokenBonding}
       pricing={pricing}
-      base={isBuying ? base : target}
-      target={isBuying ? target : base}
-      ownedBase={isBuying ? ownedBase || 0 : ownedTarget || 0}
+      base={base}
+      target={target}
+      ownedBase={ownedBase || 0}
       spendCap={spendCap}
       feeAmount={feeAmount}
+      baseOptions={
+        <MenuList borderColor="gray.300" zIndex={1000}>
+          { allMints.filter(mint => baseMint && !mint.equals(baseMint)).map(mint =>
+            <MintMenuItem 
+              mint={mint} 
+              onClick={() => {
+                onTradingMintsChange({
+                  base: mint,
+                  target: targetMint && mint.equals(targetMint) ? baseMint: targetMint
+                });
+              }}
+            />
+          )}
+        </MenuList>
+      }
+      targetOptions={
+        <MenuList borderColor="gray.300" zIndex={1000}>
+          { allMints.filter(mint => targetMint && !mint.equals(targetMint)).map(mint =>
+            <MintMenuItem 
+              mint={mint} 
+              onClick={() => {
+                onTradingMintsChange({
+                  target: mint,
+                  base: baseMint && mint.equals(baseMint) ? targetMint : baseMint
+                });
+              }} 
+            />
+          )}
+        </MenuList>
+      }
     />
   );
 };

@@ -41,19 +41,27 @@ export abstract class AnchorSdk<IDL extends Idl> {
     return null;
   }
 
-
-  sendInstructions(
+  async sendInstructions(
     instructions: TransactionInstruction[],
     signers: Signer[],
     payer?: PublicKey
   ): Promise<string> {
-    return sendInstructions(
-      this.errors || new Map(),
-      this.provider,
-      instructions,
-      signers,
-      payer
-    );
+    try {
+      return await sendInstructions(
+        this.errors || new Map(),
+        this.provider,
+        instructions,
+        signers,
+        payer
+      );
+    } catch (e: any) {
+      // If all compute was consumed, this can often mean that the bonding price moved too much, causing
+      // our root estimates to be off.
+      if (e.logs && e.logs.some((l: string) => l == "Program TBondz6ZwSM5fs4v2GpnVBMuwoncPkFLFR9S422ghhN consumed 200000 of 200000 compute units")) {
+        throw new Error("The price has moved too much, please try again.")
+      }
+      throw e;
+    }
   }
 
   async execute<Output>(command: Promise<InstructionResult<Output>>, payer: PublicKey = this.wallet.publicKey): Promise<Output> {

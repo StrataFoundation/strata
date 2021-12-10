@@ -109,6 +109,32 @@ export class BondingPricing {
     });
   }
 
+  swap(baseAmount: number, baseMint: PublicKey, targetMint: PublicKey): number {
+    const lowMint = this.hierarchy.lowest(baseMint, targetMint);
+    const highMint = lowMint.equals(baseMint) ? targetMint : baseMint;
+    const isBuying = lowMint.equals(targetMint);
+
+    const path = this.hierarchy.path(lowMint, highMint);
+    if (isBuying) {
+      return path.reverse().reduce((amount, { pricingCurve, tokenBonding }) => {
+        return pricingCurve.buyWithBaseAmount(
+          amount,
+          tokenBonding.buyBaseRoyaltyPercentage,
+          tokenBonding.buyTargetRoyaltyPercentage
+        )
+      }, baseAmount)
+    } else {
+    console.log(path)
+      return path.reduce((amount, { pricingCurve, tokenBonding }) => {
+        return pricingCurve.sellTargetAmount(
+          amount,
+          tokenBonding.sellBaseRoyaltyPercentage,
+          tokenBonding.sellTargetRoyaltyPercentage
+        )
+      }, baseAmount)
+    }
+  }
+
   sellTargetAmount(
     targetAmountNum: number,
     baseMint: PublicKey = this.hierarchy.tokenBonding.baseMint

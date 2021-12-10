@@ -12,26 +12,25 @@ import {
   InputRightElement,
   Link,
   Menu,
-  MenuButton,
-  ScaleFade,
+  MenuButton, ScaleFade,
   Text,
   Tooltip,
-  VStack,
+  VStack
 } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import {
-  IPricingCurve,
   ITokenBonding,
-  SplTokenBonding,
+  SplTokenBonding
 } from "@strata-foundation/spl-token-bonding";
 import { BondingPricing } from "@strata-foundation/spl-token-bonding/dist/lib/pricing";
 import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { BsChevronDown } from "react-icons/bs";
 import { RiArrowUpDownFill, RiInformationLine } from "react-icons/ri";
 import * as yup from "yup";
-import { useFtxPayLink, useProvider } from "../../hooks";
+import { useFtxPayLink, useProvider, useTokenMetadata } from "../../hooks";
 
 export interface ISwapFormValues {
   topAmount: number;
@@ -55,14 +54,15 @@ const humanReadablePercentage = (u32: number) => {
 };
 
 export interface ISwapFormProps {
-  action: "buy" | "sell";
   isSubmitting: boolean;
   onConnectWallet: () => void;
-  onFlipTokens: (tokenBonding: PublicKey, action: "buy" | "sell") => void;
+  onFlipTokens: (tokenBonding: PublicKey) => void;
   onBuyBase: (tokenBonding: PublicKey) => void;
   onSubmit: (values: ISwapFormValues) => Promise<void>;
   tokenBonding: ITokenBonding;
   pricing: BondingPricing;
+  baseOptions: React.ReactNode; // MenuList
+  targetOptions: React.ReactNode; // MenuList
   base: {
     name: string;
     ticker: string;
@@ -84,8 +84,64 @@ function roundToDecimals(num: number, decimals: number): number {
   return Math.trunc(num * Math.pow(10, decimals)) / Math.pow(10, decimals);
 }
 
+
+function Royalties({ tokenBonding, isBuying, formRef }: { tokenBonding: ITokenBonding, isBuying: boolean, formRef: React.MutableRefObject<HTMLInputElement> }) {
+  const baseRoyalties = isBuying ? tokenBonding.buyBaseRoyaltyPercentage : tokenBonding.sellBaseRoyaltyPercentage;
+  const targetRoyalties = isBuying ? tokenBonding.buyTargetRoyaltyPercentage : tokenBonding.sellTargetRoyaltyPercentage;
+  const { metadata: baseMeta } = useTokenMetadata(tokenBonding.baseMint);
+  const { metadata: targetMeta } = useTokenMetadata(tokenBonding.targetMint);
+
+  return <>
+    { baseRoyalties > 0 && <Flex justify="space-between" alignItems="center">
+      <HStack>
+        <Text>{baseMeta?.data.symbol} Royalties</Text>
+        <Tooltip
+          placement="top"
+          label={`A percentage of every ${baseMeta?.data.symbol} token minted goes to the person who has claimed this token`}
+          portalProps={{ containerRef: formRef }}
+        >
+          <Flex>
+            <Icon
+              w={5}
+              h={5}
+              as={RiInformationLine}
+              _hover={{ color: "indigo.500", cursor: "pointer" }}
+            />
+          </Flex>
+        </Tooltip>
+      </HStack>
+      <Flex>
+        {humanReadablePercentage(baseRoyalties)}
+        %
+      </Flex>
+    </Flex> }
+    { targetRoyalties > 0 && <Flex justify="space-between" alignItems="center">
+      <HStack>
+        <Text>{targetMeta?.data.symbol} Royalties</Text>
+        <Tooltip
+          placement="top"
+          label={`A percentage of every ${baseMeta?.data.symbol} token minted goes to the person who has claimed this token`}
+          portalProps={{ containerRef: formRef }}
+        >
+          <Flex>
+            <Icon
+              w={5}
+              h={5}
+              as={RiInformationLine}
+              _hover={{ color: "indigo.500", cursor: "pointer" }}
+            />
+          </Flex>
+        </Tooltip>
+      </HStack>
+      <Flex>
+        {humanReadablePercentage(targetRoyalties)}
+        %
+      </Flex>
+    </Flex> }
+  </>
+}
+
 export const SwapForm = ({
-  action,
   isSubmitting,
   onConnectWallet,
   onFlipTokens,
@@ -98,6 +154,8 @@ export const SwapForm = ({
   ownedBase,
   spendCap,
   feeAmount,
+  baseOptions,
+  targetOptions
 }: ISwapFormProps) => {
   const formRef = useRef() as React.MutableRefObject<HTMLInputElement>;
   const { connected } = useWallet();
@@ -120,13 +178,15 @@ export const SwapForm = ({
     },
     resolver: yupResolver(validationSchema),
   });
-
   const isBaseSol = base.publicKey.equals(SplTokenBonding.WRAPPED_SOL_MINT);
-  const isBuying = action === "buy";
   const topAmount = watch("topAmount");
   const slippage = watch("slippage");
   const hasBaseAmount = ownedBase >= +(topAmount || 0);
   const moreThanSpendCap = +(topAmount || 0) > spendCap;
+
+  const lowMint = pricing.hierarchy.lowest(base.publicKey, target.publicKey);
+  const highMint = lowMint.equals(base.publicKey) ? target.publicKey : base.publicKey;
+  const isBuying = lowMint.equals(target.publicKey);
 
   const handleConnectWallet = () => onConnectWallet();
 
@@ -134,7 +194,7 @@ export const SwapForm = ({
     setValue("topAmount", ownedBase >= spendCap ? spendCap : ownedBase);
 
   const handleFlipTokens = () => {
-    onFlipTokens(tokenBonding.publicKey, isBuying ? "sell" : "buy");
+    onFlipTokens(tokenBonding.publicKey);
     reset();
   };
 
@@ -153,18 +213,10 @@ export const SwapForm = ({
 
   useEffect(() => {
     if (topAmount && topAmount >= 0 && tokenBonding && pricing) {
-      if (isBuying) {
-        const buyMax = pricing.buyWithBaseAmount(+topAmount);
+      const amount = pricing.swap(+topAmount, base.publicKey, target.publicKey);
 
-        setValue("bottomAmount", roundToDecimals(buyMax, 9));
-        setRate(`${roundToDecimals(buyMax / topAmount, 9)}`);
-      } else {
-        const sellMax = pricing.sellTargetAmount(+topAmount);
-
-        setValue("bottomAmount", roundToDecimals(sellMax, 9));
-        setRate(`${roundToDecimals(sellMax / topAmount, 9)}`);
-      }
-
+      setValue("bottomAmount", roundToDecimals(amount, 9));
+      setRate(`${roundToDecimals(amount / topAmount, 9)}`);
       setFee(`${feeAmount}`);
     } else {
       reset({ slippage: slippage });
@@ -218,8 +270,10 @@ export const SwapForm = ({
                 {connected && (
                   <Menu>
                     <MenuButton
+                      cursor="pointer"
                       isDisabled={!connected}
                       as={Button}
+                      rightIcon={<BsChevronDown />}
                       leftIcon={
                         <Center
                           w={8}
@@ -234,10 +288,11 @@ export const SwapForm = ({
                       borderRadius="20px 6px 6px 20px"
                       paddingX={1.5}
                       bgColor="gray.200"
-                      _hover={{ cursor: "default" }}
                     >
                       {base.ticker}
                     </MenuButton>
+                    { baseOptions }
+                    
                   </Menu>
                 )}
               </InputRightElement>
@@ -274,9 +329,8 @@ export const SwapForm = ({
               )}
             </Flex>
             <Divider color="gray.200" />
-            {/* flipping to wum (Selling wum to sol) is disabled in beta*/}
             <IconButton
-              isDisabled={!connected || isBaseSol}
+              isDisabled={!connected}
               aria-label="Flip Tokens"
               size="sm"
               colorScheme="gray"
@@ -310,6 +364,7 @@ export const SwapForm = ({
                 {...register("bottomAmount")}
               />
               <InputRightElement
+                zIndex={0}
                 w="auto"
                 justifyContent="end"
                 paddingX={1.5}
@@ -318,6 +373,7 @@ export const SwapForm = ({
                 {connected && (
                   <Menu>
                     <MenuButton
+                      rightIcon={<BsChevronDown />}
                       isDisabled={!connected}
                       as={Button}
                       leftIcon={
@@ -334,10 +390,10 @@ export const SwapForm = ({
                       borderRadius="20px 6px 6px 20px"
                       paddingX={1.5}
                       bgColor="gray.200"
-                      _hover={{ cursor: "default" }}
                     >
                       {target.ticker}
                     </MenuButton>
+                    { targetOptions }
                   </Menu>
                 )}
               </InputRightElement>
@@ -412,62 +468,9 @@ export const SwapForm = ({
               <Text>Estimated Fees</Text>
               <Flex>{fee}</Flex>
             </Flex>
-            <Flex justify="space-between" alignItems="center">
-              <HStack>
-                <Text>{isBuying ? base.ticker : target.ticker} Royalties</Text>
-                <Tooltip
-                  isDisabled={!connected}
-                  placement="top"
-                  label={`A purchase fee in ${base.ticker} that is split amongst stakers of ${target.ticker}`}
-                  portalProps={{ containerRef: formRef }}
-                >
-                  <Flex>
-                    <Icon
-                      w={5}
-                      h={5}
-                      as={RiInformationLine}
-                      _hover={{ color: "indigo.500", cursor: "pointer" }}
-                    />
-                  </Flex>
-                </Tooltip>
-              </HStack>
-              <Flex>
-                {humanReadablePercentage(
-                  isBuying
-                    ? tokenBonding.buyBaseRoyaltyPercentage
-                    : tokenBonding.sellBaseRoyaltyPercentage
-                )}
-                %
-              </Flex>
-            </Flex>
-            <Flex justify="space-between" alignItems="center">
-              <HStack>
-                <Text>{isBuying ? target.ticker : base.ticker} Royalties</Text>
-                <Tooltip
-                  isDisabled={!connected}
-                  placement="top"
-                  label={`A percentage of every ${target.ticker} token minted goes to the person who has claimed this token`}
-                  portalProps={{ containerRef: formRef }}
-                >
-                  <Flex>
-                    <Icon
-                      w={5}
-                      h={5}
-                      as={RiInformationLine}
-                      _hover={{ color: "indigo.500", cursor: "pointer" }}
-                    />
-                  </Flex>
-                </Tooltip>
-              </HStack>
-              <Flex>
-                {humanReadablePercentage(
-                  isBuying
-                    ? tokenBonding.buyTargetRoyaltyPercentage
-                    : tokenBonding.sellTargetRoyaltyPercentage
-                )}
-                %
-              </Flex>
-            </Flex>
+            { pricing.hierarchy.path(base.publicKey, target.publicKey).map(h => 
+              <Royalties formRef={formRef} tokenBonding={h.tokenBonding} isBuying={isBuying} />
+            )}
           </VStack>
           <Box position="relative">
             <ScaleFade
@@ -515,9 +518,7 @@ export const SwapForm = ({
               loadingText={
                 awaitingApproval
                   ? "Awaiting Approval"
-                  : action === "buy"
-                  ? "Buying"
-                  : "Selling"
+                  : "Swapping"
               }
             >
               Trade
