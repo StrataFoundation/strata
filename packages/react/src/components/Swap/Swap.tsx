@@ -11,27 +11,34 @@ export const Swap = React.memo(
     const { handleErrors } = useErrorHandler();
     handleErrors(error);
     const { info: tokenBonding } = useTokenBonding(tokenBondingKey);
-    const [tradingMints, setTradingMints] = useState<{ base?: PublicKey; target?: PublicKey}>({
+    const [tradingMints, setTradingMints] = useState<{
+      base?: PublicKey;
+      target?: PublicKey;
+    }>({
       base: tokenBonding?.baseMint,
-      target: tokenBonding?.targetMint
-    })
+      target: tokenBonding?.targetMint,
+    });
 
     return (
       <PluggableSwap
         tradingMints={tradingMints}
         onTradingMintsChange={setTradingMints}
         loading={loading}
-        swap={(args) => execute(args).then(({ targetAmount }) => {
-          toast.custom((t) => (
-            <Notification
-              show={t.visible}
-              type="success"
-              heading="Transaction Succesful"
-              message={`Succesfully purchased ${Number(targetAmount).toFixed(9)} ${args.ticker}!`}
-              onDismiss={() => toast.dismiss(t.id)}
-            />
-          ));
-        })}
+        swap={(args) =>
+          execute(args).then(({ targetAmount }) => {
+            toast.custom((t) => (
+              <Notification
+                show={t.visible}
+                type="success"
+                heading="Transaction Succesful"
+                message={`Succesfully purchased ${Number(targetAmount).toFixed(
+                  9
+                )} ${args.ticker}!`}
+                onDismiss={() => toast.dismiss(t.id)}
+              />
+            ));
+          })
+        }
         onConnectWallet={() => {}}
         tokenBondingKey={tokenBondingKey}
       />

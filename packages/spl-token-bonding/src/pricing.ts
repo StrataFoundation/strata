@@ -121,17 +121,17 @@ export class BondingPricing {
           amount,
           tokenBonding.buyBaseRoyaltyPercentage,
           tokenBonding.buyTargetRoyaltyPercentage
-        )
-      }, baseAmount)
+        );
+      }, baseAmount);
     } else {
-    console.log(path)
+      console.log(path);
       return path.reduce((amount, { pricingCurve, tokenBonding }) => {
         return pricingCurve.sellTargetAmount(
           amount,
           tokenBonding.sellBaseRoyaltyPercentage,
           tokenBonding.sellTargetRoyaltyPercentage
-        )
-      }, baseAmount)
+        );
+      }, baseAmount);
     }
   }
 

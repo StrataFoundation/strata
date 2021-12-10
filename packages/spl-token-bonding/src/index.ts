@@ -385,7 +385,11 @@ export interface ISwapArgs {
   /** The slippage PER TRANSACTION */
   slippage: number;
   /** Optionally inject extra instructions before each trade. Usefull for adding txn fees */
-  extraInstructions?: (args: { tokenBonding: ITokenBonding, isBuy: boolean, amount: BN }) => Promise<InstructionResult<null>>
+  extraInstructions?: (args: {
+    tokenBonding: ITokenBonding;
+    isBuy: boolean;
+    amount: BN;
+  }) => Promise<InstructionResult<null>>;
 }
 
 export interface ISellArgs {
@@ -1542,7 +1546,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
    * Intelligently traverses using either buy or sell, executing multiple txns to either sell baseAmount
    * or buy with baseAmount
    *
-   * @param param0 
+   * @param param0
    */
   async swap({
     payer = this.wallet.publicKey,
@@ -1551,45 +1555,51 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     targetMint,
     baseAmount,
     slippage,
-    extraInstructions = () => Promise.resolve({
-      instructions: [],
-      signers: [],
-      output: null
-    })
+    extraInstructions = () =>
+      Promise.resolve({
+        instructions: [],
+        signers: [],
+        output: null,
+      }),
   }: ISwapArgs): Promise<{ targetAmount: number }> {
-    const hierarchyFromTarget = (await this.getBondingHierarchy(
+    const hierarchyFromTarget = await this.getBondingHierarchy(
       (
         await SplTokenBonding.tokenBondingKey(targetMint)
       )[0],
       baseMint
-    ));
-    const hierarchyFromBase = (await this.getBondingHierarchy(
+    );
+    const hierarchyFromBase = await this.getBondingHierarchy(
       (
         await SplTokenBonding.tokenBondingKey(baseMint)
       )[0],
       targetMint
-    ));
-    const hierarchy = [hierarchyFromTarget, hierarchyFromBase].find(hierarchy => 
-      hierarchy?.contains(baseMint, targetMint)
-    )
+    );
+    const hierarchy = [hierarchyFromTarget, hierarchyFromBase].find(
+      (hierarchy) => hierarchy?.contains(baseMint, targetMint)
+    );
     const isBuy = hierarchy!.tokenBonding.targetMint.equals(targetMint);
-    const arrHierarchy = (hierarchy?.toArray() || []);
+    const arrHierarchy = hierarchy?.toArray() || [];
 
     const baseMintInfo = await getMintInfo(this.provider, baseMint);
 
     let currAmount = toBN(baseAmount, baseMintInfo);
-    for (const subHierarchy of (isBuy ? arrHierarchy.reverse() : arrHierarchy)) {
+    for (const subHierarchy of isBuy ? arrHierarchy.reverse() : arrHierarchy) {
       const tokenBonding = subHierarchy.tokenBonding;
-      const baseIsSol = tokenBonding.baseMint.equals(SplTokenBonding.WRAPPED_SOL_MINT);
+      const baseIsSol = tokenBonding.baseMint.equals(
+        SplTokenBonding.WRAPPED_SOL_MINT
+      );
       const ata = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         isBuy ? tokenBonding.targetMint : tokenBonding.baseMint,
         sourceAuthority
       );
-      const preBalance = baseIsSol ?
-        new BN((await this.provider.connection.getAccountInfo(sourceAuthority))?.lamports || 0) :
-          (await this.accountExists(ata)) &&
+      const preBalance = baseIsSol
+        ? new BN(
+            (await this.provider.connection.getAccountInfo(sourceAuthority))
+              ?.lamports || 0
+          )
+        : (await this.accountExists(ata)) &&
           (await (
             await getTokenAccount(this.provider, ata)
           ).amount);
@@ -1597,7 +1607,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       let instructions: TransactionInstruction[];
       let signers: Signer[];
       if (isBuy) {
-        console.log(`Actually doing ${tokenBonding.baseMint.toBase58()} to ${tokenBonding.targetMint.toBase58()}`);
+        console.log(
+          `Actually doing ${tokenBonding.baseMint.toBase58()} to ${tokenBonding.targetMint.toBase58()}`
+        );
         ({ instructions, signers } = await this.buyInstructions({
           payer,
           sourceAuthority,
@@ -1606,7 +1618,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           slippage,
         }));
       } else {
-        console.log(`SELL doing ${tokenBonding.baseMint.toBase58()} to ${tokenBonding.targetMint.toBase58()}`);
+        console.log(
+          `SELL doing ${tokenBonding.baseMint.toBase58()} to ${tokenBonding.targetMint.toBase58()}`
+        );
         ({ instructions, signers } = await this.sellInstructions({
           payer,
           sourceAuthority,
@@ -1615,16 +1629,24 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           slippage,
         }));
       }
-      
-      const { instructions: extraInstrs, signers: extaSigners } = await extraInstructions({
-        tokenBonding,
-        amount: currAmount,
-        isBuy
-      });
-      await this.sendInstructions([...instructions, ...extraInstrs], [...signers, ...extaSigners], payer);
-      const postBalance = baseIsSol ?
-        new BN((await this.provider.connection.getAccountInfo(sourceAuthority))?.lamports || 0) : 
-          await (
+
+      const { instructions: extraInstrs, signers: extaSigners } =
+        await extraInstructions({
+          tokenBonding,
+          amount: currAmount,
+          isBuy,
+        });
+      await this.sendInstructions(
+        [...instructions, ...extraInstrs],
+        [...signers, ...extaSigners],
+        payer
+      );
+      const postBalance = baseIsSol
+        ? new BN(
+            (await this.provider.connection.getAccountInfo(sourceAuthority))
+              ?.lamports || 0
+          )
+        : await (
             await getTokenAccount(this.provider, ata)
           ).amount;
       currAmount = postBalance.sub(preBalance || new BN(0));
@@ -1633,7 +1655,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     const targetMintInfo = await getMintInfo(this.provider, targetMint);
     return {
       targetAmount: toNumber(currAmount, targetMintInfo),
-    }
+    };
   }
 
   async getState(): Promise<ProgramStateV0 | null> {
@@ -1913,7 +1935,7 @@ export class BondingHierarchy {
     parent,
     child,
     tokenBonding,
-    pricingCurve
+    pricingCurve,
   }: {
     parent?: BondingHierarchy;
     child?: BondingHierarchy;
@@ -1930,48 +1952,62 @@ export class BondingHierarchy {
     let arr: BondingHierarchy[] = [];
     let current: BondingHierarchy | undefined = this;
     do {
-      arr.push(current)
+      arr.push(current);
       current = current?.parent;
-    } while (current)
+    } while (current);
 
     return arr;
   }
 
   lowest(one: PublicKey, two: PublicKey): PublicKey {
-    return this.toArray().find(hierarchy => hierarchy.tokenBonding.targetMint.equals(one) || hierarchy.tokenBonding.targetMint.equals(two))!.tokenBonding.targetMint;
+    return this.toArray().find(
+      (hierarchy) =>
+        hierarchy.tokenBonding.targetMint.equals(one) ||
+        hierarchy.tokenBonding.targetMint.equals(two)
+    )!.tokenBonding.targetMint;
   }
 
   /**
    * Get the path from one token to another.
-   * 
-   * @param one 
-   * @param two 
+   *
+   * @param one
+   * @param two
    */
   path(one: PublicKey, two: PublicKey): BondingHierarchy[] {
     const lowest = this.lowest(one, two);
     const highest = lowest.equals(one) ? two : one;
     const arr = this.toArray();
-    const lowIdx = arr.findIndex(h => h.tokenBonding.targetMint.equals(lowest));
-    const highIdx = arr.findIndex(h => h.tokenBonding.baseMint.equals(highest));
-    return arr.slice(lowIdx, highIdx + 1)
+    const lowIdx = arr.findIndex((h) =>
+      h.tokenBonding.targetMint.equals(lowest)
+    );
+    const highIdx = arr.findIndex((h) =>
+      h.tokenBonding.baseMint.equals(highest)
+    );
+    return arr.slice(lowIdx, highIdx + 1);
   }
 
   /**
    * Find the bonding curve whose target is this mint
    *
-   * @param mint 
+   * @param mint
    */
   findTarget(mint: PublicKey): ITokenBonding {
-    return this.toArray().find(h => h.tokenBonding.targetMint.equals(mint))!.tokenBonding
+    return this.toArray().find((h) => h.tokenBonding.targetMint.equals(mint))!
+      .tokenBonding;
   }
 
   /**
    * Does this hierarchy contain all of these mints?
-   * 
-   * @param mints 
+   *
+   * @param mints
    */
   contains(...mints: PublicKey[]): boolean {
-    const availableMints = new Set(this.toArray().flatMap(h => [h.tokenBonding.baseMint.toBase58(), h.tokenBonding.targetMint.toBase58()]));
-    return mints.every(mint => availableMints.has(mint.toBase58()));
+    const availableMints = new Set(
+      this.toArray().flatMap((h) => [
+        h.tokenBonding.baseMint.toBase58(),
+        h.tokenBonding.targetMint.toBase58(),
+      ])
+    );
+    return mints.every((mint) => availableMints.has(mint.toBase58()));
   }
 }
