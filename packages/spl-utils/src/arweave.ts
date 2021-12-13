@@ -40,14 +40,10 @@ export type ArweaveEnv = "mainnet-beta" | "testnet" | "devnet";
 export async function uploadToArweave(
   txid: string,
   mintKey: PublicKey,
-  filesIn: Map<string, Buffer>,
+  files: File[],
   uploadUrl: string = ARWEAVE_UPLOAD_URL,
   env: ArweaveEnv = "mainnet-beta"
 ): Promise<IArweaveResult> {
-  const files = [...filesIn.entries()].map(
-    ([name, file]) => new File([file], name)
-  );
-
   // this means we're done getting AR txn setup. Ship it off to ARWeave!
   const data = new FormData();
   data.append("transaction", txid);
@@ -60,6 +56,7 @@ export async function uploadToArweave(
     },
     {}
   );
+
   data.append("tags", JSON.stringify(tags));
   files.map((f) => data.append("file[]", f));
 
@@ -90,15 +87,11 @@ export async function uploadToArweave(
 
 export const prePayForFilesInstructions = async (
   payer: PublicKey,
-  filesIn: Map<string, Buffer>,
+  files: File[],
   uploadUrl: string = ARWEAVE_UPLOAD_URL,
   env: ArweaveEnv = "mainnet-beta"
 ): Promise<TransactionInstruction[]> => {
   const instructions: TransactionInstruction[] = [];
-
-  const files = [...filesIn.entries()].map(
-    ([name, file]) => new File([file], name)
-  );
   const sizes = files.map((f) => f.size);
   const result = await calculate(sizes);
 
@@ -127,27 +120,27 @@ export const prePayForFilesInstructions = async (
 };
 
 export function getFilesWithMetadata(
-  files: Map<string, Buffer>,
+  files: File[],
   metadata: {
     name: string;
     symbol: string;
     description: string;
     image: string | undefined;
-    animation_url: string | undefined;
-    external_url: string;
+    animationUrl: string | undefined;
+    externalUrl: string;
     properties: any;
     creators: Creator[] | null;
     sellerFeeBasisPoints: number;
   }
-): Map<string, Buffer> {
+): File[] {
   const metadataContent = {
     name: metadata.name,
     symbol: metadata.symbol,
     description: metadata.description,
     seller_fee_basis_points: metadata.sellerFeeBasisPoints,
     image: metadata.image,
-    animation_url: metadata.animation_url,
-    external_url: metadata.external_url,
+    animation_url: metadata.animationUrl,
+    external_url: metadata.externalUrl,
     properties: {
       ...metadata.properties,
       creators: metadata.creators?.map((creator) => {
@@ -159,10 +152,10 @@ export function getFilesWithMetadata(
     },
   };
 
-  files.set(
-    "metadata.json",
-    Buffer.from(JSON.stringify(metadataContent), "utf-8")
-  );
+  const realFiles: File[] = [
+    ...files,
+    new File([JSON.stringify(metadataContent)], "metadata.json"),
+  ];
 
-  return files;
+  return realFiles;
 }

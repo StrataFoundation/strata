@@ -1096,9 +1096,6 @@ export const SplTokenBondingIDLJson: Idl & { metadata?: { address: string } } =
         msg: "The provided curve is invalid",
       },
     ],
-    metadata: {
-      address: "TBondz6ZwSM5fs4v2GpnVBMuwoncPkFLFR9S422ghhN",
-    },
   };
 export type SplTokenBondingIDL = {
   version: "0.0.0";
@@ -1526,7 +1523,6 @@ export type SplTokenBondingIDL = {
     },
     { code: 314; name: "InvalidCurve"; msg: "The provided curve is invalid" }
   ];
-  metadata: { address: "TBondz6ZwSM5fs4v2GpnVBMuwoncPkFLFR9S422ghhN" };
 };
 
 export type PrimitiveCurve = Record<string, Record<string, any>>;
