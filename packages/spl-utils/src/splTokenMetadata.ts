@@ -279,8 +279,8 @@ export class SplTokenMetadata {
       symbol,
       description,
       image,
-      external_url: "",
-      animation_url: undefined,
+      externalUrl: "",
+      animationUrl: undefined,
       properties: {
         category: MetadataCategory.Image,
         files,

@@ -126,8 +126,8 @@ export function getFilesWithMetadata(
     symbol: string;
     description: string;
     image: string | undefined;
-    animation_url: string | undefined;
-    external_url: string;
+    animationUrl: string | undefined;
+    externalUrl: string;
     properties: any;
     creators: Creator[] | null;
     sellerFeeBasisPoints: number;
@@ -139,8 +139,8 @@ export function getFilesWithMetadata(
     description: metadata.description,
     seller_fee_basis_points: metadata.sellerFeeBasisPoints,
     image: metadata.image,
-    animation_url: metadata.animation_url,
-    external_url: metadata.external_url,
+    animation_url: metadata.animationUrl,
+    external_url: metadata.externalUrl,
     properties: {
       ...metadata.properties,
       creators: metadata.creators?.map((creator) => {
@@ -152,11 +152,10 @@ export function getFilesWithMetadata(
     },
   };
 
-  files.push(
-    new File([JSON.stringify(metadataContent)], "metadata.json", {
-      type: "application/json",
-    })
-  );
+  const realFiles: File[] = [
+    ...files,
+    new File([JSON.stringify(metadataContent)], "metadata.json"),
+  ];
 
-  return files;
+  return realFiles;
 }
