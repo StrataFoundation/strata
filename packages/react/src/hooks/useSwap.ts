@@ -6,14 +6,16 @@ import { ISwapArgs, ITokenBonding } from "@strata-foundation/spl-token-bonding";
 import { InstructionResult } from "@strata-foundation/spl-utils";
 import { BN } from "@project-serum/anchor";
 
+export type SwapArgs = {
+  extraInstructions?: (args: {
+    tokenBonding: ITokenBonding;
+    isBuy: boolean;
+    amount: BN;
+  }) => Promise<InstructionResult<null>>;
+};
+
 export const useSwap = (
-  swapArgs: {
-    extraInstructions?: (args: {
-      tokenBonding: ITokenBonding;
-      isBuy: boolean;
-      amount: BN;
-    }) => Promise<InstructionResult<null>>;
-  } = {}
+  swapArgs: SwapArgs = {}
 ): {
   execute: (args: ISwapArgs) => Promise<{ targetAmount: number }>;
   data: { targetAmount: number } | undefined;

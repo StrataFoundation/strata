@@ -4,6 +4,7 @@ import {
   createMintInstructions,
   getMintInfo,
   getTokenAccount,
+  sleep
 } from "@project-serum/common";
 import {
   AccountInfo,
@@ -13,38 +14,44 @@ import {
   NATIVE_MINT,
   Token,
   TOKEN_PROGRAM_ID,
+  u64
 } from "@solana/spl-token";
 import {
+  Commitment,
   Keypair,
   PublicKey,
   Signer,
   SystemProgram,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
-  TransactionInstruction,
+  TransactionInstruction
 } from "@solana/web3.js";
 import {
   AnchorSdk,
   createMetadata,
   Data,
+  getAssociatedAccountBalance,
   InstructionResult,
   percent,
-  TypedAccountParser,
-  WRAPPED_SOL_MINT,
+  TypedAccountParser
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
-import { amountAsNum, asDecimal, fromCurve, IPricingCurve } from "./curves";
+import { BondingHierarchy } from "./bondingHierarchy";
+import { fromCurve, IPricingCurve } from "./curves";
 import {
   CurveV0,
   ProgramStateV0,
   SplTokenBondingIDL,
-  TokenBondingV0,
+  TokenBondingV0
 } from "./generated/spl-token-bonding";
 import { BondingPricing } from "./pricing";
+import { asDecimal, toBN, toNumber, toU128 } from "./utils";
 
+export * from "./bondingHierarchy";
 export * from "./curves";
-export * from "./pricing";
 export * from "./generated/spl-token-bonding";
+export * from "./pricing";
+export * from "./utils";
 
 /**
  * The curve config required by the smart contract is unwieldy, implementors of `CurveConfig` wrap the interface
@@ -55,50 +62,6 @@ interface ICurveConfig {
 
 interface IPrimitiveCurve {
   toRawPrimitiveConfig(): any;
-}
-
-/**
- * Convert a number to a string avoiding scientific notation
- * @param n
- * @returns
- */
-function toFixedSpecial(num: number, n: number): string {
-  var str = num.toFixed(n);
-  if (str.indexOf("e+") === -1) return str;
-
-  // if number is in scientific notation, pick (b)ase and (p)ower
-  str = str
-    .replace(".", "")
-    .split("e+")
-    .reduce(function (b: any, p: any) {
-      // @ts-ignore
-      return b + Array(p - b.length + 2).join(0);
-    });
-
-  if (n > 0) {
-    // @ts-ignore
-    str += "." + Array(n + 1).join(0);
-  }
-
-  return str;
-}
-
-/**
- * Convert a number to a 12 decimal fixed precision u128
- *
- * @param num Number to convert to a 12 decimal fixed precision BN
- * @returns
- */
-export function toU128(num: number | BN): BN {
-  if (BN.isBN(num)) {
-    return num;
-  }
-
-  if (num == Infinity) {
-    return new BN(0);
-  }
-
-  return new BN(toFixedSpecial(num, 12).replace(".", ""));
 }
 
 /**
@@ -423,21 +386,6 @@ export interface ISellBondingWrappedSolArgs {
   all?: boolean /** Sell all and close this account? **Default:** false */;
 }
 
-function toNumber(numberOrBn: BN | number, mint: MintInfo): number {
-  if (BN.isBN(numberOrBn)) {
-    return amountAsNum(numberOrBn, mint);
-  } else {
-    return numberOrBn;
-  }
-}
-
-function toBN(numberOrBn: BN | number, mint: MintInfo): BN {
-  if (BN.isBN(numberOrBn)) {
-    return numberOrBn;
-  } else {
-    return new BN(Math.ceil(Number(numberOrBn) * Math.pow(10, mint.decimals)));
-  }
-}
 
 /**
  * Unified token bonding interface wrapping the raw TokenBondingV0
@@ -1541,6 +1489,15 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     await this.execute(this.buyInstructions(args), args.payer);
   }
 
+  async getTokenAccountBalance(account: PublicKey, commitment: Commitment = "confirmed"): Promise<BN> {
+    const acct = await this.provider.connection.getAccountInfo(account, commitment);
+    if (acct) {
+      return u64.fromBuffer(AccountLayout.decode(acct.data).amount)
+    }
+
+    return new BN(0);
+  }
+
   /**
    * Swap from any base mint to any target mint that are both on a shared link of bonding curves.
    * Intelligently traverses using either buy or sell, executing multiple txns to either sell baseAmount
@@ -1594,15 +1551,18 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         isBuy ? tokenBonding.targetMint : tokenBonding.baseMint,
         sourceAuthority
       );
-      const preBalance = baseIsSol
-        ? new BN(
-            (await this.provider.connection.getAccountInfo(sourceAuthority))
+
+      const getBalance = async (): Promise<BN> => {
+        if (!isBuy && baseIsSol) {
+          return new BN(
+            (await this.provider.connection.getAccountInfo(sourceAuthority, "single"))
               ?.lamports || 0
           )
-        : (await this.accountExists(ata)) &&
-          (await (
-            await getTokenAccount(this.provider, ata)
-          ).amount);
+        } else {
+          return this.getTokenAccountBalance(ata, "single");
+        }
+      }
+      const preBalance = await getBalance();
 
       let instructions: TransactionInstruction[];
       let signers: Signer[];
@@ -1641,15 +1601,37 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         [...signers, ...extaSigners],
         payer
       );
-      const postBalance = baseIsSol
-        ? new BN(
-            (await this.provider.connection.getAccountInfo(sourceAuthority))
-              ?.lamports || 0
-          )
-        : await (
-            await getTokenAccount(this.provider, ata)
-          ).amount;
-      currAmount = postBalance.sub(preBalance || new BN(0));
+
+      async function newBalance(tries: number = 0): Promise<BN> {
+        if (tries >= 4) {
+          return new BN(0)
+        }
+        let postBalance = await getBalance();
+        // Sometimes it can take a bit for Solana to catch up
+        // Wait and see if the balance truly hasn't changed.
+        if (postBalance.eq(preBalance)) {
+          console.log("No balance change detected while swapping, trying again", tries)
+          await sleep(5000);
+          return newBalance(tries + 1)
+        }
+
+        return postBalance
+      }
+      
+      const postBalance = await newBalance();
+
+      currAmount = postBalance!.sub(preBalance || new BN(0));
+      // Fees, or something else caused the balance to be negative. Just report the change
+      // and quit
+      if (currAmount.eq(new BN(0))) {
+        const targetMintInfo = await getMintInfo(
+          this.provider, 
+          isBuy ? tokenBonding.targetMint : tokenBonding.baseMint,
+        );
+        return {
+          targetAmount: toNumber(postBalance!, targetMintInfo) - toNumber(preBalance, targetMintInfo)
+        }
+      }
     }
 
     const targetMintInfo = await getMintInfo(this.provider, targetMint);
@@ -1922,92 +1904,5 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     });
     (ret.parent || ({} as any)).child = ret;
     return ret;
-  }
-}
-
-export class BondingHierarchy {
-  parent?: BondingHierarchy;
-  child?: BondingHierarchy;
-  tokenBonding: ITokenBonding;
-  pricingCurve: IPricingCurve;
-
-  constructor({
-    parent,
-    child,
-    tokenBonding,
-    pricingCurve,
-  }: {
-    parent?: BondingHierarchy;
-    child?: BondingHierarchy;
-    tokenBonding: ITokenBonding;
-    pricingCurve: IPricingCurve;
-  }) {
-    this.parent = parent;
-    this.child = child;
-    this.tokenBonding = tokenBonding;
-    this.pricingCurve = pricingCurve;
-  }
-
-  toArray(): BondingHierarchy[] {
-    let arr: BondingHierarchy[] = [];
-    let current: BondingHierarchy | undefined = this;
-    do {
-      arr.push(current);
-      current = current?.parent;
-    } while (current);
-
-    return arr;
-  }
-
-  lowest(one: PublicKey, two: PublicKey): PublicKey {
-    return this.toArray().find(
-      (hierarchy) =>
-        hierarchy.tokenBonding.targetMint.equals(one) ||
-        hierarchy.tokenBonding.targetMint.equals(two)
-    )!.tokenBonding.targetMint;
-  }
-
-  /**
-   * Get the path from one token to another.
-   *
-   * @param one
-   * @param two
-   */
-  path(one: PublicKey, two: PublicKey): BondingHierarchy[] {
-    const lowest = this.lowest(one, two);
-    const highest = lowest.equals(one) ? two : one;
-    const arr = this.toArray();
-    const lowIdx = arr.findIndex((h) =>
-      h.tokenBonding.targetMint.equals(lowest)
-    );
-    const highIdx = arr.findIndex((h) =>
-      h.tokenBonding.baseMint.equals(highest)
-    );
-    return arr.slice(lowIdx, highIdx + 1);
-  }
-
-  /**
-   * Find the bonding curve whose target is this mint
-   *
-   * @param mint
-   */
-  findTarget(mint: PublicKey): ITokenBonding {
-    return this.toArray().find((h) => h.tokenBonding.targetMint.equals(mint))!
-      .tokenBonding;
-  }
-
-  /**
-   * Does this hierarchy contain all of these mints?
-   *
-   * @param mints
-   */
-  contains(...mints: PublicKey[]): boolean {
-    const availableMints = new Set(
-      this.toArray().flatMap((h) => [
-        h.tokenBonding.baseMint.toBase58(),
-        h.tokenBonding.targetMint.toBase58(),
-      ])
-    );
-    return mints.every((mint) => availableMints.has(mint.toBase58()));
   }
 }

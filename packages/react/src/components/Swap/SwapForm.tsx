@@ -16,14 +16,14 @@ import {
   ScaleFade,
   Text,
   Tooltip,
-  VStack,
+  VStack
 } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import {
   ITokenBonding,
-  SplTokenBonding,
+  SplTokenBonding
 } from "@strata-foundation/spl-token-bonding";
 import { BondingPricing } from "@strata-foundation/spl-token-bonding/dist/lib/pricing";
 import React, { useEffect, useRef, useState } from "react";
@@ -31,7 +31,9 @@ import { useForm } from "react-hook-form";
 import { BsChevronDown } from "react-icons/bs";
 import { RiArrowUpDownFill, RiInformationLine } from "react-icons/ri";
 import * as yup from "yup";
-import { useFtxPayLink, useProvider, useTokenMetadata } from "../../hooks";
+import { useFtxPayLink, useProvider } from "../../hooks";
+import { Royalties } from "./Royalties";
+import { TransactionInfo, TransactionInfoArgs } from "./TransactionInfo";
 
 export interface ISwapFormValues {
   topAmount: number;
@@ -46,13 +48,6 @@ const validationSchema = yup
     slippage: yup.number().required().moreThan(0),
   })
   .required();
-
-const humanReadablePercentage = (u32: number) => {
-  if (u32 && u32 !== 0) {
-    return ((u32 / 4294967295) * 100).toFixed(2);
-  }
-  return 0;
-};
 
 export interface ISwapFormProps {
   isSubmitting: boolean;
@@ -79,81 +74,15 @@ export interface ISwapFormProps {
   ownedBase: number;
   spendCap: number;
   feeAmount?: number;
+  extraTransactionInfo?: Omit<TransactionInfoArgs, "formRef">[];
 }
 
 function roundToDecimals(num: number, decimals: number): number {
   return Math.trunc(num * Math.pow(10, decimals)) / Math.pow(10, decimals);
 }
 
-function Royalties({
-  tokenBonding,
-  isBuying,
-  formRef,
-}: {
-  tokenBonding: ITokenBonding;
-  isBuying: boolean;
-  formRef: React.MutableRefObject<HTMLInputElement>;
-}) {
-  const baseRoyalties = isBuying
-    ? tokenBonding.buyBaseRoyaltyPercentage
-    : tokenBonding.sellBaseRoyaltyPercentage;
-  const targetRoyalties = isBuying
-    ? tokenBonding.buyTargetRoyaltyPercentage
-    : tokenBonding.sellTargetRoyaltyPercentage;
-  const { metadata: baseMeta } = useTokenMetadata(tokenBonding.baseMint);
-  const { metadata: targetMeta } = useTokenMetadata(tokenBonding.targetMint);
-
-  return (
-    <>
-      {baseRoyalties > 0 && (
-        <Flex justify="space-between" alignItems="center">
-          <HStack>
-            <Text>{baseMeta?.data.symbol} Royalties</Text>
-            <Tooltip
-              placement="top"
-              label={`A percentage of every ${baseMeta?.data.symbol} token minted goes to the person who has claimed this token`}
-              portalProps={{ containerRef: formRef }}
-            >
-              <Flex>
-                <Icon
-                  w={5}
-                  h={5}
-                  as={RiInformationLine}
-                  _hover={{ color: "indigo.500", cursor: "pointer" }}
-                />
-              </Flex>
-            </Tooltip>
-          </HStack>
-          <Flex>{humanReadablePercentage(baseRoyalties)}%</Flex>
-        </Flex>
-      )}
-      {targetRoyalties > 0 && (
-        <Flex justify="space-between" alignItems="center">
-          <HStack>
-            <Text>{targetMeta?.data.symbol} Royalties</Text>
-            <Tooltip
-              placement="top"
-              label={`A percentage of every ${baseMeta?.data.symbol} token minted goes to the person who has claimed this token`}
-              portalProps={{ containerRef: formRef }}
-            >
-              <Flex>
-                <Icon
-                  w={5}
-                  h={5}
-                  as={RiInformationLine}
-                  _hover={{ color: "indigo.500", cursor: "pointer" }}
-                />
-              </Flex>
-            </Tooltip>
-          </HStack>
-          <Flex>{humanReadablePercentage(targetRoyalties)}%</Flex>
-        </Flex>
-      )}
-    </>
-  );
-}
-
 export const SwapForm = ({
+  extraTransactionInfo,
   isSubmitting,
   onConnectWallet,
   onFlipTokens,
@@ -197,9 +126,6 @@ export const SwapForm = ({
   const moreThanSpendCap = +(topAmount || 0) > spendCap;
 
   const lowMint = pricing.hierarchy.lowest(base.publicKey, target.publicKey);
-  const highMint = lowMint.equals(base.publicKey)
-    ? target.publicKey
-    : base.publicKey;
   const isBuying = lowMint.equals(target.publicKey);
 
   const handleConnectWallet = () => onConnectWallet();
@@ -229,7 +155,7 @@ export const SwapForm = ({
     if (topAmount && topAmount >= 0 && tokenBonding && pricing) {
       const amount = pricing.swap(+topAmount, base.publicKey, target.publicKey);
 
-      setValue("bottomAmount", roundToDecimals(amount, 9));
+      setValue("bottomAmount", topAmount == 0 ? 0 : roundToDecimals(amount, 9));
       setRate(`${roundToDecimals(amount / topAmount, 9)}`);
       setFee(`${feeAmount}`);
     } else {
@@ -260,7 +186,7 @@ export const SwapForm = ({
                 Buy More {base.ticker}
               </Link>
             </Flex>
-            <InputGroup size="lg">
+            <InputGroup zIndex={100} size="lg">
               <Input
                 isInvalid={!!errors.topAmount}
                 isDisabled={!connected}
@@ -358,7 +284,7 @@ export const SwapForm = ({
             <Text color="gray.600" fontSize="xs">
               You Receive
             </Text>
-            <InputGroup size="lg">
+            <InputGroup zIndex={99} size="lg">
               <Input
                 isInvalid={!!errors.bottomAmount}
                 isReadOnly
@@ -377,7 +303,6 @@ export const SwapForm = ({
                 {...register("bottomAmount")}
               />
               <InputRightElement
-                zIndex={0}
                 w="auto"
                 justifyContent="end"
                 paddingX={1.5}
@@ -468,6 +393,7 @@ export const SwapForm = ({
                   {...register("slippage")}
                 />
                 <InputRightElement
+                  zIndex={0}
                   w={4}
                   justifyContent="end"
                   paddingRight={1.5}
@@ -478,7 +404,7 @@ export const SwapForm = ({
               </InputGroup>
             </Flex>
             <Flex justify="space-between" alignItems="center">
-              <Text>Estimated Fees</Text>
+              <Text>Solana Network Fees</Text>
               <Flex>{fee}</Flex>
             </Flex>
             {pricing.hierarchy
@@ -490,6 +416,9 @@ export const SwapForm = ({
                   isBuying={isBuying}
                 />
               ))}
+            {(extraTransactionInfo || []).map(i => 
+              <TransactionInfo formRef={formRef} {...i} key={i.name} />
+            )}
           </VStack>
           <Box position="relative">
             <ScaleFade

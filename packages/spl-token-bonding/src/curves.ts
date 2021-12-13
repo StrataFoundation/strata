@@ -1,6 +1,7 @@
-import { AccountInfo, MintInfo, u64 } from "@solana/spl-token";
+import { AccountInfo, MintInfo } from "@solana/spl-token";
 // @ts-ignore
 import BN from "bn.js";
+import { amountAsNum, asDecimal, supplyAsNum } from "./utils";
 
 export type ExponentialCurveV0 = {
   c: BN;
@@ -8,20 +9,6 @@ export type ExponentialCurveV0 = {
   pow: number;
   frac: number;
 };
-
-export function supplyAsNum(mint: MintInfo): number {
-  return amountAsNum(mint.supply, mint);
-}
-
-export function asDecimal(percent: number): number {
-  return percent / 4294967295; // uint32 max value
-}
-
-export function amountAsNum(amount: u64, mint: MintInfo): number {
-  const decimals = new u64(Math.pow(10, mint.decimals).toString());
-  const decimal = amount.mod(decimals).toNumber() / decimals.toNumber();
-  return amount.div(decimals).toNumber() + decimal;
-}
 
 export function fromCurve(
   curve: any,

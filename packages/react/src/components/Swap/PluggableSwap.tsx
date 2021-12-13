@@ -1,13 +1,14 @@
 import { Avatar } from "@chakra-ui/avatar";
-import { MenuItem, MenuList, Text, Center } from "@chakra-ui/react";
-import { AccountLayout, u64 } from "@solana/spl-token";
+import { Center, MenuItem, MenuList, Text } from "@chakra-ui/react";
+import { Provider } from "@project-serum/common";
+import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
 import {
   BondingHierarchy,
-  ISwapArgs,
-  SplTokenBonding,
+  ISwapArgs, SplTokenBonding
 } from "@strata-foundation/spl-token-bonding";
 import React, { useEffect, useState } from "react";
+import { useAsync } from "react-async-hook";
 import {
   amountAsNum,
   useBondingPricing,
@@ -15,16 +16,17 @@ import {
   useEstimatedFees,
   useMint,
   useOwnedAmount,
+  useProvider,
   useSolOwnedAmount,
   useTokenBonding,
-  useTokenMetadata,
+  useTokenMetadata
 } from "../../hooks";
 import { truthy } from "../../utils";
 import { SolanaIcon } from "../icons";
 import { Spinner } from "../Spinner";
 import { ISwapFormProps, ISwapFormValues, SwapForm } from "./SwapForm";
 
-interface ISwapProps extends Pick<ISwapFormProps, "onConnectWallet"> {
+export interface ISwapProps extends Pick<ISwapFormProps, "onConnectWallet" | "extraTransactionInfo"> {
   tokenBondingKey: PublicKey;
   tradingMints: { base?: PublicKey; target?: PublicKey };
   onTradingMintsChange(mints: { base: PublicKey; target: PublicKey }): void;
@@ -51,14 +53,15 @@ function MintMenuItem({
   const isSol = mint.equals(SplTokenBonding.WRAPPED_SOL_MINT);
 
   return (
-    <MenuItem onClick={onClick}>
-      <Center
+    <MenuItem
+      onClick={onClick}
+      icon={
+      <Center 
         w={8}
         h={8}
         color="white"
         bg="indigo.500"
         rounded="full"
-        mr="12px"
       >
         {isSol ? (
           <SolanaIcon w={8} h={8} />
@@ -66,9 +69,44 @@ function MintMenuItem({
           <Avatar w={"100%"} h={"100%"} size="sm" src={image} />
         )}
       </Center>
+      }
+    >
       {isSol ? <Text>SOL</Text> : <Text>{metadata?.data.symbol}</Text>}
     </MenuItem>
   );
+}
+
+async function getMissingSpace(provider: Provider | undefined, hierarchy: BondingHierarchy | undefined, baseMint: PublicKey | undefined, targetMint: PublicKey | undefined): Promise<number> {
+  if (!provider || !baseMint || !targetMint || !hierarchy) {
+    return 0;
+  }
+
+  const path = hierarchy.path(baseMint, targetMint);
+  const accounts = (await Promise.all(path.map(async hierarchy => {
+    return [
+      await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        hierarchy.tokenBonding.baseMint,
+        provider.wallet.publicKey
+      ),
+      await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        hierarchy.tokenBonding.targetMint,
+        provider.wallet.publicKey
+      )
+    ]
+  }))).flat();
+  const distinctAccounts = [...new Set(accounts.map(a => a.toBase58()))];
+  const totalSpace = (await Promise.all(distinctAccounts.map(async acct => {
+    if (await provider.connection.getAccountInfo(new PublicKey(acct))) {
+      return 0;
+    }
+
+    return AccountLayout.span as number
+  }))).reduce((acc, total) => acc + total, 0);
+  return totalSpace;
 }
 
 export const PluggableSwap = ({
@@ -78,13 +116,11 @@ export const PluggableSwap = ({
   onTradingMintsChange,
   loading,
   swap,
+  extraTransactionInfo
 }: ISwapProps) => {
   const [internalError, setInternalError] = useState<Error | undefined>();
   const [spendCap, setSpendCap] = useState<number>(0);
-  const { amount: feeAmount, error: feeError } = useEstimatedFees(
-    AccountLayout.span,
-    1
-  );
+  const { provider } = useProvider();
 
   const { info: tokenBonding, loading: tokenBondingLoading } =
     useTokenBonding(tokenBondingKey);
@@ -106,6 +142,11 @@ export const PluggableSwap = ({
   const { loading: curveLoading, pricing } = useBondingPricing(
     tokenBonding?.publicKey
   );
+  const { result: missingSpace, error: missingSpaceError } = useAsync(getMissingSpace, [provider, pricing?.hierarchy, baseMint, targetMint]);
+  const { amount: feeAmount, error: feeError } = useEstimatedFees(
+    missingSpace || 0,
+    1
+  );
   const targetMintAcct = useMint(targetMint);
   const allMints = [
     tokenBonding?.targetMint,
@@ -118,7 +159,7 @@ export const PluggableSwap = ({
   const isTargetSol = targetMint?.equals(SplTokenBonding.WRAPPED_SOL_MINT);
   const ownedBase = isBaseSol ? ownedSol : ownedBaseNormal;
   const { handleErrors } = useErrorHandler();
-  handleErrors(baseMetaError, targetMetaError, feeError, internalError);
+  handleErrors(missingSpaceError, baseMetaError, targetMetaError, feeError, internalError);
 
   useEffect(() => {
     if (tokenBonding && targetMintAcct && pricing) {
@@ -189,6 +230,7 @@ export const PluggableSwap = ({
 
   return (
     <SwapForm
+      extraTransactionInfo={extraTransactionInfo}
       isSubmitting={loading}
       onConnectWallet={onConnectWallet}
       onFlipTokens={() => {
@@ -213,7 +255,7 @@ export const PluggableSwap = ({
       spendCap={spendCap}
       feeAmount={feeAmount}
       baseOptions={
-        <MenuList borderColor="gray.300" zIndex={1000}>
+        <MenuList borderColor="gray.300">
           {allMints
             .filter((mint) => baseMint && !mint.equals(baseMint))
             .map((mint) => (
@@ -233,7 +275,7 @@ export const PluggableSwap = ({
         </MenuList>
       }
       targetOptions={
-        <MenuList borderColor="gray.300" zIndex={1000}>
+        <MenuList borderColor="gray.300">
           {allMints
             .filter((mint) => targetMint && !mint.equals(targetMint))
             .map((mint) => (

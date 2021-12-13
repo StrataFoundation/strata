@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
   * Ability to opt out
+  * Ability to swap to any token on the bonding hierarchy.
 
 [1.2.0-3]
 

@@ -1,19 +1,21 @@
+import { NameRegistryState } from "@bonfida/spl-name-service";
 import { useConnection } from "@solana/wallet-adapter-react";
-import { Connection, PublicKey } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import {
   ITokenBonding,
-  TokenBondingV0,
+  TokenBondingV0
 } from "@strata-foundation/spl-token-bonding";
 import {
   ITokenRef,
-  SplTokenCollective,
+  SplTokenCollective
 } from "@strata-foundation/spl-token-collective";
-import { useTokenBonding, useTokenRef } from "../hooks";
+import { AccountFetchCache } from "@strata-foundation/spl-utils";
 import { useMemo } from "react";
 import { useAsync } from "react-async-hook";
+import { useTokenBonding, useTokenRef } from "../hooks";
+import { useAccountFetchCache } from "../hooks/useAccountFetchCache";
 import {
-  getTwitterRegistry,
-  getTwitterRegistryKey,
+  getTwitterRegistryKey
 } from "../utils/nameServiceTwitter";
 import { UseAccountState } from "./useAccount";
 import { IUseTokenMetadataResult, useTokenMetadata } from "./useTokenMetadata";
@@ -23,16 +25,25 @@ export const WUMBO_TWITTER_TLD = new PublicKey(
 );
 
 export async function getClaimedTokenRefKeyForName(
-  connection: Connection,
+  cache: AccountFetchCache,
   handle: string,
   mint: PublicKey | undefined | null = undefined,
   tld: PublicKey = WUMBO_TWITTER_TLD
 ): Promise<PublicKey> {
-  const owner = (await getTwitterRegistry(connection, handle, tld)).owner;
+  const key = await getTwitterRegistryKey(
+    handle,
+    tld
+  );
+  const [registry, dispose] = await cache.searchAndWatch(key, (pubkey, account) => ({
+    pubkey,
+    account,
+    info: deserializeUnchecked(NameRegistryState.schema, account.data)
+  }), true);
+  setTimeout(dispose, 30 * 1000) // Keep this state around for 30s
 
   return (
     await SplTokenCollective.ownerTokenRefKey({
-      owner,
+      owner: registry?.info.owner,
       mint,
     })
   )[0];
@@ -78,19 +89,19 @@ export const useClaimedTokenRefKeyForName = (
   mint: PublicKey | undefined | null,
   tld: PublicKey | undefined
 ): { result: PublicKey | undefined; loading: boolean } => {
-  const { connection } = useConnection();
+  const cache = useAccountFetchCache();
   const { result: key, loading } = useAsync(
     async (
-      connection: Connection | undefined,
+      cache: AccountFetchCache,
       name: string | undefined | null,
       mint: PublicKey | undefined | null,
       tld: PublicKey | undefined
     ) => {
-      if (connection && name) {
-        return getClaimedTokenRefKeyForName(connection, name, mint, tld);
+      if (name) {
+        return getClaimedTokenRefKeyForName(cache, name, mint, tld);
       }
     },
-    [connection, name, mint, tld]
+    [cache, name, mint, tld]
   );
   return { result: key, loading };
 };
@@ -232,3 +243,7 @@ export function useSocialTokenMetadata(
     tokenBonding,
   };
 }
+function deserializeUnchecked(schema: any, data: Buffer): any {
+  throw new Error("Function not implemented.");
+}
+

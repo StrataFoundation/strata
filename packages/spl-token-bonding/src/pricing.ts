@@ -1,5 +1,7 @@
+import { NATIVE_MINT } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
-import { BondingHierarchy } from ".";
+import { SplTokenBonding } from ".";
+import { BondingHierarchy } from "./bondingHierarchy";
 
 /**
  * Traverse a bonding hierarchy, executing func and accumulating
@@ -21,6 +23,10 @@ function reduce<A>({
 }): A {
   if (!hierarchy) {
     return initial;
+  }
+
+  if (destination == NATIVE_MINT) {
+    destination = SplTokenBonding.WRAPPED_SOL_MINT;
   }
 
   let current: BondingHierarchy | undefined = hierarchy;
@@ -58,6 +64,10 @@ function reduceFromParent<A>({
 }): A {
   if (!hierarchy) {
     return initial;
+  }
+
+  if (destination == NATIVE_MINT) {
+    destination = SplTokenBonding.WRAPPED_SOL_MINT;
   }
 
   let current: BondingHierarchy | undefined = hierarchy;
@@ -115,6 +125,11 @@ export class BondingPricing {
     const isBuying = lowMint.equals(targetMint);
 
     const path = this.hierarchy.path(lowMint, highMint);
+
+    if (path.length == 0) {
+      throw new Error(`No path from ${baseMint} to ${targetMint}`);
+    }
+
     if (isBuying) {
       return path.reverse().reduce((amount, { pricingCurve, tokenBonding }) => {
         return pricingCurve.buyWithBaseAmount(
@@ -124,7 +139,6 @@ export class BondingPricing {
         );
       }, baseAmount);
     } else {
-      console.log(path);
       return path.reduce((amount, { pricingCurve, tokenBonding }) => {
         return pricingCurve.sellTargetAmount(
           amount,

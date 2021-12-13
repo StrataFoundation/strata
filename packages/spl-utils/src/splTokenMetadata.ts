@@ -347,8 +347,6 @@ export class SplTokenMetadata {
       throw new Error("Metadata file not found");
     }
 
-    debugger;
-
     // Use the uploaded arweave files in token metadata
     return `https://arweave.net/${metadataFile.transactionId}`;
   }
