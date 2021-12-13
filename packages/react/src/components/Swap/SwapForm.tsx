@@ -57,8 +57,8 @@ export interface ISwapFormProps {
   isSubmitting: boolean;
   onConnectWallet: () => void;
   onTradingMintsChange: (args: {
-    base?: PublicKey;
-    target?: PublicKey;
+    base: PublicKey;
+    target: PublicKey;
   }) => void;
   onBuyBase: (tokenBonding: PublicKey) => void;
   onSubmit: (values: ISwapFormValues) => Promise<void>;

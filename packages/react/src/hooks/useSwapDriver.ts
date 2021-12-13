@@ -204,25 +204,14 @@ export const useSwapDriver = (
       !tokenBonding ||
       !baseMeta,
     onConnectWallet,
-    onTradingMintsChange: React.useMemo(
-      () => () => {
-        onTradingMintsChange({
-          base: targetMint!,
-          target: baseMint!,
-        });
-      },
-      [targetMint, baseMint]
-    ),
-    onBuyBase: React.useMemo(
-      () => () => {
-        const tokenBonding = pricing!.hierarchy.findTarget(baseMint!);
-        onTradingMintsChange({
-          base: tokenBonding.baseMint,
-          target: tokenBonding.targetMint,
-        });
-      },
-      [tokenBonding, pricing]
-    ),
+    onTradingMintsChange,
+    onBuyBase: () => {
+      const tokenBonding = pricing!.hierarchy.findTarget(baseMint!);
+      onTradingMintsChange({
+        base: tokenBonding.baseMint,
+        target: tokenBonding.targetMint,
+      });
+    },
     onSubmit: handleSubmit,
     tokenBonding,
     pricing,
