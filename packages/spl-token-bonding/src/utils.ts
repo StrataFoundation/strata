@@ -6,7 +6,7 @@ import BN from "bn.js";
  * @param n
  * @returns
  */
- function toFixedSpecial(num: number, n: number): string {
+function toFixedSpecial(num: number, n: number): string {
   var str = num.toFixed(n);
   if (str.indexOf("e+") === -1) return str;
 
@@ -33,7 +33,7 @@ import BN from "bn.js";
  * @param num Number to convert to a 12 decimal fixed precision BN
  * @returns
  */
- export function toU128(num: number | BN): BN {
+export function toU128(num: number | BN): BN {
   if (BN.isBN(num)) {
     return num;
   }

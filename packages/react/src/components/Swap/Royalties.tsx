@@ -1,11 +1,7 @@
-import {
-  ITokenBonding
-} from "@strata-foundation/spl-token-bonding";
+import { ITokenBonding } from "@strata-foundation/spl-token-bonding";
 import React from "react";
 import { useTokenMetadata } from "../../hooks";
 import { TransactionInfo } from "./TransactionInfo";
-
-
 
 const humanReadablePercentage = (u32: number) => {
   if (u32 && u32 !== 0) {

@@ -16,14 +16,14 @@ import {
   ScaleFade,
   Text,
   Tooltip,
-  VStack
+  VStack,
 } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import {
   ITokenBonding,
-  SplTokenBonding
+  SplTokenBonding,
 } from "@strata-foundation/spl-token-bonding";
 import { BondingPricing } from "@strata-foundation/spl-token-bonding/dist/lib/pricing";
 import React, { useEffect, useRef, useState } from "react";
@@ -416,9 +416,9 @@ export const SwapForm = ({
                   isBuying={isBuying}
                 />
               ))}
-            {(extraTransactionInfo || []).map(i => 
+            {(extraTransactionInfo || []).map((i) => (
               <TransactionInfo formRef={formRef} {...i} key={i.name} />
-            )}
+            ))}
           </VStack>
           <Box position="relative">
             <ScaleFade

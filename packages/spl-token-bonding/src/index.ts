@@ -4,7 +4,7 @@ import {
   createMintInstructions,
   getMintInfo,
   getTokenAccount,
-  sleep
+  sleep,
 } from "@project-serum/common";
 import {
   AccountInfo,
@@ -14,7 +14,7 @@ import {
   NATIVE_MINT,
   Token,
   TOKEN_PROGRAM_ID,
-  u64
+  u64,
 } from "@solana/spl-token";
 import {
   Commitment,
@@ -24,7 +24,7 @@ import {
   SystemProgram,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
-  TransactionInstruction
+  TransactionInstruction,
 } from "@solana/web3.js";
 import {
   AnchorSdk,
@@ -33,7 +33,7 @@ import {
   getAssociatedAccountBalance,
   InstructionResult,
   percent,
-  TypedAccountParser
+  TypedAccountParser,
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
 import { BondingHierarchy } from "./bondingHierarchy";
@@ -42,7 +42,7 @@ import {
   CurveV0,
   ProgramStateV0,
   SplTokenBondingIDL,
-  TokenBondingV0
+  TokenBondingV0,
 } from "./generated/spl-token-bonding";
 import { BondingPricing } from "./pricing";
 import { asDecimal, toBN, toNumber, toU128 } from "./utils";
@@ -385,7 +385,6 @@ export interface ISellBondingWrappedSolArgs {
   payer?: PublicKey;
   all?: boolean /** Sell all and close this account? **Default:** false */;
 }
-
 
 /**
  * Unified token bonding interface wrapping the raw TokenBondingV0
@@ -1489,10 +1488,16 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     await this.execute(this.buyInstructions(args), args.payer);
   }
 
-  async getTokenAccountBalance(account: PublicKey, commitment: Commitment = "confirmed"): Promise<BN> {
-    const acct = await this.provider.connection.getAccountInfo(account, commitment);
+  async getTokenAccountBalance(
+    account: PublicKey,
+    commitment: Commitment = "confirmed"
+  ): Promise<BN> {
+    const acct = await this.provider.connection.getAccountInfo(
+      account,
+      commitment
+    );
     if (acct) {
-      return u64.fromBuffer(AccountLayout.decode(acct.data).amount)
+      return u64.fromBuffer(AccountLayout.decode(acct.data).amount);
     }
 
     return new BN(0);
@@ -1555,13 +1560,17 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       const getBalance = async (): Promise<BN> => {
         if (!isBuy && baseIsSol) {
           return new BN(
-            (await this.provider.connection.getAccountInfo(sourceAuthority, "single"))
-              ?.lamports || 0
-          )
+            (
+              await this.provider.connection.getAccountInfo(
+                sourceAuthority,
+                "single"
+              )
+            )?.lamports || 0
+          );
         } else {
           return this.getTokenAccountBalance(ata, "single");
         }
-      }
+      };
       const preBalance = await getBalance();
 
       let instructions: TransactionInstruction[];
@@ -1604,20 +1613,23 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
 
       async function newBalance(tries: number = 0): Promise<BN> {
         if (tries >= 4) {
-          return new BN(0)
+          return new BN(0);
         }
         let postBalance = await getBalance();
         // Sometimes it can take a bit for Solana to catch up
         // Wait and see if the balance truly hasn't changed.
         if (postBalance.eq(preBalance)) {
-          console.log("No balance change detected while swapping, trying again", tries)
+          console.log(
+            "No balance change detected while swapping, trying again",
+            tries
+          );
           await sleep(5000);
-          return newBalance(tries + 1)
+          return newBalance(tries + 1);
         }
 
-        return postBalance
+        return postBalance;
       }
-      
+
       const postBalance = await newBalance();
 
       currAmount = postBalance!.sub(preBalance || new BN(0));
@@ -1625,12 +1637,14 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       // and quit
       if (currAmount.eq(new BN(0))) {
         const targetMintInfo = await getMintInfo(
-          this.provider, 
-          isBuy ? tokenBonding.targetMint : tokenBonding.baseMint,
+          this.provider,
+          isBuy ? tokenBonding.targetMint : tokenBonding.baseMint
         );
         return {
-          targetAmount: toNumber(postBalance!, targetMintInfo) - toNumber(preBalance, targetMintInfo)
-        }
+          targetAmount:
+            toNumber(postBalance!, targetMintInfo) -
+            toNumber(preBalance, targetMintInfo),
+        };
       }
     }
 

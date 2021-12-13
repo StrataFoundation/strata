@@ -3,20 +3,18 @@ import { useConnection } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import {
   ITokenBonding,
-  TokenBondingV0
+  TokenBondingV0,
 } from "@strata-foundation/spl-token-bonding";
 import {
   ITokenRef,
-  SplTokenCollective
+  SplTokenCollective,
 } from "@strata-foundation/spl-token-collective";
 import { AccountFetchCache } from "@strata-foundation/spl-utils";
 import { useMemo } from "react";
 import { useAsync } from "react-async-hook";
 import { useTokenBonding, useTokenRef } from "../hooks";
 import { useAccountFetchCache } from "../hooks/useAccountFetchCache";
-import {
-  getTwitterRegistryKey
-} from "../utils/nameServiceTwitter";
+import { getTwitterRegistryKey } from "../utils/nameServiceTwitter";
 import { UseAccountState } from "./useAccount";
 import { IUseTokenMetadataResult, useTokenMetadata } from "./useTokenMetadata";
 
@@ -30,16 +28,17 @@ export async function getClaimedTokenRefKeyForName(
   mint: PublicKey | undefined | null = undefined,
   tld: PublicKey = WUMBO_TWITTER_TLD
 ): Promise<PublicKey> {
-  const key = await getTwitterRegistryKey(
-    handle,
-    tld
+  const key = await getTwitterRegistryKey(handle, tld);
+  const [registry, dispose] = await cache.searchAndWatch(
+    key,
+    (pubkey, account) => ({
+      pubkey,
+      account,
+      info: deserializeUnchecked(NameRegistryState.schema, account.data),
+    }),
+    true
   );
-  const [registry, dispose] = await cache.searchAndWatch(key, (pubkey, account) => ({
-    pubkey,
-    account,
-    info: deserializeUnchecked(NameRegistryState.schema, account.data)
-  }), true);
-  setTimeout(dispose, 30 * 1000) // Keep this state around for 30s
+  setTimeout(dispose, 30 * 1000); // Keep this state around for 30s
 
   return (
     await SplTokenCollective.ownerTokenRefKey({
@@ -246,4 +245,3 @@ export function useSocialTokenMetadata(
 function deserializeUnchecked(schema: any, data: Buffer): any {
   throw new Error("Function not implemented.");
 }
-
