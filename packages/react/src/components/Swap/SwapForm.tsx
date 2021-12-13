@@ -56,10 +56,7 @@ const validationSchema = yup
 export interface ISwapFormProps {
   isSubmitting: boolean;
   onConnectWallet: () => void;
-  onTradingMintsChange: (args: {
-    base: PublicKey;
-    target: PublicKey;
-  }) => void;
+  onTradingMintsChange: (args: { base: PublicKey; target: PublicKey }) => void;
   onBuyBase: (tokenBonding: PublicKey) => void;
   onSubmit: (values: ISwapFormValues) => Promise<void>;
   tokenBonding: ITokenBonding | undefined;
