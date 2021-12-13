@@ -1,5 +1,3 @@
-import { Avatar } from "@chakra-ui/avatar";
-import { Center, MenuItem, MenuList, Text } from "@chakra-ui/react";
 import { Provider } from "@project-serum/common";
 import {
   AccountLayout,
@@ -12,10 +10,11 @@ import { PublicKey } from "@solana/web3.js";
 import {
   BondingHierarchy,
   ISwapArgs,
-  SplTokenBonding,
 } from "@strata-foundation/spl-token-bonding";
 import React, { useEffect, useState } from "react";
 import { useAsync } from "react-async-hook";
+import { ISwapFormProps, ISwapFormValues } from "../components/Swap/SwapForm";
+import { truthy } from "../utils";
 import {
   amountAsNum,
   useBondingPricing,
@@ -27,19 +26,14 @@ import {
   useSolOwnedAmount,
   useTokenBonding,
   useTokenMetadata,
-} from "../../hooks";
-import { truthy } from "../../utils";
-import { SolanaIcon } from "../icons";
-import { Spinner } from "../Spinner";
-import { ISwapFormProps, ISwapFormValues, SwapForm } from "./SwapForm";
+} from "./";
 
-export interface ISwapProps
+export interface ISwapDriverArgs
   extends Pick<ISwapFormProps, "onConnectWallet" | "extraTransactionInfo"> {
   tokenBondingKey: PublicKey;
   tradingMints: { base?: PublicKey; target?: PublicKey };
   onTradingMintsChange(mints: { base: PublicKey; target: PublicKey }): void;
   swap(args: ISwapArgs & { ticker: string }): void;
-  loading: boolean;
 }
 
 function getMints(hierarchy: BondingHierarchy | undefined): PublicKey[] {
@@ -50,41 +44,13 @@ function getMints(hierarchy: BondingHierarchy | undefined): PublicKey[] {
   return [hierarchy.tokenBonding.baseMint, ...getMints(hierarchy.parent)];
 }
 
-function MintMenuItem({
-  mint,
-  onClick,
-}: {
-  mint: PublicKey;
-  onClick: () => void;
-}) {
-  const { image, metadata } = useTokenMetadata(mint);
-  const isSol = mint.equals(SplTokenBonding.WRAPPED_SOL_MINT);
-
-  return (
-    <MenuItem
-      onClick={onClick}
-      icon={
-        <Center w={8} h={8} color="white" bg="indigo.500" rounded="full">
-          {isSol ? (
-            <SolanaIcon w={8} h={8} />
-          ) : (
-            <Avatar w={"100%"} h={"100%"} size="sm" src={image} />
-          )}
-        </Center>
-      }
-    >
-      {isSol ? <Text>SOL</Text> : <Text>{metadata?.data.symbol}</Text>}
-    </MenuItem>
-  );
-}
-
 async function getMissingSpace(
   provider: Provider | undefined,
   hierarchy: BondingHierarchy | undefined,
   baseMint: PublicKey | undefined,
   targetMint: PublicKey | undefined
 ): Promise<number> {
-  if (!provider || !baseMint || !targetMint || !hierarchy) {
+  if (!provider || !provider.wallet || !baseMint || !targetMint || !hierarchy) {
     return 0;
   }
 
@@ -124,15 +90,17 @@ async function getMissingSpace(
   return totalSpace;
 }
 
-export const PluggableSwap = ({
-  onConnectWallet,
-  tokenBondingKey,
-  tradingMints,
-  onTradingMintsChange,
-  loading,
-  swap,
-  extraTransactionInfo,
-}: ISwapProps) => {
+export const useSwapDriver = (
+  args: ISwapDriverArgs
+): Omit<ISwapFormProps, "isSubmitting"> & { loading: boolean } => {
+  const {
+    onConnectWallet,
+    tokenBondingKey,
+    tradingMints,
+    onTradingMintsChange,
+    swap,
+    extraTransactionInfo,
+  } = args;
   const [internalError, setInternalError] = useState<Error | undefined>();
   const [spendCap, setSpendCap] = useState<number>(0);
   const { provider } = useProvider();
@@ -166,16 +134,15 @@ export const PluggableSwap = ({
     1
   );
   const targetMintAcct = useMint(targetMint);
-  const allMints = [
-    tokenBonding?.targetMint,
-    ...getMints(pricing?.hierarchy),
-  ].filter(truthy);
+  const allMints = React.useMemo(
+    () =>
+      [tokenBonding?.targetMint, ...getMints(pricing?.hierarchy)].filter(
+        truthy
+      ),
+    [tokenBonding, pricing]
+  );
 
-  const { amount: ownedSol, loading: solLoading } = useSolOwnedAmount();
-  const ownedBaseNormal = useOwnedAmount(baseMint);
-  const isBaseSol = baseMint?.equals(SplTokenBonding.WRAPPED_SOL_MINT);
-  const isTargetSol = targetMint?.equals(SplTokenBonding.WRAPPED_SOL_MINT);
-  const ownedBase = isBaseSol ? ownedSol : ownedBaseNormal;
+  const ownedBase = useOwnedAmount(baseMint);
   const { handleErrors } = useErrorHandler();
   handleErrors(
     missingSpaceError,
@@ -187,6 +154,7 @@ export const PluggableSwap = ({
 
   useEffect(() => {
     if (tokenBonding && targetMintAcct && pricing) {
+      console.log("IM EFFECTING 1");
       const purchaseCap = tokenBonding.purchaseCap
         ? amountAsNum(tokenBonding.purchaseCap as u64, targetMintAcct)
         : Number.POSITIVE_INFINITY;
@@ -197,54 +165,28 @@ export const PluggableSwap = ({
     }
   }, [tokenBonding, targetMint, pricing, setSpendCap]);
 
-  if (
-    targetMetaLoading ||
-    baseMetaLoading ||
-    tokenBondingLoading ||
-    curveLoading ||
-    solLoading ||
-    !tokenBonding ||
-    !pricing ||
-    !baseMeta ||
-    !baseMint ||
-    !targetMint
-  ) {
-    return <Spinner />;
-  }
-
-  const baseInfo = {
+  const base = baseMint && {
     name: baseMeta?.data.name || "",
     ticker: baseMeta?.data.symbol || "",
-    icon: <Avatar w="100%" h="100%" size="sm" src={baseImage} />,
+    image: baseImage,
     publicKey: baseMint,
   };
-  const targetInfo = {
+  const target = targetMint && {
     name: targetMeta?.data.name || "",
     ticker: targetMeta?.data.symbol || "",
-    icon: <Avatar w="100%" h="100%" size="sm" src={targetImage} />,
+    image: targetImage,
     publicKey: targetMint,
   };
-  const solInfo = {
-    name: "SOL",
-    ticker: "SOL",
-    icon: <SolanaIcon w="full" h="full" />,
-    publicKey: SplTokenBonding.WRAPPED_SOL_MINT,
-  };
-  const base = isBaseSol ? solInfo : baseInfo;
-  const target = isTargetSol ? solInfo : targetInfo;
 
   const handleSubmit = async (values: ISwapFormValues) => {
     if (values.topAmount) {
       try {
-        console.log(
-          `Swapping ${baseMint.toBase58()} to ${targetMint.toBase58()}`
-        );
         await swap({
           baseAmount: +values.topAmount,
-          baseMint,
-          targetMint,
+          baseMint: baseMint!,
+          targetMint: targetMint!,
           slippage: +values.slippage / 100,
-          ticker: target.ticker,
+          ticker: target!.ticker,
         });
       } catch (e: any) {
         setInternalError(e);
@@ -252,70 +194,50 @@ export const PluggableSwap = ({
     }
   };
 
-  return (
-    <SwapForm
-      extraTransactionInfo={extraTransactionInfo}
-      isSubmitting={loading}
-      onConnectWallet={onConnectWallet}
-      onFlipTokens={() => {
+  return {
+    extraTransactionInfo,
+    loading:
+      targetMetaLoading ||
+      baseMetaLoading ||
+      tokenBondingLoading ||
+      curveLoading ||
+      !tokenBonding ||
+      !baseMeta,
+    onConnectWallet,
+    onTradingMintsChange: React.useMemo(
+      () => () => {
         onTradingMintsChange({
-          base: targetMint,
-          target: baseMint,
+          base: targetMint!,
+          target: baseMint!,
         });
-      }}
-      onBuyBase={() => {
-        const tokenBonding = pricing.hierarchy.findTarget(baseMint);
+      },
+      [targetMint, baseMint]
+    ),
+    onBuyBase: React.useMemo(
+      () => () => {
+        const tokenBonding = pricing!.hierarchy.findTarget(baseMint!);
         onTradingMintsChange({
           base: tokenBonding.baseMint,
           target: tokenBonding.targetMint,
         });
-      }}
-      onSubmit={handleSubmit}
-      tokenBonding={tokenBonding}
-      pricing={pricing}
-      base={base}
-      target={target}
-      ownedBase={ownedBase || 0}
-      spendCap={spendCap}
-      feeAmount={feeAmount}
-      baseOptions={
-        <MenuList borderColor="gray.300">
-          {allMints
-            .filter((mint) => baseMint && !mint.equals(baseMint))
-            .map((mint) => (
-              <MintMenuItem
-                mint={mint}
-                onClick={() => {
-                  onTradingMintsChange({
-                    base: mint,
-                    target:
-                      targetMint && mint.equals(targetMint)
-                        ? baseMint
-                        : targetMint,
-                  });
-                }}
-              />
-            ))}
-        </MenuList>
-      }
-      targetOptions={
-        <MenuList borderColor="gray.300">
-          {allMints
-            .filter((mint) => targetMint && !mint.equals(targetMint))
-            .map((mint) => (
-              <MintMenuItem
-                mint={mint}
-                onClick={() => {
-                  onTradingMintsChange({
-                    target: mint,
-                    base:
-                      baseMint && mint.equals(baseMint) ? targetMint : baseMint,
-                  });
-                }}
-              />
-            ))}
-        </MenuList>
-      }
-    />
-  );
+      },
+      [tokenBonding, pricing]
+    ),
+    onSubmit: handleSubmit,
+    tokenBonding,
+    pricing,
+    base,
+    target,
+    ownedBase,
+    spendCap,
+    feeAmount,
+    baseOptions: React.useMemo(
+      () => allMints.filter((mint) => baseMint && !mint.equals(baseMint)),
+      [allMints]
+    ),
+    targetOptions: React.useMemo(
+      () => allMints.filter((mint) => targetMint && !mint.equals(targetMint)),
+      [allMints]
+    ),
+  };
 };

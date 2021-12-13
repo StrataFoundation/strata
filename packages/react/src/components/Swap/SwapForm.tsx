@@ -1,4 +1,5 @@
 import {
+  Avatar,
   Box,
   Button,
   Center,
@@ -13,11 +14,14 @@ import {
   Link,
   Menu,
   MenuButton,
+  MenuItem,
+  MenuList,
   ScaleFade,
   Text,
   Tooltip,
   VStack,
 } from "@chakra-ui/react";
+import { Spinner } from "../Spinner";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
@@ -31,7 +35,7 @@ import { useForm } from "react-hook-form";
 import { BsChevronDown } from "react-icons/bs";
 import { RiArrowUpDownFill, RiInformationLine } from "react-icons/ri";
 import * as yup from "yup";
-import { useFtxPayLink, useProvider } from "../../hooks";
+import { useFtxPayLink, useProvider, useTokenMetadata } from "../../hooks";
 import { Royalties } from "./Royalties";
 import { TransactionInfo, TransactionInfoArgs } from "./TransactionInfo";
 
@@ -52,26 +56,33 @@ const validationSchema = yup
 export interface ISwapFormProps {
   isSubmitting: boolean;
   onConnectWallet: () => void;
-  onFlipTokens: (tokenBonding: PublicKey) => void;
+  onTradingMintsChange: (args: {
+    base?: PublicKey;
+    target?: PublicKey;
+  }) => void;
   onBuyBase: (tokenBonding: PublicKey) => void;
   onSubmit: (values: ISwapFormValues) => Promise<void>;
-  tokenBonding: ITokenBonding;
-  pricing: BondingPricing;
-  baseOptions: React.ReactNode; // MenuList
-  targetOptions: React.ReactNode; // MenuList
-  base: {
-    name: string;
-    ticker: string;
-    icon: React.ReactNode;
-    publicKey: PublicKey;
-  };
-  target: {
-    name: string;
-    ticker: string;
-    icon: React.ReactNode;
-    publicKey: PublicKey;
-  };
-  ownedBase: number;
+  tokenBonding: ITokenBonding | undefined;
+  pricing: BondingPricing | undefined;
+  baseOptions: PublicKey[];
+  targetOptions: PublicKey[];
+  base:
+    | {
+        name: string;
+        ticker: string;
+        image: string | undefined;
+        publicKey: PublicKey;
+      }
+    | undefined;
+  target:
+    | {
+        name: string;
+        ticker: string;
+        image: string | undefined;
+        publicKey: PublicKey;
+      }
+    | undefined;
+  ownedBase: number | undefined;
   spendCap: number;
   feeAmount?: number;
   extraTransactionInfo?: Omit<TransactionInfoArgs, "formRef">[];
@@ -81,11 +92,34 @@ function roundToDecimals(num: number, decimals: number): number {
   return Math.trunc(num * Math.pow(10, decimals)) / Math.pow(10, decimals);
 }
 
+function MintMenuItem({
+  mint,
+  onClick,
+}: {
+  mint: PublicKey;
+  onClick: () => void;
+}) {
+  const { image, metadata } = useTokenMetadata(mint);
+
+  return (
+    <MenuItem
+      onClick={onClick}
+      icon={
+        <Center w={8} h={8} color="white" bg="indigo.500" rounded="full">
+          <Avatar w={"100%"} h={"100%"} size="sm" src={image} />
+        </Center>
+      }
+    >
+      <Text>{metadata?.data.symbol}</Text>
+    </MenuItem>
+  );
+}
+
 export const SwapForm = ({
   extraTransactionInfo,
   isSubmitting,
   onConnectWallet,
-  onFlipTokens,
+  onTradingMintsChange,
   onBuyBase,
   onSubmit,
   tokenBonding,
@@ -119,22 +153,31 @@ export const SwapForm = ({
     },
     resolver: yupResolver(validationSchema),
   });
-  const isBaseSol = base.publicKey.equals(SplTokenBonding.WRAPPED_SOL_MINT);
+  const isBaseSol = base?.publicKey.equals(SplTokenBonding.WRAPPED_SOL_MINT);
   const topAmount = watch("topAmount");
   const slippage = watch("slippage");
-  const hasBaseAmount = ownedBase >= +(topAmount || 0);
+  const hasBaseAmount = (ownedBase || 0) >= +(topAmount || 0);
   const moreThanSpendCap = +(topAmount || 0) > spendCap;
 
-  const lowMint = pricing.hierarchy.lowest(base.publicKey, target.publicKey);
-  const isBuying = lowMint.equals(target.publicKey);
+  const lowMint =
+    base &&
+    target &&
+    pricing?.hierarchy.lowest(base.publicKey, target.publicKey);
+  const isBuying = lowMint && lowMint.equals(target?.publicKey);
 
   const handleConnectWallet = () => onConnectWallet();
 
   const handleUseMax = () =>
-    setValue("topAmount", ownedBase >= spendCap ? spendCap : ownedBase);
+    setValue(
+      "topAmount",
+      (ownedBase || 0) >= spendCap ? spendCap : ownedBase || 0
+    );
 
   const handleFlipTokens = () => {
-    onFlipTokens(tokenBonding.publicKey);
+    onTradingMintsChange({
+      base: target?.publicKey,
+      target: base?.publicKey,
+    });
     reset();
   };
 
@@ -142,7 +185,7 @@ export const SwapForm = ({
     if (isBaseSol) {
       window.open(ftxPayLink);
     } else {
-      onBuyBase(tokenBonding.publicKey);
+      onBuyBase(tokenBonding!.publicKey);
     }
   };
 
@@ -152,7 +195,14 @@ export const SwapForm = ({
   };
 
   useEffect(() => {
-    if (topAmount && topAmount >= 0 && tokenBonding && pricing) {
+    if (
+      topAmount &&
+      topAmount >= 0 &&
+      tokenBonding &&
+      pricing &&
+      base &&
+      target
+    ) {
       const amount = pricing.swap(+topAmount, base.publicKey, target.publicKey);
 
       setValue("bottomAmount", topAmount == 0 ? 0 : roundToDecimals(amount, 9));
@@ -173,6 +223,10 @@ export const SwapForm = ({
     slippage,
   ]);
 
+  if (!base || !target || (connected && (!ownedBase || !pricing))) {
+    return <Spinner />;
+  }
+
   return (
     <Box ref={formRef} w="full">
       <form onSubmit={handleSubmit(handleSwap)}>
@@ -182,9 +236,11 @@ export const SwapForm = ({
               <Text color="gray.600" fontSize="xs">
                 You Pay
               </Text>
-              <Link color="indigo.500" fontSize="xs" onClick={handleBuyBase}>
-                Buy More {base.ticker}
-              </Link>
+              {base && (
+                <Link color="indigo.500" fontSize="xs" onClick={handleBuyBase}>
+                  Buy More {base.ticker}
+                </Link>
+              )}
             </Flex>
             <InputGroup zIndex={100} size="lg">
               <Input
@@ -222,7 +278,7 @@ export const SwapForm = ({
                           bg="indigo.500"
                           rounded="full"
                         >
-                          {base.icon}
+                          <Avatar src={base.image} w="100%" h="100%" />
                         </Center>
                       }
                       borderRadius="20px 6px 6px 20px"
@@ -231,7 +287,24 @@ export const SwapForm = ({
                     >
                       {base.ticker}
                     </MenuButton>
-                    {baseOptions}
+                    <MenuList borderColor="gray.300">
+                      {baseOptions.map((mint) => (
+                        <MintMenuItem
+                          mint={mint}
+                          key={mint.toBase58()}
+                          onClick={() =>
+                            onTradingMintsChange({
+                              base: mint,
+                              target:
+                                target.publicKey &&
+                                mint.equals(target.publicKey)
+                                  ? base.publicKey
+                                  : target.publicKey,
+                            })
+                          }
+                        />
+                      ))}
+                    </MenuList>
                   </Menu>
                 )}
               </InputRightElement>
@@ -262,7 +335,8 @@ export const SwapForm = ({
                   variant="ghost"
                   onClick={handleUseMax}
                 >
-                  Use Max ({ownedBase > spendCap ? spendCap : ownedBase}{" "}
+                  Use Max (
+                  {(ownedBase || 0) > spendCap ? spendCap : ownedBase || 0}{" "}
                   {base.ticker})
                 </Button>
               )}
@@ -322,7 +396,7 @@ export const SwapForm = ({
                           bg="indigo.500"
                           rounded="full"
                         >
-                          {target.icon}
+                          <Avatar src={target.image} w="100%" h="100%" />
                         </Center>
                       }
                       borderRadius="20px 6px 6px 20px"
@@ -331,7 +405,23 @@ export const SwapForm = ({
                     >
                       {target.ticker}
                     </MenuButton>
-                    {targetOptions}
+                    <MenuList borderColor="gray.300">
+                      {targetOptions.map((mint) => (
+                        <MintMenuItem
+                          mint={mint}
+                          key={mint.toBase58()}
+                          onClick={() =>
+                            onTradingMintsChange({
+                              target: mint,
+                              base:
+                                base.publicKey && mint.equals(base.publicKey)
+                                  ? target.publicKey
+                                  : base.publicKey,
+                            })
+                          }
+                        />
+                      ))}
+                    </MenuList>
                   </Menu>
                 )}
               </InputRightElement>
@@ -407,15 +497,17 @@ export const SwapForm = ({
               <Text>Solana Network Fees</Text>
               <Flex>{fee}</Flex>
             </Flex>
-            {pricing.hierarchy
-              .path(base.publicKey, target.publicKey)
-              .map((h) => (
-                <Royalties
-                  formRef={formRef}
-                  tokenBonding={h.tokenBonding}
-                  isBuying={isBuying}
-                />
-              ))}
+            {base &&
+              target &&
+              pricing?.hierarchy
+                .path(base.publicKey, target.publicKey)
+                .map((h) => (
+                  <Royalties
+                    formRef={formRef}
+                    tokenBonding={h.tokenBonding}
+                    isBuying={!!isBuying}
+                  />
+                ))}
             {(extraTransactionInfo || []).map((i) => (
               <TransactionInfo formRef={formRef} {...i} key={i.name} />
             ))}

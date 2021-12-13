@@ -1,4 +1,4 @@
-import { MintInfo, u64 } from "@solana/spl-token";
+import { MintInfo, NATIVE_MINT, u64 } from "@solana/spl-token";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import {
@@ -24,10 +24,16 @@ export function amountAsNum(amount: u64, mint: MintInfo): number {
   return amount.div(decimals).toNumber() + decimal;
 }
 
-export function useSolOwnedAmount(): { amount: number; loading: boolean } {
-  const { publicKey } = useWallet();
+export function useSolOwnedAmount(wallet?: PublicKey): {
+  amount: number;
+  loading: boolean;
+} {
+  const { adapter } = useWallet();
+  if (!wallet) {
+    wallet = adapter?.publicKey || undefined;
+  }
   const { info: lamports, loading } = useAccount<number>(
-    publicKey || undefined,
+    wallet,
     (_, account) => account.lamports
   );
   const result = React.useMemo(
@@ -45,6 +51,7 @@ export function useUserOwnedAmount(
   wallet: PublicKey | undefined | null,
   token: PublicKey | undefined | null
 ): number | undefined {
+  const { amount: solOwnedAmount } = useSolOwnedAmount(wallet || undefined);
   const { associatedAccount } = useAssociatedAccount(wallet, token);
   const mint = useMint(token);
   const [amount, setAmount] = useState<number>();
@@ -52,8 +59,10 @@ export function useUserOwnedAmount(
   useEffect(() => {
     if (mint && associatedAccount) {
       setAmount(amountAsNum(associatedAccount.amount, mint));
+    } else if (token?.equals(NATIVE_MINT)) {
+      setAmount(solOwnedAmount);
     }
-  }, [associatedAccount, mint]);
+  }, [associatedAccount, mint, solOwnedAmount]);
 
   return amount && Number(amount);
 }
