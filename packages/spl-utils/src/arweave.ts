@@ -40,14 +40,10 @@ export type ArweaveEnv = "mainnet-beta" | "testnet" | "devnet";
 export async function uploadToArweave(
   txid: string,
   mintKey: PublicKey,
-  filesIn: Map<string, Buffer>,
+  files: File[],
   uploadUrl: string = ARWEAVE_UPLOAD_URL,
   env: ArweaveEnv = "mainnet-beta"
 ): Promise<IArweaveResult> {
-  const files = [...filesIn.entries()].map(
-    ([name, file]) => new File([file], name)
-  );
-
   // this means we're done getting AR txn setup. Ship it off to ARWeave!
   const data = new FormData();
   data.append("transaction", txid);
@@ -60,6 +56,7 @@ export async function uploadToArweave(
     },
     {}
   );
+
   data.append("tags", JSON.stringify(tags));
   files.map((f) => data.append("file[]", f));
 
@@ -90,15 +87,11 @@ export async function uploadToArweave(
 
 export const prePayForFilesInstructions = async (
   payer: PublicKey,
-  filesIn: Map<string, Buffer>,
+  files: File[],
   uploadUrl: string = ARWEAVE_UPLOAD_URL,
   env: ArweaveEnv = "mainnet-beta"
 ): Promise<TransactionInstruction[]> => {
   const instructions: TransactionInstruction[] = [];
-
-  const files = [...filesIn.entries()].map(
-    ([name, file]) => new File([file], name)
-  );
   const sizes = files.map((f) => f.size);
   const result = await calculate(sizes);
 
@@ -127,7 +120,7 @@ export const prePayForFilesInstructions = async (
 };
 
 export function getFilesWithMetadata(
-  files: Map<string, Buffer>,
+  files: File[],
   metadata: {
     name: string;
     symbol: string;
@@ -139,7 +132,7 @@ export function getFilesWithMetadata(
     creators: Creator[] | null;
     sellerFeeBasisPoints: number;
   }
-): Map<string, Buffer> {
+): File[] {
   const metadataContent = {
     name: metadata.name,
     symbol: metadata.symbol,
@@ -159,9 +152,10 @@ export function getFilesWithMetadata(
     },
   };
 
-  files.set(
-    "metadata.json",
-    Buffer.from(JSON.stringify(metadataContent), "utf-8")
+  files.push(
+    new File([JSON.stringify(metadataContent)], "metadata.json", {
+      type: "application/json",
+    })
   );
 
   return files;

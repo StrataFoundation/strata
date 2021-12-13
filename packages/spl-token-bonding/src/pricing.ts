@@ -1,5 +1,6 @@
+import { NATIVE_MINT } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
-import { BondingHierarchy } from ".";
+import { BondingHierarchy, SplTokenBonding } from ".";
 
 /**
  * Traverse a bonding hierarchy, executing func and accumulating
@@ -21,6 +22,10 @@ function reduce<A>({
 }): A {
   if (!hierarchy) {
     return initial;
+  }
+
+  if (destination?.equals(NATIVE_MINT)) {
+    destination = SplTokenBonding.WRAPPED_SOL_MINT;
   }
 
   let current: BondingHierarchy | undefined = hierarchy;
@@ -58,6 +63,10 @@ function reduceFromParent<A>({
 }): A {
   if (!hierarchy) {
     return initial;
+  }
+
+  if (destination?.equals(NATIVE_MINT)) {
+    destination = SplTokenBonding.WRAPPED_SOL_MINT;
   }
 
   let current: BondingHierarchy | undefined = hierarchy;
