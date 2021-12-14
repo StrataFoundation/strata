@@ -1539,7 +1539,10 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     const hierarchy = [hierarchyFromTarget, hierarchyFromBase].find(
       (hierarchy) => hierarchy?.contains(baseMint, targetMint)
     );
-    const isBuy = hierarchy!.tokenBonding.targetMint.equals(targetMint);
+    if (!hierarchy) {
+      throw new Error(`No bonding curve hierarchies found for base or target that contain both ${baseMint.toBase58()} and ${targetMint.toBase58()}`)
+    }
+    const isBuy = hierarchy.tokenBonding.targetMint.equals(targetMint);
     const arrHierarchy = hierarchy?.toArray() || [];
 
     const baseMintInfo = await getMintInfo(this.provider, baseMint);
