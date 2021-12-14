@@ -271,8 +271,8 @@ export class SplTokenMetadata {
     creators,
     files = [],
     payer = this.provider.wallet.publicKey,
-    env,
-    uploadUrl,
+    env = "mainnet-beta",
+    uploadUrl = ARWEAVE_UPLOAD_URL,
   }: ICreateArweaveUrlArgs): Promise<InstructionResult<{ files: File[] }>> {
     const metadata = {
       name,
@@ -327,8 +327,8 @@ export class SplTokenMetadata {
     txid,
     mint,
     files = [],
-    uploadUrl = ARWEAVE_UPLOAD_URL,
     env = "mainnet-beta",
+    uploadUrl = ARWEAVE_UPLOAD_URL,
   }: {
     env: ArweaveEnv;
     uploadUrl?: string;
