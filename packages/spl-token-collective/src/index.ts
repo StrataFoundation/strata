@@ -1371,11 +1371,17 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
         );
         const ownerTokenRef =
           account && this.tokenRefDecoder(mintTokenRefKey, account);
-        const tokenBondingKey = (await SplTokenBonding.tokenBondingKey(info.mint))[0];
-        const tokenBondingAccount = await this.provider.connection.getAccountInfo(
-          tokenBondingKey
-        );
-        const tokenBonding = tokenBondingAccount && this.splTokenBondingProgram.tokenBondingDecoder(tokenBondingKey, tokenBondingAccount)
+        const tokenBondingKey = (
+          await SplTokenBonding.tokenBondingKey(info.mint)
+        )[0];
+        const tokenBondingAccount =
+          await this.provider.connection.getAccountInfo(tokenBondingKey);
+        const tokenBonding =
+          tokenBondingAccount &&
+          this.splTokenBondingProgram.tokenBondingDecoder(
+            tokenBondingKey,
+            tokenBondingAccount
+          );
         return {
           ...(await this.splTokenMetadata.getTokenMetadata(
             new PublicKey(metadataKey)
