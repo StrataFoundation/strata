@@ -17,29 +17,30 @@ import { useAccountFetchCache } from "../hooks/useAccountFetchCache";
 import { getTwitterRegistryKey } from "../utils/nameServiceTwitter";
 import { UseAccountState } from "./useAccount";
 import { IUseTokenMetadataResult, useTokenMetadata } from "./useTokenMetadata";
-
-export const WUMBO_TWITTER_TLD = new PublicKey(
-  "Fhqd3ostRQQE65hzoA7xFMgT9kge2qPnsTNAKuL2yrnx"
-);
+import { deserializeUnchecked } from "borsh";
 
 export async function getClaimedTokenRefKeyForName(
   cache: AccountFetchCache,
   handle: string,
   mint: PublicKey | undefined | null = undefined,
-  tld: PublicKey = WUMBO_TWITTER_TLD
+  tld: PublicKey
 ): Promise<PublicKey> {
   const key = await getTwitterRegistryKey(handle, tld);
   const [registry, dispose] = await cache.searchAndWatch(
     key,
-    (pubkey, account) => ({
-      pubkey,
-      account,
-      info: deserializeUnchecked(NameRegistryState.schema, account.data),
-    }),
+    (pubkey, account) => {
+      const info = deserializeUnchecked(NameRegistryState.schema, NameRegistryState, account.data);
+      return {
+        pubkey,
+        account,
+        info,
+      }
+    },
     true
   );
   setTimeout(dispose, 30 * 1000); // Keep this state around for 30s
 
+  console.log("reg", registry);
   return (
     await SplTokenCollective.ownerTokenRefKey({
       owner: registry?.info.owner,
@@ -96,7 +97,7 @@ export const useClaimedTokenRefKeyForName = (
       mint: PublicKey | undefined | null,
       tld: PublicKey | undefined
     ) => {
-      if (name) {
+      if (name && tld) {
         return getClaimedTokenRefKeyForName(cache, name, mint, tld);
       }
     },
@@ -241,7 +242,4 @@ export function useSocialTokenMetadata(
     tokenRef,
     tokenBonding,
   };
-}
-function deserializeUnchecked(schema: any, data: Buffer): any {
-  throw new Error("Function not implemented.");
 }
