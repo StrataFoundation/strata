@@ -1,5 +1,6 @@
+import { NATIVE_MINT } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
-import { BondingHierarchy } from ".";
+import { BondingHierarchy, SplTokenBonding } from ".";
 
 /**
  * Traverse a bonding hierarchy, executing func and accumulating
@@ -21,6 +22,10 @@ function reduce<A>({
 }): A {
   if (!hierarchy) {
     return initial;
+  }
+
+  if (destination?.equals(NATIVE_MINT)) {
+    destination = SplTokenBonding.WRAPPED_SOL_MINT;
   }
 
   let current: BondingHierarchy | undefined = hierarchy;
@@ -58,6 +63,10 @@ function reduceFromParent<A>({
 }): A {
   if (!hierarchy) {
     return initial;
+  }
+
+  if (destination?.equals(NATIVE_MINT)) {
+    destination = SplTokenBonding.WRAPPED_SOL_MINT;
   }
 
   let current: BondingHierarchy | undefined = hierarchy;
@@ -107,6 +116,36 @@ export class BondingPricing {
       initial: this.hierarchy.pricingCurve.locked(),
       destination: baseMint,
     });
+  }
+
+  swap(baseAmount: number, baseMint: PublicKey, targetMint: PublicKey): number {
+    const lowMint = this.hierarchy.lowest(baseMint, targetMint);
+    const highMint = lowMint.equals(baseMint) ? targetMint : baseMint;
+    const isBuying = lowMint.equals(targetMint);
+
+    const path = this.hierarchy.path(lowMint, highMint);
+
+    if (path.length == 0) {
+      throw new Error(`No path from ${baseMint} to ${targetMint}`);
+    }
+
+    if (isBuying) {
+      return path.reverse().reduce((amount, { pricingCurve, tokenBonding }) => {
+        return pricingCurve.buyWithBaseAmount(
+          amount,
+          tokenBonding.buyBaseRoyaltyPercentage,
+          tokenBonding.buyTargetRoyaltyPercentage
+        );
+      }, baseAmount);
+    } else {
+      return path.reduce((amount, { pricingCurve, tokenBonding }) => {
+        return pricingCurve.sellTargetAmount(
+          amount,
+          tokenBonding.sellBaseRoyaltyPercentage,
+          tokenBonding.sellTargetRoyaltyPercentage
+        );
+      }, baseAmount);
+    }
   }
 
   sellTargetAmount(

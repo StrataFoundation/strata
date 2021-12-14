@@ -40,9 +40,9 @@ export interface ICreateArweaveUrlArgs {
   description?: string;
   image?: string;
   creators?: Creator[];
-  files?: Map<string, Buffer>;
-  env?: ArweaveEnv;
-  uploadUrl?: string;
+  files?: File[];
+  env: ArweaveEnv;
+  uploadUrl: string;
 }
 
 export interface ICreateMetadataInstructionsArgs {
@@ -269,20 +269,18 @@ export class SplTokenMetadata {
     description = "",
     image,
     creators,
-    files = new Map(),
+    files = [],
     payer = this.provider.wallet.publicKey,
     env = "mainnet-beta",
     uploadUrl = ARWEAVE_UPLOAD_URL,
-  }: ICreateArweaveUrlArgs): Promise<
-    InstructionResult<{ files: Map<string, Buffer> }>
-  > {
+  }: ICreateArweaveUrlArgs): Promise<InstructionResult<{ files: File[] }>> {
     const metadata = {
       name,
       symbol,
       description,
       image,
-      external_url: "",
-      animation_url: undefined,
+      externalUrl: "",
+      animationUrl: undefined,
       properties: {
         category: MetadataCategory.Image,
         files,
@@ -290,7 +288,9 @@ export class SplTokenMetadata {
       creators: creators ? creators : null,
       sellerFeeBasisPoints: 0,
     };
+
     const realFiles = await getFilesWithMetadata(files, metadata);
+
     const prepayTxnInstructions = await prePayForFilesInstructions(
       payer,
       realFiles,
@@ -309,7 +309,7 @@ export class SplTokenMetadata {
 
   async presignCreateArweaveUrl(
     args: ICreateArweaveUrlArgs
-  ): Promise<{ files: Map<string, Buffer>; txid: string }> {
+  ): Promise<{ files: File[]; txid: string }> {
     const {
       output: { files },
       instructions,
@@ -326,28 +326,25 @@ export class SplTokenMetadata {
   async getArweaveUrl({
     txid,
     mint,
-    files = new Map(),
-    env = "mainnet-beta",
+    files = [],
     uploadUrl = ARWEAVE_UPLOAD_URL,
+    env = "mainnet-beta",
   }: {
     env: ArweaveEnv;
     uploadUrl?: string;
     txid: string;
     mint: PublicKey;
-    files?: Map<string, Buffer>;
+    files?: File[];
   }): Promise<string> {
     const result = await uploadToArweave(txid, mint, files, uploadUrl, env);
 
     const metadataFile = result.messages?.find(
       (m) => m.filename === "manifest.json"
     );
-    console.log(JSON.stringify(metadataFile, null, 2));
 
     if (!metadataFile) {
       throw new Error("Metadata file not found");
     }
-
-    debugger;
 
     // Use the uploaded arweave files in token metadata
     return `https://arweave.net/${metadataFile.transactionId}`;

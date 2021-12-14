@@ -106,7 +106,7 @@ We can also do the last two steps all at once:
 
 ```jsx async name=buy_all deps=fetch
 
-var { targetAmount } = await tokenBondingSdk.buyWithBase({
+var { targetAmount } = await tokenBondingSdk.swap({
   baseMint: NATIVE_MINT,
   targetMint: tokenBondingAcct.targetMint,
   baseAmount: 0.01,

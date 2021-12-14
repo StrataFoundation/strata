@@ -26,32 +26,6 @@ export const AccountProvider: FC<IAccountProviderProps> = ({
     });
   }, [connection]);
 
-  useEffect(() => {
-    const oldGetAccountInfo = connection.getAccountInfo.bind(connection);
-    // Make sure everything in our app is using the cache
-    connection.getAccountInfo = async (
-      publicKey: PublicKey,
-      commitment?: Commitment
-    ): Promise<AccountInfo<Buffer> | null> => {
-      if (commitment && commitment != DEFAULT_COMMITMENT) {
-        return oldGetAccountInfo(publicKey, commitment);
-      }
-
-      return cache.searchAndWatch(publicKey).then(([i, dispose]) => {
-        setTimeout(dispose, 30 * 1000); // Cache the account for 30 seconds
-        if (i) {
-          return i.account;
-        }
-
-        return null;
-      });
-    };
-
-    return () => {
-      cache.close();
-    };
-  }, [connection]);
-
   return (
     <AccountContext.Provider value={cache}>{children}</AccountContext.Provider>
   );

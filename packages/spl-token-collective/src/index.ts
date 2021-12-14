@@ -19,6 +19,7 @@ import {
 } from "@solana/web3.js";
 import {
   ICreateTokenBondingArgs,
+  ITokenBonding,
   IUpdateTokenBondingArgs,
   SplTokenBonding,
 } from "@strata-foundation/spl-token-bonding";
@@ -49,6 +50,7 @@ export * from "./generated/spl-token-collective";
 export interface ITokenWithMetaAndAccount extends ITokenWithMeta {
   publicKey?: PublicKey;
   tokenRef?: ITokenRef;
+  tokenBonding?: ITokenBonding;
   account?: TokenAccountInfo;
 }
 
@@ -1369,12 +1371,23 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
         );
         const ownerTokenRef =
           account && this.tokenRefDecoder(mintTokenRefKey, account);
-
+        const tokenBondingKey = (
+          await SplTokenBonding.tokenBondingKey(info.mint)
+        )[0];
+        const tokenBondingAccount =
+          await this.provider.connection.getAccountInfo(tokenBondingKey);
+        const tokenBonding =
+          tokenBondingAccount &&
+          this.splTokenBondingProgram.tokenBondingDecoder(
+            tokenBondingKey,
+            tokenBondingAccount
+          );
         return {
           ...(await this.splTokenMetadata.getTokenMetadata(
             new PublicKey(metadataKey)
           )),
-          ownerTokenRef: ownerTokenRef || undefined,
+          tokenRef: ownerTokenRef || undefined,
+          tokenBonding: tokenBonding || undefined,
           publicKey: pubkey,
           account: info,
         };
@@ -1406,6 +1419,13 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
         "Cannot update token bonding on a token ref that has no token bonding"
       );
     }
+
+    if (!tokenRefAcct.authority) {
+      throw new Error(
+        "No authority on this token. Cannot update token bonding."
+      );
+    }
+
     const collectiveAcct =
       tokenRefAcct.collective &&
       (await this.getCollective(tokenRefAcct.collective))!;
@@ -1444,6 +1464,26 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
             : buyFrozen,
       };
 
+    console.log({
+      tokenRefAuthority: tokenRefAcct.authority as PublicKey,
+      collective: tokenRefAcct.collective || PublicKey.default,
+      authority:
+        (collectiveAcct &&
+          (collectiveAcct.authority as PublicKey | undefined)) ||
+        PublicKey.default,
+      mintTokenRef: mintTokenRef,
+      tokenBonding: tokenRefAcct.tokenBonding,
+      tokenBondingProgram: this.splTokenBondingProgram.programId,
+      baseMint: tokenBondingAcct.baseMint,
+      targetMint: tokenBondingAcct.targetMint,
+      buyBaseRoyalties: buyBaseRoyalties || tokenBondingAcct.buyBaseRoyalties,
+      buyTargetRoyalties:
+        buyTargetRoyalties || tokenBondingAcct.buyTargetRoyalties,
+      sellBaseRoyalties:
+        sellBaseRoyalties || tokenBondingAcct.sellBaseRoyalties,
+      sellTargetRoyalties:
+        sellTargetRoyalties || tokenBondingAcct.sellTargetRoyalties,
+    });
     return {
       output: null,
       signers: [],
