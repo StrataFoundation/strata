@@ -1408,7 +1408,9 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     }
 
     if (!tokenRefAcct.authority) {
-      throw new Error("No authority on this token. Cannot update token bonding.")
+      throw new Error(
+        "No authority on this token. Cannot update token bonding."
+      );
     }
 
     const collectiveAcct =
@@ -1449,27 +1451,26 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
             : buyFrozen,
       };
 
-      console.log({
-        tokenRefAuthority: tokenRefAcct.authority as PublicKey,
-        collective: tokenRefAcct.collective || PublicKey.default,
-        authority:
-          (collectiveAcct &&
-            (collectiveAcct.authority as PublicKey | undefined)) ||
-          PublicKey.default,
-        mintTokenRef: mintTokenRef,
-        tokenBonding: tokenRefAcct.tokenBonding,
-        tokenBondingProgram: this.splTokenBondingProgram.programId,
-        baseMint: tokenBondingAcct.baseMint,
-        targetMint: tokenBondingAcct.targetMint,
-        buyBaseRoyalties:
-          buyBaseRoyalties || tokenBondingAcct.buyBaseRoyalties,
-        buyTargetRoyalties:
-          buyTargetRoyalties || tokenBondingAcct.buyTargetRoyalties,
-        sellBaseRoyalties:
-          sellBaseRoyalties || tokenBondingAcct.sellBaseRoyalties,
-        sellTargetRoyalties:
-          sellTargetRoyalties || tokenBondingAcct.sellTargetRoyalties,
-      })
+    console.log({
+      tokenRefAuthority: tokenRefAcct.authority as PublicKey,
+      collective: tokenRefAcct.collective || PublicKey.default,
+      authority:
+        (collectiveAcct &&
+          (collectiveAcct.authority as PublicKey | undefined)) ||
+        PublicKey.default,
+      mintTokenRef: mintTokenRef,
+      tokenBonding: tokenRefAcct.tokenBonding,
+      tokenBondingProgram: this.splTokenBondingProgram.programId,
+      baseMint: tokenBondingAcct.baseMint,
+      targetMint: tokenBondingAcct.targetMint,
+      buyBaseRoyalties: buyBaseRoyalties || tokenBondingAcct.buyBaseRoyalties,
+      buyTargetRoyalties:
+        buyTargetRoyalties || tokenBondingAcct.buyTargetRoyalties,
+      sellBaseRoyalties:
+        sellBaseRoyalties || tokenBondingAcct.sellBaseRoyalties,
+      sellTargetRoyalties:
+        sellTargetRoyalties || tokenBondingAcct.sellTargetRoyalties,
+    });
     return {
       output: null,
       signers: [],
