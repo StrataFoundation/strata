@@ -1,11 +1,12 @@
 import * as anchor from "@project-serum/anchor";
 import { BN } from "@project-serum/anchor";
 import { createMint } from "@project-serum/common";
-import {NATIVE_MINT, Token, TOKEN_PROGRAM_ID} from "@solana/spl-token";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, NATIVE_MINT, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
-import { ExponentialCurve, ExponentialCurveConfig, SplTokenBonding, TimeCurveConfig, TokenBondingV0 } from "../packages/spl-token-bonding/src";
+import { ExponentialCurve, ExponentialCurveConfig, ITokenBonding, SplTokenBonding, TimeCurveConfig, TokenBondingV0 } from "../packages/spl-token-bonding/src";
+import { BondingPricing } from "../packages/spl-token-bonding/src/pricing";
 import { waitForUnixTime } from './utils/clock';
 import { TokenUtils } from "./utils/token";
 
@@ -116,7 +117,7 @@ describe("spl-token-bonding", () => {
     let baseMint: PublicKey;
     let curve: PublicKey;
     let tokenBonding: PublicKey;
-    let tokenBondingAcct: TokenBondingV0;
+    let tokenBondingAcct: ITokenBonding;
     const INITIAL_BALANCE = 1000;
     const DECIMALS = 2;
     beforeEach(async () => {
@@ -145,7 +146,7 @@ describe("spl-token-bonding", () => {
       tokenBonding = tokenBondingOut;
       tokenBondingAcct = (await tokenBondingProgram.getTokenBonding(
         tokenBonding
-      )) as TokenBondingV0;
+      ))!;
     });
 
     it("succesfully creates the curve", async () => {
@@ -247,6 +248,112 @@ describe("spl-token-bonding", () => {
       );
     });
   });
+
+  describe("buy with base vs buy with target", () => {
+    let baseMint: PublicKey;
+    let curve: PublicKey;
+    let tokenBonding: PublicKey;
+    let tokenBondingAcct: ITokenBonding;
+    const INITIAL_BALANCE = 1000000;
+    const DECIMALS = 2;
+    beforeEach(async () => {
+      baseMint = await createMint(provider, me, DECIMALS);
+      await tokenUtils.createAtaAndMint(provider, baseMint, INITIAL_BALANCE);
+      curve = await tokenBondingProgram.initializeCurve({
+        config: new ExponentialCurveConfig({
+          c: 1,
+          b: 0,
+          pow: 1,
+          frac: 1
+        })
+      });
+
+      const { tokenBonding: tokenBondingOut } = await tokenBondingProgram.createTokenBonding({
+        curve,
+        baseMint,
+        targetMintDecimals: DECIMALS,
+        generalAuthority: me,
+        buyBaseRoyaltyPercentage: 0,
+        buyTargetRoyaltyPercentage: 0,
+        sellBaseRoyaltyPercentage: 0,
+        sellTargetRoyaltyPercentage: 0,
+        mintCap: new BN(1000), // 10.0
+      });
+      tokenBonding = tokenBondingOut;
+      tokenBondingAcct = (await tokenBondingProgram.getTokenBonding(
+        tokenBonding
+      ))!;
+    });
+
+    it("has the same result from buying with base as buy with target amount", async () => {
+      const { targetAmount } = await tokenBondingProgram.swap({
+        baseMint: tokenBondingAcct.baseMint,
+        targetMint: tokenBondingAcct.targetMint,
+        baseAmount: 2,
+        slippage: 0.5,
+      });
+
+      await tokenBondingProgram.sell({
+        tokenBonding,
+        targetAmount,
+        slippage: 0.5,
+      });
+      
+      const ata = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        tokenBondingAcct.targetMint,
+        me
+      );
+      const pre = (await provider.connection.getTokenAccountBalance(ata))!.value.uiAmount;
+      await tokenBondingProgram.buy({
+        tokenBonding: tokenBondingAcct.publicKey,
+        desiredTargetAmount: targetAmount,
+        slippage: 0.5,
+      });
+      const post = (await provider.connection.getTokenAccountBalance(ata))!.value.uiAmount;
+      expect(post! - pre!).to.eq(targetAmount!);
+    });
+
+    it("(when not an initial buy) has the same result from buying with base as buy with target amount", async () => {
+      await tokenBondingProgram.swap({
+        baseMint: tokenBondingAcct.baseMint,
+        targetMint: tokenBondingAcct.targetMint,
+        baseAmount: 2,
+        slippage: 0.5,
+      });
+
+      const targetAmount = 4;
+
+      const ata = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        tokenBondingAcct.baseMint,
+        me
+      );
+      const pre = (await provider.connection.getTokenAccountBalance(ata))!.value.uiAmount;
+      await tokenBondingProgram.buy({
+        tokenBonding,
+        desiredTargetAmount: targetAmount,
+        slippage: 0.5,
+      });
+      const post = (await provider.connection.getTokenAccountBalance(ata))!.value.uiAmount;
+      
+      await tokenBondingProgram.sell({
+        tokenBonding,
+        targetAmount,
+        slippage: 0.5,
+      });
+
+      const { targetAmount: newTargetAmount } = await tokenBondingProgram.swap({
+        baseMint: tokenBondingAcct.baseMint,
+        targetMint: tokenBondingAcct.targetMint,
+        baseAmount: pre! - post!,
+        slippage: 0.5,
+      });
+      expect(newTargetAmount).to.eq(targetAmount!);
+    });
+  })
 
   describe("time curve", () => {
     let curve: PublicKey;
@@ -678,4 +785,113 @@ describe("spl-token-bonding", () => {
       })
     });
   });
+
+  describe("nested curves", () => {
+    let baseMint: PublicKey;
+    let tokenBonding: PublicKey;
+    let tokenBondingAcct: ITokenBonding;
+    const INITIAL_BALANCE = 100000000;
+    const DECIMALS = 2;
+    let targetAmount: number;
+    let pricing: BondingPricing;
+
+    const curves = [
+      {
+        config: new ExponentialCurveConfig({
+          c: 0,
+          b: 2,
+          pow: 0,
+          frac: 1
+        })
+      },
+      {
+        config: new ExponentialCurveConfig({
+          c: 0,
+          b: 5,
+          pow: 0,
+          frac: 1
+        })
+      },
+      {
+        config: new ExponentialCurveConfig({
+          c: 0,
+          b: 2,
+          pow: 0,
+          frac: 1
+        })
+      }
+    ]
+
+    before(async () => {
+      baseMint = await createMint(provider, me, DECIMALS);
+      await tokenUtils.createAtaAndMint(provider, baseMint, INITIAL_BALANCE);
+
+      let currentBaseMint = baseMint;
+      for (const curveSpec of curves) {
+        // @ts-ignore
+        const curve = await tokenBondingProgram.initializeCurve(curveSpec);
+        let targetMint;
+        ({ tokenBonding, targetMint } = await tokenBondingProgram.createTokenBonding({
+          curve,
+          baseMint: currentBaseMint,
+          targetMintDecimals: DECIMALS,
+          generalAuthority: me,
+          buyBaseRoyaltyPercentage: 0,
+          buyTargetRoyaltyPercentage: 0,
+          sellBaseRoyaltyPercentage: 0,
+          sellTargetRoyaltyPercentage: 0
+        }));
+        currentBaseMint = targetMint;
+      }
+
+      tokenBondingAcct = (await tokenBondingProgram.getTokenBonding(tokenBonding))!;
+
+      // 100 -> 50 --> 50/5 (10) -> 10/2 (5)
+      ({ targetAmount } = await tokenBondingProgram.swap({
+        baseMint,
+        targetMint: tokenBondingAcct.targetMint,
+        baseAmount: 100,
+        slippage: 0.5
+      }));
+      pricing = (await tokenBondingProgram.getPricing(tokenBonding))!;
+    })
+
+    it("correctly bought up to the target", async () => {
+      expect(targetAmount).to.eq(5)
+    })
+
+    describe("pricing", () => {
+      it("can display the current price in terms of the base token", () => {
+        expect(pricing.current(baseMint)).to.eq(2 * 5 * 2)
+      })
+
+      it("can display the tvl in terms of the base token", () => {
+        expect(pricing.locked(baseMint)).to.eq(5 * 2 * 5 * 2)
+      })
+
+      it("can tell what amount of base I will get for selling target", () => {
+        expect(pricing.sellTargetAmount(2, baseMint)).to.eq(2 * 2 * 5 * 2)
+      })
+
+
+      it("can tell what amount of base I will need to buy a target amount", () => {
+        expect(pricing.buyTargetAmount(2, baseMint)).to.eq(2 * 2 * 5 * 2)
+      })
+
+      it("can tell what amount of target I will get for a given base amount", () => {
+        expect(pricing.buyWithBaseAmount(100, baseMint)).to.eq(5)
+      })
+    })
+
+    it("allows selling", async () => {
+      ({ targetAmount } = await tokenBondingProgram.swap({
+        baseMint: tokenBondingAcct.targetMint,
+        targetMint: baseMint,
+        baseAmount: 5,
+        slippage: 0.5
+      }));
+      await tokenUtils.expectAtaBalance(me, tokenBondingAcct.targetMint, 0);
+      await tokenUtils.expectAtaBalance(me, baseMint, INITIAL_BALANCE / Math.pow(10, DECIMALS));
+    })
+  })
 });

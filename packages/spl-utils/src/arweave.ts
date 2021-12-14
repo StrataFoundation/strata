@@ -1,4 +1,9 @@
-import { ArweaveStorage, Coingecko, ConversionRatePair, Currency } from "@metaplex/js";
+import {
+  ArweaveStorage,
+  Coingecko,
+  ConversionRatePair,
+  Currency,
+} from "@metaplex/js";
 import {
   LAMPORTS_PER_SOL,
   PublicKey,
@@ -7,17 +12,17 @@ import {
 } from "@solana/web3.js";
 import crypto from "crypto";
 import { Creator } from ".";
-import { calculate } from '@metaplex/arweave-cost';
+import { calculate } from "@metaplex/arweave-cost";
 
 export const AR_SOL_HOLDER_ID = new PublicKey(
   "6FKvsq4ydWFci6nGq9ckbjYMtnmaqAoatz5c9XWjiDuS"
 );
-export const ARWEAVE_UPLOAD_URL = process.env.REACT_APP_ARWEAVE_UPLOAD_URL || "https://us-central1-metaplex-studios.cloudfunctions.net/uploadFile";
+export const ARWEAVE_UPLOAD_URL =
+  process.env.REACT_APP_ARWEAVE_UPLOAD_URL ||
+  "https://us-central1-metaplex-studios.cloudfunctions.net/uploadFile";
 // export const ARWEAVE_UPLOAD_URL = process.env.REACT_APP_ARWEAVE_UPLOAD_URL || "https://us-central1-principal-lane-200702.cloudfunctions.net/uploadFile4";
 
-const MEMO_ID = new PublicKey(
-  'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr',
-);
+const MEMO_ID = new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr");
 
 type ArweaveFile = {
   filename: string;
@@ -30,49 +35,44 @@ interface IArweaveResult {
   messages?: Array<ArweaveFile>;
 }
 
-export type ArweaveEnv = 'mainnet-beta' | 'testnet' | 'devnet';
+export type ArweaveEnv = "mainnet-beta" | "testnet" | "devnet";
 
 export async function uploadToArweave(
   txid: string,
   mintKey: PublicKey,
-  filesIn: Map<string, Buffer>,
+  files: File[],
   uploadUrl: string = ARWEAVE_UPLOAD_URL,
   env: ArweaveEnv = "mainnet-beta"
 ): Promise<IArweaveResult> {
-  const files = [...filesIn.entries()].map(([name, file]) => new File([file], name));
+  // this means we're done getting AR txn setup. Ship it off to ARWeave!
+  const data = new FormData();
+  data.append("transaction", txid);
+  data.append("env", env);
 
-   // this means we're done getting AR txn setup. Ship it off to ARWeave!
-   const data = new FormData();
-   data.append('transaction', txid);
-   data.append('env', env);
- 
-   const tags = files.reduce(
-     (acc: Record<string, Array<{ name: string; value: string }>>, f) => {
-       acc[f.name] = [{ name: 'mint', value: mintKey.toBase58() }];
-       return acc;
-     },
-     {},
-   );
-   data.append('tags', JSON.stringify(tags));
-   files.map(f => data.append('file[]', f));
- 
-   // TODO: convert to absolute file name for image
-
-   
-  const resp = await fetch(
-    uploadUrl,
-    {
-      method: 'POST',
-      // @ts-ignore
-      body: data,
+  const tags = files.reduce(
+    (acc: Record<string, Array<{ name: string; value: string }>>, f) => {
+      acc[f.name] = [{ name: "mint", value: mintKey.toBase58() }];
+      return acc;
     },
+    {}
   );
+
+  data.append("tags", JSON.stringify(tags));
+  files.map((f) => data.append("file[]", f));
+
+  // TODO: convert to absolute file name for image
+
+  const resp = await fetch(uploadUrl, {
+    method: "POST",
+    // @ts-ignore
+    body: data,
+  });
 
   if (!resp.ok) {
     return Promise.reject(
       new Error(
-        'Unable to upload the artwork to Arweave. Please wait and then try again.',
-      ),
+        "Unable to upload the artwork to Arweave. Please wait and then try again."
+      )
     );
   }
 
@@ -85,65 +85,62 @@ export async function uploadToArweave(
   return result;
 }
 
-export const prepPayForFilesInstructions = async (
+export const prePayForFilesInstructions = async (
   payer: PublicKey,
-  filesIn: Map<string, Buffer>,
+  files: File[],
   uploadUrl: string = ARWEAVE_UPLOAD_URL,
   env: ArweaveEnv = "mainnet-beta"
 ): Promise<TransactionInstruction[]> => {
   const instructions: TransactionInstruction[] = [];
-
-  const files = [...filesIn.entries()].map(([name, file]) => new File([file], name));
-  const sizes = files.map(f => f.size);
+  const sizes = files.map((f) => f.size);
   const result = await calculate(sizes);
 
   instructions.push(
     SystemProgram.transfer({
       fromPubkey: payer,
       toPubkey: AR_SOL_HOLDER_ID,
-      lamports: LAMPORTS_PER_SOL * result.solana
+      lamports: LAMPORTS_PER_SOL * result.solana,
     })
   );
 
   for (let i = 0; i < files.length; i++) {
-    const hashSum = crypto.createHash('sha256');
+    const hashSum = crypto.createHash("sha256");
     hashSum.update(await files[i].text());
-    const hex = hashSum.digest('hex');
+    const hex = hashSum.digest("hex");
     instructions.push(
       new TransactionInstruction({
         keys: [],
         programId: MEMO_ID,
         data: Buffer.from(hex),
-      }),
+      })
     );
   }
 
   return instructions;
 };
 
-
 export function getFilesWithMetadata(
-  files: Map<string, Buffer>,
+  files: File[],
   metadata: {
     name: string;
     symbol: string;
     description: string;
     image: string | undefined;
-    animation_url: string | undefined;
-    external_url: string;
+    animationUrl: string | undefined;
+    externalUrl: string;
     properties: any;
     creators: Creator[] | null;
     sellerFeeBasisPoints: number;
   }
-): Map<string, Buffer> {
+): File[] {
   const metadataContent = {
     name: metadata.name,
     symbol: metadata.symbol,
     description: metadata.description,
     seller_fee_basis_points: metadata.sellerFeeBasisPoints,
     image: metadata.image,
-    animation_url: metadata.animation_url,
-    external_url: metadata.external_url,
+    animation_url: metadata.animationUrl,
+    external_url: metadata.externalUrl,
     properties: {
       ...metadata.properties,
       creators: metadata.creators?.map((creator) => {
@@ -155,7 +152,10 @@ export function getFilesWithMetadata(
     },
   };
 
-  files.set("metadata.json", Buffer.from(JSON.stringify(metadataContent), "utf-8"))
-  
-  return files;
+  const realFiles: File[] = [
+    ...files,
+    new File([JSON.stringify(metadataContent)], "metadata.json"),
+  ];
+
+  return realFiles;
 }

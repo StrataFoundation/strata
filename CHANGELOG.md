@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htmlq).
 
+#[1.3.1]
+
+### Fixed
+  * Updates to bonding curve were validated against unclaimed collective settings, always.
+  * No authority on primary token refs. **NOTE**: To update, rerun set_as_primary_v0
+
+#[1.3.0]
+### Changed
+  * getPricing -> getPricingCurve in favor of a new getPricing that can price bonding in terms of any token in the hierarchy.
+  * useBondingPricing now returns the above
+  * usePrice hooks changed to usePriceInUsd and usePriceInSol. These will recursively traverse a social token hierarchy to get its usd price
+  * Almost all hooks in tokenRef pertaining to twitter have been changed to be generic name references.
+
+### Added
+  * Ability to opt out
+  * Ability to swap to any token on the bonding hierarchy.
+
+[1.2.0-3]
+
+Testing builds. Do not use
+
+## [1.1.1]
+### Changed
+- `prepPayForFilesInstructions` => `prePayForFilesInstructions`
+
+## [1.1.0]
+### Added
+
+  - nullable params for hooks
+
 ## [1.0.0]
 ### Added
 

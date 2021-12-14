@@ -1,7 +1,10 @@
+import { NATIVE_MINT } from "@solana/spl-token";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
+import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import { ITokenWithMetaAndAccount } from "@strata-foundation/spl-token-collective";
 import {
+  Data,
   decodeMetadata,
   Edition,
   getMetadata,
@@ -22,6 +25,20 @@ export interface IUseTokenMetadataResult extends ITokenWithMetaAndAccount {
 }
 
 const parser = (_: any, acct: any) => decodeMetadata(acct.data);
+const solMetadata = new Metadata({
+  updateAuthority: "",
+  mint: NATIVE_MINT.toBase58(),
+  data: new Data({
+    name: "Solana",
+    symbol: "SOL",
+    uri: "https://strata-token-metadata.s3.us-east-2.amazonaws.com/sol.json",
+    creators: null,
+    sellerFeeBasisPoints: 0,
+  }),
+  primarySaleHappened: false,
+  isMutable: false,
+  editionNonce: null,
+});
 
 /**
  * Get the token account and all metaplex + token collective metadata around the token
@@ -30,23 +47,29 @@ const parser = (_: any, acct: any) => decodeMetadata(acct.data);
  * @returns
  */
 export function useTokenMetadata(
-  token: PublicKey | undefined
+  token: PublicKey | undefined | null
 ): IUseTokenMetadataResult {
   const {
     result: metadataAccountKeyStr,
     loading,
     error,
   } = useAsync(
-    async (token: string | undefined) =>
+    async (token: string | undefined | null) =>
       token ? getMetadata(token) : undefined,
     [token?.toBase58()]
   );
   const metadataAccountKey = usePublicKey(metadataAccountKeyStr);
 
-  const { info: metadata, loading: accountLoading } = useAccount(
+  let { info: metadata, loading: accountLoading } = useAccount(
     metadataAccountKey,
     parser
   );
+  const isSol =
+    token?.equals(NATIVE_MINT) ||
+    token?.equals(SplTokenBonding.WRAPPED_SOL_MINT);
+  if (isSol) {
+    metadata = solMetadata;
+  }
 
   const { tokenMetadataSdk: splTokenMetadataSdk } = useStrataSdks();
   const getEditionInfo: (metadata: Metadata | undefined) => Promise<{

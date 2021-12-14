@@ -1,14 +1,14 @@
 import { PublicKey } from "@solana/web3.js";
 import { useUserOwnedAmount } from "./bondingPricing";
-import { useTwitterTokenRef } from "./tokenRef";
+import { useTokenRefForName } from "./tokenRef";
 
-export function useOwnedAmountForOwnerAndHandle(
-  owner: PublicKey | undefined,
-  handle: string | undefined,
-  collective: PublicKey | undefined,
-  tld?: PublicKey
+export function useOwnedAmountOfNameForOwner(
+  owner: PublicKey | undefined | null,
+  handle: string | undefined | null,
+  collective: PublicKey | null,
+  tld: PublicKey
 ): { amount: number | undefined; loading: boolean } {
-  const { info: tokenRef, loading: loadingRef } = useTwitterTokenRef(
+  const { info: tokenRef, loading: loadingRef } = useTokenRefForName(
     handle,
     collective,
     tld

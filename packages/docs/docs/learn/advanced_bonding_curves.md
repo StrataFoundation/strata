@@ -28,11 +28,9 @@ $$
 
 Now, what happens when we inject `Base` tokens into the Reserves?
 
-![Reserve Injection](./injection.png)
-
 This causes all holders to see an increase in value of the token. Our formula above does not account for this possibility in pricing. So how do we support this model?
 
-Given the `Reserve` funciton
+Given the `Reserve` function
 
 $$
 	R = 0.666667 S^{1.5}
@@ -68,7 +66,7 @@ $$
 	R = c 0.666667 S^{1.5}
 $$
 
-Where c is a constant that will help set the initial price.
+Where c is a constant that will help set the slope of the initial curve, and thus the initial price.
 
 ## Changing Curves
 

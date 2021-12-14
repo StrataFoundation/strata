@@ -64,7 +64,7 @@ pub struct TokenBondingSettingsV0 {
     pub max_mint_cap: Option<u64>,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default, Copy)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct InitializeSocialTokenV0Args {
   pub authority: Option<Pubkey>,
   pub name_parent: Option<Pubkey>,

@@ -31,4 +31,7 @@ pub enum ErrorCode {
 
     #[msg("Invalid name authority passed")]
     InvalidNameAuthority,
+    
+    #[msg("Unclaimed tokens cannot have a go live date in the future. They must be immediately live.")]
+    UnclaimedNotLive
 }

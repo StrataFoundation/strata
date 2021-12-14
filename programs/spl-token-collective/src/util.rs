@@ -113,8 +113,6 @@ pub fn verify_token_bonding_defaults<'info>(defaults: &TokenBondingSettingsV0, t
     defaults.max_mint_cap.map_or(true, |cap| token_bonding.mint_cap.map_or(true, |bond_cap| bond_cap <= cap)) &&
     !token_bonding.sell_frozen &&
     token_bonding.freeze_buy_unix_time.is_none();
-    // TODO: Go live check?
-    // token_bonding_defaults.go_live_unix_time.map_or(true, |go_live| token_bonding.go_live_unix_time <= go_live) &&
 
   if valid {
     Ok(())

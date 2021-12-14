@@ -25,7 +25,7 @@ pub fn initialize_social_token_v0<'info>(
   accounts: &mut InitializeSocialTokenV0,
   owner_token_ref: &mut Account<TokenRefV0>,
   mint_token_ref: &mut Account<TokenRefV0>,
-  args: InitializeSocialTokenV0Args,
+  args: &InitializeSocialTokenV0Args,
 ) -> ProgramResult {
   let c = get_collective(accounts.collective.clone());
   let collective = c.as_ref();
@@ -114,6 +114,7 @@ pub mod spl_token_collective {
     primary_token_ref.token_bonding = token_ref.token_bonding;
     primary_token_ref.name = token_ref.name;
     primary_token_ref.owner = token_ref.owner;
+    primary_token_ref.authority = token_ref.authority;
     primary_token_ref.is_claimed = token_ref.is_claimed;
     primary_token_ref.is_primary = true;
     primary_token_ref.bump_seed = args.bump_seed;
@@ -143,7 +144,7 @@ pub mod spl_token_collective {
       )?;
     }
 
-    initialize_social_token_v0(&mut ctx.accounts.initialize_args, &mut ctx.accounts.owner_token_ref, &mut ctx.accounts.mint_token_ref, args)?;
+    initialize_social_token_v0(&mut ctx.accounts.initialize_args, &mut ctx.accounts.owner_token_ref, &mut ctx.accounts.mint_token_ref, &args)?;
     let owner_token_ref = &mut ctx.accounts.owner_token_ref;
     let mint_token_ref = &mut ctx.accounts.mint_token_ref;
 
@@ -180,6 +181,10 @@ pub mod spl_token_collective {
       )?;
     }
 
+    if initialize_args.token_bonding.go_live_unix_time > initialize_args.clock.unix_timestamp {
+      return Err(ErrorCode::UnclaimedNotLive.into())
+    }
+
     if token_metadata_settings_opt.is_some() {
       let token_metadata_settings = token_metadata_settings_opt.unwrap();
       let token_metadata = &ctx.accounts.token_metadata;
@@ -193,16 +198,16 @@ pub mod spl_token_collective {
       }
     }
 
-    initialize_social_token_v0(&mut ctx.accounts.initialize_args, &mut ctx.accounts.owner_token_ref,&mut ctx.accounts.mint_token_ref, args)?;
+    initialize_social_token_v0(&mut ctx.accounts.initialize_args, &mut ctx.accounts.owner_token_ref, &mut ctx.accounts.mint_token_ref, &args)?;
     let owner_token_ref = &mut ctx.accounts.owner_token_ref;
     let mint_token_ref = &mut ctx.accounts.mint_token_ref;
 
     owner_token_ref.name = Some(ctx.accounts.name.key());
     mint_token_ref.name = Some(ctx.accounts.name.key());
     owner_token_ref.owner = args.name_class;
-    mint_token_ref.owner = args.name_class;
-    owner_token_ref.authority = args.name_class;
-    mint_token_ref.authority = args.name_class;
+    mint_token_ref.owner = owner_token_ref.owner;
+    owner_token_ref.authority = owner_token_ref.owner;
+    mint_token_ref.authority = owner_token_ref.owner;
     mint_token_ref.is_claimed = false;
     owner_token_ref.is_claimed = false;
     mint_token_ref.is_primary = false;
@@ -384,7 +389,11 @@ pub mod spl_token_collective {
     })?;
 
     let config = &ctx.accounts.collective.config;
-    let token_bonding_settings_opt = config.unclaimed_token_bonding_settings.as_ref();
+    let token_bonding_settings_opt = if ctx.accounts.mint_token_ref.is_claimed {
+      config.claimed_token_bonding_settings.as_ref()
+    } else {
+      config.unclaimed_token_bonding_settings.as_ref()
+    };
     if token_bonding_settings_opt.is_some() {
       verify_token_bonding_defaults(&token_bonding_settings_opt.unwrap(), &ctx.accounts.token_bonding)?;
       verify_token_bonding_royalties(

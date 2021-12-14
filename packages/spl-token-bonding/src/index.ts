@@ -4,6 +4,7 @@ import {
   createMintInstructions,
   getMintInfo,
   getTokenAccount,
+  sleep,
 } from "@project-serum/common";
 import {
   AccountInfo,
@@ -13,10 +14,13 @@ import {
   NATIVE_MINT,
   Token,
   TOKEN_PROGRAM_ID,
+  u64,
 } from "@solana/spl-token";
 import {
+  Commitment,
   Keypair,
   PublicKey,
+  Signer,
   SystemProgram,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
@@ -26,21 +30,28 @@ import {
   AnchorSdk,
   createMetadata,
   Data,
+  getAssociatedAccountBalance,
   InstructionResult,
   percent,
   TypedAccountParser,
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
-import { amountAsNum, asDecimal, fromCurve, IPricingCurve } from "./curves";
+import { BondingHierarchy } from "./bondingHierarchy";
+import { fromCurve, IPricingCurve } from "./curves";
 import {
   CurveV0,
   ProgramStateV0,
   SplTokenBondingIDL,
   TokenBondingV0,
 } from "./generated/spl-token-bonding";
+import { BondingPricing } from "./pricing";
+import { asDecimal, toBN, toNumber, toU128 } from "./utils";
 
+export * from "./bondingHierarchy";
 export * from "./curves";
 export * from "./generated/spl-token-bonding";
+export * from "./pricing";
+export * from "./utils";
 
 /**
  * The curve config required by the smart contract is unwieldy, implementors of `CurveConfig` wrap the interface
@@ -51,46 +62,6 @@ interface ICurveConfig {
 
 interface IPrimitiveCurve {
   toRawPrimitiveConfig(): any;
-}
-
-/**
- * Convert a number to a string avoiding scientific notation
- * @param n
- * @returns
- */
-function toFixedSpecial(num: number, n: number): string {
-  var str = num.toFixed(n);
-  if (str.indexOf("e+") === -1) return str;
-
-  // if number is in scientific notation, pick (b)ase and (p)ower
-  str = str
-    .replace(".", "")
-    .split("e+")
-    .reduce(function (b: any, p: any) {
-      // @ts-ignore
-      return b + Array(p - b.length + 2).join(0);
-    });
-
-  if (n > 0) {
-    // @ts-ignore
-    str += "." + Array(n + 1).join(0);
-  }
-
-  return str;
-}
-
-/**
- * Convert a number to a 12 decimal fixed precision u128
- *
- * @param num Number to convert to a 12 decimal fixed precision BN
- * @returns
- */
-export function toU128(num: number | BN): BN {
-  if (BN.isBN(num)) {
-    return num;
-  }
-
-  return new BN(toFixedSpecial(num, 12).replace(".", ""));
 }
 
 /**
@@ -352,12 +323,36 @@ export interface IBuyArgs {
   tokenBonding: PublicKey;
   /** The payer to run this transaction, defaults to provider.wallet */
   payer?: PublicKey;
-  source?: PublicKey; // Will use ATA of sourceAuthority if not provided
-  destination?: PublicKey; // Will use ATA of sourceAuthority if not provided
-  sourceAuthority?: PublicKey; // Wallet public key if not provided
-  desiredTargetAmount?: BN | number; // Must prrovide either base amount or desired target amount
+  /** The source account to purchase with. **Default:** ata of `sourceAuthority` */
+  source?: PublicKey;
+  /** The source destination to purchase to. **Default:** ata of `sourceAuthority` */
+  destination?: PublicKey;
+  /** The wallet funding the purchase. **Default:** Provider wallet */
+  sourceAuthority?: PublicKey;
+  /** Must provide either base amount or desired target amount */
+  desiredTargetAmount?: BN | number;
   baseAmount?: BN | number;
-  slippage: number; // Decimal number. max price will be (1 + slippage) * price_for_desired_target_amount
+  /** Decimal number. max price will be (1 + slippage) * price_for_desired_target_amount */
+  slippage: number;
+}
+
+export interface ISwapArgs {
+  baseMint: PublicKey;
+  targetMint: PublicKey;
+  /** The payer to run this transaction, defaults to provider.wallet */
+  payer?: PublicKey;
+  /** The wallet funding the purchase. **Default:** Provider wallet */
+  sourceAuthority?: PublicKey;
+  /** The amount of baseMint to purchase with */
+  baseAmount: BN | number;
+  /** The slippage PER TRANSACTION */
+  slippage: number;
+  /** Optionally inject extra instructions before each trade. Usefull for adding txn fees */
+  extraInstructions?: (args: {
+    tokenBonding: ITokenBonding;
+    isBuy: boolean;
+    amount: BN;
+  }) => Promise<InstructionResult<null>>;
 }
 
 export interface ISellArgs {
@@ -389,22 +384,6 @@ export interface ISellBondingWrappedSolArgs {
   owner?: PublicKey /** The owner of the twSOL source account. **Default:** provider wallet */;
   payer?: PublicKey;
   all?: boolean /** Sell all and close this account? **Default:** false */;
-}
-
-function toNumber(numberOrBn: BN | number, mint: MintInfo): number {
-  if (BN.isBN(numberOrBn)) {
-    return amountAsNum(numberOrBn, mint);
-  } else {
-    return numberOrBn;
-  }
-}
-
-function toBN(numberOrBn: BN | number, mint: MintInfo): BN {
-  if (BN.isBN(numberOrBn)) {
-    return numberOrBn;
-  } else {
-    return new BN(Math.ceil(Number(numberOrBn) * Math.pow(10, mint.decimals)));
-  }
 }
 
 /**
@@ -1509,6 +1488,177 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     await this.execute(this.buyInstructions(args), args.payer);
   }
 
+  async getTokenAccountBalance(
+    account: PublicKey,
+    commitment: Commitment = "confirmed"
+  ): Promise<BN> {
+    const acct = await this.provider.connection.getAccountInfo(
+      account,
+      commitment
+    );
+    if (acct) {
+      return u64.fromBuffer(AccountLayout.decode(acct.data).amount);
+    }
+
+    return new BN(0);
+  }
+
+  /**
+   * Swap from any base mint to any target mint that are both on a shared link of bonding curves.
+   * Intelligently traverses using either buy or sell, executing multiple txns to either sell baseAmount
+   * or buy with baseAmount
+   *
+   * @param param0
+   */
+  async swap({
+    payer = this.wallet.publicKey,
+    sourceAuthority = this.wallet.publicKey,
+    baseMint,
+    targetMint,
+    baseAmount,
+    slippage,
+    extraInstructions = () =>
+      Promise.resolve({
+        instructions: [],
+        signers: [],
+        output: null,
+      }),
+  }: ISwapArgs): Promise<{ targetAmount: number }> {
+    const hierarchyFromTarget = await this.getBondingHierarchy(
+      (
+        await SplTokenBonding.tokenBondingKey(targetMint)
+      )[0],
+      baseMint
+    );
+    const hierarchyFromBase = await this.getBondingHierarchy(
+      (
+        await SplTokenBonding.tokenBondingKey(baseMint)
+      )[0],
+      targetMint
+    );
+    const hierarchy = [hierarchyFromTarget, hierarchyFromBase].find(
+      (hierarchy) => hierarchy?.contains(baseMint, targetMint)
+    );
+    if (!hierarchy) {
+      throw new Error(
+        `No bonding curve hierarchies found for base or target that contain both ${baseMint.toBase58()} and ${targetMint.toBase58()}`
+      );
+    }
+    const isBuy = hierarchy.tokenBonding.targetMint.equals(targetMint);
+    const arrHierarchy = hierarchy?.toArray() || [];
+
+    const baseMintInfo = await getMintInfo(this.provider, baseMint);
+
+    let currAmount = toBN(baseAmount, baseMintInfo);
+    for (const subHierarchy of isBuy ? arrHierarchy.reverse() : arrHierarchy) {
+      const tokenBonding = subHierarchy.tokenBonding;
+      const baseIsSol = tokenBonding.baseMint.equals(
+        SplTokenBonding.WRAPPED_SOL_MINT
+      );
+      const ata = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        isBuy ? tokenBonding.targetMint : tokenBonding.baseMint,
+        sourceAuthority
+      );
+
+      const getBalance = async (): Promise<BN> => {
+        if (!isBuy && baseIsSol) {
+          return new BN(
+            (
+              await this.provider.connection.getAccountInfo(
+                sourceAuthority,
+                "single"
+              )
+            )?.lamports || 0
+          );
+        } else {
+          return this.getTokenAccountBalance(ata, "single");
+        }
+      };
+      const preBalance = await getBalance();
+
+      let instructions: TransactionInstruction[];
+      let signers: Signer[];
+      if (isBuy) {
+        console.log(
+          `Actually doing ${tokenBonding.baseMint.toBase58()} to ${tokenBonding.targetMint.toBase58()}`
+        );
+        ({ instructions, signers } = await this.buyInstructions({
+          payer,
+          sourceAuthority,
+          baseAmount: currAmount,
+          tokenBonding: tokenBonding.publicKey,
+          slippage,
+        }));
+      } else {
+        console.log(
+          `SELL doing ${tokenBonding.baseMint.toBase58()} to ${tokenBonding.targetMint.toBase58()}`
+        );
+        ({ instructions, signers } = await this.sellInstructions({
+          payer,
+          sourceAuthority,
+          targetAmount: currAmount,
+          tokenBonding: tokenBonding.publicKey,
+          slippage,
+        }));
+      }
+
+      const { instructions: extraInstrs, signers: extaSigners } =
+        await extraInstructions({
+          tokenBonding,
+          amount: currAmount,
+          isBuy,
+        });
+      await this.sendInstructions(
+        [...instructions, ...extraInstrs],
+        [...signers, ...extaSigners],
+        payer
+      );
+
+      async function newBalance(tries: number = 0): Promise<BN> {
+        if (tries >= 4) {
+          return new BN(0);
+        }
+        let postBalance = await getBalance();
+        // Sometimes it can take a bit for Solana to catch up
+        // Wait and see if the balance truly hasn't changed.
+        if (postBalance.eq(preBalance)) {
+          console.log(
+            "No balance change detected while swapping, trying again",
+            tries
+          );
+          await sleep(5000);
+          return newBalance(tries + 1);
+        }
+
+        return postBalance;
+      }
+
+      const postBalance = await newBalance();
+
+      currAmount = postBalance!.sub(preBalance || new BN(0));
+      // Fees, or something else caused the balance to be negative. Just report the change
+      // and quit
+      if (currAmount.eq(new BN(0))) {
+        const targetMintInfo = await getMintInfo(
+          this.provider,
+          isBuy ? tokenBonding.targetMint : tokenBonding.baseMint
+        );
+        return {
+          targetAmount:
+            toNumber(postBalance!, targetMintInfo) -
+            toNumber(preBalance, targetMintInfo),
+        };
+      }
+    }
+
+    const targetMintInfo = await getMintInfo(this.provider, targetMint);
+    return {
+      targetAmount: toNumber(currAmount, targetMintInfo),
+    };
+  }
+
   async getState(): Promise<ProgramStateV0 | null> {
     if (this.state) {
       return this.state;
@@ -1681,7 +1831,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
    * @param tokenBonding
    * @returns
    */
-  async getPricing(tokenBonding: PublicKey): Promise<IPricingCurve> {
+  async getBondingPricingCurve(
+    tokenBonding: PublicKey
+  ): Promise<IPricingCurve> {
     const tokenBondingAcct = (await this.getTokenBonding(tokenBonding))!;
     const targetMint = await getMintInfo(
       this.provider,
@@ -1722,5 +1874,54 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     const curve = await this.getCurve(key);
     // @ts-ignore
     return fromCurve(curve, baseStorage, baseMint, targetMint);
+  }
+
+  async getPricing(
+    tokenBondingKey: PublicKey | undefined
+  ): Promise<BondingPricing | undefined> {
+    const hierarchy = await this.getBondingHierarchy(tokenBondingKey);
+    if (hierarchy) {
+      return new BondingPricing({
+        hierarchy: hierarchy,
+      });
+    }
+  }
+
+  /**
+   * Fetch the token bonding curve and all of its direct ancestors
+   *
+   * @param tokenBondingKey
+   * @returns
+   */
+  async getBondingHierarchy(
+    tokenBondingKey: PublicKey | undefined,
+    stopAtMint?: PublicKey | undefined
+  ): Promise<BondingHierarchy | undefined> {
+    if (stopAtMint?.equals(NATIVE_MINT)) {
+      stopAtMint = SplTokenBonding.WRAPPED_SOL_MINT;
+    }
+
+    if (!tokenBondingKey) {
+      return;
+    }
+    const tokenBonding = await this.getTokenBonding(tokenBondingKey);
+    if (!tokenBonding) {
+      return;
+    }
+
+    const pricingCurve = await this.getBondingPricingCurve(tokenBondingKey);
+
+    const parentKey = (
+      await SplTokenBonding.tokenBondingKey(tokenBonding.baseMint)
+    )[0];
+    const ret = new BondingHierarchy({
+      parent: stopAtMint?.equals(tokenBonding.baseMint)
+        ? undefined
+        : await this.getBondingHierarchy(parentKey, stopAtMint),
+      tokenBonding,
+      pricingCurve,
+    });
+    (ret.parent || ({} as any)).child = ret;
+    return ret;
   }
 }

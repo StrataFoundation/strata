@@ -174,9 +174,9 @@ We can get the prices behind a bonding curve by using `getPricing`
 ```js async name=pricing deps=bonding,buy
 var pricing = await tokenBondingSdk.getPricing(tokenBonding);
 
-var currentBuyPriceSol = pricing.buyTargetAmount(1, tokenBondingAcct.buyBaseRoyaltyPercentage, tokenBondingAcct.buyTargetRoyaltyPercentage);
-var currentSellPriceSol = pricing.sellTargetAmount(1, tokenBondingAcct.buyBaseRoyaltyPercentage, tokenBondingAcct.buyTargetRoyaltyPercentage);
-var amountPerOneSol = pricing.buyWithBaseAmount(1, tokenBondingAcct.buyBaseRoyaltyPercentage, tokenBondingAcct.buyTargetRoyaltyPercentage);
+var currentBuyPriceSol = pricing.buyTargetAmount(1);
+var currentSellPriceSol = pricing.sellTargetAmount(1);
+var amountPerOneSol = pricing.buyWithBaseAmount(1);
 ```
 
 ## Royalties

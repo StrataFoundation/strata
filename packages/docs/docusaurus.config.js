@@ -8,8 +8,8 @@ const plantuml = require("@akebifiky/remark-simple-plantuml");
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'Strata',
-  tagline: 'Community first Social Tokens, powered by Solana',
+  title: 'Strata Protocol',
+  tagline: 'Launch a token around a person, idea, or collective in minutes',
   url: 'https://strataprotocol.com',
   baseUrl: '/',
   onBrokenLinks: 'throw',
@@ -30,6 +30,8 @@ const config = {
           editUrl: 'https://github.com/StrataFoundation/strata/edit/master/packages/docs',
         },
         blog: {
+          remarkPlugins: [math, plantuml],
+          rehypePlugins: [katex],
           showReadingTime: true,
           // Please change this to your repo.
           editUrl:
@@ -154,7 +156,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Strata, Inc.`,
+        copyright: `Copyright © ${new Date().getFullYear()} Strata Foundation.`,
       },
       prism: {
         theme: lightCodeTheme,

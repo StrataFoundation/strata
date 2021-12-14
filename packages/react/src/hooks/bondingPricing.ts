@@ -1,30 +1,18 @@
-import { Market } from "@project-serum/serum";
-import { Order } from "@project-serum/serum/lib/market";
-import { MintInfo, u64 } from "@solana/spl-token";
+import { MintInfo, NATIVE_MINT, u64 } from "@solana/spl-token";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { Connection, PublicKey } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import {
-  fromCurve,
-  IPricingCurve,
+  BondingPricing,
+  ITokenBonding,
   SplTokenBonding,
 } from "@strata-foundation/spl-token-bonding";
+import { useTokenAccount, useTokenBonding } from "./index";
 import React, { useEffect, useMemo, useState } from "react";
 import { useAsync } from "react-async-hook";
-import { useCurve, useSolPrice, useTokenBonding } from ".";
+import { useStrataSdks } from "./index";
 import { useAccount } from "./useAccount";
 import { useAssociatedAccount } from "./useAssociatedAccount";
 import { useMint } from "./useMint";
-import { useStrataSdks } from "./useStrataSdks";
-import { useTokenAccount } from "./useTokenAccount";
-
-const SERUM_PROGRAM_ID = new PublicKey(
-  "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin"
-);
-
-const SOL_TOKEN = new PublicKey("So11111111111111111111111111111111111111112");
-
-// TODO: Use actual connection. But this can't happen in dev
-let connection = new Connection("https://api.mainnet-beta.solana.com");
 
 export function supplyAsNum(mint: MintInfo): number {
   return amountAsNum(mint.supply, mint);
@@ -36,10 +24,16 @@ export function amountAsNum(amount: u64, mint: MintInfo): number {
   return amount.div(decimals).toNumber() + decimal;
 }
 
-export function useSolOwnedAmount(): { amount: number; loading: boolean } {
-  const { publicKey } = useWallet();
+export function useSolOwnedAmount(wallet?: PublicKey): {
+  amount: number;
+  loading: boolean;
+} {
+  const { adapter } = useWallet();
+  if (!wallet) {
+    wallet = adapter?.publicKey || undefined;
+  }
   const { info: lamports, loading } = useAccount<number>(
-    publicKey || undefined,
+    wallet,
     (_, account) => account.lamports
   );
   const result = React.useMemo(
@@ -54,9 +48,10 @@ export function useSolOwnedAmount(): { amount: number; loading: boolean } {
 }
 
 export function useUserOwnedAmount(
-  wallet: PublicKey | undefined,
-  token: PublicKey | undefined
+  wallet: PublicKey | undefined | null,
+  token: PublicKey | undefined | null
 ): number | undefined {
+  const { amount: solOwnedAmount } = useSolOwnedAmount(wallet || undefined);
   const { associatedAccount } = useAssociatedAccount(wallet, token);
   const mint = useMint(token);
   const [amount, setAmount] = useState<number>();
@@ -64,14 +59,16 @@ export function useUserOwnedAmount(
   useEffect(() => {
     if (mint && associatedAccount) {
       setAmount(amountAsNum(associatedAccount.amount, mint));
+    } else if (token?.equals(NATIVE_MINT)) {
+      setAmount(solOwnedAmount);
     }
-  }, [associatedAccount, mint]);
+  }, [associatedAccount, mint, solOwnedAmount]);
 
   return amount && Number(amount);
 }
 
 export function useOwnedAmount(
-  token: PublicKey | undefined
+  token: PublicKey | undefined | null
 ): number | undefined {
   const { publicKey } = useWallet();
   return useUserOwnedAmount(publicKey || undefined, token);
@@ -79,7 +76,9 @@ export function useOwnedAmount(
 
 export interface PricingState {
   loading: boolean;
-  curve?: IPricingCurve;
+  tokenBonding?: ITokenBonding;
+  pricing?: BondingPricing;
+  error?: Error;
 }
 /**
  * Get an {@link IPricingCurve} Object that can estimate pricing on this bonding curve,
@@ -89,34 +88,37 @@ export interface PricingState {
  * @returns
  */
 export function useBondingPricing(
-  tokenBonding: PublicKey | undefined
+  tokenBonding: PublicKey | undefined | null
 ): PricingState {
-  const { info: bonding, loading: bondingLoading } =
-    useTokenBonding(tokenBonding);
-  const { info: curve, loading: curveLoading } = useCurve(bonding?.curve);
+  const { tokenBondingSdk } = useStrataSdks();
+  const { info: tokenBondingAcct } = useTokenBonding(tokenBonding);
+  const { info: reserves } = useTokenAccount(tokenBondingAcct?.baseStorage);
+  const getPricing = async (
+    tokenBondingSdk: SplTokenBonding | undefined,
+    key: PublicKey | null | undefined,
+    reserves: any // Make the pricing be re-fetched whenever the reserves change. This doesn't account for
+    // collective changes, but will due for now. TODO: Account for collective changes too
+  ) => tokenBondingSdk && key && tokenBondingSdk.getPricing(key);
 
-  const base = useMint(bonding?.baseMint);
-  const target = useMint(bonding?.targetMint);
-  const { info: baseStorage } = useTokenAccount(bonding?.baseStorage);
-  const pricing = useMemo(
-    () =>
-      curve &&
-      base &&
-      target &&
-      baseStorage &&
-      fromCurve(curve, baseStorage, base, target),
-    [curve, baseStorage, base, target]
-  );
-  const loading = useMemo(
-    () => curveLoading || bondingLoading,
-    [curveLoading, bondingLoading]
-  );
+  const {
+    result: pricing,
+    loading,
+    error,
+  } = useAsync(getPricing, [tokenBondingSdk, tokenBonding, reserves]);
 
   return {
-    curve: pricing,
+    pricing: pricing || undefined,
+    tokenBonding: tokenBondingAcct,
     loading,
+    error,
   };
 }
+
+const tokenBondingKey = async (
+  mint: PublicKey | undefined | null,
+  index: number
+): Promise<PublicKey | null | undefined> =>
+  mint && (await SplTokenBonding.tokenBondingKey(mint, index))[0];
 
 /**
  * Same as {@link useBondingPricing}, just from a mint instead of the token bonding key
@@ -126,66 +128,17 @@ export function useBondingPricing(
  * @returns
  */
 export function useBondingPricingFromMint(
-  mint: PublicKey | undefined,
+  mint: PublicKey | undefined | null,
   index?: number | undefined
 ): PricingState {
-  const { result: key, loading } = useAsync(
-    async (mint: PublicKey | undefined, index: number) =>
-      mint && SplTokenBonding.tokenBondingKey(mint, index),
-    [mint, index || 0]
-  );
-  const bondingPricing = useBondingPricing(key && key[0]);
+  const { result: key, loading } = useAsync(tokenBondingKey, [
+    mint,
+    index || 0,
+  ]);
+  const bondingPricing = useBondingPricing(key);
 
   return {
     ...bondingPricing,
     loading: bondingPricing.loading || loading,
   };
-}
-
-export const useMarketPrice = (
-  marketAddress: PublicKey
-): number | undefined => {
-  const [price, setPrice] = useState<number>();
-  useEffect(() => {
-    const fetch = async () => {
-      try {
-        let market = await Market.load(
-          connection,
-          marketAddress,
-          undefined,
-          SERUM_PROGRAM_ID
-        );
-        const book = await market.loadAsks(connection);
-        const top = book.items(false).next().value as Order;
-        setPrice(top.price);
-      } catch (e) {
-        console.error(e);
-      }
-    };
-
-    fetch();
-
-    const interval = setInterval(fetch, 30 * 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return price;
-};
-
-export function useFiatPrice(token: PublicKey | undefined): number | undefined {
-  const solPrice = useSolPrice();
-  const { curve } = useBondingPricingFromMint(token);
-
-  const [price, setPrice] = useState<number>();
-
-  useEffect(() => {
-    if (token?.toBase58() == SOL_TOKEN.toBase58()) {
-      setPrice(solPrice);
-    } else {
-      // TODO: This is not in sol, so not correct
-      setPrice(curve?.current());
-    }
-  }, [token, solPrice, curve]);
-
-  return price;
 }
