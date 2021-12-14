@@ -29,12 +29,16 @@ export async function getClaimedTokenRefKeyForName(
   const [registry, dispose] = await cache.searchAndWatch(
     key,
     (pubkey, account) => {
-      const info = deserializeUnchecked(NameRegistryState.schema, NameRegistryState, account.data);
+      const info = deserializeUnchecked(
+        NameRegistryState.schema,
+        NameRegistryState,
+        account.data
+      );
       return {
         pubkey,
         account,
         info,
-      }
+      };
     },
     true
   );
