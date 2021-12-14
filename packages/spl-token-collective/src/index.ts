@@ -19,6 +19,7 @@ import {
 } from "@solana/web3.js";
 import {
   ICreateTokenBondingArgs,
+  ITokenBonding,
   IUpdateTokenBondingArgs,
   SplTokenBonding,
 } from "@strata-foundation/spl-token-bonding";
@@ -49,6 +50,7 @@ export * from "./generated/spl-token-collective";
 export interface ITokenWithMetaAndAccount extends ITokenWithMeta {
   publicKey?: PublicKey;
   tokenRef?: ITokenRef;
+  tokenBonding?: ITokenBonding;
   account?: TokenAccountInfo;
 }
 
@@ -1369,12 +1371,17 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
         );
         const ownerTokenRef =
           account && this.tokenRefDecoder(mintTokenRefKey, account);
-
+        const tokenBondingKey = (await SplTokenBonding.tokenBondingKey(info.mint))[0];
+        const tokenBondingAccount = await this.provider.connection.getAccountInfo(
+          tokenBondingKey
+        );
+        const tokenBonding = tokenBondingAccount && this.splTokenBondingProgram.tokenBondingDecoder(tokenBondingKey, tokenBondingAccount)
         return {
           ...(await this.splTokenMetadata.getTokenMetadata(
             new PublicKey(metadataKey)
           )),
-          ownerTokenRef: ownerTokenRef || undefined,
+          tokenRef: ownerTokenRef || undefined,
+          tokenBonding: tokenBonding || undefined,
           publicKey: pubkey,
           account: info,
         };

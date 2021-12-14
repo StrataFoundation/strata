@@ -114,6 +114,7 @@ pub mod spl_token_collective {
     primary_token_ref.token_bonding = token_ref.token_bonding;
     primary_token_ref.name = token_ref.name;
     primary_token_ref.owner = token_ref.owner;
+    primary_token_ref.authority = token_ref.authority;
     primary_token_ref.is_claimed = token_ref.is_claimed;
     primary_token_ref.is_primary = true;
     primary_token_ref.bump_seed = args.bump_seed;
@@ -388,7 +389,11 @@ pub mod spl_token_collective {
     })?;
 
     let config = &ctx.accounts.collective.config;
-    let token_bonding_settings_opt = config.unclaimed_token_bonding_settings.as_ref();
+    let token_bonding_settings_opt = if ctx.accounts.mint_token_ref.is_claimed {
+      config.claimed_token_bonding_settings.as_ref()
+    } else {
+      config.unclaimed_token_bonding_settings.as_ref()
+    };
     if token_bonding_settings_opt.is_some() {
       verify_token_bonding_defaults(&token_bonding_settings_opt.unwrap(), &ctx.accounts.token_bonding)?;
       verify_token_bonding_royalties(
