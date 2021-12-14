@@ -171,10 +171,13 @@ export const SwapForm = ({
     );
 
   const handleFlipTokens = () => {
-    onTradingMintsChange({
-      base: target?.publicKey,
-      target: base?.publicKey,
-    });
+    if (base && target) {
+      onTradingMintsChange({
+        base: target.publicKey,
+        target: base.publicKey,
+      });
+    }
+    
     reset();
   };
 
