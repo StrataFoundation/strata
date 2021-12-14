@@ -91,3 +91,9 @@ pub struct UpdateTokenBondingV0ArgsWrapper {
 pub struct SetAsPrimaryV0Args {
  pub bump_seed: u8 
 }
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
+pub struct ChangeOptStatusUnclaimedV0Args {
+  pub hashed_name: Vec<u8>,
+  pub is_opted_out: bool
+}

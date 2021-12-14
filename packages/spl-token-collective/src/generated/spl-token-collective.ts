@@ -400,7 +400,7 @@ export const SplTokenCollectiveIDLJson: Idl & {
         },
         {
           name: "owner",
-          isMut: true,
+          isMut: false,
           isSigner: true,
         },
         {
@@ -561,6 +561,79 @@ export const SplTokenCollectiveIDLJson: Idl & {
         },
       ],
     },
+    {
+      name: "changeOptStatusUnclaimedV0",
+      accounts: [
+        {
+          name: "ownerTokenRef",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "mintTokenRef",
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: "name",
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: "tokenBondingUpdateAccounts",
+          accounts: [
+            {
+              name: "tokenBonding",
+              isMut: true,
+              isSigner: false,
+            },
+            {
+              name: "baseMint",
+              isMut: false,
+              isSigner: false,
+            },
+            {
+              name: "targetMint",
+              isMut: false,
+              isSigner: false,
+            },
+            {
+              name: "buyBaseRoyalties",
+              isMut: false,
+              isSigner: false,
+            },
+            {
+              name: "buyTargetRoyalties",
+              isMut: false,
+              isSigner: false,
+            },
+            {
+              name: "sellBaseRoyalties",
+              isMut: false,
+              isSigner: false,
+            },
+            {
+              name: "sellTargetRoyalties",
+              isMut: false,
+              isSigner: false,
+            },
+          ],
+        },
+        {
+          name: "tokenBondingProgram",
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: "args",
+          type: {
+            defined: "ChangeOptStatusUnclaimedV0Args",
+          },
+        },
+      ],
+    },
   ],
   accounts: [
     {
@@ -649,6 +722,10 @@ export const SplTokenCollectiveIDLJson: Idl & {
           {
             name: "targetRoyaltiesOwnerBumpSeed",
             type: "u8",
+          },
+          {
+            name: "isOptedOut",
+            type: "bool",
           },
         ],
       },
@@ -1000,6 +1077,22 @@ export const SplTokenCollectiveIDLJson: Idl & {
       },
     },
     {
+      name: "ChangeOptStatusUnclaimedV0Args",
+      type: {
+        kind: "struct",
+        fields: [
+          {
+            name: "hashedName",
+            type: "bytes",
+          },
+          {
+            name: "isOptedOut",
+            type: "bool",
+          },
+        ],
+      },
+    },
+    {
       name: "UpdateMetadataAccountArgs",
       type: {
         kind: "struct",
@@ -1068,6 +1161,11 @@ export const SplTokenCollectiveIDLJson: Idl & {
     },
     {
       code: 309,
+      name: "InvalidNameAuthority",
+      msg: "Invalid name authority passed",
+    },
+    {
+      code: 310,
       name: "UnclaimedNotLive",
       msg: "Unclaimed tokens cannot have a go live date in the future. They must be immediately live.",
     },
@@ -1187,7 +1285,7 @@ export type SplTokenCollectiveIDL = {
         { name: "tokenBonding"; isMut: true; isSigner: false },
         { name: "tokenMetadata"; isMut: true; isSigner: false },
         { name: "name"; isMut: false; isSigner: false },
-        { name: "owner"; isMut: true; isSigner: true },
+        { name: "owner"; isMut: false; isSigner: true },
         { name: "baseMint"; isMut: false; isSigner: false },
         { name: "targetMint"; isMut: false; isSigner: false },
         { name: "buyBaseRoyalties"; isMut: true; isSigner: false },
@@ -1225,6 +1323,30 @@ export type SplTokenCollectiveIDL = {
       args: [
         { name: "args"; type: { defined: "UpdateTokenBondingV0ArgsWrapper" } }
       ];
+    },
+    {
+      name: "changeOptStatusUnclaimedV0";
+      accounts: [
+        { name: "ownerTokenRef"; isMut: true; isSigner: false },
+        { name: "mintTokenRef"; isMut: true; isSigner: false },
+        { name: "name"; isMut: false; isSigner: false },
+        {
+          name: "tokenBondingUpdateAccounts";
+          accounts: [
+            { name: "tokenBonding"; isMut: true; isSigner: false },
+            { name: "baseMint"; isMut: false; isSigner: false },
+            { name: "targetMint"; isMut: false; isSigner: false },
+            { name: "buyBaseRoyalties"; isMut: false; isSigner: false },
+            { name: "buyTargetRoyalties"; isMut: false; isSigner: false },
+            { name: "sellBaseRoyalties"; isMut: false; isSigner: false },
+            { name: "sellTargetRoyalties"; isMut: false; isSigner: false }
+          ];
+        },
+        { name: "tokenBondingProgram"; isMut: false; isSigner: false }
+      ];
+      args: [
+        { name: "args"; type: { defined: "ChangeOptStatusUnclaimedV0Args" } }
+      ];
     }
   ];
   accounts: [
@@ -1255,7 +1377,8 @@ export type SplTokenCollectiveIDL = {
           { name: "isClaimed"; type: "bool" },
           { name: "isPrimary"; type: "bool" },
           { name: "bumpSeed"; type: "u8" },
-          { name: "targetRoyaltiesOwnerBumpSeed"; type: "u8" }
+          { name: "targetRoyaltiesOwnerBumpSeed"; type: "u8" },
+          { name: "isOptedOut"; type: "bool" }
         ];
       };
     }
@@ -1397,6 +1520,16 @@ export type SplTokenCollectiveIDL = {
       type: { kind: "struct"; fields: [{ name: "bumpSeed"; type: "u8" }] };
     },
     {
+      name: "ChangeOptStatusUnclaimedV0Args";
+      type: {
+        kind: "struct";
+        fields: [
+          { name: "hashedName"; type: "bytes" },
+          { name: "isOptedOut"; type: "bool" }
+        ];
+      };
+    },
+    {
       name: "UpdateMetadataAccountArgs";
       type: {
         kind: "struct";
@@ -1440,6 +1573,11 @@ export type SplTokenCollectiveIDL = {
     { code: 308; name: "InvalidCollective"; msg: "Invalid collective" },
     {
       code: 309;
+      name: "InvalidNameAuthority";
+      msg: "Invalid name authority passed";
+    },
+    {
+      code: 310;
       name: "UnclaimedNotLive";
       msg: "Unclaimed tokens cannot have a go live date in the future. They must be immediately live.";
     }

@@ -26,4 +26,6 @@ pub struct TokenRefV0 {
 
     pub bump_seed: u8,
     pub target_royalties_owner_bump_seed: u8,
+
+    pub is_opted_out: bool
 }

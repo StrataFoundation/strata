@@ -1,4 +1,5 @@
 use anchor_lang::{prelude::*, solana_program, solana_program::system_program};
+use spl_token_bonding::account::UpdateTokenBondingV0;
 use spl_token_bonding::state::TokenBondingV0;
 use crate::arg::*;
 use crate::name::NameRecordHeader;
@@ -35,43 +36,6 @@ pub fn close_token_account<'a, 'b, 'c, 'info>(
         ],
         ctx.signer_seeds,
     )
-}
-
-#[derive(Clone)]
-pub struct OptionalCollectiveV0 {
-  pub collective: Option<CollectiveV0>
-}
-
-impl AccountDeserialize for OptionalCollectiveV0 {
-  fn try_deserialize(buf: &mut &[u8]) -> core::result::Result<Self, ProgramError> {
-    if buf.len() == 0 {
-      Ok(OptionalCollectiveV0 {
-        collective: None
-      })
-    } else {
-      Ok(OptionalCollectiveV0 {
-        collective: Some(CollectiveV0::try_deserialize(buf)?)
-      })
-    }
-  }
-
-  fn try_deserialize_unchecked(buf: &mut &[u8]) -> core::result::Result<Self, ProgramError> {
-    if buf.len() == 0 {
-      Ok(OptionalCollectiveV0 {
-        collective: None
-      })
-    } else {
-      Ok(OptionalCollectiveV0 {
-        collective: Some(CollectiveV0::try_deserialize_unchecked(buf)?)
-      })
-    }
-  }
-}
-
-impl AccountSerialize for OptionalCollectiveV0 {
-  fn try_serialize<W: std::io::Write>(&self, writer: &mut W) -> core::result::Result<(), ProgramError> {
-    CollectiveV0::try_serialize(&self.collective.to_owned().unwrap(), writer)
-  }
 }
 
 #[derive(Accounts)]
@@ -233,9 +197,6 @@ pub struct InitializeUnclaimedSocialTokenV0<'info> {
     // Deserialize name account checked in token metadata constraint
     constraint = (*name.to_account_info().owner == system_program::ID && **name.try_borrow_lamports()? == 0_u64) || *name.to_account_info().owner == spl_name_service::ID,
   )]
-  #[account(
-    // Deserialize name account checked in token metadata constraint
-  )]
   pub name: AccountInfo<'info>,
   pub system_program: Program<'info, System>,
   pub rent: Sysvar<'info, Rent>,
@@ -387,9 +348,7 @@ pub struct ClaimSocialTokenV0<'info> {
     has_one = owner
   )]
   pub name: Box<Account<'info, NameRecordHeader>>,
-  #[account(
-    mut
-  )]
+  #[account()]
   pub owner: Signer<'info>,
 
   pub base_mint: Box<Account<'info, Mint>>,
@@ -419,4 +378,58 @@ pub struct ClaimSocialTokenV0<'info> {
   pub token_metadata_program: AccountInfo<'info>,
   pub system_program: Program<'info, System>,
   pub rent: Sysvar<'info, Rent>,
+}
+
+#[derive(Accounts)]
+pub struct StaticUpdateTokenBondingV0<'info> {
+  #[account(
+    mut,
+    has_one = base_mint,
+    has_one = target_mint,
+    has_one = buy_base_royalties,
+    has_one = sell_base_royalties,
+    has_one = buy_target_royalties,
+    has_one = sell_target_royalties,
+  )]
+  pub token_bonding: Box<Account<'info, TokenBondingV0>>,
+  pub base_mint: Box<Account<'info, Mint>>,
+  pub target_mint: Box<Account<'info, Mint>>,
+  pub buy_base_royalties: Box<Account<'info, TokenAccount>>,
+  pub buy_target_royalties: Box<Account<'info, TokenAccount>>,
+  pub sell_base_royalties: Box<Account<'info, TokenAccount>>,
+  pub sell_target_royalties: Box<Account<'info, TokenAccount>>,
+}
+
+#[derive(Accounts)]
+#[instruction(args: ChangeOptStatusUnclaimedV0Args)]
+pub struct ChangeOptStatusUnclaimedV0<'info> {
+  #[account(
+    mut,
+    seeds = [
+      b"owner-token-ref",
+      name.key().as_ref(),
+      token_bonding_update_accounts.base_mint.key().as_ref()
+    ],
+    bump = owner_token_ref.bump_seed,
+  )]
+  pub owner_token_ref: Account<'info, TokenRefV0>,
+  #[account(
+    mut,
+    seeds = [
+      b"mint-token-ref",
+      token_bonding_update_accounts.target_mint.key().as_ref()
+    ],
+    bump = mint_token_ref.bump_seed
+  )]
+  pub mint_token_ref: Account<'info, TokenRefV0>,
+  #[account(
+    constraint = mint_token_ref.name.is_none() || (
+      // name is the name on the token ref
+      mint_token_ref.name.unwrap() == name.key()
+    ) @ ErrorCode::InvalidNameAuthority
+  )]
+  pub name: UncheckedAccount<'info>,
+  pub token_bonding_update_accounts: StaticUpdateTokenBondingV0<'info>,
+  #[account(address = spl_token_bonding::id())]
+  pub token_bonding_program: AccountInfo<'info>,
 }

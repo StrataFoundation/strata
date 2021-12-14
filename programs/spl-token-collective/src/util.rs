@@ -1,5 +1,7 @@
+use std::cell::BorrowError;
+
 use anchor_lang::{prelude::*, solana_program::hash::hashv};
-use crate::error::ErrorCode;
+use crate::{error::ErrorCode, name::NameRecordHeader};
 use crate::arg::*;
 use spl_token_bonding::state::TokenBondingV0;
 use anchor_spl::token::{TokenAccount};
@@ -44,6 +46,11 @@ pub fn get_seeds_and_key(
   seeds_vec.push(bump);
 
   (name_account_key, seeds_vec)
+}
+
+pub fn get_name<'info>(name_parent: &AccountInfo<'info>) -> Result<NameRecordHeader, ProgramError> {
+  let mut data: &[u8] = &name_parent.data.try_borrow().map_err(|_| ProgramError::AccountBorrowFailed)?;
+  NameRecordHeader::try_deserialize(&mut data)
 }
 
 pub fn verify_name(name: &AccountInfo, name_class: Option<Pubkey>, name_parent: Option<Pubkey>, expected: &String) -> Result<bool, ProgramError> {

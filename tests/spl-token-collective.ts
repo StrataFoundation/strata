@@ -116,7 +116,7 @@ describe("spl-token-collective", () => {
     let unclaimedReverseTokenRef: PublicKey;
     let name: PublicKey;
     let nameClass = Keypair.generate();
-    const tokenName = "test-handle";
+    let tokenName = "test-handle";
 
     async function create(tokenName: string) {
       const connection = provider.connection;
@@ -186,7 +186,30 @@ describe("spl-token-collective", () => {
       );
     });
 
+
+    it("Allows opting out, which freezes the curve", async () => {
+      const { instructions, signers } = await tokenCollectiveProgram.optOutInstructions({
+        tokenRef: unclaimedTokenRef,
+        handle: tokenName
+      });
+      await tokenCollectiveProgram.sendInstructions(instructions, [...signers, nameClass]);
+      const ownerTokenRef = (await tokenCollectiveProgram.getTokenRef(
+        unclaimedTokenRef
+      ))!;
+      const tokenBonding = (await splTokenBondingProgram.getTokenBonding(
+        ownerTokenRef.tokenBonding!
+      ))!;
+      const mintTokenRef = (await tokenCollectiveProgram.getTokenRef(
+        (await SplTokenCollective.mintTokenRefKey(tokenBonding.targetMint))[0]
+      ))!;
+      expect(tokenBonding.buyFrozen).to.be.true;
+      expect(ownerTokenRef.isOptedOut).to.be.true;
+      expect(mintTokenRef.isOptedOut).to.be.true;
+    });
+
     it("Allows claiming, which by default sets new rewards to my account and transfers rewards from any accounts with owned_by_name", async () => {
+      tokenName = "claim-test";
+      await create(tokenName);
       const ownerTokenRef = (await tokenCollectiveProgram.getTokenRef(
         unclaimedTokenRef
       ))!;
