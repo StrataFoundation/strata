@@ -44,7 +44,6 @@ export async function getClaimedTokenRefKeyForName(
   );
   setTimeout(dispose, 30 * 1000); // Keep this state around for 30s
 
-  console.log("reg", registry);
   return (
     await SplTokenCollective.ownerTokenRefKey({
       owner: registry?.info.owner,
