@@ -8,7 +8,7 @@ function sanitizeSolMint(mint: PublicKey): PublicKey {
   }
 
   return mint;
-};
+}
 
 export class BondingHierarchy {
   parent?: BondingHierarchy;
@@ -60,7 +60,9 @@ export class BondingHierarchy {
    */
   path(one: PublicKey, two: PublicKey): BondingHierarchy[] {
     const lowest = this.lowest(one, two);
-    const highest = lowest.equals(one) ? sanitizeSolMint(two) : sanitizeSolMint(one);
+    const highest = lowest.equals(one)
+      ? sanitizeSolMint(two)
+      : sanitizeSolMint(one);
     const arr = this.toArray();
     const lowIdx = arr.findIndex((h) =>
       h.tokenBonding.targetMint.equals(lowest)
@@ -93,6 +95,8 @@ export class BondingHierarchy {
         h.tokenBonding.targetMint.toBase58(),
       ])
     );
-    return mints.every((mint) => availableMints.has(sanitizeSolMint(mint).toBase58()));
+    return mints.every((mint) =>
+      availableMints.has(sanitizeSolMint(mint).toBase58())
+    );
   }
 }
