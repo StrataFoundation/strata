@@ -177,7 +177,7 @@ export const SwapForm = ({
         target: base.publicKey,
       });
     }
-    
+
     reset();
   };
 
