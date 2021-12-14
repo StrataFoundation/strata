@@ -154,7 +154,6 @@ export const useSwapDriver = (
 
   useEffect(() => {
     if (tokenBonding && targetMintAcct && pricing) {
-      console.log("IM EFFECTING 1");
       const purchaseCap = tokenBonding.purchaseCap
         ? amountAsNum(tokenBonding.purchaseCap as u64, targetMintAcct)
         : Number.POSITIVE_INFINITY;

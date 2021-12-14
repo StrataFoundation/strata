@@ -22,7 +22,6 @@ export const Swap = React.memo(
     });
     React.useEffect(() => {
       if ((!tradingMints.base || !tradingMints.target) && tokenBonding) {
-        console.log("IM EFFECTING 2");
         setTradingMints({
           base: tokenBonding.baseMint,
           target: tokenBonding.targetMint,
