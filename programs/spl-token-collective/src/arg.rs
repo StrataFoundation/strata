@@ -1,5 +1,4 @@
-use anchor_lang::{prelude::*, solana_program::system_program};
-
+use anchor_lang::prelude::*;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct ClaimSocialTokenV0Args {
@@ -10,15 +9,15 @@ pub struct ClaimSocialTokenV0Args {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct InitializeCollectiveV0Args {
-    pub bump_seed: u8,
-    pub authority: Option<Pubkey>,
-    pub config: CollectiveConfigV0
+  pub bump_seed: u8,
+  pub authority: Option<Pubkey>,
+  pub config: CollectiveConfigV0,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct UpdateCollectiveV0Args {
-    pub authority: Option<Pubkey>,
-    pub config: CollectiveConfigV0
+  pub authority: Option<Pubkey>,
+  pub config: CollectiveConfigV0,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
@@ -31,9 +30,9 @@ pub struct CollectiveConfigV0 {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct TokenMetadataSettingsV0 {
-    pub symbol: Option<String>,
-    pub uri: Option<String>,
-    pub name_is_name_service_name: bool
+  pub symbol: Option<String>,
+  pub uri: Option<String>,
+  pub name_is_name_service_name: bool,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
@@ -44,24 +43,24 @@ pub struct RoyaltySettingV0 {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct TokenBondingSettingsV0 {
-    pub curve: Option<Pubkey>,
-    pub min_sell_base_royalty_percentage: Option<u32>,
-    pub min_sell_target_royalty_percentage: Option<u32>,
-    pub max_sell_base_royalty_percentage: Option<u32>,
-    pub max_sell_target_royalty_percentage: Option<u32>,
-    pub min_buy_base_royalty_percentage: Option<u32>,
-    pub min_buy_target_royalty_percentage: Option<u32>,
-    pub max_buy_base_royalty_percentage: Option<u32>,
-    pub max_buy_target_royalty_percentage: Option<u32>,
-    pub target_mint_decimals: Option<u8>,
-    pub buy_base_royalties: RoyaltySettingV0,
-    pub sell_base_royalties: RoyaltySettingV0,
-    pub buy_target_royalties: RoyaltySettingV0,
-    pub sell_target_royalties: RoyaltySettingV0,
-    pub min_purchase_cap: Option<u64>,
-    pub max_purchase_cap: Option<u64>,
-    pub min_mint_cap: Option<u64>,
-    pub max_mint_cap: Option<u64>,
+  pub curve: Option<Pubkey>,
+  pub min_sell_base_royalty_percentage: Option<u32>,
+  pub min_sell_target_royalty_percentage: Option<u32>,
+  pub max_sell_base_royalty_percentage: Option<u32>,
+  pub max_sell_target_royalty_percentage: Option<u32>,
+  pub min_buy_base_royalty_percentage: Option<u32>,
+  pub min_buy_target_royalty_percentage: Option<u32>,
+  pub max_buy_base_royalty_percentage: Option<u32>,
+  pub max_buy_target_royalty_percentage: Option<u32>,
+  pub target_mint_decimals: Option<u8>,
+  pub buy_base_royalties: RoyaltySettingV0,
+  pub sell_base_royalties: RoyaltySettingV0,
+  pub buy_target_royalties: RoyaltySettingV0,
+  pub sell_target_royalties: RoyaltySettingV0,
+  pub min_purchase_cap: Option<u64>,
+  pub max_purchase_cap: Option<u64>,
+  pub min_mint_cap: Option<u64>,
+  pub max_mint_cap: Option<u64>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
@@ -73,7 +72,6 @@ pub struct InitializeSocialTokenV0Args {
   pub owner_token_ref_bump_seed: u8,
   pub mint_token_ref_bump_seed: u8,
 }
-
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct UpdateTokenBondingV0ArgsWrapper {
@@ -89,11 +87,11 @@ pub struct UpdateTokenBondingV0ArgsWrapper {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct SetAsPrimaryV0Args {
- pub bump_seed: u8 
+  pub bump_seed: u8,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct ChangeOptStatusUnclaimedV0Args {
   pub hashed_name: Vec<u8>,
-  pub is_opted_out: bool
+  pub is_opted_out: bool,
 }

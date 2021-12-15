@@ -1170,6 +1170,9 @@ export const SplTokenCollectiveIDLJson: Idl & {
       msg: "Unclaimed tokens cannot have a go live date in the future. They must be immediately live.",
     },
   ],
+  metadata: {
+    address: "TCo1sP6RwuCuyHPHjxgzcrq4dX4BKf9oRQ3aJMcdFry",
+  },
 };
 export type SplTokenCollectiveIDL = {
   version: "0.0.0";
@@ -1582,6 +1585,7 @@ export type SplTokenCollectiveIDL = {
       msg: "Unclaimed tokens cannot have a go live date in the future. They must be immediately live.";
     }
   ];
+  metadata: { address: "TCo1sP6RwuCuyHPHjxgzcrq4dX4BKf9oRQ3aJMcdFry" };
 };
 
 export type CollectiveV0 = IdlAccounts<SplTokenCollectiveIDL>["collectiveV0"];

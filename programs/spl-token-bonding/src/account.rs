@@ -1,37 +1,38 @@
-use anchor_lang::{prelude::*, solana_program, solana_program::{system_program, system_instruction, program::{invoke_signed, invoke}}};
+#![allow(clippy::or_fun_call)]
+
 use crate::arg::*;
-use crate::state::*;
 use crate::error::ErrorCode;
-use crate::util::*;
-use anchor_spl::{token, token::{Mint, Token, TokenAccount}};
+use crate::state::*;
+use anchor_lang::{prelude::*, solana_program};
+use anchor_spl::token::{Mint, Token, TokenAccount};
 
 #[derive(Accounts)]
 pub struct CloseTokenAccount<'info> {
-    pub from: AccountInfo<'info>,
-    pub to: AccountInfo<'info>,
-    pub authority: AccountInfo<'info>,
+  pub from: AccountInfo<'info>,
+  pub to: AccountInfo<'info>,
+  pub authority: AccountInfo<'info>,
 }
 
 pub fn close_token_account<'a, 'b, 'c, 'info>(
-    ctx: CpiContext<'a, 'b, 'c, 'info, CloseTokenAccount<'info>>,
+  ctx: CpiContext<'a, 'b, 'c, 'info, CloseTokenAccount<'info>>,
 ) -> ProgramResult {
-    let ix = spl_token::instruction::close_account(
-        &spl_token::ID,
-        ctx.accounts.from.key,
-        ctx.accounts.to.key,
-        ctx.accounts.authority.key,
-        &[],
-    )?;
-    solana_program::program::invoke_signed(
-        &ix,
-        &[
-            ctx.accounts.from.clone(),
-            ctx.accounts.to.clone(),
-            ctx.accounts.authority.clone(),
-            ctx.program.clone(),
-        ],
-        ctx.signer_seeds,
-    )
+  let ix = spl_token::instruction::close_account(
+    &spl_token::ID,
+    ctx.accounts.from.key,
+    ctx.accounts.to.key,
+    ctx.accounts.authority.key,
+    &[],
+  )?;
+  solana_program::program::invoke_signed(
+    &ix,
+    &[
+      ctx.accounts.from.clone(),
+      ctx.accounts.to.clone(),
+      ctx.accounts.authority.clone(),
+      ctx.program.clone(),
+    ],
+    ctx.signer_seeds,
+  )
 }
 
 #[derive(Accounts)]
@@ -112,9 +113,7 @@ pub struct SellWrappedSolV0<'info> {
   )]
   pub source: Account<'info, TokenAccount>,
   pub owner: Signer<'info>,
-  #[account(
-    mut
-  )]
+  #[account(mut)]
   pub destination: AccountInfo<'info>,
   pub token_program: Program<'info, Token>,
   pub system_program: Program<'info, System>,
@@ -125,9 +124,7 @@ pub struct SellWrappedSolV0<'info> {
 pub struct InitializeCurveV0<'info> {
   #[account(mut, signer)]
   pub payer: AccountInfo<'info>,
-  #[account(
-    zero
-  )]
+  #[account(zero)]
   pub curve: Account<'info, CurveV0>,
   pub system_program: Program<'info, System>,
   pub rent: Sysvar<'info, Rent>,
@@ -211,9 +208,7 @@ pub struct CloseTokenBondingV0<'info> {
   )]
   pub general_authority: AccountInfo<'info>,
 
-  #[account(
-    mut
-  )]
+  #[account(mut)]
   pub target_mint: Box<Account<'info, Mint>>,
   #[account(mut)]
   pub base_storage: Box<Account<'info, TokenAccount>>,
@@ -254,7 +249,6 @@ pub struct UpdateTokenBondingV0<'info> {
   )] // Will init for you, since target mint doesn't exist yet.
   pub sell_target_royalties: Box<Account<'info, TokenAccount>>,
 }
-
 
 #[derive(Accounts)]
 pub struct BuyV0<'info> {

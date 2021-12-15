@@ -1,37 +1,39 @@
-use anchor_lang::{prelude::*, solana_program::system_program};
+use anchor_lang::prelude::*;
 
 #[error]
 pub enum ErrorCode {
-    #[msg("Provided account does not have an authority")]
-    NoAuthority,
+  #[msg("Provided account does not have an authority")]
+  NoAuthority,
 
-    #[msg("The bump provided did not match the canonical bump")]
-    InvalidBump,
+  #[msg("The bump provided did not match the canonical bump")]
+  InvalidBump,
 
-    #[msg("Invalid authority passed")]
-    InvalidAuthority,
+  #[msg("Invalid authority passed")]
+  InvalidAuthority,
 
-    #[msg("Bonding curve had invalid settings to join this collective")]
-    InvalidTokenBondingSettings,
+  #[msg("Bonding curve had invalid settings to join this collective")]
+  InvalidTokenBondingSettings,
 
-    #[msg("Bonding curve had invalid royalties accounts to join this collective")]
-    InvalidTokenBondingRoyalties,
+  #[msg("Bonding curve had invalid royalties accounts to join this collective")]
+  InvalidTokenBondingRoyalties,
 
-    #[msg("Unclaimed token had invalid metadata settings to join this collective")]
-    InvalidTokenMetadataSettings,
+  #[msg("Unclaimed token had invalid metadata settings to join this collective")]
+  InvalidTokenMetadataSettings,
 
-    #[msg("Incorrect owner on account")]
-    IncorrectOwner,
+  #[msg("Incorrect owner on account")]
+  IncorrectOwner,
 
-    #[msg("Token is not on a bonding curve")]
-    NoBonding,
+  #[msg("Token is not on a bonding curve")]
+  NoBonding,
 
-    #[msg("Invalid collective")]
-    InvalidCollective,
+  #[msg("Invalid collective")]
+  InvalidCollective,
 
-    #[msg("Invalid name authority passed")]
-    InvalidNameAuthority,
-    
-    #[msg("Unclaimed tokens cannot have a go live date in the future. They must be immediately live.")]
-    UnclaimedNotLive
+  #[msg("Invalid name authority passed")]
+  InvalidNameAuthority,
+
+  #[msg(
+    "Unclaimed tokens cannot have a go live date in the future. They must be immediately live."
+  )]
+  UnclaimedNotLive,
 }

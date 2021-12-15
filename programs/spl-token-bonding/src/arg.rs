@@ -1,5 +1,4 @@
-use anchor_lang::{prelude::*};
-
+use anchor_lang::prelude::*;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct InitializeTokenBondingV0Args {
@@ -38,7 +37,7 @@ pub struct UpdateTokenBondingV0Args {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct BuyWithBaseV0Args {
   pub base_amount: u64,
-  pub minimum_target_amount: u64
+  pub minimum_target_amount: u64,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
@@ -48,15 +47,14 @@ pub struct BuyTargetAmountV0Args {
   // Target royalties are taken out of the total purchased amount. Base royalties inflate the purchase price.
   pub target_amount: u64,
   // Maximum price to pay for this amount. Allows users to account and fail-fast for slippage.
-  pub maximum_price: u64
+  pub maximum_price: u64,
 }
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct BuyV0Args {
   pub buy_with_base: Option<BuyWithBaseV0Args>,
   pub buy_target_amount: Option<BuyTargetAmountV0Args>,
-  pub root_estimates: Option<[u128; 2]> // Required when computing an exponential. Greatly assists with newtonian root approximation, saving compute units
+  pub root_estimates: Option<[u128; 2]>, // Required when computing an exponential. Greatly assists with newtonian root approximation, saving compute units
 }
-
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct SellV0Args {
@@ -64,33 +62,31 @@ pub struct SellV0Args {
   pub target_amount: u64,
   // Minimum price to receive for this amount. Allows users to account and fail-fast for slippage.
   pub minimum_price: u64,
-  pub root_estimates: Option<[u128; 2]> // Required when computing an exponential. Greatly assists with newtonian root approximation, saving compute units
+  pub root_estimates: Option<[u128; 2]>, // Required when computing an exponential. Greatly assists with newtonian root approximation, saving compute units
 }
-
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct InitializeSolStorageV0Args {
   pub mint_authority_bump_seed: u8,
   pub sol_storage_bump_seed: u8,
-  pub bump_seed: u8
+  pub bump_seed: u8,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct BuyWrappedSolV0Args {
-  pub amount: u64
+  pub amount: u64,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct SellWrappedSolV0Args {
   pub amount: u64,
-  pub all: bool // Optional flag to just sell all of it.
+  pub all: bool, // Optional flag to just sell all of it.
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct CreateCurveV0Args {
-  pub definition: PiecewiseCurve
+  pub definition: PiecewiseCurve,
 }
-
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub enum PrimitiveCurve {
@@ -103,32 +99,30 @@ pub enum PrimitiveCurve {
     c: u128, // Constant multiplied by the curve formula. Used to set initial price, but gets cancelled out as more is injected into the reserves
     b: u128, // Constant added to the curve formula. Used to set initial price, but gets cancelled out as more is injected into the reserves
     pow: u8,
-    frac: u8
-  }
+    frac: u8,
+  },
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub enum PiecewiseCurve {
-  TimeV0 {
-    curves: Vec<TimeCurveV0>
-  }
+  TimeV0 { curves: Vec<TimeCurveV0> },
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct TimeCurveV0 {
   pub offset: i64,
-  pub curve: PrimitiveCurve
+  pub curve: PrimitiveCurve,
 }
 
 impl Default for PrimitiveCurve {
-    fn default() -> Self {
-        PrimitiveCurve::ExponentialCurveV0 {
-          c: 1,
-          b: 0,
-          pow: 1, // 1
-          frac: 1, // 1
-        }
+  fn default() -> Self {
+    PrimitiveCurve::ExponentialCurveV0 {
+      c: 1,
+      b: 0,
+      pow: 1,  // 1
+      frac: 1, // 1
     }
+  }
 }
 
 impl Default for PiecewiseCurve {
@@ -139,10 +133,10 @@ impl Default for PiecewiseCurve {
         curve: PrimitiveCurve::ExponentialCurveV0 {
           c: 1,
           b: 0,
-          pow: 1, // 1
+          pow: 1,  // 1
           frac: 1, // 1
-        }
-      }]
+        },
+      }],
     }
   }
 }

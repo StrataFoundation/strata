@@ -1,7 +1,6 @@
-use anchor_lang::{prelude::*, solana_program, solana_program::{system_program, system_instruction, program::{invoke_signed, invoke}}};
+use anchor_lang::prelude::*;
 
 use crate::arg::PiecewiseCurve;
-
 
 #[account]
 #[derive(Default)]
@@ -10,13 +9,13 @@ pub struct ProgramStateV0 {
   pub sol_storage: Pubkey,
   pub mint_authority_bump_seed: u8,
   pub sol_storage_bump_seed: u8,
-  pub bump_seed: u8
+  pub bump_seed: u8,
 }
 
 #[account]
 #[derive(Default)]
 pub struct CurveV0 {
-  pub definition: PiecewiseCurve
+  pub definition: PiecewiseCurve,
 }
 
 #[account]
@@ -38,7 +37,7 @@ pub struct TokenBondingV0 {
   pub buy_target_royalty_percentage: u32,
   pub sell_base_royalty_percentage: u32,
   pub sell_target_royalty_percentage: u32,
-  /// The bonding curve to use 
+  /// The bonding curve to use
   pub curve: Pubkey,
   pub mint_cap: Option<u64>,
   pub purchase_cap: Option<u64>,
@@ -47,7 +46,7 @@ pub struct TokenBondingV0 {
   pub created_at_unix_time: i64,
   pub buy_frozen: bool,
   pub sell_frozen: bool,
-  
+
   // Needed to derive the PDA of this instance
   pub index: u16,
   pub bump_seed: u8,

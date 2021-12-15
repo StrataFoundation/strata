@@ -1,6 +1,5 @@
 use anchor_lang::prelude::{ProgramError, Pubkey};
 use anchor_lang::solana_program::program_pack::Pack;
-use anchor_lang::{Accounts, CpiContext};
 use std::io::Write;
 use std::ops::Deref;
 
@@ -13,13 +12,13 @@ impl Deref for NameRecordHeader {
   type Target = spl_name_service::state::NameRecordHeader;
 
   fn deref(&self) -> &Self::Target {
-      &self.0
+    &self.0
   }
 }
 
 impl anchor_lang::AccountDeserialize for NameRecordHeader {
   fn try_deserialize(buf: &mut &[u8]) -> Result<Self, ProgramError> {
-      NameRecordHeader::try_deserialize_unchecked(buf)
+    NameRecordHeader::try_deserialize_unchecked(buf)
   }
 
   fn try_deserialize_unchecked(buf: &mut &[u8]) -> Result<Self, ProgramError> {
@@ -29,13 +28,13 @@ impl anchor_lang::AccountDeserialize for NameRecordHeader {
 
 impl anchor_lang::AccountSerialize for NameRecordHeader {
   fn try_serialize<W: Write>(&self, _writer: &mut W) -> Result<(), ProgramError> {
-      // no-op
-      Ok(())
+    // no-op
+    Ok(())
   }
 }
 
 impl anchor_lang::Owner for NameRecordHeader {
   fn owner() -> Pubkey {
-      ID
+    ID
   }
 }
