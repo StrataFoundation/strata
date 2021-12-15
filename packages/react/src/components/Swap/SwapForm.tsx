@@ -223,7 +223,7 @@ export const SwapForm = ({
     slippage,
   ]);
 
-  if (!base || !target || (connected && (!ownedBase || !pricing))) {
+  if (!base || !target || (connected && (typeof ownedBase == "undefined" || !pricing))) {
     return <Spinner />;
   }
 
