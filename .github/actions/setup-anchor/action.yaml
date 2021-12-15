@@ -20,5 +20,5 @@ runs:
     - uses: actions-rs/install@v0.1
       with:
         crate: anchor-cli
-        version: v0.1.18
+        version: 0.1.18
 
