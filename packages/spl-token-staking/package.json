@@ -21,7 +21,8 @@
     "scripts": {
         "build": "tsc --project tsconfig.json",
         "watch": "tsc --watch --project tsconfig.json",
-        "format": "prettier --write \"src/**/*.{ts,tsx}\""
+        "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+        "precommit": "git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' ."
     },
     "dependencies": {
         "@project-serum/common": "^0.0.1-beta.3",
@@ -31,6 +32,7 @@
         "semver": "^7.3.5"
     },
     "devDependencies": {
+        "git-format-staged": "^2.1.3",
         "style-loader": "^2.0.0",
         "ts-loader": "^9.2.3",
         "typescript": "^4.3.4"
