@@ -12,7 +12,7 @@ runs:
         with:
           path: |
             ./node_modules/
-          key: solana-${{ runner.os }}-v0000-${{ env.NODE_VERSION }}-${{ hashFiles('./ts/**/yarn.lock') }}
+          key: solana-${{ runner.os }}-v0000-${{ env.NODE_VERSION }}-${{ hashFiles('./packages/**/yarn.lock') }}
       - uses: actions/cache@v2
         name: Cache Typescript Dist
         id: cache-typescript-dist
@@ -22,7 +22,7 @@ runs:
             ./packages/docs/build/
             ./packages/react/dist/
             ./packages/**/dist/
-          key: solana-${{ runner.os }}-v0000-${{ env.NODE_VERSION }}-${{ hashFiles('./ts/**/*.ts') }}
+          key: solana-${{ runner.os }}-v0000-${{ env.NODE_VERSION }}-${{ hashFiles('./packages/**/*.ts') }}
       - run: yarn && ./node_modules/.bin/lerna bootstrap
         shell: bash
         if: steps.cache-typescript-node-modules.outputs.cache-hit != 'true'
