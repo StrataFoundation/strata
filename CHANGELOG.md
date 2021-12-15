@@ -5,17 +5,10 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ## [1.3.2](https://github.com/ChewingGlassFund/wumbo-programs/compare/v0.7.0...v1.3.2) (2021-12-15)
 
+### Fixed
+  * Swap form would show loading when you had zero balance
+
 **Note:** Version bump only for package @strata-foundation/strata
-
-
-
-
-
-# Changelog
-All notable changes to this project will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htmlq).
 
 #[1.3.1]
 
