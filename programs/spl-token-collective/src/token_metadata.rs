@@ -1,6 +1,8 @@
-use anchor_lang::prelude::{AnchorSerialize, AnchorDeserialize, ProgramError, ProgramResult, Pubkey};
-use anchor_lang::{Accounts, CpiContext, solana_program};
+use anchor_lang::prelude::{
+  AnchorDeserialize, AnchorSerialize, ProgramError, ProgramResult, Pubkey,
+};
 use anchor_lang::solana_program::account_info::AccountInfo;
+use anchor_lang::{solana_program, Accounts, CpiContext};
 use spl_token_metadata::state::Data;
 use spl_token_metadata::utils::try_from_slice_checked;
 use std::io::Write;
@@ -15,43 +17,47 @@ impl Deref for Metadata {
   type Target = spl_token_metadata::state::Metadata;
 
   fn deref(&self) -> &Self::Target {
-      &self.0
+    &self.0
   }
 }
 
 impl anchor_lang::AccountDeserialize for Metadata {
   fn try_deserialize(buf: &mut &[u8]) -> Result<Self, ProgramError> {
-      Metadata::try_deserialize_unchecked(buf)
+    Metadata::try_deserialize_unchecked(buf)
   }
 
   fn try_deserialize_unchecked(buf: &mut &[u8]) -> Result<Self, ProgramError> {
-    try_from_slice_checked(buf, spl_token_metadata::state::Key::MetadataV1, spl_token_metadata::state::MAX_METADATA_LEN).map(Metadata)
+    try_from_slice_checked(
+      buf,
+      spl_token_metadata::state::Key::MetadataV1,
+      spl_token_metadata::state::MAX_METADATA_LEN,
+    )
+    .map(Metadata)
   }
 }
 
 impl anchor_lang::AccountSerialize for Metadata {
   fn try_serialize<W: Write>(&self, _writer: &mut W) -> Result<(), ProgramError> {
-      // no-op
-      Ok(())
+    // no-op
+    Ok(())
   }
 }
 
 impl anchor_lang::Owner for Metadata {
   fn owner() -> Pubkey {
-      ID
+    ID
   }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct UpdateMetadataAccountArgs {
-    /// The name of the asset
-    pub name: String,
-    /// The symbol for the asset
-    pub symbol: String,
-    /// URI pointing to JSON representing the asset
-    pub uri: String,
+  /// The name of the asset
+  pub name: String,
+  /// The symbol for the asset
+  pub symbol: String,
+  /// URI pointing to JSON representing the asset
+  pub uri: String,
 }
-
 
 #[derive(Accounts)]
 pub struct UpdateMetadataAccount<'info> {
@@ -74,18 +80,18 @@ pub fn update_metadata_account<'a, 'b, 'c, 'info>(
       symbol: args.symbol,
       uri: args.uri,
       seller_fee_basis_points: 0,
-      creators: None
+      creators: None,
     }),
-    None
+    None,
   );
 
   solana_program::program::invoke_signed(
-      &ix,
-      &[
-        ctx.accounts.token_metadata.clone(),
-        ctx.accounts.update_authority.clone(),
-        ctx.program.clone()
-      ],
-      ctx.signer_seeds,
+    &ix,
+    &[
+      ctx.accounts.token_metadata.clone(),
+      ctx.accounts.update_authority.clone(),
+      ctx.program.clone(),
+    ],
+    ctx.signer_seeds,
   )
 }

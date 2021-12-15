@@ -1,41 +1,42 @@
-use anchor_lang::{prelude::*, solana_program, solana_program::system_program};
-use spl_token_bonding::account::UpdateTokenBondingV0;
-use spl_token_bonding::state::TokenBondingV0;
+#![allow(clippy::or_fun_call)]
+
 use crate::arg::*;
-use crate::name::NameRecordHeader;
-use crate::{token_metadata, token_metadata::Metadata};
-use crate::util::*;
-use crate::state::*;
 use crate::error::*;
+use crate::name::NameRecordHeader;
+use crate::state::*;
+use crate::util::*;
+use crate::{token_metadata, token_metadata::Metadata};
+use anchor_lang::{prelude::*, solana_program, solana_program::system_program};
 use anchor_spl::token::{Mint, Token, TokenAccount};
+use spl_token_bonding::state::TokenBondingV0;
 
 #[derive(Accounts)]
 pub struct CloseTokenAccount<'info> {
-    pub from: AccountInfo<'info>,
-    pub to: AccountInfo<'info>,
-    pub authority: AccountInfo<'info>,
+  pub from: AccountInfo<'info>,
+  pub to: AccountInfo<'info>,
+  pub authority: AccountInfo<'info>,
 }
 
 pub fn close_token_account<'a, 'b, 'c, 'info>(
-    ctx: CpiContext<'a, 'b, 'c, 'info, CloseTokenAccount<'info>>,
+  ctx: CpiContext<'a, 'b, 'c, 'info, CloseTokenAccount<'info>>,
 ) -> ProgramResult {
-    let ix = spl_token::instruction::close_account(
-        &spl_token::ID,
-        ctx.accounts.from.key,
-        ctx.accounts.to.key,
-        ctx.accounts.authority.key,
-        &[],
-    )?;
-    solana_program::program::invoke_signed(
-        &ix,
-        &[
-            ctx.accounts.from.clone(),
-            ctx.accounts.to.clone(),
-            ctx.accounts.authority.clone(),
-            ctx.program.clone(),
-        ],
-        ctx.signer_seeds,
-    )
+  let ix = spl_token::instruction::close_account(
+    &spl_token::ID,
+    ctx.accounts.from.key,
+    ctx.accounts.to.key,
+    ctx.accounts.authority.key,
+    &[],
+  )?;
+  solana_program::program::invoke_signed(
+    &ix,
+    &[
+      ctx.accounts.from.clone(),
+      ctx.accounts.to.clone(),
+      ctx.accounts.authority.clone(),
+      ctx.program.clone(),
+    ],
+    ctx.signer_seeds,
+  )
 }
 
 #[derive(Accounts)]
@@ -43,9 +44,9 @@ pub fn close_token_account<'a, 'b, 'c, 'info>(
 pub struct InitializeCollectiveV0<'info> {
   #[account(init, seeds = [
     b"collective", 
-    mint.key().as_ref()], 
+    mint.key().as_ref()],
     payer=payer,
-    bump=args.bump_seed, 
+    bump=args.bump_seed,
     space=312
   )]
   pub collective: Box<Account<'info, CollectiveV0>>,
@@ -110,14 +111,12 @@ pub struct InitializeSocialTokenV0<'info> {
   pub target_mint: Box<Account<'info, Mint>>,
   pub buy_base_royalties: Box<Account<'info, TokenAccount>>,
   pub buy_target_royalties: Box<Account<'info, TokenAccount>>,
-  pub sell_base_royalties: Box<Account<'info, TokenAccount>>,  
-  pub sell_target_royalties: Box<Account<'info, TokenAccount>>,  
+  pub sell_base_royalties: Box<Account<'info, TokenAccount>>,
+  pub sell_target_royalties: Box<Account<'info, TokenAccount>>,
   pub system_program: Program<'info, System>,
   pub rent: Sysvar<'info, Rent>,
-  pub clock: Sysvar<'info, Clock>
+  pub clock: Sysvar<'info, Clock>,
 }
-
-
 
 #[derive(Accounts)]
 #[instruction(args: InitializeSocialTokenV0Args)]
@@ -227,7 +226,6 @@ pub struct SetAsPrimaryV0<'info> {
   pub rent: Sysvar<'info, Rent>,
 }
 
-
 #[derive(Accounts)]
 #[instruction(args: UpdateTokenBondingV0ArgsWrapper)]
 pub struct UpdateTokenBondingV0Wrapper<'info> {
@@ -254,7 +252,6 @@ pub struct UpdateTokenBondingV0Wrapper<'info> {
 
   #[account(address = spl_token_bonding::id())]
   pub token_bonding_program: AccountInfo<'info>,
-
 
   #[account(
     constraint = *base_mint.to_account_info().owner == spl_token::ID

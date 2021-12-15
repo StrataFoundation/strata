@@ -45,5 +45,5 @@ pub enum ErrorCode {
   WrappedSolNotAllowed,
 
   #[msg("The provided curve is invalid")]
-  InvalidCurve
+  InvalidCurve,
 }
