@@ -44,13 +44,21 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
       - uses: actions/cache@v2
         name: Cache Cargo registry + index
-        id: cache-cargo-build
+        id: cache-cargo-registry
         with:
           path: |
             ~/.cargo/bin/
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            ./target/
           key: cargo-${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+      - uses: actions/cache@v2
+        name: Cache Builds
+        id: cache-cargo-builds
+        with:
+          path: |
+            ./target/
+            ./deps/metaplex/rust/target
+            ./deps/solana-program-library/target
+      - run: ~/.cargo/bin/anchor run build-deps
       - run: ~/.cargo/bin/anchor test
