@@ -1,6 +1,5 @@
 #![allow(clippy::or_fun_call)]
 
-
 use {
   anchor_lang::prelude::*,
   anchor_spl::token::{transfer, Transfer},
@@ -35,8 +34,8 @@ pub fn initialize_social_token_v0(
   if let Some(collective) = collective {
     if !collective.config.is_open {
       let authority = collective
-      .authority
-      .ok_or::<ProgramError>(ErrorCode::InvalidAuthority.into())?;
+        .authority
+        .ok_or::<ProgramError>(ErrorCode::InvalidAuthority.into())?;
       if accounts.authority.key() != authority || !accounts.authority.is_signer {
         return Err(ErrorCode::InvalidAuthority.into());
       }
@@ -144,10 +143,7 @@ pub mod spl_token_collective {
       .as_ref()
       .and_then(|c| c.config.claimed_token_bonding_settings.as_ref());
     if let Some(token_bonding_settings) = token_bonding_settings {
-      verify_token_bonding_defaults(
-        token_bonding_settings,
-        &initialize_args.token_bonding,
-      )?;
+      verify_token_bonding_defaults(token_bonding_settings, &initialize_args.token_bonding)?;
       verify_token_bonding_royalties(
         token_bonding_settings,
         &initialize_args.token_bonding,
@@ -417,10 +413,7 @@ pub mod spl_token_collective {
       .as_ref()
       .and_then(|c| c.config.unclaimed_token_bonding_settings.as_ref());
     if let Some(token_bonding_settings) = token_bonding_settings_opt {
-      verify_token_bonding_defaults(
-        token_bonding_settings,
-        &ctx.accounts.token_bonding,
-      )?;
+      verify_token_bonding_defaults(token_bonding_settings, &ctx.accounts.token_bonding)?;
       verify_token_bonding_royalties(
         token_bonding_settings_opt.unwrap(),
         &ctx.accounts.token_bonding,
@@ -479,10 +472,7 @@ pub mod spl_token_collective {
       config.unclaimed_token_bonding_settings.as_ref()
     };
     if let Some(token_bonding_settings) = token_bonding_settings_opt {
-      verify_token_bonding_defaults(
-        token_bonding_settings,
-        &ctx.accounts.token_bonding,
-      )?;
+      verify_token_bonding_defaults(token_bonding_settings, &ctx.accounts.token_bonding)?;
       verify_token_bonding_royalties(
         token_bonding_settings,
         &ctx.accounts.token_bonding,

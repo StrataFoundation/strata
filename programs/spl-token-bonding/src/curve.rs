@@ -2,7 +2,7 @@ use crate::{
   arg::{PiecewiseCurve, PrimitiveCurve},
   precise_number::{InnerUint, PreciseNumber, ONE_PREC, ZERO_PREC},
 };
-use anchor_lang::{solana_program::log::sol_log_compute_units};
+use anchor_lang::solana_program::log::sol_log_compute_units;
 use std::convert::*;
 
 pub trait Curve {
@@ -166,9 +166,7 @@ impl Curve for PrimitiveCurve {
               .checked_mul(&right_paren_value)
           } else if c == 0 {
             // R dS / S
-            base_amount
-              .checked_mul(amount)?
-              .checked_div(target_supply)
+            base_amount.checked_mul(amount)?.checked_div(target_supply)
           } else {
             None // Math is too hard, haven't implemented yet
           }

@@ -5,7 +5,6 @@ use anchor_lang::{prelude::*, solana_program};
 use anchor_spl::token::{self, Mint, MintTo, Token, TokenAccount, Transfer};
 use borsh::{BorshDeserialize, BorshSerialize};
 
-
 pub mod precise_number;
 pub mod uint;
 
@@ -131,9 +130,7 @@ pub fn close_token_account<'a, 'b, 'c, 'info>(
 
 #[program]
 pub mod spl_token_staking {
-  use anchor_lang::{
-    Key,
-  };
+  use anchor_lang::Key;
 
   use super::*;
   pub fn initialize_token_staking_v0(
@@ -353,8 +350,12 @@ pub mod spl_token_staking {
     staking.target_amount_per_period -= rewards_per_period;
     ctx.accounts.staking_info.target_amount_per_period -= rewards_per_period;
     if ctx.accounts.staking_info.max_voucher_number == staking.voucher_number {
-      ctx.accounts.staking_info.max_voucher_number =
-        ctx.accounts.staking_info.max_voucher_number.checked_sub(1).unwrap();
+      ctx.accounts.staking_info.max_voucher_number = ctx
+        .accounts
+        .staking_info
+        .max_voucher_number
+        .checked_sub(1)
+        .unwrap();
     }
     recalculate_staking_info(staking, &mut ctx.accounts.staking_info, unix_timestamp);
 

@@ -3,13 +3,8 @@
 use crate::arg::*;
 use crate::error::ErrorCode;
 use crate::state::*;
-use anchor_lang::{
-  prelude::*,
-  solana_program,
-};
-use anchor_spl::{
-  token::{Mint, Token, TokenAccount},
-};
+use anchor_lang::{prelude::*, solana_program};
+use anchor_spl::token::{Mint, Token, TokenAccount};
 
 #[derive(Accounts)]
 pub struct CloseTokenAccount<'info> {

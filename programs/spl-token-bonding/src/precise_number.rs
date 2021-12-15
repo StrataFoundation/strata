@@ -369,7 +369,7 @@ impl PreciseNumber {
 
   pub fn pow_frac_approximation(&self, pow: u8, frac: u8, guess: Self) -> Option<Self> {
     let pow_result = self.checked_pow(pow as u128)?;
-    
+
     pow_result.newtonian_root_approximation(
       &PreciseNumber::new(frac as u128)?,
       guess,

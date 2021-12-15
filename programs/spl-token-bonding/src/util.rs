@@ -1,4 +1,4 @@
-use crate::arg::{PiecewiseCurve};
+use crate::arg::PiecewiseCurve;
 use crate::error::ErrorCode;
 use crate::precise_number::{InnerUint, PreciseNumber};
 use crate::PrimitiveCurve;
@@ -91,9 +91,7 @@ pub fn to_mint_amount(amt: &PreciseNumber, mint: &Account<Mint>, ceil: bool) -> 
 
 pub fn primitive_curve_is_valid(curve: &PrimitiveCurve) -> bool {
   match *curve {
-    PrimitiveCurve::ExponentialCurveV0 { frac, c, b, pow: _ } => {
-      (c == 0 || b == 0) && frac > 0
-    }
+    PrimitiveCurve::ExponentialCurveV0 { frac, c, b, pow: _ } => (c == 0 || b == 0) && frac > 0,
   }
 }
 

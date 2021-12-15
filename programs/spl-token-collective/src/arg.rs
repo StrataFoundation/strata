@@ -1,4 +1,4 @@
-use anchor_lang::{prelude::*};
+use anchor_lang::prelude::*;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct ClaimSocialTokenV0Args {
