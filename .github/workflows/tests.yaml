@@ -54,12 +54,12 @@ jobs:
           key: cargo-${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions/cache@v2
         name: Cache Builds
-        key: cargo-${{ runner.os }}-cargo-build-${{ hashFiles('./deps/**/Cargo.lock') }}
         id: cache-cargo-builds
         with:
           path: |
             ./target/
             ./deps/metaplex/rust/target
             ./deps/solana-program-library/target
+          key: cargo-${{ runner.os }}-cargo-build-${{ hashFiles('./deps/**/Cargo.lock') }}
       - run: ~/.cargo/bin/anchor run build-deps
       - run: ~/.cargo/bin/anchor test
