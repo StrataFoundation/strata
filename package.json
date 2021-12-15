@@ -26,6 +26,17 @@
     "typescript": "^4.4.3"
   },
   "scripts": {
+    "versionup": "lerna version --conventional-commits --no-git-tag-version",
+    "versionup:patch": "lerna version patch --conventional-commits --no-git-tag-version",
+    "versionup:minor": "lerna version minor --conventional-commits --no-git-tag-version",
+    "versionup:major": "lerna version major --conventional-commits --no-git-tag-version",
+    "postversionup": "npm run commit-version",
+    "postversionup:patch": "npm run commit-version",
+    "postversionup:minor": "npm run commit-version",
+    "postversionup:major": "npm run commit-version",
+    "commit-version": "git add . && git commit -m \"chore(release): publish `node -p 'require(\"./lerna.json\").version'`\"",
+    "release": "lerna publish from-package",
+    "release:canary": "lerna publish --canary --preid next --dist-tag next --force-publish='*' --no-push --no-git-tag-version --yes",
     "watch": "npx lerna run --parallel watch",
     "build": "npx lerna run build",
     "build-programs": "npx lerna run build --scope @strata-foundation/spl-utils --scope @strata-foundation/spl-token-staking --scope @strata-foundation/spl-token-bonding --scope @strata-foundation/spl-token-collective",
