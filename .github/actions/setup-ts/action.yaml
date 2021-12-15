@@ -25,5 +25,5 @@ runs:
             ./packages/spl-token-collective/dist/
             ./packages/spl-token-staking/dist/
           key: solana-${{ runner.os }}-v0000-${{ env.NODE_VERSION }}-${{ hashFiles('./ts/**/*.ts') }}  
-      - run: yarn && lerna bootstrap && yarn run build
+      - run: yarn && ./node_modules/.bin/lerna bootstrap && yarn run build
         shell: bash
