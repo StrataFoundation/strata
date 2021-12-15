@@ -24,6 +24,11 @@ runs:
             ./packages/spl-token-bonding/dist/
             ./packages/spl-token-collective/dist/
             ./packages/spl-token-staking/dist/
-          key: solana-${{ runner.os }}-v0000-${{ env.NODE_VERSION }}-${{ hashFiles('./ts/**/*.ts') }}  
-      - run: yarn && ./node_modules/.bin/lerna bootstrap && yarn run build
+          key: solana-${{ runner.os }}-v0000-${{ env.NODE_VERSION }}-${{ hashFiles('./ts/**/*.ts') }}
+      - run: yarn && ./node_modules/.bin/lerna bootstrap
         shell: bash
+        if: steps.cache-typescript-node-modules.outputs.cache-hit != 'true'
+      - run:  yarn run build
+        shell: bash
+        if: steps.cache-typescript-dist.outputs.cache-hit != 'true'
+
