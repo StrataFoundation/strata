@@ -355,7 +355,7 @@ pub mod spl_token_staking {
         .staking_info
         .max_voucher_number
         .checked_sub(1)
-        .unwrap();
+        .unwrap_or_default();
     }
     recalculate_staking_info(staking, &mut ctx.accounts.staking_info, unix_timestamp);
 
