@@ -36,7 +36,7 @@
     "postversionup:major": "npm run commit-version",
     "commit-version": "git add . && git commit -m \"chore(release): publish `node -p 'require(\"./lerna.json\").version'`\"",
     "release": "lerna publish from-package",
-    "release:canary": "lerna publish --canary --preid next --dist-tag next --force-publish='*' --no-push --no-git-tag-version --yes",
+    "release:canary": "lerna publish --canary --preid next --dist-tag next --force-publish='*' --no-push --no-git-tag-version --no-verify-access --yes",
     "watch": "npx lerna run --parallel watch",
     "build": "npx lerna run build",
     "build-programs": "npx lerna run build --scope @strata-foundation/spl-utils --scope @strata-foundation/spl-token-staking --scope @strata-foundation/spl-token-bonding --scope @strata-foundation/spl-token-collective",
