@@ -46,7 +46,6 @@ jobs:
         with:
           node-version: 14.x
           registry-url: 'https://registry.npmjs.org'
-          scope: "@strata-foundation"
       - name: install
         run: yarn
       - name: Publish
