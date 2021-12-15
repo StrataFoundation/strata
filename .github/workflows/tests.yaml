@@ -12,16 +12,16 @@ env:
   NODE_VERSION: 17.0.1
 
 jobs:
-  setup-anchor-cli:
-    name: Setup Anchor cli
+  test-rust-lint:
+    needs: setup-anchor-cli
+    name: Test Rust Lint
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/setup/
-
       - uses: actions/cache@v2
         name: Cache Cargo registry + index
-        id: cache-anchor
+        id: cache-cargo-build
         with:
           path: |
             ~/.cargo/bin/
@@ -29,20 +29,18 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             ./target/
-          key: cargo-${{ runner.os }}-anchor-${{ hashFiles('**/Cargo.lock') }}
-      - run: cargo install --git https://github.com/project-serum/anchor --tag v0.18.0 anchor-cli --locked --force
-      - uses: actions/upload-artifact@v2
-        with:
-          name: anchor-binary
-          path: ~/.cargo/bin/anchor
+          key: cargo-${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+      - run: cargo fmt -- --check
+      - run: cargo clippy --all-targets -- -D warnings
 
-  test-core:
+  test-contracts:
     needs: setup-anchor-cli
-    name: Tests
+    name: Test Anchor Contracts
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/setup/
+      - uses: ./.github/actions/setup-anchor/
       - uses: actions/setup-node@v2
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -57,7 +55,4 @@ jobs:
             ~/.cargo/git/db/
             ./target/
           key: cargo-${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
-      - run: cargo build
-      - run: cargo fmt -- --check
-      - run: cargo clippy --all-targets -- -D warnings
-      - run: anchor test
+      - run: ~/.cargo/bin/anchor test

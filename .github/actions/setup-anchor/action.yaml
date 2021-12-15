@@ -1,0 +1,24 @@
+name: "Setup Anchor"
+description: "Setup Anchor"
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v2
+    - uses: ./.github/actions/setup/
+    - uses: actions/cache@v2
+      name: Cache Anchor Cli
+      id: cache-anchor-cli
+      with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            ./target/
+          key: cargo-${{ runner.os }}-anchor-${{ hashFiles('**/Cargo.lock') }}
+      - run: cargo install --git https://github.com/project-serum/anchor --tag v0.18.0 anchor-cli --locked
+      - uses: actions/upload-artifact@v2
+        with:
+          name: anchor-binary
+          path: ~/.cargo/bin/anchor
+
