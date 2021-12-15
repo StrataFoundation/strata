@@ -54,6 +54,7 @@ jobs:
           key: cargo-${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions/cache@v2
         name: Cache Builds
+        key: cargo-${{ runner.os }}-cargo-build-${{ hashFiles('./deps/**/Cargo.lock') }}
         id: cache-cargo-builds
         with:
           path: |
