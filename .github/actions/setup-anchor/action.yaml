@@ -17,10 +17,8 @@ runs:
             ~/.cargo/git/db/
             ./target/
           key: cargo-${{ runner.os }}-anchor-${{ hashFiles('**/Cargo.lock') }}
-    - run: cargo install --git https://github.com/project-serum/anchor --tag v0.18.0 anchor-cli --locked
-      shell: bash
-    - uses: actions/upload-artifact@v2
+    - uses: actions-rs/install@v0.1
       with:
-        name: anchor-binary
-        path: ~/.cargo/bin/anchor
+        crate: anchor-cli
+        version: v0.1.18
 
