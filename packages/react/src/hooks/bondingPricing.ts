@@ -13,6 +13,7 @@ import { useStrataSdks } from "./index";
 import { useAccount } from "./useAccount";
 import { useAssociatedAccount } from "./useAssociatedAccount";
 import { useMint } from "./useMint";
+import { useTwWrappedSolMint } from "./useTwWrappedSolMint";
 
 export function supplyAsNum(mint: MintInfo): number {
   return amountAsNum(mint.supply, mint);
@@ -53,13 +54,14 @@ export function useUserOwnedAmount(
 ): number | undefined {
   const { amount: solOwnedAmount } = useSolOwnedAmount(wallet || undefined);
   const { associatedAccount } = useAssociatedAccount(wallet, token);
+  const wrappedSolMint = useTwWrappedSolMint();
   const mint = useMint(token);
   const [amount, setAmount] = useState<number>();
 
   useEffect(() => {
     if (mint && associatedAccount) {
       setAmount(amountAsNum(associatedAccount.amount, mint));
-    } else if (token?.equals(NATIVE_MINT)) {
+    } else if (token?.equals(NATIVE_MINT) || (wrappedSolMint && token?.equals(wrappedSolMint))) {
       setAmount(solOwnedAmount);
     }
   }, [associatedAccount, mint, solOwnedAmount]);

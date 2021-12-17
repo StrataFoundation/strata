@@ -14,11 +14,14 @@ export function fromCurve(
   curve: any,
   baseStorage: AccountInfo,
   baseMint: MintInfo,
-  targetMint: MintInfo
+  targetMint: MintInfo,
+  goLiveUnixTime: number
 ): IPricingCurve {
   switch (Object.keys(curve.definition)[0]) {
     case "timeV0":
-      const curv = curve.definition.timeV0.curves[0].curve.exponentialCurveV0;
+      const currTime = (new Date()).valueOf() / 1000;     
+      const curv = [...curve.definition.timeV0.curves].reverse().find((c: any) => currTime >= goLiveUnixTime + c.offset.toNumber()).curve.exponentialCurveV0
+
       return new ExponentialCurve(
         curv as ExponentialCurveV0,
         baseStorage,
@@ -31,7 +34,7 @@ export function fromCurve(
 }
 
 export interface IPricingCurve {
-  current(): number;
+  current(reserves?: number, supply?: number): number;
   locked(): number;
   sellTargetAmount(
     targetAmountNum: number,
@@ -126,8 +129,8 @@ export class ExponentialCurve implements IPricingCurve {
     }
   }
 
-  current(): number {
-    return this.changeInTargetAmount(1, 0, 0);
+  current(reserves?: number, supply?: number): number {
+    return this.changeInTargetAmount(1, 0, 0, reserves, supply);
   }
 
   locked(): number {
@@ -137,12 +140,13 @@ export class ExponentialCurve implements IPricingCurve {
   changeInTargetAmount(
     targetAmountNum: number,
     baseRoyaltiesPercent: number,
-    targetRoyaltiesPercent: number
+    targetRoyaltiesPercent: number,
+    R: number = amountAsNum(this.baseStorage.amount, this.baseMint),
+    S: number = supplyAsNum(this.targetMint)
   ): number {
     // Calculate with the actual target amount they will need to get the target amount after royalties
     const dS = targetAmountNum * (1 / (1 - asDecimal(targetRoyaltiesPercent)));
-    const R = amountAsNum(this.baseStorage.amount, this.baseMint);
-    const S = supplyAsNum(this.targetMint);
+
     if (R == 0 || S == 0) {
       // b dS + (c dS^(1 + k))/(1 + k)
       return (

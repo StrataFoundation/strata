@@ -14,18 +14,20 @@ function reduce<A>({
   func,
   initial,
   destination,
+  wrappedSolMint
 }: {
   hierarchy?: BondingHierarchy;
   func: (acc: A, current: BondingHierarchy) => A;
   initial: A;
   destination: PublicKey;
+  wrappedSolMint: PublicKey;
 }): A {
-  if (!hierarchy) {
+  if (!hierarchy || hierarchy.child?.tokenBonding.baseMint.equals(destination)) {
     return initial;
   }
 
   if (destination?.equals(NATIVE_MINT)) {
-    destination = SplTokenBonding.WRAPPED_SOL_MINT;
+    destination = wrappedSolMint;
   }
 
   let current: BondingHierarchy | undefined = hierarchy;
@@ -55,18 +57,20 @@ function reduceFromParent<A>({
   func,
   initial,
   destination,
+  wrappedSolMint
 }: {
   hierarchy?: BondingHierarchy;
   func: (acc: A, current: BondingHierarchy) => A;
   initial: A;
   destination: PublicKey;
+  wrappedSolMint: PublicKey;
 }): A {
   if (!hierarchy) {
     return initial;
   }
 
   if (destination?.equals(NATIVE_MINT)) {
-    destination = SplTokenBonding.WRAPPED_SOL_MINT;
+    destination = wrappedSolMint;
   }
 
   let current: BondingHierarchy | undefined = hierarchy;
@@ -104,6 +108,7 @@ export class BondingPricing {
       },
       initial: 1,
       destination: baseMint,
+      wrappedSolMint: this.hierarchy.wrappedSolMint
     });
   }
 
@@ -115,6 +120,7 @@ export class BondingPricing {
       },
       initial: this.hierarchy.pricingCurve.locked(),
       destination: baseMint,
+      wrappedSolMint: this.hierarchy.wrappedSolMint
     });
   }
 
@@ -163,6 +169,7 @@ export class BondingPricing {
       },
       initial: targetAmountNum,
       destination: baseMint,
+      wrappedSolMint: this.hierarchy.wrappedSolMint
     });
   }
 
@@ -181,6 +188,7 @@ export class BondingPricing {
       },
       initial: targetAmountNum,
       destination: baseMint,
+      wrappedSolMint: this.hierarchy.wrappedSolMint
     });
   }
 
@@ -199,6 +207,7 @@ export class BondingPricing {
       },
       initial: baseAmountNum,
       destination: baseMint,
+      wrappedSolMint: this.hierarchy.wrappedSolMint
     });
   }
 }

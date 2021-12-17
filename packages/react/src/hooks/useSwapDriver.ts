@@ -122,7 +122,7 @@ export const useSwapDriver = (
     error: targetMetaError,
   } = useTokenMetadata(targetMint);
 
-  const { loading: curveLoading, pricing } = useBondingPricing(
+  const { loading: curveLoading, pricing, error } = useBondingPricing(
     tokenBonding?.publicKey
   );
   const { result: missingSpace, error: missingSpaceError } = useAsync(
@@ -149,7 +149,8 @@ export const useSwapDriver = (
     baseMetaError,
     targetMetaError,
     feeError,
-    internalError
+    internalError,
+    error
   );
 
   useEffect(() => {

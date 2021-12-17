@@ -38,6 +38,7 @@ import * as yup from "yup";
 import { useFtxPayLink, useProvider, useTokenMetadata } from "../../hooks";
 import { Royalties } from "./Royalties";
 import { TransactionInfo, TransactionInfoArgs } from "./TransactionInfo";
+import { useTwWrappedSolMint } from "../../hooks/useTwWrappedSolMint";
 
 export interface ISwapFormValues {
   topAmount: number;
@@ -150,7 +151,8 @@ export const SwapForm = ({
     },
     resolver: yupResolver(validationSchema),
   });
-  const isBaseSol = base?.publicKey.equals(SplTokenBonding.WRAPPED_SOL_MINT);
+  const wrappedSolMint = useTwWrappedSolMint();
+  const isBaseSol = wrappedSolMint && base?.publicKey.equals(wrappedSolMint);
   const topAmount = watch("topAmount");
   const slippage = watch("slippage");
   const hasBaseAmount = (ownedBase || 0) >= +(topAmount || 0);
@@ -226,7 +228,7 @@ export const SwapForm = ({
   if (
     !base ||
     !target ||
-    (connected && (typeof ownedBase == "undefined" || !pricing))
+    (connected && !pricing)
   ) {
     return <Spinner />;
   }

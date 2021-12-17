@@ -18,6 +18,7 @@ import { useMintTokenRef, usePublicKey, useStrataSdks } from ".";
 import { useAccount } from "./useAccount";
 import { useAssociatedAccount } from "./useAssociatedAccount";
 import { useMint } from "./useMint";
+import { useTwWrappedSolMint } from "./useTwWrappedSolMint";
 
 export interface IUseTokenMetadataResult extends ITokenWithMetaAndAccount {
   loading: boolean;
@@ -64,9 +65,11 @@ export function useTokenMetadata(
     metadataAccountKey,
     parser
   );
+  
+  const wrappedSolMint = useTwWrappedSolMint();
   const isSol =
     token?.equals(NATIVE_MINT) ||
-    token?.equals(SplTokenBonding.WRAPPED_SOL_MINT);
+    (wrappedSolMint && token?.equals(wrappedSolMint));
   if (isSol) {
     metadata = solMetadata;
   }
