@@ -404,9 +404,6 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
   state: ProgramStateV0 | undefined;
 
   static ID = new PublicKey("TBondz6ZwSM5fs4v2GpnVBMuwoncPkFLFR9S422ghhN");
-  static WRAPPED_SOL_MINT = new PublicKey(
-    "Gjzxxh8UbFyrA4meWLSXGEA8UXeoMPZaFkCxn3WCo7V4"
-  );
 
   static async init(
     provider: Provider,
@@ -1337,7 +1334,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       tokenBondingAcct.curve,
       baseStorage,
       baseMint,
-      targetMint
+      targetMint,
+      tokenBondingAcct.goLiveUnixTime.toNumber()
     );
 
     const instructions = [];
@@ -1411,7 +1409,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       buyWithBase = {
         baseAmount: toBN(baseAmount, baseMint),
         minimumTargetAmount: new BN(
-          Math.ceil(min * Math.pow(10, targetMint.decimals))
+          Math.ceil(min * Math.pow(10, targetMint.decimals)) * (1 - slippage)
         ),
       };
     }
@@ -1553,7 +1551,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     for (const subHierarchy of isBuy ? arrHierarchy.reverse() : arrHierarchy) {
       const tokenBonding = subHierarchy.tokenBonding;
       const baseIsSol = tokenBonding.baseMint.equals(
-        SplTokenBonding.WRAPPED_SOL_MINT
+        (await this.getState())?.wrappedSolMint!
       );
       const ata = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -1712,7 +1710,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       tokenBondingAcct.curve,
       baseStorage,
       baseMint,
-      targetMint
+      targetMint,
+      tokenBondingAcct.goLiveUnixTime.toNumber()
     );
 
     const instructions = [];
@@ -1852,7 +1851,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       tokenBondingAcct.curve,
       baseStorage,
       baseMint,
-      targetMint
+      targetMint,
+      tokenBondingAcct.goLiveUnixTime.toNumber()
     );
   }
 
@@ -1869,11 +1869,12 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     key: PublicKey,
     baseStorage: AccountInfo,
     baseMint: MintInfo,
-    targetMint: MintInfo
+    targetMint: MintInfo,
+    goLiveUnixTime: number
   ): Promise<IPricingCurve> {
     const curve = await this.getCurve(key);
     // @ts-ignore
-    return fromCurve(curve, baseStorage, baseMint, targetMint);
+    return fromCurve(curve, baseStorage, baseMint, targetMint, goLiveUnixTime );
   }
 
   async getPricing(
@@ -1897,8 +1898,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     tokenBondingKey: PublicKey | undefined,
     stopAtMint?: PublicKey | undefined
   ): Promise<BondingHierarchy | undefined> {
+    const wrappedSolMint = (await this.getState())?.wrappedSolMint!
     if (stopAtMint?.equals(NATIVE_MINT)) {
-      stopAtMint = SplTokenBonding.WRAPPED_SOL_MINT;
+      stopAtMint = (await this.getState())?.wrappedSolMint!
     }
 
     if (!tokenBondingKey) {
@@ -1920,6 +1922,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         : await this.getBondingHierarchy(parentKey, stopAtMint),
       tokenBonding,
       pricingCurve,
+      wrappedSolMint
     });
     (ret.parent || ({} as any)).child = ret;
     return ret;

@@ -2,9 +2,9 @@ import { NATIVE_MINT } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
 import { ITokenBonding, IPricingCurve, SplTokenBonding } from ".";
 
-function sanitizeSolMint(mint: PublicKey): PublicKey {
+function sanitizeSolMint(mint: PublicKey, wrappedSolMint: PublicKey): PublicKey {
   if (mint.equals(NATIVE_MINT)) {
-    return SplTokenBonding.WRAPPED_SOL_MINT;
+    return wrappedSolMint;
   }
 
   return mint;
@@ -15,22 +15,26 @@ export class BondingHierarchy {
   child?: BondingHierarchy;
   tokenBonding: ITokenBonding;
   pricingCurve: IPricingCurve;
+  wrappedSolMint: PublicKey;
 
   constructor({
     parent,
     child,
     tokenBonding,
     pricingCurve,
+    wrappedSolMint
   }: {
     parent?: BondingHierarchy;
     child?: BondingHierarchy;
     tokenBonding: ITokenBonding;
     pricingCurve: IPricingCurve;
+    wrappedSolMint: PublicKey;
   }) {
     this.parent = parent;
     this.child = child;
     this.tokenBonding = tokenBonding;
     this.pricingCurve = pricingCurve;
+    this.wrappedSolMint = wrappedSolMint;
   }
 
   toArray(): BondingHierarchy[] {
@@ -47,8 +51,8 @@ export class BondingHierarchy {
   lowest(one: PublicKey, two: PublicKey): PublicKey {
     return this.toArray().find(
       (hierarchy) =>
-        hierarchy.tokenBonding.targetMint.equals(sanitizeSolMint(one)) ||
-        hierarchy.tokenBonding.targetMint.equals(sanitizeSolMint(two))
+        hierarchy.tokenBonding.targetMint.equals(sanitizeSolMint(one, this.wrappedSolMint)) ||
+        hierarchy.tokenBonding.targetMint.equals(sanitizeSolMint(two, this.wrappedSolMint))
     )!.tokenBonding.targetMint;
   }
 
@@ -61,8 +65,8 @@ export class BondingHierarchy {
   path(one: PublicKey, two: PublicKey): BondingHierarchy[] {
     const lowest = this.lowest(one, two);
     const highest = lowest.equals(one)
-      ? sanitizeSolMint(two)
-      : sanitizeSolMint(one);
+      ? sanitizeSolMint(two, this.wrappedSolMint)
+      : sanitizeSolMint(one, this.wrappedSolMint);
     const arr = this.toArray();
     const lowIdx = arr.findIndex((h) =>
       h.tokenBonding.targetMint.equals(lowest)
@@ -96,7 +100,7 @@ export class BondingHierarchy {
       ])
     );
     return mints.every((mint) =>
-      availableMints.has(sanitizeSolMint(mint).toBase58())
+      availableMints.has(sanitizeSolMint(mint, this.wrappedSolMint).toBase58())
     );
   }
 }

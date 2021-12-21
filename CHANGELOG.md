@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [Unreleased]
+
+### Fixed
+
+ * usePriceInSol broken for wrappedSolMint
+ * Use wrappedSolMint from token bonding state instead of global variable, as it is different for every environment. It's too late to fix this as there's already a wrapped sol in prod.
+ * baseMint would not show up in swap interface after changing the base once because of a useMemo
+
+## Added
+
+ * unixTime to pricing so we can price the curve at a given point in time
+ 
+
 ## [1.3.2](https://github.com/ChewingGlassFund/wumbo-programs/compare/v0.7.0...v1.3.2) (2021-12-15)
 
 ### Fixed

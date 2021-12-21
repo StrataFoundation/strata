@@ -122,7 +122,7 @@ export const useSwapDriver = (
     error: targetMetaError,
   } = useTokenMetadata(targetMint);
 
-  const { loading: curveLoading, pricing } = useBondingPricing(
+  const { loading: curveLoading, pricing, error } = useBondingPricing(
     tokenBonding?.publicKey
   );
   const { result: missingSpace, error: missingSpaceError } = useAsync(
@@ -149,7 +149,8 @@ export const useSwapDriver = (
     baseMetaError,
     targetMetaError,
     feeError,
-    internalError
+    internalError,
+    error
   );
 
   useEffect(() => {
@@ -221,11 +222,11 @@ export const useSwapDriver = (
     feeAmount,
     baseOptions: React.useMemo(
       () => allMints.filter((mint) => baseMint && !mint.equals(baseMint)),
-      [allMints]
+      [baseMint, allMints]
     ),
     targetOptions: React.useMemo(
       () => allMints.filter((mint) => targetMint && !mint.equals(targetMint)),
-      [allMints]
+      [targetMint, allMints]
     ),
   };
 };

@@ -4,6 +4,7 @@ import { useBondingPricingFromMint } from "./bondingPricing";
 import { NATIVE_MINT } from "@solana/spl-token";
 import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import { useEffect, useState } from "react";
+import { useTwWrappedSolMint } from "./useTwWrappedSolMint";
 
 export function usePriceInSol(
   token: PublicKey | undefined | null
@@ -13,15 +14,16 @@ export function usePriceInSol(
 
   const [price, setPrice] = useState<number>();
 
+  const wrappedSolMint = useTwWrappedSolMint();
   useEffect(() => {
     if (
       token?.equals(NATIVE_MINT) ||
-      token?.equals(SplTokenBonding.WRAPPED_SOL_MINT)
+      (wrappedSolMint && token?.equals(wrappedSolMint))
     ) {
       setPrice(1);
     } else if (pricing) {
       try {
-        setPrice(pricing?.current(SplTokenBonding.WRAPPED_SOL_MINT));
+        setPrice(wrappedSolMint && pricing?.current(wrappedSolMint));
       } catch (e) {
         console.warn(`Token ${token} cannot be priced in terms of SOL`);
       }

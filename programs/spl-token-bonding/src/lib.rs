@@ -351,7 +351,7 @@ pub mod spl_token_bonding {
 
       total_amount = to_mint_amount(&amount_prec, target_mint, false);
 
-      price = to_mint_amount(&price_prec, base_mint, true);
+      price = to_mint_amount(&price_prec, base_mint, false);
 
       let target_royalties_prec = target_royalties_percent
         .checked_mul(&amount_prec)
