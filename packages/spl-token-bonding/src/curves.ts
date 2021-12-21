@@ -19,46 +19,119 @@ export function fromCurve(
 ): IPricingCurve {
   switch (Object.keys(curve.definition)[0]) {
     case "timeV0":
-      const currTime = (new Date()).valueOf() / 1000;     
-      const curv = [...curve.definition.timeV0.curves].reverse().find((c: any) => currTime >= goLiveUnixTime + c.offset.toNumber()).curve.exponentialCurveV0
-
-      return new ExponentialCurve(
-        curv as ExponentialCurveV0,
+      return new TimeCurve({
+        curve,
         baseStorage,
         baseMint,
-        targetMint
-      );
+        targetMint,
+        goLiveUnixTime
+      })
+
   }
 
   throw new Error("Curve not found");
 }
 
 export interface IPricingCurve {
-  current(reserves?: number, supply?: number): number;
+  current(unixTime?: number): number;
   locked(): number;
   sellTargetAmount(
     targetAmountNum: number,
     baseRoyaltiesPercent: number,
-    targetRoyaltiesPercent: number
+    targetRoyaltiesPercent: number,
+    unixTime?: number
   ): number;
   buyTargetAmount(
     targetAmountNum: number,
     baseRoyaltiesPercent: number,
-    targetRoyaltiesPercent: number
+    targetRoyaltiesPercent: number,
+    unixTime?: number
   ): number;
   buyWithBaseAmount(
     baseAmountNum: number,
     baseRoyaltiesPercent: number,
-    targetRoyaltiesPercent: number
+    targetRoyaltiesPercent: number,
+    unixTime?: number
   ): number;
   buyWithBaseRootEstimates(
     baseAmountNum: number,
-    baseRoyaltiesPercent: number
+    baseRoyaltiesPercent: number,
+    unixTime?: number
   ): number[];
   buyTargetAmountRootEstimates(
     targetAmountNum: number,
-    targetRoyaltiesPercent: number
+    targetRoyaltiesPercent: number,
+    unixTime?: number
   ): number[];
+}
+
+type TimeCurveArgs = {
+  curve: any,
+  baseStorage: AccountInfo;
+  baseMint: MintInfo;
+  targetMint: MintInfo;
+  goLiveUnixTime: number;
+}
+
+export class TimeCurve implements IPricingCurve {
+  curve: any;
+  baseStorage: AccountInfo;
+  baseMint: MintInfo;
+  targetMint: MintInfo;
+  goLiveUnixTime: number;
+
+  constructor({
+    curve,
+    baseStorage,
+    baseMint,
+    targetMint,
+    goLiveUnixTime
+  }: TimeCurveArgs) {
+    this.curve = curve;
+    this.baseStorage = baseStorage;
+    this.baseMint = baseMint;
+    this.targetMint = targetMint;
+    this.goLiveUnixTime = goLiveUnixTime;
+  }
+
+  currentCurve(unixTime: number = (new Date().valueOf() / 1000)): IPricingCurve {
+    let subCurve; 
+    if (unixTime < this.goLiveUnixTime) {
+      subCurve = this.curve.definition.timeV0.curves[0].curve.exponentialCurveV0
+    } else {
+      subCurve = [...this.curve.definition.timeV0.curves].reverse().find((c: any) => unixTime >= this.goLiveUnixTime + c.offset.toNumber()).curve.exponentialCurveV0
+    }
+
+    return new ExponentialCurve(
+      subCurve as ExponentialCurveV0,
+      this.baseStorage,
+      this.baseMint,
+      this.targetMint
+    );
+  }
+
+  current(unixTime?: number): number {
+    return this.currentCurve(unixTime).current(unixTime);
+  }
+
+  locked(): number {
+    return this.currentCurve().locked();
+  }
+  sellTargetAmount(targetAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number, unixTime?: number): number {
+    return this.currentCurve(unixTime).sellTargetAmount(targetAmountNum, baseRoyaltiesPercent, targetRoyaltiesPercent);
+  }
+  buyTargetAmount(targetAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number, unixTime?: number): number {
+    return this.currentCurve(unixTime).buyTargetAmount(targetAmountNum, baseRoyaltiesPercent, targetRoyaltiesPercent);
+  }
+  buyWithBaseAmount(baseAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number, unixTime?: number): number {
+    return this.currentCurve(unixTime).buyWithBaseAmount(baseAmountNum, baseRoyaltiesPercent, targetRoyaltiesPercent);
+  }
+  buyWithBaseRootEstimates(baseAmountNum: number, baseRoyaltiesPercent: number, unixTime?: number): number[] {
+    return this.currentCurve(unixTime).buyWithBaseRootEstimates(baseAmountNum, baseRoyaltiesPercent);
+  }
+  buyTargetAmountRootEstimates(targetAmountNum: number, targetRoyaltiesPercent: number, unixTime?: number): number[] {
+    return this.currentCurve(unixTime).buyTargetAmountRootEstimates(targetAmountNum, targetRoyaltiesPercent);
+  }
 }
 
 export class ExponentialCurve implements IPricingCurve {
@@ -129,8 +202,8 @@ export class ExponentialCurve implements IPricingCurve {
     }
   }
 
-  current(reserves?: number, supply?: number): number {
-    return this.changeInTargetAmount(1, 0, 0, reserves, supply);
+  current(): number {
+    return this.changeInTargetAmount(1, 0, 0);
   }
 
   locked(): number {
@@ -140,10 +213,11 @@ export class ExponentialCurve implements IPricingCurve {
   changeInTargetAmount(
     targetAmountNum: number,
     baseRoyaltiesPercent: number,
-    targetRoyaltiesPercent: number,
-    R: number = amountAsNum(this.baseStorage.amount, this.baseMint),
-    S: number = supplyAsNum(this.targetMint)
+    targetRoyaltiesPercent: number
   ): number {
+    const R = amountAsNum(this.baseStorage.amount, this.baseMint);
+    const S = supplyAsNum(this.targetMint);
+    
     // Calculate with the actual target amount they will need to get the target amount after royalties
     const dS = targetAmountNum * (1 / (1 - asDecimal(targetRoyaltiesPercent)));
 

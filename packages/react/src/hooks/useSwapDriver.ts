@@ -222,11 +222,11 @@ export const useSwapDriver = (
     feeAmount,
     baseOptions: React.useMemo(
       () => allMints.filter((mint) => baseMint && !mint.equals(baseMint)),
-      [allMints]
+      [baseMint, allMints]
     ),
     targetOptions: React.useMemo(
       () => allMints.filter((mint) => targetMint && !mint.equals(targetMint)),
-      [allMints]
+      [targetMint, allMints]
     ),
   };
 };
