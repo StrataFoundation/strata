@@ -1,0 +1,45 @@
+name: "Upload BPF"
+description: "Uploads an anchor program as a bpf"
+inputs:
+  network:
+    description: 'The Solana network'
+    required: true
+    default: 'devnet'
+  program:
+    description: 'The program to build and upload'
+    required: true
+  
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v2
+    - uses: ./.github/actions/setup/
+    - uses: ./.github/actions/setup-anchor/
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    - uses: actions/cache@v2
+      name: Cache Builds
+      id: cache-cargo-builds
+      with:
+        path: |
+          ./target/
+        key: cargo-${{ runner.os }}-cargo-build-${{ hashFiles('./deps/**/Cargo.lock') }}-target
+    - run: ~/.cargo/bin/anchor build --verifiable -p $PROGRAM
+      env:
+        PROGRAM: ${{ inputs.PROGRAM }}
+    - run: echo "$DEPLOY_KEYPAIR" > ./deploy-keypair.json && chmod 600 ./deploy-keypair.json
+      env:
+        DEPLOY_KEYPAIR: ${{ secrets.DEPLOY_KEYPAIR }}
+    - name: Buffer Deploy
+      id: buffer-deploy
+      run: solana program write-buffer -k ./deploy-keypair.json ./target/verifiable/$PROGRAM.so -u $NETWORK > buffer.out
+      env:
+        NETWORK: ${{ inputs.NETWORK }}
+        PROGRAM: ${{ inputs.PROGRAM }}
+    - name: Buffer Deploy Store
+      id: buffer-deploy-store
+      run: |
+        echo "::set-output name=BUFFER::$(cat buffer.out | sed 's/Buffer: //g' | xargs echo -n)"
+    - run: rm ./deploy-keypair.json
+      if: always()
+    - run: echo "The buffer is ${{ steps.buffer-deploy-store.outputs.BUFFER }}"

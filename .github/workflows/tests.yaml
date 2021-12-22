@@ -57,10 +57,7 @@ jobs:
         with:
           path: |
             ./target/
-            ./deps/metaplex/rust/target
-            ./deps/solana-program-library/target
           key: cargo-${{ runner.os }}-cargo-build-${{ hashFiles('./deps/**/Cargo.lock') }}-target
-            - uses: actions/cache@v2
       - name: Cache Deps Builds
         id: cache-cargo-deps-builds
         with:

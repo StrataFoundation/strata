@@ -17,29 +17,7 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
-      - uses: ./.github/actions/setup/
-      - uses: ./.github/actions/setup-anchor/
-      - uses: ./.github/actions/setup-ts/
+      - uses: ./.github/actions/upload-bpf/
         with:
-          node-version: ${{ env.NODE_VERSION }}
-      - uses: actions/cache@v2
-        name: Cache Builds
-        id: cache-cargo-builds
-        with:
-          path: |
-            ./target/
-          key: cargo-${{ runner.os }}-cargo-build-${{ hashFiles('./deps/**/Cargo.lock') }}-target
-      - run: ~/.cargo/bin/anchor build --verifiable -p spl_token_bonding
-      - run: echo "$DEPLOY_KEYPAIR" > ./deploy-keypair.json && chmod 600 ./deploy-keypair.json
-        env:
-          DEPLOY_KEYPAIR: ${{ secrets.DEPLOY_KEYPAIR }}
-      - name: Buffer Deploy
-        id: buffer-deploy
-        run: solana program write-buffer -k ./deploy-keypair.json ./target/verifiable/spl_token_bonding.so -u devnet > buffer.out
-      - name: Buffer Deploy Store
-        id: buffer-deploy-store
-        run: |
-          echo "::set-output name=BUFFER::$(cat buffer.out | sed 's/Buffer: //g' | xargs echo -n)"
-      - run: rm ./deploy-keypair.json
-        if: always()
-      - run: echo "The buffer is ${{ steps.buffer-deploy-store.outputs.BUFFER }}"
+          network: devnet
+          program: spl_token_bonding
