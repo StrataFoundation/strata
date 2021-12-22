@@ -345,7 +345,7 @@ pub struct ClaimSocialTokenV0<'info> {
     has_one = owner
   )]
   pub name: Box<Account<'info, NameRecordHeader>>,
-  #[account()]
+  #[account(mut)]
   pub owner: Signer<'info>,
 
   pub base_mint: Box<Account<'info, Mint>>,
