@@ -101,7 +101,7 @@ async function run() {
   tx.add(...instructions);
   tx.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
   await sendAndConfirmTransaction(connection, tx, [wallet]);
-  console.log("Proposal ", proposal.toBase58());
+  console.log(proposal.toBase58());
 }
 
 run().catch(e => {

@@ -1,0 +1,49 @@
+name: "Upload BPF"
+description: "Uploads an anchor program as a bpf"
+inputs:
+  buffer:
+    description: "The buffer address"
+    value: ${{ steps.buffer-deploy-store.outputs.BUFFER }}
+  keypair:
+    description: 'The keypair to use for deploys'
+    required: true
+  network:
+    description: "The solana cluster/network"
+    required: true
+    default: devnet
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    - run: echo "$DEPLOY_KEYPAIR" > ./deploy-keypair.json && chmod 600 ./deploy-keypair.json
+      shell: bash
+      env:
+        DEPLOY_KEYPAIR: ${{ inputs.keypair }}
+    - name: Buffer Deploy
+      id: buffer-deploy
+      run: solana program write-buffer -k ./deploy-keypair.json ./target/verifiable/$PROGRAM.so -u $NETWORK > buffer.out
+      shell: bash
+      env:
+        NETWORK: ${{ inputs.network }}
+        PROGRAM: ${{ inputs.program }}
+    - run: npm install -g @strata-foundation/governance-cli
+      shell: bash
+    - name: Create proposal
+      shell: bash
+      run: create-proposal
+      env:
+        PROGRAM_ID: Ep23h6U7HvBb2NRGRTxxH5mekpV4V3b6AJh76mra5Yiv
+        BUFFER: ${{ inputs.buffer }}
+        GOVERNANCE_KEY: GSGB9BDcb29u8fbigqeFLz1JQ64C4G4H5KRQbzNDJUcJ
+        NETWORK: devnet
+        WALLET: ./
+        NAME: Deploy new version
+        DESCRIPTION: Test
+        SIGNATORY: C6uY3FCNz76k5kDjaYtHyedgzXW8fsJABXg3R7rfc7fA
+    - run: rm ./deploy-keypair.json
+      shell: bash
+      if: always()

@@ -30,3 +30,10 @@ jobs:
         env:
           BUFFER: ${{ steps.buffer-deploy.outputs.buffer }}
           GOVERNANCE: ${{ secrets.GOVERNANCE }}
+      - uses: ./.github/actions/create-proposal/
+        id: create-proposal
+        with:
+          network: devnet
+          buffer: ${{ steps.buffer-deploy.outputs.buffer }}
+          keypair: ${{ secrets.DEPLOY_KEYPAIR }}
+  
