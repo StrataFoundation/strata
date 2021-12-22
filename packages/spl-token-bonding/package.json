@@ -4,7 +4,7 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "Interface to the spl-token-bonding smart contract",
   "repository": {
     "type": "git",
