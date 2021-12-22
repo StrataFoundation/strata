@@ -12,7 +12,7 @@ inputs:
     description: 'The keypair to use for deploys'
     required: true
 outputs:
-  bufferr:
+  buffer:
     description: "The buffer address"
     value: ${{ steps.buffer-deploy-store.outputs.BUFFER }}
   
