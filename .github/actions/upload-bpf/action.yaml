@@ -25,21 +25,27 @@ runs:
           ./target/
         key: cargo-${{ runner.os }}-cargo-build-${{ hashFiles('./deps/**/Cargo.lock') }}-target
     - run: ~/.cargo/bin/anchor build --verifiable -p $PROGRAM
+      shell: bash
       env:
         PROGRAM: ${{ inputs.PROGRAM }}
     - run: echo "$DEPLOY_KEYPAIR" > ./deploy-keypair.json && chmod 600 ./deploy-keypair.json
+      shell: bash
       env:
         DEPLOY_KEYPAIR: ${{ secrets.DEPLOY_KEYPAIR }}
     - name: Buffer Deploy
       id: buffer-deploy
       run: solana program write-buffer -k ./deploy-keypair.json ./target/verifiable/$PROGRAM.so -u $NETWORK > buffer.out
+      shell: bash
       env:
         NETWORK: ${{ inputs.NETWORK }}
         PROGRAM: ${{ inputs.PROGRAM }}
     - name: Buffer Deploy Store
+      shell: bash
       id: buffer-deploy-store
       run: |
         echo "::set-output name=BUFFER::$(cat buffer.out | sed 's/Buffer: //g' | xargs echo -n)"
     - run: rm ./deploy-keypair.json
+      shell: bash
       if: always()
     - run: echo "The buffer is ${{ steps.buffer-deploy-store.outputs.BUFFER }}"
+      shell: bash
