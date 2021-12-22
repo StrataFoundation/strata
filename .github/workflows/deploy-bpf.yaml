@@ -18,7 +18,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/upload-bpf/
+        id: buffer-deploy
         with:
           network: devnet
           program: spl_token_bonding
           keypair: ${{ secrets.DEPLOY_KEYPAIR }}
+      - run: echo "The out buffer is ${{ steps.buffer-deploy.outputs.BUFFER }}"
+        shell: bash

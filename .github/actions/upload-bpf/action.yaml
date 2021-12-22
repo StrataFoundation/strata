@@ -11,6 +11,10 @@ inputs:
   keypair:
     description: 'The keypair to use for deploys'
     required: true
+outputs:
+  bufferr:
+    description: "The buffer address"
+    value: ${{ steps.buffer-deploy-store.outputs.BUFFER }}
   
 runs:
   using: "composite"
