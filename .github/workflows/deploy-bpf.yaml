@@ -29,11 +29,12 @@ jobs:
         run: solana program set-buffer-authority $BUFFER --new-buffer-authority $GOVERNANCE -u devnet
         env:
           BUFFER: ${{ steps.buffer-deploy.outputs.buffer }}
-          GOVERNANCE: ${{ secrets.GOVERNANCE }}
+          GOVERNANCE: GSGB9BDcb29u8fbigqeFLz1JQ64C4G4H5KRQbzNDJUcJ
       - uses: ./.github/actions/create-proposal/
         id: create-proposal
         with:
           network: devnet
           buffer: ${{ steps.buffer-deploy.outputs.buffer }}
           keypair: ${{ secrets.DEPLOY_KEYPAIR }}
+          governance: GSGB9BDcb29u8fbigqeFLz1JQ64C4G4H5KRQbzNDJUcJ
   

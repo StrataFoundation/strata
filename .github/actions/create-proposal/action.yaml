@@ -11,6 +11,10 @@ inputs:
     description: "The solana cluster/network"
     required: true
     default: devnet
+  governance:
+    description: "The public key of the governance"
+    required: true
+
 
 runs:
   using: "composite"
@@ -38,7 +42,7 @@ runs:
       env:
         PROGRAM_ID: Ep23h6U7HvBb2NRGRTxxH5mekpV4V3b6AJh76mra5Yiv
         BUFFER: ${{ inputs.buffer }}
-        GOVERNANCE_KEY: GSGB9BDcb29u8fbigqeFLz1JQ64C4G4H5KRQbzNDJUcJ
+        GOVERNANCE_KEY: ${{ inputs.governance }}
         NETWORK: devnet
         WALLET: ./
         NAME: Deploy new version
