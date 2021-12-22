@@ -29,7 +29,9 @@ describe("spl-token-bonding", () => {
   const newWallet = Keypair.generate()
 
   before(async () => {
-    await tokenBondingProgram.initializeSolStorage();
+    await tokenBondingProgram.initializeSolStorage({
+      mintKeypair: Keypair.generate()
+    });
   });
 
   describe("exp curve test", () => {

@@ -48,8 +48,13 @@ function wrapAndCollectVars(code: string, injectedVars): string {
 }
 
 // Turn all BN into base 10 numbers as strings
-function recursiveTransformBN(args: any): Record<string, any> {
+function recursiveTransformBN(args: any, seen: Set<any> = new Set()): Record<string, any> {
+  if (seen.has(args)) {
+    return args;
+  }
+
   return Object.entries(args).reduce((acc, [key, value]) => {
+    seen.add(value);
     if (value instanceof BN) {
       acc[key] = value.toString(10);
     } else if (value instanceof PublicKey) {
@@ -57,7 +62,7 @@ function recursiveTransformBN(args: any): Record<string, any> {
     } else if (value && (value as any)._bn) {
       acc[key] = new PublicKey(new BN((value as any)._bn, "hex")).toBase58();
     } else if (typeof value === "object" && value !== null) {
-      acc[key] = recursiveTransformBN(value);
+      acc[key] = recursiveTransformBN(value, seen);
     } else {
       acc[key] = value;
     }

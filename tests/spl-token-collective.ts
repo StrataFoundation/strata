@@ -71,7 +71,9 @@ describe("spl-token-collective", () => {
   let curve: PublicKey;
 
   before(async () => {
-    await splTokenBondingProgram.initializeSolStorage();
+    await splTokenBondingProgram.initializeSolStorage({
+      mintKeypair: Keypair.generate()
+    });
     wumMint = await createMint(
       provider,
       tokenCollectiveProgram.wallet.publicKey,
