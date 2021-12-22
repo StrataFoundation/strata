@@ -7,13 +7,6 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 **Note:** Version bump only for package @strata-foundation/strata
 
-
-
-## [Unreleased]
-
-
-## [1.3.3]
-
 ### Fixed
 
  * usePriceInSol broken for wrappedSolMint
