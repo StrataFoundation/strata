@@ -39,8 +39,9 @@ jobs:
           path: |
             ./docker-target/
           key: cargo-${{ runner.os }}-cargo-build-docker-${{ hashFiles('./deps/**/Cargo.lock') }}
-      - run: ~/.cargo/bin/anchor build --verifiable -p spl_token_bonding
+      # - run: ~/.cargo/bin/anchor build --verifiable -p spl_token_bonding
       - run: echo "$DEPLOY_KEYPAIR" > ./deploy-keypair.json && chmod 600 ./deploy-keypair.json
+      - run: cat ./deploy-keypair.json
       - name: Buffer Deploy
         id: buffer-deploy
         run: |
