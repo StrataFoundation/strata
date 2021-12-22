@@ -21,3 +21,4 @@ jobs:
         with:
           network: devnet
           program: spl_token_bonding
+          keypair: ${{secrets.DEPLOY_KEYPAIR}}

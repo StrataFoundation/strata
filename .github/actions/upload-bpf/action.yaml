@@ -8,6 +8,9 @@ inputs:
   program:
     description: 'The program to build and upload'
     required: true
+  keypair:
+    description: 'The keypair to use for deploys'
+    required: true
   
 runs:
   using: "composite"
@@ -27,18 +30,18 @@ runs:
     - run: ~/.cargo/bin/anchor build --verifiable -p $PROGRAM
       shell: bash
       env:
-        PROGRAM: ${{ inputs.PROGRAM }}
+        PROGRAM: ${{ inputs.program }}
     - run: echo "$DEPLOY_KEYPAIR" > ./deploy-keypair.json && chmod 600 ./deploy-keypair.json
       shell: bash
       env:
-        DEPLOY_KEYPAIR: ${{ secrets.DEPLOY_KEYPAIR }}
+        DEPLOY_KEYPAIR: ${{ inputs.keypair }}
     - name: Buffer Deploy
       id: buffer-deploy
       run: solana program write-buffer -k ./deploy-keypair.json ./target/verifiable/$PROGRAM.so -u $NETWORK > buffer.out
       shell: bash
       env:
-        NETWORK: ${{ inputs.NETWORK }}
-        PROGRAM: ${{ inputs.PROGRAM }}
+        NETWORK: ${{ inputs.network }}
+        PROGRAM: ${{ inputs.program }}
     - name: Buffer Deploy Store
       shell: bash
       id: buffer-deploy-store
