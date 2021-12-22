@@ -43,7 +43,8 @@ jobs:
       - run: echo "$DEPLOY_KEYPAIR" > ./deploy-keypair.json && chmod 600 ./deploy-keypair.json
       - name: Buffer Deploy
         id: buffer-deploy
-        run: echo "::set-output name=BUFFER::$(solana program write-buffer -k ./deploy-keypair.json ./docker-target/deploy/spl_token_bonding.so -u devnet | sed 's/Buffer: //g')"
+        run: |
+          echo "::set-output name=BUFFER::$(solana program write-buffer -k ./deploy-keypair.json ./docker-target/deploy/spl_token_bonding.so -u devnet | sed 's/Buffer: //g')"
       - run: rm ./deploy-keypair.json
         if: always()
       - run: echo "The buffer is ${{ steps.buffer-deploy.outputs.BUFFER }}"
