@@ -174,6 +174,8 @@ Deposit your governance tokens using the deposit button
 
 Click the dots, then create new governance
 
+You should be on a new page. This is your **realm page**. Bookmark this.
+
 ![Create New Governance](./create-new.png)
 
 Select Program, and fill out your program information. You can also fill out voting threshold information:
@@ -193,6 +195,8 @@ You can get YOUR-REALM-ID by looking at the url of the realm in the old UI. I.e:
 https://solana-labs.github.io/oyster-gov/#/realm/C4a4XC2MPfXGfYdH7DMrUZ7hymfi6DVLtULtmnwTD5rh?programId=GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw
 
 has a realm id of C4a4XC2MPfXGfYdH7DMrUZ7hymfi6DVLtULtmnwTD5rh.
+
+This is your **realm page** in the new UI. Bookmark this.
 
 We will use the new UI for the rest of this tutorial
 
@@ -299,6 +303,9 @@ rm deploy.json
 
 Now, go back to the govenance UI and withdraw your tokens. You will need to send 1% of them to the deploy wallet so that it can create proposals.
 
+Now, we need to deposit those voting tokens. You can add the deploy to your wallet in phantom via "Add / Connect Wallet" > "Import private key". Re-visit your realm page using this wallet and deposit the tokens.
+
+
 ### Github Actions
 
 You'll want to setup github actions for your repo. Strata has two main workflows relating to this:
@@ -327,5 +334,29 @@ These workflows rely on some actions that you will probably not need to edit, bu
   * `.github/actions/setup-solana` - Setting up solana cli
 
 
-  
+  #### Test It
 
+  Create a fork of your repository. These hooks only run on the master branch, so you'll want to use a forked version of your repo until you get them stable.
+
+  Add the secrets to this fork, then push these actions to master. Go to the "Actions" tab on github and watch them go:
+
+  ![Actions](actions.png)
+
+  If it succeeds, you should be able to go to your realm and see the proposal!
+
+  ![Vote in Progress](./vote-in-progress.png)
+
+Congrats! You're now running program governance on auto-pilot!
+
+## Stuck?
+
+There's a lot of steps in this process, it's easy for a misstep. If you're having trouble debugging, you can come join us in the Strata discord and we'll do our best to help you out:
+
+   * [Discord](https://discord.gg/XQhCFg77WM)
+
+## Want to see more like this?
+
+We'll be posting tips and tricks as we solve problems ourselves. If you're interested in launching a token or token(s), let us know! We can help with that too!
+
+   * [Twitter](https://twitter.com/StrataProtocol)
+   * [Discord](https://discord.gg/XQhCFg77WM)
