@@ -51,7 +51,7 @@ runs:
       shell: bash
       env:
         DEPLOY_KEYPAIR: ${{ inputs.keypair }}
-    - run: npm install -g @strata-foundation/governance-cli@1.3.3-alpha.50+c92630b
+    - run: npm install -g @strata-foundation/governance-cli@1.3.3-alpha.65+eace05a
       shell: bash
     - name: Transfer idl buffer to governance
       shell: bash
