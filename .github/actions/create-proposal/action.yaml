@@ -36,6 +36,11 @@ runs:
         PROGRAM: ${{ inputs.program }}
     - run: npm install -g @strata-foundation/governance-cli
       shell: bash
+    - name: Transfer buffer to governance
+      run: solana program set-buffer-authority $BUFFER -k ./deploy-keypair.json --new-buffer-authority $GOVERNANCE -u devnet
+      env:
+        BUFFER: ${{ steps.buffer-deploy.outputs.buffer }}
+        GOVERNANCE: ${{ inputs.governance }}
     - name: Create proposal
       shell: bash
       run: create-proposal
