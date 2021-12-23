@@ -3,7 +3,7 @@ description: "Uploads an anchor program as a bpf"
 inputs:
   buffer:
     description: "The buffer address"
-    value: ${{ steps.buffer-deploy-store.outputs.BUFFER }}
+    required: true
   keypair:
     description: 'The keypair to use for deploys'
     required: true
@@ -14,7 +14,6 @@ inputs:
   governance:
     description: "The public key of the governance"
     required: true
-
 
 runs:
   using: "composite"
