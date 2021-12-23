@@ -40,7 +40,7 @@ runs:
       with:
         path: |
           ./proposal.out
-        key: cargo-${{ runner.os }}-${{ inputs.network }}-${{ inputs.program }}-proposal-${{ hashFiles('programs/**/*.rs') }}
+        key: ${{ inputs.network }}-${{ inputs.program }}-proposal-${{ hashFiles('programs/**/*.rs') }}
     - run: echo "$DEPLOY_KEYPAIR" > ./deploy-keypair.json && chmod 600 ./deploy-keypair.json
       shell: bash
       env:
