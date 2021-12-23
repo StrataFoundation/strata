@@ -1,13 +1,13 @@
 ---
 slug: governance-setup-anchor
-title: CI/CD with Governance on your Anchor Programs
+title: Automated Governance on your Anchor Programs
 tags: [governance, guides]
 authors: [noah]
 ---
 
 ![Splash](./splash.png)
 
-# Setting up CI/CD with Governance on your Anchor Programs
+# Automated Governance on your Anchor Programs
 
 Have you been deploying your programs with `solana program deploy`, using deploy keys that sit on your computer? While it works for prototyping, it's not great for a production program on mainnet that's holding real money.
 
