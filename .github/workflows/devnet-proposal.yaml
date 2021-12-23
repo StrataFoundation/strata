@@ -1,10 +1,7 @@
-name: Tests
+name: Devnet Proposal
 
 on:
   push:
-    branches:
-      - master
-  pull_request:
     branches:
       - master
 env:
@@ -12,8 +9,8 @@ env:
   NODE_VERSION: 17.0.1
 
 jobs:
-  deploy-bpf:
-    name: Deploy BPF
+  create-bonding-proposal:
+    name: Create Bonding Proposal
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
@@ -26,9 +23,5 @@ jobs:
           keypair: ${{ secrets.DEPLOY_KEYPAIR }}
           governance: GSGB9BDcb29u8fbigqeFLz1JQ64C4G4H5KRQbzNDJUcJ
           signatory: C6uY3FCNz76k5kDjaYtHyedgzXW8fsJABXg3R7rfc7fA
-          name: CI Automated Deployment
-          description: Test
-      # - uses: ./.github/actions/anchor-publish/
-      #   with:
-      #     program: spl_token_bonding
-      #     anchor-token: ${{ secrets.ANCHOR_TOKEN }}
+          name: Deploy ${{ github.ref_name }}
+          description: https://github.com/StrataFoundation/strata/tree/${{ github.ref_name }}

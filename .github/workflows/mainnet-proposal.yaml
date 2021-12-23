@@ -1,0 +1,33 @@
+name: Devnet Proposal
+
+on:
+  push:
+    branches:
+      - master
+    tags:        
+      - 'v*'
+env:
+  SOLANA_CLI_VERSION: 1.8.5
+  NODE_VERSION: 17.0.1
+
+jobs:
+  create-bonding-proposal:
+    name: Create Bonding Proposal
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/deploy-with-gov-proposal/
+        id: deploy
+        with:
+          program: spl_token_bonding
+          program-id: Ep23h6U7HvBb2NRGRTxxH5mekpV4V3b6AJh76mra5Yiv
+          network: mainnet
+          keypair: ${{ secrets.DEPLOY_KEYPAIR }}
+          governance: GSGB9BDcb29u8fbigqeFLz1JQ64C4G4H5KRQbzNDJUcJ
+          signatory: C6uY3FCNz76k5kDjaYtHyedgzXW8fsJABXg3R7rfc7fA
+          name: Deploy ${{ github.ref_name }}
+          description: https://github.com/StrataFoundation/strata/tree/${{ github.ref_name }}
+      - uses: ./.github/actions/anchor-publish/
+        with:
+          program: spl_token_bonding
+          anchor-token: ${{ secrets.ANCHOR_TOKEN }}
