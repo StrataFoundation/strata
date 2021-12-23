@@ -8,6 +8,7 @@ import { withCreateProposal } from "./governance/withCreateProposal";
 import { withInsertInstruction } from "./governance/withInsertInstruction";
 import { withAddSignatory } from "./governance/withAddSignatory";
 import { createIdlUpgradeInstruction } from "./createIdlUpgradeInstruction";
+import { withSignOffProposal } from "./governance/withSignOffProposal";
 
 const GOVERNANCE_PROGRAM_ID = new PublicKey("GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw");
 
@@ -17,7 +18,7 @@ async function run() {
   const idlBufferKey = new PublicKey(process.env.IDL_BUFFER!);
   const governanceKey = new PublicKey(process.env.GOVERNANCE_KEY!);
   const network = process.env.NETWORK!;
-  const signatory = new PublicKey(process.env.SIGNATORY!);
+  const signatory = process.env.SIGNATORY && new PublicKey(process.env.SIGNATORY);
   const wallet = Keypair.fromSecretKey(
     Buffer.from(
       JSON.parse(
@@ -70,14 +71,14 @@ async function run() {
     wallet.publicKey
   );
 
-  // Add the proposal creator as the default signatory
-  await withAddSignatory(
+  // If signatory provided, add it. Otherwise add ourselves and sign off immediately
+  const signatoryRecord = await withAddSignatory(
     instructions,
     GOVERNANCE_PROGRAM_ID,
     proposal,
     tokenOwner,
     wallet.publicKey,
-    signatory,
+    signatory ? signatory : wallet.publicKey,
     wallet.publicKey,
   );
 
@@ -118,6 +119,16 @@ async function run() {
     ))),
     wallet.publicKey
   );
+
+  if (!signatory) {
+    await withSignOffProposal(
+      instructions,
+      GOVERNANCE_PROGRAM_ID,
+      proposal,
+      signatoryRecord,
+      wallet.publicKey
+    )
+  }
 
   tx.add(...instructions);
   tx.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;

@@ -24,8 +24,8 @@ inputs:
     description: "The public key of the governance"
     required: true
   signatory:
-    description: 'Who must sign off to get this out of draft state?'
-    required: true
+    description: 'Who must sign off to get this out of draft state? Goes straight to voting if not provided'
+    required: false
   name:
     description: 'The name on the proposal'
     required: true

@@ -22,7 +22,7 @@ In addition to the security risks of deploying locally, there's also several ris
   * Forgetting to publish a verified build
   * Inconsistency with your git repository and what's deployed, making debugging difficult.
 
-By the end of this guide, we'll set up automation such that when you push release tags to `master`, you'll get a Governance proposal to deploy the contract. All you need to do is sign off and vote on the proposal, then execute the transaction. `push`, then go to a UI and deploy. For devnet, you'll get a new proposal every time the rust code changes on `master`
+By the end of this guide, we'll set up automation such that when you push release tags to `master`, you'll get a Governance proposal to deploy the contract. All you need to do is vote yes on the proposal, then execute the transaction. `push`, then go to a UI and deploy. For devnet, you'll get a new proposal every time the rust code changes on `master`
 
 :::note
 Do this in devnet before you try it on mainnet
@@ -320,7 +320,7 @@ You will need to copy and edit the variables in:
   * `.github/workflows/devnet-proposal.yaml` - When a commit is pushed to master, if the rust contracts have changed, create a proposal to devnet governance to release the new version. Make sure to set `governance` to the dev governance we created here
   * `.github/workflows/mainnet-proposal.yaml` - When release tags (ex v1.0.0) are pushed to master, if the rust contracts have changed, create a proposal to mainnet governance to release the new version. Make sure to set `governance` to a production governance, you will need to follow the above steps on mainnet _after_ you verify it works on devnet.
 
-In particular, make sure there's an entry for each program, and that you set `program, program-id, network, keypair, governance, signatory, name, description`. Signatory is the account that must "sign off" on the proposal.
+In particular, make sure there's an entry for each program, and that you set `program, program-id, network, keypair, governance, name, description`. If signatory is set, that account must "sign off" on the proposal to get it out of draft stage.
 
 These workflows rely on some actions that you will probably not need to edit, but will need to copy:
 

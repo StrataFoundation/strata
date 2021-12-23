@@ -22,6 +22,5 @@ jobs:
           network: devnet
           keypair: ${{ secrets.DEPLOY_KEYPAIR }}
           governance: HDkW3MrrvqT9FPvuFBAVnSag1BLDx767MD2VXKfpCoCe
-          signatory: 7HJ1MRRXK6MeKVCigSy555rjXrLUiBxvLmFFoBnVmGW9
           name: Deploy ${{ github.ref_name }}
           description: https://github.com/StrataFoundation/strata/tree/${{ github.ref_name }}
