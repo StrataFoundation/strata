@@ -20,7 +20,7 @@ runs:
       shell: bash
       env:
         ANCHOR_TOKEN: ${{ inputs.anchor-token }}
-    - run: ~/.cargo/bin/anchor publish $PROGRAM
+    - run: echo "yes" | ~/.cargo/bin/anchor publish $PROGRAM
       shell: bash
       env:
         PROGRAM: ${{ inputs.program }}
