@@ -403,7 +403,7 @@ export interface ICurve extends CurveV0 {
 export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
   state: ProgramStateV0 | undefined;
 
-  static ID = new PublicKey("TBondz6ZwSM5fs4v2GpnVBMuwoncPkFLFR9S422ghhN");
+  static ID = new PublicKey("TBondmkCYxaPCKG4CHYfVTcwQ8on31xnJrPzk8F8WsS");
 
   static async init(
     provider: Provider,
@@ -466,7 +466,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
    *
    * @returns Instructions needed to create sol storage
    */
-  async initializeSolStorageInstructions(): Promise<InstructionResult<null>> {
+  async initializeSolStorageInstructions({
+    mintKeypair
+  }: { mintKeypair: Keypair }): Promise<InstructionResult<null>> {
     const exists = await this.getState();
     if (exists) {
       return {
@@ -492,7 +494,6 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
 
     const instructions: TransactionInstruction[] = [];
     const signers = [];
-    const mintKeypair = anchor.web3.Keypair.generate();
     signers.push(mintKeypair);
 
     instructions.push(
@@ -576,8 +577,10 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
   /**
    * Admin command run once to initialize the smart contract
    */
-  initializeSolStorage(): Promise<null> {
-    return this.execute(this.initializeSolStorageInstructions());
+  initializeSolStorage({
+    mintKeypair
+  }: { mintKeypair: Keypair }): Promise<null> {
+    return this.execute(this.initializeSolStorageInstructions({ mintKeypair }));
   }
 
   /**

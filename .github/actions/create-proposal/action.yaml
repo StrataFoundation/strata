@@ -1,0 +1,89 @@
+name: "Upload BPF"
+description: "Uploads an anchor program as a bpf"
+inputs:
+  program:
+    description: 'The program to build and upload'
+    required: true
+  program-id:
+    description: 'The program id of the program we are uploading'
+    required: true
+  buffer:
+    description: "The buffer address"
+    required: true
+  idl-buffer:
+    description: "The idl buffer address"
+    required: true
+  keypair:
+    description: 'The keypair to use for deploys'
+    required: true
+  network:
+    description: "The solana cluster/network"
+    required: true
+    default: devnet
+  governance:
+    description: "The public key of the governance"
+    required: true
+  signatory:
+    description: 'Who must sign off to get this out of draft state? Goes straight to voting if not provided'
+    required: false
+  name:
+    description: 'The name on the proposal'
+    required: true
+  description:
+    description: 'The description on the proposal'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    - uses: actions/cache@v2
+      name: Cache Builds
+      id: cache-proposal
+      with:
+        path: |
+          ./proposal.out
+        key: ${{ inputs.network }}-${{ inputs.program-id }}-${{ hashFiles('programs/**/*.rs') }}-${{ hashFiles('./**/Cargo.lock') }}-proposal
+    - run: echo "$DEPLOY_KEYPAIR" > ./deploy-keypair.json && chmod 600 ./deploy-keypair.json
+      shell: bash
+      env:
+        DEPLOY_KEYPAIR: ${{ inputs.keypair }}
+    - run: npm install -g @strata-foundation/governance-cli@1.3.3-alpha.65+eace05a
+      shell: bash
+    - name: Transfer idl buffer to governance
+      shell: bash
+      if: steps.cache-proposal.outputs.cache-hit != 'true'
+      run: anchor idl set-authority $IDL_BUFFER --provider.cluster $NETWORK --program-id $PROGRAM_ID --new-authority $GOVERNANCE --provider.wallet ./deploy-keypair.json
+      env:
+        IDL_BUFFER: ${{ inputs.idl-buffer }}
+        GOVERNANCE: ${{ inputs.governance }}
+        NETWORK: ${{ inputs.network }}
+        PROGRAM_ID: ${{ inputs.program-id }}
+    - name: Transfer buffer to governance
+      shell: bash
+      if: steps.cache-proposal.outputs.cache-hit != 'true'
+      run: solana program set-buffer-authority $BUFFER -k ./deploy-keypair.json --new-buffer-authority $GOVERNANCE -u $NETWORK
+      env:
+        BUFFER: ${{ inputs.buffer }}
+        GOVERNANCE: ${{ inputs.governance }}
+        NETWORK: ${{ inputs.network }}
+    - name: Create proposal
+      shell: bash
+      if: steps.cache-proposal.outputs.cache-hit != 'true'
+      run: create-proposal > proposal.out
+      env:
+        PROGRAM_ID: ${{ inputs.program-id }}
+        BUFFER: ${{ inputs.buffer }}
+        IDL_BUFFER: ${{ inputs.idl-buffer }}
+        GOVERNANCE_KEY: ${{ inputs.governance }}
+        NETWORK: ${{ inputs.network }}
+        WALLET: ./deploy-keypair.json
+        NAME: ${{ inputs.name }}
+        DESCRIPTION: ${{ inputs.description }}
+        SIGNATORY: ${{ inputs.signatory }}
+    - run: rm ./deploy-keypair.json
+      shell: bash
+      if: always()

@@ -13,8 +13,11 @@ async function run() {
   const tokenBondingSdk = await SplTokenBonding.init(provider);
   const tokenCollectiveSdk = await SplTokenCollective.init(provider);
   const openMintKeypair = Keypair.fromSecretKey(new Uint8Array(JSON.parse(fs.readFileSync(process.env.OPEN_MINT_PATH!).toString())));
+  const wrappedSolKeypair = Keypair.fromSecretKey(new Uint8Array(JSON.parse(fs.readFileSync(process.env.WRAPPED_SOL_MINT_PATH!).toString())));
   
-  await tokenBondingSdk.initializeSolStorage();
+  await tokenBondingSdk.initializeSolStorage({
+    mintKeypair: wrappedSolKeypair
+  });
   const curve = await tokenBondingSdk.initializeCurve({
     config: new ExponentialCurveConfig({
       c: 0.001,

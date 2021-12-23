@@ -1,0 +1,42 @@
+name: Devnet Proposal
+
+on:
+  push:
+    branches:
+      - master
+env:
+  SOLANA_CLI_VERSION: 1.8.5
+  NODE_VERSION: 17.0.1
+
+jobs:
+  create-bonding-proposal:
+    name: Create Bonding Proposal
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/deploy-with-gov-proposal/
+        id: deploy
+        with:
+          program: spl_token_bonding
+          program-id: TBondmkCYxaPCKG4CHYfVTcwQ8on31xnJrPzk8F8WsS
+          network: devnet
+          keypair: ${{ secrets.DEPLOY_KEYPAIR }}
+          governance: HDkW3MrrvqT9FPvuFBAVnSag1BLDx767MD2VXKfpCoCe
+          name: Deploy Token Bonding ${{ github.ref_name }}
+          description: https://github.com/StrataFoundation/strata/tree/${{ github.ref_name }}
+
+  create-collective-proposal:
+    name: Create Collective Proposal
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/deploy-with-gov-proposal/
+        id: deploy
+        with:
+          program: spl_token_collective
+          program-id: TCo1sfSr2nCudbeJPykbif64rG9K1JNMGzrtzvPmp3y
+          network: devnet
+          keypair: ${{ secrets.DEPLOY_KEYPAIR }}
+          governance: 6yc2jb7LCjYXD3hbRKjYkpx13j4VXYcCBzYsZbmntdVk
+          name: Deploy Token Collective ${{ github.ref_name }}
+          description: https://github.com/StrataFoundation/strata/tree/${{ github.ref_name }}

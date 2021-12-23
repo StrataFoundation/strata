@@ -1,0 +1,26 @@
+name: "Anchor Publish"
+description: "Publishes a verifiable build to anchor"
+inputs:
+  program:
+    description: 'The program to build and upload'
+    required: true
+  anchor-token:
+    description: 'Token to log in with anchor'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v2
+    - uses: ./.github/actions/setup/
+    - uses: ./.github/actions/setup-anchor/
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    - run: ~/.cargo/bin/anchor login $ANCHOR_TOKEN
+      shell: bash
+      env:
+        ANCHOR_TOKEN: ${{ inputs.anchor-token }}
+    - run: echo "yes" | ~/.cargo/bin/anchor publish $PROGRAM
+      shell: bash
+      env:
+        PROGRAM: ${{ inputs.program }}

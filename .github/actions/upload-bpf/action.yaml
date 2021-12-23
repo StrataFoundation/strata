@@ -1,0 +1,74 @@
+name: "Upload BPF"
+description: "Uploads an anchor program as a bpf"
+inputs:
+  network:
+    description: 'The Solana network'
+    required: true
+    default: 'devnet'
+  program:
+    description: 'The program to build and upload'
+    required: true
+  program-id:
+    description: 'The program id of the program we are uploading'
+    required: true
+  keypair:
+    description: 'The keypair to use for deploys'
+    required: true
+outputs:
+  buffer:
+    description: "The buffer address"
+    value: ${{ steps.buffer-deploy-store.outputs.BUFFER }}
+  idl-buffer:
+    description: "The idl buffer address."
+    value: ${{ steps.buffer-deploy-store.outputs.IDL_BUFFER }}
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v2
+    - uses: ./.github/actions/setup/
+    - uses: ./.github/actions/setup-anchor/
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    - uses: actions/cache@v2
+      name: Cache Builds
+      id: cache-cargo-builds
+      with:
+        path: |
+          ./target/
+        key: ${{ inputs.program-id }}-anchor-verified-build-${{ hashFiles('programs/**/*.rs') }}-${{ hashFiles('./**/Cargo.lock') }}
+    - run: ~/.cargo/bin/anchor build --verifiable -p $PROGRAM
+      shell: bash
+      if: steps.cache-cargo-builds.outputs.cache-hit != 'true'
+      env:
+        PROGRAM: ${{ inputs.program }}
+    - run: echo "$DEPLOY_KEYPAIR" > ./deploy-keypair.json && chmod 600 ./deploy-keypair.json
+      shell: bash
+      env:
+        DEPLOY_KEYPAIR: ${{ inputs.keypair }}
+    - name: Buffer Deploy
+      id: buffer-deploy
+      run: solana program write-buffer -k ./deploy-keypair.json ./target/verifiable/$PROGRAM.so -u $NETWORK > buffer.out
+      shell: bash
+      env:
+        NETWORK: ${{ inputs.network }}
+        PROGRAM: ${{ inputs.program }}
+    - name: IDL Buffer Deploy
+      shell: bash
+      id: idl-buffer-deploy
+      run: ~/.cargo/bin/anchor idl write-buffer $PROGRAM_ID --filepath ./target/idl/$PROGRAM.json --provider.cluster $NETWORK --provider.wallet ./deploy-keypair.json > idl-buffer.out
+      env:
+        PROGRAM_ID: ${{ inputs.program-id }}
+        PROGRAM: ${{ inputs.program }}
+        NETWORK: ${{ inputs.network }}
+    - name: Buffer Deploy Store
+      shell: bash
+      id: buffer-deploy-store
+      run: |
+        echo "::set-output name=BUFFER::$(cat buffer.out | sed 's/Buffer: //g' | xargs echo -n)" &&
+        echo "::set-output name=IDL_BUFFER::$(cat idl-buffer.out | sed 's/Idl buffer created: //g' | xargs echo -n)"
+    - run: rm ./deploy-keypair.json
+      shell: bash
+      if: always()
+    - run: echo "The buffer is ${{ steps.buffer-deploy-store.outputs.BUFFER }}"
+      shell: bash
