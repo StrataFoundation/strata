@@ -1,11 +1,8 @@
-name: "Deploy via Governance"
+name: "Deploy wiht Governance Proposal"
 description: "Uploads an anchor program as a bpf, then creates a proposal to upgrade to this buffer"
 inputs:
   program:
     description: 'The program to build and upload'
-    required: true
-  buffer:
-    description: "The buffer address"
     required: true
   keypair:
     description: 'The keypair to use for deploys'
@@ -41,7 +38,7 @@ runs:
       with:
         program: ${{ inputs.program }}
         network: ${{ inputs.network }}
-        buffer: ${{ inputs.buffer }}
+        buffer: ${{ steps.buffer-deploy.outputs.buffer }}
         keypair: ${{ inputs.keypair }}
         governance: ${{ inputs.governance }}
         signatory: ${{ inputs.signatory }}
