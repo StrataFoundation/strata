@@ -55,7 +55,7 @@ runs:
         BUFFER: ${{ inputs.buffer }}
         GOVERNANCE_KEY: ${{ inputs.governance }}
         NETWORK: ${{ inputs.network }}
-        WALLET: ./deploy-keypair
+        WALLET: ./deploy-keypair.json
         NAME: ${{ inputs.name }}
         DESCRIPTION: ${{ inputs.description }}
         SIGNATORY: ${{ inputs.signatory }}
