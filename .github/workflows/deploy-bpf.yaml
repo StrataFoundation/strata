@@ -12,10 +12,11 @@ env:
   NODE_VERSION: 17.0.1
 
 jobs:
-  test-contracts:
+  deploy-bpf:
     name: Deploy BPF
     runs-on: ubuntu-18.04
     steps:
+      - uses: actions/checkout@v2
       - uses: ./.github/actions/deploy-with-gov-proposal/
         id: deploy
         with:
