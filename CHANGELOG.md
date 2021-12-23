@@ -125,7 +125,7 @@ Minor version bumping it because the below changes included some interface chang
   - Ability to `updateCollective` to change both the config and authority.
 
 ### Changed
-  - Token collective now lives at TCo1sP6RwuCuyHPHjxgzcrq4dX4BKf9oRQ3aJMcdFry
+  - Token collective now lives at TCo1sfSr2nCudbeJPykbif64rG9K1JNMGzrtzvPmp3y
 
 ### Removed
   - ["token-ref", owner, Pubkey::default] as the primary token ref

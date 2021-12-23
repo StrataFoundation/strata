@@ -33,10 +33,10 @@ members = ["programs/spl-token-bonding", "programs/spl-token-collective", "progr
 
 [programs.mainnet]
 spl_token_bonding = "TBondmkCYxaPCKG4CHYfVTcwQ8on31xnJrPzk8F8WsS"
-spl_token_collective = "TCo1sP6RwuCuyHPHjxgzcrq4dX4BKf9oRQ3aJMcdFry"
+spl_token_collective = "TCo1sfSr2nCudbeJPykbif64rG9K1JNMGzrtzvPmp3y"
 spl_token_staking = "TStakXwvzEZiK6PSNpXuNx6wEsKc93NtSaMxmcqG6qP"
 
 [programs.localnet]
 spl_token_bonding = "TBondmkCYxaPCKG4CHYfVTcwQ8on31xnJrPzk8F8WsS"
-spl_token_collective = "TCo1sP6RwuCuyHPHjxgzcrq4dX4BKf9oRQ3aJMcdFry"
+spl_token_collective = "TCo1sfSr2nCudbeJPykbif64rG9K1JNMGzrtzvPmp3y"
 spl_token_staking = "TStakXwvzEZiK6PSNpXuNx6wEsKc93NtSaMxmcqG6qP"

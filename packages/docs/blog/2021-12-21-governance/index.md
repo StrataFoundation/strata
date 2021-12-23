@@ -1,6 +1,6 @@
 ---
-slug: governance-setup-anchor
-title: Automated Governance on your Anchor Programs
+slug: automated-program-governance
+title: Automated Program Governance for Anchor
 tags: [governance, guides]
 authors: [noah]
 ---
