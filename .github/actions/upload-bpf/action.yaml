@@ -30,7 +30,7 @@ runs:
       with:
         path: |
           ./target/
-        key: ${{ inputs.network }}-${{ inputs.program }}-anchor-verified-build-${{ hashFiles('programs/**/*.rs') }}
+        key: ${{ inputs.program }}-anchor-verified-build-${{ hashFiles('programs/**/*.rs') }}
     - run: ~/.cargo/bin/anchor build --verifiable -p $PROGRAM
       shell: bash
       if: steps.cache-cargo-builds.outputs.cache-hit != 'true'
