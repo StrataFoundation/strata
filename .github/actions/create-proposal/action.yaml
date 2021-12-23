@@ -29,13 +29,6 @@ runs:
       shell: bash
       env:
         DEPLOY_KEYPAIR: ${{ inputs.keypair }}
-    - name: Buffer Deploy
-      id: buffer-deploy
-      run: solana program write-buffer ./target/verifiable/$PROGRAM.so -u $NETWORK -k ./deploy-keypair.json > buffer.out
-      shell: bash
-      env:
-        NETWORK: ${{ inputs.network }}
-        PROGRAM: ${{ inputs.program }}
     - run: npm install -g @strata-foundation/governance-cli
       shell: bash
     - name: Transfer buffer to governance
