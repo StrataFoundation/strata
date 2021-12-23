@@ -4,6 +4,9 @@ inputs:
   program:
     description: 'The program to build and upload'
     required: true
+  program-id:
+    description: 'The program id of the program we are uploading'
+    required: true
   buffer:
     description: "The buffer address"
     required: true
@@ -43,7 +46,7 @@ runs:
       with:
         path: |
           ./proposal.out
-        key: ${{ inputs.network }}-${{ inputs.program }}-${{ hashFiles('programs/**/*.rs') }}-${{ hashFiles('./**/Cargo.lock') }}-proposal
+        key: ${{ inputs.network }}-${{ inputs.program-id }}-${{ hashFiles('programs/**/*.rs') }}-${{ hashFiles('./**/Cargo.lock') }}-proposal
     - run: echo "$DEPLOY_KEYPAIR" > ./deploy-keypair.json && chmod 600 ./deploy-keypair.json
       shell: bash
       env:
