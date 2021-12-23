@@ -1,6 +1,9 @@
 name: "Upload BPF"
 description: "Uploads an anchor program as a bpf"
 inputs:
+  program:
+    description: 'The program to build and upload'
+    required: true
   buffer:
     description: "The buffer address"
     required: true

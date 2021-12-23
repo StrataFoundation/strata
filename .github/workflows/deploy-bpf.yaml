@@ -28,6 +28,7 @@ jobs:
       - uses: ./.github/actions/create-proposal/
         id: create-proposal
         with:
+          program: spl_token_bonding
           network: devnet
           buffer: ${{ steps.buffer-deploy.outputs.buffer }}
           keypair: ${{ secrets.DEPLOY_KEYPAIR }}
