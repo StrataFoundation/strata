@@ -35,7 +35,7 @@ runs:
       shell: bash
       run: solana program set-buffer-authority $BUFFER -k ./deploy-keypair.json --new-buffer-authority $GOVERNANCE -u devnet
       env:
-        BUFFER: ${{ steps.buffer-deploy.outputs.buffer }}
+        BUFFER: ${{ inputs.buffer }}
         GOVERNANCE: ${{ inputs.governance }}
     - name: Create proposal
       shell: bash
