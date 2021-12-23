@@ -27,7 +27,7 @@ jobs:
           signatory: C6uY3FCNz76k5kDjaYtHyedgzXW8fsJABXg3R7rfc7fA
           name: CI Automated Deployment
           description: Test
-      - uses: ./.github/acions/anchor-publish/
+      - uses: ./.github/actions/anchor-publish/
         with:
           program: spl_token_bonding
           anchor-token: ${{ secrets.ANCHOR_TOKEN }}
