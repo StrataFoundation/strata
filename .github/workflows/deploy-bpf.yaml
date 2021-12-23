@@ -16,7 +16,7 @@ jobs:
     name: Deploy BPF
     runs-on: ubuntu-18.04
     steps:
-      - uses: ./.github/actions/deploy-via-governance
+      - uses: ./.github/actions/deploy-via-governance/
         id: deploy
         with:
           program: spl_token_bonding
