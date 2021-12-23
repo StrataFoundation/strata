@@ -20,8 +20,8 @@ anchor-spl = "0.18.0"
 uint = "0.9"
 spl-token = "3.2.0"
 spl-associated-token-account = { version = "1.0.3",  features = [ "no-entrypoint" ] }
-spl-name-service = { path = "../../deps/solana-program-library/name-service/program", features = ["no-entrypoint"] }
-spl-token-metadata = { path = "../../deps/metaplex/rust/token-metadata/program", features = ["no-entrypoint"] }
+spl-name-service = { version = "0.2.0", features = ["no-entrypoint"] }
+spl-token-metadata = { version = "0.0.1", features = ["no-entrypoint"] }
 spl-token-bonding = { path = '../spl-token-bonding', features = ["no-entrypoint", "cpi"] }
 sha2 = "0.9.8"
 borsh = "0.9.1"
