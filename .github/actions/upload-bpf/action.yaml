@@ -30,9 +30,10 @@ runs:
       with:
         path: |
           ./target/
-        key: cargo-${{ runner.os }}-cargo-build-${{ hashFiles('./deps/**/Cargo.lock') }}-target
+        key: cargo-${{ runner.os }}-cargo-build-${{ hashFiles('programs/**/*.rs') }}-target
     - run: ~/.cargo/bin/anchor build --verifiable -p $PROGRAM
       shell: bash
+      if: steps.cache-cargo-builds.outputs.cache-hit != 'true'
       env:
         PROGRAM: ${{ inputs.program }}
     - run: echo "$DEPLOY_KEYPAIR" > ./deploy-keypair.json && chmod 600 ./deploy-keypair.json
