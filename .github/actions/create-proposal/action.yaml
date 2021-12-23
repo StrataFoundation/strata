@@ -28,7 +28,7 @@ runs:
         DEPLOY_KEYPAIR: ${{ inputs.keypair }}
     - name: Buffer Deploy
       id: buffer-deploy
-      run: solana program write-buffer -k ./deploy-keypair.json ./target/verifiable/$PROGRAM.so -u $NETWORK > buffer.out
+      run: solana program write-buffer ./target/verifiable/$PROGRAM.so -u $NETWORK -k ./deploy-keypair.json > buffer.out
       shell: bash
       env:
         NETWORK: ${{ inputs.network }}

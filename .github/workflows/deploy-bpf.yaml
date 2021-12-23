@@ -25,11 +25,11 @@ jobs:
           keypair: ${{ secrets.DEPLOY_KEYPAIR }}
       - run: echo "The out buffer is ${{ steps.buffer-deploy.outputs.buffer }}"
         shell: bash
-      # - uses: ./.github/actions/create-proposal/
-      #   id: create-proposal
-      #   with:
-      #     network: devnet
-      #     buffer: ${{ steps.buffer-deploy.outputs.buffer }}
-      #     keypair: ${{ secrets.DEPLOY_KEYPAIR }}
-      #     governance: GSGB9BDcb29u8fbigqeFLz1JQ64C4G4H5KRQbzNDJUcJ
+      - uses: ./.github/actions/create-proposal/
+        id: create-proposal
+        with:
+          network: devnet
+          buffer: ${{ steps.buffer-deploy.outputs.buffer }}
+          keypair: ${{ secrets.DEPLOY_KEYPAIR }}
+          governance: GSGB9BDcb29u8fbigqeFLz1JQ64C4G4H5KRQbzNDJUcJ
   
