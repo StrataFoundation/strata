@@ -54,6 +54,7 @@ runs:
         NETWORK: ${{ inputs.network }}
         PROGRAM: ${{ inputs.program }}
     - name: IDL Buffer Deploy
+      shell: bash
       id: idl-buffer-deploy
       run: ~/.cargo/bin/anchor idl write-buffer $PROGRAM_ID --filepath ./target/idl/$PROGRAM.json --provider.cluster $NETWORK > idl-buffer.out
       env:
