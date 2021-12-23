@@ -17,10 +17,6 @@ inputs:
   governance:
     description: "The public key of the governance"
     required: true
-  network:
-    description: 'The Solana network'
-    required: true
-    default: 'devnet'
   signatory:
     description: 'Who must sign off to get this out of draft state?'
     required: true
