@@ -7,6 +7,9 @@ inputs:
   buffer:
     description: "The buffer address"
     required: true
+  idl-buffer:
+    description: "The idl buffer address"
+    required: true
   keypair:
     description: 'The keypair to use for deploys'
     required: true
@@ -47,6 +50,15 @@ runs:
         DEPLOY_KEYPAIR: ${{ inputs.keypair }}
     - run: npm install -g @strata-foundation/governance-cli
       shell: bash
+    - name: Transfer idl buffer to governance
+      shell: bash
+      if: steps.cache-proposal.outputs.cache-hit != 'true'
+      run: anchor idl set-authority $IDL_BUFFER --provider.cluster $NETWORK --program-id $PROGRAM_ID --new-authority $GOVERNANCE --provider.wallet ./deploy-keypair.json
+      env:
+        IDL_BUFFER: ${{ inputs.idl-buffer }}
+        GOVERNANCE: ${{ inputs.governance }}
+        NETWORK: ${{ inputs.network }}
+        PROGRAM_ID: ${{ inputs.program-id }}
     - name: Transfer buffer to governance
       shell: bash
       if: steps.cache-proposal.outputs.cache-hit != 'true'
@@ -60,8 +72,9 @@ runs:
       if: steps.cache-proposal.outputs.cache-hit != 'true'
       run: create-proposal > proposal.out
       env:
-        PROGRAM_ID: Ep23h6U7HvBb2NRGRTxxH5mekpV4V3b6AJh76mra5Yiv
+        PROGRAM_ID: ${{ inputs.program-id }}
         BUFFER: ${{ inputs.buffer }}
+        IDL_BUFFER: ${{ inputs.idl-buffer }}
         GOVERNANCE_KEY: ${{ inputs.governance }}
         NETWORK: ${{ inputs.network }}
         WALLET: ./deploy-keypair.json

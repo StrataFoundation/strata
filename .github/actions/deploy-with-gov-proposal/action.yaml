@@ -4,6 +4,9 @@ inputs:
   program:
     description: 'The program to build and upload'
     required: true
+  program-id:
+    description: 'The program id of the program we are uploading'
+    required: true
   keypair:
     description: 'The keypair to use for deploys'
     required: true
@@ -42,14 +45,17 @@ runs:
         network: ${{ inputs.network }}
         program: ${{ inputs.program }}
         keypair: ${{ inputs.keypair }}
+        program-id: ${{ inputs.program-id }}
     - uses: ./.github/actions/create-proposal/
       # Only upload bpf and create proposals when not already created for these rust files and cluster
       if: steps.cache-proposal.outputs.cache-hit != 'true'
       id: create-proposal
       with:
+        program-id: ${{ inputs.program-id }}
         program: ${{ inputs.program }}
         network: ${{ inputs.network }}
         buffer: ${{ steps.buffer-deploy.outputs.buffer }}
+        idl-buffer: ${{ steps.buffer-deploy.outputs.idl-buffer }}
         keypair: ${{ inputs.keypair }}
         governance: ${{ inputs.governance }}
         signatory: ${{ inputs.signatory }}

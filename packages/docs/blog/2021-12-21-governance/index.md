@@ -133,6 +133,12 @@ First, to setup governance we must have deployed the anchor program once. If you
 anchor deploy --provider.cluster devnet
 ```
 
+You'll also want to init the idl:
+
+```
+anchor idl init <YOUR_PROGRAM_ADDRESS> --filepath target/idl/<YOUR_PROGRAM>.json --provider.cluster devnet
+```
+
 Since you likely deployed with a local deploy key, you will want to temporarily transfer the authority to your current web wallet.
 
 ```
@@ -209,4 +215,11 @@ Done!! Now you've succesfully deployed your first program using SPL Governance!
 
 If you're like me, you're probably thinking: "this could use some automation." 
 
-Yup. Let's setup
+Yup. Let's set this up.
+
+First, let's transfer the IDL to governance:
+
+```
+anchor idl set-authority --provider.cluster devnet --program-id <PROGRAM_ADDRESS> --new-authority <GOVERNANCE_ID>
+```
+

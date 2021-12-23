@@ -8,13 +8,19 @@ inputs:
   program:
     description: 'The program to build and upload'
     required: true
+  program-id:
+    description: 'The program id of the program we are uploading'
+    required: true
   keypair:
     description: 'The keypair to use for deploys'
     required: true
 outputs:
   buffer:
-    description: "The buffer address. Will be null if this buffer has already been uploaded"
+    description: "The buffer address"
     value: ${{ steps.buffer-deploy-store.outputs.BUFFER }}
+  idl-buffer:
+    description: "The idl buffer address."
+    value: ${{ steps.buffer-deploy-store.outputs.IDL_BUFFER }}
 
 runs:
   using: "composite"
@@ -47,12 +53,20 @@ runs:
       env:
         NETWORK: ${{ inputs.network }}
         PROGRAM: ${{ inputs.program }}
+    - name: IDL Buffer Deploy
+      id: idl-buffer-deploy
+      run: ~/.cargo/bin/anchor idl write-buffer $PROGRAM_ID --filepath ./target/idl/$PROGRAM.json --provider.cluster $NETWORK > idl-buffer.out
+      env:
+        PROGRAM_ID: ${{ inputs.program-id }}
+        PROGRAM: ${{ inputs.program }}
+        NETWORK: ${{ inputs.network }}
     - name: Buffer Deploy Store
       shell: bash
       id: buffer-deploy-store
       run: |
-        echo "::set-output name=BUFFER::$(cat buffer.out | sed 's/Buffer: //g' | xargs echo -n)"
-    - run: rm ./deploy-keypair.json
+        echo "::set-output name=BUFFER::$(cat buffer.out | sed 's/Buffer: //g' | xargs echo -n)" &&
+        echo "::set-output name=IDL_BUFFER::$(cat idl-buffer.out | sed 's/Idl buffer created: //g' | xargs echo -n)"
+    - run: rm ./deploy-keypair.json && rm ./idl-keypair.json
       shell: bash
       if: always()
     - run: echo "The buffer is ${{ steps.buffer-deploy-store.outputs.BUFFER }}"

@@ -7,12 +7,14 @@ import { getInstructionDataFromBase64, GovernanceAccountParser, serializeInstruc
 import { withCreateProposal } from "./governance/withCreateProposal";
 import { withInsertInstruction } from "./governance/withInsertInstruction";
 import { withAddSignatory } from "./governance/withAddSignatory";
+import { createIdlUpgradeInstruction } from "./createIdlUpgradeInstruction";
 
 const GOVERNANCE_PROGRAM_ID = new PublicKey("GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw");
 
 async function run() {
   const programId = new PublicKey(process.env.PROGRAM_ID!);
   const bufferKey = new PublicKey(process.env.BUFFER!);
+  const idlBufferKey = new PublicKey(process.env.IDL_BUFFER!);
   const governanceKey = new PublicKey(process.env.GOVERNANCE_KEY!);
   const network = process.env.NETWORK!;
   const signatory = new PublicKey(process.env.SIGNATORY!);
@@ -96,7 +98,26 @@ async function run() {
       wallet.publicKey
     ))),
     wallet.publicKey
-  )
+  );
+
+  // Upgrade idl
+  await withInsertInstruction(
+    instructions,
+    GOVERNANCE_PROGRAM_ID,
+    1,
+    governanceKey,
+    proposal,
+    tokenOwner,
+    wallet.publicKey,
+    1,
+    0,
+    getInstructionDataFromBase64(serializeInstructionToBase64(await createIdlUpgradeInstruction(
+      programId,
+      idlBufferKey,
+      governanceKey,
+    ))),
+    wallet.publicKey
+  );
 
   tx.add(...instructions);
   tx.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
