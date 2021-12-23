@@ -34,6 +34,13 @@ runs:
     - uses: actions/setup-node@v2
       with:
         node-version: ${{ env.NODE_VERSION }}
+    - uses: actions/cache@v2
+      name: Cache Builds
+      id: cache-proposal
+      with:
+        path: |
+          ./proposal.out
+        key: cargo-${{ runner.os }}-${{ inputs.network }}-${{ inputs.program }}-proposal-${{ hashFiles('programs/**/*.rs') }}
     - run: echo "$DEPLOY_KEYPAIR" > ./deploy-keypair.json && chmod 600 ./deploy-keypair.json
       shell: bash
       env:
@@ -42,6 +49,7 @@ runs:
       shell: bash
     - name: Transfer buffer to governance
       shell: bash
+      if: steps.cache-proposal.outputs.cache-hit != 'true'
       run: solana program set-buffer-authority $BUFFER -k ./deploy-keypair.json --new-buffer-authority $GOVERNANCE -u $NETWORK
       env:
         BUFFER: ${{ inputs.buffer }}
@@ -49,7 +57,8 @@ runs:
         NETWORK: ${{ inputs.network }}
     - name: Create proposal
       shell: bash
-      run: create-proposal
+      if: steps.cache-proposal.outputs.cache-hit != 'true'
+      run: create-proposal > proposal.out
       env:
         PROGRAM_ID: Ep23h6U7HvBb2NRGRTxxH5mekpV4V3b6AJh76mra5Yiv
         BUFFER: ${{ inputs.buffer }}
