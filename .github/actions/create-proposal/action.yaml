@@ -17,6 +17,19 @@ inputs:
   governance:
     description: "The public key of the governance"
     required: true
+  network:
+    description: 'The Solana network'
+    required: true
+    default: 'devnet'
+  signatory:
+    description: 'Who must sign off to get this out of draft state?'
+    required: true
+  name:
+    description: 'The name on the proposal'
+    required: true
+  description:
+    description: 'The description on the proposal'
+    required: true
 
 runs:
   using: "composite"
@@ -33,10 +46,11 @@ runs:
       shell: bash
     - name: Transfer buffer to governance
       shell: bash
-      run: solana program set-buffer-authority $BUFFER -k ./deploy-keypair.json --new-buffer-authority $GOVERNANCE -u devnet
+      run: solana program set-buffer-authority $BUFFER -k ./deploy-keypair.json --new-buffer-authority $GOVERNANCE -u $NETWORK
       env:
         BUFFER: ${{ inputs.buffer }}
         GOVERNANCE: ${{ inputs.governance }}
+        NETWORK: ${{ inputs.network }}
     - name: Create proposal
       shell: bash
       run: create-proposal
@@ -44,11 +58,11 @@ runs:
         PROGRAM_ID: Ep23h6U7HvBb2NRGRTxxH5mekpV4V3b6AJh76mra5Yiv
         BUFFER: ${{ inputs.buffer }}
         GOVERNANCE_KEY: ${{ inputs.governance }}
-        NETWORK: devnet
-        WALLET: ./
-        NAME: Deploy new version
-        DESCRIPTION: Test
-        SIGNATORY: C6uY3FCNz76k5kDjaYtHyedgzXW8fsJABXg3R7rfc7fA
+        NETWORK: ${{ inputs.network }}
+        WALLET: ./deploy-keypair
+        NAME: ${{ inputs.name }}
+        DESCRIPTION: ${{ inputs.description }}
+        SIGNATORY: ${{ inputs.signatory }}
     - run: rm ./deploy-keypair.json
       shell: bash
       if: always()

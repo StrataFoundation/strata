@@ -33,4 +33,7 @@ jobs:
           buffer: ${{ steps.buffer-deploy.outputs.buffer }}
           keypair: ${{ secrets.DEPLOY_KEYPAIR }}
           governance: GSGB9BDcb29u8fbigqeFLz1JQ64C4G4H5KRQbzNDJUcJ
+          signatory: C6uY3FCNz76k5kDjaYtHyedgzXW8fsJABXg3R7rfc7fA
+          name: CI Automated Deployment
+          description: Test
   
