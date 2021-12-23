@@ -27,14 +27,26 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - uses: actions/cache@v2
+      name: Cache Builds
+      id: cache-proposal
+      with:
+        path: |
+          ./proposal.out
+        key: cargo-${{ runner.os }}-${{ inputs.network }}-${{ inputs.program }}-proposal-${{ hashFiles('programs/**/*.rs') }}
     - uses: ./.github/actions/upload-bpf/
+      # Only upload bpf and create proposals when not already created for these rust files and cluster
+      if: steps.cache-proposal.outputs.cache-hit != 'true'
       id: buffer-deploy
       with:
         network: ${{ inputs.network }}
         program: ${{ inputs.program }}
         keypair: ${{ inputs.keypair }}
     - uses: ./.github/actions/create-proposal/
-      id: create-proposal
+      # Only upload bpf and create proposals when not already created for these rust files and cluster
+      if: steps.cache-proposal.outputs.cache-hit != 'true'
+      id: create-proposal > proposal.out
+      if: steps.buffer-deploy.outputs.buffer != ""
       with:
         program: ${{ inputs.program }}
         network: ${{ inputs.network }}
