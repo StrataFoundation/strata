@@ -1,10 +1,8 @@
-name: Devnet Proposal
+name: Mainnet Proposal
 
 on:
   push:
-    branches:
-      - master
-    tags:        
+    tags:       
       - 'v*'
 env:
   SOLANA_CLI_VERSION: 1.8.5
@@ -14,6 +12,7 @@ jobs:
   create-bonding-proposal:
     name: Create Bonding Proposal
     runs-on: ubuntu-18.04
+    if: github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/deploy-with-gov-proposal/

@@ -7,22 +7,22 @@ authors: [noah]
 
 ![Splash](./splash.png)
 
-# Automated Governance on your Anchor Programs
+## Automated Governance on your Anchor Programs
 
-Have you been deploying your programs with `solana program deploy`, using deploy keys that sit on your computer? While it works for prototyping, it's not great for a production program on mainnet that's holding real money.
+Have you been deploying your programs with `solana program deploy` with deploy keys on your local file system? While it works for prototyping, it's not great for a production program on mainnet that's holding real money.
 
 Local deploy keys are a security risk. If your computer is compromised, a hacker could take the deploy keys and do whatever they want with your program; including siphon all funds stored in or owned by the program.
 
-Multisigs are great for simplicity, but with governance you can transfer voting shares around. You can also change the voting settings as the project evolves.
+Multisigs are great for simplicity, but with governance you can transfer voting shares around. You can also change the voting settings as the project evolves. It's also got a nifty UI!
 
-Why automate this? There's several risks associated with manually deploying to mainnet, including:
+In addition to the security risks of deploying locally, there's also several risks associated with manually deploying to mainnet, including:
 
   * Accidentally deploying dev code to mainnet because you ran the wrong command
   * Updating the program but not the IDL
   * Forgetting to publish a verified build
   * Inconsistency with your git repository and what's deployed, making debugging difficult.
 
-By the end of this guide, you'll automatically get a Governance proposal with an Anchor Verified Build when you push a `git` tag to master/main. You'll get a dev proposal when any change to the rust code lands in master. All you need to do is sign off and vote on the proposal, then execute the transaction.
+By the end of this guide, we'll set up automation such that when you push release tags to `master`, you'll get a Governance proposal to deploy the contract. All you need to do is sign off and vote on the proposal, then execute the transaction. `push`, then go to a UI and deploy. For devnet, you'll get a new proposal every time the rust code changes on `master`
 
 :::note
 Do this in devnet before you try it on mainnet
@@ -37,9 +37,11 @@ In this guide, we're going to:
   * Setup Anchor Verifiable Builds
 
 
-# Issue Govenance Voting Shares
+## Issue Govenance Voting Shares
 
-First, let's issue a governance token. We're going to use Metaplex spl-token-metadata to asssociate a name and symbol with our governance token, so it's easy to use in wallets.
+Governance works by creating and executing proposals to upgrade the program. These proposals are voted on by governance token holders. In a simple case, the governance token holders may just be the founders of the company. If all hold an even number of tokens, this acts like a multisig.
+
+Let's issue a governance token. We're going to use Metaplex spl-token-metadata to asssociate a name and symbol with our governance token, so it's easy to use in wallets. You can edit the name and symbol in `createMetadata` to name your own token.
 
 ```js
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
@@ -133,7 +135,7 @@ If you check your wallet, you should see our test governance token. After you're
 
 ![Wallet](./wallet.png)
 
-# Setup SPL Governance
+## Setup SPL Governance
 
 First, to setup governance we must have deployed the anchor program once. If you haven't yet, run
 
@@ -151,7 +153,8 @@ Since you likely deployed with a local deploy key, you will want to temporarily 
 
 :::caution
 This command cannot be undone without the new upgrade authority signing off. Make absolute sure your wallet address is correct here.
-::
+:::
+
 ```
 solana program set-upgrade-authority -u devnet <PROGRAM_ADDRESS> --new-upgrade-authority <YOUR_WALLET_ADDRESS>
 ```
@@ -192,7 +195,7 @@ https://solana-labs.github.io/oyster-gov/#/governance/GSGB9BDcb29u8fbigqeFLz1JQ6
 
 After you create this governance, you should be able to navigate back to the new UI, I.e. https://realms.today/dao/YOUR-REALM-ID?cluster=devnet.
 
-# Deploying your first Update
+## Deploy Your First Update
 
 Deploying with governance works in two steps. First, we'll write a buffer to Solana. Then, we'll create a Proposal to deploy that buffer. This allows us to separate building from signing to deploy.
 
@@ -222,7 +225,7 @@ Once the vote passes, click on the instructions drop down and scroll down to exe
 
 Done!! Now you've succesfully deployed your first program using SPL Governance!
 
-# Automation
+## CI/CD - Automation
 
 If you're like me, you're probably thinking: "this could use some automation." 
 
@@ -232,13 +235,13 @@ First, let's transfer the IDL to governance:
 
 :::caution
 This command cannot be undone without the new authority signing off. Make absolute sure the governance address is correct here
-::
+:::
 
 ```
 anchor idl set-authority --provider.cluster devnet --program-id <PROGRAM_ADDRESS> --new-authority <GOVERNANCE_ID>
 ```
 
-## Secrets
+### Secrets
 
 We'll need two github secrets
 
@@ -271,6 +274,10 @@ Now cat that file and copy its contents and fill that in for `DEPLOY_KEYPAIR`
 cat deploy.json
 ```
 
+### Deploy Wallet
+
+We need to set this deploy wallet up with permissions to create proposals and write buffers. First, it will need some SOL:
+
 Get the address:
 
 ```bash
@@ -289,4 +296,35 @@ Now delete that file to be safe:
 rm deploy.json
 ```
 
+Now, send the deploy wallet enough of your governance token to create a proposal.
+
+### Github Actions
+
+You'll want to setup github actions for your repo. Strata has two main workflows relating to this:
+
+  * Devnet Proposal - When a commit is pushed to master, if the rust contracts have changed, create a proposal to devnet governance to release the new version
+  * Mainnet Proposal - When release tags (ex v1.0.0) are pushed to master, if the rust contracts have changed, create a proposal to mainnet governance to release the new version
+
+To get these in your repo, you'll want to clone https://github.com/StrataFoundation/strata
+
+You will need to copy and edit the variables in:
+
+  * `.github/workflows/devnet-proposal.yaml` - When a commit is pushed to master, if the rust contracts have changed, create a proposal to devnet governance to release the new version 
+  * `.github/workflows/mainnet-proposal.yaml` - When release tags (ex v1.0.0) are pushed to master, if the rust contracts have changed, create a proposal to mainnet governance to release the new version
+
+In particular, make sure there's an entry for each program, and that you set `program, program-id, network, keypair, governance, signatory, name, description`. Signatory is the account that must "sign off" on the proposal.
+
+These workflows rely on some actions that you will probably not need to edit, but will need to copy:
+
+  * `.github/actions/anchor-publish` - Action that publishes your anchor contract to Anchor Verified Builds.
+    * If you do not want to do this, simply comment out this action in .github/workflows/mainnet-proposal.yaml
+  * `.github/actions/upload-bpf` - Action that builds your smart contract and uploads it to solana via `write-buffer`
+  * `.github/actions/create-proposal` - Uses a script we wrote to create a governance proposal to set your program to the one deployed via `upload-bpf`
+  * `.github/actions/deploy-with-gov-proposal` - Execute `upload-bpf` then `create-proposal`, only if a proposal hasn't been created for this action.
+  * `.github/actions/setup` - General setup
+  * `.github/actions/setup-anchor` - Setting up anchor cli
+  * `.github/actions/setup-solana` - Setting up solana cli
+
+
+  
 
