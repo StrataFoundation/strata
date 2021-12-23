@@ -19,7 +19,7 @@ pub mod state;
 pub mod uint;
 pub mod util;
 
-declare_id!("Ep23h6U7HvBb2NRGRTxxH5mekpV4V3b6AJh76mra5Yiv");
+declare_id!("TBondmkCYxaPCKG4CHYfVTcwQ8on31xnJrPzk8F8WsS");
 
 #[program]
 pub mod spl_token_bonding {

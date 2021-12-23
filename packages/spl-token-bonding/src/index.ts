@@ -403,7 +403,7 @@ export interface ICurve extends CurveV0 {
 export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
   state: ProgramStateV0 | undefined;
 
-  static ID = new PublicKey("Ep23h6U7HvBb2NRGRTxxH5mekpV4V3b6AJh76mra5Yiv");
+  static ID = new PublicKey("TBondmkCYxaPCKG4CHYfVTcwQ8on31xnJrPzk8F8WsS");
 
   static async init(
     provider: Provider,

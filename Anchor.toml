@@ -32,11 +32,11 @@ program = "./deps/metaplex/rust/target/deploy/spl_token_metadata.so"
 members = ["programs/spl-token-bonding", "programs/spl-token-collective", "programs/spl-token-staking"]
 
 [programs.mainnet]
-spl_token_bonding = "Ep23h6U7HvBb2NRGRTxxH5mekpV4V3b6AJh76mra5Yiv"
+spl_token_bonding = "TBondmkCYxaPCKG4CHYfVTcwQ8on31xnJrPzk8F8WsS"
 spl_token_collective = "TCo1sP6RwuCuyHPHjxgzcrq4dX4BKf9oRQ3aJMcdFry"
 spl_token_staking = "TStakXwvzEZiK6PSNpXuNx6wEsKc93NtSaMxmcqG6qP"
 
 [programs.localnet]
-spl_token_bonding = "Ep23h6U7HvBb2NRGRTxxH5mekpV4V3b6AJh76mra5Yiv"
+spl_token_bonding = "TBondmkCYxaPCKG4CHYfVTcwQ8on31xnJrPzk8F8WsS"
 spl_token_collective = "TCo1sP6RwuCuyHPHjxgzcrq4dX4BKf9oRQ3aJMcdFry"
 spl_token_staking = "TStakXwvzEZiK6PSNpXuNx6wEsKc93NtSaMxmcqG6qP"

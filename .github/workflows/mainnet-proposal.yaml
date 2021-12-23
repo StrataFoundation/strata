@@ -19,10 +19,10 @@ jobs:
         id: deploy
         with:
           program: spl_token_bonding
-          program-id: Ep23h6U7HvBb2NRGRTxxH5mekpV4V3b6AJh76mra5Yiv
+          program-id: TBondmkCYxaPCKG4CHYfVTcwQ8on31xnJrPzk8F8WsS
           network: mainnet
           keypair: ${{ secrets.DEPLOY_KEYPAIR }}
-          governance: GSGB9BDcb29u8fbigqeFLz1JQ64C4G4H5KRQbzNDJUcJ
+          governance: HDkW3MrrvqT9FPvuFBAVnSag1BLDx767MD2VXKfpCoCe
           signatory: C6uY3FCNz76k5kDjaYtHyedgzXW8fsJABXg3R7rfc7fA
           name: Deploy ${{ github.ref_name }}
           description: https://github.com/StrataFoundation/strata/tree/${{ github.ref_name }}

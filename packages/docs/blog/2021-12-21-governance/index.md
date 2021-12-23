@@ -131,7 +131,7 @@ await provider.send(tx, [mintKeypair]);
 
 **Take note of the mint address above**. Mine was "65uCXAukbwXFMUdT75SjmBfr6HhFL4h17QtzsM5MdmLD"
 
-If you check your wallet, you should see our test governance token. After you're done with this guide, you can send it to anyone you'd like.
+Change your wallet network to devnet. If you check your wallet, you should see our test governance token. After you're done with this guide, you can send it to anyone you'd like.
 
 ![Wallet](./wallet.png)
 
@@ -139,8 +139,9 @@ If you check your wallet, you should see our test governance token. After you're
 
 First, to setup governance we must have deployed the anchor program once. If you haven't yet, run
 
-```
-anchor deploy --provider.cluster devnet
+```bash
+anchor build
+solana program deploy ./target/deploy/<YOUR_PROGRAM>.so -u devnet
 ```
 
 You'll also want to init the idl:
@@ -159,27 +160,19 @@ This command cannot be undone without the new upgrade authority signing off. Mak
 solana program set-upgrade-authority -u devnet <PROGRAM_ADDRESS> --new-upgrade-authority <YOUR_WALLET_ADDRESS>
 ```
 
-Now we will need to create a realm. Navigate to: https://realms.today?cluster=devnet
+Now we will need to create a realm. Navigate to: https://solana-labs.github.io/oyster-gov/#/?cluster=devnet
 
-Once you connect your wallet, you should be able to click this plus to add a realm:
+Once you connect your wallet, you should be able to click Register Realm:
 
-![Add Realm](./plus.png)
+![Add Realm](./create-realm.png)
 
 Fill out this form with your mint from earlier as the community mint id:
 
 ![Realm Form](./realm-form.png)
 
-You'll be taken to your governance page, I.e. https://realms.today/dao/5VchfiRHocpJWNRGHLaMmQBTRiNXT7JbVvxWEgQURpX?cluster=devnet
-
 Deposit your governance tokens using the deposit button
 
-![Deposit](./deposit.png)
-
-This next part, you need to (temporarily) do in the old governance UI. Take the address after /dao/ that you're at in the realms.today url, and paste it into this url.
-
-https://solana-labs.github.io/oyster-gov/#/realm/YOUR-REALM-ID?programId=GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw
-
-You should be at the old governance UI. Click the dots, then create new governance
+Click the dots, then create new governance
 
 ![Create New Governance](./create-new.png)
 
@@ -189,11 +182,19 @@ Select Program, and fill out your program information. You can also fill out vot
 
 After you create your governance, you will be taken to a page at some url like this one:
 
-https://solana-labs.github.io/oyster-gov/#/governance/GSGB9BDcb29u8fbigqeFLz1JQ64C4G4H5KRQbzNDJUcJ?programId=GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw
+https://solana-labs.github.io/oyster-gov/#/governance/GOVERNANCE-ID?programId=GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw
 
 **Note the address after /governance**. Copy that to your clipboard, you'll need it in the next step.
 
 After you create this governance, you should be able to navigate back to the new UI, I.e. https://realms.today/dao/YOUR-REALM-ID?cluster=devnet.
+
+You can get YOUR-REALM-ID by looking at the url of the realm in the old UI. I.e:
+
+https://solana-labs.github.io/oyster-gov/#/realm/C4a4XC2MPfXGfYdH7DMrUZ7hymfi6DVLtULtmnwTD5rh?programId=GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw
+
+has a realm id of C4a4XC2MPfXGfYdH7DMrUZ7hymfi6DVLtULtmnwTD5rh.
+
+We will use the new UI for the rest of this tutorial
 
 ## Deploy Your First Update
 
@@ -284,19 +285,19 @@ Get the address:
 solana address -k deploy.json
 ```
 
-Now airdrop some sol to it (run this a few times):
+Now airdrop some sol to it (run this a few times). On mainnet, you will need to fund this wallet:
 
 ```bash
 solana airdrop -u devnet 2 <DEPLOY_ADDRESS>
 ```
 
-Now delete that file to be safe:
+You may want to store the deploy key somewhere safe. Now delete that file so it cannot be compromised:
 
 ```bash
 rm deploy.json
 ```
 
-Now, send the deploy wallet enough of your governance token to create a proposal.
+Now, go back to the govenance UI and withdraw your tokens. You will need to send 1% of them to the deploy wallet so that it can create proposals.
 
 ### Github Actions
 
@@ -309,8 +310,8 @@ To get these in your repo, you'll want to clone https://github.com/StrataFoundat
 
 You will need to copy and edit the variables in:
 
-  * `.github/workflows/devnet-proposal.yaml` - When a commit is pushed to master, if the rust contracts have changed, create a proposal to devnet governance to release the new version 
-  * `.github/workflows/mainnet-proposal.yaml` - When release tags (ex v1.0.0) are pushed to master, if the rust contracts have changed, create a proposal to mainnet governance to release the new version
+  * `.github/workflows/devnet-proposal.yaml` - When a commit is pushed to master, if the rust contracts have changed, create a proposal to devnet governance to release the new version. Make sure to set `governance` to the dev governance we created here
+  * `.github/workflows/mainnet-proposal.yaml` - When release tags (ex v1.0.0) are pushed to master, if the rust contracts have changed, create a proposal to mainnet governance to release the new version. Make sure to set `governance` to a production governance, you will need to follow the above steps on mainnet _after_ you verify it works on devnet.
 
 In particular, make sure there's an entry for each program, and that you set `program, program-id, network, keypair, governance, signatory, name, description`. Signatory is the account that must "sign off" on the proposal.
 
