@@ -36,7 +36,7 @@ runs:
       with:
         path: |
           ./proposal.out
-        key: ${{ inputs.network }}-${{ inputs.program }}-proposal-${{ hashFiles('programs/**/*.rs') }}
+        key: ${{ inputs.network }}-${{ inputs.program }}-proposal-${{ hashFiles('programs/**/*.rs') }}--${{ hashFiles('./**/Cargo.lock') }}
     - uses: ./.github/actions/upload-bpf/
       # Only upload bpf and create proposals when not already created for these rust files and cluster
       if: steps.cache-proposal.outputs.cache-hit != 'true'
