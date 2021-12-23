@@ -37,6 +37,7 @@ runs:
     - run: npm install -g @strata-foundation/governance-cli
       shell: bash
     - name: Transfer buffer to governance
+      shell: bash
       run: solana program set-buffer-authority $BUFFER -k ./deploy-keypair.json --new-buffer-authority $GOVERNANCE -u devnet
       env:
         BUFFER: ${{ steps.buffer-deploy.outputs.buffer }}
