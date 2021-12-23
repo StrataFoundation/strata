@@ -56,7 +56,7 @@ runs:
     - name: IDL Buffer Deploy
       shell: bash
       id: idl-buffer-deploy
-      run: ~/.cargo/bin/anchor idl write-buffer $PROGRAM_ID --filepath ./target/idl/$PROGRAM.json --provider.cluster $NETWORK > idl-buffer.out
+      run: ~/.cargo/bin/anchor idl write-buffer $PROGRAM_ID --filepath ./target/idl/$PROGRAM.json --provider.cluster $NETWORK --provider.wallet ./deploy-keypair.json > idl-buffer.out
       env:
         PROGRAM_ID: ${{ inputs.program-id }}
         PROGRAM: ${{ inputs.program }}
