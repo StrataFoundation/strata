@@ -12,7 +12,7 @@ inputs:
     required: true
   idl-buffer:
     description: "The idl buffer address"
-    required: true
+    required: false
   keypair:
     description: 'The keypair to use for deploys'
     required: true

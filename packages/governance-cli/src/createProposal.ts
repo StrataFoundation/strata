@@ -15,7 +15,7 @@ const GOVERNANCE_PROGRAM_ID = new PublicKey("GovER5Lthms3bLBqWub97yVrMmEogzX7xNj
 async function run() {
   const programId = new PublicKey(process.env.PROGRAM_ID!);
   const bufferKey = new PublicKey(process.env.BUFFER!);
-  const idlBufferKey = new PublicKey(process.env.IDL_BUFFER!);
+  const idlBufferKey = process.env.IDL_BUFFER && new PublicKey(process.env.IDL_BUFFER);
   const governanceKey = new PublicKey(process.env.GOVERNANCE_KEY!);
   const network = process.env.NETWORK!;
   const signatory = process.env.SIGNATORY && new PublicKey(process.env.SIGNATORY);
@@ -31,7 +31,7 @@ async function run() {
       )
     )
   );
-  const connection = new Connection(clusterApiUrl(network as Cluster));
+  const connection = new Connection(network.startsWith("http") ? network : clusterApiUrl(network as Cluster));
 
   const tx = new Transaction();
   const instructions: TransactionInstruction[] = [];
@@ -102,23 +102,25 @@ async function run() {
   );
 
   // Upgrade idl
-  await withInsertInstruction(
-    instructions,
-    GOVERNANCE_PROGRAM_ID,
-    1,
-    governanceKey,
-    proposal,
-    tokenOwner,
-    wallet.publicKey,
-    1,
-    0,
-    getInstructionDataFromBase64(serializeInstructionToBase64(await createIdlUpgradeInstruction(
-      programId,
-      idlBufferKey,
+  if (idlBufferKey) {
+    await withInsertInstruction(
+      instructions,
+      GOVERNANCE_PROGRAM_ID,
+      1,
       governanceKey,
-    ))),
-    wallet.publicKey
-  );
+      proposal,
+      tokenOwner,
+      wallet.publicKey,
+      1,
+      0,
+      getInstructionDataFromBase64(serializeInstructionToBase64(await createIdlUpgradeInstruction(
+        programId,
+        idlBufferKey,
+        governanceKey,
+      ))),
+      wallet.publicKey
+    );
+  }
 
   if (!signatory) {
     await withSignOffProposal(
