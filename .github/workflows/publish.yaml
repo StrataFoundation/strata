@@ -64,7 +64,7 @@ jobs:
         if: steps.tag_check.outputs.exists_tag == 'false' && github.event.pull_request.merged == true
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.WORKLOW_TRIGGERABLE_GITHUB_TOKEN }}
         with:
           tag_name: v${{ env.CURRENT_VERSION }}
           # Copy Pull Request's tile and body to Release Note
