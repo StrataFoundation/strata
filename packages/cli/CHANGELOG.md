@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.0.2](https://github.com/StrataFoundation/strata/compare/v2.0.1...v2.0.2) (2021-12-24)
+
+**Note:** Version bump only for package @strata-foundation/cli
+
+
+
+
+
 # [2.0.1]
 
 Fix open collective ids
