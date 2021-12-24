@@ -5,11 +5,9 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 # [2.0.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v1.3.2...v2.0.0) (2021-12-24)
 
-**Note:** Version bump only for package @strata-foundation/strata
 
-
-
-
+### Changed
+  * Change bonding and collective to new program ids in preparation for mainnet launch
 
 ## [1.3.4](https://github.com/StrataFoundation/strata/compare/v1.3.2...v1.3.4) (2021-12-22)
 
