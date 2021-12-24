@@ -53,23 +53,7 @@ runs:
         DEPLOY_KEYPAIR: ${{ inputs.keypair }}
     - run: npm install -g @strata-foundation/governance-cli@2.0.2-alpha.7+78bf7cc
       shell: bash
-    - name: Transfer idl buffer to governance
-      shell: bash
-      if: steps.cache-proposal.outputs.cache-hit != 'true'
-      run: anchor idl set-authority $IDL_BUFFER --provider.cluster $NETWORK --program-id $PROGRAM_ID --new-authority $GOVERNANCE --provider.wallet ./deploy-keypair.json
-      env:
-        IDL_BUFFER: ${{ inputs.idl-buffer }}
-        GOVERNANCE: ${{ inputs.governance }}
-        NETWORK: ${{ inputs.network }}
-        PROGRAM_ID: ${{ inputs.program-id }}
-    - name: Transfer buffer to governance
-      shell: bash
-      if: steps.cache-proposal.outputs.cache-hit != 'true'
-      run: solana program set-buffer-authority $BUFFER -k ./deploy-keypair.json --new-buffer-authority $GOVERNANCE -u $NETWORK
-      env:
-        BUFFER: ${{ inputs.buffer }}
-        GOVERNANCE: ${{ inputs.governance }}
-        NETWORK: ${{ inputs.network }}
+
     - name: Create proposal
       shell: bash
       if: steps.cache-proposal.outputs.cache-hit != 'true'

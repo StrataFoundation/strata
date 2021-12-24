@@ -14,6 +14,9 @@ inputs:
   keypair:
     description: 'The keypair to use for deploys'
     required: true
+  buffer-authority:
+    description: 'The buffer authority to set'
+    required: true
 outputs:
   buffer:
     description: "The buffer address"
@@ -75,3 +78,20 @@ runs:
       if: always()
     - run: echo "The buffer is ${{ steps.buffer-deploy-store.outputs.BUFFER }}"
       shell: bash
+    - name: Transfer idl buffer to authority
+      shell: bash
+      if: steps.cache-buffer.outputs.cache-hit != 'true'
+      run: anchor idl set-authority $IDL_BUFFER --provider.cluster $NETWORK --program-id $PROGRAM_ID --new-authority $AUTHORITY --provider.wallet ./deploy-keypair.json
+      env:
+        IDL_BUFFER: ${{ steps.buffer-deploy-store.outputs.IDL_BUFFER }}
+        AUTHORITY: ${{ inputs.buffer-authority }}
+        NETWORK: ${{ inputs.network }}
+        PROGRAM_ID: ${{ inputs.program-id }}
+    - name: Transfer buffer to authority
+      shell: bash
+      if: steps.cache-buffer.outputs.cache-hit != 'true'
+      run: solana program set-buffer-authority $BUFFER -k ./deploy-keypair.json --new-buffer-authority $AUTHORITY -u $NETWORK
+      env:
+        BUFFER: ${{ steps.buffer-deploy-store.outputs.BUFFER }}
+        AUTHORITY: ${{ inputs.buffer-authority }}
+        NETWORK: ${{ inputs.network }}

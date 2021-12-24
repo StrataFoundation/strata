@@ -46,6 +46,7 @@ runs:
         program: ${{ inputs.program }}
         keypair: ${{ inputs.keypair }}
         program-id: ${{ inputs.program-id }}
+        buffer-authority: ${{ inputs.governance }}
     - uses: ./.github/actions/create-proposal/
       # Only upload bpf and create proposals when not already created for these rust files and cluster
       if: steps.cache-proposal.outputs.cache-hit != 'true'
