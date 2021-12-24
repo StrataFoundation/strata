@@ -1,9 +1,85 @@
 import * as anchor from "@project-serum/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
-import { ExponentialCurveConfig, SplTokenBonding } from "@strata-foundation/spl-token-bonding";
+import { ExponentialCurveConfig, SplTokenBonding, TimeCurve, TimeCurveConfig } from "@strata-foundation/spl-token-bonding";
 import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
 import { getMetadata } from "@strata-foundation/spl-utils";
 import fs from "fs";
+
+function timeIncrease(curve: TimeCurveConfig): TimeCurveConfig {
+  return curve
+    // Causes a 1.96078% bump
+    .addCurve(4 * 60 * 60, // 4 hours after launch
+      new ExponentialCurveConfig({
+        c: 1,
+        b: 0,
+        pow: 1,
+        frac: 50
+      })
+    )
+    // 1.88537% bump
+    .addCurve(8 * 60 * 60, // 8 hours after launch
+      new ExponentialCurveConfig({
+        c: 1,
+        b: 0,
+        pow: 1,
+        frac: 25
+      })
+    )
+    // 2.40385% bump
+    .addCurve(12 * 60 * 60, // 12 hours after launch
+      new ExponentialCurveConfig({
+        c: 1,
+        b: 0,
+        pow: 1,
+        frac: 15
+      })
+    )
+    // 2.84091% bump
+    .addCurve(16 * 60 * 60, // 16 hours after launch
+      new ExponentialCurveConfig({
+        c: 1,
+        b: 0,
+        pow: 1,
+        frac: 10
+      })
+    )
+    // 3.40909% bump
+    .addCurve(20 * 60 * 60, // 20 hours after launch
+      new ExponentialCurveConfig({
+        c: 1,
+        b: 0,
+        pow: 1,
+        frac: 7
+      })
+    )
+    // 4.16667% bump
+    .addCurve(24 * 60 * 60, // 24 hours after launch
+      new ExponentialCurveConfig({
+        c: 1,
+        b: 0,
+        pow: 1,
+        frac: 5
+      })
+    )
+    // 8.33333% bump
+    .addCurve(28 * 60 * 60, // 28 hours after launch
+      new ExponentialCurveConfig({
+        c: 1,
+        b: 0,
+        pow: 1,
+        frac: 3
+      })
+    )
+    // 8.33333% bump
+    .addCurve(32 * 60 * 60, // 32 hours after launch
+      new ExponentialCurveConfig({
+        c: 1,
+        b: 0,
+        pow: 1,
+        frac: 2
+      })
+    )
+}
 
 async function run() {
   console.log(process.env.ANCHOR_PROVIDER_URL)
@@ -14,32 +90,34 @@ async function run() {
   const tokenCollectiveSdk = await SplTokenCollective.init(provider);
   const openMintKeypair = Keypair.fromSecretKey(new Uint8Array(JSON.parse(fs.readFileSync(process.env.OPEN_MINT_PATH!).toString())));
   const wrappedSolKeypair = Keypair.fromSecretKey(new Uint8Array(JSON.parse(fs.readFileSync(process.env.WRAPPED_SOL_MINT_PATH!).toString())));
-  
+
   await tokenBondingSdk.initializeSolStorage({
     mintKeypair: wrappedSolKeypair
   });
   const curve = await tokenBondingSdk.initializeCurve({
-    config: new ExponentialCurveConfig({
-      c: 0.001,
-      b: 0,
-      pow: 1,
-      frac: 2
-    })
+    config: timeIncrease(new TimeCurveConfig()
+      .addCurve(0, new ExponentialCurveConfig({
+        c: 0,
+        b: 0.005, // 0.005 SOL per OPEN token starting
+        pow: 0,
+        frac: 2
+      })))
   });
   const socialCurve = await tokenBondingSdk.initializeCurve({
-    config: new ExponentialCurveConfig({
-      c: 0.0001,
-      b: 0,
-      pow: 1,
+    config: timeIncrease(new TimeCurveConfig()
+    .addCurve(0, new ExponentialCurveConfig({
+      c: 0,
+      b: 1, // 1 OPEN per social token starting
+      pow: 0,
       frac: 2
-    })
+    })))
   });
 
   const { collective, tokenBonding } = await tokenCollectiveSdk.createCollective({
     metadata: {
-      name: "Open Collective",
-      symbol: "OPEN",
-      uri: "https://strata-token-metadata.s3.us-east-2.amazonaws.com/open.json"
+      name: "Test Collective",
+      symbol: "TEST",
+      uri: "https://strata-token-metadata.s3.us-east-2.amazonaws.com/test.json"
     },
     bonding: {
       targetMintKeypair: openMintKeypair,

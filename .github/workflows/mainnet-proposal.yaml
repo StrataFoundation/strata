@@ -22,7 +22,7 @@ jobs:
           keypair: ${{ secrets.DEPLOY_KEYPAIR }}
           network: https://api.mainnet-beta.solana.com
           governance: HDkW3MrrvqT9FPvuFBAVnSag1BLDx767MD2VXKfpCoCe
-          name: Deploy ${{ github.event.release.tag_name }}
+          name: Deploy Token Bonding ${{ github.event.release.tag_name }}
           description: ${{ github.event.release.url }}
       - uses: ./.github/actions/anchor-publish/
         with:
@@ -42,7 +42,7 @@ jobs:
           keypair: ${{ secrets.DEPLOY_KEYPAIR }}
           network: https://api.mainnet-beta.solana.com
           governance: 6yc2jb7LCjYXD3hbRKjYkpx13j4VXYcCBzYsZbmntdVk
-          name: Deploy ${{ github.event.release.tag_name }}
+          name: Deploy Token Collective ${{ github.event.release.tag_name }}
           description: ${{ github.event.release.url }}
       - uses: ./.github/actions/anchor-publish/
         with:

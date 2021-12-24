@@ -11,7 +11,7 @@ authors: [noah]
 
 Have you been deploying your programs with `solana program deploy` with deploy keys on your local file system? While it works for prototyping, it's not great for a production program on mainnet that's holding real money.
 
-Local deploy keys are a security risk. If your computer is compromised, a hacker could take the deploy keys and do whatever they want with your program; including siphon all funds stored in or owned by the program.
+Local file system deploy keys are a security risk. If your computer is compromised, a hacker could take the deploy keys and do whatever they want with your program; including siphon all funds stored in or owned by the program.
 
 Multisigs are great for simplicity, but with governance you can transfer voting shares around. You can also change the voting settings as the project evolves. It's also got a nifty UI!
 
@@ -22,7 +22,11 @@ In addition to the security risks of deploying locally, there's also several ris
   * Forgetting to publish a verified build
   * Inconsistency with your git repository and what's deployed, making debugging difficult.
 
-By the end of this guide, we'll set up automation such that when you push release tags to `master`, you'll get a Governance proposal to deploy the contract. All you need to do is vote yes on the proposal, then execute the transaction. `push`, then go to a UI and deploy. For devnet, you'll get a new proposal every time the rust code changes on `master`
+Let's instead set up automation so we get something like this:
+
+![Governance on Mainnet](./end-result.png)
+
+By the end of this guide, we'll set up automation such that when you issue a release on github, you'll get a Governance proposal to deploy the contract. All you need to do is vote yes on the proposal, then execute the transaction. For devnet, you'll get a new proposal every time the rust code changes on `master`.
 
 :::note
 Do this in devnet before you try it on mainnet
@@ -160,45 +164,31 @@ This command cannot be undone without the new upgrade authority signing off. Mak
 solana program set-upgrade-authority -u devnet <PROGRAM_ADDRESS> --new-upgrade-authority <YOUR_WALLET_ADDRESS>
 ```
 
-Now we will need to create a realm. Navigate to: https://solana-labs.github.io/oyster-gov/#/?cluster=devnet
+Now we will need to create a realm. Navigate to: https://realms.today/realms?cluster=devnet
 
-Once you connect your wallet, you should be able to click Register Realm:
+Once you connect your wallet, you should be able to click Create Realm:
 
 ![Add Realm](./create-realm.png)
+
+You'll want to choose the second option, as bespoke realm:
+
+![Bespoke Realm](./bespoke.png)
 
 Fill out this form with your mint from earlier as the community mint id:
 
 ![Realm Form](./realm-form.png)
 
+You should be taken to a new page. This is your realm page. Bookmark this.
+
 Deposit your governance tokens using the deposit button
 
-Click the dots, then create new governance
+Now, we're going to add our program. Click the plus button next to assets to add a program asset:
 
-You should be on a new page. This is your **realm page**. Bookmark this.
+![Add Asset](./add-asset.png)
 
-![Create New Governance](./create-new.png)
+Fill out your program information. You can also fill out voting threshold information:
 
-Select Program, and fill out your program information. You can also fill out voting threshold information:
-
-![Create New Governance Form](./create-new-form.png)
-
-After you create your governance, you will be taken to a page at some url like this one:
-
-https://solana-labs.github.io/oyster-gov/#/governance/GOVERNANCE-ID?programId=GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw
-
-**Note the address after /governance**. Copy that to your clipboard, you'll need it in the next step.
-
-After you create this governance, you should be able to navigate back to the new UI, I.e. https://realms.today/dao/YOUR-REALM-ID?cluster=devnet.
-
-You can get YOUR-REALM-ID by looking at the url of the realm in the old UI. I.e:
-
-https://solana-labs.github.io/oyster-gov/#/realm/C4a4XC2MPfXGfYdH7DMrUZ7hymfi6DVLtULtmnwTD5rh?programId=GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw
-
-has a realm id of C4a4XC2MPfXGfYdH7DMrUZ7hymfi6DVLtULtmnwTD5rh.
-
-This is your **realm page** in the new UI. Bookmark this.
-
-We will use the new UI for the rest of this tutorial
+![Create New Program Governance](./create-program.png)
 
 ## Deploy Your First Update
 
@@ -208,17 +198,22 @@ Deploying with governance works in two steps. First, we'll write a buffer to Sol
 solana program write-buffer /path/to/your/deploy/contract.so -u devnet
 ```
 
-This write buffer will be owned by you, so let's transfer it to your governance. Remember that address we copied to clipboard?
+This write buffer will be owned by you, so let's transfer it to your governance. To get the governance id, click your program under "Assets" then click Upgrade:
+
+![Upgrade](upgrade.png)
+
+You should see Upgrade Authority. Copy that to clipboard
+
+![Gov ID](./governance-id.png)
+
 
 ```
 solana program set-buffer-authority <YOUR_BUFFER_FROM_ABOVE> --new-buffer-authority <GOVERNANCE_ID_FROM_CLIPBOARD> -u devnet
 ```
 
-Now that we've deployed our buffer, let's propose an upgrade to our contract:
+Now that we've deployed our buffer, let's propose an upgrade to our contract. Input your buffer from above into the upgrade form
 
-Click the "New" Button on the realm page, then fill it out with your buffer:
-
-![Create a Proposal](./input-buffer-address.png)
+![Upgrade Form](./upgrade-form.png)
 
 Once you've created your proposal, you will be able to vote on it like so:
 
@@ -241,6 +236,10 @@ First, let's transfer the IDL to governance:
 :::caution
 This command cannot be undone without the new authority signing off. Make absolute sure the governance address is correct here
 :::
+
+![Gov ID](./governance-id.png)
+
+Make sure you're using this address, and double check it in the explorer to make sure it's owned by the governance program.
 
 ```
 anchor idl set-authority --provider.cluster devnet --program-id <PROGRAM_ADDRESS> --new-authority <GOVERNANCE_ID>
@@ -311,16 +310,16 @@ Now, we need to deposit those voting tokens. You can add the deploy to your wall
 You'll want to setup github actions for your repo. Strata has two main workflows relating to this:
 
   * Devnet Proposal - When a commit is pushed to master, if the rust contracts have changed, create a proposal to devnet governance to release the new version
-  * Mainnet Proposal - When release tags (ex v1.0.0) are pushed to master, if the rust contracts have changed, create a proposal to mainnet governance to release the new version
+  * Mainnet Proposal - When a github release happens, if the rust contracts have changed, create a proposal to mainnet governance to release the new version
 
 To get these in your repo, you'll want to clone https://github.com/StrataFoundation/strata
 
 You will need to copy and edit the variables in:
 
-  * `.github/workflows/devnet-proposal.yaml` - When a commit is pushed to master, if the rust contracts have changed, create a proposal to devnet governance to release the new version. Make sure to set `governance` to the dev governance we created here
-  * `.github/workflows/mainnet-proposal.yaml` - When release tags (ex v1.0.0) are pushed to master, if the rust contracts have changed, create a proposal to mainnet governance to release the new version. Make sure to set `governance` to a production governance, you will need to follow the above steps on mainnet _after_ you verify it works on devnet.
+  * `.github/workflows/devnet-proposal.yaml` - When a commit is pushed to master, if the rust contracts have changed, create a proposal to devnet governance to release the new version. Make sure to set `governance` to the dev governance address we got from the Upgrade Form.
+  * `.github/workflows/mainnet-proposal.yaml` - When a github release happens, if the rust contracts have changed, create a proposal to mainnet governance to release the new version. Make sure to set `governance` to a production governance, you will need to follow the above steps on mainnet _after_ you verify it works on devnet.
 
-In particular, make sure there's an entry for each program, and that you set `program, program-id, network, keypair, governance, name, description`. If signatory is set, that account must "sign off" on the proposal to get it out of draft stage.
+In particular, make sure there's an entry for each program, and that you set `program, program-id, network, keypair, governance, name, description`. If `signatory` is set, that account must "sign off" on the proposal to get it out of draft stage.
 
 These workflows rely on some actions that you will probably not need to edit, but will need to copy:
 
@@ -347,6 +346,8 @@ These workflows rely on some actions that you will probably not need to edit, bu
   ![Vote in Progress](./vote-in-progress.png)
 
 Congrats! You're now running program governance on auto-pilot!
+
+To test mainnet proposals, click the releases button on the side of your github repo. Draft a new release and publish it. Then go to the actions tab and make sure it runs successfuly. 
 
 ## Stuck?
 

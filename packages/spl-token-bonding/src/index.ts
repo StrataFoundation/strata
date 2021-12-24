@@ -478,6 +478,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       };
     }
 
+    console.log("Sol storage does not exist, creating...");
     const [state, bumpSeed] = await PublicKey.findProgramAddress(
       [Buffer.from("state", "utf-8")],
       this.programId
