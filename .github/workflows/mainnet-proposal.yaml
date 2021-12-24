@@ -1,9 +1,9 @@
 name: Mainnet Proposal
 
 on:
-  push:
-    tags:       
-      - 'v**'
+  release:
+    types: [published]
+
 env:
   SOLANA_CLI_VERSION: 1.8.5
   NODE_VERSION: 17.0.1
@@ -12,7 +12,6 @@ jobs:
   create-bonding-proposal:
     name: Create Bonding Proposal
     runs-on: ubuntu-18.04
-    if: github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/deploy-with-gov-proposal/
@@ -20,12 +19,32 @@ jobs:
         with:
           program: spl_token_bonding
           program-id: TBondmkCYxaPCKG4CHYfVTcwQ8on31xnJrPzk8F8WsS
-          network: mainnet
+          network: https://api.mainnet-beta.solana.com
           keypair: ${{ secrets.DEPLOY_KEYPAIR }}
           governance: HDkW3MrrvqT9FPvuFBAVnSag1BLDx767MD2VXKfpCoCe
-          name: Deploy ${{ github.ref_name }}
-          description: https://github.com/StrataFoundation/strata/tree/${{ github.ref_name }}
+          name: Deploy ${{ event.payload.release.tag_name }}
+          description: ${{ event.payload.release.url }}
       - uses: ./.github/actions/anchor-publish/
         with:
           program: spl_token_bonding
+          anchor-token: ${{ secrets.ANCHOR_TOKEN }}
+
+  create-collective-proposal:
+    name: Create Collective Proposal
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/deploy-with-gov-proposal/
+        id: deploy
+        with:
+          program: spl_token_collective
+          program-id: TCo1sfSr2nCudbeJPykbif64rG9K1JNMGzrtzvPmp3y
+          network: https://api.mainnet-beta.solana.com
+          keypair: ${{ secrets.DEPLOY_KEYPAIR }}
+          governance: 6yc2jb7LCjYXD3hbRKjYkpx13j4VXYcCBzYsZbmntdVk
+          name: Deploy ${{ event.payload.release.tag_name }}
+          description: ${{ event.payload.release.url }}
+      - uses: ./.github/actions/anchor-publish/
+        with:
+          program: spl_token_collective
           anchor-token: ${{ secrets.ANCHOR_TOKEN }}
