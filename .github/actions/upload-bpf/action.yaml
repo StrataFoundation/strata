@@ -40,7 +40,7 @@ runs:
         path: |
           ./buffer.out
           ./idl-buffer.out
-        key: ${{ inputs.program-id }}-anchor-verified-build-${{ hashFiles('programs/**/*.rs') }}-${{ hashFiles('./**/Cargo.lock') }}
+        key: ${{ inputs.network }}-${{ inputs.program-id }}-anchor-verified-build-${{ hashFiles('programs/**/*.rs') }}-${{ hashFiles('./**/Cargo.lock') }}
     - run: ~/.cargo/bin/anchor build --verifiable -p $PROGRAM
       shell: bash
       if: steps.cache-buffer.outputs.cache-hit != 'true'
