@@ -46,6 +46,10 @@ runs:
       shell: bash
       env:
         DEPLOY_KEYPAIR: ${{ inputs.keypair }}
+    - run: ls ./target
+      shell: bash
+    - run: ls ./target/verifiable
+      shell: bash
     - name: Buffer Deploy
       id: buffer-deploy
       run: solana program write-buffer -k ./deploy-keypair.json ./target/verifiable/$PROGRAM.so -u $NETWORK > buffer.out
