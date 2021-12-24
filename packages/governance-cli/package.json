@@ -1,6 +1,6 @@
 {
   "name": "@strata-foundation/governance-cli",
-  "version": "1.3.3-alpha.16+69dfc6e",
+  "version": "2.0.0",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
