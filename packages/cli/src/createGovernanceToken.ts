@@ -69,7 +69,7 @@ async function run(): Promise<void> {
   ]
   await createMetadata(
     new Data({
-      name: "Strata Governance",
+      name: "Strata Provisional Governance",
       symbol: "sGOV",
       uri: "",
       sellerFeeBasisPoints: 0,
