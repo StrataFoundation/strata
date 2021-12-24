@@ -73,9 +73,6 @@ runs:
       run: |
         echo "::set-output name=BUFFER::$(cat buffer.out | sed 's/Buffer: //g' | xargs echo -n)" &&
         echo "::set-output name=IDL_BUFFER::$(cat idl-buffer.out | sed 's/Idl buffer created: //g' | xargs echo -n)"
-    - run: rm ./deploy-keypair.json
-      shell: bash
-      if: always()
     - run: echo "The buffer is ${{ steps.buffer-deploy-store.outputs.BUFFER }}"
       shell: bash
     - name: Transfer idl buffer to authority
@@ -95,3 +92,6 @@ runs:
         BUFFER: ${{ steps.buffer-deploy-store.outputs.BUFFER }}
         AUTHORITY: ${{ inputs.buffer-authority }}
         NETWORK: ${{ inputs.network }}
+    - run: rm ./deploy-keypair.json
+      shell: bash
+      if: always()
