@@ -112,6 +112,15 @@ pub enum PiecewiseCurve {
 pub struct TimeCurveV0 {
   pub offset: i64,
   pub curve: PrimitiveCurve,
+  pub buy_transition_fees: Option<TransitionFeeV0>,
+  pub sell_transition_fees: Option<TransitionFeeV0>,
+}
+
+// A fee that slowly decreases over the course of interval. This is used to prevent botting when curves change
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub struct TransitionFeeV0 {
+  pub percentage: u32,
+  pub interval: u32
 }
 
 impl Default for PrimitiveCurve {
@@ -136,6 +145,8 @@ impl Default for PiecewiseCurve {
           pow: 1,  // 1
           frac: 1, // 1
         },
+        buy_transition_fees: None,
+        sell_transition_fees: None
       }],
     }
   }

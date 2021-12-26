@@ -593,32 +593,31 @@ describe("spl-token-bonding", () => {
     })
   })
 
+  async function createRoyaltyFree(c: any): Promise<{ tokenBonding: PublicKey; baseMint: PublicKey }> {
+    const baseMint = await createMint(provider, me, 2);
+    await tokenUtils.createAtaAndMint(provider, baseMint, 100_00);
+    const curve = await tokenBondingProgram.initializeCurve(c);
+
+    const { tokenBonding } = await tokenBondingProgram.createTokenBonding({
+      curve,
+      baseMint,
+      targetMintDecimals: 2,
+      generalAuthority: me,
+      buyBaseRoyaltyPercentage: 0,
+      buyTargetRoyaltyPercentage: 0,
+      sellBaseRoyaltyPercentage: 0,
+      sellTargetRoyaltyPercentage: 0,
+      mintCap: new BN(10000),
+    });
+
+    return {
+      tokenBonding,
+      baseMint,
+    };
+  }
   describe("marketplace", () => {
-    async function create(c: any): Promise<{ tokenBonding: PublicKey; baseMint: PublicKey }> {
-      const baseMint = await createMint(provider, me, 2);
-      await tokenUtils.createAtaAndMint(provider, baseMint, 100_00);
-      const curve = await tokenBondingProgram.initializeCurve(c);
-
-      const { tokenBonding } = await tokenBondingProgram.createTokenBonding({
-        curve,
-        baseMint,
-        targetMintDecimals: 2,
-        generalAuthority: me,
-        buyBaseRoyaltyPercentage: 0,
-        buyTargetRoyaltyPercentage: 0,
-        sellBaseRoyaltyPercentage: 0,
-        sellTargetRoyaltyPercentage: 0,
-        mintCap: new BN(10000),
-      });
-
-      return {
-        tokenBonding,
-        baseMint,
-      };
-    }
-
     it("allows a fixed price", async () => {
-      const { tokenBonding, baseMint } = await create({
+      const { tokenBonding, baseMint } = await createRoyaltyFree({
         config: new ExponentialCurveConfig({
           c: 0,
           b: 5,
@@ -633,6 +632,136 @@ describe("spl-token-bonding", () => {
       });
       await tokenUtils.expectAtaBalance(me, baseMint, 95);
     });
+  });
+
+  describe("shock absorbtion on curve change", () => {
+    it("handles buy with target", async () => {
+      const { tokenBonding, baseMint } = await createRoyaltyFree({
+        config: new TimeCurveConfig()
+          .addCurve(0, new ExponentialCurveConfig({
+            c: 0,
+            b: 1,
+            pow: 0,
+            frac: 1
+          }))
+          .addCurve(1, new ExponentialCurveConfig({
+            c: 0,
+            b: 1,
+            pow: 0,
+            frac: 1
+          }), {
+            interval: 200,
+            percentage: percent(10)
+          }, null)
+      });
+      const tokenBondingAcct = (await tokenBondingProgram.getTokenBonding(tokenBonding))!;
+      const ata = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        tokenBondingAcct.baseMint,
+        me
+      );
+      const targetAta = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        tokenBondingAcct.targetMint,
+        me
+      );
+      await tokenBondingProgram.buy({
+        tokenBonding,
+        desiredTargetAmount: 10,
+        slippage: 0.05,
+      });
+      const balance = (await provider.connection.getTokenAccountBalance(ata)).value.uiAmount;
+      // 1:1, so we would expect without shock we'd have 90
+      expect(balance).to.be.lessThan(90);
+      tokenUtils.expectAtaBalance(me, tokenBondingAcct.targetMint, 10)
+    });
+
+    it("handles buy with base", async () => {
+      const { tokenBonding, baseMint } = await createRoyaltyFree({
+        config: new TimeCurveConfig()
+          .addCurve(0, new ExponentialCurveConfig({
+            c: 0,
+            b: 1,
+            pow: 0,
+            frac: 1
+          }))
+          .addCurve(1, new ExponentialCurveConfig({
+            c: 0,
+            b: 1,
+            pow: 0,
+            frac: 1
+          }), {
+            interval: 200,
+            percentage: percent(10)
+          }, null)
+      });
+      const tokenBondingAcct = (await tokenBondingProgram.getTokenBonding(tokenBonding))!;
+      const targetAta = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        tokenBondingAcct.targetMint,
+        me
+      );
+      await tokenBondingProgram.buy({
+        tokenBonding,
+        baseAmount: 10,
+        slippage: 0.05,
+      });
+      const targetBalance = (await provider.connection.getTokenAccountBalance(targetAta)).value.uiAmount;
+      // Should still take 10, but I should get less than 10 in target mint
+      tokenUtils.expectAtaBalance(me, tokenBondingAcct.baseMint, 90)
+      expect(targetBalance).to.be.lessThan(10);
+    });
+
+    it("handles sell", async () => {
+      const { tokenBonding, baseMint } = await createRoyaltyFree({
+        config: new TimeCurveConfig()
+          .addCurve(0, new ExponentialCurveConfig({
+            c: 0,
+            b: 1,
+            pow: 0,
+            frac: 1
+          }))
+          .addCurve(1, new ExponentialCurveConfig({
+            c: 0,
+            b: 1,
+            pow: 0,
+            frac: 1
+          }), null, {
+            interval: 200,
+            percentage: percent(10)
+          })
+      });
+      const tokenBondingAcct = (await tokenBondingProgram.getTokenBonding(tokenBonding))!;
+      const ata = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        tokenBondingAcct.baseMint,
+        me
+      );
+      await tokenBondingProgram.buy({
+        tokenBonding,
+        desiredTargetAmount: 10,
+        slippage: 0.05,
+      });
+      await tokenBondingProgram.sell({
+        tokenBonding,
+        targetAmount: 10,
+        slippage: 0.05,
+      });
+      const balance = (await provider.connection.getTokenAccountBalance(ata)).value.uiAmount;
+      // 1:1, so we would expect without shock we'd less than our full amount back
+      expect(balance).to.be.lessThan(100);
+      tokenUtils.expectAtaBalance(me, tokenBondingAcct.targetMint, 0)
+    });
+  })
+
+  it("handles ", async () => {
+    
+    
+    
   });
 
   describe("with sol base mint", async () => {

@@ -46,6 +46,7 @@ import {
 } from "./generated/spl-token-bonding";
 import { BondingPricing } from "./pricing";
 import { asDecimal, toBN, toNumber, toU128 } from "./utils";
+import { ITransitionFee } from "./curves";
 
 export * from "./bondingHierarchy";
 export * from "./curves";
@@ -63,6 +64,8 @@ interface ICurveConfig {
 interface IPrimitiveCurve {
   toRawPrimitiveConfig(): any;
 }
+
+
 
 /**
  * Curve configuration for c(S^(pow/frac)) + b
@@ -133,9 +136,9 @@ export class ExponentialCurveConfig implements ICurveConfig, IPrimitiveCurve {
  * Curve configuration that allows the curve to change parameters at discrete time offsets from the go live date
  */
 export class TimeCurveConfig implements ICurveConfig {
-  curves: { curve: IPrimitiveCurve; offset: BN }[] = [];
+  curves: { curve: IPrimitiveCurve; offset: BN, buyTransitionFees: ITransitionFee | null, sellTransitionFees: ITransitionFee | null }[] = [];
 
-  addCurve(timeOffset: number, curve: IPrimitiveCurve): TimeCurveConfig {
+  addCurve(timeOffset: number, curve: IPrimitiveCurve, buyTransitionFees: ITransitionFee | null = null, sellTransitionFees: ITransitionFee | null = null): TimeCurveConfig {
     if (this.curves.length == 0 && timeOffset != 0) {
       throw new Error("First time offset must be 0");
     }
@@ -143,6 +146,8 @@ export class TimeCurveConfig implements ICurveConfig {
     this.curves.push({
       curve,
       offset: new BN(timeOffset),
+      buyTransitionFees,
+      sellTransitionFees
     });
 
     return this;
@@ -153,9 +158,11 @@ export class TimeCurveConfig implements ICurveConfig {
       definition: {
         timeV0: {
           // @ts-ignore
-          curves: this.curves.map(({ curve, offset }) => ({
+          curves: this.curves.map(({ curve, offset, buyTransitionFees, sellTransitionFees }) => ({
             curve: curve.toRawPrimitiveConfig(),
             offset,
+            buyTransitionFees,
+            sellTransitionFees
           })),
         },
       },

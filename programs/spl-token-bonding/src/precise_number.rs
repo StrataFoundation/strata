@@ -1,6 +1,8 @@
 //! Defines PreciseNumber, a U256 wrapper with float-like operations
 // Stolen from SPL math, but changing inner unit
 
+use anchor_lang::prelude::msg;
+
 use crate::uint::U256;
 
 // Allows for easy swapping between different internal representations
@@ -209,6 +211,7 @@ impl PreciseNumber {
     };
     let mut result = Self { value };
 
+
     // To minimize the number of operations, we keep squaring the base, and
     // only push to the result on odd exponents, like a binary decomposition
     // of the exponent.
@@ -367,6 +370,8 @@ impl PreciseNumber {
     Self::new(std::u128::MAX).unwrap()
   }
 
+  /// Approximate the rational exponent of a number using Newton's method
+  /// https://en.wikipedia.org/wiki/Newton%27s_method
   pub fn pow_frac_approximation(&self, pow: u8, frac: u8, guess: Self) -> Option<Self> {
     let pow_result = self.checked_pow(pow as u128)?;
 
