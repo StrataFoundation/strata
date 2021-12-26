@@ -758,12 +758,6 @@ describe("spl-token-bonding", () => {
     });
   })
 
-  it("handles ", async () => {
-    
-    
-    
-  });
-
   describe("with sol base mint", async () => {
     const baseMint: PublicKey = NATIVE_MINT;
     let curve: PublicKey;
