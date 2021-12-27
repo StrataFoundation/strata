@@ -1,7 +1,13 @@
+import { offset } from "@solana/buffer-layout";
 import { AccountInfo, MintInfo } from "@solana/spl-token";
 // @ts-ignore
 import BN from "bn.js";
 import { amountAsNum, asDecimal, supplyAsNum } from "./utils";
+
+export interface ITransitionFee {
+  percentage: number;
+  interval: number;
+}
 
 export type ExponentialCurveV0 = {
   c: BN;
@@ -73,6 +79,25 @@ type TimeCurveArgs = {
   goLiveUnixTime: number;
 }
 
+interface ITimeCurveItem {
+  subCurve: IPricingCurve,
+  offset: number,
+  buyTransitionFees: ITransitionFee | null,
+  sellTransitionFees: ITransitionFee | null
+}
+
+function transitionFeesToPercent(offset: number, fees: ITransitionFee | null): number {
+  if (!fees) {
+    return 0;
+  }
+
+  if  (offset > fees.interval) {
+    return 0
+  }
+
+  return asDecimal(fees.percentage) * ((fees.interval - offset) / fees.interval)
+}
+
 export class TimeCurve implements IPricingCurve {
   curve: any;
   baseStorage: AccountInfo;
@@ -94,43 +119,62 @@ export class TimeCurve implements IPricingCurve {
     this.goLiveUnixTime = goLiveUnixTime;
   }
 
-  currentCurve(unixTime: number = (new Date().valueOf() / 1000)): IPricingCurve {
+  currentCurve(unixTime: number = (new Date().valueOf() / 1000)): ITimeCurveItem {
     let subCurve; 
     if (unixTime < this.goLiveUnixTime) {
-      subCurve = this.curve.definition.timeV0.curves[0].curve.exponentialCurveV0
+      subCurve = this.curve.definition.timeV0.curves[0]
     } else {
-      subCurve = [...this.curve.definition.timeV0.curves].reverse().find((c: any) => unixTime >= this.goLiveUnixTime + c.offset.toNumber()).curve.exponentialCurveV0
+      subCurve = [...this.curve.definition.timeV0.curves].reverse().find((c: any) => unixTime >= this.goLiveUnixTime + c.offset.toNumber())
     }
 
-    return new ExponentialCurve(
-      subCurve as ExponentialCurveV0,
-      this.baseStorage,
-      this.baseMint,
-      this.targetMint
-    );
+    return {
+      subCurve: new ExponentialCurve(
+        subCurve.curve.exponentialCurveV0 as ExponentialCurveV0,
+        this.baseStorage,
+        this.baseMint,
+        this.targetMint
+      ),
+      offset: subCurve.offset.toNumber(),
+      buyTransitionFees: subCurve.buyTransitionFees,
+      sellTransitionFees: subCurve.sellTransitionFees,
+    }
   }
 
-  current(unixTime?: number): number {
-    return this.currentCurve(unixTime).current(unixTime);
+  current(unixTime: number = (new Date().valueOf() / 1000)): number {
+    const { subCurve, buyTransitionFees, offset } = this.currentCurve(unixTime);
+
+    return subCurve.current(unixTime) * (1 - transitionFeesToPercent(unixTime - offset, buyTransitionFees))
   }
 
   locked(): number {
-    return this.currentCurve().locked();
+    return this.currentCurve().subCurve.locked();
   }
-  sellTargetAmount(targetAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number, unixTime?: number): number {
-    return this.currentCurve(unixTime).sellTargetAmount(targetAmountNum, baseRoyaltiesPercent, targetRoyaltiesPercent);
+  sellTargetAmount(targetAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number, unixTime: number = (new Date().valueOf() / 1000)): number {
+    const { subCurve, sellTransitionFees, offset } = this.currentCurve(unixTime)
+    const price = subCurve.sellTargetAmount(targetAmountNum, baseRoyaltiesPercent, targetRoyaltiesPercent);
+
+    return price * (1 - transitionFeesToPercent(unixTime - this.goLiveUnixTime - offset, sellTransitionFees));
   }
-  buyTargetAmount(targetAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number, unixTime?: number): number {
-    return this.currentCurve(unixTime).buyTargetAmount(targetAmountNum, baseRoyaltiesPercent, targetRoyaltiesPercent);
+  buyTargetAmount(targetAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number, unixTime: number = (new Date().valueOf() / 1000)): number {
+    const { subCurve, buyTransitionFees, offset } = this.currentCurve(unixTime);
+    const price = subCurve.buyTargetAmount(targetAmountNum, baseRoyaltiesPercent, targetRoyaltiesPercent);
+
+    return price * (1 + transitionFeesToPercent(unixTime - this.goLiveUnixTime - offset, buyTransitionFees));
   }
-  buyWithBaseAmount(baseAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number, unixTime?: number): number {
-    return this.currentCurve(unixTime).buyWithBaseAmount(baseAmountNum, baseRoyaltiesPercent, targetRoyaltiesPercent);
+  buyWithBaseAmount(baseAmountNum: number, baseRoyaltiesPercent: number, targetRoyaltiesPercent: number, unixTime: number = (new Date().valueOf() / 1000)): number {
+    const { subCurve, buyTransitionFees, offset } = this.currentCurve(unixTime);
+    const baseAmountPostFees = baseAmountNum * (1 - transitionFeesToPercent(unixTime - this.goLiveUnixTime - offset, buyTransitionFees));
+
+    return subCurve.buyWithBaseAmount(baseAmountPostFees, baseRoyaltiesPercent, targetRoyaltiesPercent);
   }
-  buyWithBaseRootEstimates(baseAmountNum: number, baseRoyaltiesPercent: number, unixTime?: number): number[] {
-    return this.currentCurve(unixTime).buyWithBaseRootEstimates(baseAmountNum, baseRoyaltiesPercent);
+  buyWithBaseRootEstimates(baseAmountNum: number, baseRoyaltiesPercent: number, unixTime: number = (new Date().valueOf() / 1000)): number[] {
+    const { subCurve, buyTransitionFees, offset } = this.currentCurve(unixTime);
+    const baseAmountPostFees = baseAmountNum * (1 - transitionFeesToPercent(unixTime - this.goLiveUnixTime - offset, buyTransitionFees));
+
+    return subCurve.buyWithBaseRootEstimates(baseAmountPostFees, baseRoyaltiesPercent);
   }
-  buyTargetAmountRootEstimates(targetAmountNum: number, targetRoyaltiesPercent: number, unixTime?: number): number[] {
-    return this.currentCurve(unixTime).buyTargetAmountRootEstimates(targetAmountNum, targetRoyaltiesPercent);
+  buyTargetAmountRootEstimates(targetAmountNum: number, targetRoyaltiesPercent: number, unixTime: number = (new Date().valueOf() / 1000)): number[] {
+    return this.currentCurve(unixTime).subCurve.buyTargetAmountRootEstimates(targetAmountNum, targetRoyaltiesPercent);
   }
 }
 

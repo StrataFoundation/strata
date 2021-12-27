@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [Unreleased]
+
+### Added
+
+  * Ability to add transition fees to piecewise time curves, making for a less bottable fair launch.
+
+### Changed
+
+ * Max pow or frac on exponential curves to 10. Any more than that risks blowing compute.
+
 ## [2.0.3](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.0.2...v2.0.3) (2021-12-24)
 
 **Note:** Version bump only for package @strata-foundation/strata

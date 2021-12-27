@@ -438,13 +438,13 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
 
   static ID = new PublicKey("TCo1sfSr2nCudbeJPykbif64rG9K1JNMGzrtzvPmp3y");
   static OPEN_COLLECTIVE_ID = new PublicKey(
-    "3cYa5WvT2bgXSLxxu9XDJSHV3x5JZGM91Nc3B7jYhBL7"
+    "D3CfvbvtkQH8Y8PjpoZJt49SVjZEVzXnDuUaiRc4QCAH"
   );
   static OPEN_COLLECTIVE_BONDING_ID = new PublicKey(
-    "9Zse7YX2mPQFoyMuz2Gk2K8WcH83FY1BLfu34vN4sdHi"
+    "BcDMpU1wem6WehGCpZu21zdBb46TzP4Di8VdjLrKvkiB"
   );
   static OPEN_COLLECTIVE_MINT_ID = new PublicKey(
-    "openDKyuDPS6Ak1BuD3JtvkQGV3tzCxjpHUfe1mdC79"
+    "tesrHaPq12AAHeFky2zVr7kUpZx8bKWBukhxGuuXZ5G"
   );
 
   static async init(

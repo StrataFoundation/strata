@@ -1,8 +1,8 @@
 use crate::{
-  arg::{PiecewiseCurve, PrimitiveCurve},
+  arg::{PiecewiseCurve, PrimitiveCurve, TimeCurveV0},
   precise_number::{InnerUint, PreciseNumber, ONE_PREC, ZERO_PREC},
+  util::get_percent,
 };
-use anchor_lang::solana_program::log::sol_log_compute_units;
 use std::convert::*;
 
 pub trait Curve {
@@ -77,6 +77,7 @@ impl Curve for PrimitiveCurve {
             /*
             dS = -S + ((S^(1 + k) (R + dR))/R)^(1/(1 + k))
             */
+
             target_supply
               .pow_frac_approximation(one_plus_k_numerator, frac, guess1)?
               .checked_mul(&base_amount.checked_add(reserve_change)?)?
@@ -160,7 +161,6 @@ impl Curve for PrimitiveCurve {
               s_plus_ds_k1.checked_sub(s_k1)?
             };
 
-            sol_log_compute_units();
             base_amount
               .checked_div(s_k1)?
               .checked_mul(&right_paren_value)
@@ -176,6 +176,49 @@ impl Curve for PrimitiveCurve {
   }
 }
 
+fn transition_fees(
+  time_offset: i64,
+  reserve_change: &PreciseNumber,
+  curve: &TimeCurveV0,
+  sell: bool,
+) -> Option<PreciseNumber> {
+  let transition_fees_opt = if sell {
+    curve.sell_transition_fees.as_ref()
+  } else {
+    curve.buy_transition_fees.as_ref()
+  };
+
+  if let Some(fees) = transition_fees_opt {
+    let offset_in_current_curve =
+      PreciseNumber::new(u128::try_from(time_offset.checked_sub(curve.offset)?).ok()?)?;
+    let interval = PreciseNumber::new(u128::try_from(fees.interval).ok()?)?;
+    // Decaying percentage. Starts at 100%, works its way down to 0 over the interval. (interval - curr_offset) / interval.
+    // When curr_offset is past interval, checked_sub fails and this is just none
+    let percent_of_fees_opt = interval
+      .checked_sub(&offset_in_current_curve)?
+      .checked_div(&interval);
+    if let Some(percent_of_fees) = percent_of_fees_opt {
+      let percent = get_percent(fees.percentage).ok()?;
+
+      return reserve_change
+        .checked_mul(&percent)?
+        .checked_mul(&percent_of_fees);
+    }
+  }
+
+  None
+}
+
+fn transition_fees_or_zero(
+  time_offset: i64,
+  reserve_change: &PreciseNumber,
+  curve: &TimeCurveV0,
+  sell: bool,
+) -> PreciseNumber {
+  transition_fees(time_offset, reserve_change, curve, sell)
+    .unwrap_or(PreciseNumber::new(0).unwrap())
+}
+
 impl Curve for PiecewiseCurve {
   fn price(
     &self,
@@ -187,19 +230,29 @@ impl Curve for PiecewiseCurve {
     root_estimates: Option<[u128; 2]>,
   ) -> Option<PreciseNumber> {
     match self {
-      PiecewiseCurve::TimeV0 { curves } => curves
-        .iter()
-        .rev()
-        .find(|c| c.offset <= time_offset)?
-        .curve
-        .price(
+      PiecewiseCurve::TimeV0 { curves } => {
+        let curve = curves.iter().rev().find(|c| c.offset <= time_offset)?;
+
+        let price_opt = curve.curve.price(
           time_offset,
           base_amount,
           target_supply,
           amount,
           sell,
           root_estimates,
-        ),
+        );
+
+        price_opt.and_then(|p| {
+          // Add shock absorbtion to make price continuous
+          let fees = transition_fees_or_zero(time_offset, &p, curve, sell);
+
+          if sell {
+            p.checked_sub(&fees)
+          } else {
+            p.checked_add(&fees)
+          }
+        })
+      }
     }
   }
 
@@ -212,18 +265,19 @@ impl Curve for PiecewiseCurve {
     root_estimates: Option<[u128; 2]>,
   ) -> Option<PreciseNumber> {
     match self {
-      PiecewiseCurve::TimeV0 { curves } => curves
-        .iter()
-        .rev()
-        .find(|c| c.offset <= time_offset)?
-        .curve
-        .expected_target_amount(
+      PiecewiseCurve::TimeV0 { curves } => {
+        let curve = curves.iter().rev().find(|c| c.offset <= time_offset)?;
+
+        let fees = transition_fees_or_zero(time_offset, reserve_change, curve, false);
+
+        curve.curve.expected_target_amount(
           time_offset,
           base_amount,
           target_supply,
-          reserve_change,
+          &reserve_change.checked_sub(&fees)?,
           root_estimates,
-        ),
+        )
+      }
     }
   }
 }

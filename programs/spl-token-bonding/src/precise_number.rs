@@ -367,6 +367,8 @@ impl PreciseNumber {
     Self::new(std::u128::MAX).unwrap()
   }
 
+  /// Approximate the rational exponent of a number using Newton's method
+  /// https://en.wikipedia.org/wiki/Newton%27s_method
   pub fn pow_frac_approximation(&self, pow: u8, frac: u8, guess: Self) -> Option<Self> {
     let pow_result = self.checked_pow(pow as u128)?;
 
