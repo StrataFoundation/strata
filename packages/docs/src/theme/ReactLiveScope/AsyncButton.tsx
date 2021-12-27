@@ -48,16 +48,16 @@ function wrapAndCollectVars(code: string, injectedVars): string {
 }
 
 // Turn all BN into base 10 numbers as strings
-function recursiveTransformBN(args: any, seen: Set<any> = new Set()): Record<string, any> {
+function recursiveTransformBN(args: any, seen: Map<any, any> = new Map()): Record<string, any> {
   if (seen.has(args)) {
-    return args;
+    return seen.get(args);
   }
 
-  return Object.entries(args).reduce((acc, [key, value]) => {
-    seen.add(value);
+  const ret = Object.entries(args).reduce((acc, [key, value]) => {
     if (value instanceof BN) {
       acc[key] = value.toString(10);
     } else if (value instanceof PublicKey) {
+      // @ts-ignore
       acc[key] = value.toBase58();
     } else if (value && (value as any)._bn) {
       acc[key] = new PublicKey(new BN((value as any)._bn, "hex")).toBase58();
@@ -69,6 +69,8 @@ function recursiveTransformBN(args: any, seen: Set<any> = new Set()): Record<str
 
     return acc;
   }, {} as Record<string, any>);
+  seen.set(args, ret);
+  return ret;
 }
 
 const AsyncButton = ({ code, scope, name, deps }) => {

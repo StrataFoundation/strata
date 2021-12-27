@@ -2,73 +2,52 @@ import * as anchor from "@project-serum/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { ExponentialCurveConfig, SplTokenBonding, TimeCurve, TimeCurveConfig } from "@strata-foundation/spl-token-bonding";
 import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
-import { getMetadata } from "@strata-foundation/spl-utils";
+import { getMetadata, percent } from "@strata-foundation/spl-utils";
 import fs from "fs";
 
 function timeIncrease(curve: TimeCurveConfig): TimeCurveConfig {
   return curve
-    // Causes a 1.96078% bump
-    .addCurve(4 * 60 * 60, // 4 hours after launch
-      new ExponentialCurveConfig({
-        c: 1,
-        b: 0,
-        pow: 1,
-        frac: 50
-      })
-    )
-    // 1.88537% bump
-    .addCurve(8 * 60 * 60, // 8 hours after launch
-      new ExponentialCurveConfig({
-        c: 1,
-        b: 0,
-        pow: 1,
-        frac: 25
-      })
-    )
-    // 2.40385% bump
-    .addCurve(12 * 60 * 60, // 12 hours after launch
-      new ExponentialCurveConfig({
-        c: 1,
-        b: 0,
-        pow: 1,
-        frac: 15
-      })
-    )
-    // 2.84091% bump
-    .addCurve(16 * 60 * 60, // 16 hours after launch
+    // Causes a 9.09091% bump
+    .addCurve(6 * 60 * 60, // 6 hours after launch
       new ExponentialCurveConfig({
         c: 1,
         b: 0,
         pow: 1,
         frac: 10
-      })
+      }),
+      null,
+      {
+        percentage: percent(10)!,
+        interval: 6 * 60 * 60, // 6 hours
+      }
     )
-    // 3.40909% bump
-    .addCurve(20 * 60 * 60, // 20 hours after launch
-      new ExponentialCurveConfig({
-        c: 1,
-        b: 0,
-        pow: 1,
-        frac: 7
-      })
-    )
-    // 4.16667% bump
-    .addCurve(24 * 60 * 60, // 24 hours after launch
+    // 7.57576% bump
+    .addCurve(12 * 60 * 60, // 12 hours after launch
       new ExponentialCurveConfig({
         c: 1,
         b: 0,
         pow: 1,
         frac: 5
-      })
+      }),
+      null,
+      {
+        percentage: percent(8)!,
+        interval: 6 * 60 * 60, // 6 hours
+      }
     )
     // 8.33333% bump
-    .addCurve(28 * 60 * 60, // 28 hours after launch
+    .addCurve(24 * 60 * 60, // 24 hours after launch
       new ExponentialCurveConfig({
         c: 1,
         b: 0,
         pow: 1,
         frac: 3
-      })
+      }),
+      null,
+      {
+        percentage: percent(9)!,
+        interval: 6 * 60 * 60, // 6 hours
+      }
     )
     // 8.33333% bump
     .addCurve(32 * 60 * 60, // 32 hours after launch
@@ -77,7 +56,12 @@ function timeIncrease(curve: TimeCurveConfig): TimeCurveConfig {
         b: 0,
         pow: 1,
         frac: 2
-      })
+      }),
+      null,
+      {
+        percentage: percent(9)!,
+        interval: 6 * 60 * 60, // 6 hours
+      }
     )
 }
 
