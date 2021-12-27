@@ -1,8 +1,6 @@
 //! Defines PreciseNumber, a U256 wrapper with float-like operations
 // Stolen from SPL math, but changing inner unit
 
-use anchor_lang::prelude::msg;
-
 use crate::uint::U256;
 
 // Allows for easy swapping between different internal representations

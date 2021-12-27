@@ -1,5 +1,5 @@
 use crate::{
-  arg::{PiecewiseCurve, PrimitiveCurve, TimeCurveV0, TransitionFeeV0},
+  arg::{PiecewiseCurve, PrimitiveCurve, TimeCurveV0},
   precise_number::{InnerUint, PreciseNumber, ONE_PREC, ZERO_PREC},
   util::get_percent,
 };
