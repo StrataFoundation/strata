@@ -120,7 +120,7 @@ pub struct TimeCurveV0 {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct TransitionFeeV0 {
   pub percentage: u32,
-  pub interval: u32
+  pub interval: u32,
 }
 
 impl Default for PrimitiveCurve {
@@ -146,7 +146,7 @@ impl Default for PiecewiseCurve {
           frac: 1, // 1
         },
         buy_transition_fees: None,
-        sell_transition_fees: None
+        sell_transition_fees: None,
       }],
     }
   }

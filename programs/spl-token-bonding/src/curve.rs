@@ -1,6 +1,7 @@
 use crate::{
-  arg::{PiecewiseCurve, PrimitiveCurve, TransitionFeeV0, TimeCurveV0},
-  precise_number::{InnerUint, PreciseNumber, ONE_PREC, ZERO_PREC}, util::get_percent,
+  arg::{PiecewiseCurve, PrimitiveCurve, TimeCurveV0, TransitionFeeV0},
+  precise_number::{InnerUint, PreciseNumber, ONE_PREC, ZERO_PREC},
+  util::get_percent,
 };
 use std::convert::*;
 
@@ -138,7 +139,6 @@ impl Curve for PrimitiveCurve {
       match *self {
         PrimitiveCurve::ExponentialCurveV0 { pow, frac, c, b } => {
           if b == 0 && c != 0 {
-
             /*
               (R / S^(1 + k)) ((S + dS)^(1 + k) - S^(1 + k))
             */
@@ -176,7 +176,12 @@ impl Curve for PrimitiveCurve {
   }
 }
 
-fn transition_fees(time_offset: i64, reserve_change: &PreciseNumber, curve: &TimeCurveV0, sell: bool) -> Option<PreciseNumber> {
+fn transition_fees(
+  time_offset: i64,
+  reserve_change: &PreciseNumber,
+  curve: &TimeCurveV0,
+  sell: bool,
+) -> Option<PreciseNumber> {
   let transition_fees_opt = if sell {
     curve.sell_transition_fees.as_ref()
   } else {
@@ -184,26 +189,34 @@ fn transition_fees(time_offset: i64, reserve_change: &PreciseNumber, curve: &Tim
   };
 
   if let Some(fees) = transition_fees_opt {
-    let offset_in_current_curve = PreciseNumber::new(u128::try_from(time_offset.checked_sub(curve.offset)?).ok()?)?;
+    let offset_in_current_curve =
+      PreciseNumber::new(u128::try_from(time_offset.checked_sub(curve.offset)?).ok()?)?;
     let interval = PreciseNumber::new(u128::try_from(fees.interval).ok()?)?;
     // Decaying percentage. Starts at 100%, works its way down to 0 over the interval. (interval - curr_offset) / interval.
     // When curr_offset is past interval, checked_sub fails and this is just none
     let percent_of_fees_opt = interval
-                                                            .checked_sub(&offset_in_current_curve)?
-                                                            .checked_div(&interval);
+      .checked_sub(&offset_in_current_curve)?
+      .checked_div(&interval);
     if let Some(percent_of_fees) = percent_of_fees_opt {
       let percent = get_percent(fees.percentage).ok()?;
-      
-      
-      return reserve_change.checked_mul(&percent)?.checked_mul(&percent_of_fees)
+
+      return reserve_change
+        .checked_mul(&percent)?
+        .checked_mul(&percent_of_fees);
     }
   }
 
   None
 }
 
-fn transition_fees_or_zero(time_offset: i64, reserve_change: &PreciseNumber, curve: &TimeCurveV0, sell: bool) -> PreciseNumber {
-  transition_fees(time_offset, reserve_change, curve, sell).unwrap_or(PreciseNumber::new(0).unwrap())
+fn transition_fees_or_zero(
+  time_offset: i64,
+  reserve_change: &PreciseNumber,
+  curve: &TimeCurveV0,
+  sell: bool,
+) -> PreciseNumber {
+  transition_fees(time_offset, reserve_change, curve, sell)
+    .unwrap_or(PreciseNumber::new(0).unwrap())
 }
 
 impl Curve for PiecewiseCurve {
@@ -218,11 +231,8 @@ impl Curve for PiecewiseCurve {
   ) -> Option<PreciseNumber> {
     match self {
       PiecewiseCurve::TimeV0 { curves } => {
-        let curve = curves
-          .iter()
-          .rev()
-          .find(|c| c.offset <= time_offset)?;
-        
+        let curve = curves.iter().rev().find(|c| c.offset <= time_offset)?;
+
         let price_opt = curve.curve.price(
           time_offset,
           base_amount,
@@ -256,23 +266,18 @@ impl Curve for PiecewiseCurve {
   ) -> Option<PreciseNumber> {
     match self {
       PiecewiseCurve::TimeV0 { curves } => {
-        let curve = curves
-          .iter()
-          .rev()
-          .find(|c| c.offset <= time_offset)?;
+        let curve = curves.iter().rev().find(|c| c.offset <= time_offset)?;
 
         let fees = transition_fees_or_zero(time_offset, reserve_change, curve, false);
 
-        curve
-          .curve
-          .expected_target_amount(
-            time_offset,
-            base_amount,
-            target_supply,
-            &reserve_change.checked_sub(&fees)?,
-            root_estimates,
-          )
-        }
+        curve.curve.expected_target_amount(
+          time_offset,
+          base_amount,
+          target_supply,
+          &reserve_change.checked_sub(&fees)?,
+          root_estimates,
+        )
+      }
     }
   }
 }

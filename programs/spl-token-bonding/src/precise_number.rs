@@ -211,7 +211,6 @@ impl PreciseNumber {
     };
     let mut result = Self { value };
 
-
     // To minimize the number of operations, we keep squaring the base, and
     // only push to the result on odd exponents, like a binary decomposition
     // of the exponent.
