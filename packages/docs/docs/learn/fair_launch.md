@@ -14,7 +14,7 @@ So how do we disincentivise bots?
 
 ## The Bonding Curve Fair Launch
 
-The goal is to disencentivize bots while still retaining the property that getting into the bonding curve early is ideal. We do this is with a gradually steepening bonding curve.
+The goal is to disencentivize bots while still retaining the property that getting into the bonding curve early is ideal. We do this with a gradually steepening bonding curve.
 
 A property of bonding curves is that the area under the price vs supply curve is always equal to the amount of money in the reserves. To get a better understanding of how bonding curves work, read [Bonding Curves](./bonding_curves) and [Advanced Bonding Curves](./advanced_bonding_curves)
 
