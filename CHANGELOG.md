@@ -5,14 +5,6 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ## [2.0.4](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.0.3-test...v2.0.4) (2021-12-29)
 
-**Note:** Version bump only for package @strata-foundation/strata
-
-
-
-
-
-## [Unreleased]
-
 ### Added
 
   * Ability to add transition fees to piecewise time curves, making for a less bottable fair launch.
@@ -20,6 +12,10 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 ### Changed
 
  * Max pow or frac on exponential curves to 10. Any more than that risks blowing compute.
+
+### Fixed
+
+ * `targetMintDecimals: 0` no longer throws an error.
 
 ## [2.0.3](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.0.2...v2.0.3) (2021-12-24)
 
