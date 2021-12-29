@@ -3,7 +3,7 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-## [Unreleased]
+## [2.0.4](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.0.3-test...v2.0.4) (2021-12-29)
 
 ### Added
 
@@ -12,6 +12,10 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 ### Changed
 
  * Max pow or frac on exponential curves to 10. Any more than that risks blowing compute.
+
+### Fixed
+
+ * `targetMintDecimals: 0` no longer throws an error.
 
 ## [2.0.3](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.0.2...v2.0.3) (2021-12-24)
 
