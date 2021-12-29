@@ -1420,7 +1420,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       buyWithBase = {
         baseAmount: toBN(baseAmount, baseMint),
         minimumTargetAmount: new BN(
-          Math.ceil(Math.ceil(min * Math.pow(10, targetMint.decimals)) * (1 - slippage) * Math.pow(10, targetMint.decimals))
+          Math.ceil(Math.ceil(min * Math.pow(10, targetMint.decimals) * (1 - slippage)))
         ),
       };
     }

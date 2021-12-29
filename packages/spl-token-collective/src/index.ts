@@ -27,6 +27,7 @@ import {
 import {
   AnchorSdk,
   BigInstructionResult,
+  Creator,
   Data,
   decodeMetadata,
   extendBorsh,
@@ -177,7 +178,9 @@ export interface ICreateSocialTokenArgs {
      * If the collective has a default URI configured, you can just not pass this
      * **Default:** {@link ICollectiveConfig.unclaimedTokenMetadataSettings.uri} */
     uri?: string;
-  };
+    sellerFeeBasisPoints?: number;
+    creators?: Creator[] | null;
+  }
   /** The wallet to create this social token under, defaults to `provider.wallet` */
   owner?: PublicKey;
   /**  The authority to make changes on this bonding curve. **Default:** `provider.wallet`. */
@@ -1178,11 +1181,10 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       mint: targetMint!,
       authority: owner ? owner : mintTokenRef,
       data: new Data({
-        name: metadata.name,
-        symbol: metadata.symbol,
         uri,
         creators: null,
         sellerFeeBasisPoints: 0,
+        ...metadata
       }),
     });
     instructions1.push(...metadataInstructions);
