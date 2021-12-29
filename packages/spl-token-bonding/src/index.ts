@@ -707,7 +707,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         );
       }
 
-      if (!targetMintDecimals) {
+      if (typeof targetMintDecimals == "undefined") {
         throw new Error("Cannot define mint without decimals ");
       }
     }
@@ -1420,7 +1420,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       buyWithBase = {
         baseAmount: toBN(baseAmount, baseMint),
         minimumTargetAmount: new BN(
-          Math.ceil(min * Math.pow(10, targetMint.decimals)) * (1 - slippage)
+          Math.ceil(Math.ceil(min * Math.pow(10, targetMint.decimals) * (1 - slippage)))
         ),
       };
     }
