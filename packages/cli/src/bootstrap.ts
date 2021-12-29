@@ -91,7 +91,7 @@ async function run() {
     config: timeIncrease(new TimeCurveConfig()
     .addCurve(0, new ExponentialCurveConfig({
       c: 0,
-      b: 1, // 1 OPEN per social token starting
+      b: 0.1, // 1 OPEN per 10 social token starting
       pow: 0,
       frac: 2
     })))
@@ -146,7 +146,7 @@ async function run() {
       unclaimedTokenMetadataSettings: {
         symbol: "UNCLAIMED",
         nameIsNameServiceName: true,
-        uri: "https://strata-token-metadata.s3.us-east-2.amazonaws.com/open.json",
+        uri: "https://wumbo-token-metadata.s3.us-east-2.amazonaws.com/unclaimed.json",
       },
       claimedTokenBondingSettings: {
         maxSellBaseRoyaltyPercentage: 20,
