@@ -146,7 +146,7 @@ async function run() {
       unclaimedTokenMetadataSettings: {
         symbol: "UNCLAIMED",
         nameIsNameServiceName: true,
-        uri: "https://wumbo-token-metadata.s3.us-east-2.amazonaws.com/open.json",
+        uri: "https://strata-token-metadata.s3.us-east-2.amazonaws.com/open.json",
       },
       claimedTokenBondingSettings: {
         maxSellBaseRoyaltyPercentage: 20,
