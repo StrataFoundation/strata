@@ -95,10 +95,12 @@ export function useBondingPricing(
   const { tokenBondingSdk } = useStrataSdks();
   const { info: tokenBondingAcct } = useTokenBonding(tokenBonding);
   const { info: reserves } = useTokenAccount(tokenBondingAcct?.baseStorage);
+  const targetMint = useMint(tokenBondingAcct?.targetMint);
   const getPricing = async (
     tokenBondingSdk: SplTokenBonding | undefined,
     key: PublicKey | null | undefined,
-    reserves: any // Make the pricing be re-fetched whenever the reserves change. This doesn't account for
+    reserves: any, // Make the pricing be re-fetched whenever the reserves change.
+    mint: any // Make the pricing be re-fetched whenever the supply change. This doesn't account for
     // collective changes, but will due for now. TODO: Account for collective changes too
   ) => tokenBondingSdk && key && tokenBondingSdk.getPricing(key);
 
@@ -106,7 +108,7 @@ export function useBondingPricing(
     result: pricing,
     loading,
     error,
-  } = useAsync(getPricing, [tokenBondingSdk, tokenBonding, reserves]);
+  } = useAsync(getPricing, [tokenBondingSdk, tokenBonding, reserves, targetMint]);
 
   return {
     pricing: pricing || undefined,

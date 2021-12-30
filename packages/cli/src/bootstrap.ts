@@ -138,19 +138,19 @@ async function run() {
         maxBuyBaseRoyaltyPercentage: 0,
         minSellBaseRoyaltyPercentage: 0,
         maxSellBaseRoyaltyPercentage: 0,
-        minBuyTargetRoyaltyPercentage: 5,
-        maxBuyTargetRoyaltyPercentage: 5,
+        minBuyTargetRoyaltyPercentage: 0,
+        maxBuyTargetRoyaltyPercentage: 0,
         minSellTargetRoyaltyPercentage: 0,
         maxSellTargetRoyaltyPercentage: 0,
       },
       unclaimedTokenMetadataSettings: {
         symbol: "UNCLAIMED",
         nameIsNameServiceName: true,
-        uri: "https://wumbo-token-metadata.s3.us-east-2.amazonaws.com/unclaimed.json",
+        uri: "https://strata-token-metadata.s3.us-east-2.amazonaws.com/unclaimed.json",
       },
       claimedTokenBondingSettings: {
-        maxSellBaseRoyaltyPercentage: 20,
-        maxSellTargetRoyaltyPercentage: 20,
+        maxSellBaseRoyaltyPercentage: 10,
+        maxSellTargetRoyaltyPercentage: 10,
       }
     }
   });
