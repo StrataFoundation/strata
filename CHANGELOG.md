@@ -7,8 +7,9 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 **Note:** Version bump only for package @strata-foundation/strata
 
+### Fixed
 
-
+  * CI/CD publish did not build first
 
 
 ## [2.0.4](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.0.3-test...v2.0.4) (2021-12-29)
