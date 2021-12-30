@@ -78,7 +78,7 @@ jobs:
           NPM_TOKEN: ${{ secrets.TOKEN }}
       - name: Build
         run: |
-          yarn lerna bootstrap && yarn lerna build
+          yarn lerna bootstrap && yarn build
       - name: Publish
         if: steps.tag_check.outputs.exists_tag == 'false'
         run: |
