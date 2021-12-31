@@ -35,6 +35,7 @@ export const ProviderContextProvider: React.FC = ({ children }) => {
       setAwaitingApproval(true);
       try {
         const signed = await this.wallet.signTransaction(tx);
+        setAwaitingApproval(false);
         signers
           .filter((s) => s !== undefined)
           .forEach((kp) => {
