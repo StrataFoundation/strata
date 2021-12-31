@@ -1,6 +1,6 @@
 {
     "name": "@strata-foundation/spl-token-staking",
-    "version": "2.0.4",
+    "version": "2.0.6",
     "publishConfig": {
         "access": "public",
         "registry": "https://registry.npmjs.org/"
@@ -22,7 +22,8 @@
         "build": "tsc --project tsconfig.json",
         "watch": "tsc --watch --project tsconfig.json",
         "format": "prettier --write \"src/**/*.{ts,tsx}\"",
-        "precommit": "git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' ."
+        "precommit": "git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' .",
+        "prepare": "yarn run build"
     },
     "dependencies": {
         "@project-serum/common": "^0.0.1-beta.3",
