@@ -28,6 +28,13 @@ export type AccountParser<T> = (
   data: AccountInfo<Buffer>
 ) => ParsedAccountBase<T> | undefined;
 
+function getWriteableAccounts(instructions: TransactionInstruction[]): PublicKey[] {
+  return instructions
+  .flatMap((i) => i.keys)
+  .filter((k) => k.isWritable)
+  .map((a) => a.pubkey);
+}
+
 export class AccountFetchCache {
   connection: Connection;
   chunkSize: number;
@@ -56,12 +63,15 @@ export class AccountFetchCache {
     delay = DEFAULT_DELAY,
     commitment,
     missingRefetchDelay = 10000,
+    extendConnection = false
   }: {
     connection: Connection;
     chunkSize?: number;
     delay?: number;
     commitment: Commitment;
     missingRefetchDelay?: number;
+    /** Add functionatility to getAccountInfo that uses the cache */
+    extendConnection?: boolean;
   }) {
     this.connection = connection;
     this.chunkSize = chunkSize;
@@ -77,12 +87,27 @@ export class AccountFetchCache {
       connection.sendRawTransaction.bind(connection);
 
     const self = this;
+
+    if (extendConnection) {
+      const oldGetAccountinfo = connection.getAccountInfo.bind(connection);
+      connection.getAccountInfo = async (publicKey: PublicKey, com?: Commitment): Promise<AccountInfo<Buffer> | null> => {
+        if ((com || connection.commitment) == commitment) {
+          const [result, dispose] = await this.searchAndWatch(publicKey)
+          setTimeout(dispose, 30 * 1000) // cache for 30s
+          return result?.account || null;
+        }
+
+        return oldGetAccountinfo(publicKey, com)
+      }
+    }
     connection.sendTransaction = async function overloadedSendTransaction(
       transaction: Transaction,
       signers: Array<Signer>,
       options?: SendOptions
     ) {
       const result = await oldSendTransaction(transaction, signers, options);
+      const writeableAccounts = getWriteableAccounts(transaction.instructions).map(a => a.toBase58());
+      writeableAccounts.forEach(a => self.genericCache.delete(a))
       this.confirmTransaction(result, "finalized")
         .then(() => self.requeryMissing(transaction.instructions))
         .catch(console.error);
@@ -95,10 +120,13 @@ export class AccountFetchCache {
       options?: SendOptions
     ) {
       const result = await oldSendRawTransaction(rawTransaction, options);
+      const instructions = Transaction.from(rawTransaction).instructions
+      const writeableAccounts = getWriteableAccounts(instructions).map(a => a.toBase58());
+      writeableAccounts.forEach(a => self.genericCache.delete(a))
 
       this.confirmTransaction(result, "finalized")
         .then(() =>
-          self.requeryMissing(Transaction.from(rawTransaction).instructions)
+          self.requeryMissing(instructions)
         )
         .catch(console.error);
 
@@ -106,11 +134,9 @@ export class AccountFetchCache {
     };
   }
 
+
   async requeryMissing(instructions: TransactionInstruction[]) {
-    const writeableAccounts = instructions
-      .flatMap((i) => i.keys)
-      .filter((k) => k.isWritable)
-      .map((a) => a.pubkey.toBase58());
+    const writeableAccounts = getWriteableAccounts(instructions).map(a => a.toBase58());
     const affectedAccounts = writeableAccounts.filter((acct) =>
       this.missingAccounts.has(acct)
     );
@@ -253,6 +279,7 @@ export class AccountFetchCache {
     } else {
       id = pubKey;
     }
+    this.registerParser(id, parser);
 
     const address = id.toBase58();
     if (isStatic) {
@@ -438,8 +465,15 @@ export class AccountFetchCache {
   ) {
     if (pubkey) {
       const address = typeof pubkey === "string" ? pubkey : pubkey?.toBase58();
-      if (parser && !this.keyToAccountParser.has(address)) {
+      if (parser && !this.keyToAccountParser.get(address)) {
         this.keyToAccountParser.set(address, parser);
+        const cached = this.genericCache.get(address)
+        if (cached) {
+          const parsed = parser(cached.pubkey, cached.account);
+          if (parsed) {
+            this.genericCache.set(address, parsed)
+          }
+        }
       }
     }
 

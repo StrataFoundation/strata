@@ -7,6 +7,7 @@ import { useConnection } from "@solana/wallet-adapter-react";
 export interface IAccountProviderProps {
   children: ReactNode;
   commitment: Commitment;
+  extendConnection?: boolean;
 }
 
 export const AccountContext = createContext<AccountFetchCache>(
@@ -16,6 +17,7 @@ export const AccountContext = createContext<AccountFetchCache>(
 export const AccountProvider: FC<IAccountProviderProps> = ({
   children,
   commitment = DEFAULT_COMMITMENT,
+  extendConnection = true
 }) => {
   const { connection } = useConnection();
   const cache = useMemo(() => {
@@ -23,6 +25,7 @@ export const AccountProvider: FC<IAccountProviderProps> = ({
       connection,
       delay: 500,
       commitment,
+      extendConnection
     });
   }, [connection]);
 
