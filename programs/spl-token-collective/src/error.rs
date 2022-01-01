@@ -36,4 +36,9 @@ pub enum ErrorCode {
     "Unclaimed tokens cannot have a go live date in the future. They must be immediately live."
   )]
   UnclaimedNotLive,
+
+  #[msg(
+    "Invalid go live date for prelaunch"
+  )]
+  InvalidGoLive
 }
