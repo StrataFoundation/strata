@@ -6,6 +6,9 @@ use {
   borsh::{BorshDeserialize, BorshSerialize},
   spl_token_bonding::arg::UpdateTokenBondingV0Args,
 };
+use std::str::FromStr;
+use crate::token_metadata::update_metadata_account;
+
 
 pub mod account;
 pub mod arg;
@@ -20,6 +23,8 @@ use token_metadata::UpdateMetadataAccount;
 
 use crate::token_metadata::UpdateMetadataAccountArgs;
 use crate::{account::*, arg::*, error::*, state::*, util::*};
+
+const WUMBO_KEY: &str = "Gzyvrg8gJfShKQwhVYFXV5utp86tTcMxSzrN7zcfebKj";
 
 declare_id!("TCo1sfSr2nCudbeJPykbif64rG9K1JNMGzrtzvPmp3y");
 
@@ -80,9 +85,6 @@ pub fn get_collective(collective: UncheckedAccount) -> Option<CollectiveV0> {
 
 #[program]
 pub mod spl_token_collective {
-
-  use crate::token_metadata::update_metadata_account;
-
   use super::*;
 
   pub fn initialize_collective_v0(
@@ -203,8 +205,19 @@ pub mod spl_token_collective {
       )?;
     }
 
-    if initialize_args.token_bonding.go_live_unix_time > initialize_args.clock.unix_timestamp {
-      return Err(ErrorCode::UnclaimedNotLive.into());
+    // if initialize_args.token_bonding.go_live_unix_time > initialize_args.clock.unix_timestamp {
+    //   return Err(ErrorCode::UnclaimedNotLive.into());
+    // }
+    let early_launch_go_live = 1642518000; // Jan 18th 9am CST
+    let launch_go_live = 1642604400; // Jan 19th 9am CST
+    let wumbo = Pubkey::from_str(WUMBO_KEY).unwrap();
+    let is_wumbo = ctx.accounts.initialize_args.payer.key() == wumbo;
+
+    let set_go_live = initialize_args.token_bonding.go_live_unix_time;
+
+    let correct_go_live = (is_wumbo && set_go_live == early_launch_go_live) || (!is_wumbo && set_go_live == launch_go_live);
+    if !correct_go_live {
+      return Err(ErrorCode::InvalidGoLive.into());
     }
 
     if let Some(token_metadata_settings) = token_metadata_settings_opt {
