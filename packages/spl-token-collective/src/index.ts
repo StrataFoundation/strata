@@ -93,25 +93,9 @@ export interface ICreateCollectiveArgs {
 
 // Taken from token bonding initialize
 /** See [InitializeTokenBondingArgs](/docs/api/spl-token-bonding/interfaces/ICreateTokenBondingArgs) */
-export interface ITokenBondingParams {
+export interface ITokenBondingParams extends Omit<ICreateTokenBondingArgs, "curve" | "baseMint"> {
   /** The curve to create this social token on. **Default:** Curve from the collective's config */
   curve?: PublicKey;
-
-  buyBaseRoyaltyPercentage: number;
-  buyTargetRoyaltyPercentage: number;
-  sellBaseRoyaltyPercentage: number;
-  sellTargetRoyaltyPercentage: number;
-
-  /** **Default:** uses decimals from collective config, or 9 */
-  targetMintDecimals?: number;
-  buyBaseRoyalties?: PublicKey;
-  buyBaseRoyaltiesOwner?: PublicKey;
-  buyTargetRoyalties?: PublicKey;
-  buyTargetRoyaltiesOwner?: PublicKey;
-  sellBaseRoyalties?: PublicKey;
-  sellBaseRoyaltiesOwner?: PublicKey;
-  sellTargetRoyalties?: PublicKey;
-  sellTargetRoyaltiesOwner?: PublicKey;
 }
 
 /**
