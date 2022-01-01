@@ -1911,7 +1911,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
   ): Promise<BondingHierarchy | undefined> {
     const wrappedSolMint = (await this.getState())?.wrappedSolMint!
     if (stopAtMint?.equals(NATIVE_MINT)) {
-      stopAtMint = (await this.getState())?.wrappedSolMint!
+      stopAtMint = wrappedSolMint;
     }
 
     if (!tokenBondingKey) {

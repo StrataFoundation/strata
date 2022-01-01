@@ -19,34 +19,45 @@ import { UseAccountState } from "./useAccount";
 import { IUseTokenMetadataResult, useTokenMetadata } from "./useTokenMetadata";
 import { deserializeUnchecked } from "borsh";
 
+export async function getOwnerForName(
+  cache: AccountFetchCache,
+  handle: string | undefined,
+  tld: PublicKey | undefined
+): Promise<PublicKey | undefined> {
+  const key = handle && await getTwitterRegistryKey(handle, tld);
+  if (key) {
+    const [registry, dispose] = await cache.searchAndWatch(
+      key,
+      (pubkey, account) => {
+        const info = deserializeUnchecked(
+          NameRegistryState.schema,
+          NameRegistryState,
+          account.data
+        );
+        return {
+          pubkey,
+          account,
+          info,
+        };
+      },
+      true
+    );
+    setTimeout(dispose, 30 * 1000); // Keep this state around for 30s
+  
+    return registry?.info.owner;
+  }
+}
+
 export async function getClaimedTokenRefKeyForName(
   cache: AccountFetchCache,
   handle: string,
   mint: PublicKey | undefined | null = undefined,
   tld: PublicKey
 ): Promise<PublicKey> {
-  const key = await getTwitterRegistryKey(handle, tld);
-  const [registry, dispose] = await cache.searchAndWatch(
-    key,
-    (pubkey, account) => {
-      const info = deserializeUnchecked(
-        NameRegistryState.schema,
-        NameRegistryState,
-        account.data
-      );
-      return {
-        pubkey,
-        account,
-        info,
-      };
-    },
-    true
-  );
-  setTimeout(dispose, 30 * 1000); // Keep this state around for 30s
 
   return (
     await SplTokenCollective.ownerTokenRefKey({
-      owner: registry?.info.owner,
+      owner: await getOwnerForName(cache, handle, tld),
       mint,
     })
   )[0];
