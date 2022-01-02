@@ -5,6 +5,10 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ## [Unreleased]
 
+### Added
+
+  * Handle go live date in swap form
+
 ### Fixed
 
   * Awaiting approval flag on provider would only go to false after finished txn

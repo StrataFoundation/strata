@@ -99,8 +99,8 @@ async function run() {
 
   const { collective, tokenBonding } = await tokenCollectiveSdk.createCollective({
     metadata: {
-      name: "Test Collective",
-      symbol: "TEST",
+      name: "Open Collective",
+      symbol: "OPEN",
       uri: "https://strata-token-metadata.s3.us-east-2.amazonaws.com/open.json"
     },
     bonding: {
