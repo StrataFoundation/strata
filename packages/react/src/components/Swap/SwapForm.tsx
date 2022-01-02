@@ -157,6 +157,7 @@ export const SwapForm = ({
   const slippage = watch("slippage");
   const hasBaseAmount = (ownedBase || 0) >= +(topAmount || 0);
   const moreThanSpendCap = +(topAmount || 0) > spendCap;
+  const notLive = tokenBonding && (tokenBonding.goLiveUnixTime.toNumber() > (new Date().valueOf() / 1000));
 
   const lowMint =
     base &&
@@ -521,7 +522,7 @@ export const SwapForm = ({
           <Box position="relative">
             <ScaleFade
               initialScale={0.9}
-              in={!hasBaseAmount || moreThanSpendCap}
+              in={!hasBaseAmount || moreThanSpendCap || notLive}
             >
               <Center
                 bgColor="gray.500"
@@ -538,7 +539,12 @@ export const SwapForm = ({
                     Spend Cap is {spendCap} {base.ticker}. Please adjust amount
                   </Text>
                 )}
-                {!moreThanSpendCap && (
+                {notLive && (
+                  <Text>
+                    Goes live at {tokenBonding && new Date(tokenBonding.goLiveUnixTime.toNumber() * 1000).toLocaleString()}
+                  </Text>
+                )}
+                {!hasBaseAmount && (
                   <Text>
                     Insufficent funds for this trade.{" "}
                     <Text as="u">
@@ -555,7 +561,7 @@ export const SwapForm = ({
               </Center>
             </ScaleFade>
             <Button
-              isDisabled={!connected || !hasBaseAmount || moreThanSpendCap}
+              isDisabled={!connected || !hasBaseAmount || moreThanSpendCap || notLive}
               w="full"
               colorScheme="indigo"
               size="lg"
