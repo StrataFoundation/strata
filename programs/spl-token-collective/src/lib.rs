@@ -205,13 +205,15 @@ pub mod spl_token_collective {
       )?;
     }
 
-    // if initialize_args.token_bonding.go_live_unix_time > initialize_args.clock.unix_timestamp {
-    //   return Err(ErrorCode::UnclaimedNotLive.into());
-    // }
+    let timestamp = initialize_args.clock.unix_timestamp;
     let early_launch_go_live = 1642518000; // Jan 18th 9am CST
     let launch_go_live = 1642604400; // Jan 19th 9am CST
     let wumbo = Pubkey::from_str(WUMBO_KEY).unwrap();
     let is_wumbo = ctx.accounts.initialize_args.payer.key() == wumbo;
+    // TOOD: We can remove this after launch. 
+    if timestamp > launch_go_live && initialize_args.token_bonding.go_live_unix_time > timestamp {
+      return Err(ErrorCode::UnclaimedNotLive.into());
+    }
 
     let set_go_live = initialize_args.token_bonding.go_live_unix_time;
 
