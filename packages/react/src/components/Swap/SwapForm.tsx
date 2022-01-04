@@ -39,6 +39,7 @@ import { useFtxPayLink, useProvider, useTokenMetadata } from "../../hooks";
 import { Royalties } from "./Royalties";
 import { TransactionInfo, TransactionInfoArgs } from "./TransactionInfo";
 import { useTwWrappedSolMint } from "../../hooks/useTwWrappedSolMint";
+import { NATIVE_MINT } from "@solana/spl-token";
 
 export interface ISwapFormValues {
   topAmount: number;
@@ -152,18 +153,20 @@ export const SwapForm = ({
     resolver: yupResolver(validationSchema),
   });
   const wrappedSolMint = useTwWrappedSolMint();
-  const isBaseSol = wrappedSolMint && base?.publicKey.equals(wrappedSolMint);
+  const isBaseSol = wrappedSolMint && (base?.publicKey.equals(wrappedSolMint) || base?.publicKey.equals(NATIVE_MINT));
   const topAmount = watch("topAmount");
   const slippage = watch("slippage");
   const hasBaseAmount = (ownedBase || 0) >= +(topAmount || 0);
   const moreThanSpendCap = +(topAmount || 0) > spendCap;
-  const notLive = tokenBonding && (tokenBonding.goLiveUnixTime.toNumber() > (new Date().valueOf() / 1000));
 
   const lowMint =
     base &&
     target &&
     pricing?.hierarchy.lowest(base.publicKey, target.publicKey);
   const isBuying = lowMint && lowMint.equals(target?.publicKey);
+  const targetBonding = lowMint && pricing?.hierarchy.findTarget(lowMint);
+
+  const notLive = targetBonding && (targetBonding.goLiveUnixTime.toNumber() > (new Date().valueOf() / 1000));
 
   const handleConnectWallet = () => onConnectWallet();
 
@@ -541,7 +544,7 @@ export const SwapForm = ({
                 )}
                 {notLive && (
                   <Text>
-                    Goes live at {tokenBonding && new Date(tokenBonding.goLiveUnixTime.toNumber() * 1000).toLocaleString()}
+                    Goes live at {targetBonding && new Date(targetBonding.goLiveUnixTime.toNumber() * 1000).toLocaleString()}
                   </Text>
                 )}
                 {!hasBaseAmount && (

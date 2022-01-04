@@ -37,8 +37,6 @@ pub enum ErrorCode {
   )]
   UnclaimedNotLive,
 
-  #[msg(
-    "Invalid go live date for prelaunch"
-  )]
-  InvalidGoLive
+  #[msg("Invalid go live date for prelaunch")]
+  InvalidGoLive,
 }

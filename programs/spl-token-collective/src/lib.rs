@@ -1,14 +1,13 @@
 #![allow(clippy::or_fun_call)]
 
+use crate::token_metadata::update_metadata_account;
+use std::str::FromStr;
 use {
   anchor_lang::prelude::*,
   anchor_spl::token::{transfer, Transfer},
   borsh::{BorshDeserialize, BorshSerialize},
   spl_token_bonding::arg::UpdateTokenBondingV0Args,
 };
-use std::str::FromStr;
-use crate::token_metadata::update_metadata_account;
-
 
 pub mod account;
 pub mod arg;
@@ -210,14 +209,15 @@ pub mod spl_token_collective {
     let launch_go_live = 1642604400; // Jan 19th 9am CST
     let wumbo = Pubkey::from_str(WUMBO_KEY).unwrap();
     let is_wumbo = ctx.accounts.initialize_args.payer.key() == wumbo;
-    // TOOD: We can remove this after launch. 
+    // TOOD: We can remove this after launch.
     if timestamp > launch_go_live && initialize_args.token_bonding.go_live_unix_time > timestamp {
       return Err(ErrorCode::UnclaimedNotLive.into());
     }
 
     let set_go_live = initialize_args.token_bonding.go_live_unix_time;
 
-    let correct_go_live = (is_wumbo && set_go_live == early_launch_go_live) || (!is_wumbo && set_go_live == launch_go_live);
+    let correct_go_live = (is_wumbo && set_go_live == early_launch_go_live)
+      || (!is_wumbo && set_go_live == launch_go_live);
     if !correct_go_live {
       return Err(ErrorCode::InvalidGoLive.into());
     }
