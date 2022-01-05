@@ -12,13 +12,13 @@ export const ProviderContext = React.createContext<{
 
 export const ProviderContextProvider: React.FC = ({ children }) => {
   const { connection } = useConnection();
-  const { adapter } = useWallet();
+  const { wallet } = useWallet();
   const [awaitingApproval, setAwaitingApproval] = React.useState(false);
 
   const provider = React.useMemo(() => {
     // Let adapter be null, it'll fail if anyone issues transaction commands but will let fetch go through
     // @ts-ignore
-    const provider = new Provider(connection, adapter, {});
+    const provider = new Provider(connection, wallet?.adapter, {});
 
     // The default impl of send does not use the transaction resuling from wallet.signTransaciton. So we need to fix it.
     provider.send = async function FixedSend(tx, signers, opts) {
@@ -54,7 +54,7 @@ export const ProviderContextProvider: React.FC = ({ children }) => {
     };
 
     return provider;
-  }, [connection, adapter]);
+  }, [connection, wallet]);
 
   return (
     <ProviderContext.Provider value={{ awaitingApproval, provider }}>

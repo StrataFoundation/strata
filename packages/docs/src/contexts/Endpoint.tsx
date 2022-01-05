@@ -1,36 +1,46 @@
+import React, {
+  FC,
+  ReactNode,
+  createContext,
+  useContext,
+  useState,
+} from "react";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { clusterApiUrl } from "@solana/web3.js";
-import React from "react";
 
-// Default styles that can be overridden by your app
-require("@solana/wallet-adapter-react-ui/styles.css");
-
-interface IEndpointConext {
-  endpoint: WalletAdapterNetwork;
-  setEndpoint: (endpoint: WalletAdapterNetwork) => void;
+export interface IEndpointProviderProps {
+  children: ReactNode;
+  initialEndpoint?: string;
 }
 
-const EndpointContext = React.createContext<IEndpointConext>({
-  endpoint: clusterApiUrl(WalletAdapterNetwork.Devnet),
-  setEndpoint: () => {},
-});
+export interface IEndpointContextState {
+  endpoint: string;
+  setEndpoint: (endpoint: string) => void;
+}
 
-export const EndpointProvider = ({
+const EndpointContext = createContext<IEndpointContextState>(
+  {} as IEndpointContextState
+);
+
+const EndpointProvider: FC<IEndpointProviderProps> = ({
   children,
   initialEndpoint = clusterApiUrl(WalletAdapterNetwork.Devnet),
-}: {
-  children?: React.ReactNode;
-  initialEndpoint?: string;
 }) => {
-  const [stateEndpoint, setEndpoint] =
-    React.useState<WalletAdapterNetwork>(initialEndpoint);
+  const [endpoint, setEndpoint] = useState<string>(initialEndpoint);
+
   return (
-    <EndpointContext.Provider value={{ endpoint: stateEndpoint, setEndpoint }}>
+    <EndpointContext.Provider value={{ endpoint, setEndpoint }}>
       {children}
     </EndpointContext.Provider>
   );
 };
 
-export const useEndpoint = () => {
-  return React.useContext(EndpointContext);
+const useEndpoint = () => {
+  const context = useContext(EndpointContext);
+  if (context === undefined) {
+    throw new Error("useEndpoint must be used within a EndpointProvider");
+  }
+  return context;
 };
+
+export { EndpointProvider, useEndpoint };

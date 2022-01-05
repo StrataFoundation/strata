@@ -25,16 +25,16 @@ export function amountAsNum(amount: u64, mint: MintInfo): number {
   return amount.div(decimals).toNumber() + decimal;
 }
 
-export function useSolOwnedAmount(wallet?: PublicKey): {
+export function useSolOwnedAmount(ownerPublicKey?: PublicKey): {
   amount: number;
   loading: boolean;
 } {
-  const { adapter } = useWallet();
-  if (!wallet) {
-    wallet = adapter?.publicKey || undefined;
+  const { wallet } = useWallet();
+  if (!ownerPublicKey) {
+    ownerPublicKey = wallet?.adapter?.publicKey || undefined;
   }
   const { info: lamports, loading } = useAccount<number>(
-    wallet,
+    ownerPublicKey,
     (_, account) => account.lamports
   );
   const result = React.useMemo(
@@ -61,7 +61,10 @@ export function useUserOwnedAmount(
   useEffect(() => {
     if (mint && associatedAccount) {
       setAmount(amountAsNum(associatedAccount.amount, mint));
-    } else if (token?.equals(NATIVE_MINT) || (wrappedSolMint && token?.equals(wrappedSolMint))) {
+    } else if (
+      token?.equals(NATIVE_MINT) ||
+      (wrappedSolMint && token?.equals(wrappedSolMint))
+    ) {
       setAmount(solOwnedAmount);
     }
   }, [associatedAccount, mint, solOwnedAmount]);
@@ -108,7 +111,12 @@ export function useBondingPricing(
     result: pricing,
     loading,
     error,
-  } = useAsync(getPricing, [tokenBondingSdk, tokenBonding, reserves, targetMint]);
+  } = useAsync(getPricing, [
+    tokenBondingSdk,
+    tokenBonding,
+    reserves,
+    targetMint,
+  ]);
 
   return {
     pricing: pricing || undefined,

@@ -1,6 +1,6 @@
 import "./bufferFill";
-import { Wallet } from "@site/src/contexts/Wallet";
-import { EndpointProvider } from "@site/src/contexts/Endpoint";
+import { Wallet } from "../../contexts/Wallet";
+import { EndpointProvider } from "../../contexts/Endpoint";
 import {
   AccountProvider,
   StrataSdksProvider,
@@ -58,7 +58,7 @@ export default ({ children }) => {
           <ErrorHandlerProvider onError={onError}>
             <Wallet>
               <StrataSdksProvider>
-                <AccountProvider>
+                <AccountProvider commitment="confirmed">
                   <VariablesProvider>
                     {children}
                     <Toaster

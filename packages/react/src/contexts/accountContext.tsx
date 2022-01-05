@@ -17,7 +17,7 @@ export const AccountContext = createContext<AccountFetchCache>(
 export const AccountProvider: FC<IAccountProviderProps> = ({
   children,
   commitment = DEFAULT_COMMITMENT,
-  extendConnection = true
+  extendConnection = true,
 }) => {
   const { connection } = useConnection();
   const cache = useMemo(() => {
@@ -25,7 +25,7 @@ export const AccountProvider: FC<IAccountProviderProps> = ({
       connection,
       delay: 500,
       commitment,
-      extendConnection
+      extendConnection,
     });
   }, [connection]);
 
