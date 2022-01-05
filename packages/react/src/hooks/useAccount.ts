@@ -87,13 +87,15 @@ export function useAccount<T>(
 
     const disposeEmitter = cache.emitter.onCache((e) => {
       const event = e;
-      if (event.id === id && !event.isNew) {
-        cache.query(id, parsedAccountBaseParser).then((acc) => {
-          setState({
-            loading: false,
-            info: (parser && parser(acc.pubkey, acc!.account)) as any,
-            account: acc!.account,
-          });
+      if (event.id === id) {
+        cache.search(id, parsedAccountBaseParser).then((acc) => {
+          if (acc && acc.account != state.account) {
+            setState({
+              loading: false,
+              info: (parser && parser(acc.pubkey, acc!.account)) as any,
+              account: acc!.account,
+            });
+          }
         });
       }
     });
