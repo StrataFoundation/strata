@@ -93,7 +93,8 @@ export interface ICreateCollectiveArgs {
 
 // Taken from token bonding initialize
 /** See [InitializeTokenBondingArgs](/docs/api/spl-token-bonding/interfaces/ICreateTokenBondingArgs) */
-export interface ITokenBondingParams extends Omit<ICreateTokenBondingArgs, "curve" | "baseMint"> {
+export interface ITokenBondingParams
+  extends Omit<ICreateTokenBondingArgs, "curve" | "baseMint"> {
   /** The curve to create this social token on. **Default:** Curve from the collective's config */
   curve?: PublicKey;
 }
@@ -164,7 +165,7 @@ export interface ICreateSocialTokenArgs {
     uri?: string;
     sellerFeeBasisPoints?: number;
     creators?: Creator[] | null;
-  }
+  };
   /** The wallet to create this social token under, defaults to `provider.wallet` */
   owner?: PublicKey;
   /**  The authority to make changes on this bonding curve. **Default:** `provider.wallet`. */
@@ -1176,7 +1177,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
         uri,
         creators: null,
         sellerFeeBasisPoints: 0,
-        ...metadata
+        ...metadata,
       }),
     });
     instructions1.push(...metadataInstructions);
@@ -1454,18 +1455,22 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     const args: IdlTypes<SplTokenCollectiveIDL>["UpdateTokenBondingV0ArgsWrapper"] =
       {
         tokenBondingAuthority: tokenBondingAcct.generalAuthority as PublicKey,
-        buyBaseRoyaltyPercentage:
-          definedOr(percent(buyBaseRoyaltyPercentage),
-          tokenBondingAcct.buyBaseRoyaltyPercentage),
-        buyTargetRoyaltyPercentage:
-          definedOr(percent(buyTargetRoyaltyPercentage),
-          tokenBondingAcct.buyTargetRoyaltyPercentage),
-        sellBaseRoyaltyPercentage:
-          definedOr(percent(sellBaseRoyaltyPercentage) ||
-          tokenBondingAcct.sellBaseRoyaltyPercentage),
-        sellTargetRoyaltyPercentage:
-          definedOr(percent(sellTargetRoyaltyPercentage) ||
-          tokenBondingAcct.sellTargetRoyaltyPercentage),
+        buyBaseRoyaltyPercentage: definedOr(
+          percent(buyBaseRoyaltyPercentage),
+          tokenBondingAcct.buyBaseRoyaltyPercentage
+        ),
+        buyTargetRoyaltyPercentage: definedOr(
+          percent(buyTargetRoyaltyPercentage),
+          tokenBondingAcct.buyTargetRoyaltyPercentage
+        ),
+        sellBaseRoyaltyPercentage: definedOr(
+          percent(sellBaseRoyaltyPercentage),
+          tokenBondingAcct.sellBaseRoyaltyPercentage
+        ),
+        sellTargetRoyaltyPercentage: definedOr(
+          percent(sellTargetRoyaltyPercentage),
+          tokenBondingAcct.sellTargetRoyaltyPercentage
+        ),
         buyFrozen:
           typeof buyFrozen === "undefined"
             ? (tokenBondingAcct.buyFrozen as boolean)
