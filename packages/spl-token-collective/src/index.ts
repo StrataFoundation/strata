@@ -419,6 +419,14 @@ export interface ICollective extends CollectiveV0 {
   config: CollectiveConfigV0;
 }
 
+function definedOr<A>(value: A | undefined, def: A): A {
+  if (typeof value == "undefined") {
+    return def;
+  }
+
+  return value!;
+}
+
 export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
   splTokenBondingProgram: SplTokenBonding;
   splTokenMetadata: SplTokenMetadata;
@@ -1447,17 +1455,17 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       {
         tokenBondingAuthority: tokenBondingAcct.generalAuthority as PublicKey,
         buyBaseRoyaltyPercentage:
-          percent(buyBaseRoyaltyPercentage) ||
-          tokenBondingAcct.buyBaseRoyaltyPercentage,
+          definedOr(percent(buyBaseRoyaltyPercentage),
+          tokenBondingAcct.buyBaseRoyaltyPercentage),
         buyTargetRoyaltyPercentage:
-          percent(buyTargetRoyaltyPercentage) ||
-          tokenBondingAcct.buyTargetRoyaltyPercentage,
+          definedOr(percent(buyTargetRoyaltyPercentage),
+          tokenBondingAcct.buyTargetRoyaltyPercentage),
         sellBaseRoyaltyPercentage:
-          percent(sellBaseRoyaltyPercentage) ||
-          tokenBondingAcct.sellBaseRoyaltyPercentage,
+          definedOr(percent(sellBaseRoyaltyPercentage) ||
+          tokenBondingAcct.sellBaseRoyaltyPercentage),
         sellTargetRoyaltyPercentage:
-          percent(sellTargetRoyaltyPercentage) ||
-          tokenBondingAcct.sellTargetRoyaltyPercentage,
+          definedOr(percent(sellTargetRoyaltyPercentage) ||
+          tokenBondingAcct.sellTargetRoyaltyPercentage),
         buyFrozen:
           typeof buyFrozen === "undefined"
             ? (tokenBondingAcct.buyFrozen as boolean)
