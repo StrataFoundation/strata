@@ -59,15 +59,15 @@ export function useUserOwnedAmount(
   const [amount, setAmount] = useState<number>();
 
   useEffect(() => {
-    if (mint && associatedAccount) {
-      setAmount(amountAsNum(associatedAccount.amount, mint));
-    } else if (
+     if (
       token?.equals(NATIVE_MINT) ||
       (wrappedSolMint && token?.equals(wrappedSolMint))
     ) {
       setAmount(solOwnedAmount);
+    } else if (mint && associatedAccount) {
+      setAmount(amountAsNum(associatedAccount.amount, mint));
     }
-  }, [associatedAccount, mint, solOwnedAmount]);
+  }, [associatedAccount, mint, solOwnedAmount, wrappedSolMint]);
 
   return amount && Number(amount);
 }

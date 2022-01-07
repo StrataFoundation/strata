@@ -49,6 +49,7 @@ export class BondingHierarchy {
   }
 
   lowest(one: PublicKey, two: PublicKey): PublicKey {
+    console.log(one.toBase58(), two.toBase58())
     return this.toArray().find(
       (hierarchy) =>
         hierarchy.tokenBonding.targetMint.equals(sanitizeSolMint(one, this.wrappedSolMint)) ||
