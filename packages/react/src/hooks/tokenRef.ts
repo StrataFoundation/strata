@@ -25,7 +25,7 @@ export async function getOwnerForName(
   tld: PublicKey | undefined
 ): Promise<PublicKey | undefined> {
   const key = handle && await getTwitterRegistryKey(handle, tld);
-  if (key) {
+  if (key && cache) {
     const [registry, dispose] = await cache.searchAndWatch(
       key,
       (pubkey, account) => {

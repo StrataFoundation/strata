@@ -273,7 +273,7 @@ export class ExponentialCurve implements IPricingCurve {
       // b dS + (c dS^(1 + k))/(1 + k)
       return (
         (this.b * dS + (this.c * Math.pow(dS, 1 + this.k)) / (1 + this.k)) *
-        (1 / (1 - asDecimal(baseRoyaltiesPercent)))
+        (1 - asDecimal(baseRoyaltiesPercent))
       );
     } else {
       if (this.b == 0 && this.c != 0) {
@@ -282,12 +282,11 @@ export class ExponentialCurve implements IPricingCurve {
         */
         return (
           ((R / Math.pow(S, 1 + this.k)) *
-            ((S + dS) * Math.pow(S + dS, this.k) - Math.pow(S, 1 + this.k))) /
-          (1 - asDecimal(baseRoyaltiesPercent))
+            ((S + dS) * Math.pow(S + dS, this.k) - Math.pow(S, 1 + this.k))) * (1 - asDecimal(baseRoyaltiesPercent)) 
         );
       } else if (this.c == 0) {
         // R dS / S
-        return ((R * dS) / S) * (1 / (1 - asDecimal(baseRoyaltiesPercent)));
+        return ((R * dS) / S) * (1 - asDecimal(baseRoyaltiesPercent));
       } else {
         throw new Error(
           "Cannot convert base amount to target amount when both b and k are defined on an exponential curve. The math is too hard"

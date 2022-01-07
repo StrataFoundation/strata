@@ -144,7 +144,6 @@ export const useSwapDriver = (
     [tokenBonding, pricing]
   );
 
-  console.log("base", baseMint?.toBase58())
   const ownedBase = useOwnedAmount(baseMint);
   const { handleErrors } = useErrorHandler();
   handleErrors(

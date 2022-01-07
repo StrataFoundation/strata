@@ -1479,7 +1479,6 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         clock: SYSVAR_CLOCK_PUBKEY,
       },
     };
-    console.log(accounts);
     instructions.push(await this.instruction.buyV0(args, accounts));
     instructions.push(...lastInstructions);
 
