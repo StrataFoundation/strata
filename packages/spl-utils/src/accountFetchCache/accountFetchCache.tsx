@@ -116,7 +116,10 @@ export class AccountFetchCache {
       const writeableAccounts = getWriteableAccounts(
         transaction.instructions
       ).map((a) => a.toBase58());
-      writeableAccounts.forEach((a) => self.genericCache.delete(a));
+      writeableAccounts.forEach((a) => {
+        self.pendingCalls.delete(a);
+        self.genericCache.delete(a);
+      });
       this.confirmTransaction(result, "finalized")
         .then(() => self.requeryMissing(transaction.instructions))
         .catch(console.error);
@@ -133,7 +136,10 @@ export class AccountFetchCache {
       const writeableAccounts = getWriteableAccounts(instructions).map((a) =>
         a.toBase58()
       );
-      writeableAccounts.forEach((a) => self.genericCache.delete(a));
+      writeableAccounts.forEach((a) => {
+        self.pendingCalls.delete(a);
+        self.genericCache.delete(a);
+      });
 
       this.confirmTransaction(result, "finalized")
         .then(() => self.requeryMissing(instructions))
@@ -451,7 +457,7 @@ export class AccountFetchCache {
       this.accountChangeListeners.delete(key);
     }
 
-    if (this.genericCache.get(key)) {
+    if (this.genericCache.has(key)) {
       this.genericCache.delete(key);
       this.emitter.raiseCacheDeleted(key);
       return true;

@@ -34,6 +34,7 @@
     "@strata-foundation/spl-token-bonding": "^2.0.6",
     "@strata-foundation/spl-token-collective": "^2.0.6",
     "@strata-foundation/spl-utils": "^2.0.0",
+    "@toruslabs/solana-embed": "0.0.9",
     "buffer": "^6.0.3",
     "dotenv": "^10.0.0",
     "eventemitter3": "^4.0.7",
