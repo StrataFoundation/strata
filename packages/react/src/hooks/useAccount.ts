@@ -37,7 +37,7 @@ export function useAccount<T>(
     pubkey: PublicKey,
     data: AccountInfo<Buffer>
   ): ParsedAccountBase => {
-    const info = parser && parser(pubkey, data);
+    const info = parser!(pubkey, data);
     return {
       pubkey,
       account: data,
@@ -55,7 +55,7 @@ export function useAccount<T>(
       shouldDisposeImmediately = true;
     };
 
-    if (!id) {
+    if (!id || !cache) {
       setState({ loading: false });
       return;
     } else {
@@ -63,7 +63,7 @@ export function useAccount<T>(
     }
 
     cache
-      .searchAndWatch(id, parsedAccountBaseParser, isStatic)
+      .searchAndWatch(id, parser ? parsedAccountBaseParser : undefined, isStatic)
       .then(([acc, dispose]) => {
         if (shouldDisposeImmediately) {
           dispose();

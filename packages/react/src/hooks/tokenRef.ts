@@ -53,14 +53,16 @@ export async function getClaimedTokenRefKeyForName(
   handle: string,
   mint: PublicKey | undefined | null = undefined,
   tld: PublicKey
-): Promise<PublicKey> {
-
-  return (
-    await SplTokenCollective.ownerTokenRefKey({
-      owner: await getOwnerForName(cache, handle, tld),
-      mint,
-    })
-  )[0];
+): Promise<PublicKey | undefined> {
+  const owner = await getOwnerForName(cache, handle, tld);
+  if (owner) {
+    return (
+      await SplTokenCollective.ownerTokenRefKey({
+        owner,
+        mint,
+      })
+    )[0];
+  }
 }
 export async function getUnclaimedTokenRefKeyForName(
   handle: string,

@@ -11,7 +11,8 @@ export interface IAccountProviderProps {
 }
 
 export const AccountContext = createContext<AccountFetchCache>(
-  {} as AccountFetchCache
+  // @ts-ignore
+  null as AccountFetchCache
 );
 
 export const AccountProvider: FC<IAccountProviderProps> = ({

@@ -6,7 +6,7 @@ export function useOwnedAmountOfNameForOwner(
   owner: PublicKey | undefined | null,
   handle: string | undefined | null,
   collective: PublicKey | null,
-  tld: PublicKey
+  tld: PublicKey | undefined
 ): { amount: number | undefined; loading: boolean } {
   const { info: tokenRef, loading: loadingRef } = useTokenRefForName(
     handle,
