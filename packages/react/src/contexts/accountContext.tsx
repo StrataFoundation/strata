@@ -22,7 +22,7 @@ export const AccountProvider: FC<IAccountProviderProps> = ({
 }) => {
   const { connection } = useConnection();
   const cache = useMemo(() => {
-    return new AccountFetchCache({
+    return connection && new AccountFetchCache({
       connection,
       delay: 500,
       commitment,
@@ -30,7 +30,11 @@ export const AccountProvider: FC<IAccountProviderProps> = ({
     });
   }, [connection]);
 
-  return (
-    <AccountContext.Provider value={cache}>{children}</AccountContext.Provider>
-  );
+  if (cache) {
+    return (
+      <AccountContext.Provider value={cache}>{children}</AccountContext.Provider>
+    );
+  }
+
+  return null;
 };
