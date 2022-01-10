@@ -494,7 +494,7 @@ pub mod spl_token_collective {
   ) -> ProgramResult {
     let name_class = &ctx.remaining_accounts[0];
     let name_parent = &ctx.remaining_accounts[1];
-    let name_parent_owner = &ctx.remaining_accounts[1];
+    let name_parent_owner = &ctx.remaining_accounts[2];
     let valid_authority = get_seeds_and_key(
       &spl_name_service::ID,
       args.hashed_name,
