@@ -2,7 +2,7 @@
 slug: us-social-token-law
 title: Social Tokens and US Securities Law
 tags: [legal]
-authors: [noah,bry]
+authors: [mark,noah]
 ---
 
 # US Securities Law and Social Tokens
