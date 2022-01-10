@@ -12,7 +12,7 @@ runs:
         with:
           path: |
             ./node_modules/
-          key: solana-${{ runner.os }}-v0000-${{ env.NODE_VERSION }}-${{ hashFiles('./packages/**/yarn.lock') }}
+          key: solana-${{ runner.os }}-v0000-${{ env.NODE_VERSION }}-${{ hashFiles('./yarn.lock') }}
       - uses: actions/cache@v2
         name: Cache Typescript Dist
         id: cache-typescript-dist
