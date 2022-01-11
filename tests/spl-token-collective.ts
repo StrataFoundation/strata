@@ -140,6 +140,8 @@ describe("spl-token-collective", () => {
         )
       );
       nameTx.partialSign(nameClass);
+      const goLiveDate = new Date(0)
+      goLiveDate.setUTCSeconds(1642690800);
       await provider.send(nameTx);
       const { ownerTokenRef, mintTokenRef } =
         await tokenCollectiveProgram.createSocialToken({
@@ -152,6 +154,7 @@ describe("spl-token-collective", () => {
           },
           tokenBondingParams: {
             curve,
+            goLiveDate,
             buyBaseRoyaltyPercentage: 10,
             buyTargetRoyaltyPercentage: 5,
             sellBaseRoyaltyPercentage: 0,
@@ -264,6 +267,8 @@ describe("spl-token-collective", () => {
           config,
         });
       collective = collectiveRet;
+      const goLiveDate = new Date(0)
+      goLiveDate.setUTCSeconds(1642690800);
       const {
         output: { ownerTokenRef, mintTokenRef },
         instructions,
@@ -277,6 +282,7 @@ describe("spl-token-collective", () => {
           symbol: "WHAD",
         },
         tokenBondingParams: {
+          goLiveDate,
           curve,
           buyBaseRoyaltyPercentage: 0,
           buyTargetRoyaltyPercentage: 0,

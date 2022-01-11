@@ -25,6 +25,9 @@ use crate::{account::*, arg::*, error::*, state::*, util::*};
 
 const WUMBO_KEY: &str = "Gzyvrg8gJfShKQwhVYFXV5utp86tTcMxSzrN7zcfebKj";
 
+const EARLY_LAUNCH_GO_LIVE: i64 = 1642604400; // Jan 19th 9am CST
+const LAUNCH_GO_LIVE: i64 = 1642690800; // Jan 20th 9am CST
+
 declare_id!("TCo1sfSr2nCudbeJPykbif64rG9K1JNMGzrtzvPmp3y");
 
 pub fn initialize_social_token_v0(
@@ -157,6 +160,11 @@ pub mod spl_token_collective {
       )?;
     }
 
+    let correct_go_live = initialize_args.token_bonding.go_live_unix_time >= LAUNCH_GO_LIVE;
+    if !correct_go_live {
+      return Err(ErrorCode::InvalidGoLive.into());
+    }
+
     initialize_social_token_v0(
       &mut ctx.accounts.initialize_args,
       &mut ctx.accounts.owner_token_ref,
@@ -205,19 +213,17 @@ pub mod spl_token_collective {
     }
 
     let timestamp = initialize_args.clock.unix_timestamp;
-    let early_launch_go_live = 1642518000; // Jan 18th 9am CST
-    let launch_go_live = 1642604400; // Jan 19th 9am CST
     let wumbo = Pubkey::from_str(WUMBO_KEY).unwrap();
     let is_wumbo = ctx.accounts.initialize_args.payer.key() == wumbo;
     // TOOD: We can remove this after launch.
-    if timestamp > launch_go_live && initialize_args.token_bonding.go_live_unix_time > timestamp {
+    if timestamp > LAUNCH_GO_LIVE && initialize_args.token_bonding.go_live_unix_time > timestamp {
       return Err(ErrorCode::UnclaimedNotLive.into());
     }
 
     let set_go_live = initialize_args.token_bonding.go_live_unix_time;
 
-    let correct_go_live = (is_wumbo && set_go_live == early_launch_go_live)
-      || (!is_wumbo && set_go_live == launch_go_live);
+    let correct_go_live = (is_wumbo && set_go_live >= EARLY_LAUNCH_GO_LIVE)
+      || (!is_wumbo && set_go_live >= LAUNCH_GO_LIVE);
     if !correct_go_live {
       return Err(ErrorCode::InvalidGoLive.into());
     }
@@ -509,7 +515,7 @@ pub mod spl_token_collective {
   ) -> ProgramResult {
     let name_class = &ctx.remaining_accounts[0];
     let name_parent = &ctx.remaining_accounts[1];
-    let name_parent_owner = &ctx.remaining_accounts[1];
+    let name_parent_owner = &ctx.remaining_accounts[2];
     let valid_authority = get_seeds_and_key(
       &spl_name_service::ID,
       args.hashed_name,
