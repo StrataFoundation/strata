@@ -1,5 +1,7 @@
 #![allow(clippy::or_fun_call)]
 
+use crate::token_metadata::update_metadata_account;
+use std::str::FromStr;
 use {
   anchor_lang::prelude::*,
   anchor_spl::token::{transfer, Transfer},
@@ -20,6 +22,11 @@ use token_metadata::UpdateMetadataAccount;
 
 use crate::token_metadata::UpdateMetadataAccountArgs;
 use crate::{account::*, arg::*, error::*, state::*, util::*};
+
+const WUMBO_KEY: &str = "Gzyvrg8gJfShKQwhVYFXV5utp86tTcMxSzrN7zcfebKj";
+
+const EARLY_LAUNCH_GO_LIVE: i64 = 1642604400; // Jan 19th 9am CST
+const LAUNCH_GO_LIVE: i64 = 1642690800; // Jan 20th 9am CST
 
 declare_id!("TCo1sfSr2nCudbeJPykbif64rG9K1JNMGzrtzvPmp3y");
 
@@ -80,9 +87,6 @@ pub fn get_collective(collective: UncheckedAccount) -> Option<CollectiveV0> {
 
 #[program]
 pub mod spl_token_collective {
-
-  use crate::token_metadata::update_metadata_account;
-
   use super::*;
 
   pub fn initialize_collective_v0(
@@ -156,6 +160,11 @@ pub mod spl_token_collective {
       )?;
     }
 
+    let correct_go_live = initialize_args.token_bonding.go_live_unix_time >= LAUNCH_GO_LIVE;
+    if !correct_go_live {
+      return Err(ErrorCode::InvalidGoLive.into());
+    }
+
     initialize_social_token_v0(
       &mut ctx.accounts.initialize_args,
       &mut ctx.accounts.owner_token_ref,
@@ -203,8 +212,20 @@ pub mod spl_token_collective {
       )?;
     }
 
-    if initialize_args.token_bonding.go_live_unix_time > initialize_args.clock.unix_timestamp {
+    let timestamp = initialize_args.clock.unix_timestamp;
+    let wumbo = Pubkey::from_str(WUMBO_KEY).unwrap();
+    let is_wumbo = ctx.accounts.initialize_args.payer.key() == wumbo;
+    // TOOD: We can remove this after launch.
+    if timestamp > LAUNCH_GO_LIVE && initialize_args.token_bonding.go_live_unix_time > timestamp {
       return Err(ErrorCode::UnclaimedNotLive.into());
+    }
+
+    let set_go_live = initialize_args.token_bonding.go_live_unix_time;
+
+    let correct_go_live = (is_wumbo && set_go_live >= EARLY_LAUNCH_GO_LIVE)
+      || (!is_wumbo && set_go_live >= LAUNCH_GO_LIVE);
+    if !correct_go_live {
+      return Err(ErrorCode::InvalidGoLive.into());
     }
 
     if let Some(token_metadata_settings) = token_metadata_settings_opt {

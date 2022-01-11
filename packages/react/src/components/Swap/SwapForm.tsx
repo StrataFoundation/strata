@@ -39,6 +39,7 @@ import { useFtxPayLink, useProvider, useTokenMetadata } from "../../hooks";
 import { Royalties } from "./Royalties";
 import { TransactionInfo, TransactionInfoArgs } from "./TransactionInfo";
 import { useTwWrappedSolMint } from "../../hooks/useTwWrappedSolMint";
+import { NATIVE_MINT } from "@solana/spl-token";
 
 export interface ISwapFormValues {
   topAmount: number;
@@ -152,7 +153,7 @@ export const SwapForm = ({
     resolver: yupResolver(validationSchema),
   });
   const wrappedSolMint = useTwWrappedSolMint();
-  const isBaseSol = wrappedSolMint && base?.publicKey.equals(wrappedSolMint);
+  const isBaseSol = wrappedSolMint && (base?.publicKey.equals(wrappedSolMint) || base?.publicKey.equals(NATIVE_MINT));
   const topAmount = watch("topAmount");
   const slippage = watch("slippage");
   const hasBaseAmount = (ownedBase || 0) >= +(topAmount || 0);
@@ -163,6 +164,9 @@ export const SwapForm = ({
     target &&
     pricing?.hierarchy.lowest(base.publicKey, target.publicKey);
   const isBuying = lowMint && lowMint.equals(target?.publicKey);
+  const targetBonding = lowMint && pricing?.hierarchy.findTarget(lowMint);
+
+  const notLive = targetBonding && (targetBonding.goLiveUnixTime.toNumber() > (new Date().valueOf() / 1000));
 
   const handleConnectWallet = () => onConnectWallet();
 
@@ -521,7 +525,7 @@ export const SwapForm = ({
           <Box position="relative">
             <ScaleFade
               initialScale={0.9}
-              in={!hasBaseAmount || moreThanSpendCap}
+              in={!hasBaseAmount || moreThanSpendCap || notLive}
             >
               <Center
                 bgColor="gray.500"
@@ -538,7 +542,12 @@ export const SwapForm = ({
                     Spend Cap is {spendCap} {base.ticker}. Please adjust amount
                   </Text>
                 )}
-                {!moreThanSpendCap && (
+                {notLive && (
+                  <Text>
+                    Goes live at {targetBonding && new Date(targetBonding.goLiveUnixTime.toNumber() * 1000).toLocaleString()}
+                  </Text>
+                )}
+                {!hasBaseAmount && (
                   <Text>
                     Insufficent funds for this trade.{" "}
                     <Text as="u">
@@ -555,7 +564,7 @@ export const SwapForm = ({
               </Center>
             </ScaleFade>
             <Button
-              isDisabled={!connected || !hasBaseAmount || moreThanSpendCap}
+              isDisabled={!connected || !hasBaseAmount || moreThanSpendCap || notLive}
               w="full"
               colorScheme="indigo"
               size="lg"

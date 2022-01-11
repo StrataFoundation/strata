@@ -93,25 +93,10 @@ export interface ICreateCollectiveArgs {
 
 // Taken from token bonding initialize
 /** See [InitializeTokenBondingArgs](/docs/api/spl-token-bonding/interfaces/ICreateTokenBondingArgs) */
-export interface ITokenBondingParams {
+export interface ITokenBondingParams
+  extends Omit<ICreateTokenBondingArgs, "curve" | "baseMint"> {
   /** The curve to create this social token on. **Default:** Curve from the collective's config */
   curve?: PublicKey;
-
-  buyBaseRoyaltyPercentage: number;
-  buyTargetRoyaltyPercentage: number;
-  sellBaseRoyaltyPercentage: number;
-  sellTargetRoyaltyPercentage: number;
-
-  /** **Default:** uses decimals from collective config, or 9 */
-  targetMintDecimals?: number;
-  buyBaseRoyalties?: PublicKey;
-  buyBaseRoyaltiesOwner?: PublicKey;
-  buyTargetRoyalties?: PublicKey;
-  buyTargetRoyaltiesOwner?: PublicKey;
-  sellBaseRoyalties?: PublicKey;
-  sellBaseRoyaltiesOwner?: PublicKey;
-  sellTargetRoyalties?: PublicKey;
-  sellTargetRoyaltiesOwner?: PublicKey;
 }
 
 /**
@@ -180,7 +165,7 @@ export interface ICreateSocialTokenArgs {
     uri?: string;
     sellerFeeBasisPoints?: number;
     creators?: Creator[] | null;
-  }
+  };
   /** The wallet to create this social token under, defaults to `provider.wallet` */
   owner?: PublicKey;
   /**  The authority to make changes on this bonding curve. **Default:** `provider.wallet`. */
@@ -433,6 +418,14 @@ export interface ITokenRef extends TokenRefV0 {
 export interface ICollective extends CollectiveV0 {
   publicKey: PublicKey;
   config: CollectiveConfigV0;
+}
+
+function definedOr<A>(value: A | undefined, def: A): A {
+  if (typeof value == "undefined") {
+    return def;
+  }
+
+  return value!;
 }
 
 export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
@@ -1184,7 +1177,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
         uri,
         creators: null,
         sellerFeeBasisPoints: 0,
-        ...metadata
+        ...metadata,
       }),
     });
     instructions1.push(...metadataInstructions);
@@ -1462,18 +1455,22 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     const args: IdlTypes<SplTokenCollectiveIDL>["UpdateTokenBondingV0ArgsWrapper"] =
       {
         tokenBondingAuthority: tokenBondingAcct.generalAuthority as PublicKey,
-        buyBaseRoyaltyPercentage:
-          percent(buyBaseRoyaltyPercentage) ||
-          tokenBondingAcct.buyBaseRoyaltyPercentage,
-        buyTargetRoyaltyPercentage:
-          percent(buyTargetRoyaltyPercentage) ||
-          tokenBondingAcct.buyTargetRoyaltyPercentage,
-        sellBaseRoyaltyPercentage:
-          percent(sellBaseRoyaltyPercentage) ||
-          tokenBondingAcct.sellBaseRoyaltyPercentage,
-        sellTargetRoyaltyPercentage:
-          percent(sellTargetRoyaltyPercentage) ||
-          tokenBondingAcct.sellTargetRoyaltyPercentage,
+        buyBaseRoyaltyPercentage: definedOr(
+          percent(buyBaseRoyaltyPercentage),
+          tokenBondingAcct.buyBaseRoyaltyPercentage
+        ),
+        buyTargetRoyaltyPercentage: definedOr(
+          percent(buyTargetRoyaltyPercentage),
+          tokenBondingAcct.buyTargetRoyaltyPercentage
+        ),
+        sellBaseRoyaltyPercentage: definedOr(
+          percent(sellBaseRoyaltyPercentage),
+          tokenBondingAcct.sellBaseRoyaltyPercentage
+        ),
+        sellTargetRoyaltyPercentage: definedOr(
+          percent(sellTargetRoyaltyPercentage),
+          tokenBondingAcct.sellTargetRoyaltyPercentage
+        ),
         buyFrozen:
           typeof buyFrozen === "undefined"
             ? (tokenBondingAcct.buyFrozen as boolean)

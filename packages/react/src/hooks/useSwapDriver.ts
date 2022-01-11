@@ -106,15 +106,6 @@ export const useSwapDriver = (
   const [internalError, setInternalError] = useState<Error | undefined>();
   const [spendCap, setSpendCap] = useState<number>(0);
   const { provider } = useProvider();
-  const wrappedSol = useTwWrappedSolMint();
-
-  if (wrappedSol && args.tradingMints.base?.equals(wrappedSol)) {
-    args.tradingMints.base = NATIVE_MINT;
-  }
-
-  if (wrappedSol && args.tradingMints.target?.equals(wrappedSol)) {
-    args.tradingMints.target = NATIVE_MINT;
-  }
 
   const { info: tokenBonding, loading: tokenBondingLoading } =
     useTokenBonding(tokenBondingKey);

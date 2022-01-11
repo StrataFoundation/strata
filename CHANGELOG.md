@@ -5,12 +5,17 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ## [Unreleased]
 
+### Added
+
+  * Handle go live date in swap form
+
 ### Fixed
 
   * Awaiting approval flag on provider would only go to false after finished txn
   * Pricing didn't update when target mint supply changed
 ## [2.0.6](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.0.5...v2.0.6) (2021-12-30)
   * Fix account fetch cache to output parsed data when a parser is provided for something cached
+  * Add more options to bonding parameters to social token
 
 
 ## [2.0.5](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.0.4...v2.0.5) (2021-12-30)

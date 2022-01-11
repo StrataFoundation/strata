@@ -22,12 +22,13 @@ import {
   WalletModalProvider, WalletMultiButton
 } from '@solana/wallet-adapter-react-ui';
 import {
-  getLedgerWallet,
-  getPhantomWallet,
-  getSlopeWallet,
-  getSolflareWallet,
-  getSolletExtensionWallet,
-  getSolletWallet
+  LedgerWalletAdapter,
+  PhantomWalletAdapter,
+  SlopeWalletAdapter,
+  SolflareWalletAdapter,
+  SolletExtensionWalletAdapter,
+  SolletWalletAdapter,
+  TorusWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
 import { Data } from "@strata-foundation/spl-utils";
 import { clusterApiUrl } from "@solana/web3.js";
@@ -48,15 +49,16 @@ export const Wallet: FC = ({ children }) => {
   // Only the wallets you configure here will be compiled into your application
   const wallets = useMemo(
     () => [
-      getPhantomWallet(),
-      getSlopeWallet(),
-      getSolflareWallet(),
-      getLedgerWallet(),
-      getSolletWallet({ network }),
-      getSolletExtensionWallet({ network }),
+      new PhantomWalletAdapter(),
+      new SlopeWalletAdapter(),
+      new SolflareWalletAdapter(),
+      new TorusWalletAdapter(),
+      new LedgerWalletAdapter(),
+      new SolletWalletAdapter({ network }),
+      new SolletExtensionWalletAdapter({ network }),
     ],
     [network]
-  );
+  );  
 
   return (
     <ConnectionProvider endpoint={endpoint}>

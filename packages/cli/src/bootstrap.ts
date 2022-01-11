@@ -97,25 +97,28 @@ async function run() {
     })))
   });
 
+  const goLiveDate = new Date(0)
+  goLiveDate.setUTCSeconds(1642604400) // 9am CST on January 18th
+
   const { collective, tokenBonding } = await tokenCollectiveSdk.createCollective({
     metadata: {
-      name: "Test Collective",
-      symbol: "TEST",
-      uri: "https://strata-token-metadata.s3.us-east-2.amazonaws.com/test.json"
+      name: "Open Collective",
+      symbol: "OPEN",
+      uri: "https://strata-token-metadata.s3.us-east-2.amazonaws.com/open.json"
     },
     bonding: {
       targetMintKeypair: openMintKeypair,
       curve,
       baseMint: new PublicKey("So11111111111111111111111111111111111111112"),
       index: 0,
-      // TODO: If in prod, don't take these authorities
-      reserveAuthority: provider.wallet.publicKey,
+      reserveAuthority: null,
       curveAuthority: provider.wallet.publicKey,
       targetMintDecimals: 9,
       buyBaseRoyaltyPercentage: 0,
       buyTargetRoyaltyPercentage: 0,
       sellBaseRoyaltyPercentage: 0,
-      sellTargetRoyaltyPercentage: 0
+      sellTargetRoyaltyPercentage: 0,
+      goLiveDate
     },
     authority: provider.wallet.publicKey,
     config: {
@@ -138,8 +141,8 @@ async function run() {
         maxBuyBaseRoyaltyPercentage: 0,
         minSellBaseRoyaltyPercentage: 0,
         maxSellBaseRoyaltyPercentage: 0,
-        minBuyTargetRoyaltyPercentage: 0,
-        maxBuyTargetRoyaltyPercentage: 0,
+        minBuyTargetRoyaltyPercentage: 5,
+        maxBuyTargetRoyaltyPercentage: 5,
         minSellTargetRoyaltyPercentage: 0,
         maxSellTargetRoyaltyPercentage: 0,
       },

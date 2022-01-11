@@ -1,5 +1,5 @@
 import BrowserOnly from "@docusaurus/BrowserOnly";
-import { useEndpoint } from "@site/src/contexts/Endpoint";
+import { useEndpoint } from "../../contexts/Endpoint";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import {
@@ -48,7 +48,10 @@ function wrapAndCollectVars(code: string, injectedVars): string {
 }
 
 // Turn all BN into base 10 numbers as strings
-function recursiveTransformBN(args: any, seen: Map<any, any> = new Map()): Record<string, any> {
+function recursiveTransformBN(
+  args: any,
+  seen: Map<any, any> = new Map()
+): Record<string, any> {
   if (seen.has(args)) {
     return seen.get(args);
   }

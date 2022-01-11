@@ -1,4 +1,5 @@
 const webpack = require("webpack");
+const path = require("path")
 
 module.exports = function(context, options) {
   return {
@@ -14,6 +15,11 @@ module.exports = function(context, options) {
             "crypto": require.resolve("crypto-browserify"),
             "stream": require.resolve("stream-browserify") 
           },
+          alias: {
+            "@chakra-ui/react": path.resolve("../../node_modules/@chakra-ui/react"),
+            "@solana/wallet-adapter-react": path.resolve("../../node_modules/@solana/wallet-adapter-react"),
+            "@toruslabs/solana-embed": path.resolve("../../node_modules/@toruslabs/solana-embed"),
+          }
         },
         module: {
           rules: [{

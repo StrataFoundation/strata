@@ -37,7 +37,7 @@ export function useAccount<T>(
     pubkey: PublicKey,
     data: AccountInfo<Buffer>
   ): ParsedAccountBase => {
-    const info = parser && parser(pubkey, data);
+    const info = parser!(pubkey, data);
     return {
       pubkey,
       account: data,
@@ -55,7 +55,7 @@ export function useAccount<T>(
       shouldDisposeImmediately = true;
     };
 
-    if (!id) {
+    if (!id || !cache) {
       setState({ loading: false });
       return;
     } else {
@@ -63,7 +63,7 @@ export function useAccount<T>(
     }
 
     cache
-      .searchAndWatch(id, parsedAccountBaseParser, isStatic)
+      .searchAndWatch(id, parser ? parsedAccountBaseParser : undefined, isStatic)
       .then(([acc, dispose]) => {
         if (shouldDisposeImmediately) {
           dispose();
@@ -87,13 +87,15 @@ export function useAccount<T>(
 
     const disposeEmitter = cache.emitter.onCache((e) => {
       const event = e;
-      if (event.id === id && !event.isNew) {
-        cache.query(id, parsedAccountBaseParser).then((acc) => {
-          setState({
-            loading: false,
-            info: (parser && parser(acc.pubkey, acc!.account)) as any,
-            account: acc!.account,
-          });
+      if (event.id === id) {
+        cache.search(id, parsedAccountBaseParser).then((acc) => {
+          if (acc && acc.account != state.account) {
+            setState({
+              loading: false,
+              info: (parser && parser(acc.pubkey, acc!.account)) as any,
+              account: acc!.account,
+            });
+          }
         });
       }
     });

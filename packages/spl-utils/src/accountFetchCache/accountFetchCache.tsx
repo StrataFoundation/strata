@@ -1,10 +1,12 @@
 import {
-  AccountInfo, Commitment, Connection,
+  AccountInfo,
+  Commitment,
+  Connection,
   PublicKey,
   SendOptions,
   Signer,
   Transaction,
-  TransactionInstruction
+  TransactionInstruction,
 } from "@solana/web3.js";
 import { EventEmitter } from "./eventEmitter";
 import { getMultipleAccounts } from "./getMultipleAccounts";
@@ -28,11 +30,13 @@ export type AccountParser<T> = (
   data: AccountInfo<Buffer>
 ) => ParsedAccountBase<T> | undefined;
 
-function getWriteableAccounts(instructions: TransactionInstruction[]): PublicKey[] {
+function getWriteableAccounts(
+  instructions: TransactionInstruction[]
+): PublicKey[] {
   return instructions
-  .flatMap((i) => i.keys)
-  .filter((k) => k.isWritable)
-  .map((a) => a.pubkey);
+    .flatMap((i) => i.keys)
+    .filter((k) => k.isWritable)
+    .map((a) => a.pubkey);
 }
 
 export class AccountFetchCache {
@@ -63,7 +67,7 @@ export class AccountFetchCache {
     delay = DEFAULT_DELAY,
     commitment,
     missingRefetchDelay = 10000,
-    extendConnection = false
+    extendConnection = false,
   }: {
     connection: Connection;
     chunkSize?: number;
@@ -90,15 +94,18 @@ export class AccountFetchCache {
 
     if (extendConnection) {
       const oldGetAccountinfo = connection.getAccountInfo.bind(connection);
-      connection.getAccountInfo = async (publicKey: PublicKey, com?: Commitment): Promise<AccountInfo<Buffer> | null> => {
+      connection.getAccountInfo = async (
+        publicKey: PublicKey,
+        com?: Commitment
+      ): Promise<AccountInfo<Buffer> | null> => {
         if ((com || connection.commitment) == commitment) {
-          const [result, dispose] = await this.searchAndWatch(publicKey)
-          setTimeout(dispose, 30 * 1000) // cache for 30s
+          const [result, dispose] = await this.searchAndWatch(publicKey);
+          setTimeout(dispose, 30 * 1000); // cache for 30s
           return result?.account || null;
         }
 
-        return oldGetAccountinfo(publicKey, com)
-      }
+        return oldGetAccountinfo(publicKey, com);
+      };
     }
     connection.sendTransaction = async function overloadedSendTransaction(
       transaction: Transaction,
@@ -106,8 +113,13 @@ export class AccountFetchCache {
       options?: SendOptions
     ) {
       const result = await oldSendTransaction(transaction, signers, options);
-      const writeableAccounts = getWriteableAccounts(transaction.instructions).map(a => a.toBase58());
-      writeableAccounts.forEach(a => self.genericCache.delete(a))
+      const writeableAccounts = getWriteableAccounts(
+        transaction.instructions
+      ).map((a) => a.toBase58());
+      writeableAccounts.forEach((a) => {
+        self.pendingCalls.delete(a);
+        self.genericCache.delete(a);
+      });
       this.confirmTransaction(result, "finalized")
         .then(() => self.requeryMissing(transaction.instructions))
         .catch(console.error);
@@ -120,23 +132,27 @@ export class AccountFetchCache {
       options?: SendOptions
     ) {
       const result = await oldSendRawTransaction(rawTransaction, options);
-      const instructions = Transaction.from(rawTransaction).instructions
-      const writeableAccounts = getWriteableAccounts(instructions).map(a => a.toBase58());
-      writeableAccounts.forEach(a => self.genericCache.delete(a))
+      const instructions = Transaction.from(rawTransaction).instructions;
+      const writeableAccounts = getWriteableAccounts(instructions).map((a) =>
+        a.toBase58()
+      );
+      writeableAccounts.forEach((a) => {
+        self.pendingCalls.delete(a);
+        self.genericCache.delete(a);
+      });
 
       this.confirmTransaction(result, "finalized")
-        .then(() =>
-          self.requeryMissing(instructions)
-        )
+        .then(() => self.requeryMissing(instructions))
         .catch(console.error);
 
       return result;
     };
   }
 
-
   async requeryMissing(instructions: TransactionInstruction[]) {
-    const writeableAccounts = getWriteableAccounts(instructions).map(a => a.toBase58());
+    const writeableAccounts = getWriteableAccounts(instructions).map((a) =>
+      a.toBase58()
+    );
     const affectedAccounts = writeableAccounts.filter((acct) =>
       this.missingAccounts.has(acct)
     );
@@ -160,13 +176,14 @@ export class AccountFetchCache {
   async fetchMissing() {
     try {
       await Promise.all(
-        [...this.missingAccounts].map(([account, _]) =>
-          this.searchAndWatch(
-            new PublicKey(account),
-            this.missingAccounts.get(account),
-            this.statics.has(account),
-            true
-          ).then(([_, dispose]) => dispose()) // Dispose immediately, this isn't watching.
+        [...this.missingAccounts].map(
+          ([account, _]) =>
+            this.searchAndWatch(
+              new PublicKey(account),
+              this.missingAccounts.get(account),
+              this.statics.has(account),
+              true
+            ).then(([_, dispose]) => dispose()) // Dispose immediately, this isn't watching.
         )
       );
     } catch (e) {
@@ -344,7 +361,7 @@ export class AccountFetchCache {
     const address = id.toBase58();
     const isStatic = this.statics.has(address);
     let oldCount = (this.accountWatchersCount.get(address) || 0) + 1;
-    this.accountWatchersCount.set(address, oldCount)
+    this.accountWatchersCount.set(address, oldCount);
 
     if (exists && !isStatic) {
       // Only websocket watch accounts that exist
@@ -373,14 +390,14 @@ export class AccountFetchCache {
       this.accountWatchersCount.set(address, newCount);
 
       if (newCount <= 0) {
-        const subscriptionId = this.accountChangeListeners.get(address)
+        const subscriptionId = this.accountChangeListeners.get(address);
         if (subscriptionId) {
-          this.accountChangeListeners.delete(address)
+          this.accountChangeListeners.delete(address);
           this.connection.removeAccountChangeListener(subscriptionId);
         }
         this.missingAccounts.delete(address);
       }
-    }
+    };
   }
 
   async query<T>(
@@ -440,7 +457,7 @@ export class AccountFetchCache {
       this.accountChangeListeners.delete(key);
     }
 
-    if (this.genericCache.get(key)) {
+    if (this.genericCache.has(key)) {
       this.genericCache.delete(key);
       this.emitter.raiseCacheDeleted(key);
       return true;
@@ -467,11 +484,11 @@ export class AccountFetchCache {
       const address = typeof pubkey === "string" ? pubkey : pubkey?.toBase58();
       if (parser && !this.keyToAccountParser.get(address)) {
         this.keyToAccountParser.set(address, parser);
-        const cached = this.genericCache.get(address)
+        const cached = this.genericCache.get(address);
         if (cached) {
           const parsed = parser(cached.pubkey, cached.account);
           if (parsed) {
-            this.genericCache.set(address, parsed)
+            this.genericCache.set(address, parsed);
           }
         }
       }
