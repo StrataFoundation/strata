@@ -19,6 +19,8 @@ Securities can be a complex and evolving area of law. This post is intended to p
 
 ## TL;DR;
 
+Many token projects have had success reducing the risk of being deemed a security by focusing on one of the following features:
+
 **Provide non-financial benefits to limit risk of security status**
 
 If you're based in the US or offer your Social Tokens to US individuals, you should set up your Social Token to provide rewards or perks to your fans, but nothing that could be considered profit (such as an appreciation of capital or a share in your earnings). You should likely avoid even hinting that the coins could appreciate in value or "pay off" somehow. Be straightforward. Let your fans know that your Strata Social Tokens are a great way to show their appreciation for what you do, and can carry some nifty perks as well---maybe an exclusive video or a chance to buy tickets to a show early. But nothing more.
