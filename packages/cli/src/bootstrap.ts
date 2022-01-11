@@ -97,6 +97,9 @@ async function run() {
     })))
   });
 
+  const goLiveDate = new Date(0)
+  goLiveDate.setUTCSeconds(1642604400) // 9am CST on January 18th
+
   const { collective, tokenBonding } = await tokenCollectiveSdk.createCollective({
     metadata: {
       name: "Open Collective",
@@ -115,7 +118,7 @@ async function run() {
       buyTargetRoyaltyPercentage: 0,
       sellBaseRoyaltyPercentage: 0,
       sellTargetRoyaltyPercentage: 0,
-      goLiveDate: new Date(1642518000 * 1000) // 9am CST on January 18th
+      goLiveDate
     },
     authority: provider.wallet.publicKey,
     config: {
