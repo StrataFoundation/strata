@@ -3,7 +3,9 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-## [Unreleased]
+# [2.1.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.0.6...v2.1.0) (2022-01-11)
+
+This release contains logic to limit go live dates for officially going live on mainnet, starting with OPEN collective.
 
 ### Added
 
@@ -16,6 +18,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 ## [2.0.6](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.0.5...v2.0.6) (2021-12-30)
   * Fix account fetch cache to output parsed data when a parser is provided for something cached
   * Add more options to bonding parameters to social token
+  * Account fetch cache bugfixes
 
 
 ## [2.0.5](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.0.4...v2.0.5) (2021-12-30)
