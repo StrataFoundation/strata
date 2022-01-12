@@ -86,5 +86,3 @@ export abstract class AnchorSdk<IDL extends Idl> {
     return output;
   }
 }
-
-
