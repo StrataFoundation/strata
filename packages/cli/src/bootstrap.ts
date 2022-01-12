@@ -32,7 +32,7 @@ function timeIncrease(curve: TimeCurveConfig): TimeCurveConfig {
       null,
       {
         percentage: percent(8)!,
-        interval: 6 * 60 * 60, // 6 hours
+        interval: 12 * 60 * 60, // 12 hours
       }
     )
     // 8.33333% bump
@@ -46,11 +46,11 @@ function timeIncrease(curve: TimeCurveConfig): TimeCurveConfig {
       null,
       {
         percentage: percent(9)!,
-        interval: 6 * 60 * 60, // 6 hours
+        interval: 12 * 60 * 60, // 12 hours
       }
     )
     // 8.33333% bump
-    .addCurve(32 * 60 * 60, // 32 hours after launch
+    .addCurve(36 * 60 * 60, // 36 hours after launch
       new ExponentialCurveConfig({
         c: 1,
         b: 0,
@@ -60,7 +60,7 @@ function timeIncrease(curve: TimeCurveConfig): TimeCurveConfig {
       null,
       {
         percentage: percent(9)!,
-        interval: 6 * 60 * 60, // 6 hours
+        interval: 12 * 60 * 60, // 12 hours
       }
     )
 }
@@ -78,6 +78,9 @@ async function run() {
   await tokenBondingSdk.initializeSolStorage({
     mintKeypair: wrappedSolKeypair
   });
+  // c S ^ (pow/frac) +  b
+
+  // 0.005 
   const curve = await tokenBondingSdk.initializeCurve({
     config: timeIncrease(new TimeCurveConfig()
       .addCurve(0, new ExponentialCurveConfig({
@@ -98,7 +101,7 @@ async function run() {
   });
 
   const goLiveDate = new Date(0)
-  goLiveDate.setUTCSeconds(1642604400) // 9am CST on January 18th
+  goLiveDate.setUTCSeconds(1642604400) // 9am CST on January 19th
 
   const { collective, tokenBonding } = await tokenCollectiveSdk.createCollective({
     metadata: {
@@ -112,7 +115,8 @@ async function run() {
       baseMint: new PublicKey("So11111111111111111111111111111111111111112"),
       index: 0,
       reserveAuthority: null,
-      curveAuthority: provider.wallet.publicKey,
+      curveAuthority: new PublicKey("7HJ1MRRXK6MeKVCigSy555rjXrLUiBxvLmFFoBnVmGW9"),
+      generalAuthority: new PublicKey("7HJ1MRRXK6MeKVCigSy555rjXrLUiBxvLmFFoBnVmGW9"),
       targetMintDecimals: 9,
       buyBaseRoyaltyPercentage: 0,
       buyTargetRoyaltyPercentage: 0,
@@ -154,6 +158,8 @@ async function run() {
       claimedTokenBondingSettings: {
         maxSellBaseRoyaltyPercentage: 10,
         maxSellTargetRoyaltyPercentage: 10,
+        maxBuyBaseRoyaltyPercentage: 25,
+        maxBuyTargetRoyaltyPercentage: 25
       }
     }
   });

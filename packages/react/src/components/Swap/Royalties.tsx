@@ -3,7 +3,7 @@ import React from "react";
 import { useTokenMetadata } from "../../hooks";
 import { TransactionInfo } from "./TransactionInfo";
 
-const humanReadablePercentage = (u32: number) => {
+export const humanReadablePercentage = (u32: number) => {
   if (u32 && u32 !== 0) {
     return ((u32 / 4294967295) * 100).toFixed(2);
   }
