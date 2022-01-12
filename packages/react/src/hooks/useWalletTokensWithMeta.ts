@@ -6,6 +6,10 @@ import { useAsync, UseAsyncReturn } from "react-async-hook";
 import { useWalletTokenAccounts } from "./useWalletTokenAccounts";
 
 /**
+ * @deprecated The method should not be used. It fetches way too much data. Consider fetching only the data
+ * you need in the components you need. If each component fetches data around a token, you can display a loading
+ * mask for each individual component
+ * 
  * Get all tokens in a wallet plus all relevant metadata from spl-token-metadata and spl-token-collective
  *
  * @param owner
