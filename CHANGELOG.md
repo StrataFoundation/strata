@@ -3,7 +3,7 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-[Unreleased]
+## [2.1.1](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.1.0...v2.1.1) (2022-01-12)
 
 ### Fixed
 
