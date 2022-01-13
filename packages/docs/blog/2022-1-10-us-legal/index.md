@@ -7,29 +7,27 @@ authors: [mark,noah]
 
 # US Securities Law and Social Tokens
 
-Strata Social Tokens offer unlimited potential for connecting with your fans. But if you're based in the US, make sure you stay on the right side of securities laws.
+Strata Social Tokens give content creators the tools they need to easily create and manage their own personalized cryptocurrency. This comes with unequaled opportunities for monetization and community engagement.
 
-[Wum.bo](https://wum.bo/) is a platform that brings the potential of the blockchain directly to the social networks (Twitter, Twitch, Reddit, etc.) where creators interact with their fans. Based around the extensible [Strata Protocol](https://www.strataprotocol.com/), and powered by [Solana](https://solana.com/), Strata Social Tokens give content creators the tools they need to easily create, build out, and manage their own personalized custom cryptocurrency, with unequaled opportunities for monetization and community engagement.
-
-But along with these amazing new opportunities come dangers. Creators who dive wholeheartedly into this new and robust ecosystem without informing themselves about the relevant rules may run afoul of U.S. securities laws. Read this guide for what you need to know before you mint your first Social Token.
+New opportunities often expose us to risk, especially where we lack information. If you are a creator based in the US, it is important that you stay on the right side of US securities laws. We created this guide as a primer for everything you need to know before you mint your first Social Token.
 
 :::caution Disclaimer
 Securities can be a complex and evolving area of law. This post is intended to provide general educational information, but is not legal advice. Its content was overseen by lawyers retained by Wum.bo and Strata, but they are not your lawyers. If you have any questions about securities laws, contact an attorney licensed in your jurisdiction for advice on what *you* should do to stay legal.
 :::
 
-## TL;DR;
+## TL;DR; 
 
 Many token projects have had success reducing the risk of being deemed a security by focusing on one of the following features:
 
 **Provide non-financial benefits to limit risk of security status**
 
-If you're based in the US or offer your Social Tokens to US individuals, you should set up your Social Token to provide rewards or perks to your fans, but nothing that could be considered profit (such as an appreciation of capital or a share in your earnings). You should likely avoid even hinting that the coins could appreciate in value or "pay off" somehow. Be straightforward. Let your fans know that your Strata Social Tokens are a great way to show their appreciation for what you do, and can carry some nifty perks as well---maybe an exclusive video or a chance to buy tickets to a show early. But nothing more.
+If you're based in the US or offer your Social Tokens to US individuals, you should set up your Social Token to provide rewards or perks to your fans, but nothing that could be considered profit (such as an appreciation of capital or a share in your earnings). You should likely avoid even hinting that the coins could appreciate in value or "pay off" somehow. Be straightforward. Let your fans know that your Strata Social Tokens are a great way to show their appreciation for what you do, and can carry some nifty perks as well — maybe an exclusive video or a chance to buy tickets to a show early. But nothing more.
 
-Your aim should be for your tokens to be consumed; the more these tokens are meant to be exchanged for status, perks, goods, or services, the less they look like a security. This aligns well with the royalties mechanic -- you receive royalties when tokens are being transacted. Look to provide value in exchange for holding or paying tokens.
+Your aim should be for your tokens to be consumed; the more these tokens are meant to be exchanged for status, perks, goods, or services, the less they look like a security. This aligns well with the royalties mechanic — you receive royalties when tokens are being transacted. Look to provide value in exchange for holding or paying tokens.
 
 **Ensure any increase in value of Social Token is the result of community activity**
 
-If purchasers of your token are not motivated by your entrepreneurial activities, the token may not be considered a security. The best example is an unclaimed token, or a token you have claimed but are not actively participating in. In this case, the value of the token is derived from community efforts (the fans). The value is also derived from applications like Wum.bo allowing users to gain utility from using the token; such as displaying it in tweet replies as a symbol of support. In this case, an argument can be made that the value of the token is derived from Wum.bo, the Strata Ecosystem, and the fans.
+If purchasers of your token are not motivated by your entrepreneurial activities, the token may not be considered a security. The best example is an unclaimed token, or a token you have claimed but are not actively participating in. In this case, the value of the token is derived from community efforts (the fans).The value can also be derived from applications like Wum.bo, which is a platform built on Strata Protocol that brings Strata Social Tokens directly to social networks. Wum.bo is allowing users to gain utility from using the token; such as displaying it in tweet replies as a symbol of support. In this case, an argument can be made that the value of the token is derived from Wum.bo, the Strata Ecosystem, and the fans.
 
 # US Securities Law
 
@@ -115,12 +113,13 @@ But remember: because all four *Howey* factors are required for your Social Toke
 
 Probably the easiest to avoid is the third factor: the expectation of profit. Due to the narrow definition of "profit" under securities laws, if you set up your Social Token to provide rewards or perks to your fans, but nothing that could be considered profit (such as an appreciation of capital or a share in your earnings), you may likely avoid accidentally creating a security.
 
-Because any investigation would look at *your* statements and those of anyone else working with you in promoting the coin, it's probably a good idea to avoid making broad, sweeping announcements. You should likely avoid even hinting that the coins could appreciate in value or "pay off" somehow. Be straightforward. Let your fans know that your Strata Social Tokens are a great way to show their appreciation for what you do, and can carry some nifty perks as well---maybe an exclusive video or a chance to buy tickets to a show early. But nothing more.
+Because any investigation would look at *your* statements and those of anyone else working with you in promoting the coin, it's probably a good idea to avoid making broad, sweeping announcements. You should likely avoid even hinting that the coins could appreciate in value or "pay off" somehow. Be straightforward. Let your fans know that your Strata Social Tokens are a great way to show their appreciation for what you do, and can carry some nifty perks as well — maybe an exclusive video or a chance to buy tickets to a show early. But nothing more.
 
-Your tokens are meant to be consumed and traded; this aligns well with the royalties mechanic -- you receive royalties when tokens are being transacted. Look to allow people to trade tokens in exchange for perks, goods, or services. Purchases should be motivated primarily by the desire to use or consume the item purchased.
+Your tokens are meant to be consumed and traded; this aligns well with the royalties mechanic — you receive royalties when tokens are being transacted. Look to allow people to trade tokens in exchange for perks, goods, or services. Purchases should be motivated primarily by the desire to use or consume the item purchased.
 
 Another way to position your token is to asses where the value of the token is derived. If purchasers of your token are not motivated by your entrepreneurial activities, the token may not be considered a security. The best example is an unclaimed token, or a token you have claimed but are not actively participating in. In this cases, the value of the token is derived from community efforts (the fans). The value is also derived from applications like Wum.bo allowing users to gain utility from using the token as a status symbol. In this case, an argument can be made that the value of the token is derived from Wum.bo, Strata, and the fans. If your token is "sufficiently decentralized," in that it is governed by the community, you may have an argument that it is not a security.
 
-This can all seem overwhelming. But if you pay careful attention, and think ahead, you may find yourself in a better position than another creator who didn't do either of those things, and inadvertently violated federal securities laws.
+This can all seem overwhelming, but you are already on the right track by reading through this document. If you pay careful attention and think ahead, you may find yourself in a better position to avoid inadvertently violating federal securities laws than another creator who didn't do their homework.
+
 
 Happy building!
