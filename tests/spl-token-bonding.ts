@@ -593,9 +593,9 @@ describe("spl-token-bonding", () => {
     })
   })
 
-  async function createRoyaltyFree(c: any): Promise<{ tokenBonding: PublicKey; baseMint: PublicKey }> {
+  async function createRoyaltyFree(c: any, initialBalance: number = 100_00): Promise<{ tokenBonding: PublicKey; baseMint: PublicKey }> {
     const baseMint = await createMint(provider, me, 2);
-    await tokenUtils.createAtaAndMint(provider, baseMint, 100_00);
+    await tokenUtils.createAtaAndMint(provider, baseMint, initialBalance);
     const curve = await tokenBondingProgram.initializeCurve(c);
 
     const { tokenBonding } = await tokenBondingProgram.createTokenBonding({
@@ -606,8 +606,7 @@ describe("spl-token-bonding", () => {
       buyBaseRoyaltyPercentage: 0,
       buyTargetRoyaltyPercentage: 0,
       sellBaseRoyaltyPercentage: 0,
-      sellTargetRoyaltyPercentage: 0,
-      mintCap: new BN(10000),
+      sellTargetRoyaltyPercentage: 0
     });
 
     return {
@@ -631,6 +630,30 @@ describe("spl-token-bonding", () => {
         slippage: 0.05,
       });
       await tokenUtils.expectAtaBalance(me, baseMint, 95);
+    });
+  });
+
+  it("handles large purchases when exponential", async () => {
+    const { tokenBonding, baseMint } = await createRoyaltyFree({
+      config: new TimeCurveConfig()
+        .addCurve(0, new ExponentialCurveConfig({
+          c: 1,
+          b: 0,
+          pow: 1,
+          frac: 10
+        }))
+    }, 10000000000000);
+    const tokenBondingAcct = (await tokenBondingProgram.getTokenBonding(tokenBonding))!;
+    const targetAta = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      tokenBondingAcct.targetMint,
+      me
+    );
+    await tokenBondingProgram.buy({
+      tokenBonding,
+      baseAmount: 100000000000,
+      slippage: 0.05,
     });
   });
 
