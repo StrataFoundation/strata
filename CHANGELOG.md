@@ -21,6 +21,10 @@ This release contains logic to limit go live dates for officially going live on 
 
   * Handle go live date in swap form
 
+### Added
+
+  * Handle go live date in swap form
+
 ### Fixed
 
   * Awaiting approval flag on provider would only go to false after finished txn
