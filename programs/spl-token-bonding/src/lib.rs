@@ -298,6 +298,7 @@ pub mod spl_token_bonding {
 
       total_amount = buy_target_amount.target_amount;
       let amount_prec = precise_supply_amt(total_amount, target_mint);
+      msg!("Geg price");
       let price_prec = curve
         .definition
         .price(
@@ -309,6 +310,8 @@ pub mod spl_token_bonding {
           args.root_estimates,
         )
         .or_arith_error()?;
+        msg!("Got price");
+
       price = to_mint_amount(&price_prec, base_mint, true);
       let base_royalties_prec = base_royalties_percent
         .checked_mul(&price_prec)
@@ -322,7 +325,8 @@ pub mod spl_token_bonding {
 
       if price + base_royalties > buy_target_amount.maximum_price {
         msg!(
-          "Price too high for max price {}",
+          "Price {} too high for max price {}",
+          price + base_royalties,
           buy_target_amount.maximum_price
         );
         return Err(ErrorCode::PriceTooHigh.into());
@@ -338,6 +342,8 @@ pub mod spl_token_bonding {
         .checked_sub(&base_royalties_prec)
         .or_arith_error()?;
 
+        msg!("Geg price");
+
       let amount_prec = curve
         .definition
         .expected_target_amount(
@@ -348,6 +354,7 @@ pub mod spl_token_bonding {
           args.root_estimates,
         )
         .or_arith_error()?;
+        msg!("got price");
 
       total_amount = to_mint_amount(&amount_prec, target_mint, false);
 
@@ -527,6 +534,7 @@ pub mod spl_token_bonding {
         args.root_estimates,
       )
       .or_arith_error()?;
+
     let base_royalties_prec = base_royalties_percent
       .checked_mul(&reclaimed_prec)
       .or_arith_error()?;

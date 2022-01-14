@@ -5,6 +5,8 @@ use crate::{
 };
 use std::convert::*;
 
+const ITERATIONS: u32 = 2;
+
 pub trait Curve {
   fn price(
     &self,
@@ -61,7 +63,7 @@ impl Curve for PrimitiveCurve {
             one_plus_k
               .checked_mul(reserve_change)?
               .checked_div(&c_prec)?
-              .pow_frac_approximation(frac, frac + pow, guess1)
+              .pow_frac_approximation(frac, frac + pow, ITERATIONS)
           } else if c == 0 {
             reserve_change.checked_div(&b_prec)
           } else {
@@ -79,10 +81,10 @@ impl Curve for PrimitiveCurve {
             */
 
             target_supply
-              .pow_frac_approximation(one_plus_k_numerator, frac, guess1)?
+              .pow_frac_approximation(one_plus_k_numerator, frac, ITERATIONS)?
               .checked_mul(&base_amount.checked_add(reserve_change)?)?
               .checked_div(base_amount)?
-              .pow_frac_approximation(frac, frac + pow, guess2)?
+              .pow_frac_approximation(frac, frac + pow, ITERATIONS)?
               .checked_sub(target_supply)
           } else if c == 0 {
             /*
@@ -108,13 +110,6 @@ impl Curve for PrimitiveCurve {
     sell: bool,
     root_estimates: Option<[u128; 2]>,
   ) -> Option<PreciseNumber> {
-    let guess1 = PreciseNumber {
-      value: InnerUint::from(root_estimates.unwrap()[0]) * 1_000_000_000_000_u64,
-    };
-    let guess2 = PreciseNumber {
-      value: InnerUint::from(root_estimates.unwrap()[1]) * 1_000_000_000_000_u64,
-    };
-
     if base_amount.eq(&ZERO_PREC) || target_supply.eq(&ZERO_PREC) {
       match *self {
         // b dS + (c dS^(1 + pow/frac))/(1 + pow/frac)
@@ -125,13 +120,13 @@ impl Curve for PrimitiveCurve {
           let c_prec = PreciseNumber {
             value: InnerUint::from(c) * 1_000_000_000_000_u64,
           };
-          let one_plus_k_numerator = frac.checked_add(pow)?;
-          let pow_prec = PreciseNumber::new(u128::try_from(pow).ok()?)?;
-          let frac_prec = PreciseNumber::new(u128::try_from(frac).ok()?)?;
-          b_prec.checked_mul(amount)?.checked_add(
+          let one_plus_k_numerator = frac.checked_add(pow).unwrap();
+          let pow_prec = PreciseNumber::new(u128::try_from(pow).ok().unwrap()).unwrap();
+          let frac_prec = PreciseNumber::new(u128::try_from(frac).ok().unwrap()).unwrap();
+          b_prec.checked_mul(amount).unwrap().checked_add(
             &c_prec
-              .checked_mul(&amount.pow_frac_approximation(one_plus_k_numerator, frac, guess1)?)?
-              .checked_div(&ONE_PREC.checked_add(&pow_prec.checked_div(&frac_prec)?)?)?,
+              .checked_mul(&amount.pow_frac_approximation(one_plus_k_numerator, frac, ITERATIONS).unwrap()).unwrap()
+              .checked_div(&ONE_PREC.checked_add(&pow_prec.checked_div(&frac_prec).unwrap()).unwrap()).unwrap(),
           )
         }
       }
@@ -149,9 +144,9 @@ impl Curve for PrimitiveCurve {
               target_supply.checked_add(amount)?
             };
 
-            let s_k1 = &target_supply.pow_frac_approximation(one_plus_k_numerator, frac, guess1)?;
+            let s_k1 = &target_supply.pow_frac_approximation(one_plus_k_numerator, frac, ITERATIONS)?;
             let s_plus_ds_k1 =
-              s_plus_ds.pow_frac_approximation(one_plus_k_numerator, frac, guess2)?;
+              s_plus_ds.pow_frac_approximation(one_plus_k_numerator, frac, ITERATIONS)?;
 
             // PreciseNumbers cannot be negative. If we're selling, S + dS is less than S.
             // Swap the two around. This will invert the sine of this function, but since sell = true they are expecting a positive number
