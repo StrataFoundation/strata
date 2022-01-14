@@ -1,11 +1,17 @@
 noah:
   name: Noah Prince
   title: Strata Founder
-  url: https://github.com/ChewingGlass
+  url: https://twitter.com/redacted_noah
   image_url: https://github.com/ChewingGlass.png
 
 bry:
   name: Bryan Zettler
   title: Strata Cofounder
-  url: https://github.com/bryzettler
+  url: https://twitter.com/BryZettler
   image_url: https://github.com/bryzettler.png
+
+mark:
+  name: Mark Roszak
+  title: Legal Counsel
+  url: https://www.linkedin.com/in/mark-roszak-a95a026/
+  image_url: https://media-exp1.licdn.com/dms/image/C4E03AQG6IqCJ-i-iLg/profile-displayphoto-shrink_800_800/0/1517708146489?e=1647475200&v=beta&t=2GSfpwBu5No0NJq6POnHRywsZvn4EQMddmL8y87UPVQ

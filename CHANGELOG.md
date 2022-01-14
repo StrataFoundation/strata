@@ -3,9 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.1.1](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.1.0...v2.1.1) (2022-01-12)
+
+### Fixed
+
+  * Account fetch cache synchronization after running a txn on a writable account
+
+### Removed
+
+  * Deprecated useWalletTokensWithMeta as it fetches too much data and leads to laggy interfaces
+
 # [2.1.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.0.6...v2.1.0) (2022-01-11)
 
 This release contains logic to limit go live dates for officially going live on mainnet, starting with OPEN collective.
+
+### Added
+
+  * Handle go live date in swap form
 
 ### Added
 

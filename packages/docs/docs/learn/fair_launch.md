@@ -4,7 +4,7 @@ sidebar_position: 5
 
 # Fair Launch
 
-A bonding curve makes it profitable to get in early, particularly one shaped like this:
+Strata has created an innovative way to combat the potentially destructive effects of automated trading bots on a newly launched bonding curve. The Strata Fair Launch disincentivizes bot trading by enforcing a tax on selling tokens anytime the bonding curve steepens, resulting in an increase in price. The goal of Strata Fair Launch is to protect the rewards of being an early adopter. A bonding curve makes it profitable to get in early, particularly one shaped like this:
 
 ![Visualization](./visualization.png)
 

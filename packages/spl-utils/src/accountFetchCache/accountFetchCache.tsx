@@ -56,6 +56,7 @@ export class AccountFetchCache {
     string,
     (info: AccountInfo<Buffer> | null, err: Error | null) => void
   >();
+  txnLock = new Map<string, Promise<void>>();
   pendingCalls = new Map<string, Promise<ParsedAccountBase<unknown>>>();
   emitter = new EventEmitter();
 
@@ -116,14 +117,23 @@ export class AccountFetchCache {
       const writeableAccounts = getWriteableAccounts(
         transaction.instructions
       ).map((a) => a.toBase58());
-      writeableAccounts.forEach((a) => {
-        self.pendingCalls.delete(a);
-        self.genericCache.delete(a);
-      });
-      this.confirmTransaction(result, "finalized")
-        .then(() => self.requeryMissing(transaction.instructions))
-        .catch(console.error);
 
+      const txnConfirm = this.confirmTransaction(result, "finalized")
+        .then(() => {
+          writeableAccounts.forEach((a) => {
+            self.txnLock.delete(a)
+          });
+          return self.requeryMissing(transaction.instructions)
+        })
+        .catch(console.error)
+        .then(() => {
+          writeableAccounts.forEach((a) => {
+            self.txnLock.delete(a)
+          });
+        });
+      writeableAccounts.forEach((a) => {
+        self.txnLock.set(a, txnConfirm)
+      });
       return result;
     };
 
@@ -133,17 +143,27 @@ export class AccountFetchCache {
     ) {
       const result = await oldSendRawTransaction(rawTransaction, options);
       const instructions = Transaction.from(rawTransaction).instructions;
-      const writeableAccounts = getWriteableAccounts(instructions).map((a) =>
-        a.toBase58()
-      );
-      writeableAccounts.forEach((a) => {
-        self.pendingCalls.delete(a);
-        self.genericCache.delete(a);
-      });
+      const writeableAccounts = getWriteableAccounts(
+        instructions
+      ).map((a) => a.toBase58());
 
-      this.confirmTransaction(result, "finalized")
-        .then(() => self.requeryMissing(instructions))
-        .catch(console.error);
+      const txnConfirm = this.confirmTransaction(result, "finalized")
+        .then(() => {
+          writeableAccounts.forEach((a) => {
+            self.txnLock.delete(a)
+          });
+          return self.requeryMissing(instructions)
+        })
+        .catch(console.error)
+        .then(() => {
+          writeableAccounts.forEach((a) => {
+            self.txnLock.delete(a)
+          });
+        });;
+
+      writeableAccounts.forEach((a) => {
+        self.txnLock.set(a, txnConfirm)
+      });
 
       return result;
     };
@@ -153,11 +173,8 @@ export class AccountFetchCache {
     const writeableAccounts = getWriteableAccounts(instructions).map((a) =>
       a.toBase58()
     );
-    const affectedAccounts = writeableAccounts.filter((acct) =>
-      this.missingAccounts.has(acct)
-    );
     await Promise.all(
-      affectedAccounts.map(async (account) => {
+      writeableAccounts.map(async (account) => {
         const parser = this.missingAccounts.get(account);
         const [found, dispose] = await this.searchAndWatch(
           new PublicKey(account),
@@ -305,6 +322,12 @@ export class AccountFetchCache {
       this.statics.delete(address); // If trying to use this as not static, need to rm it from the statics list.
     }
 
+    if (this.txnLock.has(address)) {
+      console.log("Waiting for lock on", address);
+      await this.txnLock.get(address);
+      console.log("Done waiting for lock on", address);
+    }
+
     if (!forceRequery && this.genericCache.has(address)) {
       const result = this.genericCache.get(address);
       return result == null
@@ -367,7 +390,6 @@ export class AccountFetchCache {
       // Only websocket watch accounts that exist
       // Don't recreate listeners
       if (!this.accountChangeListeners.has(address)) {
-        console.log(`Watching ${address}`);
         this.accountChangeListeners.set(
           address,
           this.connection.onAccountChange(

@@ -214,16 +214,12 @@ export const useTokenRefForName = (
     return (
       twitterLoading ||
       claimedLoading ||
-      !unclaimedKey ||
       claimed.loading ||
       unclaimed.loading
     );
   }, [
     twitterLoading,
     claimedLoading,
-    name,
-    claimedKey,
-    unclaimedKey,
     claimed,
     unclaimed,
   ]);

@@ -15,7 +15,6 @@ Up until now, Social Tokens have been about the individual. Through a Social Tok
 :::info Collective
 A Collective is a group of Social Tokens bound to the same `Base` token. A Collective acts as a network of Social Tokens facilitating group cooperation. This allows holders of Social Tokens to pool their resources and align their direction success with the `Base` token.
 
-
 :::
 
 ## Creation
