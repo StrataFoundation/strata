@@ -88,7 +88,7 @@ export function useAccount<T>(
     const disposeEmitter = cache.emitter.onCache((e) => {
       const event = e;
       if (event.id === id) {
-        cache.search(id, parsedAccountBaseParser).then((acc) => {
+        cache.search(id, parser ? parsedAccountBaseParser : undefined).then((acc) => {
           if (acc && acc.account != state.account) {
             setState({
               loading: false,
