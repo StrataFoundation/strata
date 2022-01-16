@@ -80,6 +80,42 @@ pub const fn e() -> InnerUint {
   U256([6515245352892969472_u64, 147358_u64, 0_u64, 0_u64])
 }
 
+pub const fn p1() -> InnerUint {
+  U256([333960700220186440_u64, 9035_u64, 0_u64, 0_u64])
+}
+
+pub const fn p2() -> InnerUint {
+  U256([10766166645126596020_u64, 150_u64, 0_u64, 0_u64])
+}
+
+pub const fn p3() -> InnerUint {
+  U256([10797330993250688763_u64, 3_u64, 0_u64, 0_u64])
+}
+
+pub const fn p4() -> InnerUint {
+  U256([1653390220546525153_u64, 0_u64, 0_u64, 0_u64])
+}
+
+pub const fn p5() -> InnerUint {
+  U256([41381367970572384_u64, 0_u64, 0_u64, 0_u64])
+}
+
+pub const fn halfln2() -> InnerUint {
+  U256([14609367191293790208_u64, 18787_u64, 0_u64, 0_u64])
+}
+
+pub const fn threehalfln2() -> InnerUint {
+  U256([6934613426442267392_u64, 56363_u64, 0_u64, 0_u64])
+}
+
+pub const fn invln2() -> InnerUint {
+  U256([12080372286774215872_u64, 78208_u64, 0_u64, 0_u64])
+}
+
+pub const fn half() -> InnerUint {
+  U256([1001882102603448320_u64, 27105_u64, 0_u64, 0_u64])
+}
+
 // #[inline]
 // pub const fn L1() -> InnerUint {
 //   // InnerUint::from(1_000_000_000_000_000_000_000_000_u128)
@@ -494,12 +530,205 @@ impl PreciseNumber {
         .checked_sub(&hfsq).unwrap()
         .checked_sub(&kl2lo).unwrap(), false))
     }
-    // log(1+f) = f - s*(f - R)
-    // f.checked_sub(
-    //   &s.checked_mul(
-    //     &f.checked_sub(&r)?
-    //   )?
-    // )
+  }
+
+  fn signed_add<'a>(lhs: (&Self, bool), rhs: (&Self, bool)) -> Option<(Self, bool)> {
+    let lhs_negative = lhs.1;
+    let rhs_negative = rhs.1;
+
+    if rhs_negative && lhs_negative {
+      Some((lhs.0.checked_add(rhs.0)?, true))
+    } else if rhs_negative {
+      if rhs.0.greater_than(lhs.0) {
+        Some((rhs.0.checked_sub(lhs.0)?, true))
+      } else {
+        Some((lhs.0.checked_sub(rhs.0)?, false))
+      }
+    } else if lhs_negative {
+      if lhs.0.greater_than(rhs.0) {
+        Some((lhs.0.checked_sub(rhs.0)?, true))
+      } else {
+        Some((rhs.0.checked_sub(lhs.0)?, false))
+      }
+    } else {
+      Some((lhs.0.checked_add(rhs.0)?, false))
+    }
+  }
+
+  fn signed_sub<'a>(lhs: (&Self, bool), rhs: (&Self, bool)) -> Option<(Self, bool)> {
+    PreciseNumber::signed_add(lhs, (rhs.0, !rhs.1))
+  }
+
+  /* origin: FreeBSD /usr/src/lib/msun/src/e_exp.c */
+  /*
+  * ====================================================
+  * Copyright (C) 2004 by Sun Microsystems, Inc. All rights reserved.
+  *
+  * Permission to use, copy, modify, and distribute this
+  * software is freely granted, provided that this notice
+  * is preserved.
+  * ====================================================
+  */
+  /* exp(x)
+  * Returns the exponential of x.
+  *
+  * Method
+  *   1. Argument reduction:
+  *      Reduce x to an r so that |r| <= 0.5*ln2 ~ 0.34658.
+  *      Given x, find r and integer k such that
+  *
+  *               x = k*ln2 + r,  |r| <= 0.5*ln2.
+  *
+  *      Here r will be represented as r = hi-lo for better
+  *      accuracy.
+  *
+  *   2. Approximation of exp(r) by a special rational function on
+  *      the interval [0,0.34658]:
+  *      Write
+  *          R(r**2) = r*(exp(r)+1)/(exp(r)-1) = 2 + r*r/6 - r**4/360 + ...
+  *      We use a special Remez algorithm on [0,0.34658] to generate
+  *      a polynomial of degree 5 to approximate R. The maximum error
+  *      of this polynomial approximation is bounded by 2**-59. In
+  *      other words,
+  *          R(z) ~ 2.0 + P1*z + P2*z**2 + P3*z**3 + P4*z**4 + P5*z**5
+  *      (where z=r*r, and the values of P1 to P5 are listed below)
+  *      and
+  *          |                  5          |     -59
+  *          | 2.0+P1*z+...+P5*z   -  R(z) | <= 2
+  *          |                             |
+  *      The computation of exp(r) thus becomes
+  *                              2*r
+  *              exp(r) = 1 + ----------
+  *                            R(r) - r
+  *                                 r*c(r)
+  *                     = 1 + r + ----------- (for better accuracy)
+  *                                2 - c(r)
+  *      where
+  *                              2       4             10
+  *              c(r) = r - (P1*r  + P2*r  + ... + P5*r   ).
+  *
+  *   3. Scale back to obtain exp(x):
+  *      From step 1, we have
+  *         exp(x) = 2^k * exp(r)
+  *
+  * Special cases:
+  *      exp(INF) is INF, exp(NaN) is NaN;
+  *      exp(-INF) is 0, and
+  *      for finite argument, only exp(0)=1 is exact.
+  *
+  * Accuracy:
+  *      according to an error analysis, the error is always less than
+  *      1 ulp (unit in the last place).
+  *
+  * Misc. info.
+  *      For IEEE double
+  *          if x >  709.782712893383973096 then exp(x) overflows
+  *          if x < -745.133219101941108420 then exp(x) underflows
+  */
+
+  /// Exponential, base *e* (f64)
+  ///
+  /// Calculate the exponential of `x`, that is, *e* raised to the power `x`
+  /// (where *e* is the base of the natural system of logarithms, approximately 2.71828).
+  pub fn exp(self) -> Option<PreciseNumber> {
+    // let x1p1023 = f64::from_bits(0x7fe0000000000000); // 0x1p1023 === 2 ^ 1023
+    // let x1p_149 = f64::from_bits(0x36a0000000000000); // 0x1p-149 === 2 ^ -149
+
+    let p1 = PreciseNumber { value: p1() };
+    let p2 = PreciseNumber { value: p2() };
+    let p3 = PreciseNumber { value: p3() };
+    let p4 = PreciseNumber { value: p4() };
+    let p5 = PreciseNumber { value: p5() };
+    let half = PreciseNumber { value: half() };
+    let invln2 = PreciseNumber { value: invln2() };
+    let halfln2 = PreciseNumber { value: halfln2() };
+    let threehalfln2 = PreciseNumber { value: threehalfln2() };
+    let one = PreciseNumber::one();
+    let two = PreciseNumber::new(2)?;
+    let zero = PreciseNumber::zero();
+    let ln2lo =  PreciseNumber { value: ln2lo() };
+    let ln2hi = PreciseNumber { value: ln2hi() };
+
+    let hi: PreciseNumber;
+    let lo: PreciseNumber;
+    let xx: PreciseNumber;
+    let y: PreciseNumber;
+    let k: PreciseNumber;
+    let x: PreciseNumber;
+    /* argument reduction */
+    /* if |x| > 0.5 ln2 */
+    if self.greater_than(&halfln2) {
+      /* if |x| >= 1.5 ln2 */
+      if self.greater_than_or_equal(&threehalfln2) {
+          k = invln2.checked_mul(&self).unwrap().checked_add(&half).unwrap().floor().unwrap();
+      } else {
+          k = one;
+      }
+      hi = self.checked_sub(&k.checked_mul(&ln2hi).unwrap()).unwrap();
+      lo = k.checked_mul(&ln2lo).unwrap();
+      x = hi.checked_sub(&lo).unwrap()
+    } else {
+      x = self.clone();
+      k = zero;
+      hi = self;
+      lo = PreciseNumber::zero();
+    }
+
+    /* x is now in primary range */
+    xx = x.checked_mul(&x).unwrap();
+    // c = x - xx * (P1 + xx * (P2 + xx * (P3 + xx * (P4 + xx * P5))));
+    let p4p5 = PreciseNumber::signed_add(
+      (&p4, true),
+      (&xx.checked_mul(&p5).unwrap(), false)
+    ).unwrap();
+    let p3p4p5 = PreciseNumber::signed_add(
+      (&p3, false),
+      (&xx.checked_mul(&p4p5.0).unwrap(), p4p5.1)
+    ).unwrap();
+    let p2p3p4p5 = PreciseNumber::signed_add(
+      (&p2, true),
+      (&xx.checked_mul(&p3p4p5.0).unwrap(), p3p4p5.1)
+    ).unwrap();
+    let p1p2p3p4p5 = PreciseNumber::signed_add(
+      (&p1, false),
+      (&xx.checked_mul(&p2p3p4p5.0).unwrap(), p2p3p4p5.1)
+    ).unwrap();
+    let (c, c_is_negative) = PreciseNumber::signed_sub(
+      (&x, false), 
+      (&p1p2p3p4p5.0.checked_mul(&xx).unwrap(), p1p2p3p4p5.1)
+    ).unwrap();
+    xx.print();
+    p4p5.0.print();
+    p3p4p5.0.print();
+    p2p3p4p5.0.print();
+    p1p2p3p4p5.0.print();
+    c.print();
+
+    // y = 1. + (x * c / (2. - c) - lo + hi);
+    let c_min_2 = PreciseNumber::signed_sub((&two, false), (&c, c_is_negative)).unwrap();
+    let x_c = x.checked_mul(
+      &c.checked_div(&c_min_2.0).unwrap()
+    ).unwrap();
+    let x_c_negative = (c_is_negative || c_min_2.1) && !(c_is_negative && c_min_2.1);
+
+    y = PreciseNumber::signed_add(
+      (&PreciseNumber::one(), false),
+      (&x_c, x_c_negative)
+      )
+      .unwrap().0
+      .checked_add(&hi).unwrap()
+      .checked_sub(&lo).unwrap();
+
+    y.print();
+
+    if k.eq(&PreciseNumber::zero()) {
+        Some(y)
+    } else {
+      let bits = k.to_imprecise().unwrap();
+      let powed: u128 = 1_u128 << bits;
+      let powed_prec = PreciseNumber::new(powed).unwrap();
+      y.checked_mul(&powed_prec)
+    }
   }
 
   /// Approximate the nth root of a number using a Taylor Series around 1 on
@@ -666,21 +895,7 @@ impl PreciseNumber {
     let b = pow_prec.checked_div(&frac_prec).unwrap();
     let (lg, lg_is_negative) = self.log().unwrap();
     let x = b.checked_mul(&lg).unwrap();
-    
-    let mut curr_factorial = PreciseNumber::one();
-    let mut curr_numerator = PreciseNumber::one();
-    let mut result = PreciseNumber::one();
-
-    for k in 1..iterations {
-      curr_numerator = curr_numerator.checked_mul(&x).unwrap();
-      curr_factorial = curr_factorial.checked_mul(&PreciseNumber::new(u128::try_from(k).ok().unwrap()).unwrap()).unwrap();
-      result = result.checked_add_or_sub(
-        &curr_numerator.checked_div(&curr_factorial).unwrap(),
-        !lg_is_negative || (lg_is_negative && k % 2 != 0)
-      ).unwrap();
-    }
-    
-    Some(result)
+    x.exp()
   }
 
   /// Approximate the square root using Newton's method.  Based on testing,
@@ -695,6 +910,14 @@ impl PreciseNumber {
     // input number.  For all numbers, that will be between 1 and the given number.
     let guess = self.checked_add(&one)?.checked_div(&two)?;
     self.newtonian_root_approximation(&two, guess, Self::MAX_APPROXIMATION_ITERATIONS)
+  }
+
+  pub fn print(&self) {
+    let whole = self.floor().unwrap().to_imprecise().unwrap();
+    let decimals = self
+      .checked_sub(&PreciseNumber::new(whole).unwrap()).unwrap()
+      .checked_mul(&PreciseNumber::new(1_000_000_000_000_000_000_000_000).unwrap()).unwrap().to_imprecise().unwrap();
+    msg!("{}.{:0>width$}", whole, decimals, width = 24);
   }
 }
 
@@ -762,6 +985,8 @@ use proptest::prelude::*;
     let test = PreciseNumber::new(8).unwrap();
     let sqrt = test.pow_frac_approximation(1, 2, 32).unwrap();
     let expected = PreciseNumber::new(28284271247461903).unwrap().checked_div(&PreciseNumber::new(10000000000000000).unwrap()).unwrap();
+    sqrt.print();
+    expected.print();
     assert!(sqrt.almost_eq(&expected, precision));
   }
 
@@ -807,10 +1032,12 @@ use proptest::prelude::*;
 
   #[test]
   fn test_log() {
-    let precision = InnerUint::from(50_000_000_000_000_000_000_u128); // correct to at least 3 decimal places
+    let precision = InnerUint::from(5_000_000_000_000_u128); // correct to at least 12 decimal places
     let test = PreciseNumber::new(9).unwrap();
     let log = test.log().unwrap().0;
-    let expected = PreciseNumber::new(219722).unwrap().checked_div(&PreciseNumber::new(100000).unwrap()).unwrap();
+    let expected = PreciseNumber::new(21972245773362196).unwrap().checked_div(&PreciseNumber::new(10000000000000000).unwrap()).unwrap();
+    log.print();
+    expected.print();
     assert!(log.almost_eq(&expected, precision));
 
     let test2 = PreciseNumber::new(2).unwrap();
@@ -958,7 +1185,7 @@ use proptest::prelude::*;
 
   // Keep around for testing. Can drop a debugger and find out the binary for the inner unit
   #[test]
-  fn get_log_values() {
+  fn get_constants() {
     let ln2hi = PreciseNumber::new(693147180369123816490_u128).unwrap().checked_div(
       &PreciseNumber::new(1_000_000_000_000_000_000_000).unwrap()
     ).unwrap();
@@ -987,12 +1214,53 @@ use proptest::prelude::*;
       &PreciseNumber::new(10000000000000000000).unwrap()
     ).unwrap();
 
-    let e = PreciseNumber::new(2718281828459045).unwrap().checked_div(
-      &PreciseNumber::new(1000000000000000).unwrap()
-    );
-    let thing = l7
-    .checked_mul(&PreciseNumber::new(10000000000000000000).unwrap()).unwrap()
-    .to_imprecise();
+    let invln2 = PreciseNumber::new(144269504088896338700_u128).unwrap().checked_div(
+      &PreciseNumber::new(100000000000000000000).unwrap()
+    ).unwrap();
+
+    let halfln2 = PreciseNumber::new(34657359027997264_u128).unwrap().checked_div(
+      &PreciseNumber::new(100000000000000000).unwrap()
+    ).unwrap();
+
+    let threehalfln2 = PreciseNumber::new(10397207708399179_u128).unwrap().checked_div(
+      &PreciseNumber::new(10000000000000000).unwrap()
+    ).unwrap();
+
+
+    let half = PreciseNumber::new(5_u128).unwrap().checked_div(
+      &PreciseNumber::new(10).unwrap()
+    ).unwrap();
+
+    let p1 = PreciseNumber::new(166666666666666019037_u128).unwrap().checked_div(
+      &PreciseNumber::new(1000000000000000000000).unwrap()
+    ).unwrap();
+
+    let p2 = PreciseNumber::new(277777777770155933842_u128).unwrap().checked_div(
+      &PreciseNumber::new(100000000000000000000000).unwrap()
+    ).unwrap();
+
+    let p3 = PreciseNumber::new(661375632143793436117_u128).unwrap().checked_div(
+      &PreciseNumber::new(10000000000000000000000000).unwrap()
+    ).unwrap();
+
+    let p4 = PreciseNumber::new(165339022054652515390_u128).unwrap().checked_div(
+      &PreciseNumber::new(100000000000000000000000000).unwrap()
+    ).unwrap();
+
+    let p5 = PreciseNumber::new(413813679705723846039_u128).unwrap().checked_div(
+      &PreciseNumber::new(10000000000000000000000000000).unwrap()
+    ).unwrap();
+
+    l1.print();
+    l2.print();
+    l3.print();
+    l4.print();
+    l5.print();
+    l6.print();
+    l7.print();
+    ln2hi.print();
+    ln2lo.print();
+
     let s = 1;
   }
 
