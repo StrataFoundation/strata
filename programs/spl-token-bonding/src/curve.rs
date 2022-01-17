@@ -36,22 +36,15 @@ impl Curve for PrimitiveCurve {
     reserve_change: &PreciseNumber,
     root_estimates: Option<[u128; 2]>,
   ) -> Option<PreciseNumber> {
-    let guess1 = PreciseNumber {
-      value: InnerUint::from(root_estimates.unwrap()[0]) * 1_000_000_000_000_u64,
-    };
-    let guess2 = PreciseNumber {
-      value: InnerUint::from(root_estimates.unwrap()[1]) * 1_000_000_000_000_u64,
-    };
-
     if base_amount.eq(&ZERO_PREC) || target_supply.eq(&ZERO_PREC) {
       match *self {
         // b dS + (c dS^(1 + pow/frac))/(1 + pow/frac)
         PrimitiveCurve::ExponentialCurveV0 { pow, frac, b, c } => {
           let b_prec = PreciseNumber {
-            value: InnerUint::from(b) * 1_000_000_000_000_u64,
+            value: InnerUint::from(b) * 1_000_000_u64,
           };
           let c_prec = PreciseNumber {
-            value: InnerUint::from(c) * 1_000_000_000_000_u64,
+            value: InnerUint::from(c) * 1_000_000_u64,
           };
           if b == 0 && c != 0 {
             /*
@@ -59,11 +52,18 @@ impl Curve for PrimitiveCurve {
              */
             let pow_prec = PreciseNumber::new(u128::try_from(pow).ok()?)?;
             let frac_prec = PreciseNumber::new(u128::try_from(frac).ok()?)?;
-            let one_plus_k = &ONE_PREC.checked_add(&pow_prec.checked_div(&frac_prec)?)?;
+            let pow = &pow_prec.checked_div(&frac_prec)?;
+            let one_plus_k = &ONE_PREC.checked_add(&pow)?;
+
+            one_plus_k.print();
+            reserve_change.print();
+            c_prec.print();
+            ONE_PREC.checked_div(&one_plus_k)?.print();
+
             one_plus_k
               .checked_mul(reserve_change)?
               .checked_div(&c_prec)?
-              .pow_frac_approximation(frac, frac + pow, ITERATIONS)
+              .pow(&ONE_PREC.checked_div(&one_plus_k)?)
           } else if c == 0 {
             reserve_change.checked_div(&b_prec)
           } else {
@@ -74,17 +74,20 @@ impl Curve for PrimitiveCurve {
     } else {
       match *self {
         PrimitiveCurve::ExponentialCurveV0 { pow, frac, b, c } => {
-          let one_plus_k_numerator = frac.checked_add(pow)?;
+          let pow_prec = PreciseNumber::new(u128::try_from(pow).ok()?)?;
+          let frac_prec = PreciseNumber::new(u128::try_from(frac).ok()?)?;
+
+          let one_plus_k_prec = pow_prec.checked_div(&frac_prec)?.checked_add(&ONE_PREC)?;
           if b == 0 && c != 0 {
             /*
             dS = -S + ((S^(1 + k) (R + dR))/R)^(1/(1 + k))
             */
 
             target_supply
-              .pow_frac_approximation(one_plus_k_numerator, frac, ITERATIONS)?
+              .pow(&one_plus_k_prec)?
               .checked_mul(&base_amount.checked_add(reserve_change)?)?
               .checked_div(base_amount)?
-              .pow_frac_approximation(frac, frac + pow, ITERATIONS)?
+              .pow(&ONE_PREC.checked_div(&one_plus_k_prec)?)?
               .checked_sub(target_supply)
           } else if c == 0 {
             /*
@@ -115,18 +118,18 @@ impl Curve for PrimitiveCurve {
         // b dS + (c dS^(1 + pow/frac))/(1 + pow/frac)
         PrimitiveCurve::ExponentialCurveV0 { pow, frac, c, b } => {
           let b_prec = PreciseNumber {
-            value: InnerUint::from(b) * 1_000_000_000_000_u64,
+            value: InnerUint::from(b) * 1_000_000_u64, // Add 6 precision
           };
           let c_prec = PreciseNumber {
-            value: InnerUint::from(c) * 1_000_000_000_000_u64,
+            value: InnerUint::from(c) * 1_000_000_u64, // Add 6 precision
           };
-          let one_plus_k_numerator = frac.checked_add(pow).unwrap();
-          let pow_prec = PreciseNumber::new(u128::try_from(pow).ok().unwrap()).unwrap();
-          let frac_prec = PreciseNumber::new(u128::try_from(frac).ok().unwrap()).unwrap();
+          let pow_prec = PreciseNumber::new(u128::try_from(pow).ok()?)?;
+          let frac_prec = PreciseNumber::new(u128::try_from(frac).ok()?)?;
+          let one_plus_k_prec = pow_prec.checked_div(&frac_prec)?.checked_add(&ONE_PREC)?;
           b_prec.checked_mul(amount).unwrap().checked_add(
             &c_prec
-              .checked_mul(&amount.pow_frac_approximation(one_plus_k_numerator, frac, ITERATIONS).unwrap()).unwrap()
-              .checked_div(&ONE_PREC.checked_add(&pow_prec.checked_div(&frac_prec).unwrap()).unwrap()).unwrap(),
+              .checked_mul(&amount.pow(&one_plus_k_prec).unwrap()).unwrap()
+              .checked_div(&one_plus_k_prec).unwrap(),
           )
         }
       }
@@ -137,16 +140,19 @@ impl Curve for PrimitiveCurve {
             /*
               (R / S^(1 + k)) ((S + dS)^(1 + k) - S^(1 + k))
             */
-            let one_plus_k_numerator = frac.checked_add(pow)?;
             let s_plus_ds = if sell {
               target_supply.checked_sub(amount)?
             } else {
               target_supply.checked_add(amount)?
             };
 
-            let s_k1 = &target_supply.pow_frac_approximation(one_plus_k_numerator, frac, ITERATIONS)?;
+            let pow_prec = PreciseNumber::new(u128::try_from(pow).ok()?)?;
+            let frac_prec = PreciseNumber::new(u128::try_from(frac).ok()?)?;
+            let one_plus_k_prec = pow_prec.checked_div(&frac_prec)?.checked_add(&ONE_PREC)?;
+
+            let s_k1 = &target_supply.pow(&one_plus_k_prec)?;
             let s_plus_ds_k1 =
-              s_plus_ds.pow_frac_approximation(one_plus_k_numerator, frac, ITERATIONS)?;
+              s_plus_ds.pow(&one_plus_k_prec)?;
 
             // PreciseNumbers cannot be negative. If we're selling, S + dS is less than S.
             // Swap the two around. This will invert the sine of this function, but since sell = true they are expecting a positive number

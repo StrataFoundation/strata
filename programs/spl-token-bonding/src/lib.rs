@@ -298,11 +298,10 @@ pub mod spl_token_bonding {
 
       total_amount = buy_target_amount.target_amount;
       let amount_prec = precise_supply_amt(total_amount, target_mint);
-      msg!("Geg price");
       let price_prec = curve
         .definition
         .price(
-          ctx.accounts.clock.unix_timestamp - token_bonding.go_live_unix_time,
+          ctx.accounts.clock.unix_timestamp.checked_sub(token_bonding.go_live_unix_time).unwrap(),
           &base_amount,
           &target_supply,
           &amount_prec,
@@ -310,7 +309,6 @@ pub mod spl_token_bonding {
           args.root_estimates,
         )
         .or_arith_error()?;
-        msg!("Got price");
 
       price = to_mint_amount(&price_prec, base_mint, true);
       let base_royalties_prec = base_royalties_percent
@@ -323,7 +321,7 @@ pub mod spl_token_bonding {
       base_royalties = to_mint_amount(&base_royalties_prec, base_mint, true);
       target_royalties = to_mint_amount(&target_royalties_prec, target_mint, false);
 
-      if price + base_royalties > buy_target_amount.maximum_price {
+      if price.checked_add(base_royalties).unwrap() > buy_target_amount.maximum_price {
         msg!(
           "Price {} too high for max price {}",
           price + base_royalties,
@@ -342,19 +340,16 @@ pub mod spl_token_bonding {
         .checked_sub(&base_royalties_prec)
         .or_arith_error()?;
 
-        msg!("Geg price");
-
       let amount_prec = curve
         .definition
         .expected_target_amount(
-          ctx.accounts.clock.unix_timestamp - token_bonding.go_live_unix_time,
+          ctx.accounts.clock.unix_timestamp.checked_sub(token_bonding.go_live_unix_time).unwrap(),
           &base_amount,
           &target_supply,
           &price_prec,
           args.root_estimates,
         )
         .or_arith_error()?;
-        msg!("got price");
 
       total_amount = to_mint_amount(&amount_prec, target_mint, false);
 
@@ -366,7 +361,7 @@ pub mod spl_token_bonding {
       base_royalties = to_mint_amount(&base_royalties_prec, base_mint, true);
       target_royalties = to_mint_amount(&target_royalties_prec, target_mint, false);
 
-      let target_amount_minus_royalties = total_amount - target_royalties;
+      let target_amount_minus_royalties = total_amount.checked_sub(target_royalties).unwrap();
       if target_amount_minus_royalties < buy_with_base.minimum_target_amount {
         msg!(
           "{} less than minimum tokens {}",
@@ -378,7 +373,7 @@ pub mod spl_token_bonding {
     }
 
     if token_bonding.mint_cap.is_some()
-      && target_mint.supply + total_amount > token_bonding.mint_cap.unwrap()
+      && target_mint.supply.checked_add(total_amount).unwrap() > token_bonding.mint_cap.unwrap()
     {
       msg!(
         "Mint cap is {} {} {}",
@@ -468,7 +463,7 @@ pub mod spl_token_bonding {
         },
         mint_signer_seeds,
       ),
-      total_amount - target_royalties,
+      total_amount.checked_sub(target_royalties).unwrap(),
     )?;
 
     Ok(())
@@ -526,7 +521,7 @@ pub mod spl_token_bonding {
     let reclaimed_prec = curve
       .definition
       .price(
-        ctx.accounts.clock.unix_timestamp - token_bonding.go_live_unix_time,
+        ctx.accounts.clock.unix_timestamp.checked_sub(token_bonding.go_live_unix_time).unwrap(),
         &base_amount,
         &target_supply,
         &amount_minus_royalties_prec,
@@ -577,7 +572,7 @@ pub mod spl_token_bonding {
           authority: source_authority.clone(),
         },
       ),
-      amount - target_royalties,
+      amount.checked_sub(target_royalties).unwrap(),
     )?;
 
     if target_royalties > 0 {

@@ -308,6 +308,7 @@ describe("spl-token-bonding", () => {
         me
       );
       const pre = (await provider.connection.getTokenAccountBalance(ata))!.value.uiAmount;
+
       await tokenBondingProgram.buy({
         tokenBonding: tokenBondingAcct.publicKey,
         desiredTargetAmount: targetAmount,
@@ -353,7 +354,7 @@ describe("spl-token-bonding", () => {
         baseAmount: pre! - post!,
         slippage: 0.5,
       });
-      expect(newTargetAmount).to.eq(targetAmount!);
+      expect(newTargetAmount).to.within(0.02, targetAmount!);
     });
   })
 
