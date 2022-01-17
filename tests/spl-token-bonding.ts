@@ -644,13 +644,6 @@ describe("spl-token-bonding", () => {
           frac: 10
         }))
     }, 10000000000000);
-    const tokenBondingAcct = (await tokenBondingProgram.getTokenBonding(tokenBonding))!;
-    const targetAta = await Token.getAssociatedTokenAddress(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
-      tokenBondingAcct.targetMint,
-      me
-    );
     await tokenBondingProgram.buy({
       tokenBonding,
       baseAmount: 100000000000,
