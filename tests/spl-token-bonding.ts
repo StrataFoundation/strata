@@ -846,7 +846,7 @@ describe("spl-token-bonding", () => {
     let baseMint: PublicKey;
     let curve: PublicKey;
     let tokenBonding: PublicKey;
-    const INITIAL_BALANCE = 100000000;
+    const INITIAL_BALANCE = 10000000000000;
     const DECIMALS = 2;
 
     const curves = [
@@ -896,25 +896,25 @@ describe("spl-token-bonding", () => {
 
         await tokenBondingProgram.buy({
           tokenBonding,
-          desiredTargetAmount: new BN(500),
+          desiredTargetAmount: new BN(5000),
           slippage: 0.5,
         });
 
         await tokenBondingProgram.buy({
           tokenBonding,
-          desiredTargetAmount: new BN(1000),
+          desiredTargetAmount: new BN(100000000),
           slippage: 0.5,
         });
 
         await tokenBondingProgram.sell({
           tokenBonding,
-          targetAmount: new BN(1200),
+          targetAmount: new BN(90000000),
           slippage: 0.5,
         });
 
         await tokenBondingProgram.sell({
           tokenBonding,
-          targetAmount: new BN(300),
+          targetAmount: new BN(10005000),
           slippage: 0.5,
         });
 

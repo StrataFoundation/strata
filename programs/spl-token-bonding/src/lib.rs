@@ -18,6 +18,7 @@ pub mod precise_number;
 pub mod state;
 pub mod uint;
 pub mod util;
+pub mod signed_precise_number;
 
 declare_id!("TBondmkCYxaPCKG4CHYfVTcwQ8on31xnJrPzk8F8WsS");
 

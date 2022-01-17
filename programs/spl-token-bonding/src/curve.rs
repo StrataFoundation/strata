@@ -60,10 +60,14 @@ impl Curve for PrimitiveCurve {
             c_prec.print();
             ONE_PREC.checked_div(&one_plus_k)?.print();
 
-            one_plus_k
+            let res = one_plus_k
               .checked_mul(reserve_change)?
               .checked_div(&c_prec)?
-              .pow(&ONE_PREC.checked_div(&one_plus_k)?)
+              .pow(&ONE_PREC.checked_div(&one_plus_k)?);
+
+            res.clone()?.print();
+
+            res
           } else if c == 0 {
             reserve_change.checked_div(&b_prec)
           } else {

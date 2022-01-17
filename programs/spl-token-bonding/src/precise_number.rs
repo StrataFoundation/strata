@@ -6,6 +6,7 @@ use std::convert::*;
 use anchor_lang::{solana_program::log::sol_log_compute_units, prelude::msg};
 
 use crate::uint::{U192};
+use crate::signed_precise_number::{SignedPreciseNumber};
 
 // Allows for easy swapping between different internal representations
 pub type InnerUint = U192;
@@ -57,13 +58,13 @@ pub const LN2HI_SCALE: PreciseNumber = PreciseNumber { value: ln2hi_scale() };
 // Note that ln2lo is lower than our max precision, so we store both it and the thirty zeroes to scale by
 #[inline]
 pub const fn ln2lo() -> InnerUint {
-  U192([7217906904860196864_u64, 10344453859422221846_u64, 0_u64])
+  U192([3405790746697269248_u64, 1034445385942222_u64, 0_u64])
 }
 pub const LN2LO: PreciseNumber = PreciseNumber { value: ln2lo() };
 
 #[inline]
 pub const fn ln2lo_scale() -> InnerUint {
-  U192([9169610316303040512_u64, 1027829888850112811_u64, 2938735877_u64])
+  U192([80237960548581376_u64, 10841254275107988496_u64, 293873_u64])
 }
 
 pub const LN2LO_SCALE: PreciseNumber = PreciseNumber { value: ln2lo_scale() };
@@ -118,54 +119,6 @@ pub const fn sqrt2overtwo() -> InnerUint {
 pub const SQRT2OVERTWO: PreciseNumber = PreciseNumber { value: sqrt2overtwo() };
 
 #[inline]
-pub const fn p1() -> InnerUint {
-  U192([166666666666666019_u64, 0_u64, 0_u64])
-}
-pub const P1: PreciseNumber = PreciseNumber { value: p1() };
-
-#[inline]
-pub const fn p2() -> InnerUint {
-  U192([2777777777701559_u64, 0_u64, 0_u64])
-}
-pub const P2: PreciseNumber = PreciseNumber { value: p2() };
-
-#[inline]
-pub const fn p3() -> InnerUint {
-  U192([66137563214379_u64, 0_u64, 0_u64])
-}
-pub const P3: PreciseNumber = PreciseNumber { value: p3() };
-
-#[inline]
-pub const fn p4() -> InnerUint {
-  U192([1653390220546_u64, 0_u64, 0_u64])
-}
-pub const P4: PreciseNumber = PreciseNumber { value: p4() };
-
-#[inline]
-pub const fn p5() -> InnerUint {
-  U192([41381367970_u64, 0_u64, 0_u64])
-}
-pub const P5: PreciseNumber = PreciseNumber { value: p5() };
-
-#[inline]
-pub const fn halfln2() -> InnerUint {
-  U192([346573590279972640_u64, 0_u64, 0_u64])
-}
-pub const HALFLN2: PreciseNumber = PreciseNumber { value: halfln2() };
-
-#[inline]
-pub const fn threehalfln2() -> InnerUint {
-  U192([1039720770839917900_u64, 0_u64, 0_u64])
-}
-pub const THREEHALFLN2: PreciseNumber = PreciseNumber { value: threehalfln2() };
-
-#[inline]
-pub const fn invln2() -> InnerUint {
-  U192([1442695040888963387_u64, 0_u64, 0_u64])
-}
-pub const INVLN2: PreciseNumber = PreciseNumber { value: invln2() };
-
-#[inline]
 pub const fn half() -> InnerUint {
   U192([500000000000000000_u64, 0_u64, 0_u64])
 }
@@ -186,6 +139,14 @@ pub const fn zero() -> InnerUint {
 }
 
 impl PreciseNumber {
+
+  pub fn signed(&self) -> SignedPreciseNumber {
+    SignedPreciseNumber {
+      value: self.clone(),
+      is_negative: false
+    }
+  }
+
   /// Correction to apply to avoid truncation errors on division.  Since
   /// integer operations will always floor the result, we artifically bump it
   /// up by one half to get the expect result.
@@ -201,11 +162,11 @@ impl PreciseNumber {
     InnerUint::from(100_000_000_000_000_u64)
   }
 
-  fn zero() -> Self {
+  pub fn zero() -> Self {
     Self { value: zero() }
   }
 
-  fn one() -> Self {
+  pub fn one() -> Self {
     Self { value: one() }
   }
 
@@ -494,13 +455,16 @@ impl PreciseNumber {
   //	Log(+Inf) = +Inf
   //	Log(0) = -Inf
   //	Log(x < 0) = NaN
-  fn log(&self) -> Option<(Self, bool)> {
+  fn log(&self) -> Option<SignedPreciseNumber> {
     if self.eq(&PreciseNumber::zero()) {
       return None
     }
 
     if self.eq(&PreciseNumber::one()) {
-      return Some((PreciseNumber::zero(), false))
+      return Some(SignedPreciseNumber {
+        value: PreciseNumber::zero(),
+        is_negative: false
+      })
     }
 
     let (f1_init, ki_init) = self.frexp().unwrap();
@@ -513,15 +477,11 @@ impl PreciseNumber {
       (f1_init, ki_init)
     };
 
-    let (f, f_is_negative) = PreciseNumber::signed_sub((&f1, false), (&ONE_PREC, false)).unwrap();
+    let f = f1.signed().checked_sub(&PreciseNumber::one().signed()).unwrap();
 
-    let s_divisor = PreciseNumber::signed_add(
-      (&TWO_PREC, false),
-      (&f, f_is_negative)
-    ).unwrap();
-    let s = f.checked_div(&s_divisor.0).unwrap();
-    let s_is_negative = (s_divisor.1 || f_is_negative) && !(f_is_negative && s_divisor.1);
-    let s2 = s.checked_mul(&s).unwrap();
+    let s_divisor = PreciseNumber { value: two() }.signed().checked_add(&f).unwrap();
+    let s = &f.checked_div(&s_divisor).unwrap();
+    let s2 = s.checked_mul(s).unwrap().value;
     let s4 = s2.checked_mul(&s2).unwrap();
     // s2 * (L1 + s4*(L3+s4*(L5+s4*L7)))
     let t1 = s2.checked_mul(
@@ -550,228 +510,22 @@ impl PreciseNumber {
     ).unwrap();
 
     let r = t1.checked_add(&t2).unwrap();
-    let hfsq= f.checked_mul(&f).unwrap().checked_div(&TWO_PREC).unwrap();
-    let k = (PreciseNumber::new(u128::try_from(ki.abs()).ok().unwrap()).unwrap(), ki < 0);
+    let hfsq= f.checked_mul(&f).unwrap().checked_div(&PreciseNumber { value: two() }.signed()).unwrap();
+    let k = SignedPreciseNumber {
+      value: PreciseNumber::new(u128::try_from(ki.abs()).ok().unwrap()).unwrap(),
+      is_negative: ki < 0
+    };
     
     // k*Ln2Hi - ((hfsq - (s*(hfsq+R) + k*Ln2Lo)) - f)
-    let kl2hi = k.0.checked_mul(&LN2HI).unwrap().checked_div(&LN2HI_SCALE).unwrap();
-    let shfsqr = s.checked_mul(&hfsq.checked_add(&r).unwrap()).unwrap();
-    let kl2lo = &k.0.checked_mul(&LN2LO).unwrap().checked_div(&LN2LO_SCALE).unwrap();
+    let kl2hi = k.checked_mul(&LN2HI.signed()).unwrap().checked_div(&LN2HI_SCALE.signed()).unwrap();
+    let shfsqr = s.checked_mul(&hfsq.checked_add(&r.signed()).unwrap()).unwrap();
+    let kl2lo = k.checked_mul(&LN2LO.signed()).unwrap().checked_div(&LN2LO_SCALE.signed()).unwrap();
 
-    let shfsqr_kl2lo = PreciseNumber::signed_add(
-      (&shfsqr, s_is_negative),
-      (&kl2lo, k.1)
-    ).unwrap();
-    let hfsq_shfsqr_kl2lo = PreciseNumber::signed_sub(
-      (&hfsq, false),
-      (&shfsqr_kl2lo.0, shfsqr_kl2lo.1)
-    ).unwrap();
-    let f_hfsq_shfsqr_kl2lo = PreciseNumber::signed_sub(
-      (&hfsq_shfsqr_kl2lo.0, hfsq_shfsqr_kl2lo.1),
-      (&f, f_is_negative)
-    ).unwrap();
+    let shfsqr_kl2lo = shfsqr.checked_add(&kl2lo).unwrap();
+    let hfsq_shfsqr_kl2lo = hfsq.checked_sub(&shfsqr_kl2lo).unwrap();
+    let f_hfsq_shfsqr_kl2lo = hfsq_shfsqr_kl2lo.checked_sub(&f).unwrap();
 
-    PreciseNumber::signed_sub(
-      (&kl2hi, k.1),
-      (&f_hfsq_shfsqr_kl2lo.0, f_hfsq_shfsqr_kl2lo.1)
-    )
-  }
-
-  fn signed_add<'a>(lhs: (&Self, bool), rhs: (&Self, bool)) -> Option<(Self, bool)> {
-    let lhs_negative = lhs.1;
-    let rhs_negative = rhs.1;
-
-    if rhs_negative && lhs_negative {
-      Some((lhs.0.checked_add(rhs.0)?, true))
-    } else if rhs_negative {
-      if rhs.0.greater_than(lhs.0) {
-        Some((rhs.0.checked_sub(lhs.0)?, true))
-      } else {
-        Some((lhs.0.checked_sub(rhs.0)?, false))
-      }
-    } else if lhs_negative {
-      if lhs.0.greater_than(rhs.0) {
-        Some((lhs.0.checked_sub(rhs.0)?, true))
-      } else {
-        Some((rhs.0.checked_sub(lhs.0)?, false))
-      }
-    } else {
-      Some((lhs.0.checked_add(rhs.0)?, false))
-    }
-  }
-
-  fn signed_sub<'a>(lhs: (&Self, bool), rhs: (&Self, bool)) -> Option<(Self, bool)> {
-    PreciseNumber::signed_add(lhs, (rhs.0, !rhs.1))
-  }
-
-  // Modified from the original to support precise numbers instead of floats
-  /* origin: FreeBSD /usr/src/lib/msun/src/e_exp.c */
-  /*
-  * ====================================================
-  * Copyright (C) 2004 by Sun Microsystems, Inc. All rights reserved.
-  *
-  * Permission to use, copy, modify, and distribute this
-  * software is freely granted, provided that this notice
-  * is preserved.
-  * ====================================================
-  */
-  /* exp(x)
-  * Returns the exponential of x.
-  *
-  * Method
-  *   1. Argument reduction:
-  *      Reduce x to an r so that |r| <= 0.5*ln2 ~ 0.34658.
-  *      Given x, find r and integer k such that
-  *
-  *               x = k*ln2 + r,  |r| <= 0.5*ln2.
-  *
-  *      Here r will be represented as r = hi-lo for better
-  *      accuracy.
-  *
-  *   2. Approximation of exp(r) by a special rational function on
-  *      the interval [0,0.34658]:
-  *      Write
-  *          R(r**2) = r*(exp(r)+1)/(exp(r)-1) = 2 + r*r/6 - r**4/360 + ...
-  *      We use a special Remez algorithm on [0,0.34658] to generate
-  *      a polynomial of degree 5 to approximate R. The maximum error
-  *      of this polynomial approximation is bounded by 2**-59. In
-  *      other words,
-  *          R(z) ~ 2.0 + P1*z + P2*z**2 + P3*z**3 + P4*z**4 + P5*z**5
-  *      (where z=r*r, and the values of P1 to P5 are listed below)
-  *      and
-  *          |                  5          |     -59
-  *          | 2.0+P1*z+...+P5*z   -  R(z) | <= 2
-  *          |                             |
-  *      The computation of exp(r) thus becomes
-  *                              2*r
-  *              exp(r) = 1 + ----------
-  *                            R(r) - r
-  *                                 r*c(r)
-  *                     = 1 + r + ----------- (for better accuracy)
-  *                                2 - c(r)
-  *      where
-  *                              2       4             10
-  *              c(r) = r - (P1*r  + P2*r  + ... + P5*r   ).
-  *
-  *   3. Scale back to obtain exp(x):
-  *      From step 1, we have
-  *         exp(x) = 2^k * exp(r)
-  *
-  * Special cases:
-  *      exp(INF) is INF, exp(NaN) is NaN;
-  *      exp(-INF) is 0, and
-  *      for finite argument, only exp(0)=1 is exact.
-  *
-  * Accuracy:
-  *      according to an error analysis, the error is always less than
-  *      1 ulp (unit in the last place).
-  *
-  * Misc. info.
-  *      For IEEE double
-  *          if x >  709.782712893383973096 then exp(x) overflows
-  *          if x < -745.133219101941108420 then exp(x) underflows
-  */
-  
-  /// Calculate the exponential of `x`, that is, *e* raised to the power `x`
-  /// (where *e* is the base of the natural system of logarithms, approximately 2.71828).
-  pub fn exp(self, is_negative: bool) -> Option<PreciseNumber> {
-    let hi: (PreciseNumber, bool);
-    let lo: (PreciseNumber, bool);
-    let xx: PreciseNumber;
-    let y: (PreciseNumber, bool);
-    let k: (PreciseNumber, bool);
-    let x: (PreciseNumber, bool);
-    /* argument reduction */
-    /* if |x| > 0.5 ln2 */
-    if self.greater_than(&HALFLN2) {
-      /* if |x| >= 1.5 ln2 */
-      if self.greater_than_or_equal(&THREEHALFLN2) {
-        let k_temp = PreciseNumber::signed_add(
-          (&INVLN2.checked_mul(&self).unwrap(), is_negative),
-        (&HALF, is_negative)
-        ).unwrap();
-        k = (k_temp.0.floor().unwrap(), k_temp.1);
-      } else {
-        k = (PreciseNumber::one(), is_negative);
-      }
-      hi = PreciseNumber::signed_sub(
-        (&self, is_negative),
-        (&k.0.checked_mul(&LN2HI).unwrap().checked_div(&LN2HI_SCALE).unwrap(), k.1)
-      ).unwrap();
-      lo = (k.0.checked_mul(&LN2LO).unwrap().checked_div(&LN2LO_SCALE).unwrap(), k.1);
-      x = PreciseNumber::signed_sub(
-        (&hi.0, hi.1),
-        (&lo.0, lo.1)
-      ).unwrap();
-    } else {
-      x = (self.clone(), is_negative);
-      k = (PreciseNumber::zero(), is_negative);
-      hi = (self, is_negative);
-      lo = (PreciseNumber::zero(), is_negative);
-    }
-
-    /* x is now in primary range */
-    xx = x.0.checked_mul(&x.0).unwrap();
-    // c = x - xx * (P1 + xx * (P2 + xx * (P3 + xx * (P4 + xx * P5))));
-    let p4p5 = PreciseNumber::signed_add(
-      (&P4, true),
-      (&xx.checked_mul(&P5).unwrap(), false)
-    ).unwrap();
-    let p3p4p5 = PreciseNumber::signed_add(
-      (&P3, false),
-      (&xx.checked_mul(&p4p5.0).unwrap(), p4p5.1)
-    ).unwrap();
-    let p2p3p4p5 = PreciseNumber::signed_add(
-      (&P2, true),
-      (&xx.checked_mul(&p3p4p5.0).unwrap(), p3p4p5.1)
-    ).unwrap();
-    let p1p2p3p4p5 = PreciseNumber::signed_add(
-      (&P1, false),
-      (&xx.checked_mul(&p2p3p4p5.0).unwrap(), p2p3p4p5.1)
-    ).unwrap();
-    let (c, c_is_negative) = PreciseNumber::signed_sub(
-      (&x.0, x.1), 
-      (&p1p2p3p4p5.0.checked_mul(&xx).unwrap(), p1p2p3p4p5.1)
-    ).unwrap();
-
-    // y = 1. + (x * c / (2. - c) - lo + hi);
-    let c_min_2 = PreciseNumber::signed_sub((&TWO_PREC, false), (&c, c_is_negative)).unwrap();
-    let x_c = x.0.checked_mul(
-      &c.checked_div(&c_min_2.0).unwrap()
-    ).unwrap();
-    let xc_negative = (x.1 || c_is_negative) && !(c_is_negative && x.1);
-    let x_c_negative = (xc_negative || c_min_2.1) && !(xc_negative && c_min_2.1);
-
-    let one_x_c = PreciseNumber::signed_add(
-      (&PreciseNumber::one(), false),
-      (&x_c, x_c_negative)
-      )
-      .unwrap();
-
-    
-    let y_min_low = PreciseNumber::signed_sub(
-      (&one_x_c.0, one_x_c.1),
-      (&lo.0, lo.1)
-    ).unwrap();
-
-    y = PreciseNumber::signed_add(
-      (&y_min_low.0, y_min_low.1),
-      (&hi.0, hi.1)
-    ).unwrap();
-
-    if k.0.eq(&PreciseNumber::zero()) {
-        Some(y.0)
-    } else {
-      let bits = k.0.to_imprecise().unwrap();
-      let powed: u128 = 1_u128 << bits;
-      let powed_prec = PreciseNumber::new(powed).unwrap();
-
-      if k.1 {
-        y.0.checked_div(&powed_prec)
-      } else {
-        y.0.checked_mul(&powed_prec)
-      }
-    }
+    kl2hi.checked_sub(&f_hfsq_shfsqr_kl2lo)
   }
 
   /// Approximate the nth root of a number using a Taylor Series around 1 on
@@ -925,9 +679,9 @@ impl PreciseNumber {
       return Some(PreciseNumber::zero())
     }
 
-    let (lg, lg_is_negative) = self.log().unwrap();
-    let x = exp.checked_mul(&lg).unwrap();
-    x.exp(lg_is_negative)
+    let lg = self.log().unwrap();
+    let x = exp.clone().signed().checked_mul(&lg).unwrap();
+    x.exp()
   }
 
   /// Approximate the square root using Newton's method.  Based on testing,
@@ -956,8 +710,7 @@ impl PreciseNumber {
 #[cfg(test)]
 mod tests {
   use super::*;
-use anchor_lang::solana_program::log::sol_log_compute_units;
-use proptest::prelude::*;
+  use proptest::prelude::*;
 
   fn check_pow_approximation(base: InnerUint, exponent: InnerUint, expected: InnerUint) {
     let precision = InnerUint::from(5_000_000_000_000_000_000_u64); // correct to at least 3 decimal places
@@ -1066,62 +819,34 @@ use proptest::prelude::*;
   }
 
   #[test]
-  fn test_exp() {
-    let precision = InnerUint::from(5_000_000_000_u128); // correct to at least 9 decimal places
-    let half = PreciseNumber { value: half() };
-    assert!(half.exp(false).unwrap().almost_eq(
-      &PreciseNumber::new(16487212707001282).unwrap().checked_div(&PreciseNumber::new(10000000000000000).unwrap()).unwrap(),
-      precision
-    ));
-
-    let three_half = PreciseNumber::new(15).unwrap().checked_div(&PreciseNumber::new(10).unwrap()).unwrap();
-    assert!(three_half.exp(false).unwrap().almost_eq(
-      &PreciseNumber::new(44816890703380645).unwrap().checked_div(&PreciseNumber::new(10000000000000000).unwrap()).unwrap(),
-      precision
-    ));
-
-    let point_one = PreciseNumber::new(1).unwrap().checked_div(&PreciseNumber::new(10).unwrap()).unwrap();
-    assert!(point_one.exp(false).unwrap().almost_eq(
-      &PreciseNumber::new(11051709180756477).unwrap().checked_div(&PreciseNumber::new(10000000000000000).unwrap()).unwrap(),
-      precision
-    ));
-
-    let negative = PreciseNumber::new(55).unwrap().checked_div(&PreciseNumber::new(100).unwrap()).unwrap();
-    assert!(negative.exp(true).unwrap().almost_eq(
-      &PreciseNumber::new(5769498103804866).unwrap().checked_div(&PreciseNumber::new(10000000000000000).unwrap()).unwrap(),
-      precision
-    ));
-  }
-
-  #[test]
   fn test_log() {
     let precision = InnerUint::from(5_000_000_000_u128); // correct to at least 9 decimal places
     
     let test = PreciseNumber::new(9).unwrap();
-    let log = test.log().unwrap().0;
+    let log = test.log().unwrap().value;
     let expected = PreciseNumber::new(21972245773362196).unwrap().checked_div(&PreciseNumber::new(10000000000000000).unwrap()).unwrap();
     assert!(log.almost_eq(&expected, precision));
 
     let test2 = PreciseNumber::new(2).unwrap();
-    assert!(test2.log().unwrap().0.almost_eq(
+    assert!(test2.log().unwrap().value.almost_eq(
       &PreciseNumber::new(6931471805599453).unwrap().checked_div(&PreciseNumber::new(10000000000000000).unwrap()).unwrap(),
       precision
     ));
 
     let test3 = &PreciseNumber::new(12).unwrap().checked_div(&PreciseNumber::new(10).unwrap()).unwrap();
-    assert!(test3.log().unwrap().0.almost_eq(
+    assert!(test3.log().unwrap().value.almost_eq(
       &PreciseNumber::new(1823215567939546).unwrap().checked_div(&PreciseNumber::new(10000000000000000).unwrap()).unwrap(),
       precision
     ));
 
     let test5 = &PreciseNumber::new(15).unwrap().checked_div(&PreciseNumber::new(10).unwrap()).unwrap();
-    assert!(test5.log().unwrap().0.almost_eq(
+    assert!(test5.log().unwrap().value.almost_eq(
       &PreciseNumber::new(4054651081081644).unwrap().checked_div(&PreciseNumber::new(10000000000000000).unwrap()).unwrap(),
       precision
     ));
 
     let test6 = PreciseNumber::new(4).unwrap().checked_div(&PreciseNumber::new(1000000).unwrap()).unwrap();
-    assert!(test6.log().unwrap().0.almost_eq(
+    assert!(test6.log().unwrap().value.almost_eq(
       &PreciseNumber::new(12429216196844383).unwrap().checked_div(&PreciseNumber::new(1000000000000000).unwrap()).unwrap(),
       precision
     ));
@@ -1245,93 +970,95 @@ use proptest::prelude::*;
   }
 
   // Keep around for testing. Can drop a debugger and find out the binary for the inner unit
-  // #[test]
-  // fn get_constants() {
-  //   let one = PreciseNumber { value: InnerUint::from(ONE) };
-  //   let two = PreciseNumber::new(2).unwrap();
-  //   let sqrt_two_over_two = PreciseNumber::new(7071067811865476).unwrap().checked_div(
-  //     &PreciseNumber::new(10000000000000000).unwrap()
-  //   ).unwrap();
-  //   // Purposefully take 2 decimals off of ln2hi to keep precision
-  //   let ln2hi = PreciseNumber::new(693147180369123816490_u128).unwrap().checked_div(
-  //     &PreciseNumber::new(1_000_000_000_000_000_000_0).unwrap()
-  //   ).unwrap();
-  //   let ln2scale = &PreciseNumber::new(100).unwrap();
+  #[test]
+  fn get_constants() {
+    let one = PreciseNumber { value: InnerUint::from(ONE) };
+    let two = PreciseNumber::new(2).unwrap();
+    let sqrt_two_over_two = PreciseNumber::new(7071067811865476).unwrap().checked_div(
+      &PreciseNumber::new(10000000000000000).unwrap()
+    ).unwrap();
+    // Purposefully take 2 decimals off of ln2hi to keep precision
+    let ln2hi = PreciseNumber::new(693147180369123816490_u128).unwrap().checked_div(
+      &PreciseNumber::new(1_000_000_000_000_000_000_0).unwrap()
+    ).unwrap();
+    let ln2scale = &PreciseNumber::new(100).unwrap();
+    let extraprecisescale = &PreciseNumber::new(1000000000).unwrap();
 
-  //   let ln2lo_scale = &PreciseNumber::new(1000000000000000000000000000000).unwrap();
-  //   let ln2lo = PreciseNumber::new(190821492927058770002_u128).unwrap();
-  //   let l1 = PreciseNumber::new(6666666666666735130_u128).unwrap().checked_div(
-  //     &PreciseNumber::new(10000000000000000000).unwrap()
-  //   ).unwrap();
-  //   let l2 = PreciseNumber::new(3999999999940941908_u128).unwrap().checked_div(
-  //     &PreciseNumber::new(10000000000000000000).unwrap()
-  //   ).unwrap();
-  //   let l3 = PreciseNumber::new(2857142874366239149_u128).unwrap().checked_div(
-  //     &PreciseNumber::new(10000000000000000000).unwrap()
-  //   ).unwrap();
-  //   let l4 = PreciseNumber::new(2222219843214978396_u128).unwrap().checked_div(
-  //     &PreciseNumber::new(10000000000000000000).unwrap()
-  //   ).unwrap();
-  //   let l5 = PreciseNumber::new(1818357216161805012_u128).unwrap().checked_div(
-  //     &PreciseNumber::new(10000000000000000000).unwrap()
-  //   ).unwrap();
-  //   let l6 = PreciseNumber::new(1531383769920937332_u128).unwrap().checked_div(
-  //     &PreciseNumber::new(10000000000000000000).unwrap()
-  //   ).unwrap();
-  //   let l7 = PreciseNumber::new(1479819860511658591_u128).unwrap().checked_div(
-  //     &PreciseNumber::new(10000000000000000000).unwrap()
-  //   ).unwrap();
+    let ln2lo_scale = &PreciseNumber::new(100000000000000000000000000).unwrap();
+    let ln2lo = PreciseNumber::new(19082149292705877_u128).unwrap();
+    let l1 = PreciseNumber::new(6666666666666735130_u128).unwrap().checked_div(
+      &PreciseNumber::new(10000000000000000000).unwrap()
+    ).unwrap();
+    let l2 = PreciseNumber::new(3999999999940941908_u128).unwrap().checked_div(
+      &PreciseNumber::new(10000000000000000000).unwrap()
+    ).unwrap();
+    let l3 = PreciseNumber::new(2857142874366239149_u128).unwrap().checked_div(
+      &PreciseNumber::new(10000000000000000000).unwrap()
+    ).unwrap();
+    let l4 = PreciseNumber::new(2222219843214978396_u128).unwrap().checked_div(
+      &PreciseNumber::new(10000000000000000000).unwrap()
+    ).unwrap();
+    let l5 = PreciseNumber::new(1818357216161805012_u128).unwrap().checked_div(
+      &PreciseNumber::new(10000000000000000000).unwrap()
+    ).unwrap();
+    let l6 = PreciseNumber::new(1531383769920937332_u128).unwrap().checked_div(
+      &PreciseNumber::new(10000000000000000000).unwrap()
+    ).unwrap();
+    let l7 = PreciseNumber::new(1479819860511658591_u128).unwrap().checked_div(
+      &PreciseNumber::new(10000000000000000000).unwrap()
+    ).unwrap();
 
-  //   let invln2 = PreciseNumber::new(144269504088896338700_u128).unwrap().checked_div(
-  //     &PreciseNumber::new(100000000000000000000).unwrap()
-  //   ).unwrap();
+    let invln2 = PreciseNumber::new(144269504088896338700_u128).unwrap().checked_div(
+      &PreciseNumber::new(100000000000000000000).unwrap()
+    ).unwrap();
 
-  //   let halfln2 = PreciseNumber::new(34657359027997264_u128).unwrap().checked_div(
-  //     &PreciseNumber::new(100000000000000000).unwrap()
-  //   ).unwrap();
+    let halfln2 = PreciseNumber::new(34657359027997264_u128).unwrap().checked_div(
+      &PreciseNumber::new(100000000000000000).unwrap()
+    ).unwrap();
 
-  //   let threehalfln2 = PreciseNumber::new(10397207708399179_u128).unwrap().checked_div(
-  //     &PreciseNumber::new(10000000000000000).unwrap()
-  //   ).unwrap();
+    let threehalfln2 = PreciseNumber::new(10397207708399179_u128).unwrap().checked_div(
+      &PreciseNumber::new(10000000000000000).unwrap()
+    ).unwrap();
 
 
-  //   let half = PreciseNumber::new(5_u128).unwrap().checked_div(
-  //     &PreciseNumber::new(10).unwrap()
-  //   ).unwrap();
+    let half = PreciseNumber::new(5_u128).unwrap().checked_div(
+      &PreciseNumber::new(10).unwrap()
+    ).unwrap();
 
-  //   let p1 = PreciseNumber::new(166666666666666019037_u128).unwrap().checked_div(
-  //     &PreciseNumber::new(1000000000000000000000).unwrap()
-  //   ).unwrap();
+    let p1 = PreciseNumber::new(166666666666666019037_u128).unwrap().checked_div(
+      &PreciseNumber::new(1000000000000000000000).unwrap()
+    ).unwrap();
 
-  //   let p2 = PreciseNumber::new(277777777770155933842_u128).unwrap().checked_div(
-  //     &PreciseNumber::new(100000000000000000000000).unwrap()
-  //   ).unwrap();
+    let p2 = PreciseNumber::new(277777777770155933842_u128).unwrap().checked_div(
+      &PreciseNumber::new(100000000000000000000000).unwrap()
+    ).unwrap();
 
-  //   let p3 = PreciseNumber::new(661375632143793436117_u128).unwrap().checked_div(
-  //     &PreciseNumber::new(10000000000000000000000000).unwrap()
-  //   ).unwrap();
+    let p3 = PreciseNumber::new(661375632143793436117_u128).unwrap().checked_div(
+      &PreciseNumber::new(10000000000000000000000000).unwrap()
+    ).unwrap();
 
-  //   let p4 = PreciseNumber::new(165339022054652515390_u128).unwrap().checked_div(
-  //     &PreciseNumber::new(100000000000000000000000000).unwrap()
-  //   ).unwrap();
+    let p4 = PreciseNumber::new(165339022054652515390_u128).unwrap().checked_div(
+      &PreciseNumber::new(100000000000000000000000000).unwrap()
+    ).unwrap();
 
-  //   let p5 = PreciseNumber::new(413813679705723846039_u128).unwrap().checked_div(
-  //     &PreciseNumber::new(10000000000000000000000000000).unwrap()
-  //   ).unwrap();
+    let p5 = PreciseNumber::new(413813679705723846039_u128).unwrap().checked_div(
+      &PreciseNumber::new(10000000000000000000000000000).unwrap()
+    ).unwrap();
 
-  //   l1.print();
-  //   l2.print();
-  //   l3.print();
-  //   l4.print();
-  //   l5.print();
-  //   l6.print();
-  //   l7.print();
-  //   ln2hi.print();
-  //   ln2lo.print();
-  //   sqrt_two_over_two.print();
+    l1.print();
+    l2.print();
+    l3.print();
+    l4.print();
+    l5.print();
+    l6.print();
+    l7.print();
+    ln2hi.print();
+    ln2lo.print();
+    ln2lo_scale.print();
+    sqrt_two_over_two.print();
 
-  //   let s = 1;
-  // }
+    let s = 1;
+  }
 
   proptest! {
       #[test]
