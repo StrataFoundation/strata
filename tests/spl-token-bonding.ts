@@ -1067,4 +1067,89 @@ describe("spl-token-bonding", () => {
       await tokenUtils.expectAtaBalance(me, baseMint, INITIAL_BALANCE / Math.pow(10, DECIMALS));
     })
   })
+
+  function timeIncrease(curve: TimeCurveConfig): TimeCurveConfig {
+    return curve
+      // Causes a 9.09091% bump
+      .addCurve(6 * 60 * 60, // 6 hours after launch
+        new ExponentialCurveConfig({
+          c: 1,
+          b: 0,
+          pow: 1,
+          frac: 10
+        }),
+        null,
+        {
+          percentage: percent(10)!,
+          interval: 6 * 60 * 60, // 6 hours
+        }
+      )
+      // 7.57576% bump
+      .addCurve(12 * 60 * 60, // 12 hours after launch
+        new ExponentialCurveConfig({
+          c: 1,
+          b: 0,
+          pow: 1,
+          frac: 5
+        }),
+        null,
+        {
+          percentage: percent(8)!,
+          interval: 12 * 60 * 60, // 12 hours
+        }
+      )
+      // 8.33333% bump
+      .addCurve(24 * 60 * 60, // 24 hours after launch
+        new ExponentialCurveConfig({
+          c: 1,
+          b: 0,
+          pow: 1,
+          frac: 3
+        }),
+        null,
+        {
+          percentage: percent(9)!,
+          interval: 12 * 60 * 60, // 12 hours
+        }
+      )
+      // 8.33333% bump
+      .addCurve(36 * 60 * 60, // 36 hours after launch
+        new ExponentialCurveConfig({
+          c: 1,
+          b: 0,
+          pow: 1,
+          frac: 2
+        }),
+        null,
+        {
+          percentage: percent(9)!,
+          interval: 12 * 60 * 60, // 12 hours
+        }
+      )
+  }
+
+  it("patches social token curve", async () => {
+    const socialCurve = await tokenBondingProgram.initializeCurve({
+      config: timeIncrease(new TimeCurveConfig()
+      .addCurve(0, new ExponentialCurveConfig({
+        c: 0,
+        b: 0.1, // 1 OPEN per 10 social token starting
+        pow: 0,
+        frac: 2
+      })))
+    });
+    const curve0 = await tokenBondingProgram.getCurve(socialCurve);
+
+    await tokenBondingProgram.rpc.patchCurve({
+      accounts: {
+        curve: socialCurve,
+        strata: me
+      }
+    });
+
+    const curve1 = await tokenBondingProgram.getCurve(socialCurve);
+
+    console.log(JSON.stringify(curve0, null, 2))
+    console.log(JSON.stringify(curve1, null, 2))
+  })
 });

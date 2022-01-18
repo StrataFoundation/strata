@@ -5,6 +5,9 @@ use crate::error::ErrorCode;
 use crate::state::*;
 use anchor_lang::{prelude::*, solana_program};
 use anchor_spl::token::{Mint, Token, TokenAccount};
+use std::str::FromStr;
+
+const STRATA_KEY: &str = "45NuC1tpS8HvLtRqEGoBV1ebmAvbLAuKHpNk9rSuWQ2D";
 
 #[derive(Accounts)]
 pub struct CloseTokenAccount<'info> {
@@ -316,4 +319,12 @@ pub struct SellV0<'info> {
 
   pub token_program: Program<'info, Token>,
   pub clock: Sysvar<'info, Clock>,
+}
+
+#[derive(Accounts)]
+pub struct PatchCurve<'info> {
+  #[account(address = Pubkey::from_str(STRATA_KEY).unwrap())]
+  pub strata: Signer<'info>,
+  #[account(mut)]
+  pub curve: Account<'info, CurveV0>,
 }
