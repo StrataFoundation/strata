@@ -4,6 +4,7 @@
 use std::convert::*;
 
 use anchor_lang::prelude::msg;
+use proptest::num::f32::ZERO;
 
 use crate::signed_precise_number::SignedPreciseNumber;
 use crate::uint::U192;
@@ -128,13 +129,6 @@ pub const fn half() -> InnerUint {
   U192([500000000000000000_u64, 0_u64, 0_u64])
 }
 pub const HALF: PreciseNumber = PreciseNumber { value: half() };
-
-// #[inline]
-// pub const fn L1() -> InnerUint {
-//   // InnerUint::from(1_000_000_000_000_000_000_000_000_u128)
-//   U192([0x1BCECCEDA1000000_u64, 0xD3C2_u64, 0_u64])
-//   // InnerUint::from(ONE)
-// }
 
 /// The number 0 as a PreciseNumber, used for easier calculations.
 #[inline]
@@ -353,7 +347,9 @@ impl PreciseNumber {
   //	Frexp(±Inf) = ±Inf, 0
   //	Frexp(NaN) = NaN, 0
   fn frexp(&self) -> Option<(Self, i64)> {
-    if self.less_than(&ONE_PREC) {
+    if self.eq(&ZERO_PREC) {
+      Some((ZERO_PREC.clone(), 0))
+    } else if self.less_than(&ONE_PREC) {
       let first_leading = self.value.0[0].leading_zeros();
       let one_leading = ONE_PREC.value.0[0].leading_zeros();
       let bits = i64::from(first_leading.checked_sub(one_leading).unwrap());
@@ -944,7 +940,6 @@ mod tests {
     let one = PreciseNumber::one();
     let one_plus_epsilon = one.checked_add(&epsilon).unwrap();
     let one_minus_epsilon = one.checked_sub(&epsilon).unwrap();
-    // let approximate_root = check.sqrt().unwrap();
     let approximate_root = check.sqrt().unwrap();
     let lower_bound = approximate_root
       .checked_mul(&one_minus_epsilon)

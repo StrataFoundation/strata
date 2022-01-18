@@ -953,7 +953,6 @@ describe("spl-token-bonding", () => {
         });
 
 
-
         await tokenUtils.expectBalanceWithin(tokenBondingAcct.baseStorage, 0, 0.04); // Rounding errors always go in base storage favor, so nobody can rob with wiggling
         await tokenUtils.expectAtaBalance(me, tokenBondingAcct.targetMint, 0);
       })
