@@ -640,8 +640,9 @@ pub mod spl_token_bonding {
     curve.definition = match &curve.definition {
       PiecewiseCurve::TimeV0 { curves } => {
         PiecewiseCurve::TimeV0 {
-          curves: curves.iter().map(|curve|
-            TimeCurveV0 {
+          curves: curves
+            .iter()
+            .map(|curve| TimeCurveV0 {
               offset: curve.offset,
               curve: match &curve.curve {
                 PrimitiveCurve::ExponentialCurveV0 { pow, frac, b, c } => {
@@ -653,14 +654,14 @@ pub mod spl_token_bonding {
                       *c
                     } else {
                       100000000000 // 0.1
-                    }
+                    },
                   }
                 }
               },
               buy_transition_fees: curve.buy_transition_fees.clone(),
-              sell_transition_fees: curve.sell_transition_fees.clone()
-            }
-          ).collect()
+              sell_transition_fees: curve.sell_transition_fees.clone(),
+            })
+            .collect(),
         }
       }
     };

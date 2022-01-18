@@ -321,7 +321,6 @@ pub struct SellV0<'info> {
   pub clock: Sysvar<'info, Clock>,
 }
 
-
 #[derive(Accounts)]
 pub struct PatchCurve<'info> {
   #[account(address = Pubkey::from_str(STRATA_KEY).unwrap())]
