@@ -1376,7 +1376,6 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
 
     let buyTargetAmount = null;
     let buyWithBase = null;
-    let rootEstimates = null;
     let maxPrice: number = 0;
     if (desiredTargetAmount) {
       const desiredTargetAmountNum = toNumber(desiredTargetAmount, targetMint);
@@ -1389,10 +1388,6 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         tokenBondingAcct.buyTargetRoyaltyPercentage
       );
       maxPrice = curveAmount * (1 + slippage);
-      rootEstimates = curve.buyTargetAmountRootEstimates(
-        desiredTargetAmountNum,
-        tokenBondingAcct.buyTargetRoyaltyPercentage
-      );
 
       buyTargetAmount = {
         targetAmount: new BN(
@@ -1412,10 +1407,6 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         ) *
         (1 - slippage);
       maxPrice = baseAmountNum;
-      rootEstimates = curve.buyWithBaseRootEstimates(
-        baseAmountNum,
-        tokenBondingAcct.buyBaseRoyaltyPercentage
-      );
 
       buyWithBase = {
         baseAmount: toBN(baseAmount, baseMint),
@@ -1460,7 +1451,6 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       buyTargetAmount,
       // @ts-ignore
       buyWithBase,
-      rootEstimates: rootEstimates?.map(toU128),
     };
     const accounts = {
       accounts: {
@@ -1792,13 +1782,6 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     const args: IdlTypes<SplTokenBondingIDL>["SellV0Args"] = {
       targetAmount: toBN(targetAmount, targetMint),
       minimumPrice: new BN(minPrice),
-      rootEstimates: curve
-        .buyTargetAmountRootEstimates(
-          -targetAmountNum *
-            (1 - asDecimal(tokenBondingAcct.sellTargetRoyaltyPercentage)),
-          0
-        )
-        .map(toU128),
     };
     const accounts = {
       accounts: {

@@ -4,7 +4,6 @@
 use std::convert::*;
 
 use anchor_lang::prelude::msg;
-use proptest::num::f32::ZERO;
 
 use crate::signed_precise_number::SignedPreciseNumber;
 use crate::uint::U192;
