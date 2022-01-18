@@ -47,8 +47,8 @@ impl Curve for PrimitiveCurve {
              */
             let pow_prec = PreciseNumber::new(u128::try_from(pow).ok()?)?;
             let frac_prec = PreciseNumber::new(u128::try_from(frac).ok()?)?;
-            let pow = &pow_prec.checked_div(&frac_prec)?;
-            let one_plus_k = &ONE_PREC.checked_add(&pow)?;
+            let pow = pow_prec.checked_div(&frac_prec)?;
+            let one_plus_k = ONE_PREC.checked_add(&pow)?;
 
             let res = one_plus_k
               .checked_mul(reserve_change)?
