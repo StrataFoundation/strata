@@ -320,11 +320,3 @@ pub struct SellV0<'info> {
   pub token_program: Program<'info, Token>,
   pub clock: Sysvar<'info, Clock>,
 }
-
-#[derive(Accounts)]
-pub struct PatchCurve<'info> {
-  #[account(address = Pubkey::from_str(STRATA_KEY).unwrap())]
-  pub strata: Signer<'info>,
-  #[account(mut)]
-  pub curve: Account<'info, CurveV0>,
-}

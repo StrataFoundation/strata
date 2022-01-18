@@ -5,12 +5,12 @@ import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
 import { getMetadata, percent } from "@strata-foundation/spl-utils";
 import fs from "fs";
 
-function timeIncrease(curve: TimeCurveConfig): TimeCurveConfig {
+function timeIncrease(curve: TimeCurveConfig, c: number = 1): TimeCurveConfig {
   return curve
     // Causes a 9.09091% bump
     .addCurve(6 * 60 * 60, // 6 hours after launch
       new ExponentialCurveConfig({
-        c: 1,
+        c,
         b: 0,
         pow: 1,
         frac: 10
@@ -24,7 +24,7 @@ function timeIncrease(curve: TimeCurveConfig): TimeCurveConfig {
     // 7.57576% bump
     .addCurve(12 * 60 * 60, // 12 hours after launch
       new ExponentialCurveConfig({
-        c: 1,
+        c,
         b: 0,
         pow: 1,
         frac: 5
@@ -38,7 +38,7 @@ function timeIncrease(curve: TimeCurveConfig): TimeCurveConfig {
     // 8.33333% bump
     .addCurve(24 * 60 * 60, // 24 hours after launch
       new ExponentialCurveConfig({
-        c: 1,
+        c,
         b: 0,
         pow: 1,
         frac: 3
@@ -52,7 +52,7 @@ function timeIncrease(curve: TimeCurveConfig): TimeCurveConfig {
     // 8.33333% bump
     .addCurve(36 * 60 * 60, // 36 hours after launch
       new ExponentialCurveConfig({
-        c: 1,
+        c,
         b: 0,
         pow: 1,
         frac: 2
@@ -88,7 +88,7 @@ async function run() {
         b: 0.005, // 0.005 SOL per OPEN token starting
         pow: 0,
         frac: 2
-      })))
+      })), 0.005)
   });
   const socialCurve = await tokenBondingSdk.initializeCurve({
     config: timeIncrease(new TimeCurveConfig()
@@ -97,7 +97,7 @@ async function run() {
       b: 0.1, // 1 OPEN per 10 social token starting
       pow: 0,
       frac: 2
-    })))
+    })), 0.1)
   });
 
   const goLiveDate = new Date(0)
