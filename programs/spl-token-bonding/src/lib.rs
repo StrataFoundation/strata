@@ -633,4 +633,38 @@ pub mod spl_token_bonding {
 
     Ok(())
   }
+
+  pub fn patch_curve(ctx: Context<PatchCurve>) -> ProgramResult {
+    let curve = &mut ctx.accounts.curve;
+
+    curve.definition = match &curve.definition {
+      PiecewiseCurve::TimeV0 { curves } => {
+        PiecewiseCurve::TimeV0 {
+          curves: curves.iter().map(|curve|
+            TimeCurveV0 {
+              offset: curve.offset,
+              curve: match &curve.curve {
+                PrimitiveCurve::ExponentialCurveV0 { pow, frac, b, c } => {
+                  PrimitiveCurve::ExponentialCurveV0 {
+                    pow: *pow,
+                    frac: *frac,
+                    b: *b,
+                    c: if curve.offset == 0 {
+                      *c
+                    } else {
+                      100000000000 // 0.1
+                    }
+                  }
+                }
+              },
+              buy_transition_fees: curve.buy_transition_fees.clone(),
+              sell_transition_fees: curve.sell_transition_fees.clone()
+            }
+          ).collect()
+        }
+      }
+    };
+
+    Ok(())
+  }
 }
