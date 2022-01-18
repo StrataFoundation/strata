@@ -150,38 +150,12 @@ impl PreciseNumber {
     InnerUint::from(ONE / 2)
   }
 
-  /// Desired precision for the correction factor applied during each
-  /// iteration of checked_pow_approximation.  Once the correction factor is
-  /// smaller than this number, or we reach the maxmium number of iterations,
-  /// the calculation ends.
-  fn precision() -> InnerUint {
-    InnerUint::from(100_000_000_000_000_u64)
-  }
-
   pub fn zero() -> Self {
     Self { value: zero() }
   }
 
   pub fn one() -> Self {
     Self { value: one() }
-  }
-
-  /// Maximum number iterations to apply on checked_pow_approximation.
-  const MAX_APPROXIMATION_ITERATIONS: u128 = 100;
-
-  /// Minimum base allowed when calculating exponents in checked_pow_fraction
-  /// and checked_pow_approximation.  This simply avoids 0 as a base.
-  fn min_pow_base() -> InnerUint {
-    InnerUint::from(1)
-  }
-
-  /// Maximum base allowed when calculating exponents in checked_pow_fraction
-  /// and checked_pow_approximation.  The calculation use a Taylor Series
-  /// approxmation around 1, which converges for bases between 0 and 2.  See
-  /// https://en.wikipedia.org/wiki/Binomial_series#Conditions_for_convergence
-  /// for more information.
-  fn max_pow_base() -> InnerUint {
-    InnerUint::from(2 * ONE)
   }
 
   /// Create a precise number from an imprecise u128, should always succeed
@@ -296,7 +270,6 @@ impl PreciseNumber {
     Some(Self { value })
   }
 
-  /// Performs a subtraction, returning the result and whether the result is negative
   pub fn unsigned_sub(&self, rhs: &Self) -> (Self, bool) {
     match self.value.checked_sub(rhs.value) {
       None => {
@@ -305,35 +278,6 @@ impl PreciseNumber {
       }
       Some(value) => (Self { value }, false),
     }
-  }
-
-  /// Performs pow on a precise number
-  pub fn checked_pow(&self, exponent: u128) -> Option<Self> {
-    // For odd powers, start with a multiplication by base since we halve the
-    // exponent at the start
-    let value = if exponent.checked_rem(2)? == 0 {
-      one()
-    } else {
-      self.value
-    };
-    let mut result = Self { value };
-
-    // To minimize the number of operations, we keep squaring the base, and
-    // only push to the result on odd exponents, like a binary decomposition
-    // of the exponent.
-    let mut squared_base = self.clone();
-    let mut current_exponent = exponent.checked_div(2)?;
-    while current_exponent != 0 {
-      squared_base = squared_base.checked_mul(&squared_base)?;
-
-      // For odd exponents, "push" the base onto the value
-      if current_exponent.checked_rem(2)? != 0 {
-        result = result.checked_mul(&squared_base)?;
-      }
-
-      current_exponent = current_exponent.checked_div(2)?;
-    }
-    Some(result)
   }
 
   // Frexp breaks f into a normalized fraction
@@ -510,146 +454,6 @@ impl PreciseNumber {
     kl2hi.checked_sub(&f_hfsq_shfsqr_kl2lo)
   }
 
-  /// Approximate the nth root of a number using a Taylor Series around 1 on
-  /// x ^ n, where 0 < n < 1, result is a precise number.
-  /// Refine the guess for each term, using:
-  ///                                  1                    2
-  /// f(x) = f(a) + f'(a) * (x - a) + --- * f''(a) * (x - a)  + ...
-  ///                                  2!
-  /// For x ^ n, this gives:
-  ///  n    n         n-1           1                  n-2        2
-  /// x  = a  + n * a    (x - a) + --- * n * (n - 1) a     (x - a)  + ...
-  ///                               2!
-  ///
-  /// More simply, this means refining the term at each iteration with:
-  ///
-  /// t_k+1 = t_k * (x - a) * (n + 1 - k) / k
-  ///
-  /// where a = 1, n = power, x = precise_num
-  /// NOTE: this function is private because its accurate range and precision
-  /// have not been estbalished.
-  fn checked_pow_approximation(&self, exponent: &Self, max_iterations: u128) -> Option<Self> {
-    assert!(self.value >= Self::min_pow_base());
-    assert!(self.value <= Self::max_pow_base());
-    let one = Self::one();
-    if *exponent == Self::zero() {
-      return Some(one);
-    }
-    let mut precise_guess = one.clone();
-    let mut term = precise_guess.clone();
-    let (x_minus_a, x_minus_a_negative) = self.unsigned_sub(&precise_guess);
-    let exponent_plus_one = exponent.checked_add(&one)?;
-    let mut negative = false;
-    for k in 1..max_iterations {
-      let k = Self::new(k)?;
-      let (current_exponent, current_exponent_negative) = exponent_plus_one.unsigned_sub(&k);
-      term = term.checked_mul(&current_exponent)?;
-      term = term.checked_mul(&x_minus_a)?;
-      term = term.checked_div(&k)?;
-      if term.value < Self::precision() {
-        break;
-      }
-      if x_minus_a_negative {
-        negative = !negative;
-      }
-      if current_exponent_negative {
-        negative = !negative;
-      }
-      if negative {
-        precise_guess = precise_guess.checked_sub(&term)?;
-      } else {
-        precise_guess = precise_guess.checked_add(&term)?;
-      }
-    }
-    Some(precise_guess)
-  }
-
-  /// Get the power of a number, where the exponent is expressed as a fraction
-  /// (numerator / denominator)
-  pub fn checked_pow_fraction(&self, exponent: &Self) -> Option<Self> {
-    if exponent.eq(&ZERO_PREC) {
-      return Some(ONE_PREC.clone());
-    }
-
-    // Check if this is a whole number. If so, don't use checked_pow_fraction
-    let imprecise = exponent.to_imprecise()?;
-    if PreciseNumber::new(imprecise)?.eq(exponent) {
-      return self.checked_pow(imprecise);
-    }
-
-    assert!(self.value >= Self::min_pow_base());
-    assert!(self.value <= Self::max_pow_base());
-    let whole_exponent = exponent.floor()?;
-    let precise_whole = self.checked_pow(whole_exponent.to_imprecise()?)?;
-    let (remainder_exponent, negative) = exponent.unsigned_sub(&whole_exponent);
-    assert!(!negative);
-    if remainder_exponent.value == InnerUint::from(0) {
-      return Some(precise_whole);
-    }
-    let precise_remainder =
-      self.checked_pow_approximation(&remainder_exponent, Self::MAX_APPROXIMATION_ITERATIONS)?;
-    precise_whole.checked_mul(&precise_remainder)
-  }
-
-  /// Approximate the nth root of a number using Newton's method
-  /// https://en.wikipedia.org/wiki/Newton%27s_method
-  /// NOTE: this function is private because its accurate range and precision
-  /// have not been established.
-  fn newtonian_root_approximation(
-    &self,
-    root: &Self,
-    mut guess: Self,
-    iterations: u128,
-  ) -> Option<Self> {
-    let zero = &ZERO_PREC;
-    if *self == *zero {
-      return Some(Self::zero());
-    }
-    if *root == *zero {
-      return None;
-    }
-    let one = &ONE_PREC;
-    let root_minus_one = root.checked_sub(one)?;
-    let root_minus_one_whole = root_minus_one.to_imprecise()?;
-    let mut last_guess = guess.clone();
-    let precision = Self::precision();
-    for _ in 0..iterations {
-      // x_k+1 = ((n - 1) * x_k + A / (x_k ^ (n - 1))) / n
-      let first_term = root_minus_one.checked_mul(&guess)?;
-      let power = guess.checked_pow(root_minus_one_whole);
-      let second_term = match power {
-        Some(num) => self.checked_div(&num)?,
-        None => Self::new(0)?,
-      };
-      guess = first_term.checked_add(&second_term)?.checked_div(root)?;
-      if last_guess.almost_eq(&guess, precision) {
-        break;
-      } else {
-        last_guess = guess.clone();
-      }
-    }
-
-    if last_guess.almost_eq(&guess, precision) {
-      Some(guess)
-    } else {
-      None // Don't return answers that are not close
-    }
-  }
-
-  /// Based on testing around the limits, this base is the smallest value that
-  /// provides an epsilon 11 digits
-  fn minimum_sqrt_base() -> Self {
-    Self {
-      value: InnerUint::from(0),
-    }
-  }
-
-  /// Based on testing around the limits, this base is the smallest value that
-  /// provides an epsilon of 11 digits
-  fn maximum_sqrt_base() -> Self {
-    Self::new(std::u128::MAX).unwrap()
-  }
-
   /*
   b = pow/frac
   y = a^b
@@ -664,20 +468,6 @@ impl PreciseNumber {
     let lg = self.log()?;
     let x = exp.clone().signed().checked_mul(&lg)?;
     x.exp()
-  }
-
-  /// Approximate the square root using Newton's method.  Based on testing,
-  /// this provides a precision of 11 digits for inputs between 0 and u128::MAX
-  pub fn sqrt(&self) -> Option<Self> {
-    if self.less_than(&Self::minimum_sqrt_base()) || self.greater_than(&Self::maximum_sqrt_base()) {
-      return None;
-    }
-    let two = PreciseNumber::new(2)?;
-    let one = PreciseNumber::new(1)?;
-    // A good initial guess is the average of the interval that contains the
-    // input number.  For all numbers, that will be between 1 and the given number.
-    let guess = self.checked_add(&one)?.checked_div(&two)?;
-    self.newtonian_root_approximation(&two, guess, Self::MAX_APPROXIMATION_ITERATIONS)
   }
 
   pub fn print(&self) {
@@ -696,59 +486,6 @@ impl PreciseNumber {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use proptest::prelude::*;
-
-  fn check_pow_approximation(base: InnerUint, exponent: InnerUint, expected: InnerUint) {
-    let precision = InnerUint::from(5_000_000_000_000_000_000_u64); // correct to at least 3 decimal places
-    let base = PreciseNumber { value: base };
-    let exponent = PreciseNumber { value: exponent };
-    let root = base
-      .checked_pow_approximation(&exponent, PreciseNumber::MAX_APPROXIMATION_ITERATIONS)
-      .unwrap();
-    let expected = PreciseNumber { value: expected };
-    assert!(root.almost_eq(&expected, precision));
-  }
-
-  #[test]
-  fn test_root_approximation() {
-    let one = one();
-    // square root
-    check_pow_approximation(one / 4, one / 2, one / 2); // 1/2
-    check_pow_approximation(
-      one * 11 / 10,
-      one / 2,
-      InnerUint::from(1_048808848161_000000000000u128),
-    ); // 1.048808848161
-
-    // 5th root
-    check_pow_approximation(
-      one * 4 / 5,
-      one * 2 / 5,
-      InnerUint::from(914610103850_000000000000u128),
-    );
-    // 0.91461010385
-
-    // 10th root
-    check_pow_approximation(
-      one / 2,
-      one * 4 / 50,
-      InnerUint::from(946057646730_000000000000u128),
-    );
-    // 0.94605764673
-  }
-
-  fn check_pow_fraction(
-    base: InnerUint,
-    exponent: InnerUint,
-    expected: InnerUint,
-    precision: InnerUint,
-  ) {
-    let base = PreciseNumber { value: base };
-    let exponent = PreciseNumber { value: exponent };
-    let power = base.checked_pow_fraction(&exponent).unwrap();
-    let expected = PreciseNumber { value: expected };
-    assert!(power.almost_eq(&expected, precision));
-  }
 
   #[test]
   fn test_pow() {
@@ -771,46 +508,6 @@ mod tests {
       .checked_div(&PreciseNumber::new(10000).unwrap())
       .unwrap();
     assert!(squared.almost_eq(&expected, precision));
-  }
-
-  #[test]
-  fn test_pow_fraction() {
-    let one = one();
-    let precision = InnerUint::from(50_000_000_000_000_000_000_u128); // correct to at least 3 decimal places
-    let less_precision = precision * 1_000; // correct to at least 1 decimal place
-    check_pow_fraction(one, one, one, precision);
-    check_pow_fraction(
-      one * 20 / 13,
-      one * 50 / 3,
-      InnerUint::from(1312_534484739100_000000000000u128),
-      precision,
-    ); // 1312.5344847391
-    check_pow_fraction(
-      one * 2 / 7,
-      one * 49 / 4,
-      InnerUint::from(2163_000000000000u128),
-      precision,
-    );
-    check_pow_fraction(
-      one * 5000 / 5100,
-      one / 9,
-      InnerUint::from(997802126900_000000000000u128),
-      precision,
-    ); // 0.99780212695
-       // results get less accurate as the base gets further from 1, so allow
-       // for a greater margin of error
-    check_pow_fraction(
-      one * 2,
-      one * 27 / 5,
-      InnerUint::from(42_224253144700_000000000000u128),
-      less_precision,
-    ); // 42.2242531447
-    check_pow_fraction(
-      one * 18 / 10,
-      one * 11 / 3,
-      InnerUint::from(8_629769290500_000000000000u128),
-      less_precision,
-    ); // 8.629769290
   }
 
   #[test]
@@ -869,100 +566,6 @@ mod tests {
         .unwrap(),
       precision
     ));
-  }
-
-  #[test]
-  fn test_newtonian_approximation() {
-    // square root
-    let test = PreciseNumber::new(9).unwrap();
-    let nth_root = PreciseNumber::new(2).unwrap();
-    let guess = test.checked_div(&nth_root).unwrap();
-    let root = test
-      .newtonian_root_approximation(
-        &nth_root,
-        guess,
-        PreciseNumber::MAX_APPROXIMATION_ITERATIONS,
-      )
-      .unwrap()
-      .to_imprecise()
-      .unwrap();
-    assert_eq!(root, 3); // actually 3
-
-    let test = PreciseNumber::new(101).unwrap();
-    let nth_root = PreciseNumber::new(2).unwrap();
-    let guess = test.checked_div(&nth_root).unwrap();
-    let root = test
-      .newtonian_root_approximation(
-        &nth_root,
-        guess,
-        PreciseNumber::MAX_APPROXIMATION_ITERATIONS,
-      )
-      .unwrap()
-      .to_imprecise()
-      .unwrap();
-    assert_eq!(root, 10); // actually 10.049875
-
-    let test = PreciseNumber::new(1_000_000_000).unwrap();
-    let nth_root = PreciseNumber::new(2).unwrap();
-    let guess = test.checked_div(&nth_root).unwrap();
-    let root = test
-      .newtonian_root_approximation(
-        &nth_root,
-        guess,
-        PreciseNumber::MAX_APPROXIMATION_ITERATIONS,
-      )
-      .unwrap()
-      .to_imprecise()
-      .unwrap();
-    assert_eq!(root, 31_623); // actually 31622.7766
-
-    // 5th root
-    let test = PreciseNumber::new(500).unwrap();
-    let nth_root = PreciseNumber::new(5).unwrap();
-    let guess = test.checked_div(&nth_root).unwrap();
-    let root = test
-      .newtonian_root_approximation(
-        &nth_root,
-        guess,
-        PreciseNumber::MAX_APPROXIMATION_ITERATIONS,
-      )
-      .unwrap()
-      .to_imprecise()
-      .unwrap();
-    assert_eq!(root, 3); // actually 3.46572422
-  }
-
-  fn check_square_root(check: &PreciseNumber) {
-    let epsilon = PreciseNumber {
-      value: InnerUint::from(10_000000000000_u64),
-    }; // correct within 11 decimals
-    let one = PreciseNumber::one();
-    let one_plus_epsilon = one.checked_add(&epsilon).unwrap();
-    let one_minus_epsilon = one.checked_sub(&epsilon).unwrap();
-    let approximate_root = check.sqrt().unwrap();
-    let lower_bound = approximate_root
-      .checked_mul(&one_minus_epsilon)
-      .unwrap()
-      .checked_pow(2)
-      .unwrap();
-    let upper_bound = approximate_root
-      .checked_mul(&one_plus_epsilon)
-      .unwrap()
-      .checked_pow(2)
-      .unwrap();
-    assert!(check.less_than_or_equal(&upper_bound));
-    assert!(check.greater_than_or_equal(&lower_bound));
-  }
-
-  #[test]
-  fn test_square_root_min_max() {
-    let test_roots = [
-      PreciseNumber::minimum_sqrt_base(),
-      PreciseNumber::maximum_sqrt_base(),
-    ];
-    for i in test_roots.iter() {
-      check_square_root(i);
-    }
   }
 
   #[test]
@@ -1076,12 +679,4 @@ mod tests {
 
   //   let s = 1;
   // }
-
-  proptest! {
-      #[test]
-      fn test_square_root(a in 0..u128::MAX) {
-          let a = PreciseNumber { value: InnerUint::from(a) };
-          check_square_root(&a);
-      }
-  }
 }

@@ -309,7 +309,6 @@ impl SignedPreciseNumber {
 #[cfg(test)]
 mod tests {
   use crate::precise_number::half;
-  use proptest::prelude::*;
 
   use super::*;
 

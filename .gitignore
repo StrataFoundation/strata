@@ -18,3 +18,5 @@ oyster-common
 .idea/inspectionProfiles/Project_Default.xml
 docker-target
 scratch*
+coverage
+**/*.profraw
