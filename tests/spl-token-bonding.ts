@@ -846,13 +846,13 @@ describe("spl-token-bonding", () => {
     let baseMint: PublicKey;
     let curve: PublicKey;
     let tokenBonding: PublicKey;
-    const INITIAL_BALANCE = 10000000000000;
+    const INITIAL_BALANCE = 1000000000000000;
     const DECIMALS = 2;
 
     const curves = [
       {
         config: new ExponentialCurveConfig({
-          c: 1,
+          c: 0.0001,
           b: 0,
           pow: 1,
           frac: 2
@@ -860,7 +860,7 @@ describe("spl-token-bonding", () => {
       },
       {
         config: new ExponentialCurveConfig({
-          c: 2,
+          c: 0.0002,
           b: 0,
           pow: 1,
           frac: 2
@@ -875,6 +875,10 @@ describe("spl-token-bonding", () => {
         })
       }
     ]
+
+    function roundToDecimals(num: number, decimals: number): number {
+      return Math.trunc(num * Math.pow(10, decimals)) / Math.pow(10, decimals);
+    }
 
     curves.forEach((curveSpec, index) => {
       it(`is zero sum with curve ${index}`, async () => {
@@ -893,6 +897,9 @@ describe("spl-token-bonding", () => {
           sellBaseRoyaltyPercentage: 0,
           sellTargetRoyaltyPercentage: 0
         }));
+        const tokenBondingAcct = (await tokenBondingProgram.getTokenBonding(
+          tokenBonding
+        )) as TokenBondingV0;
 
         await tokenBondingProgram.buy({
           tokenBonding,
@@ -902,25 +909,50 @@ describe("spl-token-bonding", () => {
 
         await tokenBondingProgram.buy({
           tokenBonding,
-          desiredTargetAmount: new BN(100000000),
+          desiredTargetAmount: new BN(100_000_000_00000),
+          slippage: 0.5,
+        });
+
+        // Ensure at high prices, the price stays consistent
+        const ata = await Token.getAssociatedTokenAddress(
+          ASSOCIATED_TOKEN_PROGRAM_ID,
+          TOKEN_PROGRAM_ID,
+          baseMint,
+          me
+        );
+        const pre = (await provider.connection.getTokenAccountBalance(ata))!.value.uiAmount!;
+        await tokenBondingProgram.buy({
+          tokenBonding,
+          desiredTargetAmount: new BN(50),
+          slippage: 0.5,
+        });
+        await tokenBondingProgram.buy({
+          tokenBonding,
+          desiredTargetAmount: new BN(80),
+          slippage: 0.5,
+        });
+        await tokenBondingProgram.sell({
+          tokenBonding,
+          targetAmount: new BN(50 + 80),
+          slippage: 0.5,
+        });
+        const post = (await provider.connection.getTokenAccountBalance(ata))!.value.uiAmount!;
+        expect(roundToDecimals(post, DECIMALS - 1)).to.eq(roundToDecimals(pre, DECIMALS - 1)) // Expect one smallest unit of slippage
+
+
+        await tokenBondingProgram.sell({
+          tokenBonding,
+          targetAmount: new BN(9000000000000),
           slippage: 0.5,
         });
 
         await tokenBondingProgram.sell({
           tokenBonding,
-          targetAmount: new BN(90000000),
+          targetAmount: new BN(1000000005000),
           slippage: 0.5,
         });
 
-        await tokenBondingProgram.sell({
-          tokenBonding,
-          targetAmount: new BN(10005000),
-          slippage: 0.5,
-        });
 
-        const tokenBondingAcct = (await tokenBondingProgram.getTokenBonding(
-          tokenBonding
-        )) as TokenBondingV0;
 
         await tokenUtils.expectBalanceWithin(tokenBondingAcct.baseStorage, 0, 0.04); // Rounding errors always go in base storage favor, so nobody can rob with wiggling
         await tokenUtils.expectAtaBalance(me, tokenBondingAcct.targetMint, 0);

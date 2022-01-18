@@ -15,10 +15,10 @@ pub mod arg;
 pub mod curve;
 pub mod error;
 pub mod precise_number;
+pub mod signed_precise_number;
 pub mod state;
 pub mod uint;
 pub mod util;
-pub mod signed_precise_number;
 
 declare_id!("TBondmkCYxaPCKG4CHYfVTcwQ8on31xnJrPzk8F8WsS");
 
@@ -302,12 +302,16 @@ pub mod spl_token_bonding {
       let price_prec = curve
         .definition
         .price(
-          ctx.accounts.clock.unix_timestamp.checked_sub(token_bonding.go_live_unix_time).unwrap(),
+          ctx
+            .accounts
+            .clock
+            .unix_timestamp
+            .checked_sub(token_bonding.go_live_unix_time)
+            .unwrap(),
           &base_amount,
           &target_supply,
           &amount_prec,
           false,
-          args.root_estimates,
         )
         .or_arith_error()?;
 
@@ -344,11 +348,15 @@ pub mod spl_token_bonding {
       let amount_prec = curve
         .definition
         .expected_target_amount(
-          ctx.accounts.clock.unix_timestamp.checked_sub(token_bonding.go_live_unix_time).unwrap(),
+          ctx
+            .accounts
+            .clock
+            .unix_timestamp
+            .checked_sub(token_bonding.go_live_unix_time)
+            .unwrap(),
           &base_amount,
           &target_supply,
           &price_prec,
-          args.root_estimates,
         )
         .or_arith_error()?;
 
@@ -522,12 +530,16 @@ pub mod spl_token_bonding {
     let reclaimed_prec = curve
       .definition
       .price(
-        ctx.accounts.clock.unix_timestamp.checked_sub(token_bonding.go_live_unix_time).unwrap(),
+        ctx
+          .accounts
+          .clock
+          .unix_timestamp
+          .checked_sub(token_bonding.go_live_unix_time)
+          .unwrap(),
         &base_amount,
         &target_supply,
         &amount_minus_royalties_prec,
         true,
-        args.root_estimates,
       )
       .or_arith_error()?;
 

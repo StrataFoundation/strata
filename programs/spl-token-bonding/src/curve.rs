@@ -5,8 +5,6 @@ use crate::{
 };
 use std::convert::*;
 
-const ITERATIONS: u32 = 2;
-
 pub trait Curve {
   fn price(
     &self,
@@ -15,7 +13,6 @@ pub trait Curve {
     target_supply: &PreciseNumber,
     amount: &PreciseNumber,
     sell: bool,
-    root_estimates: Option<[u128; 2]>,
   ) -> Option<PreciseNumber>;
   fn expected_target_amount(
     &self,
@@ -23,7 +20,6 @@ pub trait Curve {
     base_amount: &PreciseNumber,
     target_supply: &PreciseNumber,
     reserve_change: &PreciseNumber,
-    root_estimates: Option<[u128; 2]>,
   ) -> Option<PreciseNumber>;
 }
 
@@ -34,7 +30,6 @@ impl Curve for PrimitiveCurve {
     base_amount: &PreciseNumber,
     target_supply: &PreciseNumber,
     reserve_change: &PreciseNumber,
-    root_estimates: Option<[u128; 2]>,
   ) -> Option<PreciseNumber> {
     if base_amount.eq(&ZERO_PREC) || target_supply.eq(&ZERO_PREC) {
       match *self {
@@ -54,11 +49,6 @@ impl Curve for PrimitiveCurve {
             let frac_prec = PreciseNumber::new(u128::try_from(frac).ok()?)?;
             let pow = &pow_prec.checked_div(&frac_prec)?;
             let one_plus_k = &ONE_PREC.checked_add(&pow)?;
-
-            one_plus_k.print();
-            reserve_change.print();
-            c_prec.print();
-            ONE_PREC.checked_div(&one_plus_k)?.print();
 
             let res = one_plus_k
               .checked_mul(reserve_change)?
@@ -115,7 +105,6 @@ impl Curve for PrimitiveCurve {
     target_supply: &PreciseNumber,
     amount: &PreciseNumber,
     sell: bool,
-    root_estimates: Option<[u128; 2]>,
   ) -> Option<PreciseNumber> {
     if base_amount.eq(&ZERO_PREC) || target_supply.eq(&ZERO_PREC) {
       match *self {
@@ -130,10 +119,10 @@ impl Curve for PrimitiveCurve {
           let pow_prec = PreciseNumber::new(u128::try_from(pow).ok()?)?;
           let frac_prec = PreciseNumber::new(u128::try_from(frac).ok()?)?;
           let one_plus_k_prec = pow_prec.checked_div(&frac_prec)?.checked_add(&ONE_PREC)?;
-          b_prec.checked_mul(amount).unwrap().checked_add(
+          b_prec.checked_mul(amount)?.checked_add(
             &c_prec
-              .checked_mul(&amount.pow(&one_plus_k_prec).unwrap()).unwrap()
-              .checked_div(&one_plus_k_prec).unwrap(),
+              .checked_mul(&amount.pow(&one_plus_k_prec)?)?
+              .checked_div(&one_plus_k_prec)?,
           )
         }
       }
@@ -155,8 +144,7 @@ impl Curve for PrimitiveCurve {
             let one_plus_k_prec = pow_prec.checked_div(&frac_prec)?.checked_add(&ONE_PREC)?;
 
             let s_k1 = &target_supply.pow(&one_plus_k_prec)?;
-            let s_plus_ds_k1 =
-              s_plus_ds.pow(&one_plus_k_prec)?;
+            let s_plus_ds_k1 = s_plus_ds.pow(&one_plus_k_prec)?;
 
             // PreciseNumbers cannot be negative. If we're selling, S + dS is less than S.
             // Swap the two around. This will invert the sine of this function, but since sell = true they are expecting a positive number
@@ -232,20 +220,14 @@ impl Curve for PiecewiseCurve {
     target_supply: &PreciseNumber,
     amount: &PreciseNumber,
     sell: bool,
-    root_estimates: Option<[u128; 2]>,
   ) -> Option<PreciseNumber> {
     match self {
       PiecewiseCurve::TimeV0 { curves } => {
         let curve = curves.iter().rev().find(|c| c.offset <= time_offset)?;
 
-        let price_opt = curve.curve.price(
-          time_offset,
-          base_amount,
-          target_supply,
-          amount,
-          sell,
-          root_estimates,
-        );
+        let price_opt = curve
+          .curve
+          .price(time_offset, base_amount, target_supply, amount, sell);
 
         price_opt.and_then(|p| {
           // Add shock absorbtion to make price continuous
@@ -267,7 +249,6 @@ impl Curve for PiecewiseCurve {
     base_amount: &PreciseNumber,
     target_supply: &PreciseNumber,
     reserve_change: &PreciseNumber,
-    root_estimates: Option<[u128; 2]>,
   ) -> Option<PreciseNumber> {
     match self {
       PiecewiseCurve::TimeV0 { curves } => {
@@ -280,7 +261,6 @@ impl Curve for PiecewiseCurve {
           base_amount,
           target_supply,
           &reserve_change.checked_sub(&fees)?,
-          root_estimates,
         )
       }
     }
