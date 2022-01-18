@@ -33,7 +33,7 @@ jobs:
 
   test-unit:
     name: Rust Unit Tests
-        runs-on: ubuntu-18.04
+    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/setup/
@@ -48,6 +48,7 @@ jobs:
             ~/.cargo/git/db/
           key: cargo-${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
       - run: cargo test --lib
+
 
   test-contracts:
     name: Test Anchor Contracts
