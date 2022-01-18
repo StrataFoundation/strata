@@ -70,7 +70,7 @@ pub fn precise_supply_amt(amt: u64, mint: &Account<Mint>) -> PreciseNumber {
     value: InnerUint::from(amt)
       .checked_mul(InnerUint::from(get_u128_pow_10(12_u8 - mint.decimals)))
       .unwrap()
-      .checked_mul(InnerUint::from(1_000_000_000_000u64))
+      .checked_mul(InnerUint::from(1_000_000u64)) // Add 6 precision
       .unwrap(),
   }
 }

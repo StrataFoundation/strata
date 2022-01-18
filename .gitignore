@@ -18,3 +18,6 @@ oyster-common
 .idea/inspectionProfiles/Project_Default.xml
 docker-target
 scratch*
+coverage
+**/*.profraw
+programs/spl-token-staking/proptest-regressions/precise_number.txt

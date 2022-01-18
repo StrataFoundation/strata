@@ -59,16 +59,6 @@ export interface IPricingCurve {
     targetRoyaltiesPercent: number,
     unixTime?: number
   ): number;
-  buyWithBaseRootEstimates(
-    baseAmountNum: number,
-    baseRoyaltiesPercent: number,
-    unixTime?: number
-  ): number[];
-  buyTargetAmountRootEstimates(
-    targetAmountNum: number,
-    targetRoyaltiesPercent: number,
-    unixTime?: number
-  ): number[];
 }
 
 type TimeCurveArgs = {
@@ -171,15 +161,6 @@ export class TimeCurve implements IPricingCurve {
 
     return subCurve.buyWithBaseAmount(baseAmountPostFees, baseRoyaltiesPercent, targetRoyaltiesPercent);
   }
-  buyWithBaseRootEstimates(baseAmountNum: number, baseRoyaltiesPercent: number, unixTime: number = now()): number[] {
-    const { subCurve, buyTransitionFees, offset } = this.currentCurve(unixTime);
-    const baseAmountPostFees = baseAmountNum * (1 - transitionFeesToPercent(unixTime - this.goLiveUnixTime - offset, buyTransitionFees));
-
-    return subCurve.buyWithBaseRootEstimates(baseAmountPostFees, baseRoyaltiesPercent);
-  }
-  buyTargetAmountRootEstimates(targetAmountNum: number, targetRoyaltiesPercent: number, unixTime: number = now()): number[] {
-    return this.currentCurve(unixTime).subCurve.buyTargetAmountRootEstimates(targetAmountNum, targetRoyaltiesPercent);
-  }
 }
 
 export class ExponentialCurve implements IPricingCurve {
@@ -207,47 +188,6 @@ export class ExponentialCurve implements IPricingCurve {
     this.baseStorage = baseStorage;
     this.baseMint = baseMint;
     this.targetMint = targetMint;
-  }
-
-  buyWithBaseRootEstimates(
-    baseAmountNum: number,
-    baseRoyaltiesPercent: number
-  ): number[] {
-    const S = supplyAsNum(this.targetMint);
-    const R = amountAsNum(this.baseStorage.amount, this.baseMint);
-    const dR = baseAmountNum * (1 - asDecimal(baseRoyaltiesPercent));
-
-    if (R == 0 || S == 0) {
-      return [Math.pow((dR * (1 + this.k)) / this.c, 1 / (1 + this.k)), 1];
-    } else {
-      /*
-        dS = -S + ((S^(1 + k) (R + dR))/R)^(1/(1 + k))
-      */
-
-      return [
-        Math.pow(S, 1 + this.k),
-        Math.pow((Math.pow(S, 1 + this.k) * (R + dR)) / R, 1 / (1 + this.k)),
-      ];
-    }
-  }
-
-  buyTargetAmountRootEstimates(
-    targetAmountNum: number,
-    targetRoyaltiesPercent: number
-  ): number[] {
-    const S = supplyAsNum(this.targetMint);
-    const dS = targetAmountNum * (1 / (1 - asDecimal(targetRoyaltiesPercent)));
-    const R = amountAsNum(this.baseStorage.amount, this.baseMint);
-
-    if (R == 0 || S == 0) {
-      return [Math.pow(dS, 1 + this.k), 1];
-    } else {
-      /*
-        (R / S^(1 + k)) ((S + dS)^(1 + k) - S^(1 + k))
-      */
-
-      return [Math.pow(S, 1 + this.k), Math.pow(S + dS, 1 + this.k)];
-    }
   }
 
   current(): number {

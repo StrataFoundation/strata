@@ -53,7 +53,6 @@ pub struct BuyTargetAmountV0Args {
 pub struct BuyV0Args {
   pub buy_with_base: Option<BuyWithBaseV0Args>,
   pub buy_target_amount: Option<BuyTargetAmountV0Args>,
-  pub root_estimates: Option<[u128; 2]>, // Required when computing an exponential. Greatly assists with newtonian root approximation, saving compute units
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
@@ -62,7 +61,6 @@ pub struct SellV0Args {
   pub target_amount: u64,
   // Minimum price to receive for this amount. Allows users to account and fail-fast for slippage.
   pub minimum_price: u64,
-  pub root_estimates: Option<[u128; 2]>, // Required when computing an exponential. Greatly assists with newtonian root approximation, saving compute units
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]

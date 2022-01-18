@@ -366,7 +366,6 @@ impl PreciseNumber {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use proptest::prelude::*;
 
   fn check_pow_approximation(base: InnerUint, exponent: InnerUint, expected: InnerUint) {
     let precision = InnerUint::from(5_000_000); // correct to at least 3 decimal places
@@ -504,39 +503,6 @@ mod tests {
     assert_eq!(root, 3); // actually 3.46572422
   }
 
-  fn check_square_root(check: &PreciseNumber) {
-    let epsilon = PreciseNumber {
-      value: InnerUint::from(10),
-    }; // correct within 11 decimals
-    let one = PreciseNumber::one();
-    let one_plus_epsilon = one.checked_add(&epsilon).unwrap();
-    let one_minus_epsilon = one.checked_sub(&epsilon).unwrap();
-    let approximate_root = check.sqrt().unwrap();
-    let lower_bound = approximate_root
-      .checked_mul(&one_minus_epsilon)
-      .unwrap()
-      .checked_pow(2)
-      .unwrap();
-    let upper_bound = approximate_root
-      .checked_mul(&one_plus_epsilon)
-      .unwrap()
-      .checked_pow(2)
-      .unwrap();
-    assert!(check.less_than_or_equal(&upper_bound));
-    assert!(check.greater_than_or_equal(&lower_bound));
-  }
-
-  #[test]
-  fn test_square_root_min_max() {
-    let test_roots = [
-      PreciseNumber::minimum_sqrt_base(),
-      PreciseNumber::maximum_sqrt_base(),
-    ];
-    for i in test_roots.iter() {
-      check_square_root(i);
-    }
-  }
-
   #[test]
   fn test_floor() {
     let whole_number = PreciseNumber::new(2).unwrap();
@@ -557,13 +523,5 @@ mod tests {
     let ceiling_again = ceiling.ceiling().unwrap();
     assert_eq!(whole_number.value, ceiling.value);
     assert_eq!(whole_number.value, ceiling_again.value);
-  }
-
-  proptest! {
-      #[test]
-      fn test_square_root(a in 0..u128::MAX) {
-          let a = PreciseNumber { value: InnerUint::from(a) };
-          check_square_root(&a);
-      }
   }
 }
