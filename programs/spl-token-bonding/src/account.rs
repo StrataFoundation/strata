@@ -5,6 +5,9 @@ use crate::error::ErrorCode;
 use crate::state::*;
 use anchor_lang::{prelude::*, solana_program};
 use anchor_spl::token::{Mint, Token, TokenAccount};
+use std::str::FromStr;
+
+const STRATA_KEY: &str = "45NuC1tpS8HvLtRqEGoBV1ebmAvbLAuKHpNk9rSuWQ2D";
 
 #[derive(Accounts)]
 pub struct CloseTokenAccount<'info> {
