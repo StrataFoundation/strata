@@ -1079,29 +1079,4 @@ describe("spl-token-bonding", () => {
         }
       )
   }
-
-  it("patches social token curve", async () => {
-    const socialCurve = await tokenBondingProgram.initializeCurve({
-      config: timeIncrease(new TimeCurveConfig()
-      .addCurve(0, new ExponentialCurveConfig({
-        c: 0,
-        b: 0.1, // 1 OPEN per 10 social token starting
-        pow: 0,
-        frac: 2
-      })))
-    });
-    const curve0 = await tokenBondingProgram.getCurve(socialCurve);
-
-    await tokenBondingProgram.rpc.patchCurve({
-      accounts: {
-        curve: socialCurve,
-        strata: me
-      }
-    });
-
-    const curve1 = await tokenBondingProgram.getCurve(socialCurve);
-
-    console.log(JSON.stringify(curve0, null, 2))
-    console.log(JSON.stringify(curve1, null, 2))
-  })
 });
