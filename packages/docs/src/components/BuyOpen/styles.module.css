@@ -1,0 +1,8 @@
+.container {
+  margin-bottom: var(--ifm-leading);
+  border-radius: var(--ifm-global-radius);
+  box-shadow: var(--ifm-global-shadow-lw);
+  border: 1px solid #ccc;
+  overflow: hidden;
+  padding: 12px;
+}
