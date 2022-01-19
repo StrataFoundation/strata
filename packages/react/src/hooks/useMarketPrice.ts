@@ -2,17 +2,16 @@ import { Connection, PublicKey } from "@solana/web3.js";
 import { useEffect, useState } from "react";
 import { Order } from "@project-serum/serum/lib/market";
 import { Market } from "@project-serum/serum";
+import { useConnection } from "@solana/wallet-adapter-react";
 
 const SERUM_PROGRAM_ID = new PublicKey(
   "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin"
 );
 
-// TODO: Use actual connection. But this can't happen in dev
-let connection = new Connection("https://api.mainnet-beta.solana.com");
-
 export const useMarketPrice = (
   marketAddress: PublicKey
 ): number | undefined => {
+  const { connection } = useConnection();
   const [price, setPrice] = useState<number>();
   useEffect(() => {
     const fetch = async () => {
