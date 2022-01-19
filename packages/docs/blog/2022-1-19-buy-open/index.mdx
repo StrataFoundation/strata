@@ -13,12 +13,16 @@ If you have been following closely to our small corner of the web you should be 
 
 In short, Open Collective is the default collective of the Strata Protocol. And OPEN is the token for this collective. Any token made on Strata that isnt directly bonded to SOL, USDC, or any other cryptocurrency will be automatically bonded to OPEN by default.
 
-The bonding curve for OPEN will become unfrozen at 9:00AM UTC Today. It is setup in a way to provide a [fair launch](/blog/open-collective#open-fair-launch) to all who participate in the early moments of its price discovery. If you would like be one of those participates, please ensure you have Solana wallet and have funded it with some SOL. After that all you need to do is wait for the curve to become unfrozen and utilize the UI below.
+The bonding curve for OPEN will become unfrozen at 9:00AM UTC Today. It is setup in a way to provide a [fair launch](/blog/open-collective#open-fair-launch) to all who participate in the early moments of its price discovery. If you would like be one of those participates, please ensure you have a Solana wallet and have funded it with SOL. After that, all you need to do is wait for the curve to become unfrozen and utilize the UI below.
 
 import { BuyOpen } from "@site/src/components/BuyOpen";
 
 <BuyOpen />
 
+The OPEN token will launch on a bonding curve with the formula
+$$
+ P = c * S^k
+$$
 The parameters for the **OPEN** fair launch are as follows.
 * **First 6 hours** of launch the curve price remains fixed
 * **6 hours** after launch there will be a 9.09091% bump
