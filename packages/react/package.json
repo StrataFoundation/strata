@@ -1,6 +1,6 @@
 {
   "name": "@strata-foundation/react",
-  "version": "2.1.5",
+  "version": "2.1.6",
   "description": "React utils for strata foundation",
   "source": "src/index.ts",
   "main": "dist/lib/index.js",
@@ -31,8 +31,8 @@
     "@solana/wallet-adapter-react": "0.15.1",
     "@solana/wallet-adapter-wallets": "0.14.0",
     "@solana/web3.js": "^1.29.2",
-    "@strata-foundation/spl-token-bonding": "^2.1.5",
-    "@strata-foundation/spl-token-collective": "^2.1.5",
+    "@strata-foundation/spl-token-bonding": "^2.1.6",
+    "@strata-foundation/spl-token-collective": "^2.1.6",
     "@strata-foundation/spl-utils": "^2.1.2",
     "@toruslabs/solana-embed": "0.0.9",
     "buffer": "^6.0.3",
