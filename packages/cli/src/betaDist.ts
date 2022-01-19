@@ -1,11 +1,23 @@
 import * as anchor from "@project-serum/anchor";
 import { Provider } from "@project-serum/anchor";
 import { createMint, getTokenAccount } from "@project-serum/common";
-import { ASSOCIATED_TOKEN_PROGRAM_ID, NATIVE_MINT, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  NATIVE_MINT,
+  Token,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
-import { ExponentialCurveConfig, SplTokenBonding } from "@strata-foundation/spl-token-bonding";
+import {
+  ExponentialCurveConfig,
+  SplTokenBonding,
+} from "@strata-foundation/spl-token-bonding";
 import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
-import { Data, getMetadata, SplTokenMetadata } from "@strata-foundation/spl-utils";
+import {
+  Data,
+  getMetadata,
+  SplTokenMetadata,
+} from "@strata-foundation/spl-utils";
 import fs from "fs";
 import BN from "bn.js";
 
@@ -23,15 +35,17 @@ async function mintTo(
     true
   );
   const mintTx = new Transaction();
-  if (!await provider.connection.getAccountInfo(ata)) {
-    mintTx.add(Token.createAssociatedTokenAccountInstruction(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
-      mint,
-      ata,
-      destination,
-      provider.wallet.publicKey
-    ));
+  if (!(await provider.connection.getAccountInfo(ata))) {
+    mintTx.add(
+      Token.createAssociatedTokenAccountInstruction(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        mint,
+        ata,
+        destination,
+        provider.wallet.publicKey
+      )
+    );
   }
   mintTx.add(
     Token.createMintToInstruction(
@@ -42,28 +56,28 @@ async function mintTo(
       [],
       amount
     )
-  )
+  );
   await provider.send(mintTx);
 }
 
 async function createTestBwum(provider: Provider): Promise<PublicKey> {
-  const betaWumDest1 = new PublicKey("Ge2eyjRosNwZAcQDQqJ3R4gXBy2BcpYstZYWQDUq5Rg");
-  const betaWumDest2 = new PublicKey("wwm872RcvN7XwNZBjXLSHfAYrFUATKgkV9v3BewHj5M");
-  const splTokenMetadata = await SplTokenMetadata.init(provider);
-  const bwum = await createMint(
-    provider,
-    provider.wallet.publicKey,
-    9
+  const betaWumDest1 = new PublicKey(
+    "Ge2eyjRosNwZAcQDQqJ3R4gXBy2BcpYstZYWQDUq5Rg"
   );
+  const betaWumDest2 = new PublicKey(
+    "wwm872RcvN7XwNZBjXLSHfAYrFUATKgkV9v3BewHj5M"
+  );
+  const splTokenMetadata = await SplTokenMetadata.init(provider);
+  const bwum = await createMint(provider, provider.wallet.publicKey, 9);
   await splTokenMetadata.createMetadata({
     data: new Data({
-      name: 'Net bWUM Test',
-      symbol: 'nbwum',
+      name: "Net bWUM Test",
+      symbol: "nbwum",
       uri: "https://wumbo-token-metadata.s3.us-east-2.amazonaws.com/bwum.json",
       creators: null,
-      sellerFeeBasisPoints: 0
+      sellerFeeBasisPoints: 0,
     }),
-    mint: bwum
+    mint: bwum,
   });
   await mintTo(provider, bwum, 80 * Math.pow(10, 9), betaWumDest1);
   await mintTo(provider, bwum, 20 * Math.pow(10, 9), betaWumDest2);
@@ -72,15 +86,14 @@ async function createTestBwum(provider: Provider): Promise<PublicKey> {
 }
 
 async function run() {
-  console.log(process.env.ANCHOR_PROVIDER_URL)
+  console.log(process.env.ANCHOR_PROVIDER_URL);
   anchor.setProvider(anchor.Provider.env());
   const provider = anchor.getProvider();
   const me = provider.wallet.publicKey;
-  
 
   const tokenBondingSdk = await SplTokenBonding.init(provider);
   await tokenBondingSdk.initializeSolStorage({
-    mintKeypair: Keypair.generate()
+    mintKeypair: Keypair.generate(),
   });
   const bwum = new PublicKey("HvdnoodTaRSaB7AEtm7QaDveqW9M3r4hmoNaqTggQkVp");
   console.log(`Using bwum ${bwum.toBase58()}`);
@@ -98,9 +111,10 @@ async function run() {
       c: 0,
       b: 1,
       pow: 0,
-      frac: 1
-    })
+      frac: 1,
+    }),
   });
+
   const { tokenBonding: bonding } = await tokenBondingSdk.createTokenBonding({
     curve,
     baseMint: NATIVE_MINT,
@@ -111,25 +125,24 @@ async function run() {
     buyTargetRoyaltyPercentage: 0,
     sellBaseRoyaltyPercentage: 0,
     sellTargetRoyaltyPercentage: 0,
-    index: 1
+    index: 1,
   });
   console.log(`Created bonding ${bonding.toBase58()}`);
 
-  const wSolBalance = (await provider.connection.getAccountInfo(wSolAcct))!.lamports
+  const wSolBalance = (await provider.connection.getAccountInfo(wSolAcct))!
+    .lamports;
   const bondingAcct = (await tokenBondingSdk.getTokenBonding(bonding))!;
   console.log(`Transferring ${wSolBalance} lamports to the reserves`);
-  
-  const { instructions, signers, output: { destination } } = await tokenBondingSdk.buyBondingWrappedSolInstructions({
-    amount: new BN(wSolBalance)
+
+  const {
+    instructions,
+    signers,
+    output: { destination },
+  } = await tokenBondingSdk.buyBondingWrappedSolInstructions({
+    amount: new BN(wSolBalance),
   });
   instructions.unshift(
-    Token.createCloseAccountInstruction(
-      TOKEN_PROGRAM_ID,
-      wSolAcct,
-      me,
-      me,
-      []
-    )
+    Token.createCloseAccountInstruction(TOKEN_PROGRAM_ID, wSolAcct, me, me, [])
   );
   instructions.push(
     Token.createTransferInstruction(
@@ -140,13 +153,15 @@ async function run() {
       [],
       wSolBalance
     )
-  )
+  );
   await tokenBondingSdk.sendInstructions(instructions, signers, me);
-  const reservesBalance = (await getTokenAccount(provider, bondingAcct.baseStorage)).amount;
-  console.log(`Reserves Balance: ${reservesBalance}`)
+  const reservesBalance = (
+    await getTokenAccount(provider, bondingAcct.baseStorage)
+  ).amount;
+  console.log(`Reserves Balance: ${reservesBalance}`);
 }
 
-run().catch(e => {
+run().catch((e) => {
   console.error(e);
   process.exit(1);
-})
+});
