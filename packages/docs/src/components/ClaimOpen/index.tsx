@@ -1,4 +1,5 @@
 import BrowserOnly from "@docusaurus/BrowserOnly";
+import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import { useEndpoint } from "@site/src/contexts/Endpoint";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -6,7 +7,7 @@ import {
   WalletModalProvider,
   WalletMultiButton,
 } from "@solana/wallet-adapter-react-ui";
-import { clusterApiUrl } from "@solana/web3.js";
+import { clusterApiUrl, PublicKey } from "@solana/web3.js";
 import {
   useBondingPricing,
   useOwnedAmount,
@@ -14,8 +15,10 @@ import {
   useTokenBonding,
   useSwap,
   Spinner,
+  useStrataSdks,
 } from "@strata-foundation/react";
 import React, { useState, useEffect } from "react";
+import { useAsyncCallback } from "react-async-hook";
 import styles from "./styles.module.css";
 
 const TOKEN_BONDING = "BBZ6tFH5b6tWxWebUe7xyWLZ3PHVCLAdRArAEACuJKHe";
@@ -44,42 +47,49 @@ const MainnetGuard = ({ children = null as any }) => {
 const roundToDecimals = (num: number, decimals: number): number =>
   Math.trunc(num * Math.pow(10, decimals)) / Math.pow(10, decimals);
 
+async function exchange(tokenBondingSdk: SplTokenBonding, amount: number): Promise<void> {
+  await tokenBondingSdk.sell({
+    tokenBonding: new PublicKey(TOKEN_BONDING),
+    targetAmount: amount,
+    slippage: 0.01
+  })
+}
+
 export const ClaimO = () => {
   const [success, setSuccess] = useState(false);
   const [internalError, setInternalError] = useState<Error>();
   const [claimableOPEN, setClaimableOPEN] = useState<number>();
-  const { loading: swapping, error, execute: swap } = useSwap();
   const tokenBondingKey = usePublicKey(TOKEN_BONDING);
   const { connected, publicKey } = useWallet();
   const { info: tokenBonding, loading: loadingBonding } =
     useTokenBonding(tokenBondingKey);
+
+  const { tokenBondingSdk } = useStrataSdks();
+
+  const { execute: swap, loading: swapping, error } = useAsyncCallback(exchange)
+
   const { pricing, loading: loadingPricing } =
     useBondingPricing(tokenBondingKey);
-  const ownedBase = useOwnedAmount(tokenBonding?.baseMint);
+  const ownedTarget = useOwnedAmount(tokenBonding?.targetMint);
 
   useEffect(() => {
-    if (ownedBase && ownedBase >= 0 && tokenBonding && pricing) {
+    if (ownedTarget && ownedTarget >= 0 && tokenBonding && pricing) {
       const claimable = pricing.swap(
-        +ownedBase,
+        +ownedTarget,
+        tokenBonding.targetMint,
         tokenBonding.baseMint,
-        tokenBonding.targetMint
       );
 
-      setClaimableOPEN(ownedBase == 0 ? 0 : roundToDecimals(claimable, 9));
+      setClaimableOPEN(ownedTarget == 0 ? 0 : roundToDecimals(claimable, 9));
     }
-  }, [tokenBonding, pricing, ownedBase, setClaimableOPEN]);
+  }, [tokenBonding, pricing, ownedTarget, setClaimableOPEN]);
 
   const handleExchange = async () => {
     try {
-      await swap({
-        baseAmount: +ownedBase!,
-        baseMint: tokenBonding!.baseMint,
-        targetMint: tokenBonding!.targetMint,
-        slippage: 0.05,
-      });
+      await swap(tokenBondingSdk!, +ownedTarget!);
 
       setSuccess(true);
-    } catch (e) {
+    } catch (e: any) {
       setInternalError(e);
     }
   };
@@ -96,7 +106,7 @@ export const ClaimO = () => {
         </WalletModalProvider>
       )}
       {isLoading && <Spinner />}
-      {connectedNotLoading && !success && !ownedBase && !claimableOPEN && (
+      {connectedNotLoading && !success && !ownedTarget && !claimableOPEN && (
         <span>
           No netbWUM Found. Make sure you have the wallet that participated in
           the Wum.bo beta connected, then refresh this page.
@@ -109,10 +119,10 @@ export const ClaimO = () => {
           </span>
         ))}
       {success && <span>Successfully swapped netbWUM to OPEN!</span>}
-      {connectedNotLoading && !success && ownedBase && claimableOPEN && (
+      {connectedNotLoading && !success && ownedTarget && claimableOPEN && (
         <div style={{ display: "flex", flexDirection: "column" }}>
           <p>
-            Exchange {ownedBase.toFixed(4)} netbWUM for{" "}
+            Exchange {ownedTarget.toFixed(4)} netbWUM for{" "}
             {claimableOPEN.toFixed(4)} OPEN
           </p>
           <button
