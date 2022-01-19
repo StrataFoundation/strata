@@ -9,7 +9,6 @@ use crate::{token_metadata, token_metadata::Metadata};
 use anchor_lang::{prelude::*, solana_program, solana_program::system_program};
 use anchor_spl::token::{Mint, Token, TokenAccount};
 use spl_token_bonding::state::TokenBondingV0;
-use std::str::FromStr;
 
 #[derive(Accounts)]
 pub struct CloseTokenAccount<'info> {
@@ -430,56 +429,4 @@ pub struct ChangeOptStatusUnclaimedV0<'info> {
   pub token_bonding_update_accounts: StaticUpdateTokenBondingV0<'info>,
   #[account(address = spl_token_bonding::id())]
   pub token_bonding_program: AccountInfo<'info>,
-}
-
-
-const STRATA_KEY: &str = "45NuC1tpS8HvLtRqEGoBV1ebmAvbLAuKHpNk9rSuWQ2D";
-
-#[derive(Accounts)]
-pub struct PatchRoyalties<'info> {
-  #[account(address = Pubkey::from_str(STRATA_KEY).unwrap())]
-  pub strata: Signer<'info>,
-  #[account(
-    constraint = mint_token_ref.is_claimed,
-    constraint = mint_token_ref.token_bonding.ok_or::<ProgramError>(ErrorCode::NoBonding.into())? == token_bonding.key(),
-  )]
-  pub mint_token_ref: Box<Account<'info, TokenRefV0>>,
-  #[account(
-    mut,
-    has_one = base_mint,
-    has_one = target_mint
-  )]
-  pub token_bonding: Box<Account<'info, TokenBondingV0>>,
-
-  #[account(address = spl_token_bonding::id())]
-  pub token_bonding_program: AccountInfo<'info>,
-
-  #[account(
-    constraint = *base_mint.to_account_info().owner == spl_token::ID
-  )]
-  pub base_mint: Box<Account<'info, Mint>>,
-  #[account(
-    constraint = target_mint.is_initialized,
-    constraint = *target_mint.to_account_info().owner == *base_mint.to_account_info().owner
-  )]
-  pub target_mint: Box<Account<'info, Mint>>,
-  #[account(
-    constraint = buy_base_royalties.mint == *base_mint.to_account_info().key
-  )]
-  pub buy_base_royalties: Box<Account<'info, TokenAccount>>,
-
-  #[account(
-    constraint = buy_target_royalties.mint == *target_mint.to_account_info().key
-  )] // Will init for you, since target mint doesn't exist yet.
-  pub buy_target_royalties: Box<Account<'info, TokenAccount>>,
-
-  #[account(
-    constraint = sell_base_royalties.mint == *base_mint.to_account_info().key
-  )]
-  pub sell_base_royalties: Box<Account<'info, TokenAccount>>,
-
-  #[account(
-    constraint = sell_target_royalties.mint == *target_mint.to_account_info().key
-  )] // Will init for you, since target mint doesn't exist yet.
-  pub sell_target_royalties: Box<Account<'info, TokenAccount>>,
 }
