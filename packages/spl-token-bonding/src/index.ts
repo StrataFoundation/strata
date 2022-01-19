@@ -65,8 +65,6 @@ interface IPrimitiveCurve {
   toRawPrimitiveConfig(): any;
 }
 
-
-
 /**
  * Curve configuration for c(S^(pow/frac)) + b
  */
@@ -136,9 +134,19 @@ export class ExponentialCurveConfig implements ICurveConfig, IPrimitiveCurve {
  * Curve configuration that allows the curve to change parameters at discrete time offsets from the go live date
  */
 export class TimeCurveConfig implements ICurveConfig {
-  curves: { curve: IPrimitiveCurve; offset: BN, buyTransitionFees: ITransitionFee | null, sellTransitionFees: ITransitionFee | null }[] = [];
+  curves: {
+    curve: IPrimitiveCurve;
+    offset: BN;
+    buyTransitionFees: ITransitionFee | null;
+    sellTransitionFees: ITransitionFee | null;
+  }[] = [];
 
-  addCurve(timeOffset: number, curve: IPrimitiveCurve, buyTransitionFees: ITransitionFee | null = null, sellTransitionFees: ITransitionFee | null = null): TimeCurveConfig {
+  addCurve(
+    timeOffset: number,
+    curve: IPrimitiveCurve,
+    buyTransitionFees: ITransitionFee | null = null,
+    sellTransitionFees: ITransitionFee | null = null
+  ): TimeCurveConfig {
     if (this.curves.length == 0 && timeOffset != 0) {
       throw new Error("First time offset must be 0");
     }
@@ -147,7 +155,7 @@ export class TimeCurveConfig implements ICurveConfig {
       curve,
       offset: new BN(timeOffset),
       buyTransitionFees,
-      sellTransitionFees
+      sellTransitionFees,
     });
 
     return this;
@@ -158,12 +166,14 @@ export class TimeCurveConfig implements ICurveConfig {
       definition: {
         timeV0: {
           // @ts-ignore
-          curves: this.curves.map(({ curve, offset, buyTransitionFees, sellTransitionFees }) => ({
-            curve: curve.toRawPrimitiveConfig(),
-            offset,
-            buyTransitionFees,
-            sellTransitionFees
-          })),
+          curves: this.curves.map(
+            ({ curve, offset, buyTransitionFees, sellTransitionFees }) => ({
+              curve: curve.toRawPrimitiveConfig(),
+              offset,
+              buyTransitionFees,
+              sellTransitionFees,
+            })
+          ),
         },
       },
     };
@@ -474,8 +484,10 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
    * @returns Instructions needed to create sol storage
    */
   async initializeSolStorageInstructions({
-    mintKeypair
-  }: { mintKeypair: Keypair }): Promise<InstructionResult<null>> {
+    mintKeypair,
+  }: {
+    mintKeypair: Keypair;
+  }): Promise<InstructionResult<null>> {
     const exists = await this.getState();
     if (exists) {
       return {
@@ -586,8 +598,10 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
    * Admin command run once to initialize the smart contract
    */
   initializeSolStorage({
-    mintKeypair
-  }: { mintKeypair: Keypair }): Promise<null> {
+    mintKeypair,
+  }: {
+    mintKeypair: Keypair;
+  }): Promise<null> {
     return this.execute(this.initializeSolStorageInstructions({ mintKeypair }));
   }
 
@@ -1411,7 +1425,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       buyWithBase = {
         baseAmount: toBN(baseAmount, baseMint),
         minimumTargetAmount: new BN(
-          Math.ceil(Math.ceil(min * Math.pow(10, targetMint.decimals) * (1 - slippage)))
+          Math.ceil(
+            Math.ceil(min * Math.pow(10, targetMint.decimals) * (1 - slippage))
+          )
         ),
       };
     }
@@ -1868,7 +1884,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
   ): Promise<IPricingCurve> {
     const curve = await this.getCurve(key);
     // @ts-ignore
-    return fromCurve(curve, baseStorage, baseMint, targetMint, goLiveUnixTime );
+    return fromCurve(curve, baseStorage, baseMint, targetMint, goLiveUnixTime);
   }
 
   async getPricing(
@@ -1892,7 +1908,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     tokenBondingKey: PublicKey | undefined,
     stopAtMint?: PublicKey | undefined
   ): Promise<BondingHierarchy | undefined> {
-    const wrappedSolMint = (await this.getState())?.wrappedSolMint!
+    const wrappedSolMint = (await this.getState())?.wrappedSolMint!;
     if (stopAtMint?.equals(NATIVE_MINT)) {
       stopAtMint = wrappedSolMint;
     }
@@ -1916,7 +1932,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         : await this.getBondingHierarchy(parentKey, stopAtMint),
       tokenBonding,
       pricingCurve,
-      wrappedSolMint
+      wrappedSolMint,
     });
     (ret.parent || ({} as any)).child = ret;
     return ret;
