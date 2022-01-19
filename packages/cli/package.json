@@ -17,8 +17,7 @@
         "watch": "yarn run copy-files && node src/idlToTs",
         "bootstrap": "tsc && node dist/lib/bootstrap",
         "create-governance-token": "tsc && node dist/lib/createGovernanceToken",
-        "beta-dist": "tsc && node dist/lib/betaDist",
-        "patch": "tsc && node dist/lib/patch"
+        "beta-dist": "tsc && node dist/lib/betaDist"
     },
     "dependencies": {
         "@project-serum/common": "^0.0.1-beta.3",
