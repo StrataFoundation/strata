@@ -18,8 +18,7 @@ import {
 import React, { useState, useEffect } from "react";
 import styles from "./styles.module.css";
 
-// TODO: add the new netbWUM => OPEN here;
-const TOKEN_BONDING = "";
+const TOKEN_BONDING = "BBZ6tFH5b6tWxWebUe7xyWLZ3PHVCLAdRArAEACuJKHe";
 
 const MainnetGuard = ({ children = null as any }) => {
   const { endpoint, setEndpoint } = useEndpoint();
