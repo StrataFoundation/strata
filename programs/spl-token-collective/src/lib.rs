@@ -572,42 +572,4 @@ pub mod spl_token_collective {
 
     Ok(())
   }
-
-  pub fn patch_royalties(
-    ctx: Context<PatchRoyalties>
-  ) -> ProgramResult {
-    let token_bonding = ctx.accounts.token_bonding.clone();
-
-    let seeds: &[&[&[u8]]] = &[&[
-      b"mint-token-ref",
-      ctx.accounts.target_mint.to_account_info().key.as_ref(),
-      &[ctx.accounts.mint_token_ref.bump_seed],
-    ]];
-    spl_token_bonding::cpi::update_token_bonding_v0(
-      CpiContext::new_with_signer(
-        ctx.accounts.token_bonding_program.clone(),
-        UpdateTokenBondingV0 {
-          token_bonding: ctx.accounts.token_bonding.to_account_info().clone(),
-          general_authority: ctx.accounts.mint_token_ref.to_account_info().clone(),
-          base_mint: ctx.accounts.base_mint.to_account_info().clone(),
-          target_mint: ctx.accounts.target_mint.to_account_info().clone(),
-          buy_base_royalties: ctx.accounts.buy_base_royalties.to_account_info().clone(),
-          sell_base_royalties: ctx.accounts.sell_base_royalties.to_account_info().clone(),
-          buy_target_royalties: ctx.accounts.buy_target_royalties.to_account_info().clone(),
-          sell_target_royalties: ctx.accounts.sell_target_royalties.to_account_info().clone(),
-        },
-        seeds,
-      ),
-      UpdateTokenBondingV0Args {
-        general_authority: token_bonding.general_authority,
-        buy_base_royalty_percentage: token_bonding.buy_base_royalty_percentage,
-        buy_target_royalty_percentage: token_bonding.buy_target_royalty_percentage,
-        sell_base_royalty_percentage: token_bonding.sell_base_royalty_percentage,
-        sell_target_royalty_percentage: token_bonding.sell_target_royalty_percentage,
-        buy_frozen: token_bonding.buy_frozen,
-      },
-    )?;
-
-    Ok(())
-  }
 }
