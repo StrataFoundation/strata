@@ -1,7 +1,6 @@
 #![allow(clippy::or_fun_call)]
 
 use crate::token_metadata::update_metadata_account;
-use std::str::FromStr;
 use {
   anchor_lang::prelude::*,
   anchor_spl::token::{transfer, Transfer},
@@ -22,11 +21,6 @@ use token_metadata::UpdateMetadataAccount;
 
 use crate::token_metadata::UpdateMetadataAccountArgs;
 use crate::{account::*, arg::*, error::*, state::*, util::*};
-
-const WUMBO_KEY: &str = "Gzyvrg8gJfShKQwhVYFXV5utp86tTcMxSzrN7zcfebKj";
-
-const EARLY_LAUNCH_GO_LIVE: i64 = 1642604400; // Jan 19th 9am CST
-const LAUNCH_GO_LIVE: i64 = 1642690800; // Jan 20th 9am CST
 
 declare_id!("TCo1sfSr2nCudbeJPykbif64rG9K1JNMGzrtzvPmp3y");
 
@@ -87,7 +81,8 @@ pub fn get_collective(collective: UncheckedAccount) -> Option<CollectiveV0> {
 
 #[program]
 pub mod spl_token_collective {
-  use super::*;
+
+use super::*;
 
   pub fn initialize_collective_v0(
     ctx: Context<InitializeCollectiveV0>,
@@ -160,11 +155,6 @@ pub mod spl_token_collective {
       )?;
     }
 
-    let correct_go_live = initialize_args.token_bonding.go_live_unix_time >= LAUNCH_GO_LIVE;
-    if !correct_go_live {
-      return Err(ErrorCode::InvalidGoLive.into());
-    }
-
     initialize_social_token_v0(
       &mut ctx.accounts.initialize_args,
       &mut ctx.accounts.owner_token_ref,
@@ -213,19 +203,8 @@ pub mod spl_token_collective {
     }
 
     let timestamp = initialize_args.clock.unix_timestamp;
-    let wumbo = Pubkey::from_str(WUMBO_KEY).unwrap();
-    let is_wumbo = ctx.accounts.initialize_args.payer.key() == wumbo;
-    // TOOD: We can remove this after launch.
-    if timestamp > LAUNCH_GO_LIVE && initialize_args.token_bonding.go_live_unix_time > timestamp {
+    if initialize_args.token_bonding.go_live_unix_time > timestamp {
       return Err(ErrorCode::UnclaimedNotLive.into());
-    }
-
-    let set_go_live = initialize_args.token_bonding.go_live_unix_time;
-
-    let correct_go_live = (is_wumbo && set_go_live >= EARLY_LAUNCH_GO_LIVE)
-      || (!is_wumbo && set_go_live >= LAUNCH_GO_LIVE);
-    if !correct_go_live {
-      return Err(ErrorCode::InvalidGoLive.into());
     }
 
     if let Some(token_metadata_settings) = token_metadata_settings_opt {
@@ -287,7 +266,7 @@ pub mod spl_token_collective {
     let token_program = &ctx.accounts.token_program;
     let owner = &ctx.accounts.owner;
 
-    let royalty_accounts = vec![
+    let mut royalty_accounts = vec![
       [
         &mut ctx.accounts.buy_base_royalties,
         &mut ctx.accounts.new_buy_base_royalties,
@@ -305,6 +284,8 @@ pub mod spl_token_collective {
         &mut ctx.accounts.new_sell_target_royalties,
       ],
     ];
+    royalty_accounts.dedup_by(|a, b| a[0].key() == b[0].key());
+
     let seeds: &[&[&[u8]]] = &[&[
       b"mint-token-ref",
       ctx.accounts.target_mint.to_account_info().key.as_ref(),
@@ -320,29 +301,29 @@ pub mod spl_token_collective {
         i += 1;
       }
 
-      if old_royalty_account.owner == mint_token_ref.key() {
-        transfer(
-          CpiContext::new_with_signer(
+        if old_royalty_account.owner == mint_token_ref.key() {
+          transfer(
+            CpiContext::new_with_signer(
+              token_program.to_account_info().clone(),
+              Transfer {
+                from: old_royalty_account.to_account_info().clone(),
+                to: new_royalty_account.to_account_info().clone(),
+                authority: mint_token_ref.to_account_info().clone(),
+              },
+              seeds,
+            ),
+            old_royalty_account.amount,
+          )?;
+          close_token_account(CpiContext::new_with_signer(
             token_program.to_account_info().clone(),
-            Transfer {
+            CloseTokenAccount {
               from: old_royalty_account.to_account_info().clone(),
-              to: new_royalty_account.to_account_info().clone(),
+              to: owner.to_account_info().clone(),
               authority: mint_token_ref.to_account_info().clone(),
             },
             seeds,
-          ),
-          old_royalty_account.amount,
-        )?;
-        close_token_account(CpiContext::new_with_signer(
-          token_program.to_account_info().clone(),
-          CloseTokenAccount {
-            from: old_royalty_account.to_account_info().clone(),
-            to: owner.to_account_info().clone(),
-            authority: mint_token_ref.to_account_info().clone(),
-          },
-          seeds,
-        ))?;
-      }
+          ))?;
+        }
     }
 
     new_token_ref.collective = owner_token_ref.collective;
