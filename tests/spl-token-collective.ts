@@ -369,7 +369,7 @@ describe("spl-token-collective", () => {
       const { instructions, signers } = await tokenCollectiveProgram.optOutInstructions({
         tokenRef: claimedTokenRef
       });
-      await tokenCollectiveProgram.sendInstructions(instructions, [...signers]);
+      await tokenCollectiveProgram.sendInstructions(instructions, [...signers, ownerKeypair]);
       const ownerTokenRef = (await tokenCollectiveProgram.getTokenRef(
         claimedTokenRef
       ))!;

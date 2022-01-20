@@ -1632,6 +1632,8 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
 
       instructions.push(
         await this.instruction.changeOptStatusClaimedV0({
+          isOptedOut: true
+        }, {
           accounts: {
             primaryTokenRef,
             ownerTokenRef,

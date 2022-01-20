@@ -575,7 +575,7 @@ pub mod spl_token_collective {
 
   pub fn change_opt_status_claimed_v0(
     ctx: Context<ChangeOptStatusClaimedV0>,
-    args: ChangeOptStatusUnclaimedV0Args,
+    args: ChangeOptStatusClaimedV0Args,
   ) -> ProgramResult {
     ctx.accounts.owner_token_ref.is_opted_out = args.is_opted_out;
     ctx.accounts.mint_token_ref.is_opted_out = args.is_opted_out;
