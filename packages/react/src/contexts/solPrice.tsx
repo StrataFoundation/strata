@@ -1,5 +1,5 @@
 import React, { FC, ReactNode, createContext } from "react";
-import { useMarketPrice } from "../hooks";
+import { useMarketPrice, useCoinGeckoPrice } from "../hooks";
 import { PublicKey } from "@solana/web3.js";
 
 export interface ISolPriceProviderProps {
@@ -13,9 +13,11 @@ const SOL_TO_USD_MARKET = new PublicKey(
 );
 
 export const SolPriceProvider: FC<ISolPriceProviderProps> = ({ children }) => {
-  const price = useMarketPrice(SOL_TO_USD_MARKET);
+  const coinGeckoPrice = useCoinGeckoPrice();
+  const marketPrice = useMarketPrice(SOL_TO_USD_MARKET);
+
   return (
-    <SolPriceContext.Provider value={price}>
+    <SolPriceContext.Provider value={marketPrice || coinGeckoPrice}>
       {children}
     </SolPriceContext.Provider>
   );

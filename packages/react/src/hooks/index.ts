@@ -34,3 +34,4 @@ export * from "./useSwapDriver";
 export * from "./useTwWrappedSolMint";
 export * from "./useCollective";
 export * from "./useMetaplexMetadata";
+export * from "./useCoinGeckoPrice";
