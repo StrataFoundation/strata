@@ -431,7 +431,6 @@ pub struct ChangeOptStatusUnclaimedV0<'info> {
   pub token_bonding_program: AccountInfo<'info>,
 }
 
-
 #[derive(Accounts)]
 #[instruction(args: ChangeOptStatusClaimedV0Args)]
 pub struct ChangeOptStatusClaimedV0<'info> {
