@@ -271,12 +271,12 @@ pub mod spl_token_collective {
         &mut ctx.accounts.new_buy_base_royalties,
       ],
       [
-        &mut ctx.accounts.buy_target_royalties,
-        &mut ctx.accounts.new_buy_target_royalties,
-      ],
-      [
         &mut ctx.accounts.sell_base_royalties,
         &mut ctx.accounts.new_sell_base_royalties,
+      ],
+      [
+        &mut ctx.accounts.buy_target_royalties,
+        &mut ctx.accounts.new_buy_target_royalties,
       ],
       [
         &mut ctx.accounts.sell_target_royalties,
@@ -290,16 +290,11 @@ pub mod spl_token_collective {
       ctx.accounts.target_mint.to_account_info().key.as_ref(),
       &[mint_token_ref.bump_seed],
     ]];
-    msg!("Closing standin royalties accounts");
-    let mut i = 0;
+    msg!(
+      "Closing {} standin royalties accounts",
+      royalty_accounts.len()
+    );
     for [old_royalty_account, new_royalty_account] in royalty_accounts {
-      if i > 1 {
-        // Only possible collistions after index 2. Saves compute on reload
-        old_royalty_account.reload()?; // Make sure the balance is up-to-date as one of the other royalty accts could be the same as this one.
-      } else {
-        i += 1;
-      }
-
       if old_royalty_account.owner == mint_token_ref.key() {
         transfer(
           CpiContext::new_with_signer(
