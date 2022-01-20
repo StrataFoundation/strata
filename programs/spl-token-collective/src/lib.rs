@@ -25,8 +25,8 @@ use crate::{account::*, arg::*, error::*, state::*, util::*};
 
 const WUMBO_KEY: &str = "Gzyvrg8gJfShKQwhVYFXV5utp86tTcMxSzrN7zcfebKj";
 
-const EARLY_LAUNCH_GO_LIVE: i64 = 1; // Jan 19th 9am CST
-const LAUNCH_GO_LIVE: i64 = 1; // Jan 20th 9am CST
+const EARLY_LAUNCH_GO_LIVE: i64 = 1642604400; // Jan 19th 9am CST
+const LAUNCH_GO_LIVE: i64 = 1642690800; // Jan 20th 9am CST
 
 declare_id!("TCo1sfSr2nCudbeJPykbif64rG9K1JNMGzrtzvPmp3y");
 
