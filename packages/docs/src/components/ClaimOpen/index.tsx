@@ -1,23 +1,20 @@
 import BrowserOnly from "@docusaurus/BrowserOnly";
-import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import { useEndpoint } from "@site/src/contexts/Endpoint";
+import { u64 } from "@solana/spl-token";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useWallet } from "@solana/wallet-adapter-react";
 import {
   WalletModalProvider,
-  WalletMultiButton,
+  WalletMultiButton
 } from "@solana/wallet-adapter-react-ui";
 import { clusterApiUrl, PublicKey } from "@solana/web3.js";
 import {
-  useBondingPricing,
+  Spinner, useAssociatedAccount, useBondingPricing,
   useOwnedAmount,
-  usePublicKey,
-  useTokenBonding,
-  useSwap,
-  Spinner,
-  useStrataSdks,
+  usePublicKey, useStrataSdks, useTokenBonding
 } from "@strata-foundation/react";
-import React, { useState, useEffect } from "react";
+import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
+import React, { useEffect, useState } from "react";
 import { useAsyncCallback } from "react-async-hook";
 import styles from "./styles.module.css";
 
@@ -47,11 +44,11 @@ const MainnetGuard = ({ children = null as any }) => {
 const roundToDecimals = (num: number, decimals: number): number =>
   Math.trunc(num * Math.pow(10, decimals)) / Math.pow(10, decimals);
 
-async function exchange(tokenBondingSdk: SplTokenBonding, amount: number): Promise<void> {
+async function exchange(tokenBondingSdk: SplTokenBonding, amount: u64): Promise<void> {
   await tokenBondingSdk.sell({
     tokenBonding: new PublicKey(TOKEN_BONDING),
     targetAmount: amount,
-    slippage: 0.01
+    slippage: 0.05
   })
 }
 
@@ -71,6 +68,7 @@ export const ClaimO = () => {
   const { pricing, loading: loadingPricing } =
     useBondingPricing(tokenBondingKey);
   const ownedTarget = useOwnedAmount(tokenBonding?.targetMint);
+  const { associatedAccount } = useAssociatedAccount(publicKey, tokenBonding?.targetMint);
 
   useEffect(() => {
     if (ownedTarget && ownedTarget >= 0 && tokenBonding && pricing) {
@@ -86,7 +84,7 @@ export const ClaimO = () => {
 
   const handleExchange = async () => {
     try {
-      await swap(tokenBondingSdk!, +ownedTarget!);
+      await swap(tokenBondingSdk!, associatedAccount!.amount);
 
       setSuccess(true);
     } catch (e: any) {
