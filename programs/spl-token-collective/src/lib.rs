@@ -259,7 +259,6 @@ pub mod spl_token_collective {
     ctx: Context<ClaimSocialTokenV0>,
     args: ClaimSocialTokenV0Args,
   ) -> ProgramResult {
-    let owner_token_ref = &mut ctx.accounts.owner_token_ref;
     let new_token_ref = &mut ctx.accounts.new_token_ref;
     let mint_token_ref = &mut ctx.accounts.mint_token_ref;
     let data = &ctx.accounts.token_metadata.data;
@@ -326,14 +325,14 @@ pub mod spl_token_collective {
       }
     }
 
-    new_token_ref.collective = owner_token_ref.collective;
-    new_token_ref.token_bonding = owner_token_ref.token_bonding;
+    new_token_ref.collective = mint_token_ref.collective;
+    new_token_ref.token_bonding = mint_token_ref.token_bonding;
     new_token_ref.bump_seed = args.owner_token_ref_bump_seed;
     new_token_ref.target_royalties_owner_bump_seed =
-      owner_token_ref.target_royalties_owner_bump_seed;
-    new_token_ref.token_metadata = owner_token_ref.token_metadata;
+      mint_token_ref.target_royalties_owner_bump_seed;
+    new_token_ref.token_metadata = mint_token_ref.token_metadata;
     new_token_ref.owner = Some(ctx.accounts.owner.key());
-    new_token_ref.mint = owner_token_ref.mint;
+    new_token_ref.mint = mint_token_ref.mint;
 
     new_token_ref.authority = args.authority;
     mint_token_ref.authority = args.authority;
