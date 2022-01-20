@@ -35,6 +35,7 @@
     "@strata-foundation/spl-token-collective": "^2.1.6",
     "@strata-foundation/spl-utils": "^2.1.2",
     "@toruslabs/solana-embed": "0.0.9",
+    "axios": "^0.25.0",
     "buffer": "^6.0.3",
     "dotenv": "^10.0.0",
     "eventemitter3": "^4.0.7",

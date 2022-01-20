@@ -14,6 +14,7 @@ export function useInterval(
     const handler = (...args: any[]) => savedCallbackRef.current!(...args);
 
     if (delay !== null) {
+      handler();
       const intervalId = setInterval(handler, delay);
       return () => clearInterval(intervalId);
     }
