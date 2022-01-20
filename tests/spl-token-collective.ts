@@ -364,5 +364,24 @@ describe("spl-token-collective", () => {
       expect(tokenBondingNow.sellTargetRoyaltyPercentage).to.equal(percent(5));
       expect(tokenBondingNow.buyFrozen).to.equal(true);
     });
+
+    it("Allows opting out, which freezes the curve", async () => {
+      const { instructions, signers } = await tokenCollectiveProgram.optOutInstructions({
+        tokenRef: claimedTokenRef
+      });
+      await tokenCollectiveProgram.sendInstructions(instructions, [...signers, ownerKeypair]);
+      const ownerTokenRef = (await tokenCollectiveProgram.getTokenRef(
+        claimedTokenRef
+      ))!;
+      const tokenBonding = (await splTokenBondingProgram.getTokenBonding(
+        ownerTokenRef.tokenBonding!
+      ))!;
+      const mintTokenRef = (await tokenCollectiveProgram.getTokenRef(
+        (await SplTokenCollective.mintTokenRefKey(tokenBonding.targetMint))[0]
+      ))!;
+      expect(tokenBonding.buyFrozen).to.be.true;
+      expect(ownerTokenRef.isOptedOut).to.be.true;
+      expect(mintTokenRef.isOptedOut).to.be.true;
+    });
   });
 });

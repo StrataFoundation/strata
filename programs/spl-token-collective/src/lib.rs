@@ -535,8 +535,8 @@ pub mod spl_token_collective {
       return Err(ErrorCode::InvalidNameAuthority.into());
     }
 
-    ctx.accounts.owner_token_ref.is_opted_out = true;
-    ctx.accounts.mint_token_ref.is_opted_out = true;
+    ctx.accounts.owner_token_ref.is_opted_out = args.is_opted_out;
+    ctx.accounts.mint_token_ref.is_opted_out = args.is_opted_out;
 
     let static_args = &ctx.accounts.token_bonding_update_accounts;
     let token_bonding = &static_args.token_bonding;
@@ -566,7 +566,52 @@ pub mod spl_token_collective {
         buy_target_royalty_percentage: token_bonding.buy_target_royalty_percentage,
         sell_base_royalty_percentage: token_bonding.sell_base_royalty_percentage,
         sell_target_royalty_percentage: token_bonding.sell_target_royalty_percentage,
-        buy_frozen: true,
+        buy_frozen: args.is_opted_out,
+      },
+    )?;
+
+    Ok(())
+  }
+
+  pub fn change_opt_status_claimed_v0(
+    ctx: Context<ChangeOptStatusClaimedV0>,
+    args: ChangeOptStatusClaimedV0Args,
+  ) -> ProgramResult {
+    ctx.accounts.owner_token_ref.is_opted_out = args.is_opted_out;
+    ctx.accounts.mint_token_ref.is_opted_out = args.is_opted_out;
+    if ctx.accounts.primary_token_ref.collective == ctx.accounts.mint_token_ref.collective {
+      ctx.accounts.primary_token_ref.is_opted_out = args.is_opted_out;
+    }
+
+    let static_args = &ctx.accounts.token_bonding_update_accounts;
+    let token_bonding = &static_args.token_bonding;
+    let seeds: &[&[&[u8]]] = &[&[
+      b"mint-token-ref",
+      static_args.target_mint.to_account_info().key.as_ref(),
+      &[ctx.accounts.mint_token_ref.bump_seed],
+    ]];
+    spl_token_bonding::cpi::update_token_bonding_v0(
+      CpiContext::new_with_signer(
+        ctx.accounts.token_bonding_program.clone(),
+        UpdateTokenBondingV0 {
+          token_bonding: token_bonding.to_account_info(),
+          base_mint: static_args.base_mint.to_account_info(),
+          target_mint: static_args.target_mint.to_account_info(),
+          general_authority: ctx.accounts.mint_token_ref.to_account_info(),
+          buy_base_royalties: static_args.buy_base_royalties.to_account_info(),
+          buy_target_royalties: static_args.buy_target_royalties.to_account_info(),
+          sell_base_royalties: static_args.sell_base_royalties.to_account_info(),
+          sell_target_royalties: static_args.sell_target_royalties.to_account_info(),
+        },
+        seeds,
+      ),
+      UpdateTokenBondingV0Args {
+        general_authority: token_bonding.general_authority,
+        buy_base_royalty_percentage: token_bonding.buy_base_royalty_percentage,
+        buy_target_royalty_percentage: token_bonding.buy_target_royalty_percentage,
+        sell_base_royalty_percentage: 0,
+        sell_target_royalty_percentage: 0,
+        buy_frozen: args.is_opted_out,
       },
     )?;
 

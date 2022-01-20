@@ -1608,15 +1608,43 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     });
 
     const instructions = [];
-    if (tokenRefAcct.isClaimed) {
-      throw new Error("Opt out is not yet supported for claimed tokens");
-    } else {
-      if (!handle) {
-        throw new Error(
-          "Handle must be provided for opting out of unclaimed tokens"
-        );
-      }
+    if (!tokenRefAcct.isClaimed && !handle) {
+      throw new Error(
+        "Handle must be provided for opting out of unclaimed tokens"
+      );
+    }
 
+    const tokenBondingUpdateAccounts = {
+      tokenBonding: tokenRefAcct.tokenBonding! as PublicKey,
+      baseMint: tokenBondingAcct.baseMint,
+      targetMint: tokenBondingAcct.targetMint,
+      buyBaseRoyalties: tokenBondingAcct.buyBaseRoyalties,
+      sellBaseRoyalties: tokenBondingAcct.sellBaseRoyalties,
+      buyTargetRoyalties: tokenBondingAcct.buyTargetRoyalties,
+      sellTargetRoyalties: tokenBondingAcct.sellTargetRoyalties,
+    };
+
+    if (tokenRefAcct.isClaimed) {
+      const [primaryTokenRef] = await SplTokenCollective.ownerTokenRefKey({
+        owner: tokenRefAcct.owner as PublicKey,
+        isPrimary: true
+      });
+
+      instructions.push(
+        await this.instruction.changeOptStatusClaimedV0({
+          isOptedOut: true
+        }, {
+          accounts: {
+            primaryTokenRef,
+            ownerTokenRef,
+            mintTokenRef,
+            owner: tokenRefAcct.owner!,
+            tokenBondingUpdateAccounts,
+            tokenBondingProgram: this.splTokenBondingProgram.programId,
+          }
+        })
+      )
+    } else {
       instructions.push(
         await this.instruction.changeOptStatusUnclaimedV0(
           {
@@ -1628,15 +1656,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
               ownerTokenRef,
               mintTokenRef,
               name: tokenRefAcct.name as PublicKey,
-              tokenBondingUpdateAccounts: {
-                tokenBonding: tokenRefAcct.tokenBonding! as PublicKey,
-                baseMint: tokenBondingAcct.baseMint,
-                targetMint: tokenBondingAcct.targetMint,
-                buyBaseRoyalties: tokenBondingAcct.buyBaseRoyalties,
-                sellBaseRoyalties: tokenBondingAcct.sellBaseRoyalties,
-                buyTargetRoyalties: tokenBondingAcct.buyTargetRoyalties,
-                sellTargetRoyalties: tokenBondingAcct.sellTargetRoyalties,
-              },
+              tokenBondingUpdateAccounts,
               tokenBondingProgram: this.splTokenBondingProgram.programId,
             },
             remainingAccounts: [
