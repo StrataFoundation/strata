@@ -17,7 +17,7 @@ export const SolPriceProvider: FC<ISolPriceProviderProps> = ({ children }) => {
   const marketPrice = useMarketPrice(SOL_TO_USD_MARKET);
 
   return (
-    <SolPriceContext.Provider value={coinGeckoPrice || marketPrice}>
+    <SolPriceContext.Provider value={marketPrice || coinGeckoPrice}>
       {children}
     </SolPriceContext.Provider>
   );
