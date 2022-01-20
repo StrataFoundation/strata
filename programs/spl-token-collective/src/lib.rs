@@ -82,7 +82,7 @@ pub fn get_collective(collective: UncheckedAccount) -> Option<CollectiveV0> {
 #[program]
 pub mod spl_token_collective {
 
-use super::*;
+  use super::*;
 
   pub fn initialize_collective_v0(
     ctx: Context<InitializeCollectiveV0>,
@@ -301,29 +301,29 @@ use super::*;
         i += 1;
       }
 
-        if old_royalty_account.owner == mint_token_ref.key() {
-          transfer(
-            CpiContext::new_with_signer(
-              token_program.to_account_info().clone(),
-              Transfer {
-                from: old_royalty_account.to_account_info().clone(),
-                to: new_royalty_account.to_account_info().clone(),
-                authority: mint_token_ref.to_account_info().clone(),
-              },
-              seeds,
-            ),
-            old_royalty_account.amount,
-          )?;
-          close_token_account(CpiContext::new_with_signer(
+      if old_royalty_account.owner == mint_token_ref.key() {
+        transfer(
+          CpiContext::new_with_signer(
             token_program.to_account_info().clone(),
-            CloseTokenAccount {
+            Transfer {
               from: old_royalty_account.to_account_info().clone(),
-              to: owner.to_account_info().clone(),
+              to: new_royalty_account.to_account_info().clone(),
               authority: mint_token_ref.to_account_info().clone(),
             },
             seeds,
-          ))?;
-        }
+          ),
+          old_royalty_account.amount,
+        )?;
+        close_token_account(CpiContext::new_with_signer(
+          token_program.to_account_info().clone(),
+          CloseTokenAccount {
+            from: old_royalty_account.to_account_info().clone(),
+            to: owner.to_account_info().clone(),
+            authority: mint_token_ref.to_account_info().clone(),
+          },
+          seeds,
+        ))?;
+      }
     }
 
     new_token_ref.collective = owner_token_ref.collective;
