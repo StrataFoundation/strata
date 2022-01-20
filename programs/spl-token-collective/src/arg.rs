@@ -95,3 +95,8 @@ pub struct ChangeOptStatusUnclaimedV0Args {
   pub hashed_name: Vec<u8>,
   pub is_opted_out: bool,
 }
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
+pub struct ChangeOptStatusClaimedV0Args {
+  pub is_opted_out: bool,
+}
