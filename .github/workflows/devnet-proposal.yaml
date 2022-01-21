@@ -19,7 +19,7 @@ jobs:
         with:
           program: spl_token_bonding
           program-id: TBondmkCYxaPCKG4CHYfVTcwQ8on31xnJrPzk8F8WsS
-          network: devnet
+          network: https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/
           keypair: ${{ secrets.DEPLOY_KEYPAIR }}
           governance: HDkW3MrrvqT9FPvuFBAVnSag1BLDx767MD2VXKfpCoCe
           name: Deploy Token Bonding ${{ github.ref_name }}
@@ -35,7 +35,7 @@ jobs:
         with:
           program: spl_token_collective
           program-id: TCo1sfSr2nCudbeJPykbif64rG9K1JNMGzrtzvPmp3y
-          network: devnet
+          network: https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/
           keypair: ${{ secrets.DEPLOY_KEYPAIR }}
           governance: 6yc2jb7LCjYXD3hbRKjYkpx13j4VXYcCBzYsZbmntdVk
           name: Deploy Token Collective ${{ github.ref_name }}
