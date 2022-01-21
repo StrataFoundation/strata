@@ -684,6 +684,7 @@ describe("spl-token-bonding", () => {
         tokenBondingAcct.targetMint,
         me
       );
+      await waitForUnixTime(provider.connection, BigInt(tokenBondingAcct.goLiveUnixTime.toNumber() + 1));
       await tokenBondingProgram.buy({
         tokenBonding,
         desiredTargetAmount: 10,
@@ -715,6 +716,7 @@ describe("spl-token-bonding", () => {
           }, null)
       });
       const tokenBondingAcct = (await tokenBondingProgram.getTokenBonding(tokenBonding))!;
+      await waitForUnixTime(provider.connection, BigInt(tokenBondingAcct.goLiveUnixTime.toNumber() + 1));
       const targetAta = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
@@ -752,6 +754,7 @@ describe("spl-token-bonding", () => {
           })
       });
       const tokenBondingAcct = (await tokenBondingProgram.getTokenBonding(tokenBonding))!;
+      await waitForUnixTime(provider.connection, BigInt(tokenBondingAcct.goLiveUnixTime.toNumber() + 1));
       const ata = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
