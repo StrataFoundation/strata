@@ -144,7 +144,11 @@ pub mod spl_token_bonding {
     let target_mint = &ctx.accounts.target_mint;
 
     let bonding = &mut ctx.accounts.token_bonding;
-    bonding.go_live_unix_time = args.go_live_unix_time;
+    bonding.go_live_unix_time = if args.go_live_unix_time < ctx.accounts.clock.unix_timestamp {
+      ctx.accounts.clock.unix_timestamp
+    } else {
+      args.go_live_unix_time
+    };
     bonding.created_at_unix_time = ctx.accounts.clock.unix_timestamp;
     bonding.freeze_buy_unix_time = args.freeze_buy_unix_time;
     bonding.base_mint = ctx.accounts.base_mint.key();

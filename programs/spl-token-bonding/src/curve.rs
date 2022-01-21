@@ -95,13 +95,13 @@ impl Curve for PrimitiveCurve {
                   .signed()
                   .checked_mul(
                     &base_amount
-                      .checked_add(&reserve_change)?
-                      .checked_div(&base_amount)?
+                      .checked_add(reserve_change)?
+                      .checked_div(base_amount)?
                       .log()?,
                   )?,
               )?
               .exp()?
-              .checked_sub(&target_supply)
+              .checked_sub(target_supply)
           } else if c == 0 {
             /*
              * dS = S dR / R
@@ -178,7 +178,7 @@ impl Curve for PrimitiveCurve {
             let one_plus_k_prec = pow_prec.checked_div(&frac_prec)?.checked_add(&ONE_PREC)?;
 
             let log1 = base_amount.log()?;
-            let log2 = s_plus_ds.checked_div(&target_supply)?.log()?;
+            let log2 = s_plus_ds.checked_div(target_supply)?.log()?;
             let logs = log1.checked_add(&one_plus_k_prec.signed().checked_mul(&log2)?)?;
             let exp = logs.exp()?;
 
