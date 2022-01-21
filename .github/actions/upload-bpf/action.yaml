@@ -59,10 +59,14 @@ runs:
         NETWORK: ${{ inputs.network }}
         PROGRAM: ${{ inputs.program }}
     - name: IDL Buffer Deploy
-      if: steps.cache-buffer.outputs.cache-hit != 'true'
-      shell: bash
+      uses: nick-invision/retry@v2
       id: idl-buffer-deploy
-      run: ~/.cargo/bin/anchor idl write-buffer $PROGRAM_ID --filepath ./target/idl/$PROGRAM.json --provider.cluster $NETWORK --provider.wallet ./deploy-keypair.json > idl-buffer.out
+      if: steps.cache-buffer.outputs.cache-hit != 'true'
+      with:
+        timeout_minutes: 10
+        max_attempts: 3
+        shell: bash
+        command:  ~/.cargo/bin/anchor idl write-buffer $PROGRAM_ID --filepath ./target/idl/$PROGRAM.json --provider.cluster $NETWORK --provider.wallet ./deploy-keypair.json > idl-buffer.out
       env:
         PROGRAM_ID: ${{ inputs.program-id }}
         PROGRAM: ${{ inputs.program }}
