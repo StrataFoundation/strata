@@ -936,9 +936,10 @@ describe("spl-token-bonding", () => {
           targetAmount: new BN(50 + 80),
           slippage: 0.5,
         });
+        
         const post = (await provider.connection.getTokenAccountBalance(ata))!.value.uiAmount!;
-        expect(roundToDecimals(post, DECIMALS - 1)).to.eq(roundToDecimals(pre, DECIMALS - 1)) // Expect one smallest unit of slippage
-
+        // Buy rounds up, sell rounds down. So we can potentially be off by 3 of the smallest unit
+        expect(post).to.within(3 / Math.pow(10, DECIMALS), pre!);
 
         await tokenBondingProgram.sell({
           tokenBonding,

@@ -4,22 +4,49 @@ use crate::precise_number::{InnerUint, PreciseNumber};
 use crate::PrimitiveCurve;
 use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
+use std::convert::*;
 
-pub trait OrArithError {
-  fn or_arith_error(self) -> Result<PreciseNumber, ProgramError>;
+pub trait OrArithError<T> {
+  fn or_arith_error(self) -> Result<T, ProgramError>;
 }
 
-impl OrArithError for Option<PreciseNumber> {
+impl OrArithError<PreciseNumber> for Option<PreciseNumber> {
   fn or_arith_error(self) -> Result<PreciseNumber, ProgramError> {
     self.ok_or(ErrorCode::ArithmeticError.into())
   }
 }
 
-pub fn get_percent(percent: u32) -> Result<PreciseNumber, ProgramError> {
+impl OrArithError<u128> for Option<u128> {
+  fn or_arith_error(self) -> Result<u128, ProgramError> {
+    self.ok_or(ErrorCode::ArithmeticError.into())
+  }
+}
+
+impl OrArithError<u64> for Option<u64> {
+  fn or_arith_error(self) -> Result<u64, ProgramError> {
+    self.ok_or(ErrorCode::ArithmeticError.into())
+  }
+}
+
+pub fn get_percent_prec(percent: u32) -> Result<PreciseNumber, ProgramError> {
   let max_u32 = PreciseNumber::new(u32::MAX as u128).or_arith_error()?;
   let percent_prec = PreciseNumber::new(percent as u128).or_arith_error()?;
 
   percent_prec.checked_div(&max_u32).or_arith_error()
+}
+
+pub fn get_percent(value: u64, percent: u32) -> Result<u64, ProgramError> {
+  u64::try_from(
+    u128::try_from(value)
+      .ok()
+      .or_arith_error()?
+      .checked_mul(u128::try_from(percent).ok().or_arith_error()?)
+      .or_arith_error()?
+      .checked_div(u32::MAX as u128)
+      .or_arith_error()?,
+  )
+  .ok()
+  .or_arith_error()
 }
 
 pub fn precise_supply(mint: &Account<Mint>) -> PreciseNumber {
