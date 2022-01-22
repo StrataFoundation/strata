@@ -100,3 +100,11 @@ pub struct ChangeOptStatusUnclaimedV0Args {
 pub struct ChangeOptStatusClaimedV0Args {
   pub is_opted_out: bool,
 }
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
+pub struct ChangeOwnerAndAuthorityV0Args {
+  pub new_authority: Pubkey,
+  pub new_owner: Pubkey,
+  pub owner_token_ref_bump_seed: u8,
+  pub primary_owner_token_ref_bump_seed: u8
+}

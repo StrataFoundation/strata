@@ -470,3 +470,60 @@ pub struct ChangeOptStatusClaimedV0<'info> {
   #[account(address = spl_token_bonding::id())]
   pub token_bonding_program: AccountInfo<'info>,
 }
+
+
+
+#[derive(Accounts)]
+#[instruction(args: ChangeOwnerAndAuthorityV0Args)]
+pub struct UpdateOwnerAndAuthorityV0<'info> {
+  #[account(mut)]
+  pub authority: Signer<'info>,
+  #[account(
+    mut,
+    close = authority,
+    seeds = [
+      b"owner-token-ref",
+      owner.key().as_ref(),
+      token_bonding_update_accounts.base_mint.key().as_ref()
+    ],
+    bump = old_owner_token_ref.bump_seed,
+    constraint = owner.key() == old_owner_token_ref.owner.ok_or::<ProgramError>(ErrorCode::InvalidAuthority.into())?
+  )]
+  pub old_owner_token_ref: Account<'info, TokenRefV0>,
+  #[account(
+    init,
+    seeds = [
+      b"owner-token-ref",
+      owner.key().as_ref(),
+      token_bonding_update_accounts.base_mint.key().as_ref()
+    ],
+    bump = args.owner_token_ref_bump_seed,
+    payer = authority,
+    constraint = owner.key() == owner_token_ref.owner.ok_or::<ProgramError>(ErrorCode::InvalidAuthority.into())?
+  )]
+  pub new_owner_token_ref: Account<'info, TokenRefV0>,
+  #[account(
+    mut,
+    seeds = [
+      b"owner-token-ref",
+      owner.key().as_ref()
+    ],
+    bump = primary_token_ref.bump_seed,
+    constraint = owner.key() == primary_token_ref.owner.ok_or::<ProgramError>(ErrorCode::InvalidAuthority.into())?
+  )]
+  pub primary_token_ref: Account<'info, TokenRefV0>,
+  pub owner: Signer<'info>,
+  #[account(
+    mut,
+    seeds = [
+      b"mint-token-ref",
+      token_bonding_update_accounts.target_mint.key().as_ref()
+    ],
+    constraint = owner.key() == mint_token_ref.owner.ok_or::<ProgramError>(ErrorCode::InvalidAuthority.into())?,
+    bump = mint_token_ref.bump_seed
+  )]
+  pub mint_token_ref: Account<'info, TokenRefV0>,
+  pub token_bonding_update_accounts: StaticUpdateTokenBondingV0<'info>,
+  #[account(address = spl_token_bonding::id())]
+  pub token_bonding_program: AccountInfo<'info>,
+}
