@@ -291,13 +291,15 @@ impl SignedPreciseNumber {
       Some(y.value)
     } else {
       let bits = k.value.to_imprecise()?;
-      let powed: u128 = 1_u128 << bits;
-      let powed_prec = PreciseNumber::new(powed)?;
 
       if k.is_negative {
-        y.value.checked_div(&powed_prec)
+        Some(PreciseNumber {
+          value: y.value.value >> bits,
+        })
       } else {
-        y.value.checked_mul(&powed_prec)
+        Some(PreciseNumber {
+          value: y.value.value << bits,
+        })
       }
     }
   }

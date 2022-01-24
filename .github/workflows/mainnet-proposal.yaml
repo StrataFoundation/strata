@@ -5,7 +5,7 @@ on:
     types: [published]
 
 env:
-  SOLANA_CLI_VERSION: 1.8.5
+  SOLANA_CLI_VERSION: 1.9.4
   NODE_VERSION: 17.0.1
 
 jobs:
@@ -20,7 +20,7 @@ jobs:
           program: spl_token_bonding
           program-id: TBondmkCYxaPCKG4CHYfVTcwQ8on31xnJrPzk8F8WsS
           keypair: ${{ secrets.DEPLOY_KEYPAIR }}
-          network: https://api.mainnet-beta.solana.com
+          network: https://wumbo.genesysgo.net
           governance: HDkW3MrrvqT9FPvuFBAVnSag1BLDx767MD2VXKfpCoCe
           name: Deploy Token Bonding ${{ github.event.release.tag_name }}
           description: ${{ github.event.release.url }}
@@ -40,7 +40,7 @@ jobs:
           program: spl_token_collective
           program-id: TCo1sfSr2nCudbeJPykbif64rG9K1JNMGzrtzvPmp3y
           keypair: ${{ secrets.DEPLOY_KEYPAIR }}
-          network: https://api.mainnet-beta.solana.com
+          network: https://wumbo.genesysgo.net
           governance: 6yc2jb7LCjYXD3hbRKjYkpx13j4VXYcCBzYsZbmntdVk
           name: Deploy Token Collective ${{ github.event.release.tag_name }}
           description: ${{ github.event.release.url }}

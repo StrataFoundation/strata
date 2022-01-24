@@ -10,6 +10,7 @@ import {
 import { clusterApiUrl, PublicKey } from "@solana/web3.js";
 import {
   Spinner, useAssociatedAccount, useBondingPricing,
+  useErrorHandler,
   useOwnedAmount,
   usePublicKey, useStrataSdks, useTokenBonding
 } from "@strata-foundation/react";
@@ -54,7 +55,6 @@ async function exchange(tokenBondingSdk: SplTokenBonding, amount: u64): Promise<
 
 export const ClaimO = () => {
   const [success, setSuccess] = useState(false);
-  const [internalError, setInternalError] = useState<Error>();
   const [claimableOPEN, setClaimableOPEN] = useState<number>();
   const tokenBondingKey = usePublicKey(TOKEN_BONDING);
   const { connected, publicKey } = useWallet();
@@ -64,6 +64,8 @@ export const ClaimO = () => {
   const { tokenBondingSdk } = useStrataSdks();
 
   const { execute: swap, loading: swapping, error } = useAsyncCallback(exchange)
+  const { handleErrors } = useErrorHandler();
+  handleErrors(error);
 
   const { pricing, loading: loadingPricing } =
     useBondingPricing(tokenBondingKey);
@@ -83,13 +85,9 @@ export const ClaimO = () => {
   }, [tokenBonding, pricing, ownedTarget, setClaimableOPEN]);
 
   const handleExchange = async () => {
-    try {
-      await swap(tokenBondingSdk!, associatedAccount!.amount);
+    await swap(tokenBondingSdk!, associatedAccount!.amount);
 
-      setSuccess(true);
-    } catch (e: any) {
-      setInternalError(e);
-    }
+    setSuccess(true);
   };
 
   const isLoading = loadingPricing || loadingBonding;
@@ -110,12 +108,6 @@ export const ClaimO = () => {
           the Wum.bo beta connected, then refresh this page.
         </span>
       )}
-      {error ||
-        (internalError && (
-          <span style={{ color: "red" }}>
-            {(error || internalError).toString()}
-          </span>
-        ))}
       {success && <span>Successfully swapped netbWUM to OPEN!</span>}
       {connectedNotLoading && !success && ownedTarget && claimableOPEN && (
         <div style={{ display: "flex", flexDirection: "column" }}>

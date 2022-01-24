@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.1.12]
+
+Another attempt at fixing claim
+
 ## [2.1.10](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.1.8...v2.1.10) (2022-01-20)
 
 **Note:** Version bump only for package @strata-foundation/strata

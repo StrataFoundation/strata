@@ -296,8 +296,9 @@ impl PreciseNumber {
       let first_leading = self.value.0[0].leading_zeros();
       let one_leading = ONE_PREC.value.0[0].leading_zeros();
       let bits = i64::from(first_leading.checked_sub(one_leading).unwrap());
-      let powed: u128 = 1_u128 << bits;
-      let frac = self.checked_mul(&PreciseNumber::new(powed)?)?;
+      let frac = PreciseNumber {
+        value: self.value << bits,
+      };
       if frac.less_than(&HALF) {
         Some((frac.checked_mul(&TWO_PREC).unwrap(), -bits - 1))
       } else {
@@ -305,8 +306,9 @@ impl PreciseNumber {
       }
     } else {
       let bits = 128_i64.checked_sub(i64::from(self.to_imprecise()?.leading_zeros()))?;
-      let powed: u128 = 1_u128 << bits;
-      let frac = self.checked_div(&PreciseNumber::new(powed)?)?;
+      let frac = PreciseNumber {
+        value: self.value >> bits,
+      };
       if frac.less_than(&HALF) {
         Some((frac.checked_mul(&TWO_PREC).unwrap(), bits - 1))
       } else {
@@ -392,14 +394,14 @@ impl PreciseNumber {
   //	Log(+Inf) = +Inf
   //	Log(0) = -Inf
   //	Log(x < 0) = NaN
-  fn log(&self) -> Option<SignedPreciseNumber> {
-    if self.eq(&PreciseNumber::zero()) {
+  pub fn log(&self) -> Option<SignedPreciseNumber> {
+    if self.eq(&ZERO_PREC) {
       return None;
     }
 
-    if self.eq(&PreciseNumber::one()) {
+    if self.eq(&ONE_PREC) {
       return Some(SignedPreciseNumber {
-        value: PreciseNumber::zero(),
+        value: ZERO_PREC.clone(),
         is_negative: false,
       });
     }
@@ -461,12 +463,12 @@ impl PreciseNumber {
   y = e^(b ln (a))
   */
   pub fn pow(&self, exp: &Self) -> Option<Self> {
-    if self.eq(&PreciseNumber::zero()) {
-      return Some(PreciseNumber::zero());
+    if self.eq(&ZERO_PREC) {
+      return Some(ZERO_PREC.clone());
     }
 
     let lg = self.log()?;
-    let x = exp.clone().signed().checked_mul(&lg)?;
+    let x = exp.signed().checked_mul(&lg)?;
     x.exp()
   }
 

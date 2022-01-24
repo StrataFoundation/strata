@@ -283,16 +283,16 @@ pub mod spl_token_bonding {
     drop(base_royalties_data);
     drop(target_royalties_data);
 
-    let base_royalties_percent = get_percent(if base_royalties_closed {
+    let base_royalties_percent = if base_royalties_closed {
       0
     } else {
       token_bonding.buy_base_royalty_percentage
-    })?;
-    let target_royalties_percent = get_percent(if target_royalties_closed {
+    };
+    let target_royalties_percent = if target_royalties_closed {
       0
     } else {
       token_bonding.buy_target_royalty_percentage
-    })?;
+    };
 
     let price: u64;
     let total_amount: u64;
@@ -320,15 +320,8 @@ pub mod spl_token_bonding {
         .or_arith_error()?;
 
       price = to_mint_amount(&price_prec, base_mint, true);
-      let base_royalties_prec = base_royalties_percent
-        .checked_mul(&price_prec)
-        .or_arith_error()?;
-
-      let target_royalties_prec = target_royalties_percent
-        .checked_mul(&amount_prec)
-        .or_arith_error()?;
-      base_royalties = to_mint_amount(&base_royalties_prec, base_mint, true);
-      target_royalties = to_mint_amount(&target_royalties_prec, target_mint, false);
+      base_royalties = get_percent(price, base_royalties_percent)?;
+      target_royalties = get_percent(total_amount, target_royalties_percent)?;
 
       if price.checked_add(base_royalties).unwrap() > buy_target_amount.maximum_price {
         msg!(
@@ -341,13 +334,11 @@ pub mod spl_token_bonding {
     } else {
       let buy_with_base = args.buy_with_base.unwrap();
       let total_price = buy_with_base.base_amount;
-      let total_price_prec = precise_supply_amt(total_price, base_mint);
-      let base_royalties_prec = base_royalties_percent
-        .checked_mul(&total_price_prec)
-        .or_arith_error()?;
-      let price_prec = total_price_prec
-        .checked_sub(&base_royalties_prec)
-        .or_arith_error()?;
+      base_royalties = get_percent(total_price, base_royalties_percent)?;
+      let price_prec = precise_supply_amt(
+        total_price.checked_sub(base_royalties).or_arith_error()?,
+        base_mint,
+      );
 
       let amount_prec = curve
         .definition
@@ -368,11 +359,7 @@ pub mod spl_token_bonding {
 
       price = to_mint_amount(&price_prec, base_mint, false);
 
-      let target_royalties_prec = target_royalties_percent
-        .checked_mul(&amount_prec)
-        .or_arith_error()?;
-      base_royalties = to_mint_amount(&base_royalties_prec, base_mint, true);
-      target_royalties = to_mint_amount(&target_royalties_prec, target_mint, false);
+      target_royalties = get_percent(total_amount, target_royalties_percent)?;
 
       let target_amount_minus_royalties = total_amount.checked_sub(target_royalties).unwrap();
       if target_amount_minus_royalties < buy_with_base.minimum_target_amount {
@@ -488,7 +475,6 @@ pub mod spl_token_bonding {
     let target_mint = &ctx.accounts.target_mint;
     let amount = args.target_amount;
     let curve = &ctx.accounts.curve;
-    let amount_prec = precise_supply_amt(amount, target_mint);
     let base_amount = precise_supply_amt(ctx.accounts.base_storage.amount, base_mint);
     let target_supply = precise_supply(target_mint);
     msg!(
@@ -514,23 +500,22 @@ pub mod spl_token_bonding {
     drop(base_royalties_data);
     drop(target_royalties_data);
 
-    let base_royalties_percent = get_percent(if base_royalties_closed {
+    let base_royalties_percent = if base_royalties_closed {
       0
     } else {
       token_bonding.sell_base_royalty_percentage
-    })?;
-    let target_royalties_percent = get_percent(if target_royalties_closed {
+    };
+    let target_royalties_percent = if target_royalties_closed {
       0
     } else {
       token_bonding.sell_target_royalty_percentage
-    })?;
+    };
 
-    let target_royalties_prec = target_royalties_percent
-      .checked_mul(&amount_prec)
-      .or_arith_error()?;
-    let amount_minus_royalties_prec = amount_prec
-      .checked_sub(&target_royalties_prec)
-      .or_arith_error()?;
+    let target_royalties = get_percent(amount, target_royalties_percent)?;
+    let amount_minus_royalties_prec = precise_supply_amt(
+      amount.checked_sub(target_royalties).or_arith_error()?,
+      target_mint,
+    );
     let reclaimed_prec = curve
       .definition
       .price(
@@ -546,17 +531,11 @@ pub mod spl_token_bonding {
         true,
       )
       .or_arith_error()?;
-
-    let base_royalties_prec = base_royalties_percent
-      .checked_mul(&reclaimed_prec)
+    let reclaimed_with_royalties = to_mint_amount(&reclaimed_prec, base_mint, false);
+    let base_royalties = get_percent(reclaimed_with_royalties, base_royalties_percent)?;
+    let reclaimed = reclaimed_with_royalties
+      .checked_sub(base_royalties)
       .or_arith_error()?;
-
-    let reclaimed_prec = reclaimed_prec
-      .checked_sub(&base_royalties_prec)
-      .or_arith_error()?;
-    let reclaimed = to_mint_amount(&reclaimed_prec, base_mint, false);
-    let base_royalties = to_mint_amount(&base_royalties_prec, base_mint, true);
-    let target_royalties = to_mint_amount(&target_royalties_prec, target_mint, false);
 
     msg!(
       "Total reclaimed is {}, with {} to base royalties, {} to target royalties",

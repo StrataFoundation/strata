@@ -1,7 +1,7 @@
 use crate::{
   arg::{PiecewiseCurve, PrimitiveCurve, TimeCurveV0},
   precise_number::{InnerUint, PreciseNumber, ONE_PREC, ZERO_PREC},
-  util::get_percent,
+  util::get_percent_prec,
 };
 use std::convert::*;
 
@@ -75,13 +75,32 @@ impl Curve for PrimitiveCurve {
           if b == 0 && c != 0 {
             /*
             dS = -S + ((S^(1 + k) (R + dR))/R)^(1/(1 + k))
+            dS + S = ((S^(1 + k) (R + dR))/R)^(1/(1 + k))
+            log(dS + S) = log((S^(1 + k) (R + dR))/R)^(1/(1 + k)))
+            log(dS + S) = (1/(1 + k))log(S^(1 + k) (R + dR))/R)
+            log(dS + S) = (1/(1 + k))(log(S^(1 + k)/R) + log(R + dR))
+            log(dS + S) = (1/(1 + k))(log(S^(1 + k)) - log(R) + log(R + dR)))
+            log(dS + S) = (1/(1 + k))(log(S^(1 + k)) + log(R + dR) - log(R))
+            log(dS + S) = (1/(1 + k))((1 + k) log(S) + log(R + dR) - log(R))
+            log(dS + S) = log(S) + (1/(1 + k))(log(R + dR) - log(R))
+            log(dS + S) = log(S) + (1/(1 + k))(log((R + dR / R)))
+            dS + S = e^(log(S) + (1/(1 + k))(log((R + dR / R))))
+            dS = e^(log(S) + (1/(1 + k))(log((R + dR / R)))) - S
             */
-
             target_supply
-              .pow(&one_plus_k_prec)?
-              .checked_mul(&base_amount.checked_add(reserve_change)?)?
-              .checked_div(base_amount)?
-              .pow(&ONE_PREC.checked_div(&one_plus_k_prec)?)?
+              .log()?
+              .checked_add(
+                &ONE_PREC
+                  .checked_div(&one_plus_k_prec)?
+                  .signed()
+                  .checked_mul(
+                    &base_amount
+                      .checked_add(reserve_change)?
+                      .checked_div(base_amount)?
+                      .log()?,
+                  )?,
+              )?
+              .exp()?
               .checked_sub(target_supply)
           } else if c == 0 {
             /*
@@ -131,7 +150,17 @@ impl Curve for PrimitiveCurve {
         PrimitiveCurve::ExponentialCurveV0 { pow, frac, c, b } => {
           if b == 0 && c != 0 {
             /*
-              (R / S^(1 + k)) ((S + dS)^(1 + k) - S^(1 + k))
+              dR = (R / S^(1 + k)) ((S + dS)^(1 + k) - S^(1 + k))
+              dR = (R(S + dS)^(1 + k))/S^(1 + k) - R
+              log(dR + R) = log((R(S + dS)^(1 + k))/S^(1 + k))
+              log(dR + R) = log((R(S + dS)^(1 + k))) - log(S^(1 + k))
+              log(dR + R) = log(R) + (1 + k) log((S + dS)) - (1 + k)log(S)
+              log(dR + R) = (1 + k) (log(R(S + dS)) - log(S))
+              dR + R = e^(log(R) + (1 + k) (log((S + dS)) - log(S)))
+              dR = e^(log(R) + (1 + k) (log((S + dS)) - log(S))) - R
+              dR = e^(log(R) + (1 + k) (log((S + dS) / S))) - R
+
+              Edge case: selling where dS = S. Just charge them the full base amount
             */
             let s_plus_ds = if sell {
               target_supply.checked_sub(amount)?
@@ -139,24 +168,21 @@ impl Curve for PrimitiveCurve {
               target_supply.checked_add(amount)?
             };
 
+            // They're killing the curve, so it should cost the full reserves
+            if s_plus_ds.eq(&ZERO_PREC) {
+              return Some(base_amount.clone());
+            }
+
             let pow_prec = PreciseNumber::new(u128::try_from(pow).ok()?)?;
             let frac_prec = PreciseNumber::new(u128::try_from(frac).ok()?)?;
             let one_plus_k_prec = pow_prec.checked_div(&frac_prec)?.checked_add(&ONE_PREC)?;
 
-            let s_k1 = &target_supply.pow(&one_plus_k_prec)?;
-            let s_plus_ds_k1 = s_plus_ds.pow(&one_plus_k_prec)?;
+            let log1 = base_amount.log()?;
+            let log2 = s_plus_ds.checked_div(target_supply)?.log()?;
+            let logs = log1.checked_add(&one_plus_k_prec.signed().checked_mul(&log2)?)?;
+            let exp = logs.exp()?;
 
-            // PreciseNumbers cannot be negative. If we're selling, S + dS is less than S.
-            // Swap the two around. This will invert the sine of this function, but since sell = true they are expecting a positive number
-            let right_paren_value = if sell {
-              s_k1.checked_sub(&s_plus_ds_k1)?
-            } else {
-              s_plus_ds_k1.checked_sub(s_k1)?
-            };
-
-            base_amount
-              .checked_div(s_k1)?
-              .checked_mul(&right_paren_value)
+            Some(exp.signed().checked_sub(&base_amount.signed())?.value)
           } else if c == 0 {
             // R dS / S
             base_amount.checked_mul(amount)?.checked_div(target_supply)
@@ -191,7 +217,7 @@ fn transition_fees(
       .checked_sub(&offset_in_current_curve)?
       .checked_div(&interval);
     if let Some(percent_of_fees) = percent_of_fees_opt {
-      let percent = get_percent(fees.percentage).ok()?;
+      let percent = get_percent_prec(fees.percentage).ok()?;
 
       return reserve_change
         .checked_mul(&percent)?
