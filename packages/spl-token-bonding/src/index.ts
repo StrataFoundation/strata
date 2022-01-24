@@ -349,6 +349,9 @@ export interface IBuyArgs {
   /** Must provide either base amount or desired target amount */
   desiredTargetAmount?: BN | number;
   baseAmount?: BN | number;
+  expectedOutputAmount?:
+    | BN
+    | number /** Expected output amount of `targetMint` before slippage */;
   /** Decimal number. max price will be (1 + slippage) * price_for_desired_target_amount */
   slippage: number;
 }
@@ -362,6 +365,9 @@ export interface ISwapArgs {
   sourceAuthority?: PublicKey;
   /** The amount of baseMint to purchase with */
   baseAmount: BN | number;
+  expectedOutputAmount?:
+    | BN
+    | number /** Expected output amount before slippage */;
   /** The slippage PER TRANSACTION */
   slippage: number;
   /** Optionally inject extra instructions before each trade. Usefull for adding txn fees */
@@ -380,6 +386,9 @@ export interface ISellArgs {
   destination?: PublicKey /** `baseMint` destination for tokens from the reserve. **Default:** ATA of wallet */;
   sourceAuthority?: PublicKey /** **Default:** wallet */;
   targetAmount: BN | number /** The amount of `targetMint` tokens to sell. */;
+  expectedOutputAmount?:
+    | BN
+    | number /** Expected output amount of `baseMint` before slippage */;
   slippage: number /* Decimal number. max price will be (1 + slippage) * price_for_desired_target_amount */;
 }
 
@@ -1336,6 +1345,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     destination,
     desiredTargetAmount,
     baseAmount,
+    expectedOutputAmount,
     slippage,
     payer = this.wallet.publicKey,
   }: IBuyArgs): Promise<InstructionResult<null>> {
@@ -1531,6 +1541,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     baseMint,
     targetMint,
     baseAmount,
+    expectedOutputAmount,
     slippage,
     extraInstructions = () =>
       Promise.resolve({
@@ -1700,6 +1711,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     sourceAuthority = this.wallet.publicKey,
     destination,
     targetAmount,
+    expectedOutputAmount,
     slippage,
     payer = this.wallet.publicKey,
   }: ISellArgs): Promise<InstructionResult<null>> {
