@@ -542,7 +542,6 @@ pub struct UpdateOwnerV0<'info> {
   pub rent: Sysvar<'info, Rent>,
 }
 
-
 #[derive(Accounts)]
 #[instruction(args: UpdateAuthorityV0Args)]
 pub struct UpdateAuthorityV0<'info> {

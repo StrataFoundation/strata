@@ -84,7 +84,7 @@ pub mod spl_token_collective {
 
   use anchor_lang::AccountsClose;
 
-use super::*;
+  use super::*;
 
   pub fn initialize_collective_v0(
     ctx: Context<InitializeCollectiveV0>,
@@ -595,11 +595,8 @@ use super::*;
     Ok(())
   }
 
-  pub fn update_owner_v0(
-    ctx: Context<UpdateOwnerV0>,
-    args: UpdateOwnerV0Args,
-  ) -> ProgramResult { 
-    let mint_token_ref = &mut ctx.accounts.mint_token_ref; 
+  pub fn update_owner_v0(ctx: Context<UpdateOwnerV0>, args: UpdateOwnerV0Args) -> ProgramResult {
+    let mint_token_ref = &mut ctx.accounts.mint_token_ref;
     // Change owner
     mint_token_ref.owner = Some(ctx.accounts.new_owner.key());
 
@@ -619,7 +616,10 @@ use super::*;
     } else {
       // Wasn't a primary for the current wallet, and wasn't a primary for the new wallet
       if ctx.accounts.new_primary_token_ref.mint == Pubkey::default() {
-        ctx.accounts.new_primary_token_ref.close(ctx.accounts.payer.to_account_info())?;
+        ctx
+          .accounts
+          .new_primary_token_ref
+          .close(ctx.accounts.payer.to_account_info())?;
       }
     }
 
@@ -635,12 +635,15 @@ use super::*;
     args: UpdateAuthorityV0Args,
   ) -> ProgramResult {
     let primary = &mut ctx.accounts.primary_token_ref;
-    if primary.authority.is_some() && primary.authority.unwrap() == ctx.accounts.authority.key() && primary.mint == ctx.accounts.mint_token_ref.mint {
+    if primary.authority.is_some()
+      && primary.authority.unwrap() == ctx.accounts.authority.key()
+      && primary.mint == ctx.accounts.mint_token_ref.mint
+    {
       ctx.accounts.primary_token_ref.authority = Some(args.new_authority);
     }
 
-    ctx.accounts.mint_token_ref.authority = Some(args.new_authority); 
-    ctx.accounts.owner_token_ref.authority = Some(args.new_authority); 
+    ctx.accounts.mint_token_ref.authority = Some(args.new_authority);
+    ctx.accounts.owner_token_ref.authority = Some(args.new_authority);
     Ok(())
   }
 }

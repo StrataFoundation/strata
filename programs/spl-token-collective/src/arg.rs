@@ -107,9 +107,7 @@ pub struct UpdateOwnerV0Args {
   pub primary_token_ref_bump_seed: u8,
 }
 
-
-
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct UpdateAuthorityV0Args {
-  pub new_authority: Pubkey
+  pub new_authority: Pubkey,
 }

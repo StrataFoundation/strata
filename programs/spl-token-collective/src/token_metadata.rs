@@ -2,7 +2,7 @@ use anchor_lang::prelude::{
   AnchorDeserialize, AnchorSerialize, ProgramError, ProgramResult, Pubkey,
 };
 use anchor_lang::solana_program::account_info::AccountInfo;
-use anchor_lang::{solana_program, Accounts, context::CpiContext};
+use anchor_lang::{context::CpiContext, solana_program, Accounts};
 use spl_token_metadata::state::Data;
 use spl_token_metadata::utils::try_from_slice_checked;
 use std::io::Write;
