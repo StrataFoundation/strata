@@ -384,6 +384,21 @@ describe("spl-token-collective", () => {
       expect(mintTokenRef.isOptedOut).to.be.true;
     });
 
+    it("Allows changing the authority", async () => {
+      await tokenCollectiveProgram.updateAuthority({
+        tokenRef: claimedTokenRef,
+        newAuthority: ownerKeypair.publicKey
+      });
+      const ownerTokenRef = (await tokenCollectiveProgram.getTokenRef(
+        claimedTokenRef
+      ))!;
+      const mintTokenRef = (await tokenCollectiveProgram.getTokenRef(
+        (await SplTokenCollective.mintTokenRefKey(ownerTokenRef.mint))[0]
+      ))!;
+      expect((ownerTokenRef.authority! as PublicKey).toBase58()).to.eq(ownerKeypair.publicKey.toBase58())
+      expect((mintTokenRef.authority! as PublicKey).toBase58()).to.eq(ownerKeypair.publicKey.toBase58())
+    });
+
     it("Allows changing the owner", async () => {
       const { instructions, signers, output: { ownerTokenRef } } = await tokenCollectiveProgram.updateOwnerInstructions({
         tokenRef: claimedTokenRef,
@@ -409,21 +424,6 @@ describe("spl-token-collective", () => {
       expect(newOwnerTokenRef.owner!.toBase58()).to.eq(provider.wallet.publicKey.toBase58())
       expect(mintTokenRef.owner!.toBase58()).to.eq(provider.wallet.publicKey.toBase58())
       expect(primaryTokenRef.owner!.toBase58()).to.eq(provider.wallet.publicKey.toBase58())
-    });
-
-    it("Allows changing the authority", async () => {
-      await tokenCollectiveProgram.updateAuthority({
-        tokenRef: claimedTokenRef,
-        newAuthority: ownerKeypair.publicKey
-      });
-      const ownerTokenRef = (await tokenCollectiveProgram.getTokenRef(
-        claimedTokenRef
-      ))!;
-      const mintTokenRef = (await tokenCollectiveProgram.getTokenRef(
-        (await SplTokenCollective.mintTokenRefKey(ownerTokenRef.mint))[0]
-      ))!;
-      expect((ownerTokenRef.authority! as PublicKey).toBase58()).to.eq(ownerKeypair.publicKey.toBase58())
-      expect((mintTokenRef.authority! as PublicKey).toBase58()).to.eq(ownerKeypair.publicKey.toBase58())
     });
   });
 });
