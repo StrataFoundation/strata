@@ -492,7 +492,6 @@ pub struct UpdateOwnerV0<'info> {
     ],
     bump = old_owner_token_ref.bump_seed,
     constraint = owner.key() == old_owner_token_ref.owner.ok_or::<ProgramError>(ErrorCode::InvalidAuthority.into())?,
-    constraint = old_owner_token_ref.mint == mint_token_ref.mint
   )]
   pub old_owner_token_ref: Box<Account<'info, TokenRefV0>>,
   #[account(
@@ -514,6 +513,7 @@ pub struct UpdateOwnerV0<'info> {
       mint_token_ref.mint.key().as_ref()
     ],
     constraint = owner.key() == mint_token_ref.owner.ok_or::<ProgramError>(ErrorCode::InvalidAuthority.into())?,
+    constraint = old_owner_token_ref.mint == mint_token_ref.mint,
     bump = mint_token_ref.bump_seed
   )]
   pub mint_token_ref: Box<Account<'info, TokenRefV0>>,
@@ -559,7 +559,6 @@ pub struct UpdateAuthorityV0<'info> {
     ],
     bump = owner_token_ref.bump_seed,
     constraint = authority.key() == owner_token_ref.authority.ok_or::<ProgramError>(ErrorCode::InvalidAuthority.into())?,
-    constraint = owner_token_ref.mint == mint_token_ref.mint
   )]
   pub owner_token_ref: Account<'info, TokenRefV0>,
   #[account(
@@ -569,6 +568,7 @@ pub struct UpdateAuthorityV0<'info> {
       mint_token_ref.mint.key().as_ref()
     ],
     constraint = authority.key() == mint_token_ref.authority.ok_or::<ProgramError>(ErrorCode::InvalidAuthority.into())?,
+    constraint = owner_token_ref.mint == mint_token_ref.mint,
     bump = mint_token_ref.bump_seed
   )]
   pub mint_token_ref: Account<'info, TokenRefV0>,

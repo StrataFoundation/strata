@@ -606,15 +606,21 @@ use super::*;
     let primary = &mut ctx.accounts.old_primary_token_ref;
     // Only update if this is for the same social token as the mint token ref
     // and if the new wallet doesn't already have a primary
-    if primary.mint == mint_token_ref.mint && ctx.accounts.new_primary_token_ref.mint == Pubkey::default() {
-      // Copy old token ref to new token ref
-      let new_token_ref = &mut ctx.accounts.new_primary_token_ref;
-      new_token_ref.set_inner(mint_token_ref.clone().into_inner());
-      primary.close(ctx.accounts.payer.to_account_info())?;
-      new_token_ref.is_primary = true;
-      new_token_ref.bump_seed = args.primary_token_ref_bump_seed;
+    if primary.mint == mint_token_ref.mint {
+      if ctx.accounts.new_primary_token_ref.mint == Pubkey::default() {
+        // Was a primary for the current wallet, and no primary for the new wallet
+        // Copy old token ref to new token ref
+        let new_token_ref = &mut ctx.accounts.new_primary_token_ref;
+        new_token_ref.set_inner(mint_token_ref.clone().into_inner());
+        primary.close(ctx.accounts.payer.to_account_info())?;
+        new_token_ref.is_primary = true;
+        new_token_ref.bump_seed = args.primary_token_ref_bump_seed;
+      }
     } else {
-      ctx.accounts.new_primary_token_ref.close(ctx.accounts.payer.to_account_info())?;
+      // Wasn't a primary for the current wallet, and wasn't a primary for the new wallet
+      if ctx.accounts.new_primary_token_ref.mint == Pubkey::default() {
+        ctx.accounts.new_primary_token_ref.close(ctx.accounts.payer.to_account_info())?;
+      }
     }
 
     // Copy old token ref to new token ref
