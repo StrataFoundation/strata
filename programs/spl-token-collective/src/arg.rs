@@ -102,9 +102,14 @@ pub struct ChangeOptStatusClaimedV0Args {
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct ChangeOwnerAndAuthorityV0Args {
-  pub new_authority: Pubkey,
-  pub new_owner: Pubkey,
+pub struct UpdateOwnerV0Args {
   pub owner_token_ref_bump_seed: u8,
-  pub primary_owner_token_ref_bump_seed: u8
+  pub primary_token_ref_bump_seed: u8,
+}
+
+
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
+pub struct UpdateAuthorityV0Args {
+  pub new_authority: Pubkey
 }

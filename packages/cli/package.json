@@ -16,12 +16,10 @@
         "copy-files": "copyfiles -u 1 src/**/*.js dist/lib",
         "watch": "yarn run copy-files && node src/idlToTs",
         "bootstrap": "tsc && node dist/lib/bootstrap",
-        "create-governance-token": "tsc && node dist/lib/createGovernanceToken",
-        "beta-dist": "tsc && node dist/lib/betaDist"
+        "create-governance-token": "tsc && node dist/lib/createGovernanceToken"
     },
     "dependencies": {
-        "@project-serum/common": "^0.0.1-beta.3",
-        "@solana/web3.js": "^1.29.2",
+        "@solana/web3.js": "^1.32.0",
         "@strata-foundation/spl-token-bonding": "^2.1.8",
         "@strata-foundation/spl-token-collective": "^2.1.8",
         "@strata-foundation/spl-token-staking": "^2.1.7",

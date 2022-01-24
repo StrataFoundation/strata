@@ -11,7 +11,7 @@
   "devDependencies": {
     "@parcel/packager-ts": "^2.0.0",
     "@parcel/transformer-typescript-types": "^2.0.0",
-    "@project-serum/anchor": "^0.18.0",
+    "@project-serum/anchor": "^0.20.1",
     "@types/chai": "^4.2.21",
     "@types/chai-as-promised": "^7.1.4",
     "@types/mocha": "^9.0.0",
@@ -46,10 +46,10 @@
   },
   "dependencies": {
     "@bonfida/spl-name-service": "^0.1.22",
-    "@project-serum/common": "^0.0.1-beta.3",
     "@solana/buffer-layout": "^3.0.0",
     "@solana/spl-token": "^0.1.8",
-    "@solana/web3.js": "^1.29.2",
+    "@solana/web3.js": "^1.32.0",
+    "superstruct": "0.14.2",
     "husky": "^7.0.4",
     "lerna": "^4.0.0",
     "quicktype-core": "^6.0.70"

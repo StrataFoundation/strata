@@ -26,8 +26,7 @@
         "prepare": "yarn run build"
     },
     "dependencies": {
-        "@project-serum/common": "^0.0.1-beta.3",
-        "@solana/web3.js": "^1.29.2",
+        "@solana/web3.js": "^1.32.0",
         "@strata-foundation/spl-utils": "^2.1.7",
         "bn.js": "^5.2.0",
         "semver": "^7.3.5"

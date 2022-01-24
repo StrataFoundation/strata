@@ -1,17 +1,14 @@
-import React from 'react';
-import { useStrataSdks } from '@strata-foundation/react';
-import { BN } from "bn.js";
-import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
-import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
-import { sendMultipleInstructions, getAssociatedAccountBalance, createMetadata, Data  } from "@strata-foundation/spl-utils";
-import { ExponentialCurveConfig, TimeCurveConfig } from "@strata-foundation/spl-token-bonding";
-import { sendAndConfirmRawTransaction, Keypair, PublicKey, Transaction, SystemProgram } from "@solana/web3.js";
-import { u64, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID, AccountLayout, NATIVE_MINT } from "@solana/spl-token";
-import { Numberu32, Numberu64, createInstruction, createNameRegistry, getHashedName, getNameAccountKey, NameRegistryState, NAME_PROGRAM_ID } from "@solana/spl-name-service";
 import BrowserOnly from '@docusaurus/BrowserOnly';
-import { useTokenMetadata, useTokenRef, useTokenBonding, useBondingPricing } from "@strata-foundation/react";
-import { useVariablesContext, useVariables } from "../Root/variables";
-import { getMintInfo, getTokenAccount } from "@project-serum/common";
+import { createInstruction, createNameRegistry, getHashedName, getNameAccountKey, NameRegistryState, NAME_PROGRAM_ID, Numberu32, Numberu64 } from "@solana/spl-name-service";
+import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, NATIVE_MINT, Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
+import { Keypair, PublicKey, sendAndConfirmRawTransaction, SystemProgram, Transaction } from "@solana/web3.js";
+import { useBondingPricing, useStrataSdks, useTokenBonding, useTokenMetadata, useTokenRef } from '@strata-foundation/react';
+import { ExponentialCurveConfig, SplTokenBonding, TimeCurveConfig } from "@strata-foundation/spl-token-bonding";
+import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
+import { createMetadata, Data, getAssociatedAccountBalance, getMintInfo, getTokenAccount, sendMultipleInstructions } from "@strata-foundation/spl-utils";
+import { BN } from "bn.js";
+import React from 'react';
+import { useVariables, useVariablesContext } from "../Root/variables";
 
 function BrowserOnlyAsyncButton(props) {
   return (

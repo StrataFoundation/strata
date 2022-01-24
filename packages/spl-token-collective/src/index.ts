@@ -1,7 +1,6 @@
 import { getHashedName, NameRegistryState } from "@solana/spl-name-service";
 import * as anchor from "@project-serum/anchor";
 import { IdlTypes, Program, Provider } from "@project-serum/anchor";
-import { createMintInstructions } from "@project-serum/common";
 import {
   AccountInfo as TokenAccountInfo,
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -39,6 +38,7 @@ import {
   SplTokenMetadata,
   TypedAccountParser,
   updateMetadata,
+  createMintInstructions
 } from "@strata-foundation/spl-utils";
 import {
   CollectiveV0,
@@ -270,6 +270,26 @@ export interface ITokenBondingSettings {
   maxPurchaseCap?: number;
   minMintCap?: number;
   maxMintCap?: number;
+}
+
+export interface IUpdateOwnerArgs {
+  /** The payer for this txn */
+  payer?: PublicKey;
+  /** The token ref of the token we are updating */
+  tokenRef: PublicKey;
+  /** The new owner to set */
+  newOwner: PublicKey;
+}
+
+export interface IUpdateAuthorityArgs {
+  /** The payer for this txn */
+  payer?: PublicKey;
+  /** The token ref of the token we are updating */
+  tokenRef: PublicKey;
+  /** The new authority to set */
+  newAuthority: PublicKey;
+  /** The current owner of the token ref. If executing in the same txn as a change owner, will need to supply this */
+  owner?: PublicKey;
 }
 
 export interface ITokenMetadataSettings {
@@ -1696,5 +1716,160 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
    */
   async optOut(args: IOptOutArgs): Promise<void> {
     await this.execute(this.optOutInstructions(args), args.payer);
+  }
+
+  /**
+  * Update the owner wallet of a social token
+  *
+  * @param args
+  * @returns
+  */
+  async updateOwnerInstructions({
+    payer = this.wallet.publicKey,
+    tokenRef,
+    newOwner
+  }: IUpdateOwnerArgs): Promise<InstructionResult<{ ownerTokenRef: PublicKey }>> {
+    const tokenRefAcct = (await this.getTokenRef(tokenRef))!;
+    if (!tokenRefAcct.tokenBonding) {
+      throw new Error(
+        "Cannot update a token ref that has no token bonding"
+      );
+    }
+    if (!tokenRefAcct.isClaimed) {
+      throw new Error("Cannot update owner on an unclaimed token ref");
+    }
+
+    const tokenBondingAcct = (await this.splTokenBondingProgram.getTokenBonding(
+      tokenRefAcct.tokenBonding
+    ))!;
+
+    const [mintTokenRef] = await SplTokenCollective.mintTokenRefKey(
+      tokenBondingAcct.targetMint
+    );
+
+    const [oldOwnerTokenRef] = await SplTokenCollective.ownerTokenRefKey({
+      owner: tokenRefAcct.owner! as PublicKey,
+      mint: tokenBondingAcct?.baseMint,
+    });
+    const [newOwnerTokenRef, ownerTokenRefBumpSeed] = await SplTokenCollective.ownerTokenRefKey({
+      owner: newOwner,
+      mint: tokenBondingAcct?.baseMint,
+    });
+    const [oldPrimaryTokenRef] = await SplTokenCollective.ownerTokenRefKey({
+      owner: tokenRefAcct.owner! as PublicKey,
+      isPrimary: true
+    });
+    const [newPrimaryTokenRef, primaryTokenRefBumpSeed] = await SplTokenCollective.ownerTokenRefKey({
+      owner: newOwner,
+      isPrimary: true
+    });
+    return {
+      output: {
+        ownerTokenRef: newOwnerTokenRef
+      },
+      signers: [],
+      instructions: [
+        await this.instruction.updateOwnerV0({
+          ownerTokenRefBumpSeed,
+          primaryTokenRefBumpSeed
+        }, {
+          accounts: {
+            newOwner,
+            payer,
+            baseMint: tokenBondingAcct.baseMint,
+            oldOwnerTokenRef,
+            oldPrimaryTokenRef,
+            newPrimaryTokenRef,
+            newOwnerTokenRef,
+            mintTokenRef,
+            owner: tokenRefAcct.owner! as PublicKey,
+            systemProgram: SystemProgram.programId,
+            rent: SYSVAR_RENT_PUBKEY
+          }
+        })
+      ],
+    };
+  }
+
+  /**
+   * Runs {@link `updateOwnerInstructions`}
+   *
+   * @param args
+   * @retruns
+   */
+  updateOwner(args: IUpdateOwnerArgs): Promise<{ ownerTokenRef: PublicKey }> {
+    return this.execute(this.updateOwnerInstructions(args), args.payer);
+  }
+
+  /**
+  * Update the authority of a social token
+  *
+  * @param args
+  * @returns
+  */
+  async updateAuthorityInstructions({
+    payer = this.wallet.publicKey,
+    tokenRef,
+    newAuthority,
+    owner
+  }: IUpdateAuthorityArgs): Promise<InstructionResult<null>> {
+    const tokenRefAcct = (await this.getTokenRef(tokenRef))!;
+    if (!tokenRefAcct.tokenBonding) {
+      throw new Error(
+        "Cannot update a token ref that has no token bonding"
+      );
+    }
+    if (!tokenRefAcct.isClaimed) {
+      throw new Error("Cannot update authority on an unclaimed token ref");
+    }
+
+    owner = owner || tokenRefAcct.owner! as PublicKey;
+
+    const tokenBondingAcct = (await this.splTokenBondingProgram.getTokenBonding(
+      tokenRefAcct.tokenBonding
+    ))!;
+
+    const [mintTokenRef] = await SplTokenCollective.mintTokenRefKey(
+      tokenBondingAcct.targetMint
+    );
+
+    const [ownerTokenRef] = await SplTokenCollective.ownerTokenRefKey({
+      owner,
+      mint: tokenBondingAcct?.baseMint,
+    });
+
+    const [primaryTokenRef] = await SplTokenCollective.ownerTokenRefKey({
+      owner,
+      isPrimary: true
+    });
+
+    return {
+      output: null,
+      signers: [],
+      instructions: [
+        await this.instruction.updateAuthorityV0({
+          newAuthority,
+        }, {
+          accounts: {
+            payer,
+            primaryTokenRef,
+            baseMint: tokenBondingAcct.baseMint,
+            ownerTokenRef,
+            mintTokenRef,
+            authority: tokenRefAcct.authority! as PublicKey
+          }
+        })
+      ],
+    };
+  }
+
+  /**
+   * Runs {@link `updateAuthorityInstructions`}
+   *
+   * @param args
+   * @retruns
+   */
+  updateAuthority(args: IUpdateAuthorityArgs): Promise<null> {
+    return this.execute(this.updateAuthorityInstructions(args), args.payer);
   }
 }
