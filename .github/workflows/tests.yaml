@@ -82,7 +82,7 @@ jobs:
         id: cache-cargo-deps-builds
         with:
           path: |
-            ./deps/metaplex/rust/target
+            ./deps/metaplex-program-library/target
             ./deps/solana-program-library/target
           key: cargo-${{ runner.os }}-cargo-build-${{ hashFiles('./deps/**/Cargo.lock') }}-deps
       - run: ~/.cargo/bin/anchor run build-deps

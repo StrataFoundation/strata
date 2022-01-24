@@ -4,5 +4,5 @@ members = [
 ]
 exclude = [
   "deps/solana-program-library",
-  "deps/metaplex"
+  "deps/metaplex-program-library"
 ]
