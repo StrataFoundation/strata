@@ -30,7 +30,6 @@ import {
   AnchorSdk,
   createMetadata,
   Data,
-  getAssociatedAccountBalance,
   InstructionResult,
   percent,
   TypedAccountParser,
@@ -1351,20 +1350,22 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
   }: IBuyArgs): Promise<InstructionResult<null>> {
     const state = (await this.getState())!;
     const tokenBondingAcct = (await this.getTokenBonding(tokenBonding))!;
-    // @ts-ignore
+
     const targetMint = await getMintInfo(
       this.provider,
       tokenBondingAcct.targetMint
     );
+
     const baseMint = await getMintInfo(
       this.provider,
       tokenBondingAcct.baseMint
     );
+
     const baseStorage = await getTokenAccount(
       this.provider,
       tokenBondingAcct.baseStorage
     );
-    // @ts-ignore
+
     const curve = await this.getPricingCurve(
       tokenBondingAcct.curve,
       baseStorage,
@@ -1375,6 +1376,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
 
     const instructions = [];
     const signers = [];
+
     if (!destination) {
       destination = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -1401,17 +1403,23 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     let buyTargetAmount = null;
     let buyWithBase = null;
     let maxPrice: number = 0;
+
     if (desiredTargetAmount) {
       const desiredTargetAmountNum = toNumber(desiredTargetAmount, targetMint);
+
       const neededAmount =
         desiredTargetAmountNum *
         (1 / (1 - asDecimal(tokenBondingAcct.buyTargetRoyaltyPercentage)));
-      const curveAmount = curve.buyTargetAmount(
-        desiredTargetAmountNum,
-        tokenBondingAcct.buyBaseRoyaltyPercentage,
-        tokenBondingAcct.buyTargetRoyaltyPercentage
-      );
-      maxPrice = curveAmount * (1 + slippage);
+
+      const min = expectedOutputAmount
+        ? toNumber(expectedOutputAmount, targetMint)
+        : curve.buyTargetAmount(
+            desiredTargetAmountNum,
+            tokenBondingAcct.buyBaseRoyaltyPercentage,
+            tokenBondingAcct.buyTargetRoyaltyPercentage
+          );
+
+      maxPrice = min * (1 + slippage);
 
       buyTargetAmount = {
         targetAmount: new BN(
@@ -1423,26 +1431,26 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
 
     if (baseAmount) {
       const baseAmountNum = toNumber(baseAmount, baseMint);
-      const min =
-        curve.buyWithBaseAmount(
-          baseAmountNum,
-          tokenBondingAcct.buyBaseRoyaltyPercentage,
-          tokenBondingAcct.buyTargetRoyaltyPercentage
-        ) *
-        (1 - slippage);
       maxPrice = baseAmountNum;
+
+      const min = expectedOutputAmount
+        ? toNumber(expectedOutputAmount, targetMint)
+        : curve.buyWithBaseAmount(
+            baseAmountNum,
+            tokenBondingAcct.buyBaseRoyaltyPercentage,
+            tokenBondingAcct.buyTargetRoyaltyPercentage
+          );
 
       buyWithBase = {
         baseAmount: toBN(baseAmount, baseMint),
         minimumTargetAmount: new BN(
-          Math.ceil(
-            Math.ceil(min * Math.pow(10, targetMint.decimals) * (1 - slippage))
-          )
+          Math.ceil(min * (1 - slippage) * Math.pow(10, targetMint.decimals))
         ),
       };
     }
 
     let lastInstructions = [];
+
     if (!source) {
       if (tokenBondingAcct.baseMint.equals(state.wrappedSolMint)) {
         const {
@@ -1478,6 +1486,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       // @ts-ignore
       buyWithBase,
     };
+
     const accounts = {
       accounts: {
         tokenBonding,
@@ -1495,6 +1504,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         clock: SYSVAR_CLOCK_PUBKEY,
       },
     };
+
     instructions.push(await this.instruction.buyV0(args, accounts));
     instructions.push(...lastInstructions);
 
@@ -1556,26 +1566,29 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       )[0],
       baseMint
     );
+
     const hierarchyFromBase = await this.getBondingHierarchy(
       (
         await SplTokenBonding.tokenBondingKey(baseMint)
       )[0],
       targetMint
     );
+
     const hierarchy = [hierarchyFromTarget, hierarchyFromBase].find(
       (hierarchy) => hierarchy?.contains(baseMint, targetMint)
     );
+
     if (!hierarchy) {
       throw new Error(
         `No bonding curve hierarchies found for base or target that contain both ${baseMint.toBase58()} and ${targetMint.toBase58()}`
       );
     }
+
     const isBuy = hierarchy.tokenBonding.targetMint.equals(targetMint);
     const arrHierarchy = hierarchy?.toArray() || [];
-
     const baseMintInfo = await getMintInfo(this.provider, baseMint);
-
     let currAmount = toBN(baseAmount, baseMintInfo);
+
     for (const subHierarchy of isBuy ? arrHierarchy.reverse() : arrHierarchy) {
       const tokenBonding = subHierarchy.tokenBonding;
       const baseIsSol = tokenBonding.baseMint.equals(
@@ -1602,10 +1615,11 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           return this.getTokenAccountBalance(ata, "single");
         }
       };
-      const preBalance = await getBalance();
 
+      const preBalance = await getBalance();
       let instructions: TransactionInstruction[];
       let signers: Signer[];
+
       if (isBuy) {
         console.log(
           `Actually doing ${tokenBonding.baseMint.toBase58()} to ${tokenBonding.targetMint.toBase58()}`
@@ -1615,6 +1629,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           sourceAuthority,
           baseAmount: currAmount,
           tokenBonding: tokenBonding.publicKey,
+          expectedOutputAmount,
           slippage,
         }));
       } else {
@@ -1626,6 +1641,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           sourceAuthority,
           targetAmount: currAmount,
           tokenBonding: tokenBonding.publicKey,
+          expectedOutputAmount,
           slippage,
         }));
       }
@@ -1636,6 +1652,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           amount: currAmount,
           isBuy,
         });
+
       await this.sendInstructions(
         [...instructions, ...extraInstrs],
         [...signers, ...extaSigners],
@@ -1799,18 +1816,22 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     }
 
     const targetAmountNum = toNumber(targetAmount, targetMint);
-    const reclaimedAmount = curve.sellTargetAmount(
-      targetAmountNum,
-      tokenBondingAcct.sellBaseRoyaltyPercentage,
-      tokenBondingAcct.sellTargetRoyaltyPercentage
-    );
-    const minPrice = Math.ceil(
-      reclaimedAmount * (1 - slippage) * Math.pow(10, baseMint.decimals)
-    );
+
+    const min = expectedOutputAmount
+      ? toNumber(expectedOutputAmount, baseMint)
+      : curve.sellTargetAmount(
+          targetAmountNum,
+          tokenBondingAcct.sellBaseRoyaltyPercentage,
+          tokenBondingAcct.sellTargetRoyaltyPercentage
+        );
+
     const args: IdlTypes<SplTokenBondingIDL>["SellV0Args"] = {
       targetAmount: toBN(targetAmount, targetMint),
-      minimumPrice: new BN(minPrice),
+      minimumPrice: new BN(
+        Math.ceil(min * (1 - slippage) * Math.pow(10, baseMint.decimals))
+      ),
     };
+
     const accounts = {
       accounts: {
         tokenBonding,
@@ -1828,6 +1849,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         clock: SYSVAR_CLOCK_PUBKEY,
       },
     };
+
     instructions.push(await this.instruction.sellV0(args, accounts));
     instructions.push(...lastInstructions);
 
