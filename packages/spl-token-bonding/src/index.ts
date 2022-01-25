@@ -1,12 +1,6 @@
 import * as anchor from "@project-serum/anchor";
 import { IdlTypes, Program, Provider } from "@project-serum/anchor";
 import {
-  createMintInstructions,
-  getMintInfo,
-  getTokenAccount,
-  sleep,
-} from "@project-serum/common";
-import {
   AccountInfo,
   AccountLayout,
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -29,7 +23,10 @@ import {
 import {
   AnchorSdk,
   createMetadata,
+  createMintInstructions,
   Data,
+  getMintInfo,
+  getTokenAccount,
   InstructionResult,
   percent,
   TypedAccountParser,
@@ -52,6 +49,10 @@ export * from "./curves";
 export * from "./generated/spl-token-bonding";
 export * from "./pricing";
 export * from "./utils";
+
+async function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 /**
  * The curve config required by the smart contract is unwieldy, implementors of `CurveConfig` wrap the interface

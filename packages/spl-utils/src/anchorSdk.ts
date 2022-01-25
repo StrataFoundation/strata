@@ -1,6 +1,6 @@
 import { AccountNamespace, Idl, InstructionNamespace, Program, Provider, RpcNamespace } from "@project-serum/anchor";
 import { AllInstructions } from "@project-serum/anchor/dist/cjs/program/namespace/types";
-import { Wallet } from "@project-serum/common";
+import { Wallet } from "@project-serum/anchor/dist/cjs/provider";
 import { PublicKey, Signer, TransactionInstruction } from "@solana/web3.js";
 import { TypedAccountParser } from ".";
 import { BigInstructionResult, InstructionResult, sendInstructions, sendMultipleInstructions } from "./transaction";

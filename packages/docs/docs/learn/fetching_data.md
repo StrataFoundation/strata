@@ -141,7 +141,7 @@ Most of the calls in this guide have React hook equivalents. For example, `useTo
 The Token Ref is at the heart of Strata. Given a token ref, you can fetch any information you need about a social token:
 
 ```js
-import { getMintInfo, getTokenAccount } from "@project-serum/common";
+import { getMintInfo, getTokenAccount } from "@strata-foundation/spl-utils";
 ```
 ```js async deps=token
 var metadata = await tokenMetadataSdk.getMetadata(tokenRef.tokenMetadata);

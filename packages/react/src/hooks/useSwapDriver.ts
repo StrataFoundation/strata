@@ -1,4 +1,4 @@
-import { Provider } from "@project-serum/common";
+import { Provider } from "@project-serum/anchor";
 import {
   AccountLayout,
   ASSOCIATED_TOKEN_PROGRAM_ID,

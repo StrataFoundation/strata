@@ -4,7 +4,7 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
-  "version": "2.1.8",
+  "version": "2.2.0",
   "description": "Interface to the spl-token-bonding smart contract",
   "repository": {
     "type": "git",
@@ -27,10 +27,9 @@
     "prepare": "yarn run build"
   },
   "dependencies": {
-    "@project-serum/anchor": "^0.18.0",
-    "@project-serum/common": "^0.0.1-beta.3",
-    "@solana/web3.js": "^1.29.2",
-    "@strata-foundation/spl-utils": "^2.1.7",
+    "@project-serum/anchor": "^0.20.1",
+    "@solana/web3.js": "^1.32.0",
+    "@strata-foundation/spl-utils": "^2.2.0",
     "bn.js": "^5.2.0",
     "copyfiles": "^2.4.1"
   },
