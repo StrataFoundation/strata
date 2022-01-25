@@ -6,7 +6,6 @@ import {
 } from "@bonfida/spl-name-service";
 import * as anchor from "@project-serum/anchor";
 import { BN } from "@project-serum/anchor";
-import { createMint } from "@project-serum/common";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import {
   ExponentialCurveConfig,
@@ -17,6 +16,7 @@ import {
   sendMultipleInstructions,
   SplTokenMetadata,
   percent,
+  createMint,
 } from "@strata-foundation/spl-utils";
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
@@ -382,6 +382,48 @@ describe("spl-token-collective", () => {
       expect(tokenBonding.buyFrozen).to.be.true;
       expect(ownerTokenRef.isOptedOut).to.be.true;
       expect(mintTokenRef.isOptedOut).to.be.true;
+    });
+
+    it("Allows changing the authority", async () => {
+      await tokenCollectiveProgram.updateAuthority({
+        tokenRef: claimedTokenRef,
+        newAuthority: ownerKeypair.publicKey
+      });
+      const ownerTokenRef = (await tokenCollectiveProgram.getTokenRef(
+        claimedTokenRef
+      ))!;
+      const mintTokenRef = (await tokenCollectiveProgram.getTokenRef(
+        (await SplTokenCollective.mintTokenRefKey(ownerTokenRef.mint))[0]
+      ))!;
+      expect((ownerTokenRef.authority! as PublicKey).toBase58()).to.eq(ownerKeypair.publicKey.toBase58())
+      expect((mintTokenRef.authority! as PublicKey).toBase58()).to.eq(ownerKeypair.publicKey.toBase58())
+    });
+
+    it("Allows changing the owner", async () => {
+      const { instructions, signers, output: { ownerTokenRef } } = await tokenCollectiveProgram.updateOwnerInstructions({
+        tokenRef: claimedTokenRef,
+        newOwner: provider.wallet.publicKey
+      });
+      await tokenCollectiveProgram.sendInstructions(instructions, [...signers, ownerKeypair]);
+      const oldOwnerTokenRef = (await tokenCollectiveProgram.getTokenRef(
+        claimedTokenRef
+      ))!;
+      expect(oldOwnerTokenRef).to.be.null;
+      const newOwnerTokenRef = (await tokenCollectiveProgram.getTokenRef(
+        ownerTokenRef
+      ))!;
+      const mintTokenRef = (await tokenCollectiveProgram.getTokenRef(
+        (await SplTokenCollective.mintTokenRefKey(newOwnerTokenRef.mint))[0]
+      ))!;
+      const primaryTokenRef = (await tokenCollectiveProgram.getTokenRef(
+        (await SplTokenCollective.ownerTokenRefKey({
+          isPrimary: true,
+          owner: provider.wallet.publicKey
+        }))[0]
+      ))!;
+      expect(newOwnerTokenRef.owner!.toBase58()).to.eq(provider.wallet.publicKey.toBase58())
+      expect(mintTokenRef.owner!.toBase58()).to.eq(provider.wallet.publicKey.toBase58())
+      expect(primaryTokenRef.owner!.toBase58()).to.eq(provider.wallet.publicKey.toBase58())
     });
   });
 });

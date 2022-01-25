@@ -1,9 +1,9 @@
 import { Provider } from "@project-serum/anchor";
-import { getMintInfo } from "@project-serum/common";
 import { AccountInfo as TokenAccountInfo, MintInfo } from "@solana/spl-token";
 import { PublicKey, Signer, TransactionInstruction } from "@solana/web3.js";
 import {
   decodeMasterEdition,
+  getMintInfo,
   InstructionResult,
   MetadataKey,
   METADATA_PROGRAM_ID,

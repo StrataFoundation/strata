@@ -1,12 +1,11 @@
 import * as anchor from "@project-serum/anchor";
 import { Program, Provider } from "@project-serum/anchor";
-import { createMintInstructions, getMintInfo } from "@project-serum/common";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import {
   PublicKey, SystemProgram, SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY
 } from "@solana/web3.js";
-import { AnchorSdk, InstructionResult } from "@strata-foundation/spl-utils";
+import { createMintInstructions, getMintInfo, AnchorSdk, InstructionResult } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
 import { PeriodUnit, SplTokenStakingIDL, TokenStakingV0 } from "./generated/spl-token-staking";
 
