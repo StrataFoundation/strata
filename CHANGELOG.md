@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [2.2.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.1.11...v2.2.0) (2022-01-25)
+
+### Added
+
+  * Change Authority on Social Token
+  * Change Owner on Social Token
+
+
 ## [2.1.12]
 
 Another attempt at fixing claim
