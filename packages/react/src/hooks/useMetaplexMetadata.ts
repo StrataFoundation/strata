@@ -1,18 +1,12 @@
+import { DataV2, EditionData, MasterEditionData, Metadata, MetadataData } from "@metaplex-foundation/mpl-token-metadata";
 import { NATIVE_MINT } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
 import {
-  Data,
-  decodeMetadata,
-  Edition,
-  getMetadata,
   ITokenWithMeta,
-  MasterEditionV1,
-  MasterEditionV2,
-  Metadata,
   SplTokenMetadata
 } from "@strata-foundation/spl-utils";
 import { useAsync } from "react-async-hook";
-import { usePublicKey, useStrataSdks } from ".";
+import { useStrataSdks } from ".";
 import { useAccount } from "./useAccount";
 import { useMint } from "./useMint";
 import { useTwWrappedSolMint } from "./useTwWrappedSolMint";
@@ -22,16 +16,18 @@ export interface IUseMetaplexTokenMetadataResult extends ITokenWithMeta {
   error: Error | undefined;
 }
 
-const parser = (_: any, acct: any) => decodeMetadata(acct.data);
-const solMetadata = new Metadata({
+const parser = (key: any, acct: any) => new Metadata(key, acct).data;
+const solMetadata = new MetadataData({
   updateAuthority: "",
   mint: NATIVE_MINT.toBase58(),
-  data: new Data({
+  data: new DataV2({
     name: "Solana",
     symbol: "SOL",
     uri: "https://strata-token-metadata.s3.us-east-2.amazonaws.com/sol.json",
     creators: null,
     sellerFeeBasisPoints: 0,
+    collection: null,
+    uses: null
   }),
   primarySaleHappened: false,
   isMutable: false,
@@ -48,15 +44,14 @@ export function useMetaplexTokenMetadata(
   token: PublicKey | undefined | null
 ): IUseMetaplexTokenMetadataResult {
   const {
-    result: metadataAccountKeyStr,
+    result: metadataAccountKey,
     loading,
     error,
   } = useAsync(
     async (token: string | undefined | null) =>
-      token ? getMetadata(token) : undefined,
+      token ? Metadata.getPDA(token) : undefined,
     [token?.toBase58()]
   );
-  const metadataAccountKey = usePublicKey(metadataAccountKeyStr);
 
   let { info: metadata, loading: accountLoading } = useAccount(
     metadataAccountKey,
@@ -72,14 +67,14 @@ export function useMetaplexTokenMetadata(
   }
 
   const { tokenMetadataSdk: splTokenMetadataSdk } = useStrataSdks();
-  const getEditionInfo: (metadata: Metadata | undefined) => Promise<{
-    edition?: Edition;
-    masterEdition?: MasterEditionV1 | MasterEditionV2;
+  const getEditionInfo: (metadata: MetadataData | undefined) => Promise<{
+    edition?: EditionData;
+    masterEdition?: MasterEditionData;
   }> = splTokenMetadataSdk
     ? splTokenMetadataSdk.getEditionInfo
     : () => Promise.resolve({});
   const { result: editionInfo } = useAsync(
-    async (metadata: Metadata | undefined) =>
+    async (metadata: MetadataData | undefined) =>
       (await getEditionInfo(metadata)) || [],
     [metadata]
   );

@@ -1,14 +1,11 @@
+import { CreateMetadataV2, Creator, DataV2, Edition, EditionData, MasterEdition, MasterEditionData, Metadata, MetadataData, MetadataKey, UpdateMetadataV2 } from "@metaplex-foundation/mpl-token-metadata";
 import { Provider } from "@project-serum/anchor";
 import { AccountInfo as TokenAccountInfo, MintInfo } from "@solana/spl-token";
 import { PublicKey, Signer, TransactionInstruction } from "@solana/web3.js";
 import {
-  decodeMasterEdition,
   getMintInfo,
   InstructionResult,
-  MetadataKey,
-  METADATA_PROGRAM_ID,
   sendInstructions,
-  updateMetadata,
 } from ".";
 import {
   ARWEAVE_UPLOAD_URL,
@@ -17,21 +14,6 @@ import {
   uploadToArweave,
   ArweaveEnv,
 } from "./arweave";
-import {
-  createMetadata,
-  Creator,
-  Data,
-  decodeEdition,
-  decodeMetadata,
-  EDITION,
-  Edition,
-  IMetadataExtension,
-  MasterEditionV1,
-  MasterEditionV2,
-  Metadata,
-  MetadataCategory,
-  METADATA_PREFIX,
-} from "./metadata";
 
 export interface ICreateArweaveUrlArgs {
   payer?: PublicKey;
@@ -45,26 +27,77 @@ export interface ICreateArweaveUrlArgs {
   uploadUrl: string;
 }
 
+export type Attribute = {
+  trait_type?: string;
+  display_type?: string;
+  value: string | number;
+};
+
+export type MetadataFile = {
+  uri: string;
+  type: string;
+};
+
+export type FileOrString = MetadataFile | string;
+
+export interface IMetadataExtension {
+  name: string;
+  symbol: string;
+
+  creators: Creator[] | null;
+  description: string;
+  // preview image absolute URI
+  image: string;
+  animation_url?: string;
+
+  attributes?: Attribute[];
+
+  // stores link to item on meta
+  external_url: string;
+
+  seller_fee_basis_points: number;
+
+  properties: {
+    files?: FileOrString[];
+    category: MetadataCategory;
+    maxSupply?: number;
+    creators?: {
+      address: string;
+      shares: number;
+    }[];
+  };
+}
+
 export interface ICreateMetadataInstructionsArgs {
-  data: Data;
+  data: DataV2;
   authority?: PublicKey;
+  mintAuthority?: PublicKey;
   mint: PublicKey;
   payer?: PublicKey;
 }
 
 export interface IUpdateMetadataInstructionsArgs {
-  data?: Data | null;
+  data?: DataV2 | null;
   authority?: PublicKey | null;
   metadata: PublicKey;
   payer?: PublicKey;
+  /** The update authority to use when updating the metadata. **Default:** Pulled from the metadata object. This can be useful if you're chaining transactions */
+  updateAuthority?: PublicKey;
+}
+
+export enum MetadataCategory {
+  Audio = 'audio',
+  Video = 'video',
+  Image = 'image',
+  VR = 'vr',
 }
 
 export interface ITokenWithMeta {
   metadataKey?: PublicKey;
-  metadata?: Metadata;
+  metadata?: MetadataData;
   mint?: MintInfo;
-  edition?: Edition;
-  masterEdition?: MasterEditionV1 | MasterEditionV2;
+  edition?: EditionData;
+  masterEdition?: MasterEditionData;
   data?: IMetadataExtension;
   image?: string;
   description?: string;
@@ -88,7 +121,7 @@ export function getImageFromMeta(meta?: any): string | undefined {
     return meta?.image;
   } else {
     const found = (meta?.properties?.files || []).find(
-      (f: any) => typeof f !== "string" && f.type === MetadataCategory.Image
+      (f: any) => typeof f !== "string" && f.type === "Ima"
     )?.uri;
     return found;
   }
@@ -165,31 +198,15 @@ export class SplTokenMetadata {
     }
   }
 
-  static async getEdition(tokenMint: PublicKey): Promise<PublicKey> {
-    return (
-      await PublicKey.findProgramAddress(
-        [
-          Buffer.from(METADATA_PREFIX),
-          new PublicKey(METADATA_PROGRAM_ID).toBuffer(),
-          tokenMint.toBuffer(),
-          Buffer.from(EDITION),
-        ],
-        new PublicKey(METADATA_PROGRAM_ID)
-      )
-    )[0];
-  }
-
-  async getEditionInfo(metadata: Metadata | undefined): Promise<{
-    edition?: Edition;
-    masterEdition?: MasterEditionV1 | MasterEditionV2;
+  async getEditionInfo(metadata: MetadataData | undefined): Promise<{
+    edition?: EditionData;
+    masterEdition?: MasterEditionData;
   }> {
     if (!metadata) {
       return {};
     }
 
-    const editionKey = await SplTokenMetadata.getEdition(
-      new PublicKey(metadata.mint)
-    );
+    const editionKey = await Edition.getPDA(new PublicKey(metadata.mint));
 
     let edition;
     let masterEdition;
@@ -197,41 +214,34 @@ export class SplTokenMetadata {
       await this.provider.connection.getAccountInfo(editionKey);
     const editionOrMasterEdition = editionOrMasterEditionAcct
       ? editionOrMasterEditionAcct?.data[0] == MetadataKey.EditionV1
-        ? decodeEdition(editionOrMasterEditionAcct.data)
-        : decodeMasterEdition(editionOrMasterEditionAcct.data)
+        ? new Edition(editionKey, editionOrMasterEditionAcct)
+        : new MasterEdition(editionKey, editionOrMasterEditionAcct)
       : null;
 
     if (editionOrMasterEdition instanceof Edition) {
       edition = editionOrMasterEdition;
       const masterEditionInfoAcct =
         await this.provider.connection.getAccountInfo(
-          new PublicKey(editionOrMasterEdition.parent)
+          new PublicKey(editionOrMasterEdition.data.parent)
         );
       masterEdition =
         masterEditionInfoAcct &&
-        decodeMasterEdition(masterEditionInfoAcct.data);
+        new MasterEdition(new PublicKey(editionOrMasterEdition.data.parent), masterEditionInfoAcct)
     } else {
       masterEdition = editionOrMasterEdition;
     }
 
     return {
-      edition,
-      masterEdition: masterEdition || undefined,
+      edition: edition?.data,
+      masterEdition: masterEdition?.data || undefined,
     };
-  }
-
-  async getMetadata(metadataKey: PublicKey): Promise<Metadata | null> {
-    const metadataAcc = await this.provider.connection.getAccountInfo(
-      metadataKey
-    );
-    return metadataAcc && decodeMetadata(metadataAcc.data);
   }
 
   async getTokenMetadata(metadataKey: PublicKey): Promise<ITokenWithMeta> {
     const metadataAcc = await this.provider.connection.getAccountInfo(
       metadataKey
     );
-    const metadata = metadataAcc && decodeMetadata(metadataAcc.data);
+    const metadata = metadataAcc && new Metadata(metadataKey, metadataAcc).data
     const data = await SplTokenMetadata.getArweaveMetadata(metadata?.data.uri);
     const image = await SplTokenMetadata.getImage(metadata?.data.uri);
     const description = data?.description;
@@ -354,27 +364,36 @@ export class SplTokenMetadata {
     data,
     authority = this.provider.wallet.publicKey,
     mint,
+    mintAuthority = this.provider.wallet.publicKey,
     payer = this.provider.wallet.publicKey,
   }: ICreateMetadataInstructionsArgs): Promise<
     InstructionResult<{ metadata: PublicKey }>
   > {
-    const instructions: TransactionInstruction[] = [];
-    const metadata = await createMetadata(
-      data,
-      authority?.toBase58(),
-      mint.toBase58(),
-      payer.toBase58(),
-      instructions,
-      payer.toBase58()
-    );
+    const metadata = await Metadata.getPDA(mint);
+    const instructions: TransactionInstruction[] = new CreateMetadataV2({
+      feePayer: payer
+    }, {
+      metadata,
+      mint,
+      metadataData: data,
+      mintAuthority,
+      updateAuthority: authority
+    }).instructions
 
     return {
       instructions,
       signers: [],
       output: {
-        metadata: new PublicKey(metadata),
+        metadata,
       },
     };
+  }
+
+  async getMetadata(metadataKey: PublicKey): Promise<MetadataData | null> {
+    const metadataAcc = await this.provider.connection.getAccountInfo(
+      metadataKey
+    );
+    return metadataAcc && new Metadata(metadataKey, metadataAcc).data;
   }
 
   async createMetadata(
@@ -392,28 +411,23 @@ export class SplTokenMetadata {
     data,
     authority,
     metadata,
+    updateAuthority
   }: IUpdateMetadataInstructionsArgs): Promise<
     InstructionResult<{ metadata: PublicKey }>
   > {
-    const instructions: TransactionInstruction[] = [];
-    const metadataAcct = await this.getMetadata(metadata);
-    await updateMetadata(
-      data == null
-        ? undefined
-        : typeof data === "undefined"
-        ? metadataAcct?.data
-        : data,
-      authority == null
-        ? undefined
-        : typeof authority === "undefined"
-        ? metadataAcct?.updateAuthority
-        : authority.toBase58(),
-      undefined,
-      metadataAcct!.mint,
-      metadataAcct!.updateAuthority,
-      instructions,
-      metadata.toBase58()
-    );
+    const metadataAcct = (await this.getMetadata(metadata))!;
+    const instructions = new UpdateMetadataV2({}, {
+      metadata,
+      metadataData: data || new DataV2({
+        ...metadataAcct.data,
+        collection: metadataAcct?.collection,
+        uses: metadataAcct?.uses
+      }),
+      updateAuthority: updateAuthority || new PublicKey(metadataAcct!.updateAuthority),
+      newUpdateAuthority: typeof authority == "undefined" ? new PublicKey(metadataAcct.updateAuthority) : (authority || undefined),
+      primarySaleHappened: null,
+      isMutable: null
+    }).instructions
 
     return {
       instructions,

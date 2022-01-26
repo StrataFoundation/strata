@@ -3,18 +3,18 @@ use anchor_lang::prelude::{
 };
 use anchor_lang::solana_program::account_info::AccountInfo;
 use anchor_lang::{context::CpiContext, solana_program, Accounts};
-use spl_token_metadata::state::Data;
-use spl_token_metadata::utils::try_from_slice_checked;
+use mpl_token_metadata::state::DataV2;
+use mpl_token_metadata::utils::try_from_slice_checked;
 use std::io::Write;
 use std::ops::Deref;
 
-pub use spl_token_metadata::ID;
+pub use mpl_token_metadata::ID;
 
 #[derive(Clone)]
-pub struct Metadata(spl_token_metadata::state::Metadata);
+pub struct Metadata(mpl_token_metadata::state::Metadata);
 
 impl Deref for Metadata {
-  type Target = spl_token_metadata::state::Metadata;
+  type Target = mpl_token_metadata::state::Metadata;
 
   fn deref(&self) -> &Self::Target {
     &self.0
@@ -29,8 +29,8 @@ impl anchor_lang::AccountDeserialize for Metadata {
   fn try_deserialize_unchecked(buf: &mut &[u8]) -> Result<Self, ProgramError> {
     try_from_slice_checked(
       buf,
-      spl_token_metadata::state::Key::MetadataV1,
-      spl_token_metadata::state::MAX_METADATA_LEN,
+      mpl_token_metadata::state::Key::MetadataV1,
+      mpl_token_metadata::state::MAX_METADATA_LEN,
     )
     .map(Metadata)
   }
@@ -66,22 +66,25 @@ pub struct UpdateMetadataAccount<'info> {
   pub new_update_authority: AccountInfo<'info>,
 }
 
-pub fn update_metadata_account<'a, 'b, 'c, 'info>(
+pub fn update_metadata_account_v2<'a, 'b, 'c, 'info>(
   ctx: CpiContext<'a, 'b, 'c, 'info, UpdateMetadataAccount<'info>>,
   args: UpdateMetadataAccountArgs,
 ) -> ProgramResult {
-  let ix = spl_token_metadata::instruction::update_metadata_accounts(
-    spl_token_metadata::ID,
+  let ix = mpl_token_metadata::instruction::update_metadata_accounts_v2(
+    mpl_token_metadata::ID,
     *ctx.accounts.token_metadata.key,
     *ctx.accounts.update_authority.key,
     Some(*ctx.accounts.new_update_authority.key),
-    Some(Data {
+    Some(DataV2 {
       name: args.name,
       symbol: args.symbol,
       uri: args.uri,
       seller_fee_basis_points: 0,
       creators: None,
+      collection: None,
+      uses: None,
     }),
+    None,
     None,
   );
 

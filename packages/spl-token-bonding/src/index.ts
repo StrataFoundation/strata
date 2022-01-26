@@ -8,7 +8,7 @@ import {
   NATIVE_MINT,
   Token,
   TOKEN_PROGRAM_ID,
-  u64,
+  u64
 } from "@solana/spl-token";
 import {
   Commitment,
@@ -18,32 +18,32 @@ import {
   SystemProgram,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
-  TransactionInstruction,
+  TransactionInstruction
 } from "@solana/web3.js";
 import {
+  DataV2,
+  CreateMetadataV2,
+  Metadata
+} from "@metaplex-foundation/mpl-token-metadata"
+import {
   AnchorSdk,
-  createMetadata,
-  createMintInstructions,
-  Data,
-  getAssociatedAccountBalance,
-  getMintInfo,
+  createMintInstructions, getMintInfo,
   getTokenAccount,
   InstructionResult,
   percent,
-  TypedAccountParser,
+  TypedAccountParser
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
 import { BondingHierarchy } from "./bondingHierarchy";
-import { fromCurve, IPricingCurve } from "./curves";
+import { fromCurve, IPricingCurve, ITransitionFee } from "./curves";
 import {
   CurveV0,
   ProgramStateV0,
   SplTokenBondingIDL,
-  TokenBondingV0,
+  TokenBondingV0
 } from "./generated/spl-token-bonding";
 import { BondingPricing } from "./pricing";
 import { asDecimal, toBN, toNumber, toU128 } from "./utils";
-import { ITransitionFee } from "./curves";
 
 export * from "./bondingHierarchy";
 export * from "./curves";
@@ -539,22 +539,23 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       ]
     );
 
-    await createMetadata(
-      new Data({
+    instructions.push(...new CreateMetadataV2({}, {
+      metadata: await Metadata.getPDA(mintKeypair.publicKey),
+      mint: mintKeypair.publicKey,
+      metadataData: new DataV2({
         name: "Token Bonding Wrapped SOL",
         symbol: "twSOL",
         uri: "",
         sellerFeeBasisPoints: 0,
         // @ts-ignore
         creators: null,
+        collection: null,
+        uses: null
       }),
-      this.wallet.publicKey.toBase58(),
-      mintKeypair.publicKey.toBase58(),
-      this.wallet.publicKey.toBase58(),
-      instructions,
-      this.wallet.publicKey.toBase58()
-    );
-
+      mintAuthority: this.wallet.publicKey,
+      updateAuthority: this.wallet.publicKey
+    }).instructions);
+    
     instructions.push(
       Token.createSetAuthorityInstruction(
         TOKEN_PROGRAM_ID,

@@ -1,6 +1,6 @@
 #![allow(clippy::or_fun_call)]
 
-use crate::token_metadata::update_metadata_account;
+use crate::token_metadata::update_metadata_account_v2;
 use {
   anchor_lang::prelude::*,
   anchor_spl::token::{transfer, Transfer},
@@ -348,7 +348,7 @@ pub mod spl_token_collective {
       &[ctx.accounts.mint_token_ref.bump_seed],
     ]];
 
-    update_metadata_account(
+    update_metadata_account_v2(
       CpiContext::new_with_signer(
         ctx.accounts.token_metadata_program.clone(),
         UpdateMetadataAccount {

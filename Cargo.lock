@@ -721,6 +721,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "mpl-token-metadata"
+version = "1.1.0"
+source = "git+https://github.com/metaplex-foundation/metaplex-program-library#c9d159ab15dde33eef6952926293a7afa37bd081"
+dependencies = [
+ "arrayref",
+ "borsh",
+ "mpl-token-vault",
+ "num-derive",
+ "num-traits",
+ "solana-program",
+ "spl-associated-token-account",
+ "spl-token",
+ "thiserror",
+]
+
+[[package]]
+name = "mpl-token-vault"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7ade4ef15bc06a6033076c4ff28cba9b42521df5ec61211d6f419415ace2746a"
+dependencies = [
+ "borsh",
+ "num-derive",
+ "num-traits",
+ "solana-program",
+ "spl-token",
+ "thiserror",
+]
+
+[[package]]
 name = "num-derive"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1242,30 +1272,14 @@ dependencies = [
  "anchor-lang",
  "anchor-spl",
  "borsh",
+ "mpl-token-metadata",
  "proptest",
  "sha2",
  "spl-associated-token-account",
  "spl-name-service",
  "spl-token",
  "spl-token-bonding",
- "spl-token-metadata",
  "uint",
-]
-
-[[package]]
-name = "spl-token-metadata"
-version = "0.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf729ee1809c761a9fc7d0c15cdb9f8caf4f53b543a035867ce31c8c4eb345e4"
-dependencies = [
- "arrayref",
- "borsh",
- "num-derive",
- "num-traits",
- "solana-program",
- "spl-token",
- "spl-token-vault",
- "thiserror",
 ]
 
 [[package]]
@@ -1278,20 +1292,6 @@ dependencies = [
  "spl-associated-token-account",
  "spl-token",
  "uint",
-]
-
-[[package]]
-name = "spl-token-vault"
-version = "0.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19326eb47c4d0be70265ad0fe47d4571a1625d843b333f785c43483eb673ea59"
-dependencies = [
- "borsh",
- "num-derive",
- "num-traits",
- "solana-program",
- "spl-token",
- "thiserror",
 ]
 
 [[package]]
