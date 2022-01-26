@@ -539,7 +539,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       ]
     );
 
-    instructions.push(...new CreateMetadataV2({}, {
+    instructions.push(...new CreateMetadataV2({
+      feePayer: this.wallet.publicKey
+    }, {
       metadata: await Metadata.getPDA(mintKeypair.publicKey),
       mint: mintKeypair.publicKey,
       metadataData: new DataV2({
@@ -555,7 +557,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       mintAuthority: this.wallet.publicKey,
       updateAuthority: this.wallet.publicKey
     }).instructions);
-    
+
     instructions.push(
       Token.createSetAuthorityInstruction(
         TOKEN_PROGRAM_ID,

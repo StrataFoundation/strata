@@ -370,6 +370,13 @@ export class SplTokenMetadata {
     InstructionResult<{ metadata: PublicKey }>
   > {
     const metadata = await Metadata.getPDA(mint);
+    console.log({
+      metadata,
+      mint,
+      metadataData: data,
+      mintAuthority,
+      updateAuthority: authority
+    })
     const instructions: TransactionInstruction[] = new CreateMetadataV2({
       feePayer: payer
     }, {
@@ -418,7 +425,7 @@ export class SplTokenMetadata {
     const metadataAcct = (await this.getMetadata(metadata))!;
     const instructions = new UpdateMetadataV2({}, {
       metadata,
-      metadataData: data || new DataV2({
+      metadataData: data ? new DataV2({ ...data }) : new DataV2({
         ...metadataAcct.data,
         collection: metadataAcct?.collection,
         uses: metadataAcct?.uses

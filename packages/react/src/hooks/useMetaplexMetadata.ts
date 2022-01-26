@@ -16,7 +16,7 @@ export interface IUseMetaplexTokenMetadataResult extends ITokenWithMeta {
   error: Error | undefined;
 }
 
-const parser = (key: any, acct: any) => new Metadata(key, acct).data;
+const parser = (key: any, acct: any) => acct && new Metadata(key, acct).data;
 const solMetadata = new MetadataData({
   updateAuthority: "",
   mint: NATIVE_MINT.toBase58(),

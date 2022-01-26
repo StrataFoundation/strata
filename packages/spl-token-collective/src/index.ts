@@ -814,8 +814,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
         this.programId
       );
 
-    const instructions2 = [];
-    instructions2.push(
+    instructions1.push(
       await this.instruction.claimSocialTokenV0(
         {
           ownerTokenRefBumpSeed,
@@ -871,9 +870,10 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
         updateAuthority: owner,
         metadata: tokenRefAcct.tokenMetadata
       })
-      instructions2.push(...updateInstructions);
+      instructions1.push(...updateInstructions);
     }
 
+    const instructions2 = [];
     if (isPrimary) {
       const { instructions: setAsPrimaryInstrs } =
         await this.setAsPrimaryInstructions({

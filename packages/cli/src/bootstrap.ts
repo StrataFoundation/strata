@@ -2,7 +2,8 @@ import * as anchor from "@project-serum/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { ExponentialCurveConfig, SplTokenBonding, TimeCurve, TimeCurveConfig } from "@strata-foundation/spl-token-bonding";
 import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
-import { getMetadata, percent } from "@strata-foundation/spl-utils";
+import { percent } from "@strata-foundation/spl-utils";
+import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import fs from "fs";
 
 function timeIncrease(curve: TimeCurveConfig, c: number = 1): TimeCurveConfig {
@@ -164,7 +165,7 @@ async function run() {
     }
   });
 
-  console.log(`Open Collective: ${collective}, bonding: ${tokenBonding}, open: ${openMintKeypair.publicKey}, openMetadata: ${await getMetadata(openMintKeypair.publicKey.toBase58())}`);
+  console.log(`Open Collective: ${collective}, bonding: ${tokenBonding}, open: ${openMintKeypair.publicKey}, openMetadata: ${await Metadata.getPDA(openMintKeypair.publicKey.toBase58())}`);
 }
 
 run().catch(e => {

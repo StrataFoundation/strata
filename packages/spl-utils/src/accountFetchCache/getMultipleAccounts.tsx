@@ -1,4 +1,4 @@
-import { AccountInfo } from "@solana/web3.js";
+import { AccountInfo, PublicKey } from "@solana/web3.js";
 
 export const chunks = <T,>(array: T[], size: number): T[][] =>
   Array.apply<number, T[], T[][]>(
@@ -44,6 +44,7 @@ export const getMultipleAccounts = async (
     const { data, ...rest } = acc;
     const obj = {
       ...rest,
+      owner: rest.owner && new PublicKey(rest.owner),
       data: Buffer.from(data[0], "base64"),
     } as AccountInfo<Buffer>;
     return obj;
