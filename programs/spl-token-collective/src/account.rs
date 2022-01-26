@@ -190,6 +190,7 @@ pub struct InitializeUnclaimedSocialTokenV0<'info> {
       token_metadata.data.seller_fee_basis_points == 0
     ),
     constraint = token_metadata.is_mutable,
+    constraint = token_metadata.update_authority == mint_token_ref.key() @ ErrorCode::InvalidAuthority
   )]
   pub token_metadata: Box<Account<'info, Metadata>>,
   #[account(

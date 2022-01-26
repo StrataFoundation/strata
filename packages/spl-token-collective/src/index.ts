@@ -868,6 +868,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
           collection: null,
           uses: null
         }),
+        newAuthority: owner,
         updateAuthority: owner,
         metadata: tokenRefAcct.tokenMetadata
       })

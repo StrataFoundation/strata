@@ -25,6 +25,7 @@ export interface ICreateArweaveUrlArgs {
   files?: File[];
   env: ArweaveEnv;
   uploadUrl: string;
+  existingFiles?: FileOrString[]
 }
 
 export type Attribute = {
@@ -78,7 +79,7 @@ export interface ICreateMetadataInstructionsArgs {
 
 export interface IUpdateMetadataInstructionsArgs {
   data?: DataV2 | null;
-  authority?: PublicKey | null;
+  newAuthority?: PublicKey | null;
   metadata: PublicKey;
   payer?: PublicKey;
   /** The update authority to use when updating the metadata. **Default:** Pulled from the metadata object. This can be useful if you're chaining transactions */
@@ -283,6 +284,7 @@ export class SplTokenMetadata {
     payer = this.provider.wallet.publicKey,
     env = "mainnet-beta",
     uploadUrl = ARWEAVE_UPLOAD_URL,
+    existingFiles
   }: ICreateArweaveUrlArgs): Promise<InstructionResult<{ files: File[] }>> {
     const metadata = {
       name,
@@ -293,7 +295,7 @@ export class SplTokenMetadata {
       animationUrl: undefined,
       properties: {
         category: MetadataCategory.Image,
-        files,
+        files: [...(existingFiles || []), ...files],
       },
       creators: creators ? creators : null,
       sellerFeeBasisPoints: 0,
@@ -416,7 +418,7 @@ export class SplTokenMetadata {
 
   async updateMetadataInstructions({
     data,
-    authority,
+    newAuthority,
     metadata,
     updateAuthority
   }: IUpdateMetadataInstructionsArgs): Promise<
@@ -431,7 +433,7 @@ export class SplTokenMetadata {
         uses: metadataAcct?.uses
       }),
       updateAuthority: updateAuthority || new PublicKey(metadataAcct!.updateAuthority),
-      newUpdateAuthority: typeof authority == "undefined" ? new PublicKey(metadataAcct.updateAuthority) : (authority || undefined),
+      newUpdateAuthority: typeof newAuthority == "undefined" ? new PublicKey(metadataAcct.updateAuthority) : (newAuthority || undefined),
       primarySaleHappened: null,
       isMutable: null
     }).instructions
