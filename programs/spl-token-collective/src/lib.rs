@@ -292,7 +292,7 @@ pub mod spl_token_collective {
       ctx.accounts.target_mint.to_account_info().key.as_ref(),
       &[mint_token_ref.bump_seed],
     ]];
-    
+
     for [old_royalty_account, new_royalty_account] in royalty_accounts {
       if old_royalty_account.owner == mint_token_ref.key() {
         transfer(
