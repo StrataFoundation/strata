@@ -20,6 +20,7 @@ export const Swap = React.memo(
       base: tokenBonding?.baseMint,
       target: tokenBonding?.targetMint,
     });
+
     React.useEffect(() => {
       if ((!tradingMints.base || !tradingMints.target) && tokenBonding) {
         setTradingMints({
@@ -30,7 +31,7 @@ export const Swap = React.memo(
     }, [tokenBonding, tradingMints]);
 
     const swapProps = useSwapDriver({
-      tradingMints: tradingMints,
+      tradingMints,
       onTradingMintsChange: setTradingMints,
       swap: (args) =>
         execute(args).then(({ targetAmount }) => {

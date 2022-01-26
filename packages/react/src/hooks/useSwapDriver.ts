@@ -2,7 +2,6 @@ import { Provider } from "@project-serum/anchor";
 import {
   AccountLayout,
   ASSOCIATED_TOKEN_PROGRAM_ID,
-  NATIVE_MINT,
   Token,
   TOKEN_PROGRAM_ID,
   u64,
@@ -24,11 +23,9 @@ import {
   useMint,
   useOwnedAmount,
   useProvider,
-  useSolOwnedAmount,
   useTokenBonding,
   useTokenMetadata,
 } from "./";
-import { useTwWrappedSolMint } from "./useTwWrappedSolMint";
 
 export interface ISwapDriverArgs
   extends Pick<ISwapFormProps, "onConnectWallet" | "extraTransactionInfo"> {
@@ -117,6 +114,7 @@ export const useSwapDriver = (
     loading: baseMetaLoading,
     error: baseMetaError,
   } = useTokenMetadata(baseMint);
+
   const {
     image: targetImage,
     metadata: targetMeta,
@@ -124,18 +122,24 @@ export const useSwapDriver = (
     error: targetMetaError,
   } = useTokenMetadata(targetMint);
 
-  const { loading: curveLoading, pricing, error } = useBondingPricing(
-    tokenBonding?.publicKey
-  );
+  const {
+    loading: curveLoading,
+    pricing,
+    error,
+  } = useBondingPricing(tokenBonding?.publicKey);
+
   const { result: missingSpace, error: missingSpaceError } = useAsync(
     getMissingSpace,
     [provider, pricing?.hierarchy, baseMint, targetMint]
   );
+
   const { amount: feeAmount, error: feeError } = useEstimatedFees(
     missingSpace || 0,
     1
   );
+
   const targetMintAcct = useMint(targetMint);
+
   const allMints = React.useMemo(
     () =>
       [tokenBonding?.targetMint, ...getMints(pricing?.hierarchy)].filter(
@@ -173,6 +177,7 @@ export const useSwapDriver = (
     image: baseImage,
     publicKey: baseMint,
   };
+
   const target = targetMint && {
     name: targetMeta?.data.name || "",
     ticker: targetMeta?.data.symbol || "",
