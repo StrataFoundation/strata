@@ -731,7 +731,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       })
     )[0];
     const name = tokenRefAcct.name! as PublicKey;
-    const instructions1 = [];
+    const instructions0 = [];
 
     if (
       !ignoreMissingName &&
@@ -760,7 +760,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       !(await this.splTokenBondingProgram.accountExists(defaultTargetRoyalties))
     ) {
       console.log(`Creating target royalties ${defaultTargetRoyalties}...`);
-      instructions1.push(
+      instructions0.push(
         Token.createAssociatedTokenAccountInstruction(
           ASSOCIATED_TOKEN_PROGRAM_ID,
           TOKEN_PROGRAM_ID,
@@ -777,7 +777,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       !(await this.splTokenBondingProgram.accountExists(defaultBaseRoyalties))
     ) {
       console.log(`Creating base royalties ${defaultBaseRoyalties}...`);
-      instructions1.push(
+      instructions0.push(
         Token.createAssociatedTokenAccountInstruction(
           ASSOCIATED_TOKEN_PROGRAM_ID,
           TOKEN_PROGRAM_ID,
@@ -814,6 +814,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
         this.programId
       );
 
+    const instructions1 = [];
     instructions1.push(
       await this.instruction.claimSocialTokenV0(
         {
@@ -885,8 +886,8 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     }
 
     return {
-      signers: [[], []],
-      instructions: [instructions1, instructions2],
+      signers: [[], [], []],
+      instructions: [instructions0, instructions1, instructions2],
       output: null,
     };
   }
