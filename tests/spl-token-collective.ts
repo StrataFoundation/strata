@@ -4,6 +4,7 @@ import {
   getNameAccountKey,
   NameRegistryState,
 } from "@bonfida/spl-name-service";
+import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import * as anchor from "@project-serum/anchor";
 import { BN } from "@project-serum/anchor";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
@@ -12,7 +13,6 @@ import {
   SplTokenBonding,
 } from "@strata-foundation/spl-token-bonding";
 import {
-  decodeMetadata,
   sendMultipleInstructions,
   SplTokenMetadata,
   percent,
@@ -323,7 +323,7 @@ describe("spl-token-collective", () => {
       const tokenMetadataRaw = await provider.connection.getAccountInfo(
         ownerTokenRef.tokenMetadata
       );
-      const tokenMetadata = decodeMetadata(tokenMetadataRaw!.data);
+      const tokenMetadata = new Metadata(ownerTokenRef.tokenMetadata, tokenMetadataRaw!).data;
       expect(tokenMetadata.updateAuthority).to.equal(
         ownerKeypair.publicKey.toBase58()
       );

@@ -1,18 +1,12 @@
-import {
-  ArweaveStorage,
-  Coingecko,
-  ConversionRatePair,
-  Currency,
-} from "@metaplex/js";
+import { Creator } from "@metaplex-foundation/mpl-token-metadata";
+import { calculate } from "@metaplex/arweave-cost";
 import {
   LAMPORTS_PER_SOL,
   PublicKey,
   SystemProgram,
-  TransactionInstruction,
+  TransactionInstruction
 } from "@solana/web3.js";
 import crypto from "crypto";
-import { Creator } from ".";
-import { calculate } from "@metaplex/arweave-cost";
 
 export const AR_SOL_HOLDER_ID = new PublicKey(
   "6FKvsq4ydWFci6nGq9ckbjYMtnmaqAoatz5c9XWjiDuS"

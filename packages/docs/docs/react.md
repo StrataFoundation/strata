@@ -30,7 +30,7 @@ import {
   SolletWalletAdapter,
   TorusWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
-import { Data } from "@strata-foundation/spl-utils";
+import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
 import { clusterApiUrl } from "@solana/web3.js";
 import { ThemeProvider, AccountProvider, StrataSdksProvider, useBondingPricing, useStrataSdks, useTokenBonding, useTokenMetadata, useTokenRef, ErrorHandlerProvider } from "@strata-foundation/react";
 import React, { useMemo } from "react";
@@ -168,12 +168,14 @@ var ownerTokenRefAcct = await tokenCollectiveSdk.getTokenRef(ownerTokenRef);
 
 await tokenMetadataSdk.updateMetadata({
   metadata: ownerTokenRefAcct.tokenMetadata,
-  data: new Data({
+  data: new DataV2({
     name: "Learned Strata Token",
     symbol: "learnStrat",
     uri: "https://strataprotocol.com/learnSTRAT.json",
     sellerFeeBasisPoint: 0,
-    creators: null
+    creators: null,
+    uses: null,
+    collection: null
   })
 })
 ```

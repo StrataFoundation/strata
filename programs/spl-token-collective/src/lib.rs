@@ -1,6 +1,6 @@
 #![allow(clippy::or_fun_call)]
 
-use crate::token_metadata::update_metadata_account;
+use crate::token_metadata::update_metadata_account_v2;
 use {
   anchor_lang::prelude::*,
   anchor_spl::token::{transfer, Transfer},
@@ -30,7 +30,7 @@ pub fn initialize_social_token_v0(
   mint_token_ref: &mut Account<TokenRefV0>,
   args: &InitializeSocialTokenV0Args,
 ) -> ProgramResult {
-  let c = get_collective(accounts.collective.clone());
+  let c = get_collective(&accounts.collective);
   let collective = c.as_ref();
   if let Some(collective) = collective {
     if !collective.config.is_open {
@@ -67,7 +67,7 @@ pub fn initialize_social_token_v0(
   Ok(())
 }
 
-pub fn get_collective(collective: UncheckedAccount) -> Option<CollectiveV0> {
+pub fn get_collective(collective: &UncheckedAccount) -> Option<CollectiveV0> {
   if *collective.owner == crate::ID {
     let data = collective.data.try_borrow().ok();
     return data.and_then(|d| {
@@ -138,7 +138,7 @@ pub mod spl_token_collective {
     ctx: Context<InitializeOwnedSocialTokenV0>,
     args: InitializeSocialTokenV0Args,
   ) -> ProgramResult {
-    let collective = get_collective(ctx.accounts.initialize_args.collective.clone());
+    let collective = get_collective(&ctx.accounts.initialize_args.collective);
     let initialize_args = &ctx.accounts.initialize_args;
     let token_bonding_settings = collective
       .as_ref()
@@ -180,7 +180,7 @@ pub mod spl_token_collective {
     ctx: Context<InitializeUnclaimedSocialTokenV0>,
     args: InitializeSocialTokenV0Args,
   ) -> ProgramResult {
-    let collective = get_collective(ctx.accounts.initialize_args.collective.clone());
+    let collective = get_collective(&ctx.accounts.initialize_args.collective);
     let initialize_args = &ctx.accounts.initialize_args;
     let config = collective.as_ref().map(|c| &c.config);
     let token_bonding_settings_opt =
@@ -292,10 +292,7 @@ pub mod spl_token_collective {
       ctx.accounts.target_mint.to_account_info().key.as_ref(),
       &[mint_token_ref.bump_seed],
     ]];
-    msg!(
-      "Closing {} standin royalties accounts",
-      royalty_accounts.len()
-    );
+
     for [old_royalty_account, new_royalty_account] in royalty_accounts {
       if old_royalty_account.owner == mint_token_ref.key() {
         transfer(
@@ -348,7 +345,7 @@ pub mod spl_token_collective {
       &[ctx.accounts.mint_token_ref.bump_seed],
     ]];
 
-    update_metadata_account(
+    update_metadata_account_v2(
       CpiContext::new_with_signer(
         ctx.accounts.token_metadata_program.clone(),
         UpdateMetadataAccount {
@@ -406,7 +403,7 @@ pub mod spl_token_collective {
       },
     )?;
 
-    let collective = get_collective(ctx.accounts.collective.clone());
+    let collective = get_collective(&ctx.accounts.collective);
     let token_bonding_settings_opt = &collective
       .as_ref()
       .and_then(|c| c.config.unclaimed_token_bonding_settings.as_ref());

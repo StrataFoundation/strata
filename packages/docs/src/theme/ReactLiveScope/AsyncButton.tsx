@@ -92,9 +92,9 @@ const AsyncButton = ({ code, scope, name, deps }) => {
   async function exec(globalVariables: any) {
     setRunningThisCommand(true);
     try {
-      const walletAcct = await connection.getAccountInfo(publicKey);
+      const walletAcct = publicKey && await connection.getAccountInfo(publicKey);
       if (!walletAcct || walletAcct.lamports < 500000000) {
-        await connection.requestAirdrop(publicKey, 1000000000);
+        publicKey && await connection.requestAirdrop(publicKey, 1000000000);
       }
       const injectedVars = {
         provider,
@@ -115,11 +115,11 @@ const AsyncButton = ({ code, scope, name, deps }) => {
   }
 
   async function wrappedExecWithDeps() {
-    setError(null);
+    setError(undefined);
     setLoading(true);
     try {
       await execWithDeps(name);
-    } catch (e) {
+    } catch (e: any) {
       setError(e);
     } finally {
       setLoading(false);

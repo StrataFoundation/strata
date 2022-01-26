@@ -72,19 +72,17 @@ export async function sendMultipleInstructions(
         recentBlockhash
       });
       tx.add(...instructions)
-      // https://github.com/solana-labs/solana/issues/21722
-      // I wouldn't wish this bug on my worst enemies. If we don't do this hack, any time our txns are signed, then serialized, then deserialized,
-      // then reserialized, they will break.
-      const fixedTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
       if (signers.length > 0) {
-        fixedTx.partialSign(...signers);
+        tx.partialSign(...signers);
       }
 
-      return fixedTx;
+      return tx;
     }
   }).filter(truthy);
 
-  const txnsSigned = (await provider.wallet.signAllTransactions(txns)).map(tx => tx.serialize());
+  const txnsSigned = (await provider.wallet.signAllTransactions(txns)).map(tx =>
+     tx.serialize()
+     );
 
   console.log("Sending multiple transactions...")
   try {
