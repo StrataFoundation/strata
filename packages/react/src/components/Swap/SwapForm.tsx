@@ -174,7 +174,7 @@ export const SwapForm = ({
 
   const handleTopChange = (value: number | undefined = 0) => {
     if (tokenBonding && pricing && base && target && value && +value >= 0) {
-      const amount = pricing.swapTargetAmount(+value, base.publicKey, target.publicKey);
+      const amount = pricing.swap(+value, base.publicKey, target.publicKey);
 
       setValue("bottomAmount", +value == 0 ? 0 : roundToDecimals(amount, 9));
       setRate(`${roundToDecimals(amount / value, 9)}`);

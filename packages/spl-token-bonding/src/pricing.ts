@@ -162,11 +162,9 @@ export class BondingPricing {
     baseMint: PublicKey,
     targetMint: PublicKey
   ): number {
-    const wrappedSolMint = this.hierarchy.wrappedSolMint;    
     const lowMint = this.hierarchy.lowest(baseMint, targetMint);
     const highMint = lowMint.equals(baseMint) ? targetMint : baseMint;
     const isBuying = lowMint.equals(targetMint);
-    const isTransactingSol = lowMint.equals(wrappedSolMint) || highMint.equals(wrappedSolMint);
 
     const path = this.hierarchy.path(lowMint, highMint);
 
@@ -175,41 +173,21 @@ export class BondingPricing {
     }
 
     if (isBuying) {
-      if (isTransactingSol) {
-        return Math.abs(path.reverse().reduce((amount, { pricingCurve, tokenBonding }) => {
-          return pricingCurve.buyWithBaseAmount(
-            -amount,
-            tokenBonding.sellBaseRoyaltyPercentage,
-            tokenBonding.sellTargetRoyaltyPercentage,
-          );
-        }, targetAmount));        
-      } else {
-        return path.reverse().reduce((amount, { pricingCurve, tokenBonding }) => {
-          return pricingCurve.buyWithBaseAmount(
-            amount,
-            tokenBonding.buyBaseRoyaltyPercentage,
-            tokenBonding.buyTargetRoyaltyPercentage,
-          );
-        }, targetAmount);        
-      }
+      return path.reverse().reduce((amount, { pricingCurve, tokenBonding }) => {
+        return pricingCurve.buyWithBaseAmount(
+          amount,
+          tokenBonding.buyBaseRoyaltyPercentage,
+          tokenBonding.buyTargetRoyaltyPercentage,
+        );
+      }, targetAmount);
     } else {
-      if (isTransactingSol) {
-        return path.reduce((amount, { pricingCurve, tokenBonding }) => {
-          return pricingCurve.sellTargetAmount(
-            amount,
-            tokenBonding.sellBaseRoyaltyPercentage,
-            tokenBonding.sellTargetRoyaltyPercentage
-          );
-        }, targetAmount)
-      } else {
-        return path.reduce((amount, { pricingCurve, tokenBonding }) => {
-          return pricingCurve.buyTargetAmount(
-              amount,
-              tokenBonding.buyBaseRoyaltyPercentage,
-              tokenBonding.buyTargetRoyaltyPercentage
-          );
-        }, targetAmount);              
-      }
+      return Math.abs(path.reverse().reduce((amount, { pricingCurve, tokenBonding }) => {
+        return pricingCurve.buyWithBaseAmount(
+          -amount,
+          tokenBonding.sellBaseRoyaltyPercentage,
+          tokenBonding.sellTargetRoyaltyPercentage,
+        );
+      }, targetAmount));              
     }
   }
 
