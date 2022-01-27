@@ -53,6 +53,7 @@ const validationSchema = yup
   .required();
 
 export interface ISwapFormProps {
+  isLoading?: boolean;
   isSubmitting: boolean;
   onConnectWallet: () => void;
   onTradingMintsChange: (args: { base: PublicKey; target: PublicKey }) => void;
@@ -112,6 +113,7 @@ function MintMenuItem({
 }
 
 export const SwapForm = ({
+  isLoading = false,
   extraTransactionInfo,
   isSubmitting,
   onConnectWallet,
@@ -188,7 +190,11 @@ export const SwapForm = ({
 
   const handleBottomChange = (value: number | undefined = 0) => {
     if (tokenBonding && pricing && base && target && value && +value >= 0) {
-      let amount = pricing.swapTargetAmount(+value, target.publicKey, base.publicKey);
+      let amount = pricing.swapTargetAmount(
+        +value,
+        target.publicKey,
+        base.publicKey
+      );
 
       setValue("topAmount", +value == 0 ? 0 : roundToDecimals(amount, 9));
       setRate(`${roundToDecimals(value / amount, 9)}`);
@@ -213,8 +219,6 @@ export const SwapForm = ({
         target: base.publicKey,
       });
     }
-
-    reset();
   };
 
   const handleBuyBase = () => {
@@ -230,7 +234,7 @@ export const SwapForm = ({
     reset();
   };
 
-  if (!base || !target || (connected && !pricing)) {
+  if (isLoading || !base || !target || (connected && !pricing)) {
     return <Spinner />;
   }
 
@@ -509,8 +513,9 @@ export const SwapForm = ({
               target &&
               pricing?.hierarchy
                 .path(base.publicKey, target.publicKey)
-                .map((h) => (
+                .map((h, idx) => (
                   <Royalties
+                    key={`royalties-${idx}`}
                     formRef={formRef}
                     tokenBonding={h.tokenBonding}
                     isBuying={!!isBuying}

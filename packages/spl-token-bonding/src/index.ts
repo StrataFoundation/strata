@@ -1595,6 +1595,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       const baseIsSol = tokenBonding.baseMint.equals(
         (await this.getState())?.wrappedSolMint!
       );
+
       const ata = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,

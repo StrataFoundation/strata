@@ -162,33 +162,29 @@ export class BondingPricing {
     baseMint: PublicKey,
     targetMint: PublicKey
   ): number {
-    const lowMint = this.hierarchy.lowest(baseMint, targetMint);
-    const highMint = lowMint.equals(baseMint) ? targetMint : baseMint;
-    const isBuying = lowMint.equals(targetMint);
+      const lowMint = this.hierarchy.lowest(baseMint, targetMint);
+      const highMint = lowMint.equals(baseMint) ? targetMint : baseMint;
+      const isBuying = lowMint.equals(targetMint);
 
-    const path = this.hierarchy.path(lowMint, highMint);
+      const path = this.hierarchy.path(lowMint, highMint);
 
-    if (path.length == 0) {
-      throw new Error(`No path from ${baseMint} to ${targetMint}`);
-    }
+      if (path.length == 0) {
+        throw new Error(`No path from ${baseMint} to ${targetMint}`);
+      }
 
-    if (isBuying) {
-      return path.reverse().reduce((amount, { pricingCurve, tokenBonding }) => {
-        return pricingCurve.buyWithBaseAmount(
-          amount,
-          tokenBonding.buyBaseRoyaltyPercentage,
-          tokenBonding.buyTargetRoyaltyPercentage,
-        );
-      }, targetAmount);
-    } else {
-      return Math.abs(path.reverse().reduce((amount, { pricingCurve, tokenBonding }) => {
+      return isBuying ? Math.abs(path.reverse().reduce((amount, { pricingCurve, tokenBonding }) => {
         return pricingCurve.buyWithBaseAmount(
           -amount,
           tokenBonding.sellBaseRoyaltyPercentage,
           tokenBonding.sellTargetRoyaltyPercentage,
-        );
-      }, targetAmount));              
-    }
+        );        
+      }, targetAmount)) : path.reverse().reduce((amount, { pricingCurve, tokenBonding }) => {                
+        return pricingCurve.buyTargetAmount(
+          amount,
+          tokenBonding.buyBaseRoyaltyPercentage,
+          tokenBonding.buyTargetRoyaltyPercentage
+        );        
+      }, targetAmount);
   }
 
   sellTargetAmount(

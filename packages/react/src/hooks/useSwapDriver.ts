@@ -30,7 +30,8 @@ import {
 export interface ISwapDriverArgs
   extends Pick<ISwapFormProps, "onConnectWallet" | "extraTransactionInfo"> {
   tokenBondingKey: PublicKey;
-  tradingMints: { base?: PublicKey; target?: PublicKey };
+  baseMint?: PublicKey;
+  targetMint?: PublicKey;
   onTradingMintsChange(mints: { base: PublicKey; target: PublicKey }): void;
   swap(args: ISwapArgs & { ticker: string }): void;
 }
@@ -89,24 +90,22 @@ async function getMissingSpace(
   return totalSpace;
 }
 
-export const useSwapDriver = (
-  args: ISwapDriverArgs
-): Omit<ISwapFormProps, "isSubmitting"> & { loading: boolean } => {
-  const {
-    onConnectWallet,
-    tokenBondingKey,
-    tradingMints,
-    onTradingMintsChange,
-    swap,
-    extraTransactionInfo,
-  } = args;
+export const useSwapDriver = ({
+  onConnectWallet,
+  tokenBondingKey,
+  baseMint,
+  targetMint,
+  onTradingMintsChange,
+  swap,
+  extraTransactionInfo,
+}: ISwapDriverArgs): Omit<ISwapFormProps, "isSubmitting"> & {
+  loading: boolean;
+} => {
+  const { provider } = useProvider();
   const [internalError, setInternalError] = useState<Error | undefined>();
   const [spendCap, setSpendCap] = useState<number>(0);
-  const { provider } = useProvider();
-
   const { info: tokenBonding, loading: tokenBondingLoading } =
     useTokenBonding(tokenBondingKey);
-  const { base: baseMint, target: targetMint } = tradingMints;
 
   const {
     image: baseImage,
@@ -192,6 +191,7 @@ export const useSwapDriver = (
           baseAmount: +values.topAmount,
           baseMint: baseMint!,
           targetMint: targetMint!,
+          expectedOutputAmount: +values.bottomAmount,
           slippage: +values.slippage / 100,
           ticker: target!.ticker,
         });
