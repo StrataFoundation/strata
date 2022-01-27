@@ -1,6 +1,6 @@
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
 import { Connection, Keypair, sendAndConfirmTransaction, SystemProgram, Transaction } from '@solana/web3.js';
-import { createMetadata, Data } from "@strata-foundation/spl-utils";
+import { CreateMetadataV2, Metadata, DataV2 } from "@metaplex-foundation/mpl-token-metadata";
 
 const serviceAccount = Keypair.fromSecretKey(
   Buffer.from(
@@ -67,21 +67,23 @@ async function run(): Promise<void> {
       new u64("10000000000000000")
     )
   ]
-  await createMetadata(
-    new Data({
+  instructions.push(...new CreateMetadataV2({
+    feePayer: serviceAccount.publicKey
+  }, {
+    metadata: await Metadata.getPDA(mintKeypair.publicKey),
+    mint: mintKeypair.publicKey,
+    metadataData:  new DataV2({
       name: "Strata Provisional Governance",
       symbol: "sGOV",
       uri: "",
       sellerFeeBasisPoints: 0,
-      // @ts-ignore
       creators: null,
+      collection: null,
+      uses: null
     }),
-    serviceAccount.publicKey.toBase58(),
-    mintKeypair.publicKey.toBase58(),
-    serviceAccount.publicKey.toBase58(),
-    instructions,
-    serviceAccount.publicKey.toBase58()
-  ),
+    mintAuthority: serviceAccount.publicKey,
+    updateAuthority: serviceAccount.publicKey
+  }).instructions)
   tx.add(
     ...instructions,
     Token.createSetAuthorityInstruction(

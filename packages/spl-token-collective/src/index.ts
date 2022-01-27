@@ -1,12 +1,13 @@
-import { getHashedName, NameRegistryState } from "@solana/spl-name-service";
+import { Metadata, Creator, DataV2, MetadataProgram } from "@metaplex-foundation/mpl-token-metadata";
 import * as anchor from "@project-serum/anchor";
 import { IdlTypes, Program, Provider } from "@project-serum/anchor";
+import { getHashedName, NameRegistryState } from "@solana/spl-name-service";
 import {
   AccountInfo as TokenAccountInfo,
   ASSOCIATED_TOKEN_PROGRAM_ID,
   MintLayout,
   Token,
-  TOKEN_PROGRAM_ID,
+  TOKEN_PROGRAM_ID
 } from "@solana/spl-token";
 import {
   AccountInfo,
@@ -15,37 +16,29 @@ import {
   SystemProgram,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
-  TransactionInstruction,
+  TransactionInstruction
 } from "@solana/web3.js";
 import {
   ICreateTokenBondingArgs,
   ITokenBonding,
   IUpdateTokenBondingArgs,
-  SplTokenBonding,
+  SplTokenBonding
 } from "@strata-foundation/spl-token-bonding";
 import {
   AnchorSdk,
-  BigInstructionResult,
-  Creator,
-  Data,
-  decodeMetadata,
-  extendBorsh,
-  getMetadata,
+  BigInstructionResult, createMintInstructions, extendBorsh,
   InstructionResult,
   ITokenWithMeta,
-  METADATA_PROGRAM_ID,
   percent,
   SplTokenMetadata,
-  TypedAccountParser,
-  updateMetadata,
-  createMintInstructions
+  TypedAccountParser
 } from "@strata-foundation/spl-utils";
+import { deserializeUnchecked } from "borsh";
 import {
   CollectiveV0,
   SplTokenCollectiveIDL,
-  TokenRefV0,
+  TokenRefV0
 } from "./generated/spl-token-collective";
-import { deserializeUnchecked } from "borsh";
 
 export * from "./generated/spl-token-collective";
 
@@ -577,12 +570,14 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
           await this.splTokenMetadata.createMetadataInstructions({
             mint: mint!,
             authority: mintAuthority,
-            data: new Data({
+            data: new DataV2({
               name: metadata.name,
               symbol: metadata.symbol,
               uri: metadata.uri,
               creators: null,
               sellerFeeBasisPoints: 0,
+              collection: null,
+              uses: null
             }),
           });
         instructions.push(...metadataInstructions);
@@ -718,7 +713,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     ignoreMissingName,
     isPrimary = true,
     authority = this.wallet.publicKey,
-  }: IClaimSocialTokenArgs): Promise<InstructionResult<null>> {
+  }: IClaimSocialTokenArgs): Promise<BigInstructionResult<null>> {
     const tokenRefAcct = (await this.getTokenRef(tokenRef))!;
     if (!tokenRefAcct.tokenBonding) {
       throw new Error(
@@ -736,7 +731,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       })
     )[0];
     const name = tokenRefAcct.name! as PublicKey;
-    const instructions = [];
+    const instructions0 = [];
 
     if (
       !ignoreMissingName &&
@@ -765,7 +760,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       !(await this.splTokenBondingProgram.accountExists(defaultTargetRoyalties))
     ) {
       console.log(`Creating target royalties ${defaultTargetRoyalties}...`);
-      instructions.push(
+      instructions0.push(
         Token.createAssociatedTokenAccountInstruction(
           ASSOCIATED_TOKEN_PROGRAM_ID,
           TOKEN_PROGRAM_ID,
@@ -782,7 +777,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       !(await this.splTokenBondingProgram.accountExists(defaultBaseRoyalties))
     ) {
       console.log(`Creating base royalties ${defaultBaseRoyalties}...`);
-      instructions.push(
+      instructions0.push(
         Token.createAssociatedTokenAccountInstruction(
           ASSOCIATED_TOKEN_PROGRAM_ID,
           TOKEN_PROGRAM_ID,
@@ -819,7 +814,8 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
         this.programId
       );
 
-    instructions.push(
+    const instructions1 = [];
+    instructions1.push(
       await this.instruction.claimSocialTokenV0(
         {
           ownerTokenRefBumpSeed,
@@ -849,7 +845,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
             newSellTargetRoyalties: sellTargetRoyalties,
             tokenProgram: TOKEN_PROGRAM_ID,
             tokenBondingProgram: this.splTokenBondingProgram.programId,
-            tokenMetadataProgram: METADATA_PROGRAM_ID,
+            tokenMetadataProgram: MetadataProgram.PUBKEY,
             systemProgram: SystemProgram.programId,
             rent: SYSVAR_RENT_PUBKEY,
           },
@@ -861,25 +857,25 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       const tokenMetadataRaw = await this.provider.connection.getAccountInfo(
         tokenRefAcct.tokenMetadata
       );
-      const tokenMetadata = decodeMetadata(tokenMetadataRaw!.data);
-
-      updateMetadata(
-        new Data({
+      const tokenMetadata = new Metadata(tokenRefAcct.tokenMetadata, tokenMetadataRaw!).data;
+      const { instructions: updateInstructions } = await this.splTokenMetadata.updateMetadataInstructions({
+        data: new DataV2({
           name: tokenName || tokenMetadata.data.name,
           symbol: symbol || tokenMetadata.data.symbol,
           uri: tokenMetadata.data.uri,
           sellerFeeBasisPoints: 0,
           creators: null,
+          collection: null,
+          uses: null
         }),
-        undefined,
-        undefined,
-        tokenBondingAcct.targetMint.toBase58(),
-        owner.toBase58(),
-        instructions,
-        tokenRefAcct.tokenMetadata.toBase58()
-      );
+        newAuthority: owner,
+        updateAuthority: owner,
+        metadata: tokenRefAcct.tokenMetadata
+      })
+      instructions1.push(...updateInstructions);
     }
 
+    const instructions2 = [];
     if (isPrimary) {
       const { instructions: setAsPrimaryInstrs } =
         await this.setAsPrimaryInstructions({
@@ -887,12 +883,12 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
           payer,
           owner,
         });
-      instructions.push(...setAsPrimaryInstrs);
+      instructions2.push(...setAsPrimaryInstrs);
     }
 
     return {
-      signers: [],
-      instructions,
+      signers: [[], [], []],
+      instructions: [instructions0, instructions1, instructions2],
       output: null,
     };
   }
@@ -902,7 +898,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
    * @param args
    */
   async claimSocialToken(args: IClaimSocialTokenArgs): Promise<void> {
-    await this.execute(this.claimSocialTokenInstructions(args));
+    await this.executeBig(this.claimSocialTokenInstructions(args));
   }
 
   /**
@@ -1193,8 +1189,10 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     } = await this.splTokenMetadata.createMetadataInstructions({
       mint: targetMint!,
       authority: owner ? owner : mintTokenRef,
-      data: new Data({
+      data: new DataV2({
         uri,
+        collection: null,
+        uses: null,
         creators: null,
         sellerFeeBasisPoints: 0,
         ...metadata,
@@ -1391,7 +1389,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
   ): Promise<ITokenWithMetaAndAccount[]> {
     return Promise.all(
       (tokenAccounts || []).map(async ({ pubkey, info }) => {
-        const metadataKey = await getMetadata(info.mint.toBase58());
+        const metadataKey = await Metadata.getPDA(info.mint);
         const [mintTokenRefKey] = await SplTokenCollective.mintTokenRefKey(
           info.mint
         );

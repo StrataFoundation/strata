@@ -1,7 +1,5 @@
-import { Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
-import { SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID } from "@strata-foundation/spl-utils";
-import { useEffect, useState } from "react";
 import { useAsync } from "react-async-hook";
 
 interface AssocState {
@@ -17,7 +15,7 @@ const fetch = async (
   }
 
   return Token.getAssociatedTokenAddress(
-    SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+    ASSOCIATED_TOKEN_PROGRAM_ID,
     TOKEN_PROGRAM_ID,
     mint,
     wallet

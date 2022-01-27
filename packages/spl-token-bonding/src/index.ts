@@ -21,10 +21,13 @@ import {
   TransactionInstruction,
 } from "@solana/web3.js";
 import {
+  DataV2,
+  CreateMetadataV2,
+  Metadata,
+} from "@metaplex-foundation/mpl-token-metadata";
+import {
   AnchorSdk,
-  createMetadata,
   createMintInstructions,
-  Data,
   getMintInfo,
   getTokenAccount,
   InstructionResult,
@@ -33,7 +36,7 @@ import {
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
 import { BondingHierarchy } from "./bondingHierarchy";
-import { fromCurve, IPricingCurve } from "./curves";
+import { fromCurve, IPricingCurve, ITransitionFee } from "./curves";
 import {
   CurveV0,
   ProgramStateV0,
@@ -42,7 +45,6 @@ import {
 } from "./generated/spl-token-bonding";
 import { BondingPricing } from "./pricing";
 import { asDecimal, toBN, toNumber, toU128 } from "./utils";
-import { ITransitionFee } from "./curves";
 
 export * from "./bondingHierarchy";
 export * from "./curves";
@@ -547,20 +549,28 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       ]
     );
 
-    await createMetadata(
-      new Data({
-        name: "Token Bonding Wrapped SOL",
-        symbol: "twSOL",
-        uri: "",
-        sellerFeeBasisPoints: 0,
-        // @ts-ignore
-        creators: null,
-      }),
-      this.wallet.publicKey.toBase58(),
-      mintKeypair.publicKey.toBase58(),
-      this.wallet.publicKey.toBase58(),
-      instructions,
-      this.wallet.publicKey.toBase58()
+    instructions.push(
+      ...new CreateMetadataV2(
+        {
+          feePayer: this.wallet.publicKey,
+        },
+        {
+          metadata: await Metadata.getPDA(mintKeypair.publicKey),
+          mint: mintKeypair.publicKey,
+          metadataData: new DataV2({
+            name: "Token Bonding Wrapped SOL",
+            symbol: "twSOL",
+            uri: "",
+            sellerFeeBasisPoints: 0,
+            // @ts-ignore
+            creators: null,
+            collection: null,
+            uses: null,
+          }),
+          mintAuthority: this.wallet.publicKey,
+          updateAuthority: this.wallet.publicKey,
+        }
+      ).instructions
     );
 
     instructions.push(
