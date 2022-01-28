@@ -30,8 +30,7 @@ import {
 export interface ISwapDriverArgs
   extends Pick<ISwapFormProps, "onConnectWallet" | "extraTransactionInfo"> {
   tokenBondingKey: PublicKey;
-  baseMint?: PublicKey;
-  targetMint?: PublicKey;
+  tradingMints: { base?: PublicKey; target?: PublicKey };
   onTradingMintsChange(mints: { base: PublicKey; target: PublicKey }): void;
   swap(args: ISwapArgs & { ticker: string }): void;
 }
@@ -93,8 +92,7 @@ async function getMissingSpace(
 export const useSwapDriver = ({
   onConnectWallet,
   tokenBondingKey,
-  baseMint,
-  targetMint,
+  tradingMints,
   onTradingMintsChange,
   swap,
   extraTransactionInfo,
@@ -106,6 +104,7 @@ export const useSwapDriver = ({
   const [spendCap, setSpendCap] = useState<number>(0);
   const { info: tokenBonding, loading: tokenBondingLoading } =
     useTokenBonding(tokenBondingKey);
+  const { base: baseMint, target: targetMint } = tradingMints;
 
   const {
     image: baseImage,

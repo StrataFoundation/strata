@@ -33,6 +33,7 @@ export function useAccount<T>(
   const [state, setState] = useState<UseAccountState<T>>({
     loading: true,
   });
+
   const parsedAccountBaseParser = (
     pubkey: PublicKey,
     data: AccountInfo<Buffer>
@@ -51,6 +52,7 @@ export function useAccount<T>(
     // Occassionally, dispose can get called while the cache promise is still going.
     // In that case, we want to dispose immediately.
     let shouldDisposeImmediately = false;
+
     let disposeWatch = () => {
       shouldDisposeImmediately = true;
     };
@@ -63,7 +65,11 @@ export function useAccount<T>(
     }
 
     cache
-      .searchAndWatch(id, parser ? parsedAccountBaseParser : undefined, isStatic)
+      .searchAndWatch(
+        id,
+        parser ? parsedAccountBaseParser : undefined,
+        isStatic
+      )
       .then(([acc, dispose]) => {
         if (shouldDisposeImmediately) {
           dispose();
@@ -88,15 +94,17 @@ export function useAccount<T>(
     const disposeEmitter = cache.emitter.onCache((e) => {
       const event = e;
       if (event.id === id) {
-        cache.search(id, parser ? parsedAccountBaseParser : undefined).then((acc) => {
-          if (acc && acc.account != state.account) {
-            setState({
-              loading: false,
-              info: (parser && parser(acc.pubkey, acc!.account)) as any,
-              account: acc!.account,
-            });
-          }
-        });
+        cache
+          .search(id, parser ? parsedAccountBaseParser : undefined)
+          .then((acc) => {
+            if (acc && acc.account != state.account) {
+              setState({
+                loading: false,
+                info: (parser && parser(acc.pubkey, acc!.account)) as any,
+                account: acc!.account,
+              });
+            }
+          });
       }
     });
     return () => {

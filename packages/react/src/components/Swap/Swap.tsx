@@ -29,7 +29,7 @@ export const Swap = ({ tokenBondingKey }: { tokenBondingKey: PublicKey }) => {
     }
   }, [tokenBonding, tradingMints]);
 
-  const swapProps = useSwapDriver({
+  const { loading: driverLoading, ...swapProps } = useSwapDriver({
     tradingMints,
     onTradingMintsChange: setTradingMints,
     swap: (args) =>
@@ -50,5 +50,7 @@ export const Swap = ({ tokenBondingKey }: { tokenBondingKey: PublicKey }) => {
     tokenBondingKey: tokenBondingKey,
   });
 
-  return <SwapForm isSubmitting={loading} {...swapProps} />;
+  return (
+    <SwapForm isLoading={driverLoading} isSubmitting={loading} {...swapProps} />
+  );
 };

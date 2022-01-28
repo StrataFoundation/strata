@@ -20,16 +20,16 @@ export function useTokenMetadata(
   token: PublicKey | undefined | null
 ): IUseTokenMetadataResult {
   const metaplexData = useMetaplexTokenMetadata(token);
+
   const wallet = useWallet();
   const { associatedAccount } = useAssociatedAccount(wallet.publicKey, token);
+  const { info: mintTokenRef, loading: loadingTokenRef } =
+    useMintTokenRef(token);
 
-  const { info: mintTokenRef, loading: loadingTokenRef } = useMintTokenRef(token);
   return {
     ...metaplexData,
     tokenRef: mintTokenRef,
-    loading: Boolean(
-      token && (loadingTokenRef || metaplexData.loading)
-    ),
-    account: associatedAccount
+    loading: Boolean(token && (loadingTokenRef || metaplexData.loading)),
+    account: associatedAccount,
   };
 }
