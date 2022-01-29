@@ -57,5 +57,6 @@ pub struct TokenBondingV0 {
   // Keep track of what the reserves should have if all txns came from bonding
   // This is used for sell frozen bonding curves, where we do not adapt the price based
   // on the actual reserves.
-  pub reserve_balance_from_bonding: u64
+  pub reserve_balance_from_bonding: u64,
+  pub supply_from_bonding: u64
 }

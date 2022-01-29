@@ -251,6 +251,13 @@ pub mod spl_token_bonding {
     let base_mint = &ctx.accounts.base_mint;
     let target_mint = &ctx.accounts.target_mint;
     let curve = &ctx.accounts.curve;
+
+    // Not yet initialized since reserve_balance_from_bonding is a new feature
+    if !token_bonding.sell_frozen && ctx.accounts.target_mint.supply > 0 && token_bonding.reserve_balance_from_bonding == 0 {
+      token_bonding.reserve_balance_from_bonding = ctx.accounts.base_storage.amount;
+      token_bonding.supply_from_bonding = ctx.accounts.target_mint.supply;
+    }
+
     // In the case of a sell frozen bonding curve, we don't want to be adaptive relative to the base storage
     // amount.
     let base_amount_u64 = if token_bonding.sell_frozen {
@@ -261,10 +268,6 @@ pub mod spl_token_bonding {
     let base_amount = precise_supply_amt(base_amount_u64, base_mint);
     let target_supply = precise_supply(target_mint);
 
-    // Not yet initialized since reserve_balance_from_bonding is a new feature
-    if ctx.accounts.target_mint.supply > 0 && token_bonding.reserve_balance_from_bonding == 0 {
-      token_bonding.reserve_balance_from_bonding = ctx.accounts.base_storage.amount;
-    }
     msg!(
       "Current reserves {} and supply {}",
       ctx.accounts.base_storage.amount,
@@ -435,7 +438,7 @@ pub mod spl_token_bonding {
     }
 
     msg!("Paying out {} to base storage", price);
-    token_bonding.reserve_balance_from_bonding = token_bonding.reserve_balance_from_bonding + price;
+    token_bonding.reserve_balance_from_bonding = token_bonding.reserve_balance_from_bonding.checked_add(price).or_arith_error()?;
     token::transfer(
       CpiContext::new(
         token_program.clone(),
@@ -465,6 +468,7 @@ pub mod spl_token_bonding {
     }
 
     msg!("Minting {} to destination", total_amount - target_royalties);
+    token_bonding.supply_from_bonding = token_bonding.supply_from_bonding.checked_add(total_amount).or_arith_error()?;
     token::mint_to(
       CpiContext::new_with_signer(
         token_program.clone(),
@@ -494,6 +498,12 @@ pub mod spl_token_bonding {
       ctx.accounts.base_storage.amount,
       ctx.accounts.target_mint.supply
     );
+
+    // Not yet initialized since reserve_balance_from_bonding is a new feature
+    if !token_bonding.sell_frozen && ctx.accounts.target_mint.supply > 0 && token_bonding.reserve_balance_from_bonding == 0 {
+      token_bonding.reserve_balance_from_bonding = ctx.accounts.base_storage.amount;
+      token_bonding.supply_from_bonding = ctx.accounts.target_mint.supply;
+    }
 
     if token_bonding.go_live_unix_time > ctx.accounts.clock.unix_timestamp {
       return Err(ErrorCode::NotLiveYet.into());
@@ -571,6 +581,7 @@ pub mod spl_token_bonding {
     let destination = ctx.accounts.destination.to_account_info();
 
     msg!("Burning {}", amount);
+    token_bonding.supply_from_bonding = token_bonding.supply_from_bonding.checked_sub(amount).or_arith_error()?;
     token::burn(
       CpiContext::new(
         token_program.clone(),
@@ -610,7 +621,7 @@ pub mod spl_token_bonding {
       reclaimed,
       ctx.accounts.base_storage.amount
     );
-    token_bonding.reserve_balance_from_bonding = token_bonding.reserve_balance_from_bonding - reclaimed;
+    token_bonding.reserve_balance_from_bonding = token_bonding.reserve_balance_from_bonding.checked_sub(reclaimed).or_arith_error()?;
     token::transfer(
       CpiContext::new_with_signer(
         token_program.clone(),

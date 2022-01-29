@@ -1362,7 +1362,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     const curve = await this.getPricingCurve(
       tokenBondingAcct.curve,
       amountAsNum(tokenBondingAcct.sellFrozen ? tokenBondingAcct.reserveBalanceFromBonding : baseStorage.amount, baseMint),
-      amountAsNum(targetMint.supply, targetMint),
+      amountAsNum(tokenBondingAcct.sellFrozen ? tokenBondingAcct.supplyFromBonding : targetMint.supply, targetMint),
       tokenBondingAcct.goLiveUnixTime.toNumber(),
     );
 
@@ -1729,7 +1729,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     const curve =  await this.getPricingCurve(
       tokenBondingAcct.curve,
       amountAsNum(tokenBondingAcct.sellFrozen ? tokenBondingAcct.reserveBalanceFromBonding : baseStorage.amount, baseMint),
-      amountAsNum(targetMint.supply, targetMint),
+      amountAsNum(tokenBondingAcct.sellFrozen ? tokenBondingAcct.supplyFromBonding : targetMint.supply, targetMint),
       tokenBondingAcct.goLiveUnixTime.toNumber(),
     );
 
@@ -1862,7 +1862,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     return await this.getPricingCurve(
       tokenBondingAcct.curve,
       amountAsNum(tokenBondingAcct.sellFrozen ? tokenBondingAcct.reserveBalanceFromBonding : baseStorage.amount, baseMint),
-      amountAsNum(targetMint.supply, targetMint),
+      amountAsNum(tokenBondingAcct.sellFrozen ? tokenBondingAcct.supplyFromBonding : targetMint.supply, targetMint),
       tokenBondingAcct.goLiveUnixTime.toNumber(),
     );
   }

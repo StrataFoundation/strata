@@ -1,6 +1,6 @@
 {
   "name": "@strata-foundation/spl-utils",
-  "version": "2.2.1-alpha.4+396e6f4",
+  "version": "3.0.0",
   "description": "Utils shared across spl suite",
   "publishConfig": {
     "access": "public",

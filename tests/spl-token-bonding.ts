@@ -586,6 +586,9 @@ describe("spl-token-bonding", () => {
         slippage: 0.05,
       });
       await tokenUtils.expectAtaBalance(me, baseMint, 95);
+      const tokenBondingAcct2 = (await tokenBondingProgram.getTokenBonding(tokenBonding))!;
+      expect(tokenBondingAcct2.reserveBalanceFromBonding.toNumber()).to.eq(5 * 100)
+      expect(tokenBondingAcct2.supplyFromBonding.toNumber()).to.eq(1 * 100)
     });
   });
 
