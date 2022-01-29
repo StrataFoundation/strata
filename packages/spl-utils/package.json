@@ -1,6 +1,6 @@
 {
   "name": "@strata-foundation/spl-utils",
-  "version": "3.0.0",
+  "version": "2.2.1-alpha.4+9348693",
   "description": "Utils shared across spl suite",
   "publishConfig": {
     "access": "public",
@@ -31,6 +31,7 @@
     "@solana/spl-name-service": "^0.1.3",
     "@solana/web3.js": "^1.32.0",
     "bs58": "^4.0.1",
+    "localstorage-memory": "^1.0.3",
     "superstruct": "0.14.2",
     "tweetnacl": "^1.0.3"
   },
@@ -40,5 +41,5 @@
     "ts-loader": "^9.2.3",
     "typescript": "^4.3.4"
   },
-  "gitHead": "9a64fbd7484a63f4e039008a2494573e8bf99229"
+  "gitHead": "934869383cc672800a188eed583d348184463ad9"
 }

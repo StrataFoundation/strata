@@ -14,6 +14,8 @@ import {
   uploadToArweave,
   ArweaveEnv,
 } from "./arweave";
+// @ts-ignore
+import localStorageMemory from "localstorage-memory";
 
 export interface ICreateArweaveUrlArgs {
   payer?: PublicKey;
@@ -138,6 +140,8 @@ const imageFromJson = (newUri: string, extended: any) => {
   }
 };
 
+global.localStorage = global.localStorage || localStorageMemory
+
 export class SplTokenMetadata {
   provider: Provider;
 
@@ -157,7 +161,7 @@ export class SplTokenMetadata {
     if (uri) {
       const newUri = routeCDN(uri);
 
-      const cached = localStorage.getItem(newUri);
+      const cached = global.localStorage.getItem(newUri);
       if (cached) {
         return JSON.parse(cached);
       } else {
@@ -172,7 +176,7 @@ export class SplTokenMetadata {
             };
           }
           try {
-            localStorage.setItem(newUri, JSON.stringify(data));
+            global.localStorage.setItem(newUri, JSON.stringify(data));
           } catch (e) {
             // ignore
           }
@@ -192,7 +196,7 @@ export class SplTokenMetadata {
       // @ts-ignore
       if (metadata?.uri) {
         // @ts-ignore
-        return getImage(metadata?.uri);
+        return SplTokenMetadata.getImage(metadata?.uri);
       }
 
       return imageFromJson(newUri, metadata);

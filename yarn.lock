@@ -4921,6 +4921,38 @@
     superstruct "^0.14.2"
     tweetnacl "^1.0.0"
 
+"@strata-foundation/react@^3.0.0":
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/@strata-foundation/react/-/react-3.0.0.tgz#9acb1d539281bcc03f55e41759d6a2abcbf232d6"
+  integrity sha512-bwLvJ/Aovn5vtXBbL8MnatX5sxC5/hE0oBkmjhKdxEGpDhjOucJzI8MJh6tZXriH1ZmdmE2Vak1f/x4GHMXh1w==
+  dependencies:
+    "@chakra-ui/react" "^1.7.2"
+    "@emotion/react" "^11.6.0"
+    "@emotion/styled" "^11.6.0"
+    "@hookform/resolvers" "^2.8.3"
+    "@project-serum/anchor" "^0.20.1"
+    "@project-serum/serum" "^0.13.61"
+    "@solana/spl-token" "^0.1.8"
+    "@solana/wallet-adapter-base" "0.9.1"
+    "@solana/wallet-adapter-react" "0.15.1"
+    "@solana/wallet-adapter-wallets" "0.14.0"
+    "@solana/web3.js" "^1.32.0"
+    "@strata-foundation/spl-token-bonding" "^3.0.0"
+    "@strata-foundation/spl-token-collective" "^3.0.0"
+    "@strata-foundation/spl-utils" "^3.0.0"
+    "@toruslabs/solana-embed" "0.0.9"
+    axios "^0.25.0"
+    buffer "^6.0.3"
+    dotenv "^10.0.0"
+    eventemitter3 "^4.0.7"
+    framer-motion "^5.3.0"
+    path "^0.12.7"
+    react-async-hook "^4.0.0"
+    react-hook-form "^7.19.5"
+    react-hot-toast "^2.1.1"
+    react-icons "^4.3.1"
+    yup "^0.32.11"
+
 "@svgr/babel-plugin-add-jsx-attribute@^5.4.0":
   version "5.4.0"
   resolved "https://registry.npmjs.org/@svgr/babel-plugin-add-jsx-attribute/-/babel-plugin-add-jsx-attribute-5.4.0.tgz"
@@ -12988,6 +13020,11 @@ loader-utils@^2.0.0:
     big.js "^5.2.2"
     emojis-list "^3.0.0"
     json5 "^2.1.2"
+
+localstorage-memory@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/localstorage-memory/-/localstorage-memory-1.0.3.tgz#566b37968fe0c4d76ba36a6da564fa613945ca72"
+  integrity sha512-t9P8WB6DcVttbw/W4PIE8HOqum8Qlvx5SjR6oInwR9Uia0EEmyUeBh7S+weKByW+l/f45Bj4L/dgZikGFDM6ng==
 
 locate-path@^2.0.0:
   version "2.0.0"
