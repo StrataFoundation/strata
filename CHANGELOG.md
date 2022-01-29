@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+[Unreleased]
+
+### Breaking
+
+  * `fromCurve` and all curve.ts signatures changed to expect numbers instead of mint accounts
+
+### Changed
+
+  * SellFrozen curves, i.e. marketplace curves now are not adaptive with respect to reserves. 
+  * Closing the bonding curve gives you back mint authority. This is better for liquidity bootstrapping
+
 # [3.0.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.2.0...v3.0.0) (2022-01-26)
 
 This was a major version bump because of the upgrade to metaplex mpl-token-metadata and metadata v2. This removed several methods from spl-utils that were token-metadata related.

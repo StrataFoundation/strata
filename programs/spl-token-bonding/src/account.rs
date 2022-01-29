@@ -253,6 +253,7 @@ pub struct UpdateTokenBondingV0<'info> {
 #[derive(Accounts)]
 pub struct BuyV0<'info> {
   #[account(
+    mut,
     has_one = base_mint,
     has_one = target_mint,
     has_one = base_storage,

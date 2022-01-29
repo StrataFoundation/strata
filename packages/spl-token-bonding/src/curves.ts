@@ -18,18 +18,16 @@ export type ExponentialCurveV0 = {
 
 export function fromCurve(
   curve: any,
-  baseStorage: AccountInfo,
-  baseMint: MintInfo,
-  targetMint: MintInfo,
-  goLiveUnixTime: number
+  baseAmount: number,
+  targetSupply: number,
+  goLiveUnixTime: number,
 ): IPricingCurve {
   switch (Object.keys(curve.definition)[0]) {
     case "timeV0":
       return new TimeCurve({
         curve,
-        baseStorage,
-        baseMint,
-        targetMint,
+        baseAmount,
+        targetSupply,
         goLiveUnixTime
       })
 
@@ -63,9 +61,8 @@ export interface IPricingCurve {
 
 type TimeCurveArgs = {
   curve: any,
-  baseStorage: AccountInfo;
-  baseMint: MintInfo;
-  targetMint: MintInfo;
+  baseAmount: number;
+  targetSupply: number;
   goLiveUnixTime: number;
 }
 
@@ -94,22 +91,19 @@ function now(): number {
 
 export class TimeCurve implements IPricingCurve {
   curve: any;
-  baseStorage: AccountInfo;
-  baseMint: MintInfo;
-  targetMint: MintInfo;
+  baseAmount: number;
+  targetSupply: number;
   goLiveUnixTime: number;
 
   constructor({
     curve,
-    baseStorage,
-    baseMint,
-    targetMint,
+    baseAmount,
+    targetSupply,
     goLiveUnixTime
   }: TimeCurveArgs) {
     this.curve = curve;
-    this.baseStorage = baseStorage;
-    this.baseMint = baseMint;
-    this.targetMint = targetMint;
+    this.baseAmount = baseAmount;
+    this.targetSupply = targetSupply;
     this.goLiveUnixTime = goLiveUnixTime;
   }
 
@@ -124,9 +118,8 @@ export class TimeCurve implements IPricingCurve {
     return {
       subCurve: new ExponentialCurve(
         subCurve.curve.exponentialCurveV0 as ExponentialCurveV0,
-        this.baseStorage,
-        this.baseMint,
-        this.targetMint
+        this.baseAmount,
+        this.targetSupply,
       ),
       offset: subCurve.offset.toNumber(),
       buyTransitionFees: subCurve.buyTransitionFees,
@@ -169,15 +162,13 @@ export class ExponentialCurve implements IPricingCurve {
   k: number;
   pow: number;
   frac: number;
-  baseStorage: AccountInfo;
-  baseMint: MintInfo;
-  targetMint: MintInfo;
+  baseAmount: number;
+  targetSupply: number;
 
   constructor(
     curve: ExponentialCurveV0,
-    baseStorage: AccountInfo,
-    baseMint: MintInfo,
-    targetMint: MintInfo
+    baseAmount: number,
+    targetSupply: number
   ) {
     this.c = curve.c.toNumber() / 1000000000000;
     this.b = curve.b.toNumber() / 1000000000000;
@@ -185,9 +176,8 @@ export class ExponentialCurve implements IPricingCurve {
     this.pow = curve.pow;
     this.frac = curve.frac;
 
-    this.baseStorage = baseStorage;
-    this.baseMint = baseMint;
-    this.targetMint = targetMint;
+    this.baseAmount = baseAmount;
+    this.targetSupply = targetSupply;
   }
 
   current(): number {
@@ -195,7 +185,7 @@ export class ExponentialCurve implements IPricingCurve {
   }
 
   locked(): number {
-    return amountAsNum(this.baseStorage.amount, this.baseMint);
+    return this.baseAmount
   }
 
   changeInTargetAmount(
@@ -203,8 +193,8 @@ export class ExponentialCurve implements IPricingCurve {
     baseRoyaltiesPercent: number,
     targetRoyaltiesPercent: number
   ): number {
-    const R = amountAsNum(this.baseStorage.amount, this.baseMint);
-    const S = supplyAsNum(this.targetMint);
+    const R = this.baseAmount;
+    const S = this.targetSupply;
     
     // Calculate with the actual target amount they will need to get the target amount after royalties
     const dS = targetAmountNum * (1 / (1 - asDecimal(targetRoyaltiesPercent)));
@@ -266,8 +256,8 @@ export class ExponentialCurve implements IPricingCurve {
   ): number {
     const dR = baseAmountNum * (1 - asDecimal(baseRoyaltiesPercent));
     if (
-      this.baseStorage.amount.toNumber() == 0 ||
-      this.targetMint.supply.toNumber() == 0
+      this.baseAmount == 0 ||
+      this.targetSupply == 0
     ) {
       if (this.b == 0) {
         /*
@@ -275,7 +265,7 @@ export class ExponentialCurve implements IPricingCurve {
          */
         return (
           (Math.pow(((1 + this.k) * dR) / this.c, 1 / (1 + this.k)) -
-            supplyAsNum(this.targetMint)) *
+            this.targetSupply) *
           (1 - asDecimal(targetRoyaltiesPercent))
         );
       } else if (this.c == 0) {
@@ -286,8 +276,8 @@ export class ExponentialCurve implements IPricingCurve {
         "Cannot convert base amount to target amount when both b and k are defined on an exponential curve. The math is too hard"
       );
     } else {
-      const R = amountAsNum(this.baseStorage.amount, this.baseMint);
-      const S = supplyAsNum(this.targetMint);
+      const R = this.baseAmount;
+      const S = this.targetSupply
       if (this.b == 0) {
         /*
          * dS = -S + ((S^(1 + k) (R + dR))/R)^(1/(1 + k))
