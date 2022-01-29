@@ -140,7 +140,7 @@ const imageFromJson = (newUri: string, extended: any) => {
   }
 };
 
-global.localStorage = global.localStorage || localStorageMemory
+const localStorage = global.localStorage || localStorageMemory
 
 export class SplTokenMetadata {
   provider: Provider;
@@ -161,7 +161,7 @@ export class SplTokenMetadata {
     if (uri) {
       const newUri = routeCDN(uri);
 
-      const cached = global.localStorage.getItem(newUri);
+      const cached = localStorage.getItem(newUri);
       if (cached) {
         return JSON.parse(cached);
       } else {
@@ -176,7 +176,7 @@ export class SplTokenMetadata {
             };
           }
           try {
-            global.localStorage.setItem(newUri, JSON.stringify(data));
+            localStorage.setItem(newUri, JSON.stringify(data));
           } catch (e) {
             // ignore
           }
