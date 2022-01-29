@@ -253,7 +253,10 @@ pub mod spl_token_bonding {
     let curve = &ctx.accounts.curve;
 
     // Not yet initialized since reserve_balance_from_bonding is a new feature
-    if !token_bonding.sell_frozen && ctx.accounts.target_mint.supply > 0 && token_bonding.reserve_balance_from_bonding == 0 {
+    if !token_bonding.sell_frozen
+      && ctx.accounts.target_mint.supply > 0
+      && token_bonding.reserve_balance_from_bonding == 0
+    {
       token_bonding.reserve_balance_from_bonding = ctx.accounts.base_storage.amount;
       token_bonding.supply_from_bonding = ctx.accounts.target_mint.supply;
     }
@@ -438,7 +441,10 @@ pub mod spl_token_bonding {
     }
 
     msg!("Paying out {} to base storage", price);
-    token_bonding.reserve_balance_from_bonding = token_bonding.reserve_balance_from_bonding.checked_add(price).or_arith_error()?;
+    token_bonding.reserve_balance_from_bonding = token_bonding
+      .reserve_balance_from_bonding
+      .checked_add(price)
+      .or_arith_error()?;
     token::transfer(
       CpiContext::new(
         token_program.clone(),
@@ -468,7 +474,10 @@ pub mod spl_token_bonding {
     }
 
     msg!("Minting {} to destination", total_amount - target_royalties);
-    token_bonding.supply_from_bonding = token_bonding.supply_from_bonding.checked_add(total_amount).or_arith_error()?;
+    token_bonding.supply_from_bonding = token_bonding
+      .supply_from_bonding
+      .checked_add(total_amount)
+      .or_arith_error()?;
     token::mint_to(
       CpiContext::new_with_signer(
         token_program.clone(),
@@ -500,7 +509,10 @@ pub mod spl_token_bonding {
     );
 
     // Not yet initialized since reserve_balance_from_bonding is a new feature
-    if !token_bonding.sell_frozen && ctx.accounts.target_mint.supply > 0 && token_bonding.reserve_balance_from_bonding == 0 {
+    if !token_bonding.sell_frozen
+      && ctx.accounts.target_mint.supply > 0
+      && token_bonding.reserve_balance_from_bonding == 0
+    {
       token_bonding.reserve_balance_from_bonding = ctx.accounts.base_storage.amount;
       token_bonding.supply_from_bonding = ctx.accounts.target_mint.supply;
     }
@@ -581,7 +593,10 @@ pub mod spl_token_bonding {
     let destination = ctx.accounts.destination.to_account_info();
 
     msg!("Burning {}", amount);
-    token_bonding.supply_from_bonding = token_bonding.supply_from_bonding.checked_sub(amount).or_arith_error()?;
+    token_bonding.supply_from_bonding = token_bonding
+      .supply_from_bonding
+      .checked_sub(amount)
+      .or_arith_error()?;
     token::burn(
       CpiContext::new(
         token_program.clone(),
@@ -621,7 +636,10 @@ pub mod spl_token_bonding {
       reclaimed,
       ctx.accounts.base_storage.amount
     );
-    token_bonding.reserve_balance_from_bonding = token_bonding.reserve_balance_from_bonding.checked_sub(reclaimed).or_arith_error()?;
+    token_bonding.reserve_balance_from_bonding = token_bonding
+      .reserve_balance_from_bonding
+      .checked_sub(reclaimed)
+      .or_arith_error()?;
     token::transfer(
       CpiContext::new_with_signer(
         token_program.clone(),

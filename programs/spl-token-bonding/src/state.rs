@@ -58,5 +58,5 @@ pub struct TokenBondingV0 {
   // This is used for sell frozen bonding curves, where we do not adapt the price based
   // on the actual reserves.
   pub reserve_balance_from_bonding: u64,
-  pub supply_from_bonding: u64
+  pub supply_from_bonding: u64,
 }
