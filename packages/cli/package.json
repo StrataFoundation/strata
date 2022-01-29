@@ -20,10 +20,10 @@
     },
     "dependencies": {
         "@solana/web3.js": "^1.32.0",
-        "@strata-foundation/spl-token-bonding": "^2.2.1-alpha.4+9348693",
-        "@strata-foundation/spl-token-collective": "^2.2.1-alpha.4+9348693",
-        "@strata-foundation/spl-token-staking": "^2.2.1-alpha.4+9348693",
-        "@strata-foundation/spl-utils": "^2.2.1-alpha.4+9348693",
+        "@strata-foundation/spl-token-bonding": "^2.2.1-alpha.4+396e6f4",
+        "@strata-foundation/spl-token-collective": "^2.2.1-alpha.4+396e6f4",
+        "@strata-foundation/spl-token-staking": "^2.2.1-alpha.4+396e6f4",
+        "@strata-foundation/spl-utils": "^2.2.1-alpha.4+396e6f4",
         "bn.js": "^5.2.0",
         "copyfiles": "^2.4.1",
         "semver": "^7.3.5"
@@ -33,6 +33,6 @@
         "ts-loader": "^9.2.3",
         "typescript": "^4.3.4"
     },
-    "gitHead": "934869383cc672800a188eed583d348184463ad9",
-    "version": "2.2.1-alpha.4+9348693"
+    "gitHead": "396e6f4df8c4ea021da409e499dba0b0136f1953",
+    "version": "2.2.1-alpha.4+396e6f4"
 }
