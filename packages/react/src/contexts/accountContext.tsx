@@ -10,9 +10,8 @@ export interface IAccountProviderProps {
   extendConnection?: boolean;
 }
 
-export const AccountContext = createContext<AccountFetchCache>(
-  // @ts-ignore
-  null as AccountFetchCache
+export const AccountContext = createContext<AccountFetchCache | undefined>(
+  undefined
 );
 
 export const AccountProvider: FC<IAccountProviderProps> = ({
@@ -30,11 +29,9 @@ export const AccountProvider: FC<IAccountProviderProps> = ({
     });
   }, [connection]);
 
-  if (cache) {
-    return (
-      <AccountContext.Provider value={cache}>{children}</AccountContext.Provider>
-    );
-  }
+  return (
+    <AccountContext.Provider value={cache}>{children}</AccountContext.Provider>
+  );
 
   return null;
 };
