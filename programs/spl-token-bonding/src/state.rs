@@ -53,4 +53,10 @@ pub struct TokenBondingV0 {
   pub base_storage_bump_seed: u8,
   pub target_mint_authority_bump_seed: u8,
   pub base_storage_authority_bump_seed: Option<u8>,
+
+  // Keep track of what the reserves should have if all txns came from bonding
+  // This is used for sell frozen bonding curves, where we do not adapt the price based
+  // on the actual reserves.
+  pub reserve_balance_from_bonding: u64,
+  pub supply_from_bonding: u64,
 }

@@ -48,42 +48,14 @@ describe("spl-token-bonding", () => {
   describe("exp curve test", () => {
     it("it does the correct calculation when supply is 0", () => {
       const curve = new ExponentialCurve(
-        {
-          c: new BN(1000000000000), // c = 1
-          b: new BN(0),
-          // @ts-ignore
-          pow: 1,
-          // @ts-ignore
-          frac: 2,
-        },
-        {
-          address: PublicKey.default,
-          mint: PublicKey.default,
-          owner: PublicKey.default,
-          amount: new BN(0),
-          delegate: null,
-          delegatedAmount: new BN(0),
-          isInitialized: false,
-          isFrozen: false,
-          isNative: false,
-          rentExemptReserve: null,
-          closeAuthority: null,
-        },
-        {
-          mintAuthority: null,
-          supply: new BN(0),
-          decimals: 9,
-          isInitialized: true,
-          freezeAuthority: null,
-        },
-        {
-          mintAuthority: null,
-          supply: new BN(0),
-          decimals: 9,
-          isInitialized: true,
-          freezeAuthority: null,
-        }
-      );
+      {
+        c: new BN(1000000000000), // c = 1
+        b: new BN(0),
+        // @ts-ignore
+        pow: 1,
+        // @ts-ignore
+        frac: 2
+      }, 0, 0);
 
       const baseAmount = curve.buyTargetAmount(10, percent(5), percent(5));
       expect(baseAmount).to.be.closeTo(23.96623025761275, 0.005);
@@ -97,35 +69,10 @@ describe("spl-token-bonding", () => {
           // @ts-ignore
           pow: 1,
           // @ts-ignore
-          frac: 2,
+          frac: 2
         },
-        {
-          address: PublicKey.default,
-          mint: PublicKey.default,
-          owner: PublicKey.default,
-          amount: new BN(1000000000),
-          delegate: null,
-          delegatedAmount: new BN(0),
-          isInitialized: false,
-          isFrozen: false,
-          isNative: false,
-          rentExemptReserve: null,
-          closeAuthority: null,
-        },
-        {
-          mintAuthority: null,
-          supply: new BN(1000000000),
-          decimals: 9,
-          isInitialized: true,
-          freezeAuthority: null,
-        },
-        {
-          mintAuthority: null,
-          supply: new BN(1000000000),
-          decimals: 9,
-          isInitialized: true,
-          freezeAuthority: null,
-        }
+        1,
+        1,
       );
 
       const baseAmount = curve.buyTargetAmount(10, percent(5), percent(5));
@@ -734,6 +681,9 @@ describe("spl-token-bonding", () => {
         slippage: 0.05,
       });
       await tokenUtils.expectAtaBalance(me, baseMint, 95);
+      const tokenBondingAcct2 = (await tokenBondingProgram.getTokenBonding(tokenBonding))!;
+      expect(tokenBondingAcct2.reserveBalanceFromBonding.toNumber()).to.eq(5 * 100)
+      expect(tokenBondingAcct2.supplyFromBonding.toNumber()).to.eq(1 * 100)
     });
   });
 
