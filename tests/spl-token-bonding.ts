@@ -1216,9 +1216,25 @@ describe("spl-token-bonding", () => {
       it("can tell what amount of target I will get for a given base amount", () => {
         expect(pricing.buyWithBaseAmount(100, baseMint)).to.eq(5);
       });
+
+      it("can tell what amount of target I will get for a given negative base amount", () => {
+        expect(pricing.buyWithBaseAmount(-100, baseMint)).to.eq(-5);
+      });
+
+      it("can tell what amount of target I will get for a given base amount (swapTargetAmount)", () => {
+        expect(
+          pricing.swapTargetAmount(100, baseMint, tokenBondingAcct.targetMint)
+        ).to.eq(-5);
+      });
+
+      it("can tell what amount of base I will get for selling target (swapTargetAmount)", () => {
+        expect(
+          pricing.swapTargetAmount(5, tokenBondingAcct.targetMint, baseMint)
+        ).to.eq(100);
+      });
     });
 
-    it("allows selling", async () => {
+    it("allows selling with swap", async () => {
       ({ targetAmount } = await tokenBondingProgram.swap({
         baseMint: tokenBondingAcct.targetMint,
         targetMint: baseMint,

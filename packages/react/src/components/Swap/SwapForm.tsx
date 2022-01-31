@@ -134,6 +134,7 @@ export const SwapForm = ({
   const { connected } = useWallet();
   const { awaitingApproval } = useProvider();
   const ftxPayLink = useFtxPayLink();
+  const [insufficientLiq, setInsufficientLiq] = useState<boolean>(false);
   const [rate, setRate] = useState<string>("--");
   const [fee, setFee] = useState<string>("--");
   const {
@@ -173,36 +174,46 @@ export const SwapForm = ({
     targetBonding.goLiveUnixTime.toNumber() > new Date().valueOf() / 1000;
 
   const handleConnectWallet = () => onConnectWallet();
+  const manualResetForm = () => {
+    reset({ slippage: slippage });
+    setInsufficientLiq(false);
+    setRate("--");
+    setFee("--");
+  };
 
   const handleTopChange = (value: number | undefined = 0) => {
     if (tokenBonding && pricing && base && target && value && +value >= 0) {
       const amount = pricing.swap(+value, base.publicKey, target.publicKey);
 
-      setValue("bottomAmount", +value == 0 ? 0 : roundToDecimals(amount, 9));
-      setRate(`${roundToDecimals(amount / value, 9)}`);
-      setFee(`${feeAmount}`);
+      if (isNaN(amount)) {
+        setInsufficientLiq(true);
+      } else {
+        setInsufficientLiq(false);
+        setValue("bottomAmount", +value == 0 ? 0 : roundToDecimals(amount, 9));
+        setRate(`${roundToDecimals(amount / value, 9)}`);
+        setFee(`${feeAmount}`);
+      }
     } else {
-      reset({ slippage: slippage });
-      setRate("--");
-      setFee("--");
+      manualResetForm();
     }
   };
 
   const handleBottomChange = (value: number | undefined = 0) => {
     if (tokenBonding && pricing && base && target && value && +value >= 0) {
-      let amount = pricing.swapTargetAmount(
-        +value,
-        target.publicKey,
-        base.publicKey
+      let amount = Math.abs(
+        pricing.swapTargetAmount(+value, target.publicKey, base.publicKey)
       );
 
-      setValue("topAmount", +value == 0 ? 0 : roundToDecimals(amount, 9));
-      setRate(`${roundToDecimals(value / amount, 9)}`);
-      setFee(`${feeAmount}`);
+      if (isNaN(amount)) {
+        setInsufficientLiq(true);
+      } else {
+        setInsufficientLiq(false);
+        setValue("topAmount", +value == 0 ? 0 : roundToDecimals(amount, 9));
+        setRate(`${roundToDecimals(value / amount, 9)}`);
+        setFee(`${feeAmount}`);
+      }
     } else {
-      reset({ slippage: slippage });
-      setRate("--");
-      setFee("--");
+      manualResetForm();
     }
   };
 
@@ -528,7 +539,9 @@ export const SwapForm = ({
           <Box position="relative">
             <ScaleFade
               initialScale={0.9}
-              in={!hasBaseAmount || moreThanSpendCap || notLive}
+              in={
+                !hasBaseAmount || moreThanSpendCap || notLive || insufficientLiq
+              }
             >
               <Center
                 bgColor="gray.500"
@@ -556,7 +569,7 @@ export const SwapForm = ({
                 )}
                 {!hasBaseAmount && (
                   <Text>
-                    Insufficent funds for this trade.{" "}
+                    Insufficient funds for this trade.{" "}
                     <Text as="u">
                       <Link
                         color="indigo.100"
@@ -568,11 +581,18 @@ export const SwapForm = ({
                     </Text>
                   </Text>
                 )}
+                {insufficientLiq && (
+                  <Text>Insufficient Liqidity for this trade.</Text>
+                )}
               </Center>
             </ScaleFade>
             <Button
               isDisabled={
-                !connected || !hasBaseAmount || moreThanSpendCap || notLive
+                !connected ||
+                !hasBaseAmount ||
+                moreThanSpendCap ||
+                notLive ||
+                insufficientLiq
               }
               w="full"
               colorScheme="indigo"
