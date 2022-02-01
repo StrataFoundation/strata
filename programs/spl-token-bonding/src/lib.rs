@@ -266,7 +266,9 @@ pub mod spl_token_bonding {
     Ok(())
   }
 
+  // DEPRECATED, USE BUY V1
   pub fn buy_v0(ctx: Context<BuyV0>, args: BuyV0Args) -> ProgramResult {
+    msg!("Warning: This endpoint is deprecated, please use buy_v1");
     if ctx.accounts.token_bonding.ignore_external_reserve_changes
       || ctx.accounts.token_bonding.ignore_external_supply_changes
     {
@@ -464,7 +466,9 @@ pub mod spl_token_bonding {
     Ok(())
   }
 
+  // DEPRECATED, USE SELL V0
   pub fn sell_v0(ctx: Context<SellV0>, args: SellV0Args) -> ProgramResult {
+    msg!("Warning: This endpoint is deprecated, please use sell_v1");
     if ctx.accounts.token_bonding.ignore_external_reserve_changes
       || ctx.accounts.token_bonding.ignore_external_supply_changes
     {
