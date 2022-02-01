@@ -266,6 +266,7 @@ pub struct UpdateTokenBondingV0<'info> {
   pub sell_target_royalties: UncheckedAccount<'info>,
 }
 
+#[deprecated]
 #[derive(Accounts)]
 pub struct BuyV0<'info> {
   #[account(
@@ -300,7 +301,20 @@ pub struct BuyV0<'info> {
 }
 
 #[derive(Accounts)]
-pub struct BuyNativeV0<'info> {
+pub struct BuyV1<'info> {
+  pub common: BuyCommonV0<'info>,
+  // This endpoint is only for non wrapped sol
+  #[account(
+    constraint = state.wrapped_sol_mint != common.base_mint.key()
+  )]
+  pub state: Box<Account<'info, ProgramStateV0>>,
+  #[account(mut)]
+  pub source: Box<Account<'info, TokenAccount>>,
+  pub source_authority: Signer<'info>,
+}
+
+#[derive(Accounts)]
+pub struct BuyCommonV0<'info> {
   #[account(
     mut,
     has_one = base_mint,
@@ -312,9 +326,6 @@ pub struct BuyNativeV0<'info> {
   )]
   pub token_bonding: Box<Account<'info, TokenBondingV0>>,
   pub curve: Box<Account<'info, CurveV0>>,
-  #[account(
-    constraint = base_mint.key() == state.wrapped_sol_mint
-  )]
   pub base_mint: Box<Account<'info, Mint>>,
   #[account(mut)]
   pub target_mint: Box<Account<'info, Mint>>,
@@ -324,16 +335,24 @@ pub struct BuyNativeV0<'info> {
   // Token account could have been closed. This is fine if royalties are 0
   pub buy_base_royalties: AccountInfo<'info>,
   #[account(mut)]
+  pub destination: Box<Account<'info, TokenAccount>>,
+  #[account(mut)]
   // Token account could have been closed. This is fine if royalties are 0
   pub buy_target_royalties: AccountInfo<'info>,
+  pub token_program: Program<'info, Token>,
+  pub clock: Sysvar<'info, Clock>,
+}
+
+#[derive(Accounts)]
+pub struct BuyNativeV0<'info> {
+  pub common: BuyCommonV0<'info>,
   #[account(mut)]
   pub source: Signer<'info>,
-  #[account(mut)]
-  pub destination: Box<Account<'info, TokenAccount>>,
 
   #[account(
     has_one = sol_storage,
-    has_one = wrapped_sol_mint
+    has_one = wrapped_sol_mint,
+    constraint = common.base_mint.key() == state.wrapped_sol_mint
   )]
   pub state: Box<Account<'info, ProgramStateV0>>,
   #[account(mut, constraint = wrapped_sol_mint.mint_authority.unwrap() == mint_authority.key())]
@@ -341,12 +360,10 @@ pub struct BuyNativeV0<'info> {
   pub mint_authority: AccountInfo<'info>,
   #[account(mut)]
   pub sol_storage: AccountInfo<'info>,
-
-  pub token_program: Program<'info, Token>,
-  pub clock: Sysvar<'info, Clock>,
   pub system_program: Program<'info, System>,
 }
 
+#[deprecated]
 #[derive(Accounts)]
 pub struct SellV0<'info> {
   #[account(
@@ -385,7 +402,20 @@ pub struct SellV0<'info> {
 }
 
 #[derive(Accounts)]
-pub struct SellNativeV0<'info> {
+pub struct SellV1<'info> {
+  pub common: SellCommonV0<'info>,
+
+  #[account(
+    constraint = state.wrapped_sol_mint != common.base_mint.key()
+  )]
+  pub state: Box<Account<'info, ProgramStateV0>>,
+
+  #[account(mut)]
+  pub destination: Box<Account<'info, TokenAccount>>,
+}
+
+#[derive(Accounts)]
+pub struct SellCommonV0<'info> {
   #[account(
     mut,
     has_one = base_mint,
@@ -406,13 +436,19 @@ pub struct SellNativeV0<'info> {
   // Token account could have been closed. Royalties are not sent if the account has been closed, but we also don't want to fail to parse here
   pub sell_base_royalties: AccountInfo<'info>,
   #[account(mut)]
-  // Token account could have been closed. Royalties are not sent if the account has been closed, but we also don't want to fail to parse here
-  pub sell_target_royalties: AccountInfo<'info>,
-
-  #[account(mut)]
   pub source: Box<Account<'info, TokenAccount>>,
   #[account(signer)]
   pub source_authority: AccountInfo<'info>,
+  #[account(mut)]
+  // Token account could have been closed. Royalties are not sent if the account has been closed, but we also don't want to fail to parse here
+  pub sell_target_royalties: AccountInfo<'info>,
+  pub token_program: Program<'info, Token>,
+  pub clock: Sysvar<'info, Clock>,
+}
+
+#[derive(Accounts)]
+pub struct SellNativeV0<'info> {
+  pub common: SellCommonV0<'info>,
 
   #[account(mut)]
   pub destination: AccountInfo<'info>,
@@ -427,8 +463,5 @@ pub struct SellNativeV0<'info> {
   pub mint_authority: AccountInfo<'info>,
   #[account(mut)]
   pub sol_storage: AccountInfo<'info>,
-
-  pub token_program: Program<'info, Token>,
-  pub clock: Sysvar<'info, Clock>,
   pub system_program: Program<'info, System>,
 }

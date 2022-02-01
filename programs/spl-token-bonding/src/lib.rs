@@ -266,35 +266,34 @@ pub mod spl_token_bonding {
     Ok(())
   }
 
+  #[deprecated]
   pub fn buy_v0(ctx: Context<BuyV0>, args: BuyV0Args) -> ProgramResult {
-    let token_bonding = &mut ctx.accounts.token_bonding;
-    let base_mint = &ctx.accounts.base_mint;
-    let target_mint = &ctx.accounts.target_mint;
-    let curve = &ctx.accounts.curve;
-
+    let common = &mut BuyCommonV0 {
+      token_bonding: ctx.accounts.token_bonding.clone(),
+      curve: ctx.accounts.curve.clone(),
+      base_mint: ctx.accounts.base_mint.clone(),
+      target_mint: ctx.accounts.target_mint.clone(),
+      base_storage: ctx.accounts.base_storage.clone(),
+      buy_base_royalties: ctx.accounts.buy_base_royalties.clone(),
+      buy_target_royalties: ctx.accounts.buy_target_royalties.clone(),
+      destination: ctx.accounts.destination.clone(),
+      token_program: ctx.accounts.token_program.clone(),
+      clock: ctx.accounts.clock.clone(),
+    };
     let BuyAmount {
-      price,
-      base_royalties,
-      target_royalties,
       total_amount,
+      price,
+      target_royalties,
+      base_royalties
     } = buy_shared_logic(
-      token_bonding,
-      curve,
-      base_mint,
-      target_mint,
-      &ctx.accounts.base_storage,
-      &ctx.accounts.clock,
-      &args,
+      common,
+      &args
     )?;
 
     mint_to_dest(
-      token_bonding,
       total_amount,
       target_royalties,
-      &ctx.accounts.token_program.to_account_info(),
-      &target_mint.to_account_info(),
-      &ctx.accounts.buy_target_royalties.to_account_info(),
-      &token_bonding.to_account_info(),
+      common,
       &ctx.accounts.destination.to_account_info(),
     )?;
 
@@ -341,36 +340,83 @@ pub mod spl_token_bonding {
     Ok(())
   }
 
-  pub fn buy_native_v0(ctx: Context<BuyNativeV0>, args: BuyV0Args) -> ProgramResult {
-    let token_bonding = &mut ctx.accounts.token_bonding;
-    let base_mint = &ctx.accounts.base_mint;
-    let target_mint = &ctx.accounts.target_mint;
-    let curve = &ctx.accounts.curve;
+  pub fn buy_v1(ctx: Context<BuyV1>, args: BuyV0Args) -> ProgramResult {
+    let BuyAmount {
+      total_amount,
+      price,
+      target_royalties,
+      base_royalties
+    } = buy_shared_logic(
+      &mut ctx.accounts.common,
+      &args,
+    )?;
 
+    mint_to_dest(
+      total_amount,
+      target_royalties,
+      &ctx.accounts.common,
+      &ctx.accounts.common.destination.to_account_info(),
+    )?;
+
+    msg!(
+      "Total price is {}, with {} to base royalties and {} to target royalties",
+      price + base_royalties,
+      base_royalties,
+      target_royalties
+    );
+    let token_program = ctx.accounts.common.token_program.to_account_info();
+    let source = ctx.accounts.source.to_account_info();
+    let base_storage_account = ctx.accounts.common.base_storage.to_account_info();
+    let base_royalties_account = ctx.accounts.common.buy_base_royalties.clone().to_account_info();
+    let source_authority = ctx.accounts.source_authority.to_account_info();
+
+    if base_royalties > 0 {
+      msg!("Paying out {} base royalties", base_royalties);
+      token::transfer(
+        CpiContext::new(
+          token_program.clone(),
+          Transfer {
+            from: source.clone(),
+            to: base_royalties_account.clone(),
+            authority: source_authority.clone(),
+          },
+        ),
+        base_royalties,
+      )?;
+    }
+
+    msg!("Paying out {} to base storage", price);
+    token::transfer(
+      CpiContext::new(
+        token_program.clone(),
+        Transfer {
+          from: source.clone(),
+          to: base_storage_account.clone(),
+          authority: source_authority.clone(),
+        },
+      ),
+      price,
+    )?;
+
+    Ok(())
+  }
+
+  pub fn buy_native_v0(ctx: Context<BuyNativeV0>, args: BuyV0Args) -> ProgramResult {
     let BuyAmount {
       price,
       base_royalties,
       target_royalties,
       total_amount,
     } = buy_shared_logic(
-      token_bonding,
-      curve,
-      base_mint,
-      target_mint,
-      &ctx.accounts.base_storage,
-      &ctx.accounts.clock,
+      &mut ctx.accounts.common,
       &args,
     )?;
 
     mint_to_dest(
-      token_bonding,
       total_amount,
       target_royalties,
-      &ctx.accounts.token_program.to_account_info(),
-      &target_mint.to_account_info(),
-      &ctx.accounts.buy_target_royalties.to_account_info(),
-      &token_bonding.to_account_info(),
-      &ctx.accounts.destination.to_account_info(),
+      &ctx.accounts.common,
+      &ctx.accounts.common.destination.to_account_info(),
     )?;
 
     msg!(
@@ -380,8 +426,8 @@ pub mod spl_token_bonding {
       target_royalties
     );
     let source = &ctx.accounts.source;
-    let base_storage_account = &ctx.accounts.base_storage;
-    let base_royalties_account = ctx.accounts.buy_base_royalties.clone().to_account_info();
+    let base_storage_account = &ctx.accounts.common.base_storage;
+    let base_royalties_account = ctx.accounts.common.buy_base_royalties.clone().to_account_info();
 
     if base_royalties > 0 {
       msg!("Paying out {} base royalties", base_royalties);
@@ -404,7 +450,7 @@ pub mod spl_token_bonding {
         sol_storage: ctx.accounts.sol_storage.clone(),
         source: source.clone(),
         destination: base_storage_account.clone(),
-        token_program: ctx.accounts.token_program.clone(),
+        token_program: ctx.accounts.common.token_program.clone(),
         system_program: ctx.accounts.system_program.clone(),
       },
       &BuyWrappedSolV0Args { amount: price },
@@ -413,23 +459,29 @@ pub mod spl_token_bonding {
     Ok(())
   }
 
+  #[deprecated]
+  #[allow(clippy::deprecated)]
   pub fn sell_v0(ctx: Context<SellV0>, args: SellV0Args) -> ProgramResult {
-    let token_bonding = &mut ctx.accounts.token_bonding;
-    let base_mint = &ctx.accounts.base_mint;
-    let target_mint = &ctx.accounts.target_mint;
-    let amount = args.target_amount;
-    let curve = &ctx.accounts.curve;
+    let common = &mut SellCommonV0 {
+      token_bonding: ctx.accounts.token_bonding.clone(),
+      curve: ctx.accounts.curve.clone(),
+      base_mint: ctx.accounts.base_mint.clone(),
+      target_mint: ctx.accounts.target_mint.clone(),
+      base_storage: ctx.accounts.base_storage.clone(),
+      sell_base_royalties: ctx.accounts.sell_base_royalties.clone(),
+      source: ctx.accounts.source.clone(),
+      source_authority: ctx.accounts.source_authority.clone(),
+      sell_target_royalties: ctx.accounts.sell_target_royalties.clone(),
+      token_program: ctx.accounts.token_program.clone(),
+      clock: ctx.accounts.clock.clone(),
+    };
+
     let SellAmount {
       reclaimed,
       base_royalties,
       target_royalties,
     } = sell_shared_logic(
-      token_bonding,
-      curve,
-      base_mint,
-      target_mint,
-      &ctx.accounts.base_storage,
-      &ctx.accounts.clock,
+      common,
       &args,
     )?;
 
@@ -441,18 +493,16 @@ pub mod spl_token_bonding {
     );
 
     burn_and_pay_sell_royalties(
-      amount,
+      args.target_amount,
       target_royalties,
-      &ctx.accounts.token_program,
-      &target_mint.to_account_info(),
-      &ctx.accounts.sell_target_royalties,
-      &ctx.accounts.source.to_account_info(),
-      &ctx.accounts.source_authority,
+      common
     )?;
 
     let token_program = ctx.accounts.token_program.to_account_info();
     let base_storage_account = ctx.accounts.base_storage.to_account_info();
     let destination = ctx.accounts.destination.to_account_info();
+    let target_mint = ctx.accounts.target_mint.to_account_info();
+    let token_bonding = &mut ctx.accounts.token_bonding;
 
     msg!(
       "Paying out {} from base storage, {}",
@@ -500,23 +550,90 @@ pub mod spl_token_bonding {
     Ok(())
   }
 
-  pub fn sell_native_v0(ctx: Context<SellNativeV0>, args: SellV0Args) -> ProgramResult {
-    let token_bonding = &mut ctx.accounts.token_bonding;
-    let base_mint = &ctx.accounts.base_mint;
-    let target_mint = &ctx.accounts.target_mint;
-    let amount = args.target_amount;
-    let curve = &ctx.accounts.curve;
+  pub fn sell_v1(ctx: Context<SellV1>, args: SellV0Args) -> ProgramResult {
     let SellAmount {
       reclaimed,
       base_royalties,
       target_royalties,
     } = sell_shared_logic(
-      token_bonding,
-      curve,
-      base_mint,
-      target_mint,
-      &ctx.accounts.base_storage,
-      &ctx.accounts.clock,
+      &mut ctx.accounts.common,
+      &args,
+    )?;
+
+    msg!(
+      "Total reclaimed is {}, with {} to base royalties, {} to target royalties",
+      reclaimed,
+      base_royalties,
+      target_royalties
+    );
+
+    burn_and_pay_sell_royalties(
+      args.target_amount,
+      target_royalties,
+      &ctx.accounts.common
+    )?;
+
+    let token_program = ctx.accounts.common.token_program.to_account_info();
+    let base_storage_account = ctx.accounts.common.base_storage.to_account_info();
+    let destination = ctx.accounts.destination.to_account_info();
+    let target_mint = ctx.accounts.common.target_mint.to_account_info();
+    let token_bonding = &mut ctx.accounts.common.token_bonding;
+
+    msg!(
+      "Paying out {} from base storage, {}",
+      reclaimed,
+      ctx.accounts.common.base_storage.amount
+    );
+    let bonding_seeds: &[&[&[u8]]] = &[&[
+      b"token-bonding",
+      target_mint.to_account_info().key.as_ref(),
+      &token_bonding.index.to_le_bytes(),
+      &[token_bonding.bump_seed],
+    ]];
+    token::transfer(
+      CpiContext::new_with_signer(
+        token_program.clone(),
+        Transfer {
+          from: base_storage_account.clone(),
+          to: destination.clone(),
+          authority: token_bonding.to_account_info().clone(),
+        },
+        bonding_seeds,
+      ),
+      reclaimed,
+    )?;
+
+    if base_royalties > 0 {
+      msg!(
+        "Paying out {} from base storage to base royalties",
+        base_royalties
+      );
+      token::transfer(
+        CpiContext::new_with_signer(
+          token_program.clone(),
+          Transfer {
+            from: base_storage_account.clone(),
+            to: ctx.accounts.common.sell_base_royalties.to_account_info().clone(),
+            authority: token_bonding.to_account_info().clone(),
+          },
+          bonding_seeds,
+        ),
+        base_royalties,
+      )?;
+    }
+
+    Ok(())
+  }
+
+  pub fn sell_native_v0(ctx: Context<SellNativeV0>, args: SellV0Args) -> ProgramResult {
+    let amount = args.target_amount;
+    
+    let SellAmount {
+      reclaimed,
+      base_royalties,
+      target_royalties,
+    } = sell_shared_logic(
+      &mut ctx.accounts.common,
       &args,
     )?;
 
@@ -530,20 +647,18 @@ pub mod spl_token_bonding {
     burn_and_pay_sell_royalties(
       amount,
       target_royalties,
-      &ctx.accounts.token_program,
-      &target_mint.to_account_info(),
-      &ctx.accounts.sell_target_royalties,
-      &ctx.accounts.source.to_account_info(),
-      &ctx.accounts.source_authority,
+      &ctx.accounts.common
     )?;
 
-    let base_storage_account = &ctx.accounts.base_storage;
+    let base_storage_account = &ctx.accounts.common.base_storage.clone();
     let destination = ctx.accounts.destination.to_account_info();
+    let token_bonding = &mut ctx.accounts.common.token_bonding;
+    let target_mint = &mut ctx.accounts.common.target_mint;
 
     msg!(
       "Paying out {} from base storage, {}",
       reclaimed,
-      ctx.accounts.base_storage.amount
+      ctx.accounts.common.base_storage.amount
     );
     let bonding_seeds: &[&[&[u8]]] = &[&[
       b"token-bonding",
@@ -560,7 +675,7 @@ pub mod spl_token_bonding {
         source: base_storage_account.clone(),
         owner: token_bonding.to_account_info(),
         destination: destination,
-        token_program: ctx.accounts.token_program.clone(),
+        token_program: ctx.accounts.common.token_program.clone(),
         system_program: ctx.accounts.system_program.clone(),
       },
       &SellWrappedSolV0Args {
@@ -582,8 +697,8 @@ pub mod spl_token_bonding {
           sol_storage: ctx.accounts.sol_storage.clone(),
           source: base_storage_account.clone(),
           owner: token_bonding.to_account_info(),
-          destination: ctx.accounts.sell_base_royalties.to_account_info(),
-          token_program: ctx.accounts.token_program.clone(),
+          destination: ctx.accounts.common.sell_base_royalties.to_account_info(),
+          token_program: ctx.accounts.common.token_program.clone(),
           system_program: ctx.accounts.system_program.clone(),
         },
         &SellWrappedSolV0Args {

@@ -2,14 +2,13 @@ use anchor_lang::{
   prelude::*,
   solana_program::{program::invoke, system_instruction},
 };
-use anchor_spl::token::{self, Mint, MintTo, TokenAccount};
+use anchor_spl::token::{self, MintTo};
 
 use crate::{
-  account::BuyWrappedSolV0,
+  account::*,
   arg::{BuyV0Args, BuyWrappedSolV0Args},
   curve::*,
   error::ErrorCode,
-  state::{CurveV0, TokenBondingV0},
   util::*,
 };
 
@@ -54,14 +53,16 @@ pub struct BuyAmount {
 }
 
 pub fn buy_shared_logic(
-  token_bonding: &mut TokenBondingV0,
-  curve: &CurveV0,
-  base_mint: &Mint,
-  target_mint: &Mint,
-  base_storage: &TokenAccount,
-  clock: &Clock,
+  common: &mut BuyCommonV0,
   args: &BuyV0Args,
 ) -> Result<BuyAmount, ProgramError> {
+  let token_bonding = &mut common.token_bonding;
+  let curve = &common.curve;
+  let base_mint = &common.base_mint;
+  let target_mint = &common.target_mint;
+  let base_storage = &common.base_storage;
+  let clock = &common.clock;
+
   // Not yet initialized since reserve_balance_from_bonding is a new feature
   if !token_bonding.sell_frozen
     && target_mint.supply > 0
@@ -216,15 +217,17 @@ pub fn buy_shared_logic(
 }
 
 pub fn mint_to_dest<'info>(
-  token_bonding: &TokenBondingV0,
   total_amount: u64,
   target_royalties: u64,
-  token_program: &AccountInfo<'info>,
-  target_mint: &AccountInfo<'info>,
-  target_royalties_account: &AccountInfo<'info>,
-  target_mint_authority: &AccountInfo<'info>,
-  destination: &AccountInfo<'info>,
+  common: &BuyCommonV0<'info>,
+  destination: &AccountInfo<'info>
 ) -> ProgramResult {
+  let token_bonding = &common.token_bonding;
+  let token_program = &common.token_program.to_account_info();
+  let target_mint = &common.target_mint.to_account_info();
+  let target_royalties_account = &common.buy_target_royalties.to_account_info();
+  let target_mint_authority = &common.token_bonding.to_account_info();
+
   let mint_signer_seeds: &[&[&[u8]]] = &[&[
     b"token-bonding",
     target_mint.key.as_ref(),

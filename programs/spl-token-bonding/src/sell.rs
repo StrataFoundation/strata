@@ -2,14 +2,13 @@ use anchor_lang::{
   prelude::*,
   solana_program::{program::invoke_signed, system_instruction},
 };
-use anchor_spl::token::{self, Burn, Mint, TokenAccount, Transfer};
+use anchor_spl::token::{self, Burn, Transfer};
 
 use crate::{
-  account::SellWrappedSolV0,
+  account::*,
   arg::{SellV0Args, SellWrappedSolV0Args},
   curve::*,
   error::ErrorCode,
-  state::{CurveV0, TokenBondingV0},
   util::*,
 };
 
@@ -63,14 +62,16 @@ pub struct SellAmount {
 }
 
 pub fn sell_shared_logic(
-  token_bonding: &mut TokenBondingV0,
-  curve: &CurveV0,
-  base_mint: &Mint,
-  target_mint: &Mint,
-  base_storage: &TokenAccount,
-  clock: &Clock,
+  common: &mut SellCommonV0,
   args: &SellV0Args,
 ) -> Result<SellAmount, ProgramError> {
+  let token_bonding = &mut common.token_bonding;
+  let curve = &common.curve;
+  let base_mint = &common.base_mint;
+  let base_storage = &common.base_storage;
+  let target_mint = &common.target_mint;
+  let clock = &common.clock;
+
   let amount = args.target_amount;
   let base_amount_u64 = if token_bonding.ignore_external_reserve_changes {
     token_bonding.reserve_balance_from_bonding
@@ -163,12 +164,14 @@ pub fn sell_shared_logic(
 pub fn burn_and_pay_sell_royalties<'info>(
   amount: u64,
   target_royalties: u64,
-  token_program: &AccountInfo<'info>,
-  target_mint: &AccountInfo<'info>,
-  target_royalties_account: &AccountInfo<'info>,
-  source: &AccountInfo<'info>,
-  source_authority: &AccountInfo<'info>,
+  common: &SellCommonV0
 ) -> ProgramResult {
+  let token_program = &common.token_program.to_account_info();
+  let target_mint = &common.target_mint.to_account_info();
+  let target_royalties_account = &common.sell_target_royalties.to_account_info();
+  let source = &common.source.to_account_info();
+  let source_authority = &common.source_authority.to_account_info();
+
   msg!("Burning {}", amount);
   token::burn(
     CpiContext::new(

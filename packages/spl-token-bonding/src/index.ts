@@ -3,7 +3,6 @@ import {
 } from "@metaplex-foundation/mpl-token-metadata";
 import * as anchor from "@project-serum/anchor";
 import { IdlTypes, Program, Provider } from "@project-serum/anchor";
-import { accountSize } from "@project-serum/anchor/dist/cjs/coder";
 import {
   AccountLayout,
   ASSOCIATED_TOKEN_PROGRAM_ID, NATIVE_MINT,
@@ -314,7 +313,6 @@ export interface ICreateTokenBondingArgs {
    * markeplace curves
    */
   index?: number;
-  
 }
 
 export interface IUpdateTokenBondingArgs {
@@ -516,7 +514,6 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
   }: {
     mintKeypair: Keypair;
   }): Promise<InstructionResult<null>> {
-    this.account.tokenBondingV0.all()
     const exists = await this.getState();
     if (exists) {
       return {
@@ -1438,7 +1435,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       // @ts-ignore
       buyWithBase,
     };
-    const accounts = {
+    const common = {
       tokenBonding,
       // @ts-ignore
       curve: tokenBondingAcct.curve,
@@ -1447,26 +1444,32 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       baseStorage: tokenBondingAcct.baseStorage,
       buyBaseRoyalties: tokenBondingAcct.buyBaseRoyalties,
       buyTargetRoyalties: tokenBondingAcct.buyTargetRoyalties,
-      source,
-      sourceAuthority,
-      destination,
       tokenProgram: TOKEN_PROGRAM_ID,
       clock: SYSVAR_CLOCK_PUBKEY,
+      destination
     };
 
     if (isNative) {
       instructions.push(await this.instruction.buyNativeV0(args, { 
         accounts: {
-          ...accounts,
+          common,
           state: state.publicKey,
           wrappedSolMint: state.wrappedSolMint,
           mintAuthority: (await SplTokenBonding.wrappedSolMintAuthorityKey(this.programId))[0],
           solStorage: state.solStorage,
-          systemProgram: SystemProgram.programId
+          systemProgram: SystemProgram.programId,
+          source
         }
       }));
     } else {
-      instructions.push(await this.instruction.buyV0(args, { accounts }));
+      instructions.push(await this.instruction.buyV1(args, {
+        accounts: {
+          common,
+          state: state.publicKey,
+          source,
+          sourceAuthority,
+        } 
+      }));
     }
 
     return {
@@ -1777,7 +1780,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       targetAmount: toBN(targetAmount, targetMint),
       minimumPrice: new BN(minPrice),
     };
-    const accounts = {
+    const common = {
       tokenBonding,
       // @ts-ignore
       curve: tokenBondingAcct.curve,
@@ -1788,14 +1791,14 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       sellTargetRoyalties: tokenBondingAcct.sellTargetRoyalties,
       source,
       sourceAuthority,
-      destination,
       tokenProgram: TOKEN_PROGRAM_ID,
       clock: SYSVAR_CLOCK_PUBKEY,
     };
     if (isNative) {
       instructions.push(await this.instruction.sellNativeV0(args, { 
         accounts: {
-          ...accounts,
+          common,
+          destination,
           state: state.publicKey,
           wrappedSolMint: state.wrappedSolMint,
           mintAuthority: (await SplTokenBonding.wrappedSolMintAuthorityKey(this.programId))[0],
@@ -1804,7 +1807,13 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         }
       }))
     } else {
-      instructions.push(await this.instruction.sellV0(args, { accounts }));
+      instructions.push(await this.instruction.sellV1(args, { 
+        accounts: {
+          common,
+          state: state.publicKey,
+          destination
+        }
+      }));
     }
 
     return {
