@@ -164,7 +164,7 @@ pub fn sell_shared_logic(
 pub fn burn_and_pay_sell_royalties<'info>(
   amount: u64,
   target_royalties: u64,
-  common: &SellCommonV0
+  common: &SellCommonV0,
 ) -> ProgramResult {
   let token_program = &common.token_program.to_account_info();
   let target_mint = &common.target_mint.to_account_info();

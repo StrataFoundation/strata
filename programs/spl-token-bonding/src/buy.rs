@@ -220,7 +220,7 @@ pub fn mint_to_dest<'info>(
   total_amount: u64,
   target_royalties: u64,
   common: &BuyCommonV0<'info>,
-  destination: &AccountInfo<'info>
+  destination: &AccountInfo<'info>,
 ) -> ProgramResult {
   let token_bonding = &common.token_bonding;
   let token_program = &common.token_program.to_account_info();

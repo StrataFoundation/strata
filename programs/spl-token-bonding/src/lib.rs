@@ -268,8 +268,10 @@ pub mod spl_token_bonding {
 
   #[deprecated]
   pub fn buy_v0(ctx: Context<BuyV0>, args: BuyV0Args) -> ProgramResult {
-    if ctx.accounts.token_bonding.ignore_external_reserve_changes || ctx.accounts.token_bonding.ignore_external_supply_changes {
-      return Err(ErrorCode::IgnoreExternalV1Only.into())
+    if ctx.accounts.token_bonding.ignore_external_reserve_changes
+      || ctx.accounts.token_bonding.ignore_external_supply_changes
+    {
+      return Err(ErrorCode::IgnoreExternalV1Only.into());
     }
     let common = &mut BuyCommonV0 {
       token_bonding: ctx.accounts.token_bonding.clone(),
@@ -287,11 +289,8 @@ pub mod spl_token_bonding {
       total_amount,
       price,
       target_royalties,
-      base_royalties
-    } = buy_shared_logic(
-      common,
-      &args
-    )?;
+      base_royalties,
+    } = buy_shared_logic(common, &args)?;
 
     mint_to_dest(
       total_amount,
@@ -348,11 +347,8 @@ pub mod spl_token_bonding {
       total_amount,
       price,
       target_royalties,
-      base_royalties
-    } = buy_shared_logic(
-      &mut ctx.accounts.common,
-      &args,
-    )?;
+      base_royalties,
+    } = buy_shared_logic(&mut ctx.accounts.common, &args)?;
 
     mint_to_dest(
       total_amount,
@@ -370,7 +366,12 @@ pub mod spl_token_bonding {
     let token_program = ctx.accounts.common.token_program.to_account_info();
     let source = ctx.accounts.source.to_account_info();
     let base_storage_account = ctx.accounts.common.base_storage.to_account_info();
-    let base_royalties_account = ctx.accounts.common.buy_base_royalties.clone().to_account_info();
+    let base_royalties_account = ctx
+      .accounts
+      .common
+      .buy_base_royalties
+      .clone()
+      .to_account_info();
     let source_authority = ctx.accounts.source_authority.to_account_info();
 
     if base_royalties > 0 {
@@ -410,10 +411,7 @@ pub mod spl_token_bonding {
       base_royalties,
       target_royalties,
       total_amount,
-    } = buy_shared_logic(
-      &mut ctx.accounts.common,
-      &args,
-    )?;
+    } = buy_shared_logic(&mut ctx.accounts.common, &args)?;
 
     mint_to_dest(
       total_amount,
@@ -430,7 +428,12 @@ pub mod spl_token_bonding {
     );
     let source = &ctx.accounts.source;
     let base_storage_account = &ctx.accounts.common.base_storage;
-    let base_royalties_account = ctx.accounts.common.buy_base_royalties.clone().to_account_info();
+    let base_royalties_account = ctx
+      .accounts
+      .common
+      .buy_base_royalties
+      .clone()
+      .to_account_info();
 
     if base_royalties > 0 {
       msg!("Paying out {} base royalties", base_royalties);
@@ -465,10 +468,12 @@ pub mod spl_token_bonding {
   #[deprecated]
   #[allow(clippy::deprecated)]
   pub fn sell_v0(ctx: Context<SellV0>, args: SellV0Args) -> ProgramResult {
-    if ctx.accounts.token_bonding.ignore_external_reserve_changes || ctx.accounts.token_bonding.ignore_external_supply_changes {
-      return Err(ErrorCode::IgnoreExternalV1Only.into())
+    if ctx.accounts.token_bonding.ignore_external_reserve_changes
+      || ctx.accounts.token_bonding.ignore_external_supply_changes
+    {
+      return Err(ErrorCode::IgnoreExternalV1Only.into());
     }
-    
+
     let common = &mut SellCommonV0 {
       token_bonding: ctx.accounts.token_bonding.clone(),
       curve: ctx.accounts.curve.clone(),
@@ -487,10 +492,7 @@ pub mod spl_token_bonding {
       reclaimed,
       base_royalties,
       target_royalties,
-    } = sell_shared_logic(
-      common,
-      &args,
-    )?;
+    } = sell_shared_logic(common, &args)?;
 
     msg!(
       "Total reclaimed is {}, with {} to base royalties, {} to target royalties",
@@ -499,11 +501,7 @@ pub mod spl_token_bonding {
       target_royalties
     );
 
-    burn_and_pay_sell_royalties(
-      args.target_amount,
-      target_royalties,
-      common
-    )?;
+    burn_and_pay_sell_royalties(args.target_amount, target_royalties, common)?;
 
     let token_program = ctx.accounts.token_program.to_account_info();
     let base_storage_account = ctx.accounts.base_storage.to_account_info();
@@ -562,10 +560,7 @@ pub mod spl_token_bonding {
       reclaimed,
       base_royalties,
       target_royalties,
-    } = sell_shared_logic(
-      &mut ctx.accounts.common,
-      &args,
-    )?;
+    } = sell_shared_logic(&mut ctx.accounts.common, &args)?;
 
     msg!(
       "Total reclaimed is {}, with {} to base royalties, {} to target royalties",
@@ -574,11 +569,7 @@ pub mod spl_token_bonding {
       target_royalties
     );
 
-    burn_and_pay_sell_royalties(
-      args.target_amount,
-      target_royalties,
-      &ctx.accounts.common
-    )?;
+    burn_and_pay_sell_royalties(args.target_amount, target_royalties, &ctx.accounts.common)?;
 
     let token_program = ctx.accounts.common.token_program.to_account_info();
     let base_storage_account = ctx.accounts.common.base_storage.to_account_info();
@@ -620,7 +611,12 @@ pub mod spl_token_bonding {
           token_program.clone(),
           Transfer {
             from: base_storage_account.clone(),
-            to: ctx.accounts.common.sell_base_royalties.to_account_info().clone(),
+            to: ctx
+              .accounts
+              .common
+              .sell_base_royalties
+              .to_account_info()
+              .clone(),
             authority: token_bonding.to_account_info().clone(),
           },
           bonding_seeds,
@@ -634,15 +630,12 @@ pub mod spl_token_bonding {
 
   pub fn sell_native_v0(ctx: Context<SellNativeV0>, args: SellV0Args) -> ProgramResult {
     let amount = args.target_amount;
-    
+
     let SellAmount {
       reclaimed,
       base_royalties,
       target_royalties,
-    } = sell_shared_logic(
-      &mut ctx.accounts.common,
-      &args,
-    )?;
+    } = sell_shared_logic(&mut ctx.accounts.common, &args)?;
 
     msg!(
       "Total reclaimed is {}, with {} to base royalties, {} to target royalties",
@@ -651,11 +644,7 @@ pub mod spl_token_bonding {
       target_royalties
     );
 
-    burn_and_pay_sell_royalties(
-      amount,
-      target_royalties,
-      &ctx.accounts.common
-    )?;
+    burn_and_pay_sell_royalties(amount, target_royalties, &ctx.accounts.common)?;
 
     let base_storage_account = &ctx.accounts.common.base_storage.clone();
     let destination = ctx.accounts.destination.to_account_info();

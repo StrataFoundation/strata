@@ -51,5 +51,5 @@ pub enum ErrorCode {
   InvalidMint,
 
   #[msg("Ignoring external changes is only supported on v1 of buy and sell endpoints. Please upgrade your client")]
-  IgnoreExternalV1Only
+  IgnoreExternalV1Only,
 }
