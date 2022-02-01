@@ -268,6 +268,9 @@ pub mod spl_token_bonding {
 
   #[deprecated]
   pub fn buy_v0(ctx: Context<BuyV0>, args: BuyV0Args) -> ProgramResult {
+    if ctx.accounts.token_bonding.ignore_external_reserve_changes || ctx.accounts.token_bonding.ignore_external_supply_changes {
+      return Err(ErrorCode::IgnoreExternalV1Only.into())
+    }
     let common = &mut BuyCommonV0 {
       token_bonding: ctx.accounts.token_bonding.clone(),
       curve: ctx.accounts.curve.clone(),
@@ -462,6 +465,10 @@ pub mod spl_token_bonding {
   #[deprecated]
   #[allow(clippy::deprecated)]
   pub fn sell_v0(ctx: Context<SellV0>, args: SellV0Args) -> ProgramResult {
+    if ctx.accounts.token_bonding.ignore_external_reserve_changes || ctx.accounts.token_bonding.ignore_external_supply_changes {
+      return Err(ErrorCode::IgnoreExternalV1Only.into())
+    }
+    
     let common = &mut SellCommonV0 {
       token_bonding: ctx.accounts.token_bonding.clone(),
       curve: ctx.accounts.curve.clone(),

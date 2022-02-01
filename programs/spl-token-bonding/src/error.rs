@@ -49,4 +49,7 @@ pub enum ErrorCode {
 
   #[msg("An account was provided that did not have the correct mint")]
   InvalidMint,
+
+  #[msg("Ignoring external changes is only supported on v1 of buy and sell endpoints. Please upgrade your client")]
+  IgnoreExternalV1Only
 }
