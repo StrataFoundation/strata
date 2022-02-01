@@ -39,9 +39,15 @@ async function getSdks(
     return {};
   }
 
-  const tokenCollective = await tryProm(SplTokenCollective.init(provider));
-  const tokenBonding = await tryProm(SplTokenBonding.init(provider));
-  const splTokenMetadataSdk = await tryProm(SplTokenMetadata.init(provider));
+  const [
+    tokenCollective,
+    tokenBonding,
+    splTokenMetadataSdk
+  ] = (await tryProm(Promise.all([
+    SplTokenCollective.init(provider),
+    SplTokenBonding.init(provider),
+    SplTokenMetadata.init(provider)
+  ])) || []);
   return {
     tokenCollectiveSdk: tokenCollective,
     tokenBondingSdk: tokenBonding,

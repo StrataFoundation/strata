@@ -1,0 +1,266 @@
+use anchor_lang::{
+  prelude::*,
+  solana_program::{program::invoke, system_instruction},
+};
+use anchor_spl::token::{self, Mint, MintTo, TokenAccount};
+
+use crate::{
+  account::BuyWrappedSolV0,
+  arg::{BuyV0Args, BuyWrappedSolV0Args},
+  curve::*,
+  error::ErrorCode,
+  state::{CurveV0, TokenBondingV0},
+  util::*,
+};
+
+pub fn buy_wrapped_sol(accounts: &BuyWrappedSolV0, args: &BuyWrappedSolV0Args) -> ProgramResult {
+  invoke(
+    &system_instruction::transfer(
+      &accounts.source.key(),
+      &accounts.sol_storage.key(),
+      args.amount,
+    ),
+    &[
+      accounts.source.to_account_info().clone(),
+      accounts.sol_storage.to_account_info().clone(),
+      accounts.system_program.to_account_info().clone(),
+    ],
+  )?;
+
+  token::mint_to(
+    CpiContext::new_with_signer(
+      accounts.token_program.to_account_info().clone(),
+      MintTo {
+        mint: accounts.wrapped_sol_mint.to_account_info().clone(),
+        to: accounts.destination.to_account_info().clone(),
+        authority: accounts.mint_authority.to_account_info().clone(),
+      },
+      &[&[
+        b"wrapped-sol-authority",
+        &[accounts.state.mint_authority_bump_seed],
+      ]],
+    ),
+    args.amount,
+  )?;
+
+  Ok(())
+}
+
+pub struct BuyAmount {
+  pub price: u64,
+  pub total_amount: u64,
+  pub base_royalties: u64,
+  pub target_royalties: u64,
+}
+
+pub fn buy_shared_logic(
+  token_bonding: &mut TokenBondingV0,
+  curve: &CurveV0,
+  base_mint: &Mint,
+  target_mint: &Mint,
+  base_storage: &TokenAccount,
+  clock: &Clock,
+  args: &BuyV0Args,
+) -> Result<BuyAmount, ProgramError> {
+  // Not yet initialized since reserve_balance_from_bonding is a new feature
+  if !token_bonding.sell_frozen
+    && target_mint.supply > 0
+    && token_bonding.reserve_balance_from_bonding == 0
+  {
+    token_bonding.reserve_balance_from_bonding = base_storage.amount;
+    token_bonding.supply_from_bonding = target_mint.supply;
+  }
+
+  let base_amount_u64 = if token_bonding.ignore_external_reserve_changes {
+    token_bonding.reserve_balance_from_bonding
+  } else {
+    base_storage.amount
+  };
+  let base_amount = precise_supply_amt(base_amount_u64, base_mint);
+  let target_supply_u64 = if token_bonding.ignore_external_supply_changes {
+    token_bonding.supply_from_bonding
+  } else {
+    target_mint.supply
+  };
+  let target_supply = precise_supply_amt(target_supply_u64, target_mint);
+
+  msg!(
+    "Current reserves {} and supply {}",
+    base_storage.amount,
+    target_mint.supply
+  );
+
+  if token_bonding.go_live_unix_time > clock.unix_timestamp {
+    return Err(ErrorCode::NotLiveYet.into());
+  }
+
+  if token_bonding.buy_frozen {
+    return Err(ErrorCode::BuyFrozen.into());
+  }
+
+  if token_bonding.freeze_buy_unix_time.is_some()
+    && token_bonding.freeze_buy_unix_time.unwrap() < clock.unix_timestamp
+  {
+    return Err(ErrorCode::BuyFrozen.into());
+  }
+
+  let base_royalties_percent = token_bonding.buy_base_royalty_percentage;
+  let target_royalties_percent = token_bonding.buy_target_royalty_percentage;
+
+  let price: u64;
+  let total_amount: u64;
+  let base_royalties: u64;
+  let target_royalties: u64;
+  if args.buy_target_amount.is_some() {
+    let buy_target_amount = args.buy_target_amount.clone().unwrap();
+
+    total_amount = buy_target_amount.target_amount;
+    let amount_prec = precise_supply_amt(total_amount, target_mint);
+    let price_prec = curve
+      .definition
+      .price(
+        clock
+          .unix_timestamp
+          .checked_sub(token_bonding.go_live_unix_time)
+          .unwrap(),
+        &base_amount,
+        &target_supply,
+        &amount_prec,
+        false,
+      )
+      .or_arith_error()?;
+
+    price = to_mint_amount(&price_prec, base_mint, true);
+    base_royalties = get_percent(price, base_royalties_percent)?;
+    target_royalties = get_percent(total_amount, target_royalties_percent)?;
+
+    if price.checked_add(base_royalties).unwrap() > buy_target_amount.maximum_price {
+      msg!(
+        "Price {} too high for max price {}",
+        price + base_royalties,
+        buy_target_amount.maximum_price
+      );
+      return Err(ErrorCode::PriceTooHigh.into());
+    }
+  } else {
+    let buy_with_base = args.buy_with_base.clone().unwrap();
+    let total_price = buy_with_base.base_amount;
+    base_royalties = get_percent(total_price, base_royalties_percent)?;
+    let price_prec = precise_supply_amt(
+      total_price.checked_sub(base_royalties).or_arith_error()?,
+      base_mint,
+    );
+
+    let amount_prec = curve
+      .definition
+      .expected_target_amount(
+        clock
+          .unix_timestamp
+          .checked_sub(token_bonding.go_live_unix_time)
+          .unwrap(),
+        &base_amount,
+        &target_supply,
+        &price_prec,
+      )
+      .or_arith_error()?;
+
+    total_amount = to_mint_amount(&amount_prec, target_mint, false);
+
+    price = to_mint_amount(&price_prec, base_mint, false);
+
+    target_royalties = get_percent(total_amount, target_royalties_percent)?;
+
+    let target_amount_minus_royalties = total_amount.checked_sub(target_royalties).unwrap();
+    if target_amount_minus_royalties < buy_with_base.minimum_target_amount {
+      msg!(
+        "{} less than minimum tokens {}",
+        target_amount_minus_royalties,
+        buy_with_base.minimum_target_amount
+      );
+      return Err(ErrorCode::PriceTooHigh.into());
+    }
+  }
+
+  if token_bonding.mint_cap.is_some()
+    && target_mint.supply.checked_add(total_amount).unwrap() > token_bonding.mint_cap.unwrap()
+  {
+    msg!(
+      "Mint cap is {} {} {}",
+      token_bonding.mint_cap.unwrap(),
+      target_mint.supply,
+      total_amount
+    );
+    return Err(ErrorCode::PassedMintCap.into());
+  }
+
+  if token_bonding.purchase_cap.is_some() && total_amount > token_bonding.purchase_cap.unwrap() {
+    return Err(ErrorCode::OverPurchaseCap.into());
+  }
+
+  token_bonding.supply_from_bonding = token_bonding
+    .supply_from_bonding
+    .checked_add(total_amount)
+    .or_arith_error()?;
+
+  token_bonding.reserve_balance_from_bonding = token_bonding
+    .reserve_balance_from_bonding
+    .checked_add(price)
+    .or_arith_error()?;
+
+  Ok(BuyAmount {
+    price,
+    base_royalties,
+    target_royalties,
+    total_amount,
+  })
+}
+
+pub fn mint_to_dest<'info>(
+  token_bonding: &TokenBondingV0,
+  total_amount: u64,
+  target_royalties: u64,
+  token_program: &AccountInfo<'info>,
+  target_mint: &AccountInfo<'info>,
+  target_royalties_account: &AccountInfo<'info>,
+  target_mint_authority: &AccountInfo<'info>,
+  destination: &AccountInfo<'info>,
+) -> ProgramResult {
+  let mint_signer_seeds: &[&[&[u8]]] = &[&[
+    b"token-bonding",
+    target_mint.key.as_ref(),
+    &token_bonding.index.to_le_bytes(),
+    &[token_bonding.bump_seed],
+  ]];
+
+  if target_royalties > 0 {
+    msg!("Minting {} to target royalties", target_royalties);
+    token::mint_to(
+      CpiContext::new_with_signer(
+        token_program.clone(),
+        MintTo {
+          mint: target_mint.clone(),
+          to: target_royalties_account.clone(),
+          authority: target_mint_authority.clone(),
+        },
+        mint_signer_seeds,
+      ),
+      target_royalties,
+    )?;
+  }
+
+  msg!("Minting {} to destination", total_amount - target_royalties);
+  token::mint_to(
+    CpiContext::new_with_signer(
+      token_program.clone(),
+      MintTo {
+        mint: target_mint.clone(),
+        to: destination.clone(),
+        authority: target_mint_authority.clone(),
+      },
+      mint_signer_seeds,
+    ),
+    total_amount.checked_sub(target_royalties).unwrap(),
+  )?;
+
+  Ok(())
+}

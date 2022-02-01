@@ -1,7 +1,7 @@
 import { AccountNamespace, Idl, InstructionNamespace, Program, Provider, RpcNamespace } from "@project-serum/anchor";
 import { AllInstructions } from "@project-serum/anchor/dist/cjs/program/namespace/types";
 import { Wallet } from "@project-serum/anchor/dist/cjs/provider";
-import { PublicKey, Signer, TransactionInstruction } from "@solana/web3.js";
+import { PublicKey, Signer, TransactionInstruction, Commitment, Finality } from "@solana/web3.js";
 import { TypedAccountParser } from ".";
 import { BigInstructionResult, InstructionResult, sendInstructions, sendMultipleInstructions } from "./transaction";
 
@@ -44,7 +44,8 @@ export abstract class AnchorSdk<IDL extends Idl> {
   async sendInstructions(
     instructions: TransactionInstruction[],
     signers: Signer[],
-    payer?: PublicKey
+    payer?: PublicKey,
+    commitment?: Commitment
   ): Promise<string> {
     try {
       return await sendInstructions(
@@ -52,7 +53,8 @@ export abstract class AnchorSdk<IDL extends Idl> {
         this.provider,
         instructions,
         signers,
-        payer
+        payer,
+        commitment
       );
     } catch (e: any) {
       // If all compute was consumed, this can often mean that the bonding price moved too much, causing
@@ -64,15 +66,15 @@ export abstract class AnchorSdk<IDL extends Idl> {
     }
   }
 
-  async execute<Output>(command: Promise<InstructionResult<Output>>, payer: PublicKey = this.wallet.publicKey): Promise<Output> {
+  async execute<Output>(command: Promise<InstructionResult<Output>>, payer: PublicKey = this.wallet.publicKey, commitment?: Commitment): Promise<Output> {
     const { instructions, signers, output } = await command;
     if (instructions.length > 0) {
-      await this.sendInstructions(instructions, signers, payer);
+      await this.sendInstructions(instructions, signers, payer, commitment);
     }
     return output;
   }
 
-  async executeBig<Output>(command: Promise<BigInstructionResult<Output>>, payer: PublicKey = this.wallet.publicKey): Promise<Output> {
+  async executeBig<Output>(command: Promise<BigInstructionResult<Output>>, payer: PublicKey = this.wallet.publicKey, finality?: Finality): Promise<Output> {
     const { instructions, signers, output } = await command;
     if (instructions.length > 0) {
       await sendMultipleInstructions(
@@ -80,7 +82,8 @@ export abstract class AnchorSdk<IDL extends Idl> {
         this.provider,
         instructions,
         signers,
-        payer
+        payer,
+        finality
       );
     }
     return output;

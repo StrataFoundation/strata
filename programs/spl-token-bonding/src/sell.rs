@@ -1,0 +1,201 @@
+use anchor_lang::{
+  prelude::*,
+  solana_program::{program::invoke_signed, system_instruction},
+};
+use anchor_spl::token::{self, Burn, Mint, TokenAccount, Transfer};
+
+use crate::{
+  account::SellWrappedSolV0,
+  arg::{SellV0Args, SellWrappedSolV0Args},
+  curve::*,
+  error::ErrorCode,
+  state::{CurveV0, TokenBondingV0},
+  util::*,
+};
+
+pub fn sell_wrapped_sol(
+  accounts: &SellWrappedSolV0,
+  args: &SellWrappedSolV0Args,
+  seeds: Option<&[&[&[u8]]]>,
+) -> ProgramResult {
+  let amount = if args.all {
+    accounts.source.amount
+  } else {
+    args.amount
+  };
+
+  invoke_signed(
+    &system_instruction::transfer(
+      &accounts.sol_storage.key(),
+      &accounts.destination.key(),
+      amount,
+    ),
+    &[
+      accounts.sol_storage.to_account_info().clone(),
+      accounts.destination.to_account_info().clone(),
+      accounts.system_program.to_account_info().clone(),
+    ],
+    &[&[
+      "sol-storage".as_bytes(),
+      &[accounts.state.sol_storage_bump_seed],
+    ]],
+  )?;
+
+  let token_program = accounts.token_program.to_account_info().clone();
+  let command = Burn {
+    mint: accounts.wrapped_sol_mint.to_account_info().clone(),
+    to: accounts.source.to_account_info().clone(),
+    authority: accounts.owner.to_account_info().clone(),
+  };
+  let context = match seeds {
+    Some(seeds) => CpiContext::new_with_signer(token_program, command, seeds),
+    None => CpiContext::new(token_program, command),
+  };
+  token::burn(context, amount)?;
+
+  Ok(())
+}
+
+pub struct SellAmount {
+  pub reclaimed: u64,
+  pub base_royalties: u64,
+  pub target_royalties: u64,
+}
+
+pub fn sell_shared_logic(
+  token_bonding: &mut TokenBondingV0,
+  curve: &CurveV0,
+  base_mint: &Mint,
+  target_mint: &Mint,
+  base_storage: &TokenAccount,
+  clock: &Clock,
+  args: &SellV0Args,
+) -> Result<SellAmount, ProgramError> {
+  let amount = args.target_amount;
+  let base_amount_u64 = if token_bonding.ignore_external_reserve_changes {
+    token_bonding.reserve_balance_from_bonding
+  } else {
+    base_storage.amount
+  };
+  let base_amount = precise_supply_amt(base_amount_u64, base_mint);
+  let target_supply_u64 = if token_bonding.ignore_external_supply_changes {
+    token_bonding.supply_from_bonding
+  } else {
+    target_mint.supply
+  };
+  let target_supply = precise_supply_amt(target_supply_u64, target_mint);
+
+  msg!(
+    "Current reserves {} and supply {}",
+    base_storage.amount,
+    target_mint.supply
+  );
+
+  // Not yet initialized since reserve_balance_from_bonding is a new feature
+  if !token_bonding.sell_frozen
+    && target_mint.supply > 0
+    && token_bonding.reserve_balance_from_bonding == 0
+  {
+    token_bonding.reserve_balance_from_bonding = base_storage.amount;
+    token_bonding.supply_from_bonding = target_mint.supply;
+  }
+
+  if token_bonding.go_live_unix_time > clock.unix_timestamp {
+    return Err(ErrorCode::NotLiveYet.into());
+  }
+
+  if token_bonding.sell_frozen {
+    return Err(ErrorCode::SellDisabled.into());
+  }
+
+  let base_royalties_percent = token_bonding.sell_base_royalty_percentage;
+  let target_royalties_percent = token_bonding.sell_target_royalty_percentage;
+
+  let target_royalties = get_percent(amount, target_royalties_percent)?;
+  let amount_minus_royalties_prec = precise_supply_amt(
+    amount.checked_sub(target_royalties).or_arith_error()?,
+    target_mint,
+  );
+  let reclaimed_prec = curve
+    .definition
+    .price(
+      clock
+        .unix_timestamp
+        .checked_sub(token_bonding.go_live_unix_time)
+        .unwrap(),
+      &base_amount,
+      &target_supply,
+      &amount_minus_royalties_prec,
+      true,
+    )
+    .or_arith_error()?;
+  let reclaimed_with_royalties = to_mint_amount(&reclaimed_prec, base_mint, false);
+  let base_royalties = get_percent(reclaimed_with_royalties, base_royalties_percent)?;
+  let reclaimed = reclaimed_with_royalties
+    .checked_sub(base_royalties)
+    .or_arith_error()?;
+
+  token_bonding.supply_from_bonding = token_bonding
+    .supply_from_bonding
+    .checked_sub(amount)
+    .or_arith_error()?;
+  token_bonding.reserve_balance_from_bonding = token_bonding
+    .reserve_balance_from_bonding
+    .checked_sub(reclaimed)
+    .or_arith_error()?;
+
+  if reclaimed < args.minimum_price {
+    msg!(
+      "Err: Minimum price was {}, reclaimed was {}",
+      args.minimum_price,
+      reclaimed
+    );
+    return Err(ErrorCode::PriceTooLow.into());
+  }
+
+  Ok(SellAmount {
+    reclaimed,
+    base_royalties,
+    target_royalties,
+  })
+}
+
+pub fn burn_and_pay_sell_royalties<'info>(
+  amount: u64,
+  target_royalties: u64,
+  token_program: &AccountInfo<'info>,
+  target_mint: &AccountInfo<'info>,
+  target_royalties_account: &AccountInfo<'info>,
+  source: &AccountInfo<'info>,
+  source_authority: &AccountInfo<'info>,
+) -> ProgramResult {
+  msg!("Burning {}", amount);
+  token::burn(
+    CpiContext::new(
+      token_program.clone(),
+      Burn {
+        mint: target_mint.to_account_info().clone(),
+        to: source.clone(),
+        authority: source_authority.clone(),
+      },
+    ),
+    amount.checked_sub(target_royalties).unwrap(),
+  )?;
+
+  if target_royalties > 0 {
+    msg!("Paying out {} to target royalties", target_royalties);
+    token::transfer(
+      CpiContext::new(
+        token_program.clone(),
+        Transfer {
+          from: source.clone(),
+          to: target_royalties_account.to_account_info().clone(),
+          authority: source_authority.clone(),
+        },
+      ),
+      target_royalties,
+    )?;
+  }
+
+  Ok(())
+}

@@ -46,4 +46,7 @@ pub enum ErrorCode {
 
   #[msg("The provided curve is invalid")]
   InvalidCurve,
+
+  #[msg("An account was provided that did not have the correct mint")]
+  InvalidMint,
 }
