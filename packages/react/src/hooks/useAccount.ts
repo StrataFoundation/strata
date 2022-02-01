@@ -37,12 +37,21 @@ export function useAccount<T>(
     pubkey: PublicKey,
     data: AccountInfo<Buffer>
   ): ParsedAccountBase => {
-    const info = parser!(pubkey, data);
-    return {
-      pubkey,
-      account: data,
-      info,
-    };
+    try {
+      const info = parser!(pubkey, data);
+      return {
+        pubkey,
+        account: data,
+        info,
+      };
+    } catch (e: any) {
+      console.error("Error while parsing", e);
+      return {
+        pubkey,
+        account: data,
+        info: undefined
+      }
+    }
   };
 
   const id = typeof key === "string" ? key : key?.toBase58();
@@ -71,11 +80,20 @@ export function useAccount<T>(
         }
         disposeWatch = dispose;
         if (acc) {
-          setState({
-            loading: false,
-            info: (parser && parser(acc.pubkey, acc!.account)) as any,
-            account: acc.account,
-          });
+          try {
+            setState({
+              loading: false,
+              info: (parser && parser(acc.pubkey, acc!.account)) as any,
+              account: acc.account,
+            });
+          } catch (e: any) {
+            console.error("Error while parsing", e);
+            setState({
+              loading: false,
+              info: undefined,
+              account: acc.account
+            })
+          }
         } else {
           setState({ loading: false });
         }
@@ -90,11 +108,20 @@ export function useAccount<T>(
       if (event.id === id) {
         cache.search(id, parser ? parsedAccountBaseParser : undefined).then((acc) => {
           if (acc && acc.account != state.account) {
-            setState({
-              loading: false,
-              info: (parser && parser(acc.pubkey, acc!.account)) as any,
-              account: acc!.account,
-            });
+            try {
+              setState({
+                loading: false,
+                info: (parser && parser(acc.pubkey, acc!.account)) as any,
+                account: acc!.account,
+              });
+            } catch (e: any) {
+              console.error("Error while parsing", e);
+              setState({
+                loading: false,
+                info: undefined,
+                account: acc.account,
+              });
+            }
           }
         });
       }
