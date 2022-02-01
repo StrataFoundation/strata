@@ -266,7 +266,6 @@ pub struct UpdateTokenBondingV0<'info> {
   pub sell_target_royalties: UncheckedAccount<'info>,
 }
 
-#[deprecated]
 #[derive(Accounts)]
 pub struct BuyV0<'info> {
   #[account(
@@ -363,7 +362,6 @@ pub struct BuyNativeV0<'info> {
   pub system_program: Program<'info, System>,
 }
 
-#[deprecated]
 #[derive(Accounts)]
 pub struct SellV0<'info> {
   #[account(

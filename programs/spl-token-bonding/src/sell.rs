@@ -161,7 +161,7 @@ pub fn sell_shared_logic(
   })
 }
 
-pub fn burn_and_pay_sell_royalties<'info>(
+pub fn burn_and_pay_sell_royalties(
   amount: u64,
   target_royalties: u64,
   common: &SellCommonV0,

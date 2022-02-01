@@ -51,7 +51,7 @@ pub mod spl_token_bonding {
     ctx: Context<SellWrappedSolV0>,
     args: SellWrappedSolV0Args,
   ) -> ProgramResult {
-    sell_wrapped_sol(&ctx.accounts, &args, None)
+    sell_wrapped_sol(ctx.accounts, &args, None)
   }
 
   pub fn create_curve_v0(
@@ -266,7 +266,6 @@ pub mod spl_token_bonding {
     Ok(())
   }
 
-  #[deprecated]
   pub fn buy_v0(ctx: Context<BuyV0>, args: BuyV0Args) -> ProgramResult {
     if ctx.accounts.token_bonding.ignore_external_reserve_changes
       || ctx.accounts.token_bonding.ignore_external_supply_changes
@@ -465,8 +464,6 @@ pub mod spl_token_bonding {
     Ok(())
   }
 
-  #[deprecated]
-  #[allow(clippy::deprecated)]
   pub fn sell_v0(ctx: Context<SellV0>, args: SellV0Args) -> ProgramResult {
     if ctx.accounts.token_bonding.ignore_external_reserve_changes
       || ctx.accounts.token_bonding.ignore_external_supply_changes
@@ -670,7 +667,7 @@ pub mod spl_token_bonding {
         sol_storage: ctx.accounts.sol_storage.clone(),
         source: base_storage_account.clone(),
         owner: token_bonding.to_account_info(),
-        destination: destination,
+        destination,
         token_program: ctx.accounts.common.token_program.clone(),
         system_program: ctx.accounts.system_program.clone(),
       },
