@@ -59,4 +59,8 @@ pub struct TokenBondingV0 {
   // on the actual reserves.
   pub reserve_balance_from_bonding: u64,
   pub supply_from_bonding: u64,
+
+  /** Whether or not to ignore changes to base storage and target supply outside of the curve */
+  pub ignore_external_reserve_changes: bool,
+  pub ignore_external_supply_changes: bool,
 }

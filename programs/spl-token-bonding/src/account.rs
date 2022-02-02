@@ -77,7 +77,7 @@ pub struct BuyWrappedSolV0<'info> {
     has_one = sol_storage,
     has_one = wrapped_sol_mint
   )]
-  pub state: Account<'info, ProgramStateV0>,
+  pub state: Box<Account<'info, ProgramStateV0>>,
   #[account(mut, constraint = wrapped_sol_mint.mint_authority.unwrap() == mint_authority.key())]
   pub wrapped_sol_mint: Account<'info, Mint>,
   pub mint_authority: AccountInfo<'info>,
@@ -89,7 +89,7 @@ pub struct BuyWrappedSolV0<'info> {
     mut,
     constraint = destination.mint == wrapped_sol_mint.key()
   )]
-  pub destination: Account<'info, TokenAccount>,
+  pub destination: Box<Account<'info, TokenAccount>>,
   pub token_program: Program<'info, Token>,
   pub system_program: Program<'info, System>,
 }
@@ -101,7 +101,7 @@ pub struct SellWrappedSolV0<'info> {
     has_one = sol_storage,
     has_one = wrapped_sol_mint
   )]
-  pub state: Account<'info, ProgramStateV0>,
+  pub state: Box<Account<'info, ProgramStateV0>>,
   #[account(mut)]
   pub wrapped_sol_mint: Account<'info, Mint>,
   #[account(mut)]
@@ -111,8 +111,9 @@ pub struct SellWrappedSolV0<'info> {
     has_one = owner,
     constraint = source.mint == wrapped_sol_mint.key()
   )]
-  pub source: Account<'info, TokenAccount>,
-  pub owner: Signer<'info>,
+  pub source: Box<Account<'info, TokenAccount>>,
+  #[account(signer)]
+  pub owner: AccountInfo<'info>,
   #[account(mut)]
   pub destination: AccountInfo<'info>,
   pub token_program: Program<'info, Token>,
@@ -158,28 +159,14 @@ pub struct InitializeTokenBondingV0<'info> {
     constraint = base_storage.mint == base_mint.key(),
     constraint = base_storage.delegate.is_none(),
     constraint = base_storage.close_authority.is_none(),
+    constraint = base_storage.owner == token_bonding.key()
   )]
   pub base_storage: Box<Account<'info, TokenAccount>>,
 
-  #[account(
-    constraint = buy_base_royalties.mint == base_mint.key(),
-  )]
-  pub buy_base_royalties: Box<Account<'info, TokenAccount>>,
-
-  #[account(
-    constraint = buy_target_royalties.mint == target_mint.key()
-  )]
-  pub buy_target_royalties: Box<Account<'info, TokenAccount>>,
-
-  #[account(
-    constraint = sell_base_royalties.mint == base_mint.key()
-  )]
-  pub sell_base_royalties: Box<Account<'info, TokenAccount>>,
-
-  #[account(
-    constraint = sell_target_royalties.mint == target_mint.key()
-  )] // Will init for you, since target mint doesn't exist yet.
-  pub sell_target_royalties: Box<Account<'info, TokenAccount>>,
+  pub buy_base_royalties: UncheckedAccount<'info>,
+  pub buy_target_royalties: UncheckedAccount<'info>,
+  pub sell_base_royalties: UncheckedAccount<'info>,
+  pub sell_target_royalties: UncheckedAccount<'info>,
 
   pub token_program: Program<'info, Token>,
   pub system_program: Program<'info, System>,
@@ -200,19 +187,65 @@ pub struct CloseTokenBondingV0<'info> {
   )]
   pub token_bonding: Account<'info, TokenBondingV0>,
   #[account(
-    signer,
-    // Bonding can be closed by the authority if 
-    //   1. Target supply is empty or
-    //   2. Sell is frozen
-    constraint = token_bonding.sell_frozen || target_mint.supply == 0
+    // Bonding can be closed by the authority if reserves are empty
+    constraint = base_storage.amount == 0
   )]
-  pub general_authority: AccountInfo<'info>,
+  pub general_authority: Signer<'info>,
 
   #[account(mut)]
   pub target_mint: Box<Account<'info, Mint>>,
   #[account(mut)]
   pub base_storage: Box<Account<'info, TokenAccount>>,
   pub token_program: Program<'info, Token>,
+}
+
+#[derive(Accounts)]
+pub struct TransferReservesV0Common<'info> {
+  #[account(
+    mut,
+    constraint = token_bonding.reserve_authority.ok_or::<ProgramError>(ErrorCode::NoAuthority.into())? == reserve_authority.key(),
+    has_one = base_mint,
+    has_one = base_storage
+  )]
+  pub token_bonding: Account<'info, TokenBondingV0>,
+  pub reserve_authority: Signer<'info>,
+  pub base_mint: Box<Account<'info, Mint>>,
+  #[account(mut)]
+  pub base_storage: Box<Account<'info, TokenAccount>>,
+  pub token_program: Program<'info, Token>,
+}
+
+#[derive(Accounts)]
+#[instruction(args: TransferReservesV0Args)]
+pub struct TransferReservesV0<'info> {
+  pub common: TransferReservesV0Common<'info>,
+  #[account(mut)]
+  pub destination: Box<Account<'info, TokenAccount>>,
+}
+
+#[derive(Accounts)]
+#[instruction(args: TransferReservesV0Args)]
+pub struct TransferReservesNativeV0<'info> {
+  pub common: TransferReservesV0Common<'info>,
+  #[account(mut)]
+  pub destination: UncheckedAccount<'info>,
+
+  #[account(
+    has_one = sol_storage,
+    has_one = wrapped_sol_mint
+  )]
+  pub state: Box<Account<'info, ProgramStateV0>>,
+  #[account(
+    mut, 
+    constraint = wrapped_sol_mint.mint_authority.unwrap() == mint_authority.key(),
+    constraint = wrapped_sol_mint.key() == common.base_mint.key()
+  )]
+  pub wrapped_sol_mint: Account<'info, Mint>,
+  pub mint_authority: AccountInfo<'info>,
+  #[account(mut)]
+  pub sol_storage: AccountInfo<'info>,
+
+  pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
@@ -229,25 +262,11 @@ pub struct UpdateTokenBondingV0<'info> {
   pub general_authority: AccountInfo<'info>,
   pub base_mint: Box<Account<'info, Mint>>,
   pub target_mint: Box<Account<'info, Mint>>,
-  #[account(
-    constraint = buy_base_royalties.mint == base_mint.key()
-  )]
-  pub buy_base_royalties: Box<Account<'info, TokenAccount>>,
 
-  #[account(
-    constraint = buy_target_royalties.mint == target_mint.key()
-  )] // Will init for you, since target mint doesn't exist yet.
-  pub buy_target_royalties: Box<Account<'info, TokenAccount>>,
-
-  #[account(
-    constraint = sell_base_royalties.mint == base_mint.key()
-  )]
-  pub sell_base_royalties: Box<Account<'info, TokenAccount>>,
-
-  #[account(
-    constraint = sell_target_royalties.mint == target_mint.key()
-  )] // Will init for you, since target mint doesn't exist yet.
-  pub sell_target_royalties: Box<Account<'info, TokenAccount>>,
+  pub buy_base_royalties: UncheckedAccount<'info>,
+  pub buy_target_royalties: UncheckedAccount<'info>,
+  pub sell_base_royalties: UncheckedAccount<'info>,
+  pub sell_target_royalties: UncheckedAccount<'info>,
 }
 
 #[derive(Accounts)]
@@ -269,10 +288,10 @@ pub struct BuyV0<'info> {
   #[account(mut)]
   pub base_storage: Box<Account<'info, TokenAccount>>,
   #[account(mut)]
-  // Token account could have been closed. Royalties are not sent if the account has been closed, but we also don't want to fail to parse here
+  // Token account could have been closed. This is fine if royalties are 0
   pub buy_base_royalties: AccountInfo<'info>,
   #[account(mut)]
-  // Token account could have been closed. Royalties are not sent if the account has been closed, but we also don't want to fail to parse here
+  // Token account could have been closed. This is fine if royalties are 0
   pub buy_target_royalties: AccountInfo<'info>,
   #[account(mut)]
   pub source: Box<Account<'info, TokenAccount>>,
@@ -281,6 +300,69 @@ pub struct BuyV0<'info> {
   pub destination: Box<Account<'info, TokenAccount>>,
   pub token_program: Program<'info, Token>,
   pub clock: Sysvar<'info, Clock>,
+}
+
+#[derive(Accounts)]
+pub struct BuyV1<'info> {
+  pub common: BuyCommonV0<'info>,
+  // This endpoint is only for non wrapped sol
+  #[account(
+    constraint = state.wrapped_sol_mint != common.base_mint.key()
+  )]
+  pub state: Box<Account<'info, ProgramStateV0>>,
+  #[account(mut)]
+  pub source: Box<Account<'info, TokenAccount>>,
+  pub source_authority: Signer<'info>,
+}
+
+#[derive(Accounts)]
+pub struct BuyCommonV0<'info> {
+  #[account(
+    mut,
+    has_one = base_mint,
+    has_one = target_mint,
+    has_one = base_storage,
+    has_one = buy_base_royalties,
+    has_one = buy_target_royalties,
+    has_one = curve
+  )]
+  pub token_bonding: Box<Account<'info, TokenBondingV0>>,
+  pub curve: Box<Account<'info, CurveV0>>,
+  pub base_mint: Box<Account<'info, Mint>>,
+  #[account(mut)]
+  pub target_mint: Box<Account<'info, Mint>>,
+  #[account(mut)]
+  pub base_storage: Box<Account<'info, TokenAccount>>,
+  #[account(mut)]
+  // Token account could have been closed. This is fine if royalties are 0
+  pub buy_base_royalties: AccountInfo<'info>,
+  #[account(mut)]
+  pub destination: Box<Account<'info, TokenAccount>>,
+  #[account(mut)]
+  // Token account could have been closed. This is fine if royalties are 0
+  pub buy_target_royalties: AccountInfo<'info>,
+  pub token_program: Program<'info, Token>,
+  pub clock: Sysvar<'info, Clock>,
+}
+
+#[derive(Accounts)]
+pub struct BuyNativeV0<'info> {
+  pub common: BuyCommonV0<'info>,
+  #[account(mut)]
+  pub source: Signer<'info>,
+
+  #[account(
+    has_one = sol_storage,
+    has_one = wrapped_sol_mint,
+    constraint = common.base_mint.key() == state.wrapped_sol_mint
+  )]
+  pub state: Box<Account<'info, ProgramStateV0>>,
+  #[account(mut, constraint = wrapped_sol_mint.mint_authority.unwrap() == mint_authority.key())]
+  pub wrapped_sol_mint: Account<'info, Mint>,
+  pub mint_authority: AccountInfo<'info>,
+  #[account(mut)]
+  pub sol_storage: AccountInfo<'info>,
+  pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
@@ -318,4 +400,69 @@ pub struct SellV0<'info> {
 
   pub token_program: Program<'info, Token>,
   pub clock: Sysvar<'info, Clock>,
+}
+
+#[derive(Accounts)]
+pub struct SellV1<'info> {
+  pub common: SellCommonV0<'info>,
+
+  #[account(
+    constraint = state.wrapped_sol_mint != common.base_mint.key()
+  )]
+  pub state: Box<Account<'info, ProgramStateV0>>,
+
+  #[account(mut)]
+  pub destination: Box<Account<'info, TokenAccount>>,
+}
+
+#[derive(Accounts)]
+pub struct SellCommonV0<'info> {
+  #[account(
+    mut,
+    has_one = base_mint,
+    has_one = target_mint,
+    has_one = base_storage,
+    has_one = curve,
+    has_one = sell_base_royalties,
+    has_one = sell_target_royalties,
+  )]
+  pub token_bonding: Box<Account<'info, TokenBondingV0>>,
+  pub curve: Box<Account<'info, CurveV0>>,
+  pub base_mint: Box<Account<'info, Mint>>,
+  #[account(mut)]
+  pub target_mint: Box<Account<'info, Mint>>,
+  #[account(mut)]
+  pub base_storage: Box<Account<'info, TokenAccount>>,
+  #[account(mut)]
+  // Token account could have been closed. Royalties are not sent if the account has been closed, but we also don't want to fail to parse here
+  pub sell_base_royalties: AccountInfo<'info>,
+  #[account(mut)]
+  pub source: Box<Account<'info, TokenAccount>>,
+  #[account(signer)]
+  pub source_authority: AccountInfo<'info>,
+  #[account(mut)]
+  // Token account could have been closed. Royalties are not sent if the account has been closed, but we also don't want to fail to parse here
+  pub sell_target_royalties: AccountInfo<'info>,
+  pub token_program: Program<'info, Token>,
+  pub clock: Sysvar<'info, Clock>,
+}
+
+#[derive(Accounts)]
+pub struct SellNativeV0<'info> {
+  pub common: SellCommonV0<'info>,
+
+  #[account(mut)]
+  pub destination: AccountInfo<'info>,
+
+  #[account(
+    has_one = sol_storage,
+    has_one = wrapped_sol_mint
+  )]
+  pub state: Box<Account<'info, ProgramStateV0>>,
+  #[account(mut, constraint = wrapped_sol_mint.mint_authority.unwrap() == mint_authority.key())]
+  pub wrapped_sol_mint: Account<'info, Mint>,
+  pub mint_authority: AccountInfo<'info>,
+  #[account(mut)]
+  pub sol_storage: AccountInfo<'info>,
+  pub system_program: Program<'info, System>,
 }

@@ -1,12 +1,11 @@
-
+import {
+  CreateMetadataV2, DataV2, Metadata
+} from "@metaplex-foundation/mpl-token-metadata";
 import * as anchor from "@project-serum/anchor";
 import { IdlTypes, Program, Provider } from "@project-serum/anchor";
 import {
-  AccountInfo,
   AccountLayout,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  MintInfo,
-  NATIVE_MINT,
+  ASSOCIATED_TOKEN_PROGRAM_ID, NATIVE_MINT,
   Token,
   TOKEN_PROGRAM_ID,
   u64,
@@ -21,11 +20,6 @@ import {
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
 } from "@solana/web3.js";
-import {
-  DataV2,
-  CreateMetadataV2,
-  Metadata,
-} from "@metaplex-foundation/mpl-token-metadata";
 import {
   AnchorSdk,
   createMintInstructions,
@@ -278,17 +272,6 @@ export interface ICreateTokenBondingArgs {
    * **Default:** null. You most likely don't need this permission, if it is being set you should do so explicitly.
    */
   curveAuthority?: PublicKey | null;
-  /**
-   * The reserves of the bonding curve. When {@link SplTokenBonding.buy} is called, `baseMint` tokens are stored here.
-   * When {@link SplTokenBonding.sell} is called, `baseMint` tokens are returned to the callee from this account
-   *
-   * Optionally, this account can have an authority _not_ owned by the spl-token-bonding program. In this case, a bonding curve
-   * is created with {@link SplTokenBonding.sell} disabled. This allows the bonding curve contract to be used like a
-   * marketplace to sell a new token
-   *
-   * **Default:** creates this account for you, owned by the token bonding program
-   */
-  baseStorage?: PublicKey;
   /** Number from 0 to 100 */
   buyBaseRoyaltyPercentage: number;
   /** Number from 0 to 100 */
@@ -307,6 +290,24 @@ export interface ICreateTokenBondingArgs {
   freezeBuyDate?: Date;
   /** Should this bonding curve be frozen initially? It can be unfrozen using {@link SplTokenBonding.updateTokenBonding}. **Default:** false */
   buyFrozen?: boolean;
+  /** Should this bonding curve have sell functionality? **Default:** false */
+  sellFrozen?: boolean;
+  /** 
+   * 
+   * Should the bonding curve's price change based on funds entering or leaving the reserves account outside of buy/sell
+   * 
+   * Setting this to `false` means that sending tokens into the reserves improves value for all holders,
+   * withdrawing money from reserves (via reserve authority) detracts value from holders.
+   * 
+   */
+  ignoreExternalReserveChanges?: boolean;
+  /** 
+   * Should the bonding curve's price change based on external burning of target tokens?
+   * 
+   * Setting this to `false` enables what is called a "sponsored burn". With a sponsored burn,
+   * burning tokens increases the value for all holders
+   */
+  ignoreExternalSupplyChanges?: boolean;
   /**
    * Multiple bonding curves can exist for a given target mint.
    * 0 is reserved for the one where the program owns mint authority and can mint new tokens. All other curves may exist as
@@ -395,6 +396,25 @@ export interface ISellArgs {
   slippage: number /* Decimal number. max price will be (1 + slippage) * price_for_desired_target_amount */;
 }
 
+export interface ICloseArgs {
+  tokenBonding: PublicKey;
+  /** The payer to run this transaction. **Default:** provider.wallet */
+  payer?: PublicKey;
+  /** Account to receive the rent sol. **Default**: provide.wallet */
+  refund?: PublicKey;
+}
+
+export interface ITransferReservesArgs {
+  /** The payer to run this transaction, defaults to provider.wallet */
+  payer?: PublicKey;
+  tokenBonding: PublicKey;
+  amount: BN | number;
+  /**
+   * The destination for the reserves **Default:** ata of wallet
+   */
+  destination?: PublicKey;
+}
+
 export interface IBuyBondingWrappedSolArgs {
   amount:
     | BN
@@ -422,6 +442,10 @@ export interface ITokenBonding extends TokenBondingV0 {
   publicKey: PublicKey;
 }
 
+export interface IProgramState extends ProgramStateV0 {
+  publicKey: PublicKey;
+}
+
 /**
  * Unified curve interface wrapping the raw CurveV0
  */
@@ -430,7 +454,7 @@ export interface ICurve extends CurveV0 {
 }
 
 export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
-  state: ProgramStateV0 | undefined;
+  state: IProgramState | undefined;
 
   static ID = new PublicKey("TBondmkCYxaPCKG4CHYfVTcwQ8on31xnJrPzk8F8WsS");
 
@@ -696,6 +720,15 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     );
   }
 
+  static async wrappedSolMintAuthorityKey(
+    programId: PublicKey = SplTokenBonding.ID
+  ): Promise<[PublicKey, number]> {
+    return PublicKey.findProgramAddress(
+      [Buffer.from("wrapped-sol-authority", "utf-8")],
+      programId
+    )
+  }
+
   /**
    * Create a bonding curve
    *
@@ -710,7 +743,6 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     curve,
     baseMint,
     targetMint,
-    baseStorage,
     buyBaseRoyalties,
     buyBaseRoyaltiesOwner = this.wallet.publicKey,
     buyTargetRoyalties,
@@ -730,6 +762,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     targetMintDecimals,
     targetMintKeypair = Keypair.generate(),
     buyFrozen = false,
+    ignoreExternalReserveChanges = false,
+    ignoreExternalSupplyChanges = false,
+    sellFrozen = false,
     index,
   }: ICreateTokenBondingArgs): Promise<
     InstructionResult<ICreateTokenBondingOutput>
@@ -747,7 +782,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     }
     const provider = this.provider;
     const state = (await this.getState())!;
-    if (baseMint.equals(NATIVE_MINT)) {
+    let isNative = baseMint.equals(NATIVE_MINT) || baseMint.equals(state.wrappedSolMint);
+    if (isNative) {
       baseMint = state.wrappedSolMint;
     }
 
@@ -795,30 +831,32 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       );
     }
 
-    // This is a buy/sell bonding curve. Create the program owned base storage account
-    if (!baseStorage) {
-      const baseStorageKeypair = anchor.web3.Keypair.generate();
-      signers.push(baseStorageKeypair);
-      baseStorage = baseStorageKeypair.publicKey;
+    const baseStorageKeypair = anchor.web3.Keypair.generate();
+    signers.push(baseStorageKeypair);
+    const baseStorage = baseStorageKeypair.publicKey;
 
-      instructions.push(
-        SystemProgram.createAccount({
-          fromPubkey: payer,
-          newAccountPubkey: baseStorage!,
-          space: AccountLayout.span,
-          programId: TOKEN_PROGRAM_ID,
-          lamports:
-            await this.provider.connection.getMinimumBalanceForRentExemption(
-              AccountLayout.span
-            ),
-        }),
-        Token.createInitAccountInstruction(
-          TOKEN_PROGRAM_ID,
-          baseMint,
-          baseStorage,
-          tokenBonding
-        )
-      );
+    instructions.push(
+      SystemProgram.createAccount({
+        fromPubkey: payer,
+        newAccountPubkey: baseStorage!,
+        space: AccountLayout.span,
+        programId: TOKEN_PROGRAM_ID,
+        lamports:
+          await this.provider.connection.getMinimumBalanceForRentExemption(
+            AccountLayout.span
+          ),
+      }),
+      Token.createInitAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        baseMint,
+        baseStorage,
+        tokenBonding
+      )
+    );
+
+    if (isNative) {
+      buyBaseRoyalties = buyBaseRoyalties || buyBaseRoyaltiesOwner;
+      sellBaseRoyalties = sellBaseRoyalties || sellBaseRoyaltiesOwner;
     }
 
     let createdAccts: Set<string> = new Set();
@@ -956,6 +994,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           reserveAuthority,
           bumpSeed,
           buyFrozen,
+          ignoreExternalReserveChanges,
+          ignoreExternalSupplyChanges,
+          sellFrozen
         },
         {
           accounts: {
@@ -963,7 +1004,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
             curve,
             tokenBonding,
             baseMint,
-            targetMint: targetMint,
+            targetMint,
             baseStorage,
             buyBaseRoyalties,
             buyTargetRoyalties,
@@ -1120,12 +1161,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         this.programId
       )
     )[0];
-    const mintAuthority = (
-      await PublicKey.findProgramAddress(
-        [Buffer.from("wrapped-sol-authority", "utf-8")],
-        this.programId
-      )
-    )[0];
+    const mintAuthority = (await SplTokenBonding.wrappedSolMintAuthorityKey(this.programId))[0]
     const mint = await getMintInfo(this.provider, state.wrappedSolMint);
 
     let usedAta = false;
@@ -1282,68 +1318,6 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
   }
 
   /**
-   * Create a temporary account with `amount` twSOL, the token bonding wrapped sol mint.
-   *
-   * @param param0
-   * @returns
-   */
-  async createTemporaryWSolAccount({
-    payer,
-    owner,
-    amount,
-  }: {
-    owner: PublicKey;
-    payer: PublicKey;
-    amount: number;
-  }): Promise<{
-    signer: Keypair;
-    firstInstructions: TransactionInstruction[];
-    lastInstructions: TransactionInstruction[];
-  }> {
-    const state = (await this.getState())!;
-    const mint = await getMintInfo(this.provider, state.wrappedSolMint);
-
-    // Create a new account
-    const newAccount = anchor.web3.Keypair.generate();
-    const balanceNeeded = await Token.getMinBalanceRentForExemptAccount(
-      this.provider.connection
-    );
-    return {
-      firstInstructions: [
-        SystemProgram.createAccount({
-          fromPubkey: payer,
-          newAccountPubkey: newAccount.publicKey,
-          lamports: balanceNeeded,
-          space: AccountLayout.span,
-          programId: TOKEN_PROGRAM_ID,
-        }),
-        Token.createInitAccountInstruction(
-          TOKEN_PROGRAM_ID,
-          state.wrappedSolMint,
-          newAccount.publicKey,
-          owner
-        ),
-        ...(
-          await this.buyBondingWrappedSolInstructions({
-            destination: newAccount.publicKey,
-            amount: toBN(amount, mint).add(new BN(1)), // In case of rounding errors,
-            source: owner,
-          })
-        ).instructions,
-      ],
-      lastInstructions: (
-        await this.sellBondingWrappedSolInstructions({
-          source: newAccount.publicKey,
-          owner,
-          all: true,
-          amount: toBN(amount, mint),
-        })
-      ).instructions,
-      signer: newAccount,
-    };
-  }
-
-  /**
    * Issue a command to buy `targetMint` tokens with `baseMint` tokens.
    *
    * @param param0
@@ -1362,7 +1336,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
   }: IBuyArgs): Promise<InstructionResult<null>> {
     const state = (await this.getState())!;
     const tokenBondingAcct = (await this.getTokenBonding(tokenBonding))!;
+    const isNative = tokenBondingAcct.baseMint.equals(NATIVE_MINT) || tokenBondingAcct.baseMint.equals(state.wrappedSolMint);
 
+    // @ts-ignore
     const targetMint = await getMintInfo(
       this.provider,
       tokenBondingAcct.targetMint
@@ -1460,23 +1436,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       };
     }
 
-    let lastInstructions = [];
-
     if (!source) {
-      if (tokenBondingAcct.baseMint.equals(state.wrappedSolMint)) {
-        const {
-          signer,
-          firstInstructions,
-          lastInstructions: lastInstrs,
-        } = await this.createTemporaryWSolAccount({
-          payer: payer,
-          owner: sourceAuthority,
-          amount: maxPrice!,
-        });
-        source = signer.publicKey;
-        signers.push(signer);
-        instructions.push(...firstInstructions);
-        lastInstructions.push(...lastInstrs);
+      if (isNative) {
+        source = sourceAuthority
       } else {
         source = await Token.getAssociatedTokenAddress(
           ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -1498,30 +1460,46 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       buyWithBase,
     };
 
-    const accounts = {
-      accounts: {
-        tokenBonding,
-        // @ts-ignore
-        curve: tokenBondingAcct.curve,
-        baseMint: tokenBondingAcct.baseMint,
-        targetMint: tokenBondingAcct.targetMint,
-        baseStorage: tokenBondingAcct.baseStorage,
-        buyBaseRoyalties: tokenBondingAcct.buyBaseRoyalties,
-        buyTargetRoyalties: tokenBondingAcct.buyTargetRoyalties,
-        source,
-        sourceAuthority,
-        destination,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        clock: SYSVAR_CLOCK_PUBKEY,
-      },
+    const common = {
+      tokenBonding,
+      // @ts-ignore
+      curve: tokenBondingAcct.curve,
+      baseMint: tokenBondingAcct.baseMint,
+      targetMint: tokenBondingAcct.targetMint,
+      baseStorage: tokenBondingAcct.baseStorage,
+      buyBaseRoyalties: tokenBondingAcct.buyBaseRoyalties,
+      buyTargetRoyalties: tokenBondingAcct.buyTargetRoyalties,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      clock: SYSVAR_CLOCK_PUBKEY,
+      destination
     };
 
-    instructions.push(await this.instruction.buyV0(args, accounts));
-    instructions.push(...lastInstructions);
+    if (isNative) {
+      instructions.push(await this.instruction.buyNativeV0(args, { 
+        accounts: {
+          common,
+          state: state.publicKey,
+          wrappedSolMint: state.wrappedSolMint,
+          mintAuthority: (await SplTokenBonding.wrappedSolMintAuthorityKey(this.programId))[0],
+          solStorage: state.solStorage,
+          systemProgram: SystemProgram.programId,
+          source
+        }
+      }));
+    } else {
+      instructions.push(await this.instruction.buyV1(args, {
+        accounts: {
+          common,
+          state: state.publicKey,
+          source,
+          sourceAuthority,
+        } 
+      }));
+    }
 
     return {
       output: null,
-      signers,
+      signers: [],
       instructions,
     };
   }
@@ -1714,7 +1692,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     };
   }
 
-  async getState(): Promise<ProgramStateV0 | null> {
+  async getState(): Promise<IProgramState & { publicKey: PublicKey } | null> {
     if (this.state) {
       return this.state;
     }
@@ -1725,7 +1703,17 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         this.programId
       )
     )[0];
-    return this.account.programStateV0.fetchNullable(stateAddress);
+
+    const stateRaw = await this.account.programStateV0.fetchNullable(stateAddress);
+    const state: IProgramState | null = stateRaw ? {
+      ...stateRaw,
+      publicKey: stateAddress
+    }: null;
+    if (state) {
+      this.state = state;
+    }
+
+    return state;
   }
 
   /**
@@ -1750,6 +1738,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       throw new Error("Sell is frozen on this bonding curve");
     }
 
+    const isNative = tokenBondingAcct.baseMint.equals(NATIVE_MINT) || tokenBondingAcct.baseMint.equals(state.wrappedSolMint);
+
     // @ts-ignore
     const targetMint = await getMintInfo(
       this.provider,
@@ -1772,7 +1762,6 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     );
 
     const instructions = [];
-    const signers = [];
     if (!source) {
       source = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -1786,22 +1775,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       }
     }
 
-    const lastInstructions = [];
     if (!destination) {
-      if (tokenBondingAcct.baseMint.equals(state.wrappedSolMint)) {
-        const {
-          signer,
-          firstInstructions,
-          lastInstructions: lastInstrs,
-        } = await this.createTemporaryWSolAccount({
-          payer,
-          owner: sourceAuthority,
-          amount: 0,
-        });
-        destination = signer.publicKey;
-        signers.push(signer);
-        instructions.push(...firstInstructions);
-        lastInstructions.push(...lastInstrs);
+      if (isNative) {
+        destination = sourceAuthority
       } else {
         destination = await Token.getAssociatedTokenAddress(
           ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -1809,7 +1785,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           tokenBondingAcct.baseMint,
           sourceAuthority
         );
-
+  
         if (!(await this.accountExists(destination))) {
           console.log("Creating base account");
           instructions.push(
@@ -1843,30 +1819,45 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       ),
     };
 
-    const accounts = {
-      accounts: {
-        tokenBonding,
-        // @ts-ignore
-        curve: tokenBondingAcct.curve,
-        baseMint: tokenBondingAcct.baseMint,
-        targetMint: tokenBondingAcct.targetMint,
-        baseStorage: tokenBondingAcct.baseStorage,
-        sellBaseRoyalties: tokenBondingAcct.sellBaseRoyalties,
-        sellTargetRoyalties: tokenBondingAcct.sellTargetRoyalties,
-        source,
-        sourceAuthority,
-        destination,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        clock: SYSVAR_CLOCK_PUBKEY,
-      },
+    const common = {
+      tokenBonding,
+      // @ts-ignore
+      curve: tokenBondingAcct.curve,
+      baseMint: tokenBondingAcct.baseMint,
+      targetMint: tokenBondingAcct.targetMint,
+      baseStorage: tokenBondingAcct.baseStorage,
+      sellBaseRoyalties: tokenBondingAcct.sellBaseRoyalties,
+      sellTargetRoyalties: tokenBondingAcct.sellTargetRoyalties,
+      source,
+      sourceAuthority,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      clock: SYSVAR_CLOCK_PUBKEY,
     };
-
-    instructions.push(await this.instruction.sellV0(args, accounts));
-    instructions.push(...lastInstructions);
+    if (isNative) {
+      instructions.push(await this.instruction.sellNativeV0(args, { 
+        accounts: {
+          common,
+          destination,
+          state: state.publicKey,
+          wrappedSolMint: state.wrappedSolMint,
+          mintAuthority: (await SplTokenBonding.wrappedSolMintAuthorityKey(this.programId))[0],
+          solStorage: state.solStorage,
+          systemProgram: SystemProgram.programId
+        }
+      }))
+    } else {
+      instructions.push(await this.instruction.sellV1(args, { 
+        accounts: {
+          common,
+          state: state.publicKey,
+          destination
+        }
+      }));
+    }
 
     return {
       output: null,
-      signers,
+      signers: [],
       instructions,
     };
   }
@@ -1877,6 +1868,143 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
    */
   async sell(args: ISellArgs): Promise<void> {
     await this.execute(this.sellInstructions(args), args.payer);
+  }
+
+
+  /**
+   * Instructions to close the bonding curve
+   *
+   * @param param0
+   * @returns
+   */
+  async closeInstructions({
+    tokenBonding,
+    refund = this.wallet.publicKey
+  }: ICloseArgs): Promise<InstructionResult<null>> {
+    const tokenBondingAcct = (await this.getTokenBonding(tokenBonding))!;
+
+    if (!tokenBondingAcct.generalAuthority) {
+      throw new Error("Cannot close a bonding account with no general authority");
+    }
+
+    return {
+      output: null,
+      signers: [],
+      instructions: [
+        await this.instruction.closeTokenBondingV0({
+          accounts: {
+            refund,
+            tokenBonding,
+            generalAuthority: (tokenBondingAcct.generalAuthority!) as PublicKey,
+            targetMint: tokenBondingAcct.targetMint,
+            baseStorage: tokenBondingAcct.baseStorage,
+            tokenProgram: TOKEN_PROGRAM_ID
+          }
+        })
+      ],
+    };
+  }
+
+  /**
+   * Runs {@link closeInstructions}
+   * @param args
+   */
+  async close(args: ICloseArgs): Promise<void> {
+    await this.execute(this.closeInstructions(args), args.payer);
+  }
+
+  /**
+   * Instructions to transfer the reserves of the bonding curve
+   *
+   * @param param0
+   * @returns
+   */
+  async transferReservesInstructions({
+    tokenBonding,
+    destination,
+    amount,
+    payer = this.wallet.publicKey
+  }: ITransferReservesArgs): Promise<InstructionResult<null>> {
+    const tokenBondingAcct = (await this.getTokenBonding(tokenBonding))!;
+    const state = (await this.getState())!
+    const isNative = tokenBondingAcct.baseMint.equals(NATIVE_MINT) || tokenBondingAcct.baseMint.equals(state.wrappedSolMint);
+    const baseMint = await getMintInfo(
+      this.provider,
+      tokenBondingAcct.baseMint
+    );
+    const instructions = [];
+
+    if (!tokenBondingAcct.reserveAuthority) {
+      throw new Error("Cannot transfer reserves on a bonding account with no reserve authority");
+    }
+
+    if (!destination) {
+      if (isNative) {
+        destination = this.wallet.publicKey 
+      } else {
+        destination = await Token.getAssociatedTokenAddress(
+          ASSOCIATED_TOKEN_PROGRAM_ID,
+          TOKEN_PROGRAM_ID,
+          tokenBondingAcct.baseMint,
+          this.wallet.publicKey
+        );
+
+        if (!await this.accountExists(destination)) {
+          instructions.push(Token.createAssociatedTokenAccountInstruction(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            tokenBondingAcct.baseMint,
+            destination,
+            this.wallet.publicKey,
+            payer
+          ))
+        }
+      }
+    }
+    
+    const common = {
+      tokenBonding,
+      reserveAuthority: (tokenBondingAcct.reserveAuthority!) as PublicKey,
+      baseMint: tokenBondingAcct.baseMint,
+      baseStorage: tokenBondingAcct.baseStorage,
+      tokenProgram: TOKEN_PROGRAM_ID
+    };
+    const args = {
+      amount: toBN(amount, baseMint)
+    }
+    if (isNative) {
+      instructions.push(await this.instruction.transferReservesNativeV0(args, {
+        accounts: {
+          common,
+          destination,
+          state: state.publicKey,
+          wrappedSolMint: state.wrappedSolMint,
+          mintAuthority: (await SplTokenBonding.wrappedSolMintAuthorityKey(this.programId))[0],
+          solStorage: state.solStorage,
+          systemProgram: SystemProgram.programId
+        }
+      }))
+    } else {
+      instructions.push(await this.instruction.transferReservesV0(args, {
+        accounts: {
+          common,
+          destination
+        }
+      }))
+    }
+    return {
+      output: null,
+      signers: [],
+      instructions,
+    };
+  }
+
+  /**
+   * Runs {@link closeInstructions}
+   * @param args
+   */
+  async transferReserves(args: ITransferReservesArgs): Promise<void> {
+    await this.execute(this.transferReservesInstructions(args), args.payer);
   }
 
   /**
@@ -1950,15 +2078,22 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     tokenBondingKey: PublicKey | undefined,
     stopAtMint?: PublicKey | undefined
   ): Promise<BondingHierarchy | undefined> {
-    const wrappedSolMint = (await this.getState())?.wrappedSolMint!;
-    if (stopAtMint?.equals(NATIVE_MINT)) {
-      stopAtMint = wrappedSolMint;
-    }
-
     if (!tokenBondingKey) {
       return;
     }
-    const tokenBonding = await this.getTokenBonding(tokenBondingKey);
+
+    const [
+      wrappedSolMint,
+      tokenBonding
+    ] = await Promise.all([
+      this.getState().then(s => s?.wrappedSolMint!),
+      this.getTokenBonding(tokenBondingKey)
+    ])
+
+    if (stopAtMint?.equals(NATIVE_MINT)) {
+      stopAtMint = wrappedSolMint;
+    }
+ 
     if (!tokenBonding) {
       return;
     }

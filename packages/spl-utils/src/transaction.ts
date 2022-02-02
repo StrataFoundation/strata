@@ -1,5 +1,7 @@
 import { Provider } from "@project-serum/anchor";
 import {
+  Commitment,
+  Finality,
   PublicKey,
   Signer, Transaction,
   TransactionInstruction
@@ -32,7 +34,8 @@ export async function sendInstructions(
   provider: Provider, 
   instructions: TransactionInstruction[], 
   signers: Signer[],
-  payer: PublicKey = provider.wallet.publicKey
+  payer: PublicKey = provider.wallet.publicKey,
+  commitment: Commitment = "confirmed"
 ): Promise<string> {
   const tx = new Transaction();
   tx.feePayer = payer || provider.wallet.publicKey;
@@ -40,8 +43,8 @@ export async function sendInstructions(
 
   try {
     return await provider.send(tx, signers, {
-      commitment: "confirmed",
-      preflightCommitment: "confirmed"
+      commitment,
+      preflightCommitment: commitment
     });
   } catch (e) {
     console.error(e);
@@ -61,7 +64,8 @@ export async function sendMultipleInstructions(
   provider: Provider, 
   instructionGroups: TransactionInstruction[][], 
   signerGroups: Signer[][], 
-  payer?: PublicKey
+  payer?: PublicKey,
+  finality: Finality = "confirmed"
 ): Promise<Iterable<string>> {
   const recentBlockhash = (await provider.connection.getRecentBlockhash('confirmed')).blockhash
   const txns = instructionGroups.map((instructions, index) => {
@@ -90,10 +94,10 @@ export async function sendMultipleInstructions(
       const txid = await provider.connection.sendRawTransaction(txn, {
         skipPreflight: true
       })
-      const result = await provider.connection.confirmTransaction(txid, "confirmed");
+      const result = await provider.connection.confirmTransaction(txid, finality);
       if (result.value.err) {
         const tx = await provider.connection.getTransaction(txid, {
-          commitment: "confirmed"
+          commitment: finality
         });
         console.error(tx?.meta?.logMessages?.join("\n"))
         throw result.value.err

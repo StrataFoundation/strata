@@ -1,12 +1,7 @@
 import * as anchor from "@project-serum/anchor";
 import { BN } from "@project-serum/anchor";
-import { createMint } from "@strata-foundation/spl-utils";
-import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  NATIVE_MINT,
-  Token,
-  TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
+import { createMint, getAssociatedAccountBalance } from "@strata-foundation/spl-utils";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, NATIVE_MINT, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
@@ -463,10 +458,10 @@ describe("spl-token-bonding", () => {
         baseMint,
         targetMintDecimals: DECIMALS,
         generalAuthority: me,
-        buyBaseRoyaltyPercentage: 10,
-        sellBaseRoyaltyPercentage: 10,
-        buyTargetRoyaltyPercentage: 10,
-        sellTargetRoyaltyPercentage: 10,
+        buyBaseRoyaltyPercentage: 0,
+        sellBaseRoyaltyPercentage: 0,
+        buyTargetRoyaltyPercentage: 0,
+        sellTargetRoyaltyPercentage: 0,
         mintCap: new BN(1000), // 10.0
       }));
       tokenBondingAcct = (await tokenBondingProgram.getTokenBonding(
@@ -474,38 +469,12 @@ describe("spl-token-bonding", () => {
       )) as TokenBondingV0;
     });
 
-    it("does not send royalties when the royalty account is closed", async () => {
-      await tokenBondingProgram.sendInstructions(
-        [
-          Token.createCloseAccountInstruction(
-            TOKEN_PROGRAM_ID,
-            buyBaseRoyalties,
-            me,
-            me,
-            []
-          ),
-          Token.createCloseAccountInstruction(
-            TOKEN_PROGRAM_ID,
-            buyTargetRoyalties,
-            me,
-            me,
-            []
-          ),
-          Token.createCloseAccountInstruction(
-            TOKEN_PROGRAM_ID,
-            sellBaseRoyalties,
-            me,
-            me,
-            []
-          ),
-          Token.createCloseAccountInstruction(
-            TOKEN_PROGRAM_ID,
-            sellTargetRoyalties,
-            me,
-            me,
-            []
-          ),
-        ],
+    it("does not fail when the royalty account is closed and royalties are 0", async () => {
+      await tokenBondingProgram.sendInstructions([Token.createCloseAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        buyBaseRoyalties,
+        me,
+        me,
         []
       );
       const { instructions, signers } =
@@ -520,17 +489,13 @@ describe("spl-token-bonding", () => {
         newWallet,
       ]);
 
-      const { instructions: instructions2, signers: signers2 } =
-        await tokenBondingProgram.sellInstructions({
-          tokenBonding,
-          targetAmount: new BN(111), // We acquired extra tokens above because the royalties went back to us.
-          slippage: 0.5,
-          sourceAuthority: newWallet.publicKey,
-        });
-      await tokenBondingProgram.sendInstructions(instructions2, [
-        ...signers2,
-        newWallet,
-      ]);
+      const { instructions: instructions2, signers: signers2 } = await tokenBondingProgram.sellInstructions({
+        tokenBonding,
+        targetAmount: new BN(100),
+        slippage: 0.5,
+        sourceAuthority: newWallet.publicKey
+      });
+      await tokenBondingProgram.sendInstructions(instructions2, [...signers2, newWallet])
 
       await tokenUtils.expectAtaBalance(
         newWallet.publicKey,
@@ -651,6 +616,7 @@ describe("spl-token-bonding", () => {
 
     const { tokenBonding } = await tokenBondingProgram.createTokenBonding({
       curve,
+      reserveAuthority: provider.wallet.publicKey,
       baseMint,
       targetMintDecimals: 2,
       generalAuthority: me,
@@ -1200,69 +1166,82 @@ describe("spl-token-bonding", () => {
     });
   });
 
-  function timeIncrease(curve: TimeCurveConfig): TimeCurveConfig {
-    return (
-      curve
-        // Causes a 9.09091% bump
-        .addCurve(
-          6 * 60 * 60, // 6 hours after launch
-          new ExponentialCurveConfig({
-            c: 1,
-            b: 0,
-            pow: 1,
-            frac: 10,
-          }),
-          null,
-          {
-            percentage: percent(10)!,
-            interval: 6 * 60 * 60, // 6 hours
-          }
-        )
-        // 7.57576% bump
-        .addCurve(
-          12 * 60 * 60, // 12 hours after launch
-          new ExponentialCurveConfig({
-            c: 1,
-            b: 0,
-            pow: 1,
-            frac: 5,
-          }),
-          null,
-          {
-            percentage: percent(8)!,
-            interval: 12 * 60 * 60, // 12 hours
-          }
-        )
-        // 8.33333% bump
-        .addCurve(
-          24 * 60 * 60, // 24 hours after launch
-          new ExponentialCurveConfig({
-            c: 1,
-            b: 0,
-            pow: 1,
-            frac: 3,
-          }),
-          null,
-          {
-            percentage: percent(9)!,
-            interval: 12 * 60 * 60, // 12 hours
-          }
-        )
-        // 8.33333% bump
-        .addCurve(
-          36 * 60 * 60, // 36 hours after launch
-          new ExponentialCurveConfig({
-            c: 1,
-            b: 0,
-            pow: 1,
-            frac: 2,
-          }),
-          null,
-          {
-            percentage: percent(9)!,
-            interval: 12 * 60 * 60, // 12 hours
-          }
-        )
-    );
-  }
+  describe("reserve authority", () => {
+    it("can transfer funds from the curve", async () => {
+      const { tokenBonding, baseMint } = await createRoyaltyFree({
+        config: new ExponentialCurveConfig({
+          c: 0,
+          b: 5,
+          pow: 0,
+          frac: 1
+        })
+      });
+      const ata = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        baseMint,
+        me
+      );
+      const initialBalance = (await provider.connection.getTokenAccountBalance(ata)).value.uiAmount!;
+      await tokenBondingProgram.buy({
+        tokenBonding,
+        baseAmount: 10,
+        slippage: 0.05,
+      });
+      await tokenBondingProgram.transferReserves({
+        tokenBonding,
+        amount: 10
+      })
+      await tokenUtils.expectAtaBalance(me, baseMint, initialBalance);
+
+      // Test that close works, since the curve is empty
+      await tokenBondingProgram.close({
+        tokenBonding
+      });
+    });
+
+    it ("can transfer funds from the curve when native", async () => {      // Also ensure zero sum.
+      const initLamports = (await provider.connection.getAccountInfo(me))!
+        .lamports;
+      const curve = await tokenBondingProgram.initializeCurve({
+        config: new ExponentialCurveConfig({
+          c: 1,
+          b: 0,
+          pow: 1,
+          frac: 1
+        })
+      });
+
+      const { tokenBonding } = await tokenBondingProgram.createTokenBonding({
+        curve,
+        baseMint: NATIVE_MINT,
+        reserveAuthority: me,
+        targetMintDecimals: 2,
+        generalAuthority: me,
+        buyBaseRoyaltyPercentage: 0,
+        buyTargetRoyaltyPercentage: 0,
+        sellBaseRoyaltyPercentage: 0,
+        sellTargetRoyaltyPercentage: 0,
+        mintCap: new BN(1000), // 10.0
+      });
+      await tokenBondingProgram.buy({
+        tokenBonding,
+        baseAmount: 2,
+        slippage: 0.05,
+      });
+      await tokenBondingProgram.transferReserves({
+        tokenBonding,
+        amount: 2
+      })
+      const postLamports = (await provider.connection.getAccountInfo(me))!
+        .lamports;
+        
+      expect(postLamports).to.within(100000000, initLamports);
+
+      // Test that close works, since the curve is empty
+      await tokenBondingProgram.close({
+        tokenBonding
+      });
+    })
+  })
 });

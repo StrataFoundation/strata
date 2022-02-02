@@ -6,10 +6,5 @@ import { AccountContext } from "../contexts";
  * @returns
  */
 export const useAccountFetchCache = () => {
-  const context = useContext(AccountContext);
-  if (context === undefined) {
-    throw new Error("useAccountFetchCache must be used within AccountProvider");
-  }
-
-  return context;
+  return useContext(AccountContext);
 };
