@@ -14,6 +14,7 @@ import {
 import {
   BigInstructionResult,
   createMintInstructions,
+  getMintInfo,
   InstructionResult,
   SplTokenMetadata,
 } from "@strata-foundation/spl-utils";
@@ -100,6 +101,10 @@ interface ICreateMetadataForBondingArgs {
    * Optionally, use this keypair to create the target mint
    */
   targetMintKeypair?: Keypair;
+  /**
+   * Decimals for the mint
+   */
+  decimals: number;
 }
 
 export class MarketplaceSdk {
@@ -144,9 +149,11 @@ export class MarketplaceSdk {
     metadataUpdateAuthority,
     metadata,
     targetMintKeypair = Keypair.generate(),
+    decimals,
   }: ICreateMetadataForBondingArgs): Promise<
     InstructionResult<{ metadata: PublicKey; mint: PublicKey }>
   > {
+    console.log("decimals", decimals);
     const targetMint = targetMintKeypair.publicKey;
     const instructions = [];
     const signers = [];
@@ -156,7 +163,7 @@ export class MarketplaceSdk {
         this.tokenBondingSdk.provider,
         this.provider.wallet.publicKey,
         targetMint,
-        0
+        decimals
       ))
     );
     signers.push(targetMintKeypair);
@@ -228,6 +235,7 @@ export class MarketplaceSdk {
     } = await this.createMetadataForBondingInstructions({
       metadata,
       metadataUpdateAuthority: metadataUpdateAuthority!,
+      decimals: bondingArgs?.targetMintDecimals || 0
     });
 
     instructions.push(...metadataInstructions);
@@ -317,6 +325,7 @@ export class MarketplaceSdk {
     BigInstructionResult<{ tokenBonding: PublicKey }>
   > {
     const curve = bondingArgs?.curve || new PublicKey(MarketplaceSdk.FIXED_CURVE);
+    const baseMintAcct = await getMintInfo(this.provider, baseMint);
 
     const instructions = [];
     const signers = [];
@@ -330,6 +339,7 @@ export class MarketplaceSdk {
     } = await this.createMetadataForBondingInstructions({
       metadata,
       metadataUpdateAuthority: metadataUpdateAuthority!,
+      decimals: typeof bondingArgs?.targetMintDecimals == "undefined" ? baseMintAcct.decimals : bondingArgs.targetMintDecimals,
     });
 
     instructions.push(...metadataInstructions);

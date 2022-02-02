@@ -40,6 +40,7 @@ import { Royalties } from "./Royalties";
 import { TransactionInfo, TransactionInfoArgs } from "./TransactionInfo";
 import { useTwWrappedSolMint } from "../../hooks/useTwWrappedSolMint";
 import { NATIVE_MINT } from "@solana/spl-token";
+import { roundToDecimals } from "../../utils";
 
 export interface ISwapFormValues {
   topAmount: number;
@@ -85,10 +86,6 @@ export interface ISwapFormProps {
   spendCap: number;
   feeAmount?: number;
   extraTransactionInfo?: Omit<TransactionInfoArgs, "formRef">[];
-}
-
-function roundToDecimals(num: number, decimals: number): number {
-  return Math.trunc(num * Math.pow(10, decimals)) / Math.pow(10, decimals);
 }
 
 function MintMenuItem({

@@ -20,7 +20,7 @@ import { IUseTokenMetadataResult, useTokenMetadata } from "./useTokenMetadata";
 import { deserializeUnchecked } from "borsh";
 
 export async function getOwnerForName(
-  cache: AccountFetchCache,
+  cache: AccountFetchCache | undefined,
   handle: string | undefined,
   tld: PublicKey | undefined
 ): Promise<PublicKey | undefined> {
