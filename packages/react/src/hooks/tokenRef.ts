@@ -108,12 +108,12 @@ export const useClaimedTokenRefKeyForName = (
   const cache = useAccountFetchCache();
   const { result: key, loading } = useAsync(
     async (
-      cache: AccountFetchCache,
+      cache: AccountFetchCache | undefined,
       name: string | undefined | null,
       mint: PublicKey | undefined | null,
       tld: PublicKey | undefined
     ) => {
-      if (name && tld) {
+      if (cache && name && tld) {
         return getClaimedTokenRefKeyForName(cache, name, mint, tld);
       }
     },

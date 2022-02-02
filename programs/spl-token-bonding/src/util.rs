@@ -3,7 +3,8 @@ use crate::error::ErrorCode;
 use crate::precise_number::{InnerUint, PreciseNumber};
 use crate::PrimitiveCurve;
 use anchor_lang::prelude::*;
-use anchor_spl::token::Mint;
+use anchor_lang::solana_program::system_program;
+use anchor_spl::token::{Mint, TokenAccount};
 use std::convert::*;
 
 pub trait OrArithError<T> {
@@ -92,7 +93,7 @@ fn get_u128_pow_10(decimals: u8) -> u128 {
   }
 }
 
-pub fn precise_supply_amt(amt: u64, mint: &Account<Mint>) -> PreciseNumber {
+pub fn precise_supply_amt(amt: u64, mint: &Mint) -> PreciseNumber {
   PreciseNumber {
     value: InnerUint::from(amt)
       .checked_mul(InnerUint::from(get_u128_pow_10(12_u8 - mint.decimals)))
@@ -102,7 +103,7 @@ pub fn precise_supply_amt(amt: u64, mint: &Account<Mint>) -> PreciseNumber {
   }
 }
 
-pub fn to_mint_amount(amt: &PreciseNumber, mint: &Account<Mint>, ceil: bool) -> u64 {
+pub fn to_mint_amount(amt: &PreciseNumber, mint: &Mint, ceil: bool) -> u64 {
   // Lookup is faster than a checked_pow
   let pow_10 = get_pow_10(mint.decimals);
 
@@ -134,6 +135,22 @@ pub fn curve_is_valid(curve: &PiecewiseCurve) -> bool {
         curves.get(0).map(|c| c.offset).unwrap_or(1) == 0 &&
         // The curves list is ordered by offset
         curves.windows(2).all(|c| c[0].offset <= c[1].offset)
+    }
+  }
+}
+
+pub fn verify_empty_or_mint<'info>(
+  maybe_token_account: &UncheckedAccount<'info>,
+  mint: &Pubkey,
+) -> ProgramResult {
+  if *maybe_token_account.owner == system_program::ID {
+    Ok(())
+  } else {
+    let acc: Account<'info, TokenAccount> = Account::try_from(maybe_token_account)?;
+    if acc.mint == *mint {
+      Ok(())
+    } else {
+      Err(ErrorCode::InvalidMint.into())
     }
   }
 }

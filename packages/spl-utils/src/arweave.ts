@@ -82,8 +82,6 @@ export async function uploadToArweave(
 export const prePayForFilesInstructions = async (
   payer: PublicKey,
   files: File[],
-  uploadUrl: string = ARWEAVE_UPLOAD_URL,
-  env: ArweaveEnv = "mainnet-beta"
 ): Promise<TransactionInstruction[]> => {
   const instructions: TransactionInstruction[] = [];
   const sizes = files.map((f) => f.size);

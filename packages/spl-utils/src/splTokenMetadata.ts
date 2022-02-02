@@ -25,9 +25,11 @@ export interface ICreateArweaveUrlArgs {
   image?: string;
   creators?: Creator[];
   files?: File[];
-  env: ArweaveEnv;
-  uploadUrl: string;
   existingFiles?: FileOrString[]
+  attributes?: Attribute[];
+  animationUrl?: string;
+  externalUrl?: string;
+  extraMetadata?: any;
 }
 
 export type Attribute = {
@@ -278,6 +280,29 @@ export class SplTokenMetadata {
     );
   }
 
+  /**
+   * Wrapper function that prepays for arweave metadata files in SOL, then uploads them to arweave and returns the url
+   *
+   * @param args
+   * @returns 
+   */
+  async createArweaveMetadata(args: ICreateArweaveUrlArgs & {
+    env?: ArweaveEnv;
+    uploadUrl?: string;
+    mint: PublicKey;
+  }): Promise<string> {
+    const { txid, files } = await this.presignCreateArweaveUrl(args);
+    const uri = await this.getArweaveUrl({
+      txid,
+      mint: args.mint,
+      files,
+      env: args.env || "mainnet-beta",
+      uploadUrl: args.uploadUrl || ARWEAVE_UPLOAD_URL
+    });
+
+    return uri;
+  }
+
   async presignCreateArweaveUrlInstructions({
     name,
     symbol,
@@ -286,23 +311,27 @@ export class SplTokenMetadata {
     creators,
     files = [],
     payer = this.provider.wallet.publicKey,
-    env = "mainnet-beta",
-    uploadUrl = ARWEAVE_UPLOAD_URL,
-    existingFiles
+    existingFiles,
+    attributes,
+    externalUrl,
+    animationUrl,
+    extraMetadata
   }: ICreateArweaveUrlArgs): Promise<InstructionResult<{ files: File[] }>> {
     const metadata = {
       name,
       symbol,
       description,
       image,
-      externalUrl: "",
-      animationUrl: undefined,
+      attributes,
+      externalUrl: externalUrl || "",
+      animationUrl,
       properties: {
         category: MetadataCategory.Image,
         files: [...(existingFiles || []), ...files],
       },
       creators: creators ? creators : null,
       sellerFeeBasisPoints: 0,
+      ...(extraMetadata || {})
     };
 
     const realFiles = await getFilesWithMetadata(files, metadata);
@@ -310,8 +339,6 @@ export class SplTokenMetadata {
     const prepayTxnInstructions = await prePayForFilesInstructions(
       payer,
       realFiles,
-      uploadUrl,
-      env
     );
 
     return {
@@ -388,7 +415,7 @@ export class SplTokenMetadata {
     }, {
       metadata,
       mint,
-      metadataData: data,
+      metadataData: new DataV2({ ...data }),
       mintAuthority,
       updateAuthority: authority
     }).instructions

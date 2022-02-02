@@ -20,6 +20,17 @@ pub struct InitializeTokenBondingV0Args {
   pub buy_frozen: bool,
   pub index: u16, // A given target mint can have multiple curves associated with it. Index 0 is reserved for the primary curve that holds mint authority
   pub bump_seed: u8,
+
+  pub sell_frozen: bool,
+
+  /** Whether or not to ignore changes to base storage and target supply outside of the curve */
+  pub ignore_external_reserve_changes: bool,
+  pub ignore_external_supply_changes: bool,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
+pub struct TransferReservesV0Args {
+  pub amount: u64,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
