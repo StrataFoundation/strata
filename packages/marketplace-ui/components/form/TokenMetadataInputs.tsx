@@ -74,13 +74,13 @@ export function TokenMetadataInputs() {
         style={{ display: "none" }}
       />
       <FormHelperText color={errors.image?.message && "red.400"}>
-        {errors.image?.message || `The image of the item`}
+        {errors.image?.message || `The image that will be displayed with this post`}
       </FormHelperText>
     </FormControl>
 
     <FormControlWithError
       id="name"
-      help="The name that will be displayed for this item"
+      help="The name that will be displayed for this post"
       label="Name"
       errors={errors}
     >
@@ -88,7 +88,7 @@ export function TokenMetadataInputs() {
     </FormControlWithError>
     <FormControlWithError
       id="Description"
-      help="The description that will be displayed with this item"
+      help="The description that will be displayed for this post"
       label="Description"
       errors={errors}
     >

@@ -23,6 +23,7 @@
     "copy-files": "copyfiles -u 1 src/**/*.js dist/lib",
     "watch": "yarn run copy-files && tsc --watch --project tsconfig.json",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "bootstrap": "tsc && node dist/lib/bootstrap",
     "precommit": "git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' .",
     "prepare": "yarn run build"
   },

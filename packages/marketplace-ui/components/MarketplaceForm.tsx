@@ -41,7 +41,14 @@ async function createMarket(marketplaceSdk: MarketplaceSdk, values: IMarketplace
     image: values.image?.name,
     files: [values.image].filter(truthy),
     mint: targetMintKeypair.publicKey,
-  }) 
+    attributes: [
+      {
+        trait_type: "is_strata_marketplace_item",
+        display_type: "Strata Market Place Item",
+        value: "true",
+      },
+    ],
+  }); 
   const { tokenBonding } = await marketplaceSdk.createMarketItem({
     targetMintKeypair,
     metadata: new DataV2({
@@ -51,11 +58,11 @@ async function createMarket(marketplaceSdk: MarketplaceSdk, values: IMarketplace
       sellerFeeBasisPoints: 0,
       creators: null,
       collection: null,
-      uses: null
+      uses: null,
     }),
     quantity: values.quantity,
     price: values.price,
-    baseMint: mint
+    baseMint: mint,
   });
 
   return tokenBonding; 

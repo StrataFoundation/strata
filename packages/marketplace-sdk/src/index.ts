@@ -30,10 +30,6 @@ interface ICreateMarketItemArgs {
    */
   seller?: PublicKey;
   /**
-   * Account to deposit the resulting funds in. **Default:** ATA on seller
-   */
-  salesAccount?: PublicKey;
-  /**
    * The update authority on the metadata created. **Default:** Seller
    */
   metadataUpdateAuthority?: PublicKey;
@@ -49,6 +45,36 @@ interface ICreateMarketItemArgs {
    * The price to sell them for. If not provided, should pass `bondingArgs.curve`
    */
   price?: number;
+
+  /**
+   * The mint to base the sales off of
+   */
+  baseMint: PublicKey;
+
+  /**
+   * Optionally -- override bonding params
+   */
+  bondingArgs?: ICreateTokenBondingArgs;
+}
+
+interface ICreateBountyArgs {
+  payer?: PublicKey;
+  /**
+   * Optionally, use this keypair to create the target mint
+   */
+  targetMintKeypair?: Keypair;
+  /**
+   * Wallet who will approve the bounty and disburse the funds
+   */
+  authority?: PublicKey;
+  /**
+   * The update authority on the metadata created. **Default:** authority
+   */
+  metadataUpdateAuthority?: PublicKey;
+  /**
+   * The token metadata for the marketplace item
+   */
+  metadata: DataV2;
 
   /**
    * The mint to base the sales off of
@@ -77,6 +103,8 @@ interface ICreateMetadataForBondingArgs {
 }
 
 export class MarketplaceSdk {
+  static FIXED_CURVE = "fixmyQQ8cCVFh8Pp5LwZg4N3rXkym7sUXmGehxHqTAS";
+
   static async init(
     provider: Provider,
     splTokenBondingProgramId: PublicKey = SplTokenBonding.ID
@@ -93,6 +121,24 @@ export class MarketplaceSdk {
     readonly tokenBondingSdk: SplTokenBonding,
     readonly tokenMetadataSdk: SplTokenMetadata
   ) {}
+
+  async createFixedCurve({
+    keypair,
+  }: {
+    keypair: Keypair;
+  }): Promise<PublicKey> {
+    const curve = await this.tokenBondingSdk.initializeCurve({
+      curveKeypair: keypair,
+      config: new ExponentialCurveConfig({
+        c: 0,
+        pow: 0,
+        frac: 1,
+        b: 1,
+      }),
+    });
+
+    return curve;
+  }
 
   async createMetadataForBondingInstructions({
     metadataUpdateAuthority,
@@ -214,6 +260,7 @@ export class MarketplaceSdk {
       payer,
       curve: curve!,
       reserveAuthority: seller,
+      generalAuthority: seller,
       curveAuthority: seller,
       targetMint,
       mintCap: quantity ? new BN(quantity) : undefined,
@@ -248,6 +295,85 @@ export class MarketplaceSdk {
   ): Promise<{ tokenBonding: PublicKey }> {
     return this.tokenBondingSdk.executeBig(
       this.createMarketItemInstructions(args),
+      args.payer,
+      finality
+    );
+  }
+
+  /**
+   * Creates a bounty
+   *
+   * @param param0
+   * @returns
+   */
+  async createBountyInstructions({
+    payer = this.provider.wallet.publicKey,
+    authority = this.provider.wallet.publicKey,
+    metadata,
+    metadataUpdateAuthority = authority,
+    bondingArgs,
+    baseMint,
+  }: ICreateBountyArgs): Promise<
+    BigInstructionResult<{ tokenBonding: PublicKey }>
+  > {
+    const curve = bondingArgs?.curve || new PublicKey(MarketplaceSdk.FIXED_CURVE);
+
+    const instructions = [];
+    const signers = [];
+
+    metadataUpdateAuthority = metadataUpdateAuthority || authority;
+
+    const {
+      output: { mint: targetMint },
+      signers: metadataSigners,
+      instructions: metadataInstructions,
+    } = await this.createMetadataForBondingInstructions({
+      metadata,
+      metadataUpdateAuthority: metadataUpdateAuthority!,
+    });
+
+    instructions.push(...metadataInstructions);
+    signers.push(...metadataSigners);
+
+    const {
+      output: { tokenBonding },
+      instructions: tokenBondingInstructions,
+      signers: tokenBondingSigners,
+    } = await this.tokenBondingSdk.createTokenBondingInstructions({
+      payer,
+      curve: curve!,
+      reserveAuthority: authority,
+      generalAuthority: authority,
+      curveAuthority: authority,
+      targetMint,
+      buyBaseRoyaltyPercentage: 0,
+      sellBaseRoyaltyPercentage: 0,
+      sellTargetRoyaltyPercentage: 0,
+      buyTargetRoyaltyPercentage: 0,
+      baseMint,
+      ...bondingArgs,
+    });
+
+    return {
+      output: {
+        tokenBonding,
+      },
+      instructions: [instructions, tokenBondingInstructions],
+      signers: [signers, tokenBondingSigners],
+    };
+  }
+
+  /**
+   * Executes `createBountyIntructions`
+   * @param args
+   * @returns
+   */
+  async createBounty(
+    args: ICreateBountyArgs,
+    finality?: Finality
+  ): Promise<{ tokenBonding: PublicKey }> {
+    return this.tokenBondingSdk.executeBig(
+      this.createBountyInstructions(args),
       args.payer,
       finality
     );

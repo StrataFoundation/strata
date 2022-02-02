@@ -1,25 +1,8 @@
-import { Button, ButtonProps, Heading, HStack, Spinner } from "@chakra-ui/react";
+import { HStack } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
-import { useErrorHandler, useMint, useProvider, useStrataSdks, useTokenAccount, useTokenBonding, useTokenMetadata } from "@strata-foundation/react";
+import { useMint, useStrataSdks, useTokenAccount, useTokenBonding, useTokenMetadata } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
-import { useAsyncCallback } from "react-async-hook";
-
-const AsyncButton = ({ action, children, ...props }: { children: React.ReactNode, action: () => Promise<void> | undefined } & ButtonProps) => {
-  const { awaitingApproval } = useProvider();
-  const { execute, loading, error } = useAsyncCallback(action);
-  const { handleErrors } = useErrorHandler();
-
-  handleErrors(error);
-
-  return <Button
-    isLoading={loading}
-    loadingText={awaitingApproval ? "Awaiting Approval" : "Loading"}
-    onClick={execute}
-    {...props}
-  >
-    {children}
-  </Button>
-}
+import { AsyncButton } from "./AsyncButton";
 
 export const MarketplaceItemAdmin = ({
   tokenBondingKey,

@@ -181,6 +181,8 @@ export interface IInitializeCurveArgs {
   config: ICurveConfig;
   /** The payer to create this curve, defaults to provider.wallet */
   payer?: PublicKey;
+  /** The keypair to use for this curve */
+  curveKeypair?: Keypair;
 }
 
 export interface ICreateTokenBondingOutput {
@@ -643,9 +645,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
   async initializeCurveInstructions({
     payer = this.wallet.publicKey,
     config: curveConfig,
+    curveKeypair = anchor.web3.Keypair.generate()
   }: IInitializeCurveArgs): Promise<InstructionResult<{ curve: PublicKey }>> {
     const curve = curveConfig.toRawConfig();
-    const curveKeypair = anchor.web3.Keypair.generate();
     return {
       output: {
         curve: curveKeypair.publicKey,
