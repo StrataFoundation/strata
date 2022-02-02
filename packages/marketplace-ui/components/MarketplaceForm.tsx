@@ -5,7 +5,7 @@ import { NATIVE_MINT } from "@solana/spl-token";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
-import { usePrimaryClaimedTokenRef, useProvider } from "@strata-foundation/react";
+import { truthy, usePrimaryClaimedTokenRef, useProvider } from "@strata-foundation/react";
 import { useMarketplaceSdk } from "contexts/marketplaceSdkContext";
 import { useRouter } from 'next/router';
 import React from "react";
