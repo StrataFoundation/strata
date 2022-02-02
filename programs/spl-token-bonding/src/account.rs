@@ -228,7 +228,6 @@ pub struct TransferReservesV0<'info> {
 pub struct TransferReservesNativeV0<'info> {
   pub common: TransferReservesV0Common<'info>,
   #[account(mut)]
-  // Unchecked because it may be a native account
   pub destination: UncheckedAccount<'info>,
 
   #[account(
@@ -236,7 +235,11 @@ pub struct TransferReservesNativeV0<'info> {
     has_one = wrapped_sol_mint
   )]
   pub state: Box<Account<'info, ProgramStateV0>>,
-  #[account(mut, constraint = wrapped_sol_mint.mint_authority.unwrap() == mint_authority.key())]
+  #[account(
+    mut, 
+    constraint = wrapped_sol_mint.mint_authority.unwrap() == mint_authority.key(),
+    constraint = wrapped_sol_mint.key() == common.base_mint.key()
+  )]
   pub wrapped_sol_mint: Account<'info, Mint>,
   pub mint_authority: AccountInfo<'info>,
   #[account(mut)]
