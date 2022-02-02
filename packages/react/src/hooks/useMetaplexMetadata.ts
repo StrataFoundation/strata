@@ -43,7 +43,6 @@ const solMetadata = new MetadataData({
  * @param token
  * @returns
  */
-const metadatas: any = {};
 export function useMetaplexTokenMetadata(
   token: PublicKey | undefined | null
 ): IUseMetaplexTokenMetadataResult {

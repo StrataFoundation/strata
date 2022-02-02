@@ -38,7 +38,7 @@ export const Swap = ({ tokenBondingKey }: { tokenBondingKey: PublicKey }) => {
           <Notification
             show={t.visible}
             type="success"
-            heading="Transaction Succesful"
+            heading="Transaction Successful"
             message={`Succesfully purchased ${Number(targetAmount).toFixed(
               9
             )} ${args.ticker}!`}
