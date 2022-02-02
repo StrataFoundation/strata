@@ -76,7 +76,7 @@ function recursiveTransformBN(
   return ret;
 }
 
-const AsyncButton = ({ code, scope, name, deps }) => {
+const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
   const [loading, setLoading] = useState(false);
   const [runningThisCommand, setRunningThisCommand] = useState(false);
   const { register, execWithDeps } = useVariablesContext();
@@ -137,7 +137,7 @@ const AsyncButton = ({ code, scope, name, deps }) => {
   const fullLoading =
     loading || !sdks.tokenBondingSdk || !sdks.tokenCollectiveSdk;
 
-  if (endpoint.includes("mainnet")) {
+  if (endpoint.includes("mainnet") && !allowMainnet) {
     return (
       <div className={styles.container}>
         <button

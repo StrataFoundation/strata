@@ -1,11 +1,10 @@
 import React, { FC } from "react";
 import {
   ThemeProvider as ChakraThemeProvider,
-  CSSReset,
   extendTheme,
 } from "@chakra-ui/react";
 
-export const theme = extendTheme({
+export const theme: any = extendTheme({
   shadows: {
     outline: "none",
   },
