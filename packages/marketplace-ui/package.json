@@ -1,6 +1,9 @@
 {
-  "name": "strata-marketplace",
-  "private": true,
+  "name": "@strata-foundation/strata-marketplace",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "version": "3.2.0",
   "license": "Apache-2.0",
   "files": [
