@@ -558,10 +558,8 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
   }: ICreateCollectiveArgs): Promise<
     BigInstructionResult<{ collective: PublicKey; tokenBonding?: PublicKey }>
   > {
-    const programId = this.programId;
     const instructions: TransactionInstruction[] = [];
     const signers: Signer[] = [];
-    let metadataUri = metadata?.uri;
 
     let metadataAdded = false;
     const addMetadata = async () => {
@@ -620,6 +618,10 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     const [collective, collectiveBump] = await SplTokenCollective.collectiveKey(
       mint
     );
+
+    if (await this.provider.connection.getAccountInfo(collective)) {
+      throw new Error("Collective already exists");
+    }
 
     instructions.push(
       await this.instruction.initializeCollectiveV0(
