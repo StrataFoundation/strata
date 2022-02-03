@@ -236,7 +236,7 @@ pub struct TransferReservesNativeV0<'info> {
   )]
   pub state: Box<Account<'info, ProgramStateV0>>,
   #[account(
-    mut, 
+    mut,
     constraint = wrapped_sol_mint.mint_authority.unwrap() == mint_authority.key(),
     constraint = wrapped_sol_mint.key() == common.base_mint.key()
   )]
