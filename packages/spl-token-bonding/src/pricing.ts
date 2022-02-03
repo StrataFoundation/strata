@@ -14,7 +14,7 @@ function reduce<A>({
   func,
   initial,
   destination,
-  wrappedSolMint
+  wrappedSolMint,
 }: {
   hierarchy?: BondingHierarchy;
   func: (acc: A, current: BondingHierarchy) => A;
@@ -22,7 +22,10 @@ function reduce<A>({
   destination: PublicKey;
   wrappedSolMint: PublicKey;
 }): A {
-  if (!hierarchy || hierarchy.child?.tokenBonding.baseMint.equals(destination)) {
+  if (
+    !hierarchy ||
+    hierarchy.child?.tokenBonding.baseMint.equals(destination)
+  ) {
     return initial;
   }
 
@@ -57,7 +60,7 @@ function reduceFromParent<A>({
   func,
   initial,
   destination,
-  wrappedSolMint
+  wrappedSolMint,
 }: {
   hierarchy?: BondingHierarchy;
   func: (acc: A, current: BondingHierarchy) => A;
@@ -108,7 +111,7 @@ export class BondingPricing {
       },
       initial: 1,
       destination: baseMint,
-      wrappedSolMint: this.hierarchy.wrappedSolMint
+      wrappedSolMint: this.hierarchy.wrappedSolMint,
     });
   }
 
@@ -120,7 +123,7 @@ export class BondingPricing {
       },
       initial: this.hierarchy.pricingCurve.locked(),
       destination: baseMint,
-      wrappedSolMint: this.hierarchy.wrappedSolMint
+      wrappedSolMint: this.hierarchy.wrappedSolMint,
     });
   }
 
@@ -154,6 +157,38 @@ export class BondingPricing {
     }
   }
 
+  swapTargetAmount(
+    targetAmount: number,
+    baseMint: PublicKey,
+    targetMint: PublicKey
+  ): number {
+    const lowMint = this.hierarchy.lowest(baseMint, targetMint);
+    const highMint = lowMint.equals(baseMint) ? targetMint : baseMint;
+    const isBuying = lowMint.equals(targetMint);
+
+    const path = this.hierarchy.path(lowMint, highMint);
+
+    if (path.length == 0) {
+      throw new Error(`No path from ${baseMint} to ${targetMint}`);
+    }
+
+    return isBuying
+      ? path.reverse().reduce((amount, { pricingCurve, tokenBonding }) => {
+          return pricingCurve.buyWithBaseAmount(
+            -amount,
+            tokenBonding.sellBaseRoyaltyPercentage,
+            tokenBonding.sellTargetRoyaltyPercentage
+          );
+        }, targetAmount)
+      : path.reverse().reduce((amount, { pricingCurve, tokenBonding }) => {
+          return pricingCurve.buyTargetAmount(
+            amount,
+            tokenBonding.buyBaseRoyaltyPercentage,
+            tokenBonding.buyTargetRoyaltyPercentage
+          );
+        }, targetAmount);
+  }
+
   sellTargetAmount(
     targetAmountNum: number,
     baseMint: PublicKey = this.hierarchy.tokenBonding.baseMint
@@ -169,7 +204,7 @@ export class BondingPricing {
       },
       initial: targetAmountNum,
       destination: baseMint,
-      wrappedSolMint: this.hierarchy.wrappedSolMint
+      wrappedSolMint: this.hierarchy.wrappedSolMint,
     });
   }
 
@@ -188,7 +223,7 @@ export class BondingPricing {
       },
       initial: targetAmountNum,
       destination: baseMint,
-      wrappedSolMint: this.hierarchy.wrappedSolMint
+      wrappedSolMint: this.hierarchy.wrappedSolMint,
     });
   }
 
@@ -207,7 +242,7 @@ export class BondingPricing {
       },
       initial: baseAmountNum,
       destination: baseMint,
-      wrappedSolMint: this.hierarchy.wrappedSolMint
+      wrappedSolMint: this.hierarchy.wrappedSolMint,
     });
   }
 }

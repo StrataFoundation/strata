@@ -1,10 +1,13 @@
-import { DataV2, EditionData, MasterEditionData, Metadata, MetadataData } from "@metaplex-foundation/mpl-token-metadata";
+import {
+  DataV2,
+  EditionData,
+  MasterEditionData,
+  Metadata,
+  MetadataData,
+} from "@metaplex-foundation/mpl-token-metadata";
 import { NATIVE_MINT } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
-import {
-  ITokenWithMeta,
-  SplTokenMetadata
-} from "@strata-foundation/spl-utils";
+import { ITokenWithMeta, SplTokenMetadata } from "@strata-foundation/spl-utils";
 import { useAsync } from "react-async-hook";
 import { useStrataSdks } from ".";
 import { useAccount } from "./useAccount";
@@ -27,7 +30,7 @@ const solMetadata = new MetadataData({
     creators: null,
     sellerFeeBasisPoints: 0,
     collection: null,
-    uses: null
+    uses: null,
   }),
   primarySaleHappened: false,
   isMutable: false,
@@ -57,7 +60,7 @@ export function useMetaplexTokenMetadata(
     metadataAccountKey,
     parser
   );
-  
+
   const wrappedSolMint = useTwWrappedSolMint();
   const isSol =
     token?.equals(NATIVE_MINT) ||
@@ -84,6 +87,7 @@ export function useMetaplexTokenMetadata(
     loading: dataLoading,
     error: dataError,
   } = useAsync(SplTokenMetadata.getArweaveMetadata, [metadata?.data.uri]);
+
   const {
     result: image,
     loading: imageLoading,
@@ -91,10 +95,16 @@ export function useMetaplexTokenMetadata(
   } = useAsync(SplTokenMetadata.getImage, [metadata?.data.uri]);
   const mint = useMint(token);
 
+  const isLoading =
+    !token ||
+    loading ||
+    accountLoading ||
+    dataLoading ||
+    imageLoading ||
+    !metadata;
+
   return {
-    loading: Boolean(
-      token && (loading || accountLoading || dataLoading || imageLoading)
-    ),
+    loading: isLoading,
     error: error || dataError || imageError,
     mint,
     metadata,

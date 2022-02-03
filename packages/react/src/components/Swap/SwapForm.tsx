@@ -25,12 +25,9 @@ import { Spinner } from "../Spinner";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
-import {
-  ITokenBonding,
-  SplTokenBonding,
-} from "@strata-foundation/spl-token-bonding";
+import { ITokenBonding } from "@strata-foundation/spl-token-bonding";
 import { BondingPricing } from "@strata-foundation/spl-token-bonding/dist/lib/pricing";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { BsChevronDown } from "react-icons/bs";
 import { RiArrowUpDownFill, RiInformationLine } from "react-icons/ri";
@@ -56,6 +53,7 @@ const validationSchema = yup
   .required();
 
 export interface ISwapFormProps {
+  isLoading?: boolean;
   isSubmitting: boolean;
   onConnectWallet: () => void;
   onTradingMintsChange: (args: { base: PublicKey; target: PublicKey }) => void;
@@ -115,6 +113,7 @@ function MintMenuItem({
 }
 
 export const SwapForm = ({
+  isLoading = false,
   extraTransactionInfo,
   isSubmitting,
   onConnectWallet,
@@ -135,6 +134,7 @@ export const SwapForm = ({
   const { connected } = useWallet();
   const { awaitingApproval } = useProvider();
   const ftxPayLink = useFtxPayLink();
+  const [insufficientLiq, setInsufficientLiq] = useState<boolean>(false);
   const [rate, setRate] = useState<string>("--");
   const [fee, setFee] = useState<string>("--");
   const {
@@ -153,7 +153,10 @@ export const SwapForm = ({
     resolver: yupResolver(validationSchema),
   });
   const wrappedSolMint = useTwWrappedSolMint();
-  const isBaseSol = wrappedSolMint && (base?.publicKey.equals(wrappedSolMint) || base?.publicKey.equals(NATIVE_MINT));
+  const isBaseSol =
+    wrappedSolMint &&
+    (base?.publicKey.equals(wrappedSolMint) ||
+      base?.publicKey.equals(NATIVE_MINT));
   const topAmount = watch("topAmount");
   const slippage = watch("slippage");
   const hasBaseAmount = (ownedBase || 0) >= +(topAmount || 0);
@@ -163,18 +166,62 @@ export const SwapForm = ({
     base &&
     target &&
     pricing?.hierarchy.lowest(base.publicKey, target.publicKey);
-  const isBuying = lowMint && lowMint.equals(target?.publicKey);
+  const isBuying = lowMint && lowMint.equals(target?.publicKey!);
   const targetBonding = lowMint && pricing?.hierarchy.findTarget(lowMint);
 
-  const notLive = targetBonding && (targetBonding.goLiveUnixTime.toNumber() > (new Date().valueOf() / 1000));
+  const notLive =
+    targetBonding &&
+    targetBonding.goLiveUnixTime.toNumber() > new Date().valueOf() / 1000;
 
   const handleConnectWallet = () => onConnectWallet();
+  const manualResetForm = () => {
+    reset({ slippage: slippage });
+    setInsufficientLiq(false);
+    setRate("--");
+    setFee("--");
+  };
 
-  const handleUseMax = () =>
-    setValue(
-      "topAmount",
-      (ownedBase || 0) >= spendCap ? spendCap : ownedBase || 0
-    );
+  const handleTopChange = (value: number | undefined = 0) => {
+    if (tokenBonding && pricing && base && target && value && +value >= 0) {
+      const amount = pricing.swap(+value, base.publicKey, target.publicKey);
+
+      if (isNaN(amount)) {
+        setInsufficientLiq(true);
+      } else {
+        setInsufficientLiq(false);
+        setValue("bottomAmount", +value == 0 ? 0 : roundToDecimals(amount, 9));
+        setRate(`${roundToDecimals(amount / value, 9)}`);
+        setFee(`${feeAmount}`);
+      }
+    } else {
+      manualResetForm();
+    }
+  };
+
+  const handleBottomChange = (value: number | undefined = 0) => {
+    if (tokenBonding && pricing && base && target && value && +value >= 0) {
+      let amount = Math.abs(
+        pricing.swapTargetAmount(+value, target.publicKey, base.publicKey)
+      );
+
+      if (isNaN(amount)) {
+        setInsufficientLiq(true);
+      } else {
+        setInsufficientLiq(false);
+        setValue("topAmount", +value == 0 ? 0 : roundToDecimals(amount, 9));
+        setRate(`${roundToDecimals(value / amount, 9)}`);
+        setFee(`${feeAmount}`);
+      }
+    } else {
+      manualResetForm();
+    }
+  };
+
+  const handleUseMax = () => {
+    const amount = (ownedBase || 0) >= spendCap ? spendCap : ownedBase || 0;
+    setValue("topAmount", amount);
+    handleTopChange(amount);
+  };
 
   const handleFlipTokens = () => {
     if (base && target) {
@@ -183,8 +230,6 @@ export const SwapForm = ({
         target: base.publicKey,
       });
     }
-
-    reset();
   };
 
   const handleBuyBase = () => {
@@ -200,40 +245,7 @@ export const SwapForm = ({
     reset();
   };
 
-  useEffect(() => {
-    if (
-      topAmount &&
-      topAmount >= 0 &&
-      tokenBonding &&
-      pricing &&
-      base &&
-      target
-    ) {
-      const amount = pricing.swap(+topAmount, base.publicKey, target.publicKey);
-
-      setValue("bottomAmount", topAmount == 0 ? 0 : roundToDecimals(amount, 9));
-      setRate(`${roundToDecimals(amount / topAmount, 9)}`);
-      setFee(`${feeAmount}`);
-    } else {
-      reset({ slippage: slippage });
-      setRate("--");
-      setFee("--");
-    }
-  }, [
-    topAmount,
-    feeAmount,
-    setValue,
-    setRate,
-    tokenBonding,
-    pricing,
-    slippage,
-  ]);
-
-  if (
-    !base ||
-    !target ||
-    (connected && !pricing)
-  ) {
+  if (isLoading || !base || !target || (connected && !pricing)) {
     return <Spinner />;
   }
 
@@ -262,10 +274,12 @@ export const SwapForm = ({
                 type="number"
                 fontSize="2xl"
                 fontWeight="semibold"
-                _placeholder={{ color: "gray.200" }}
                 step={0.0000000001}
                 min={0}
-                {...register("topAmount")}
+                _placeholder={{ color: "gray.200" }}
+                {...register("topAmount", {
+                  onChange: (e) => handleTopChange(e.target.value),
+                })}
               />
               <InputRightElement
                 w="auto"
@@ -371,7 +385,6 @@ export const SwapForm = ({
             <InputGroup zIndex={99} size="lg">
               <Input
                 isInvalid={!!errors.bottomAmount}
-                isReadOnly
                 isDisabled={!connected}
                 id="bottomAmount"
                 borderColor="gray.200"
@@ -382,9 +395,9 @@ export const SwapForm = ({
                 step={0.0000000001}
                 min={0}
                 _placeholder={{ color: "gray.200" }}
-                _hover={{ cursor: "not-allowed" }}
-                _focus={{ outline: "none", borderColor: "gray.200" }}
-                {...register("bottomAmount")}
+                {...register("bottomAmount", {
+                  onChange: (e) => handleBottomChange(e.target.value),
+                })}
               />
               <InputRightElement
                 w="auto"
@@ -511,8 +524,9 @@ export const SwapForm = ({
               target &&
               pricing?.hierarchy
                 .path(base.publicKey, target.publicKey)
-                .map((h) => (
+                .map((h, idx) => (
                   <Royalties
+                    key={`royalties-${idx}`}
                     formRef={formRef}
                     tokenBonding={h.tokenBonding}
                     isBuying={!!isBuying}
@@ -525,7 +539,9 @@ export const SwapForm = ({
           <Box position="relative">
             <ScaleFade
               initialScale={0.9}
-              in={!hasBaseAmount || moreThanSpendCap || notLive}
+              in={
+                !hasBaseAmount || moreThanSpendCap || notLive || insufficientLiq
+              }
             >
               <Center
                 bgColor="gray.500"
@@ -544,12 +560,16 @@ export const SwapForm = ({
                 )}
                 {notLive && (
                   <Text>
-                    Goes live at {targetBonding && new Date(targetBonding.goLiveUnixTime.toNumber() * 1000).toLocaleString()}
+                    Goes live at{" "}
+                    {targetBonding &&
+                      new Date(
+                        targetBonding.goLiveUnixTime.toNumber() * 1000
+                      ).toLocaleString()}
                   </Text>
                 )}
                 {!hasBaseAmount && (
                   <Text>
-                    Insufficent funds for this trade.{" "}
+                    Insufficient funds for this trade.{" "}
                     <Text as="u">
                       <Link
                         color="indigo.100"
@@ -561,10 +581,19 @@ export const SwapForm = ({
                     </Text>
                   </Text>
                 )}
+                {insufficientLiq && (
+                  <Text>Insufficient Liqidity for this trade.</Text>
+                )}
               </Center>
             </ScaleFade>
             <Button
-              isDisabled={!connected || !hasBaseAmount || moreThanSpendCap || notLive}
+              isDisabled={
+                !connected ||
+                !hasBaseAmount ||
+                moreThanSpendCap ||
+                notLive ||
+                insufficientLiq
+              }
               w="full"
               colorScheme="indigo"
               size="lg"
