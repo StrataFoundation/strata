@@ -476,7 +476,7 @@ describe("spl-token-bonding", () => {
         me,
         me,
         []
-      );
+      )], []);
       const { instructions, signers } =
         await tokenBondingProgram.buyInstructions({
           tokenBonding,
