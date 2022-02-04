@@ -8,37 +8,40 @@ const plantuml = require("@akebifiky/remark-simple-plantuml");
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'Strata Protocol',
-  tagline: 'Launch a token around a person, idea, or collective in minutes',
-  url: 'https://strataprotocol.com',
-  baseUrl: '/',
-  onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
-  favicon: 'img/favicon.ico',
-  organizationName: 'StrataFoundation', // Usually your GitHub org/user name.
-  projectName: 'strata', // Usually your repo name.
+  title: "Strata Protocol",
+  tagline: "Launch a token around a person, idea, or collective in minutes",
+  url: "https://strataprotocol.com",
+  baseUrl: "/",
+  onBrokenLinks: "throw",
+  onBrokenMarkdownLinks: "warn",
+  favicon: "img/favicon.ico",
+  organizationName: "StrataFoundation", // Usually your GitHub org/user name.
+  projectName: "strata", // Usually your repo name.
   presets: [
     [
-      '@docusaurus/preset-classic',
+      "@docusaurus/preset-classic",
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
         docs: {
           remarkPlugins: [math, plantuml],
           rehypePlugins: [katex],
-          sidebarPath: require.resolve('./sidebars.js'),
+          sidebarPath: require.resolve("./sidebars.js"),
           // Please change this to your repo.
-          editUrl: 'https://github.com/StrataFoundation/strata/edit/master/packages/docs',
+          editUrl:
+            "https://github.com/StrataFoundation/strata/edit/master/packages/docs",
         },
         blog: {
+          blogSidebarTitle: "Posts",
+          blogSidebarCount: "ALL",
           remarkPlugins: [math, plantuml],
           rehypePlugins: [katex],
           showReadingTime: true,
           // Please change this to your repo.
           editUrl:
-            'https://github.com/StrataFoundation/strata/edit/master/packages/docs/blog',
+            "https://github.com/StrataFoundation/strata/edit/master/packages/docs/blog",
         },
         theme: {
-          customCss: require.resolve('./src/css/custom.css'),
+          customCss: require.resolve("./src/css/custom.css"),
         },
       }),
     ],
@@ -47,43 +50,44 @@ const config = {
   plugins: [
     "./src/plugins/webpack-loader",
     [
-      'docusaurus-plugin-typedoc',
+      "docusaurus-plugin-typedoc",
 
       // Plugin / TypeDoc options
       {
-        id: 'bonding',
-        entryPoints: ['../spl-token-bonding/src/index.ts'],
-        tsconfig: '../spl-token-bonding/tsconfig.json',
-        out: 'api/spl-token-bonding'
+        id: "bonding",
+        entryPoints: ["../spl-token-bonding/src/index.ts"],
+        tsconfig: "../spl-token-bonding/tsconfig.json",
+        out: "api/spl-token-bonding",
       },
     ],
     [
-      'docusaurus-plugin-typedoc',
+      "docusaurus-plugin-typedoc",
       // Plugin / TypeDoc options
       {
-        id: 'collective',
-        entryPoints: ['../spl-token-collective/src/index.ts'],
-        tsconfig: '../spl-token-collective/tsconfig.json',
-        out: 'api/spl-token-collective'
+        id: "collective",
+        entryPoints: ["../spl-token-collective/src/index.ts"],
+        tsconfig: "../spl-token-collective/tsconfig.json",
+        out: "api/spl-token-collective",
       },
     ],
     [
-      'docusaurus-plugin-typedoc',
+      "docusaurus-plugin-typedoc",
       // Plugin / TypeDoc options
       {
-        id: 'react',
-        entryPoints: ['../react/src/index.ts'],
-        tsconfig: '../react/tsconfig.json',
-        out: 'api/react'
+        id: "react",
+        entryPoints: ["../react/src/index.ts"],
+        tsconfig: "../react/tsconfig.json",
+        out: "api/react",
       },
-    ]
+    ],
   ],
   stylesheets: [
     {
       href: "https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/katex.min.css",
-      integrity: "sha384-Um5gpz1odJg5Z4HAmzPtgZKdTBHZdw8S29IecapCSB31ligYPhHQZMIlWLYQGVoc",
+      integrity:
+        "sha384-Um5gpz1odJg5Z4HAmzPtgZKdTBHZdw8S29IecapCSB31ligYPhHQZMIlWLYQGVoc",
       crossorigin: "anonymous",
-    }
+    },
   ],
 
   themeConfig:
@@ -94,64 +98,64 @@ const config = {
          * The position of the live playground, above or under the editor
          * Possible values: "top" | "bottom"
          */
-        playgroundPosition: 'bottom',
+        playgroundPosition: "bottom",
       },
       navbar: {
-        title: 'Strata',
+        title: "Strata",
         logo: {
-          alt: 'Strata Logo',
-          src: 'img/logo.png',
+          alt: "Strata Logo",
+          src: "img/logo.png",
         },
         items: [
           {
-            type: 'doc',
-            docId: 'getting_started',
-            position: 'left',
-            label: 'Docs',
+            type: "doc",
+            docId: "getting_started",
+            position: "left",
+            label: "Docs",
           },
-          {to: '/blog', label: 'Blog', position: 'left'},
+          { to: "/blog", label: "Blog", position: "left" },
           {
-            href: 'https://github.com/StrataFoundation/strata',
-            label: 'GitHub',
-            position: 'right',
+            href: "https://github.com/StrataFoundation/strata",
+            label: "GitHub",
+            position: "right",
           },
         ],
       },
       footer: {
-        style: 'dark',
+        style: "dark",
         links: [
           {
-            title: 'Docs',
+            title: "Docs",
             items: [
               {
-                label: 'Tutorial',
-                to: '/docs/getting_started',
+                label: "Tutorial",
+                to: "/docs/getting_started",
               },
             ],
           },
           {
-            title: 'Community',
+            title: "Community",
             items: [
               {
-                label: 'Discord',
-                href: 'https://discord.gg/XQhCFg77WM',
+                label: "Discord",
+                href: "https://discord.gg/XQhCFg77WM",
               },
               {
-                label: 'Twitter',
-                href: 'https://twitter.com/StrataProtocol',
+                label: "Twitter",
+                href: "https://twitter.com/StrataProtocol",
               },
             ],
           },
           {
-            title: 'More',
+            title: "More",
             items: [
               {
-                label: 'Blog',
-                to: '/blog',
+                label: "Blog",
+                to: "/blog",
               },
               {
-                label: 'GitHub',
-                href: 'https://github.com/StrataFoundation/strata',
+                label: "GitHub",
+                href: "https://github.com/StrataFoundation/strata",
               },
             ],
           },
