@@ -5,7 +5,7 @@ import {
   extendTheme,
 } from "@chakra-ui/react";
 
-export const theme = extendTheme({
+export const theme: any = extendTheme({
   shadows: {
     outline: "none",
   },
@@ -46,6 +46,23 @@ export const theme = extendTheme({
       700: "#3730A3",
       800: "#312E81",
       900: "#23215e",
+    },
+    black: {
+      300: "#23273B",
+      500: "#0F1324",
+      700: "#363135",
+    },
+    orange: {
+      50: "#fdefe7",
+      100: "#fbd6c2",
+      200: "#f8bb99",
+      300: "#f5a070",
+      400: "#f28b52",
+      500: "#f07733",
+      600: "#ee6f2e",
+      700: "#ec6427",
+      800: "#e95a20",
+      900: "#e54714",
     },
   },
 });
