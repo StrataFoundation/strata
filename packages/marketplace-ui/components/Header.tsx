@@ -40,36 +40,48 @@ const MenuItem: React.FC<IMenuItemProps> = ({
 export const Header: React.FC = () => {
   const { disconnect, connected } = useWallet();
   return (
-    <Center
-      w="full"
-      height="56px"
-      alignItems="center"
-      color="white"
-      bg="black.300"
-    >
-      <Container
-        maxW="container.lg"
+    <>
+      <Center
+        zIndex={100}
+        position="fixed"
         w="full"
-        display="flex"
-        justifyContent="space-between"
+        height="56px"
+        alignItems="center"
+        color="white"
+        bg="black.300"
       >
-        <Image alt="Strata Marketplace" src="/logo.svg" />
-        <Box display={{ md: "block" }} flexBasis={{ base: "100%", md: "auto" }}>
-          <HStack
-            align="center"
-            justify={["center", "space-between", "flex-end", "flex-end"]}
-            direction={["column", "row", "row", "row"]}
-            pt={[4, 4, 0, 0]}
+        <Container
+          maxW="container.lg"
+          w="full"
+          display="flex"
+          justifyContent="space-between"
+        >
+          <Image alt="Strata Marketplace" src="/logo.svg" />
+          <Box
+            display={{ md: "block" }}
+            flexBasis={{ base: "100%", md: "auto" }}
           >
-            {connected && (
-              <Button _hover={{ backgroundColor: "black.500" }} variant="ghost" onClick={() => disconnect()}>
-                Disconnect
-              </Button>
-            )}
-            <WalletModalButton />
-          </HStack>
-        </Box>
-      </Container>
-    </Center>
+            <HStack
+              align="center"
+              justify={["center", "space-between", "flex-end", "flex-end"]}
+              direction={["column", "row", "row", "row"]}
+              pt={[4, 4, 0, 0]}
+            >
+              {connected && (
+                <Button
+                  _hover={{ backgroundColor: "black.500" }}
+                  variant="ghost"
+                  onClick={() => disconnect()}
+                >
+                  Disconnect
+                </Button>
+              )}
+              <WalletModalButton />
+            </HStack>
+          </Box>
+        </Container>
+      </Center>
+      <Box height="56px" />
+    </>
   );
 };

@@ -1,4 +1,5 @@
-import { Alert, Button, Heading, Input, VStack } from "@chakra-ui/react";
+import { Alert, Button, Heading, usePrevious, VStack } from "@chakra-ui/react";
+import { Input } from "./Input";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
 import { NATIVE_MINT } from "@solana/spl-token";
@@ -7,21 +8,25 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
 import {
   truthy,
+  useMintTokenRef,
   usePrimaryClaimedTokenRef,
   useProvider,
+  usePublicKey,
 } from "@strata-foundation/react";
 import { useMarketplaceSdk } from "contexts/marketplaceSdkContext";
 import { useRouter } from "next/router";
 import { route, routes } from "pages/routes";
-import React from "react";
+import React, { useEffect } from "react";
 import { useAsyncCallback } from "react-async-hook";
 import { FormProvider, useForm } from "react-hook-form";
 import * as yup from "yup";
 import { FormControlWithError } from "./FormControlWithError";
+import { Recipient } from "./Recipient";
 import {
   IMetadataFormProps,
   TokenMetadataInputs,
 } from "./TokenMetadataInputs";
+import { MintSelect } from "./MintSelect";
 
 interface IBountyFormProps extends IMetadataFormProps {
   mint: string;
@@ -64,6 +69,11 @@ async function createBounty(
   //       value: "true",
   //     },
   //     {
+  //       trait_type: "bounty_uri",
+  //       display_type: "Bount URI",
+  //       value: `https://marketplace.strataprotocol.com/bounties/${mint}`,
+  //     },
+  //     {
   //       trait_type: "contact",
   //       display_type: "Contact",
   //       value: values.contact,
@@ -89,7 +99,7 @@ async function createBounty(
       collection: null,
       uses: null,
     }),
-    baseMint: mint
+    baseMint: mint,
   });
 
   return tokenBonding;
@@ -102,6 +112,7 @@ export const BountyForm: React.FC = () => {
   const {
     register,
     handleSubmit,
+    watch,
     setValue,
     formState: { errors, isSubmitting },
   } = formProps;
@@ -111,16 +122,36 @@ export const BountyForm: React.FC = () => {
   const { loading, error } = useAsyncCallback(createBounty);
   const { marketplaceSdk } = useMarketplaceSdk();
   const router = useRouter();
+  const { authority, mint } = watch();
+  const mintKey = usePublicKey(mint);
+  const { info: mintTokenRef } = useMintTokenRef(mintKey);
+  const prevAuthority = usePrevious(authority);
+
+  // Social tokens should default bounties to the owner of the social token
+  // as the authority. This is generally better because if the owner acts in 
+  // bad faith, they'll collapse the value of their own token. Vs a fan who can
+  // easily not give money to the creator
+  useEffect(() => {
+    if (!authority && mintTokenRef) {
+      const owner = mintTokenRef.owner as PublicKey | undefined;
+      if (owner) {
+        setValue("authority", owner.toBase58());
+      }
+    }
+  }, [mintTokenRef]);
+
 
   const onSubmit = async (values: IBountyFormProps) => {
     const tokenBondingKey = await createBounty(marketplaceSdk!, values);
     router.push(route(routes.bounty, { tokenBondingKey: tokenBondingKey.toBase58() }));
   };
 
+  const authorityRegister = register("authority");
+
   return (
     <FormProvider {...formProps}>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <VStack spacing={2}>
+        <VStack spacing={8}>
           <Heading>New Bounty</Heading>
           <TokenMetadataInputs />
           <FormControlWithError
@@ -130,39 +161,6 @@ export const BountyForm: React.FC = () => {
             errors={errors}
           >
             <Input {...register("shortName")} />
-          </FormControlWithError>
-          <FormControlWithError
-            id="authority"
-            help="The wallet that must sign approve this bounty has been completed and disburse funds. 
-            You can set yourself as the authority, paste an SPL Governance address here, or setup your own approval system."
-            label="Bounty Authority"
-            errors={errors}
-          >
-            {publicKey && (
-              <Button
-                variant="link"
-                onClick={() => setValue("authority", publicKey.toBase58())}
-              >
-                Set to My Wallet
-              </Button>
-            )}
-            <Input {...register("authority")} />
-          </FormControlWithError>
-          <FormControlWithError
-            id="contact"
-            help="The contact information of the bounty authority"
-            label="Authority Contact Information"
-            errors={errors}
-          >
-            <Input {...register("contact")} />
-          </FormControlWithError>
-          <FormControlWithError
-            id="discussion"
-            help="A link to where this bounty is actively being discussed. This can be a github issue, forum link, etc. Use this to coordinate the bounty."
-            label="Discussion"
-            errors={errors}
-          >
-            <Input {...register("discussion")} />
           </FormControlWithError>
 
           <FormControlWithError
@@ -179,7 +177,49 @@ export const BountyForm: React.FC = () => {
                 Use my Social Token
               </Button>
             )}
-            <Input {...register("mint")} />
+            <MintSelect
+              value={watch("mint")}
+              onChange={(s) => setValue("mint", s)}
+            />
+          </FormControlWithError>
+
+          <FormControlWithError
+            id="authority"
+            help="The wallet that signs to disburse the funds of this bounty when it is completed. 
+            For social tokens, this defaults to the wallet associated with the social token. This
+            can also be an SPL Governance address or a multisig."
+            label="Bounty Authority"
+            errors={errors}
+          >
+            {publicKey && (
+              <Button
+                variant="link"
+                onClick={() => setValue("authority", publicKey.toBase58())}
+              >
+                Set to My Wallet
+              </Button>
+            )}
+            <Recipient
+              name={authorityRegister.name}
+              value={authority}
+              onChange={authorityRegister.onChange}
+            />
+          </FormControlWithError>
+          <FormControlWithError
+            id="contact"
+            help="The contact information of the bounty authority. This can be an email address, twitter handle, etc."
+            label="Authority Contact Information"
+            errors={errors}
+          >
+            <Input {...register("contact")} />
+          </FormControlWithError>
+          <FormControlWithError
+            id="discussion"
+            help="A link to where this bounty is actively being discussed. This can be a github issue, forum link, etc. Use this to coordinate the bounty."
+            label="Discussion"
+            errors={errors}
+          >
+            <Input {...register("discussion")} />
           </FormControlWithError>
 
           {error && (
@@ -190,13 +230,12 @@ export const BountyForm: React.FC = () => {
 
           <Button
             type="submit"
-            w="full"
-            size="lg"
-            colorScheme="blue"
+            alignSelf="flex-end"
+            colorScheme="orange"
             isLoading={isSubmitting || loading}
             loadingText={awaitingApproval ? "Awaiting Approval" : "Loading"}
           >
-            Submit
+            Send Bounty
           </Button>
         </VStack>
       </form>

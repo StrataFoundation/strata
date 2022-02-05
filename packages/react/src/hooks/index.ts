@@ -37,3 +37,4 @@ export * from "./useMetaplexMetadata";
 export * from "./useCoinGeckoPrice";
 export * from "./nameService";
 export * from "./useReserveAmount";
+export * from "./useUserTokensWithMeta";

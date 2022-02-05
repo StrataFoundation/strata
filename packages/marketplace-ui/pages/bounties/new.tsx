@@ -3,7 +3,7 @@ import { Container } from "@chakra-ui/react";
 import { NextPage } from "next";
 
 export const NewBounty: NextPage = () => {
-  return <Container>
+  return <Container mt={8}>
     <BountyForm />
   </Container>
 }

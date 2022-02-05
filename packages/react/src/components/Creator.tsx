@@ -10,10 +10,10 @@ import { Link } from "react-router-dom";
 import { PublicKey } from "@solana/web3.js";
 import { useReverseName } from "../hooks/nameService";
 
-const WUMBO_TWITTER_VERIFIER = new PublicKey(
+export const WUMBO_TWITTER_VERIFIER = new PublicKey(
   "DTok7pfUzNeNPqU3Q6foySCezPQE82eRyhX1HdhVNLVC"
 );
-const WUMBO_TWITTER_TLD = new PublicKey(
+export const WUMBO_TWITTER_TLD = new PublicKey(
   "Fhqd3ostRQQE65hzoA7xFMgT9kge2qPnsTNAKuL2yrnx"
 );
 

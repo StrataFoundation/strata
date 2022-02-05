@@ -1,25 +1,13 @@
-import { Button } from "@chakra-ui/react";
-import {
-  ButtonProps, Heading,
-  Image, Input, HStack, Box,
-  InputProps, Link, Spinner, Text, VStack
-} from "@chakra-ui/react";
+import { Box, Button, ButtonProps, Heading, HStack, Image, Input, InputProps, Link, Spinner, Text, VStack } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import {
-  amountAsNum,
-  Creator,
-  useBondingPricing,
+  Creator, roundToDecimals, useBondingPricing,
   useMint,
-  useOwnedAmount,
-  useStrataSdks,
-  useTokenAccount,
-  useTokenBonding,
-  useTokenMetadata,
-  roundToDecimals,
-  useReserveAmount,
+  useOwnedAmount, useReserveAmount, useStrataSdks, useTokenBondingFromMint,
+  useTokenMetadata
 } from "@strata-foundation/react";
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { AsyncButton } from "../AsyncButton";
 import { DisburseFunds } from "./DisburseFunds";
 
@@ -77,15 +65,15 @@ export const BountyDetail = ({
   name,
   description,
   image,
-  tokenBondingKey,
+  mintKey,
 }: {
-  tokenBondingKey?: PublicKey;
+  mintKey?: PublicKey;
   name: string;
   description: string;
   image: string;
 }) => {
   const { info: tokenBonding, loading: bondingLoading } =
-    useTokenBonding(tokenBondingKey);
+    useTokenBondingFromMint(mintKey);
   const { connected, publicKey } = useWallet();
   const targetMint = useMint(tokenBonding?.targetMint);
   const {
@@ -98,17 +86,17 @@ export const BountyDetail = ({
     tokenBonding?.baseMint
   );
   const { pricing, loading: pricingLoading } =
-    useBondingPricing(tokenBondingKey);
+    useBondingPricing(tokenBonding?.publicKey);
   const { tokenBondingSdk } = useStrataSdks();
   const targetSupplyNumber = targetMint?.supply.toNumber();
   const baseBalance = useOwnedAmount(tokenBonding?.baseMint);
   const targetBalance = useOwnedAmount(tokenBonding?.targetMint);
-  const reserveAmount = useReserveAmount(tokenBondingKey);
+  const reserveAmount = useReserveAmount(tokenBonding?.publicKey);
 
   const attributes = React.useMemo(
     () =>
       targetData?.attributes?.reduce((acc, att) => {
-        if (att.trait_type) acc[att.trait_type] = att.value; 
+        if (att.trait_type) acc[att.trait_type] = att.value;
         return acc;
       }, {} as Record<string, string | number>),
     [targetData]
@@ -135,8 +123,8 @@ export const BountyDetail = ({
 
   return (
     <VStack p={4} align="start">
-      {isAdmin && tokenBondingKey && (
-        <DisburseFunds tokenBondingKey={tokenBondingKey} />
+      {isAdmin && tokenBonding && (
+        <DisburseFunds tokenBondingKey={tokenBonding?.publicKey} />
       )}
       <Image alt={name} w="full" src={image} />
       <Heading>{name}</Heading>
@@ -159,7 +147,7 @@ export const BountyDetail = ({
         <Spinner size="xs" />
       )}
       <b>Authority: </b>
-      {(bondingLoading || !tokenBonding) ? (
+      {bondingLoading || !tokenBonding ? (
         "Loading"
       ) : (
         <Creator
@@ -197,7 +185,7 @@ export const BountyDetail = ({
           action={({ quantity }) =>
             tokenBondingSdk?.buy({
               baseAmount: quantity,
-              tokenBonding: tokenBondingKey!,
+              tokenBonding: tokenBonding?.publicKey!,
               slippage: 0,
             })
           }
@@ -229,7 +217,7 @@ export const BountyDetail = ({
               pricing &&
               tokenBondingSdk?.sell({
                 targetAmount: -pricing.buyWithBaseAmount(-quantity),
-                tokenBonding: tokenBondingKey!,
+                tokenBonding: tokenBonding?.publicKey!,
                 slippage: 0,
               })
             );

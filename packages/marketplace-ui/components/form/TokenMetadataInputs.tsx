@@ -1,7 +1,18 @@
-import { Button, FormControl, FormHelperText, FormLabel, HStack, Image, Input, Textarea } from "@chakra-ui/react";
+import {
+  Text, Button,
+  FormControl,
+  FormHelperText,
+  FormLabel,
+  HStack,
+  Icon,
+  Image,
+  Textarea,
+} from "@chakra-ui/react";
+import { Input } from "./Input";
 import React, { useEffect, useState } from "react";
 import { useFormContext, UseFormReturn } from "react-hook-form";
 import { FormControlWithError } from "./FormControlWithError";
+import { RiCheckFill } from "react-icons/ri";
 
 export interface IMetadataFormProps {
   image: File;
@@ -50,49 +61,59 @@ export function TokenMetadataInputs() {
     clearErrors("image");
   };
 
-  return <>
-    <FormControl id="image">
-      <FormLabel>Photo</FormLabel>
-      {<Image maxWidth="200px" src={imgUrl} />}
-      <HStack w="full" spacing={4}>
-        <Button
-          size="md"
-          colorScheme="gray"
-          variant="outline"
-          onClick={() => hiddenFileInput.current!.click()}
-        >
-          Choose
-        </Button>
-      </HStack>
-      <input
-        id="image"
-        type="file"
-        accept=".png,.jpg,.gif,.mp4,.svg"
-        multiple={false}
-        onChange={handleImageChange}
-        ref={hiddenFileInput}
-        style={{ display: "none" }}
-      />
-      <FormHelperText color={errors.image?.message && "red.400"}>
-        {errors.image?.message || `The image that will be displayed with this post`}
-      </FormHelperText>
-    </FormControl>
-
-    <FormControlWithError
-      id="name"
-      help="The name that will be displayed for this post"
-      label="Name"
-      errors={errors}
-    >
-      <Input {...register("name")} />
-    </FormControlWithError>
-    <FormControlWithError
-      id="Description"
-      help="The description that will be displayed for this post"
-      label="Description"
-      errors={errors}
-    >
-      <Textarea {...register("description")} />
-    </FormControlWithError>
-  </>
+  return (
+    <>
+      <FormControlWithError
+        id="name"
+        help="The name that will be displayed for this post"
+        label="Name"
+        errors={errors}
+      >
+        <Input {...register("name")} />
+      </FormControlWithError>
+      <FormControl id="image">
+        <FormLabel>Photo</FormLabel>
+        <HStack w="full" spacing={4}>
+          <Button
+            size="md"
+            colorScheme="orange"
+            variant="outline"
+            onClick={() => hiddenFileInput.current!.click()}
+          >
+            Choose
+          </Button>
+          {image && (
+            <HStack spacing={2} align="center">
+              <Image alt={image.name} w="32px" h="32px" src={imgUrl} />
+              <Text color="gray.500">
+                {image.name}
+              </Text>
+              <Icon w="22px" h="22px" color="green.400" as={RiCheckFill} />
+            </HStack>
+          )}
+        </HStack>
+        <input
+          id="image"
+          type="file"
+          accept=".png,.jpg,.gif,.mp4,.svg"
+          multiple={false}
+          onChange={handleImageChange}
+          ref={hiddenFileInput}
+          style={{ display: "none" }}
+        />
+        <FormHelperText color={errors.image?.message && "red.400"}>
+          {errors.image?.message ||
+            `The image that will be displayed with this post`}
+        </FormHelperText>
+      </FormControl>
+      <FormControlWithError
+        id="Description"
+        help="The description that will be displayed for this post"
+        label="Description"
+        errors={errors}
+      >
+        <Textarea borderColor="gray.200" {...register("description")} />
+      </FormControlWithError>
+    </>
+  );
 }

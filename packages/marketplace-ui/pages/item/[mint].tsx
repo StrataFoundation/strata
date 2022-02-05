@@ -6,26 +6,27 @@ import { GetServerSideProps, InferGetServerSidePropsType, NextPage } from "next"
 import Head from "next/head";
 import { useRouter } from 'next/router';
 import React from "react";
-import { tokenBondingMetadataServerSideProps } from "utils/tokenMetadataServerProps";
+import { mintMetadataServerSideProps } from "utils/tokenMetadataServerProps";
 
 
 export const getServerSideProps: GetServerSideProps =
-  tokenBondingMetadataServerSideProps;
+  mintMetadataServerSideProps;
 
 
 export const MarketDisplay: NextPage = ({ name, image, description }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const router = useRouter()
-  const { tokenBondingKey: tokenBondingKeyRaw } = router.query;
-  const tokenBondingKey = usePublicKey(tokenBondingKeyRaw as string);
+  const { mintKey: mintKeyRaw } = router.query;
+  
+  const mintKey = usePublicKey(mintKeyRaw as string);
 
   return (
     <Box h="100vh">
       <Head>
         <meta
           property="twitter:url"
-          content={`https://marketplace.strataprotocol.com/item/${tokenBondingKeyRaw}/`}
+          content={`https://marketplace.strataprotocol.com/item/${mintKey}/`}
         />
-        <MetadataMeta name={name} description={description} image={image}/>
+        <MetadataMeta name={name} description={description} image={image} />
       </Head>
       <Box w="full" h="full" overflow="auto" paddingTop={{ sm: "18px" }}>
         <Center flexGrow={1}>
@@ -34,7 +35,7 @@ export const MarketDisplay: NextPage = ({ name, image, description }: InferGetSe
               name={name}
               description={description}
               image={image}
-              tokenBondingKey={tokenBondingKey}
+              mintKey={mintKey}
             />
           </Center>
         </Center>

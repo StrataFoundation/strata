@@ -1,20 +1,19 @@
 import { BountyDetail } from "@/components/bounties/BountyDetail";
-import { MarketplaceItem } from "@/components/MarketplaceItem";
 import { MetadataMeta } from "@/components/MetadataMeta";
-import { Box, Center, Container, VStack } from "@chakra-ui/react";
+import { Box, Center, Container } from "@chakra-ui/react";
 import { usePublicKey } from "@strata-foundation/react";
 import {
   GetServerSideProps,
   InferGetServerSidePropsType,
-  NextPage,
+  NextPage
 } from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import React from "react";
-import { tokenBondingMetadataServerSideProps } from "utils/tokenMetadataServerProps";
+import { mintMetadataServerSideProps } from "utils/tokenMetadataServerProps";
 
 export const getServerSideProps: GetServerSideProps =
-  tokenBondingMetadataServerSideProps;
+  mintMetadataServerSideProps;
 
 export const MarketDisplay: NextPage = ({
   name,
@@ -22,15 +21,16 @@ export const MarketDisplay: NextPage = ({
   description,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const router = useRouter();
-  const { tokenBondingKey: tokenBondingKeyRaw } = router.query;
-  const tokenBondingKey = usePublicKey(tokenBondingKeyRaw as string);
+  const { mintKey: mintKeyRaw } = router.query;
+
+  const mintKey = usePublicKey(mintKeyRaw as string);
 
   return (
     <Container w="full">
       <Head>
         <meta
           property="twitter:url"
-          content={`https://marketplace.strataprotocol.com/bounty/${tokenBondingKeyRaw}/`}
+          content={`https://marketplace.strataprotocol.com/bounty/${mintKey}/`}
         />
         <MetadataMeta name={name} description={description} image={image} />
       </Head>
@@ -41,7 +41,7 @@ export const MarketDisplay: NextPage = ({
               name={name}
               description={description}
               image={image}
-              tokenBondingKey={tokenBondingKey}
+              mintKey={mintKey}
             />
           </Box>
         </Center>

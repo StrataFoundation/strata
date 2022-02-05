@@ -9,7 +9,11 @@ export const theme: any = extendTheme({
   shadows: {
     outline: "none",
   },
-  components: { Button: { baseStyle: { _focus: { boxShadow: "none" } } } },
+  components: {
+    Button: {
+      baseStyle: { _focus: { boxShadow: "none" } },
+    }
+  },
   colors: {
     gray: {
       50: "#F9FAFB",
