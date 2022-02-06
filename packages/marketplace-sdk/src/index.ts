@@ -216,6 +216,7 @@ export class MarketplaceSdk {
     price,
     bondingArgs,
     baseMint,
+    targetMintKeypair,
   }: ICreateMarketItemArgs): Promise<
     BigInstructionResult<{ tokenBonding: PublicKey }>
   > {
@@ -233,9 +234,10 @@ export class MarketplaceSdk {
       signers: metadataSigners,
       instructions: metadataInstructions,
     } = await this.createMetadataForBondingInstructions({
+      targetMintKeypair,
       metadata,
       metadataUpdateAuthority: metadataUpdateAuthority!,
-      decimals: bondingArgs?.targetMintDecimals || 0
+      decimals: bondingArgs?.targetMintDecimals || 0,
     });
 
     instructions.push(...metadataInstructions);
@@ -317,14 +319,16 @@ export class MarketplaceSdk {
   async createBountyInstructions({
     payer = this.provider.wallet.publicKey,
     authority = this.provider.wallet.publicKey,
+    targetMintKeypair,
     metadata,
     metadataUpdateAuthority = authority,
     bondingArgs,
     baseMint,
   }: ICreateBountyArgs): Promise<
-    BigInstructionResult<{ tokenBonding: PublicKey }>
+    BigInstructionResult<{ tokenBonding: PublicKey; targetMint: PublicKey }>
   > {
-    const curve = bondingArgs?.curve || new PublicKey(MarketplaceSdk.FIXED_CURVE);
+    const curve =
+      bondingArgs?.curve || new PublicKey(MarketplaceSdk.FIXED_CURVE);
     const baseMintAcct = await getMintInfo(this.provider, baseMint);
 
     const instructions = [];
@@ -338,8 +342,12 @@ export class MarketplaceSdk {
       instructions: metadataInstructions,
     } = await this.createMetadataForBondingInstructions({
       metadata,
+      targetMintKeypair,
       metadataUpdateAuthority: metadataUpdateAuthority!,
-      decimals: typeof bondingArgs?.targetMintDecimals == "undefined" ? baseMintAcct.decimals : bondingArgs.targetMintDecimals,
+      decimals:
+        typeof bondingArgs?.targetMintDecimals == "undefined"
+          ? baseMintAcct.decimals
+          : bondingArgs.targetMintDecimals,
     });
 
     instructions.push(...metadataInstructions);
@@ -367,6 +375,7 @@ export class MarketplaceSdk {
     return {
       output: {
         tokenBonding,
+        targetMint,
       },
       instructions: [instructions, tokenBondingInstructions],
       signers: [signers, tokenBondingSigners],
@@ -381,7 +390,7 @@ export class MarketplaceSdk {
   async createBounty(
     args: ICreateBountyArgs,
     finality?: Finality
-  ): Promise<{ tokenBonding: PublicKey }> {
+  ): Promise<{ tokenBonding: PublicKey; targetMint: PublicKey }> {
     return this.tokenBondingSdk.executeBig(
       this.createBountyInstructions(args),
       args.payer,

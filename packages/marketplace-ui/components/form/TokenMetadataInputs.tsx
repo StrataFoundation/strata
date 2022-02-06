@@ -1,5 +1,6 @@
 import {
-  Text, Button,
+  Text,
+  Button,
   FormControl,
   FormHelperText,
   FormLabel,
@@ -7,8 +8,8 @@ import {
   Icon,
   Image,
   Textarea,
+  Input
 } from "@chakra-ui/react";
-import { Input } from "./Input";
 import React, { useEffect, useState } from "react";
 import { useFormContext, UseFormReturn } from "react-hook-form";
 import { FormControlWithError } from "./FormControlWithError";

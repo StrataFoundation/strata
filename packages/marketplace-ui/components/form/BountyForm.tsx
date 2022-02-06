@@ -1,5 +1,11 @@
-import { Alert, Box, Button, Heading, usePrevious, VStack } from "@chakra-ui/react";
-import { Input } from "./Input";
+import {
+  Input, Alert,
+  Box,
+  Button,
+  Heading,
+  usePrevious,
+  VStack,
+} from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
 import { NATIVE_MINT } from "@solana/spl-token";
@@ -87,7 +93,7 @@ async function createBounty(
   // });
   const uri =
     "https://strata-token-metadata.s3.us-east-2.amazonaws.com/test-bounty.json";
-  const { tokenBonding } = await marketplaceSdk.createBounty({
+  const { targetMint } = await marketplaceSdk.createBounty({
     targetMintKeypair,
     authority,
     metadata: new DataV2({
@@ -102,7 +108,7 @@ async function createBounty(
     baseMint: mint,
   });
 
-  return tokenBonding;
+  return targetMint;
 }
 
 export const BountyForm: React.FC = () => {
@@ -125,7 +131,6 @@ export const BountyForm: React.FC = () => {
   const { authority, mint } = watch();
   const mintKey = usePublicKey(mint);
   const { info: mintTokenRef } = useMintTokenRef(mintKey);
-  const prevAuthority = usePrevious(authority);
 
   // Social tokens should default bounties to the owner of the social token
   // as the authority. This is generally better because if the owner acts in 
@@ -142,8 +147,8 @@ export const BountyForm: React.FC = () => {
 
 
   const onSubmit = async (values: IBountyFormProps) => {
-    const tokenBondingKey = await createBounty(marketplaceSdk!, values);
-    router.push(route(routes.bounty, { tokenBondingKey: tokenBondingKey.toBase58() }));
+    const mintKey = await createBounty(marketplaceSdk!, values);
+    router.push(route(routes.bounty, { mintKey: mintKey.toBase58() }));
   };
 
   const authorityRegister = register("authority");

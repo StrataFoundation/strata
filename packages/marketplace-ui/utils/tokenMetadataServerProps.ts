@@ -15,7 +15,7 @@ export const mintMetadataServerSideProps: GetServerSideProps = async (
     new NodeWallet(Keypair.generate()),
     {}
   );
-  const mint = new PublicKey(context.params?.mint as string);
+  const mint = new PublicKey(context.params?.mintKey as string);
   const tokenMetadataSdk = await SplTokenMetadata.init(provider);
   const metadataAcc =
     (await tokenMetadataSdk.getMetadata(

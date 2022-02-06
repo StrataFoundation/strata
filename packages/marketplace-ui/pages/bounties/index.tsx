@@ -4,6 +4,7 @@ import {
   Box, Button, Center, Container, Heading, Icon,
   Input, InputGroup, InputLeftElement, Link, Select, Stack, VStack
 } from "@chakra-ui/react";
+import { PublicKey } from "@solana/web3.js";
 import { NextPage } from "next";
 import Head from "next/head";
 import { AiOutlineSearch } from "react-icons/ai";
@@ -11,7 +12,7 @@ import { routes } from "../routes";
 
 export const Bounties: NextPage = () => {
   return (
-    <Box w="full" backgroundColor="#f9f9f9" height="100vh">
+    <Box w="full" backgroundColor="#f9f9f9" height="100vh" overflow="auto">
       <Head>
         <title>Strata Bounties</title>
         <meta name="twitter:card" content="summary_large_image" />
@@ -81,8 +82,8 @@ export const Bounties: NextPage = () => {
             </Select>
           </Stack>
           <BountyList>
-            <BountyCard />
-            <BountyCard />
+            <BountyCard mintKey={PublicKey.default} />
+            <BountyCard mintKey={PublicKey.default}  />
           </BountyList>
         </VStack>
       </Container>

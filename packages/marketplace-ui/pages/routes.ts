@@ -6,7 +6,7 @@ export interface IRoute {
 export const routes = {
   bounties: { path: "/bounties", params: [] },
   newBounty: { path: "/bounties/new", params: [] },
-  bounty: { path: "/bounties/:tokenBondingKey", params: ["tokenBondingKey"] },
+  bounty: { path: "/bounties/:mintKey", params: ["mintKey"] },
 };
 
 export function route(route: IRoute, params: Record<string, string>): string {

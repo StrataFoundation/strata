@@ -59,7 +59,11 @@ impl Curve for PrimitiveCurve {
 
             res
           } else if c == 0 {
-            reserve_change.checked_div(&b_prec)
+            if base_amount.eq(&ZERO_PREC) {
+              reserve_change.checked_div(&b_prec)
+            } else {
+              target_supply.checked_mul(&reserve_change)?.checked_div(&b_prec)
+            }
           } else {
             None // This math is too hard, have not implemented yet.
           }

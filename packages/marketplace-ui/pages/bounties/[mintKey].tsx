@@ -1,11 +1,11 @@
 import { BountyDetail } from "@/components/bounties/BountyDetail";
 import { MetadataMeta } from "@/components/MetadataMeta";
-import { Box, Center, Container } from "@chakra-ui/react";
+import { Box, Center, Container, Image } from "@chakra-ui/react";
 import { usePublicKey } from "@strata-foundation/react";
 import {
   GetServerSideProps,
   InferGetServerSidePropsType,
-  NextPage
+  NextPage,
 } from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";
@@ -26,7 +26,13 @@ export const MarketDisplay: NextPage = ({
   const mintKey = usePublicKey(mintKeyRaw as string);
 
   return (
-    <Container w="full">
+    <Box
+      w="full"
+      backgroundColor="#f9f9f9"
+      height="100vh"
+      overflow="auto"
+      paddingBottom="200px"
+    >
       <Head>
         <meta
           property="twitter:url"
@@ -34,19 +40,32 @@ export const MarketDisplay: NextPage = ({
         />
         <MetadataMeta name={name} description={description} image={image} />
       </Head>
-      <Box w="full" h="full" overflow="auto" paddingTop={{ sm: "18px" }}>
-        <Center flexGrow={1}>
-          <Box bg="white" shadow="xl" rounded="lg" maxW="600px" minW="400px">
-            <BountyDetail
-              name={name}
-              description={description}
-              image={image}
-              mintKey={mintKey}
-            />
-          </Box>
-        </Center>
-      </Box>
-    </Container>
+      <Box padding="54px" backgroundColor="black.500" />
+      <Container justify="stretch" maxW="640px">
+        <Image
+          zIndex={1000}
+          rounded="xl"
+          background="#f9f9f9"
+          outline="3.15556px solid #E1E3E8"
+          mb="-22px"
+          mt="-60px"
+          marginLeft="auto"
+          marginRight="auto"
+          w="142px"
+          h="142px"
+          alt={name}
+          src={image}
+        />
+        <Box zIndex={1} bg="white" shadow="xl" rounded="lg">
+          <BountyDetail
+            name={name}
+            description={description}
+            image={image}
+            mintKey={mintKey}
+          />
+        </Box>
+      </Container>
+    </Box>
   );
 };
 

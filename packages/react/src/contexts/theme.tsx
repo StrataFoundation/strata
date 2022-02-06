@@ -3,6 +3,7 @@ import {
   ThemeProvider as ChakraThemeProvider,
   CSSReset,
   extendTheme,
+  
 } from "@chakra-ui/react";
 
 export const theme: any = extendTheme({
@@ -12,6 +13,15 @@ export const theme: any = extendTheme({
   components: {
     Button: {
       baseStyle: { _focus: { boxShadow: "none" } },
+    },
+    Input: {
+      variants: {
+        outline: {
+          field: {
+            borderColor: "#E5E7EB",
+          } 
+        }
+      }
     }
   },
   colors: {

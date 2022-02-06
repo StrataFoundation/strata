@@ -6,8 +6,8 @@ import {
   InputProps,
   InputRightElement,
   useDisclosure,
+  Input,
 } from "@chakra-ui/react";
-import { Input } from "./Input";
 import { TokenSearch } from "@strata-foundation/react";
 import { useCallback, useEffect } from "react";
 import { AiOutlineSearch } from "react-icons/ai";

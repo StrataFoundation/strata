@@ -53,23 +53,25 @@ export function useUserOwnedAmount(
   token: PublicKey | undefined | null
 ): number | undefined {
   const { amount: solOwnedAmount } = useSolOwnedAmount(wallet || undefined);
-  const { associatedAccount } = useAssociatedAccount(wallet, token);
+  const { associatedAccount, loading: loadingAssoc } = useAssociatedAccount(wallet, token);
   const wrappedSolMint = useTwWrappedSolMint();
   const mint = useMint(token);
   const [amount, setAmount] = useState<number>();
 
   useEffect(() => {
-     if (
+    if (
       token?.equals(NATIVE_MINT) ||
       (wrappedSolMint && token?.equals(wrappedSolMint))
     ) {
       setAmount(solOwnedAmount);
     } else if (mint && associatedAccount) {
       setAmount(amountAsNum(associatedAccount.amount, mint));
+    } else if (mint && !associatedAccount && !loadingAssoc) {
+      setAmount(0);
     }
-  }, [associatedAccount, mint, solOwnedAmount, wrappedSolMint]);
-
-  return amount && Number(amount);
+  }, [loadingAssoc, associatedAccount, mint, solOwnedAmount, wrappedSolMint]);
+  
+  return typeof amount === "undefined" ? amount : Number(amount);
 }
 
 export function useOwnedAmount(
