@@ -1,4 +1,4 @@
-import { Alert, Button, Heading, usePrevious, VStack } from "@chakra-ui/react";
+import { Alert, Box, Button, Heading, usePrevious, VStack } from "@chakra-ui/react";
 import { Input } from "./Input";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
@@ -152,7 +152,6 @@ export const BountyForm: React.FC = () => {
     <FormProvider {...formProps}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <VStack spacing={8}>
-          <Heading>New Bounty</Heading>
           <TokenMetadataInputs />
           <FormControlWithError
             id="shortName"
