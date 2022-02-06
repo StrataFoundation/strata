@@ -15,6 +15,7 @@ import { numberWithCommas } from "utils/numberWithCommas";
 import { BountyCardContribution } from "./BountyCardContribution";
 import { TopHolders } from "./TopHolders";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
+import { BurnButton } from "../BurnButton";
 
 export const AsyncQtyButton = ({
   inputProps = {},
@@ -113,6 +114,7 @@ export const BountyDetail = ({
     [pricing, targetMint, targetMint?.supply, reserveAmount]
   );
   const fundsHaveBeenUsed: boolean = !!fundsUsed && (fundsUsed > 0);
+  const bountyClosed = !tokenBonding && !bondingLoading;
 
   const attributes = React.useMemo(
     () =>
@@ -159,112 +161,124 @@ export const BountyDetail = ({
         {attributes?.discussion && `Discussion: ${attributes.discussion}\n`}
         {attributes?.contact && `Contact: ${attributes.contact}`}
       </Text>
-      { fundsHaveBeenUsed && 
-      <Alert status="error">
-        Funds have been disbursed from this bounty without closing it. Existing contributors may not be able
-        to withdraw what they put into the bounty. Contact the bounty authority if
-        you have any questions
-      </Alert>
-      }
+      {fundsHaveBeenUsed && (
+        <Alert status="error">
+          Funds have been disbursed from this bounty without closing it.
+          Existing contributors may not be able to withdraw what they put into
+          the bounty. Contact the bounty authority if you have any questions
+        </Alert>
+      )}
 
-      <SimpleGrid
-        w="full"
-        justify="stretch"
-        columns={[1, 1, 2]}
-        spacing={2}
-        gap={2}
-      >
-        <BountyCardContribution
-          amount={reserveAmount}
-          symbol={baseMetadata?.data.symbol}
-        />
-        <BountyCardContribution
-          amount={
-            typeof targetBalance === "undefined"
-              ? undefined
-              : pricing?.sellTargetAmount(targetBalance)
-          }
-          symbol={baseMetadata?.data.symbol}
-          text="My Contributions"
-        />
-      </SimpleGrid>
-
-      <VStack align="flex-end" w="full">
-        <AsyncQtyButton
-          buttonProps={{
-            colorScheme: "orange",
-            w: "180px",
-          }}
-          symbol={baseMetadata?.data.symbol}
-          validate={({ quantity }) => {
-            if (isWithdraw) {
-              if (pricing) {
-                const actualQuantity = -pricing.buyWithBaseAmount(-quantity);
-                if (!targetBalance || targetBalance < actualQuantity) {
-                  return "Insufficient funds";
-                }
-
-                if (!connected) {
-                  return "Connect Wallet";
-                }
-              }
-
-              return null;
-            } else {
-              if (!baseBalance || baseBalance < quantity) {
-                return "Insufficient funds";
-              }
-
-              if (!connected) {
-                return "Connect Wallet";
-              }
-            }
-
-            return null;
-          }}
-          action={async ({ quantity }) => {
-            if (isWithdraw && pricing) {
-              await tokenBondingSdk?.sell({
-                targetAmount: -pricing.buyWithBaseAmount(-quantity),
-                tokenBonding: tokenBonding?.publicKey!,
-                slippage: 0,
-              });
-            } else if (!isWithdraw) {
-              await tokenBondingSdk?.buy({
-                baseAmount: quantity,
-                tokenBonding: tokenBonding?.publicKey!,
-                slippage: 0,
-              });
-            }
-          }}
-        >
-          {isWithdraw ? "Withdraw Funds" : "Contribute Funds"}
-        </AsyncQtyButton>
-        <Button
-          onClick={() => setIsWithdraw(!isWithdraw)}
-          fontWeight={400}
-          w="180px"
-          variant="link"
-          size="sm"
-          colorScheme="orange"
-        >
-          {isWithdraw ? "Contribute Funds" : "Withdraw Funds"}
-        </Button>
-      </VStack>
-      <Divider color="gray.200" />
-      {isAdmin && tokenBonding && (
+      {bountyClosed && (
         <>
-          <Heading alignSelf="flex-start" size="sm">
-            Disburse Funds
-          </Heading>
-          <DisburseFunds tokenBondingKey={tokenBonding?.publicKey} />
-          <Divider color="gray.200" />
+          <Alert status="error">This bounty has been closed. You can burn the bounty tokens if you no longer have use for them. </Alert>
+          { mintKey && <BurnButton mintKey={mintKey} /> }
         </>
       )}
-      <Heading mb={"-6px"} alignSelf="flex-start" size="sm">
-        Top Contributors
-      </Heading>
-      <TopHolders mintKey={mintKey} />
+      {!bountyClosed && (
+        <>
+          <SimpleGrid
+            w="full"
+            justify="stretch"
+            columns={[1, 1, 2]}
+            spacing={2}
+            gap={2}
+          >
+            <BountyCardContribution
+              amount={reserveAmount}
+              symbol={baseMetadata?.data.symbol}
+            />
+            <BountyCardContribution
+              amount={
+                typeof targetBalance === "undefined"
+                  ? undefined
+                  : pricing?.sellTargetAmount(targetBalance)
+              }
+              symbol={baseMetadata?.data.symbol}
+              text="My Contributions"
+            />
+          </SimpleGrid>
+
+          <VStack align="flex-end" w="full">
+            <AsyncQtyButton
+              buttonProps={{
+                colorScheme: "orange",
+                w: "180px",
+              }}
+              symbol={baseMetadata?.data.symbol}
+              validate={({ quantity }) => {
+                if (isWithdraw) {
+                  if (pricing) {
+                    const actualQuantity = -pricing.buyWithBaseAmount(
+                      -quantity
+                    );
+                    if (!targetBalance || targetBalance < actualQuantity) {
+                      return "Insufficient funds";
+                    }
+
+                    if (!connected) {
+                      return "Connect Wallet";
+                    }
+                  }
+
+                  return null;
+                } else {
+                  if (!baseBalance || baseBalance < quantity) {
+                    return "Insufficient funds";
+                  }
+
+                  if (!connected) {
+                    return "Connect Wallet";
+                  }
+                }
+
+                return null;
+              }}
+              action={async ({ quantity }) => {
+                if (isWithdraw && pricing) {
+                  await tokenBondingSdk?.sell({
+                    targetAmount: -pricing.buyWithBaseAmount(-quantity),
+                    tokenBonding: tokenBonding?.publicKey!,
+                    slippage: 0,
+                  });
+                } else if (!isWithdraw) {
+                  await tokenBondingSdk?.buy({
+                    baseAmount: quantity,
+                    tokenBonding: tokenBonding?.publicKey!,
+                    slippage: 0,
+                  });
+                }
+              }}
+            >
+              {isWithdraw ? "Withdraw Funds" : "Contribute Funds"}
+            </AsyncQtyButton>
+            <Button
+              onClick={() => setIsWithdraw(!isWithdraw)}
+              fontWeight={400}
+              w="180px"
+              variant="link"
+              size="sm"
+              colorScheme="orange"
+            >
+              {isWithdraw ? "Contribute Funds" : "Withdraw Funds"}
+            </Button>
+          </VStack>
+          <Divider color="gray.200" />
+          {isAdmin && tokenBonding && (
+            <>
+              <Heading alignSelf="flex-start" size="sm">
+                Disburse Funds
+              </Heading>
+              <DisburseFunds tokenBondingKey={tokenBonding?.publicKey} />
+              <Divider color="gray.200" />
+            </>
+          )}
+          <Heading mb={"-6px"} alignSelf="flex-start" size="sm">
+            Top Contributors
+          </Heading>
+          <TopHolders mintKey={mintKey} />
+        </>
+      )}
     </VStack>
   );
 };

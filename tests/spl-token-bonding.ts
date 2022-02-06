@@ -857,7 +857,7 @@ describe("spl-token-bonding", () => {
           buyBaseRoyaltyPercentage: 0,
           buyTargetRoyaltyPercentage: 0,
           sellBaseRoyaltyPercentage: 0,
-          sellTargetRoyaltyPercentage: 0
+          sellTargetRoyaltyPercentage: 0,
         }));
         const tokenBondingAcct = (await tokenBondingProgram.getTokenBonding(
           tokenBonding
@@ -866,6 +866,19 @@ describe("spl-token-bonding", () => {
         await tokenBondingProgram.buy({
           tokenBonding,
           desiredTargetAmount: new BN(5000),
+          slippage: 0.5,
+        });
+
+        // Test buy with base amount, sell with target amount
+        const { targetAmount } = await tokenBondingProgram.swap({
+          baseMint: tokenBondingAcct.baseMint,
+          targetMint: tokenBondingAcct.targetMint,
+          baseAmount: new BN(10),
+          slippage: 0.5,
+        });
+        await tokenBondingProgram.sell({
+          tokenBonding,
+          targetAmount,
           slippage: 0.5,
         });
 
@@ -882,7 +895,8 @@ describe("spl-token-bonding", () => {
           baseMint,
           me
         );
-        const pre = (await provider.connection.getTokenAccountBalance(ata))!.value.uiAmount!;
+        const pre = (await provider.connection.getTokenAccountBalance(ata))!
+          .value.uiAmount!;
         await tokenBondingProgram.buy({
           tokenBonding,
           desiredTargetAmount: new BN(50),
@@ -898,8 +912,9 @@ describe("spl-token-bonding", () => {
           targetAmount: new BN(50 + 80),
           slippage: 0.5,
         });
-        
-        const post = (await provider.connection.getTokenAccountBalance(ata))!.value.uiAmount!;
+
+        const post = (await provider.connection.getTokenAccountBalance(ata))!
+          .value.uiAmount!;
         // Buy rounds up, sell rounds down. So we can potentially be off by 3 of the smallest unit
         expect(post).to.within(3 / Math.pow(10, DECIMALS), pre!);
 
@@ -915,8 +930,11 @@ describe("spl-token-bonding", () => {
           slippage: 0.5,
         });
 
-
-        await tokenUtils.expectBalanceWithin(tokenBondingAcct.baseStorage, 0, 0.04); // Rounding errors always go in base storage favor, so nobody can rob with wiggling
+        await tokenUtils.expectBalanceWithin(
+          tokenBondingAcct.baseStorage,
+          0,
+          0.04
+        ); // Rounding errors always go in base storage favor, so nobody can rob with wiggling
         await tokenUtils.expectAtaBalance(me, tokenBondingAcct.targetMint, 0);
       })
     });

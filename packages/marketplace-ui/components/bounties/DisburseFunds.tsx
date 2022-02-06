@@ -37,13 +37,21 @@ export const DisburseFunds = ({ tokenBondingKey }: { tokenBondingKey: PublicKey 
         variant="outline"
         colorScheme="orange"
         w="full"
-        action={() =>
-          tokenBondingSdk?.transferReserves({
-            amount: reserveAmount!,
-            destination: new PublicKey(tokenBondingKey),
-            tokenBonding: tokenBondingKey,
-          })
-        }
+        action={async () => {
+          if (tokenBondingSdk) {
+            const { instructions: i1, signers: s1 } =
+              await tokenBondingSdk?.transferReservesInstructions({
+                amount: reserveAmount!,
+                destination: new PublicKey(tokenBondingKey),
+                tokenBonding: tokenBondingKey,
+              });
+            const { instructions, signers } =
+              await tokenBondingSdk?.closeInstructions({
+                tokenBonding: tokenBondingKey,
+              });
+            await tokenBondingSdk.sendInstructions([...i1, ...instructions], [...s1, ...signers]);
+          }
+        }}
       >
         Disburse
       </AsyncButton>
