@@ -227,7 +227,7 @@ export const BountyForm: React.FC = () => {
 
           {error && (
             <Alert status="error">
-              <Alert status="error">{error.toString()}</Alert>
+              {error.toString()}
             </Alert>
           )}
 

@@ -16,6 +16,7 @@ import { BountyCardContribution } from "./BountyCardContribution";
 import { TopHolders } from "./TopHolders";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import { BurnButton } from "../BurnButton";
+import debounce from "lodash.debounce";
 
 export const AsyncQtyButton = ({
   inputProps = {},
@@ -106,18 +107,23 @@ export const BountyDetail = ({
   const targetBalance = useOwnedAmount(tokenBonding?.targetMint);
   const reserveAmount = useReserveAmount(tokenBonding?.publicKey);
   const [isWithdraw, setIsWithdraw] = useState(false);
-  const fundsUsed = useMemo(
-    () => {
-      if (targetMint && pricing && typeof reserveAmount !== "undefined") {
-        return (
-          toNumber(targetMint.supply, targetMint) - reserveAmount
-        );
-      }
-    },
-    [pricing, targetMint, targetMint?.supply, reserveAmount]
+  const baseMint = useMint(tokenBonding?.baseMint);
+  // Debounce because this can cause it to flash a notification when reserves change at the
+  // same time as bonding, but one comes through before the other.
+  const fundsHaveBeenUsed = useMemo(
+    debounce(
+      () =>
+        tokenBonding &&
+        baseMint &&
+        reserveAmount &&
+        toNumber(tokenBonding.reserveBalanceFromBonding, baseMint) !==
+          reserveAmount,
+      500
+    ),
+    [tokenBonding, baseMint, reserveAmount]
   );
-  const fundsHaveBeenUsed: boolean = !!fundsUsed && (fundsUsed > 0);
-  const bountyClosed = !tokenBonding && !bondingLoading;
+    
+  const bountyClosed = useMemo(debounce(() => !tokenBonding && !bondingLoading, 200), [tokenBonding, bondingLoading]);
   const [topHolderKey, setTopHolderKey] = useState(0);
   const refreshTopHolders = () => setTopHolderKey(k => k+1);
   
