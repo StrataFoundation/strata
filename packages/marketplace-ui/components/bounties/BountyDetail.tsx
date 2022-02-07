@@ -1,22 +1,25 @@
-import { Alert, Box, Button, ButtonProps, Divider, Heading, HStack, Image, Input, InputGroup, InputProps, InputRightElement, Link, SimpleGrid, Spinner, Stack, Text, VStack } from "@chakra-ui/react";
+import { Alert, Box, Button, ButtonProps, Divider, Heading, HStack, Input, InputGroup, InputProps, InputRightElement, SimpleGrid, Spinner, Text, VStack } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
+import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
 import {
-  Creator, roundToDecimals, useBondingPricing,
-  useMint,
-  useOwnedAmount, useReserveAmount, useStrataSdks, useTokenBondingFromMint,
+  useBondingPricing, useGovernance, useMint,
+  useOwnedAmount,
+  useReserveAmount,
+  useStrataSdks,
+  useTokenBondingFromMint,
   useTokenMetadata
 } from "@strata-foundation/react";
+import { toNumber } from "@strata-foundation/spl-token-bonding";
+import { SplTokenMetadata } from "@strata-foundation/spl-utils";
+import debounce from "lodash/debounce";
 import React, { useMemo, useState } from "react";
 import { AsyncButton } from "../AsyncButton";
-import { DisburseFunds } from "./DisburseFunds";
-import { AuthorityAndTokenInfo } from "./AuthorityAndTokenInfo";
-import { numberWithCommas } from "utils/numberWithCommas";
-import { BountyCardContribution } from "./BountyCardContribution";
-import { TopHolders } from "./TopHolders";
-import { toNumber } from "@strata-foundation/spl-token-bonding";
 import { BurnButton } from "../BurnButton";
-import debounce from "lodash.debounce";
+import { AuthorityAndTokenInfo } from "./AuthorityAndTokenInfo";
+import { BountyCardContribution } from "./BountyCardContribution";
+import { DisburseFunds } from "./DisburseFunds";
+import { TopHolders } from "./TopHolders";
 
 export const AsyncQtyButton = ({
   inputProps = {},
@@ -128,19 +131,18 @@ export const BountyDetail = ({
   const refreshTopHolders = () => setTopHolderKey(k => k+1);
   
   const attributes = React.useMemo(
-    () =>
-      targetData?.attributes?.reduce((acc, att) => {
-        if (att.trait_type) acc[att.trait_type] = att.value;
-        return acc;
-      }, {} as Record<string, string | number>),
-    [targetData]
+    () => SplTokenMetadata.attributesToRecord(targetData?.attributes), [targetData]
+  );
+
+  const { info: governance } = useGovernance(
+    tokenBonding?.reserveAuthority as PublicKey | undefined
   );
 
   const isAdmin =
-    publicKey &&
+    (publicKey &&
     (tokenBonding?.reserveAuthority as PublicKey | undefined)?.equals(
       publicKey
-    );
+    )) || governance;
   name = displayName || name;
   image = targetImage || image;
   description = targetData?.description || description;
@@ -186,6 +188,10 @@ export const BountyDetail = ({
         </Alert>
       )}
 
+      {!MarketplaceSdk.isNormalBounty(tokenBonding) && <Alert status="warning">
+        This bounty does not have normal bonding curve parameters. It may have royalties set, or
+        be using a non fixed price curve. Buyer beware.
+      </Alert>}
       {bountyClosed && (
         <>
           <Alert status="error">
@@ -286,19 +292,19 @@ export const BountyDetail = ({
             </Button>
           </VStack>
           <Divider color="gray.200" />
-          {isAdmin && tokenBonding && (
-            <VStack w="full" spacing={2}>
-              <Heading alignSelf="flex-start" size="sm">
-                Disburse Funds
-              </Heading>
-              <DisburseFunds tokenBondingKey={tokenBonding?.publicKey} />
-              <Divider color="gray.200" />
-            </VStack>
-          )}
           <Heading mb={"-6px"} alignSelf="flex-start" size="sm">
             Top Contributors
           </Heading>
           <TopHolders key={topHolderKey} mintKey={mintKey} />
+          {isAdmin && tokenBonding && (
+            <VStack w="full" spacing={2}>
+              <Divider color="gray.200" />
+              <Heading alignSelf="flex-start" size="sm">
+                Disburse Funds
+              </Heading>
+              <DisburseFunds tokenBondingKey={tokenBonding?.publicKey} />
+            </VStack>
+          )}
         </>
       )}
     </VStack>

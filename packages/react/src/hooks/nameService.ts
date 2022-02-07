@@ -9,7 +9,7 @@ import {
   getOwnerForName,
   useAccountFetchCache
 } from ".";
-import { deserializeUnchecked } from "borsh";
+import { deserialize } from "borsh";
 import { useAsync } from "react-async-hook";
 
 export async function reverseNameLookup(
@@ -30,7 +30,7 @@ export async function reverseNameLookup(
   if (!reverseAccount) {
     throw new Error("Invalid reverse account provided");
   }
-  return deserializeUnchecked(
+  return deserialize(
     ReverseTwitterRegistryState.schema,
     ReverseTwitterRegistryState,
     reverseAccount.data.slice(NameRegistryState.HEADER_LEN)

@@ -57,7 +57,7 @@ export const MintSelect = ({ value, onChange }: { value: string, onChange: (i: s
               maxHeight: "500px",
               overflow: "auto",
               backgroundColor: "white",
-              top: "100px",
+              top: "110px",
             }}
             placeholder="Press Escape to Close"
             onSelect={(t) => {

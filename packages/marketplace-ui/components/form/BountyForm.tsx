@@ -68,28 +68,11 @@ async function createBounty(
     image: values.image?.name,
     files: [values.image].filter(truthy),
     mint: targetMintKeypair.publicKey,
-    attributes: [
-      {
-        trait_type: "is_strata_bounty",
-        display_type: "Strata Bounty",
-        value: "true",
-      },
-      {
-        trait_type: "bounty_uri",
-        display_type: "Bounty URI",
-        value: `https://marketplace.strataprotocol.com/bounties/${mint}`,
-      },
-      {
-        trait_type: "contact",
-        display_type: "Contact",
-        value: values.contact,
-      },
-      {
-        trait_type: "discussion",
-        display_type: "Discussion",
-        value: values.discussion,
-      },
-    ],
+    attributes: MarketplaceSdk.bountyAttributes({
+      mint,
+      discussion: values.discussion,
+      contact: values.contact
+    }),
   });
   const { targetMint } = await marketplaceSdk.createBounty({
     targetMintKeypair,
@@ -124,7 +107,7 @@ export const BountyForm: React.FC = () => {
   const { publicKey } = useWallet();
   const { info: tokenRef } = usePrimaryClaimedTokenRef(publicKey);
   const { awaitingApproval } = useProvider();
-  const { loading, error } = useAsyncCallback(createBounty);
+  const { execute, loading, error } = useAsyncCallback(createBounty);
   const { marketplaceSdk } = useMarketplaceSdk();
   const router = useRouter();
   const { authority, mint } = watch();
@@ -146,7 +129,7 @@ export const BountyForm: React.FC = () => {
 
 
   const onSubmit = async (values: IBountyFormProps) => {
-    const mintKey = await createBounty(marketplaceSdk!, values);
+    const mintKey = await execute(marketplaceSdk!, values);
     router.push(route(routes.bounty, { mintKey: mintKey.toBase58() }));
   };
 
@@ -210,8 +193,8 @@ export const BountyForm: React.FC = () => {
           </FormControlWithError>
           <FormControlWithError
             id="contact"
-            help="The contact information of the bounty authority. This can be an email address, twitter handle, etc."
-            label="Authority Contact Information"
+            help="Who to contact regarding the bounty. This can be an email address, twitter handle, etc."
+            label="Contact Information"
             errors={errors}
           >
             <Input {...register("contact")} />

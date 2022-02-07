@@ -1,7 +1,7 @@
 import { BountyDetail } from "@/components/bounties/BountyDetail";
 import { MetadataMeta } from "@/components/MetadataMeta";
 import { Box, Center, Container, Image } from "@chakra-ui/react";
-import { usePublicKey } from "@strata-foundation/react";
+import { usePublicKey, useTokenMetadata } from "@strata-foundation/react";
 import {
   GetServerSideProps,
   InferGetServerSidePropsType,
@@ -22,8 +22,10 @@ export const MarketDisplay: NextPage = ({
 }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const router = useRouter();
   const { mintKey: mintKeyRaw } = router.query;
+  
 
   const mintKey = usePublicKey(mintKeyRaw as string);
+const { image: targetImage } = useTokenMetadata(mintKey);
 
   return (
     <Box
@@ -54,7 +56,7 @@ export const MarketDisplay: NextPage = ({
           w="142px"
           h="142px"
           alt={name}
-          src={image}
+          src={targetImage || image}
         />
         <Box zIndex={1} bg="white" shadow="xl" rounded="lg">
           <BountyDetail

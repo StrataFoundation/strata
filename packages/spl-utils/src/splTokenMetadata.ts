@@ -158,6 +158,17 @@ export class SplTokenMetadata {
     this.provider = opts.provider;
   }
 
+  static attributesToRecord(attributes: Attribute[] | undefined): Record<string, string | number> {
+    if (!attributes) {
+      return {}
+    }
+    
+    return attributes?.reduce((acc, att) => {
+      if (att.trait_type) acc[att.trait_type] = att.value;
+      return acc;
+    }, {} as Record<string, string | number>);
+  }
+
   static async getArweaveMetadata(
     uri: string | undefined
   ): Promise<IMetadataExtension | undefined> {
@@ -299,11 +310,22 @@ export class SplTokenMetadata {
     mint: PublicKey;
   }): Promise<string> {
     const { txid, files } = await this.presignCreateArweaveUrl(args);
+    let env = args.env;
+    if (!env) {
+      // @ts-ignore
+      const url: string = this.provider.connection._rpcEndpoint;
+      if (url.includes("devnet")) {
+        env = "devnet";
+      } else {
+        env = "mainnet-beta";
+      }
+    }
+
     const uri = await this.getArweaveUrl({
       txid,
       mint: args.mint,
       files,
-      env: args.env || "mainnet-beta",
+      env,
       uploadUrl: args.uploadUrl || ARWEAVE_UPLOAD_URL
     });
 

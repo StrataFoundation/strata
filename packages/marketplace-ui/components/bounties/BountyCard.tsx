@@ -1,31 +1,37 @@
-import { Box, Heading, HStack, Image, SimpleGrid, VStack } from "@chakra-ui/react";
+import { Box, Heading, HStack, Image, Link, SimpleGrid, VStack } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
+import { useReserveAmount, useTokenBondingFromMint, useTokenMetadata } from "@strata-foundation/react";
+import { route, routes } from "pages/routes";
 import { AuthorityAndTokenInfo } from "./AuthorityAndTokenInfo";
 import { BountyCardContribution } from "./BountyCardContribution";
 
 export const BountyCard = ({ mintKey }: { mintKey: PublicKey }) => {
+  const { image, displayName } = useTokenMetadata(mintKey);
+  const { info: tokenBonding } = useTokenBondingFromMint(mintKey);
+  const { metadata } = useTokenMetadata(tokenBonding?.baseMint);
+  const reserveAmount = useReserveAmount(tokenBonding?.publicKey);
   return (
     <HStack
+      as={Link}
+      href={route(routes.bounty, { mintKey: mintKey.toBase58() })}
       align="flex-start"
       spacing={4}
-      _hover={{ backgroundColor: "gray.100", cursor: "pointer" }}
+      _hover={{ backgroundColor: "gray.100", cursor: "pointer", textDecoration: "none" }}
       padding={8}
     >
-      <Image
-        w="45px"
-        h="45px"
-        src="https://strataprotocol.com/img/logo.png"
-        alt="Hey"
-      />
+      <Image w="45px" h="45px" src={image} alt={displayName} />
       <SimpleGrid columns={[1, 2]} gap={4}>
         <VStack maxWidth="500px" spacing={4} align="left">
           <Heading fontSize="20px" size="md">
-            Web Developer. provider does not catch new events/block updates
+            {displayName}
           </Heading>
           <AuthorityAndTokenInfo mintKey={mintKey} />
         </VStack>
         <Box justifySelf={[null, "flex-end"]} alignSelf="center" align="left">
-          <BountyCardContribution amount={25324654.23} symbol="NAS" />
+          <BountyCardContribution
+            amount={reserveAmount}
+            symbol={metadata?.data.symbol}
+          />
         </Box>
       </SimpleGrid>
     </HStack>

@@ -1,13 +1,13 @@
-import React from "react";
-import { Link as PlainLink, Avatar, Text, HStack } from "@chakra-ui/react";
+import { Avatar, HStack, Link as PlainLink, Text } from "@chakra-ui/react";
 import { MetadataData } from "@metaplex-foundation/mpl-token-metadata";
-import {
-  useSocialTokenMetadata,
-  useErrorHandler,
-} from "../hooks";
-import { ITokenRef } from "@strata-foundation/spl-token-collective";
-import { Link } from "react-router-dom";
 import { PublicKey } from "@solana/web3.js";
+import { ITokenRef } from "@strata-foundation/spl-token-collective";
+import { useGovernance } from "../hooks/useGovernance";
+import React from "react";
+import { Link } from "react-router-dom";
+import {
+  useAccount, useErrorHandler, useSocialTokenMetadata
+} from "../hooks";
 import { useReverseName } from "../hooks/nameService";
 
 export const WUMBO_TWITTER_VERIFIER = new PublicKey(
@@ -30,6 +30,8 @@ export type GetCreatorLink = (
   h: string | undefined
 ) => string;
 
+
+
 export const Creator = React.memo(
   ({
     creator,
@@ -45,6 +47,8 @@ export const Creator = React.memo(
     const { nameString: handle, error: reverseTwitterError2 } = useReverseName(creator, WUMBO_TWITTER_VERIFIER, WUMBO_TWITTER_TLD);
     handleErrors(error, reverseTwitterError2);
 
+    const { info: governance } = useGovernance(creator);
+    
     const children = (
       <>
         {metadata && (
@@ -57,6 +61,12 @@ export const Creator = React.memo(
         {!metadata && handle && `@${handle}`}
       </>
     );
+
+    if (governance) {
+      <Link to={`https://realms.today/dao/${governance.realm.toBase58()}`}>
+        {children}
+      </Link>;
+    }
 
     // @ts-ignore
     const link = getCreatorLink(creator, metadata, tokenRef, handle);

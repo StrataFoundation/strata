@@ -34,7 +34,7 @@ export const AuthorityAndTokenInfo = ({ mintKey }: { mintKey: PublicKey | undefi
   const updateAuthority = usePublicKey(metadata?.updateAuthority);
   return (
     <SimpleGrid columns={[1, 1, 2]} fontSize="14px" spacing={4}>
-      <InfoItem creator={updateAuthority} loading={loading} name="Created By" />
+      <InfoItem creator={updateAuthority} loading={loading} name="Requester" />
       <InfoItem
         creator={tokenBonding?.reserveAuthority as PublicKey}
         loading={loading}

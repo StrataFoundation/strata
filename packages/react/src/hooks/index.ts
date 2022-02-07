@@ -38,3 +38,4 @@ export * from "./useCoinGeckoPrice";
 export * from "./nameService";
 export * from "./useReserveAmount";
 export * from "./useUserTokensWithMeta";
+export * from "./useGovernance";

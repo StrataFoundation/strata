@@ -1,16 +1,34 @@
 import { BountyCard } from "@/components/bounties/BountyCard";
 import { BountyList } from "@/components/bounties/BountyList";
+import { MintSelectModal } from "@/components/bounties/MintSelectModal";
 import {
   Box, Button, Center, Container, Heading, Icon,
   Input, InputGroup, InputLeftElement, Link, Select, Stack, VStack
 } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
+import { useErrorHandler, usePublicKey } from "@strata-foundation/react";
+import { SortDirection, useBounties } from "hooks/useBounties";
+import { useQueryString } from "hooks/useQueryString";
 import { NextPage } from "next";
 import Head from "next/head";
+import { useState } from "react";
 import { AiOutlineSearch } from "react-icons/ai";
 import { routes } from "../routes";
 
 export const Bounties: NextPage = () => {
+  const [mint, setMint] = useQueryString("mint", "");
+  const [search, setSearch] = useQueryString("search", "");
+  const [sort, setSort] = useQueryString("sort", "newest");
+  const baseMint = usePublicKey(mint);
+  const { result: bounties, error } = useBounties({
+    baseMint,
+    search,
+    sortType: sort.includes("contribution") ? "CONTRIBUTION" : "GO_LIVE",
+    sortDirection: sort.includes("asc") ? "ASC" : "DESC"
+  });
+  const { handleErrors } = useErrorHandler();
+  handleErrors(error);
+
   return (
     <Box w="full" backgroundColor="#f9f9f9" height="100vh" overflow="auto">
       <Head>
@@ -61,11 +79,14 @@ export const Bounties: NextPage = () => {
                 <Icon color="#718EBF" as={AiOutlineSearch} />
               </InputLeftElement>
               <Input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
                 borderColor="gray.200"
                 placeholder="Search text, token name, or token symbol"
               />
             </InputGroup>
             <Select
+              onChange={e => setSort(e.target.value)}
               borderColor="gray.200"
               w={[null, null, "248px"]}
               placeholder="Sort by"
@@ -80,15 +101,24 @@ export const Bounties: NextPage = () => {
                 Contribution: High to low
               </option>
             </Select>
+            <MintSelectModal
+              buttonProps={{ backgroundColor: "white" }}
+              onChange={setMint}
+              value={mint}
+            />
           </Stack>
           <BountyList>
-            <BountyCard mintKey={PublicKey.default} />
-            <BountyCard mintKey={PublicKey.default}  />
+            {bounties?.map((bounty) => (
+              <BountyCard
+                key={bounty.tokenBondingKey.toBase58()}
+                mintKey={bounty.targetMint}
+              />
+            ))}
           </BountyList>
         </VStack>
       </Container>
     </Box>
   );
-}
+};
 
 export default Bounties;
