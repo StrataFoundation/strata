@@ -12,7 +12,7 @@ export const BurnButton = ({ mintKey }: { mintKey: PublicKey }) => {
   const hasTokens = account && account.amount.toNumber() > 0
   
   return <AsyncButton
-    disabled={!hasTokens}
+    isDisabled={!hasTokens}
     colorScheme="red"
     action={async () => {
       if (account && publicKey && provider && associatedAccountKey) {

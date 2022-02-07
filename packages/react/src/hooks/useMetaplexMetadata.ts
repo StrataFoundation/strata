@@ -141,10 +141,16 @@ export function useMetaplexTokenMetadata(
     metadataOrTokenListMetadata,
   ]);
 
+  const displayName =
+    metadataOrTokenListMetadata?.data.name.length == 32
+      ? data?.name
+      : metadataOrTokenListMetadata?.data.name;
+
   return {
     loading: Boolean(
       token && (loading || accountLoading || dataLoading || imageLoading)
     ),
+    displayName,
     error: error || dataError || imageError,
     mint,
     metadata: metadataOrTokenListMetadata,

@@ -56,7 +56,9 @@ export const Header: React.FC = () => {
           display="flex"
           justifyContent="space-between"
         >
-          <Image alt="Strata Marketplace" src="/logo.svg" />
+          <Link href="/bounties">
+            <Image alt="Strata Marketplace" src="/logo.svg" />
+          </Link>
           <Box
             display={{ md: "block" }}
             flexBasis={{ base: "100%", md: "auto" }}

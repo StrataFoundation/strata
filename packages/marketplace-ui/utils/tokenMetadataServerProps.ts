@@ -25,9 +25,11 @@ export const mintMetadataServerSideProps: GetServerSideProps = async (
     metadataAcc?.data.uri
   );
 
+  const name = metadataAcc?.data?.name.length == 32 ? metadata?.name : metadataAcc?.data?.name;
+
   return {
     props: {
-      name: metadataAcc?.data.name || null,
+      name: name || null,
       description: metadata?.description || null,
       image: (await SplTokenMetadata.getImage(metadataAcc?.data.uri)) || null,
     },

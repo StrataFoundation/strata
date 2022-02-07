@@ -1,5 +1,5 @@
 import React from "react";
-import { Link as PlainLink, Avatar } from "@chakra-ui/react";
+import { Link as PlainLink, Avatar, Text, HStack } from "@chakra-ui/react";
 import { MetadataData } from "@metaplex-foundation/mpl-token-metadata";
 import {
   useSocialTokenMetadata,
@@ -48,7 +48,10 @@ export const Creator = React.memo(
     const children = (
       <>
         {metadata && (
-          <Avatar showDetails size="xs" src={image} name={metadata.data.name} />
+          <HStack spacing={1}>
+            <Avatar size="xs" src={image} />
+            <Text>{metadata.data.name}</Text>
+          </HStack>
         )}
         {!metadata && !handle && truncatePubkey(creator)}
         {!metadata && handle && `@${handle}`}

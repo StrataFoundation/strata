@@ -1911,18 +1911,33 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           tokenBondingAcct.baseMint,
           this.wallet.publicKey
         );
+      }
+    }
 
-        if (!await this.accountExists(destination)) {
-          instructions.push(Token.createAssociatedTokenAccountInstruction(
+    const destAcct = await this.provider.connection.getAccountInfo(destination);
+
+    // Destination is a wallet, need to get the ATA
+    if (!isNative && (!destAcct || destAcct.owner.equals(SystemProgram.programId))) {
+      const ataDestination = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        tokenBondingAcct.baseMint,
+        destination
+      );
+      if (!(await this.accountExists(ataDestination))) {
+        instructions.push(
+          Token.createAssociatedTokenAccountInstruction(
             ASSOCIATED_TOKEN_PROGRAM_ID,
             TOKEN_PROGRAM_ID,
             tokenBondingAcct.baseMint,
+            ataDestination,
             destination,
-            this.wallet.publicKey,
             payer
-          ))
-        }
+          )
+        );
       }
+
+      destination = ataDestination;
     }
     
     const common = {

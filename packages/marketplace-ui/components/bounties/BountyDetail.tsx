@@ -55,6 +55,8 @@ export const AsyncQtyButton = ({
             fontSize="16px"
             fontWeight={700}
             color="gray.500"
+            justifyContent="flex-end"
+            width="120px"
           >
             {symbol}
           </InputRightElement>
@@ -92,6 +94,7 @@ export const BountyDetail = ({
     metadata: targetMetadata,
     data: targetData,
     loading: targetMetaLoading,
+    displayName
   } = useTokenMetadata(tokenBonding?.targetMint);
   const { metadata: baseMetadata, loading: metadataLoading } = useTokenMetadata(
     tokenBonding?.baseMint
@@ -115,7 +118,9 @@ export const BountyDetail = ({
   );
   const fundsHaveBeenUsed: boolean = !!fundsUsed && (fundsUsed > 0);
   const bountyClosed = !tokenBonding && !bondingLoading;
-
+  const [topHolderKey, setTopHolderKey] = useState(0);
+  const refreshTopHolders = () => setTopHolderKey(k => k+1);
+  
   const attributes = React.useMemo(
     () =>
       targetData?.attributes?.reduce((acc, att) => {
@@ -130,13 +135,16 @@ export const BountyDetail = ({
     (tokenBonding?.reserveAuthority as PublicKey | undefined)?.equals(
       publicKey
     );
-  name = targetMetadata?.data.name || name;
+  name = displayName || name;
   image = targetImage || image;
   description = targetData?.description || description;
 
   const dataMissing = !name && !image && !description;
 
-  if (!metadataLoading && dataMissing) {
+  if (
+    (!metadataLoading && dataMissing) ||
+    (attributes && !attributes.is_strata_bounty)
+  ) {
     return <Text>Not found</Text>;
   }
 
@@ -145,9 +153,12 @@ export const BountyDetail = ({
   }
 
   return (
-    <VStack p={8} spacing={4} w="full">
-      <Heading textAlign="center">{name}</Heading>
-      <AuthorityAndTokenInfo mintKey={mintKey} />
+    <VStack p={8} spacing={8} w="full">
+      <VStack spacing={4}>
+        <Heading textAlign="center">{name}</Heading>
+        <AuthorityAndTokenInfo mintKey={mintKey} />
+      </VStack>
+
       <Text
         w="full"
         align="left"
@@ -171,8 +182,11 @@ export const BountyDetail = ({
 
       {bountyClosed && (
         <>
-          <Alert status="error">This bounty has been closed. You can burn the bounty tokens if you no longer have use for them. </Alert>
-          { mintKey && <BurnButton mintKey={mintKey} /> }
+          <Alert status="error">
+            This bounty has been closed. You can burn the bounty tokens if you
+            no longer have use for them.{" "}
+          </Alert>
+          {mintKey && <BurnButton mintKey={mintKey} />}
         </>
       )}
       {!bountyClosed && (
@@ -248,6 +262,8 @@ export const BountyDetail = ({
                     slippage: 0,
                   });
                 }
+
+                refreshTopHolders();
               }}
             >
               {isWithdraw ? "Withdraw Funds" : "Contribute Funds"}
@@ -265,18 +281,18 @@ export const BountyDetail = ({
           </VStack>
           <Divider color="gray.200" />
           {isAdmin && tokenBonding && (
-            <>
+            <VStack w="full" spacing={2}>
               <Heading alignSelf="flex-start" size="sm">
                 Disburse Funds
               </Heading>
               <DisburseFunds tokenBondingKey={tokenBonding?.publicKey} />
               <Divider color="gray.200" />
-            </>
+            </VStack>
           )}
           <Heading mb={"-6px"} alignSelf="flex-start" size="sm">
             Top Contributors
           </Heading>
-          <TopHolders mintKey={mintKey} />
+          <TopHolders key={topHolderKey} mintKey={mintKey} />
         </>
       )}
     </VStack>

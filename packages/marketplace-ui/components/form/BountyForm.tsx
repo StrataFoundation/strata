@@ -61,44 +61,43 @@ async function createBounty(
   const authority = new PublicKey(values.authority);
 
   const targetMintKeypair = Keypair.generate();
-  // const uri = await marketplaceSdk.tokenMetadataSdk.createArweaveMetadata({
-  //   name: values.name,
-  //   symbol: values.shortName,
-  //   description: values.description,
-  //   image: values.image?.name,
-  //   files: [values.image].filter(truthy),
-  //   mint: targetMintKeypair.publicKey,
-  //   attributes: [
-  //     {
-  //       trait_type: "is_strata_bounty",
-  //       display_type: "Strata Bounty",
-  //       value: "true",
-  //     },
-  //     {
-  //       trait_type: "bounty_uri",
-  //       display_type: "Bount URI",
-  //       value: `https://marketplace.strataprotocol.com/bounties/${mint}`,
-  //     },
-  //     {
-  //       trait_type: "contact",
-  //       display_type: "Contact",
-  //       value: values.contact,
-  //     },
-  //     {
-  //       trait_type: "discussion",
-  //       display_type: "Discussion",
-  //       value: values.discussion,
-  //     },
-  //   ],
-  // });
-  const uri =
-    "https://strata-token-metadata.s3.us-east-2.amazonaws.com/test-bounty.json";
+  const uri = await marketplaceSdk.tokenMetadataSdk.createArweaveMetadata({
+    name: values.name,
+    symbol: values.shortName,
+    description: values.description,
+    image: values.image?.name,
+    files: [values.image].filter(truthy),
+    mint: targetMintKeypair.publicKey,
+    attributes: [
+      {
+        trait_type: "is_strata_bounty",
+        display_type: "Strata Bounty",
+        value: "true",
+      },
+      {
+        trait_type: "bounty_uri",
+        display_type: "Bounty URI",
+        value: `https://marketplace.strataprotocol.com/bounties/${mint}`,
+      },
+      {
+        trait_type: "contact",
+        display_type: "Contact",
+        value: values.contact,
+      },
+      {
+        trait_type: "discussion",
+        display_type: "Discussion",
+        value: values.discussion,
+      },
+    ],
+  });
   const { targetMint } = await marketplaceSdk.createBounty({
     targetMintKeypair,
     authority,
     metadata: new DataV2({
-      name: values.name,
-      symbol: values.shortName,
+      // Max name len 32
+      name: values.name.substring(0, 32),
+      symbol: values.shortName.substring(0, 10),
       uri,
       sellerFeeBasisPoints: 0,
       creators: null,

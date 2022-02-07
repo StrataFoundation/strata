@@ -98,6 +98,7 @@ export enum MetadataCategory {
 }
 
 export interface ITokenWithMeta {
+  displayName?: string;
   metadataKey?: PublicKey;
   metadata?: MetadataData;
   mint?: MintInfo;
@@ -255,7 +256,13 @@ export class SplTokenMetadata {
     const mint =
       metadata &&
       (await getMintInfo(this.provider, new PublicKey(metadata.mint)));
+
+    const displayName =
+      metadata?.data.name.length == 32
+        ? data?.name
+        : metadata?.data.name; 
     return {
+      displayName,
       metadata: metadata || undefined,
       metadataKey,
       image,
@@ -403,13 +410,6 @@ export class SplTokenMetadata {
     InstructionResult<{ metadata: PublicKey }>
   > {
     const metadata = await Metadata.getPDA(mint);
-    console.log({
-      metadata,
-      mint,
-      metadataData: data,
-      mintAuthority,
-      updateAuthority: authority
-    })
     const instructions: TransactionInstruction[] = new CreateMetadataV2({
       feePayer: payer
     }, {

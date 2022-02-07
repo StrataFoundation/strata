@@ -42,7 +42,7 @@ export const DisburseFunds = ({ tokenBondingKey }: { tokenBondingKey: PublicKey 
             const { instructions: i1, signers: s1 } =
               await tokenBondingSdk?.transferReservesInstructions({
                 amount: reserveAmount!,
-                destination: new PublicKey(tokenBondingKey),
+                destination: new PublicKey(address),
                 tokenBonding: tokenBondingKey,
               });
             const { instructions, signers } =
