@@ -1,5 +1,5 @@
 {
-  "name": "@strata-foundation/strata-marketplace",
+  "name": "@strata-foundation/marketplace-ui",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"

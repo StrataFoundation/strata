@@ -7,6 +7,7 @@ import {
 import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import * as anchor from "@project-serum/anchor";
 import { BN } from "@project-serum/anchor";
+import { NATIVE_MINT } from "@solana/spl-token";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import {
   ExponentialCurveConfig,
@@ -246,6 +247,33 @@ describe("spl-token-collective", () => {
       );
     });
   });
+
+  it("should allow creating a social token with no collective", async () => {
+    const keypair = Keypair.generate();
+    const { instructions, signers } = await tokenCollectiveProgram.createSocialTokenInstructions({
+      owner: keypair.publicKey,
+      mint: NATIVE_MINT,
+      authority: keypair.publicKey,
+      metadata: {
+        name: "Whaddup",
+        symbol: "WHAD",
+        uri: "https://wumbo-token-metadata.s3.us-east-2.amazonaws.com/open.json",
+      },
+      tokenBondingParams: {
+        curve,
+        buyBaseRoyaltyPercentage: 0,
+        buyTargetRoyaltyPercentage: 0,
+        sellBaseRoyaltyPercentage: 0,
+        sellTargetRoyaltyPercentage: 0,
+      },
+    });
+    await sendMultipleInstructions(
+      tokenCollectiveProgram.errors || new Map(),
+      provider,
+      instructions,
+      [signers[0], signers[1], [...signers[2], keypair]]
+    );
+  })
 
   describe("Claimed", () => {
     let claimedTokenRef: PublicKey;

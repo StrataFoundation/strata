@@ -6,6 +6,7 @@ import {
   AccountInfo as TokenAccountInfo,
   ASSOCIATED_TOKEN_PROGRAM_ID,
   MintLayout,
+  NATIVE_MINT,
   Token,
   TOKEN_PROGRAM_ID
 } from "@solana/spl-token";
@@ -1110,14 +1111,29 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     if (!mint && !collective) {
       mint = SplTokenCollective.OPEN_COLLECTIVE_MINT_ID;
     }
-
-    if (!collective) {
-      collective = (await SplTokenCollective.collectiveKey(mint!))[0];
+    const state = (await this.splTokenBondingProgram.getState())!;
+    const isNative =
+      mint?.equals(NATIVE_MINT) || mint?.equals(state.wrappedSolMint);
+    if (isNative) {
+      mint = state.wrappedSolMint;
     }
 
-    const collectiveAcct = (await this.getCollective(collective))!;
-    const config = collectiveAcct.config as CollectiveConfigV0;
+    let collectiveBumpSeed: number = 0;
+    if (!collective) {
+      ([collective, collectiveBumpSeed] = (await SplTokenCollective.collectiveKey(mint!)));
+    }
+
+    const collectiveAcct = (await this.getCollective(collective));
+    if (collectiveAcct) {
+      collectiveBumpSeed = collectiveAcct.bumpSeed;
+    }
+    const config: CollectiveConfigV0 | undefined = collectiveAcct?.config as
+      | CollectiveConfigV0
+      | undefined;
     if (!mint) {
+      if (!collectiveAcct) {
+        throw new Error("Must either provide a collective or a mint")
+      }
       mint = collectiveAcct.mint;
     }
 
@@ -1142,7 +1158,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
         targetMint,
         tokenBondingParams.targetMintDecimals ||
           // @ts-ignore
-          config.unclaimedTokenBondingSettings?.targetMintDecimals ||
+          config?.unclaimedTokenBondingSettings?.targetMintDecimals ||
           9
       ))
     );
@@ -1172,7 +1188,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     // create metadata with payer as temporary authority
     console.log("Creating social token metadata...");
     // @ts-ignore
-    let uri = metadataUri || config.unclaimedTokenMetadataSettings?.uri;
+    let uri = metadataUri || config?.unclaimedTokenMetadataSettings?.uri;
 
     if (!uri) {
       throw new Error(
@@ -1217,18 +1233,18 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     // Create token bonding
     const instructions2: TransactionInstruction[] = [];
     const tokenBondingSettings = owner
-      ? config.claimedTokenBondingSettings
-      : config.unclaimedTokenBondingSettings;
+      ? config?.claimedTokenBondingSettings
+      : config?.unclaimedTokenBondingSettings;
     const signers2: Signer[] = [];
     const curveToUse = (curve ||
       // @ts-ignore
-      (!owner && collectiveAcct.config.unclaimedTokenBondingSettings?.curve) ||
+      (!owner && collectiveAcct?.config?.unclaimedTokenBondingSettings?.curve) ||
       // @ts-ignore
-      (owner && collectiveAcct.config.claimedTokenBondingSettings?.curve) ||
+      (owner && collectiveAcct?.config?.claimedTokenBondingSettings?.curve) ||
       // @ts-ignore
-      collectiveAcct.config.unclaimedTokenBondingSettings?.curve ||
+      collectiveAcct?.config?.unclaimedTokenBondingSettings?.curve ||
       // @ts-ignore
-      collectiveAcct.config.claimedTokenBondingSettings?.curve)!;
+      collectiveAcct?.config?.claimedTokenBondingSettings?.curve)!;
 
     if (!curveToUse) {
       throw new Error("No curve provided");
@@ -1242,13 +1258,14 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
         buyTargetRoyalties,
         sellBaseRoyalties,
         sellTargetRoyalties,
+        baseMint
       },
     } = await this.splTokenBondingProgram.createTokenBondingInstructions({
       payer,
       index: 0,
       // @ts-ignore
       curve: curveToUse,
-      baseMint: collectiveAcct.mint,
+      baseMint: mint,
       targetMint,
       generalAuthority: mintTokenRef,
       reserveAuthority: mintTokenRef,
@@ -1287,13 +1304,13 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
 
     const initializeArgs = {
       authority:
-        (collectiveAcct.authority as PublicKey | undefined) ||
+        (collectiveAcct?.authority as PublicKey | undefined) ||
         PublicKey.default,
       collective,
       tokenMetadata: new PublicKey(tokenMetadata),
       tokenBonding,
       payer,
-      baseMint: collectiveAcct.mint,
+      baseMint,
       targetMint,
       buyBaseRoyalties,
       buyTargetRoyalties,
@@ -1307,7 +1324,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       authority: authority || null,
       nameClass: nameClass || null,
       nameParent: nameParent || null,
-      collectiveBumpSeed: collectiveAcct.bumpSeed,
+      collectiveBumpSeed,
       ownerTokenRefBumpSeed,
       mintTokenRefBumpSeed,
     };
@@ -1320,7 +1337,6 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
         await this.instruction.initializeOwnedSocialTokenV0(args, {
           accounts: {
             initializeArgs,
-
             owner,
             payer,
             ownerTokenRef,

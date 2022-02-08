@@ -187,6 +187,7 @@ export interface IInitializeCurveArgs {
 
 export interface ICreateTokenBondingOutput {
   tokenBonding: PublicKey;
+  baseMint: PublicKey;
   targetMint: PublicKey;
   buyBaseRoyalties: PublicKey;
   buyTargetRoyalties: PublicKey;
@@ -1022,6 +1023,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
 
     return {
       output: {
+        baseMint,
         tokenBonding,
         targetMint,
         buyBaseRoyalties,
