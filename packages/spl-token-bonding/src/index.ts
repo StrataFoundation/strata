@@ -27,6 +27,7 @@ import {
   getTokenAccount,
   InstructionResult,
   percent,
+  SplTokenMetadata,
   TypedAccountParser,
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
@@ -1578,7 +1579,10 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     const baseMintInfo = await getMintInfo(this.provider, baseMint);
     let currAmount = toBN(baseAmount, baseMintInfo);
 
-    for (const subHierarchy of isBuy ? arrHierarchy.reverse() : arrHierarchy) {
+    const hierarchyToTraverse = isBuy ? arrHierarchy.reverse() : arrHierarchy;
+    const processedMints = [];
+    for (const [index, subHierarchy] of hierarchyToTraverse.entries()) {
+      const isLastHop = index === arrHierarchy.length - 1;
       const tokenBonding = subHierarchy.tokenBonding;
       const baseIsSol = tokenBonding.baseMint.equals(
         (await this.getState())?.wrappedSolMint!
@@ -1610,6 +1614,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       let instructions: TransactionInstruction[];
       let signers: Signer[];
 
+      let currMint;
       if (isBuy) {
         console.log(
           `Actually doing ${tokenBonding.baseMint.toBase58()} to ${tokenBonding.targetMint.toBase58()}`
@@ -1619,9 +1624,10 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           sourceAuthority,
           baseAmount: currAmount,
           tokenBonding: tokenBonding.publicKey,
-          expectedOutputAmount,
+          expectedOutputAmount: isLastHop ? expectedOutputAmount : undefined,
           slippage,
         }));
+        currMint = tokenBonding.targetMint;
       } else {
         console.log(
           `SELL doing ${tokenBonding.baseMint.toBase58()} to ${tokenBonding.targetMint.toBase58()}`
@@ -1631,9 +1637,10 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           sourceAuthority,
           targetAmount: currAmount,
           tokenBonding: tokenBonding.publicKey,
-          expectedOutputAmount,
+          expectedOutputAmount: isLastHop ? expectedOutputAmount : undefined,
           slippage,
         }));
+        currMint = tokenBonding.baseMint;
       }
 
       const { instructions: extraInstrs, signers: extaSigners } =
@@ -1643,11 +1650,33 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           isBuy,
         });
 
-      await this.sendInstructions(
-        [...instructions, ...extraInstrs],
-        [...signers, ...extaSigners],
-        payer
-      );
+      try {
+        await this.sendInstructions(
+          [...instructions, ...extraInstrs],
+          [...signers, ...extaSigners],
+          payer
+        );
+      } catch (e: any) {
+        // Throw a nice error if the swap partially succeeded.
+        if (processedMints.length > 0) {
+          const splTokenMetadata = await SplTokenMetadata.init(this.provider);
+          const lastMint = processedMints[processedMints.length - 1];
+          const metadataKey = await Metadata.getPDA(lastMint);
+          const metadata = await splTokenMetadata.getMetadata(metadataKey);
+          const name = metadata?.data.symbol || lastMint.toBase58();
+          
+          const err = new Error(
+            `Swap partially failed, check your wallet for ${name} tokens. Error: ${e.toString()}`,
+          );
+          err.stack = e.stack;
+
+          throw err;
+        }
+
+        throw e;
+      }
+      
+      processedMints.push(currMint);
 
       async function newBalance(tries: number = 0): Promise<BN> {
         if (tries >= 4) {
