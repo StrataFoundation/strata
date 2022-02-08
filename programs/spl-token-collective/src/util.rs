@@ -3,7 +3,7 @@
 use crate::arg::*;
 use crate::{error::ErrorCode, name::NameRecordHeader};
 use anchor_lang::{prelude::*, solana_program::hash::hashv};
-use anchor_spl::token::{TokenAccount, Mint};
+use anchor_spl::token::{Mint, TokenAccount};
 use spl_token_bonding::state::TokenBondingV0;
 
 pub fn verify_authority(authority: Option<Pubkey>, key: &Pubkey) -> Result<bool, ProgramError> {
@@ -108,25 +108,29 @@ pub fn verify_token_bonding_royalties<'info>(
         .map_or(true, |royalty| {
           royalty == token_bonding.sell_target_royalties
         }));
-    
-    let valid_unclaimed = if claimed {
-      true
-    } else {
-      // Unclaimed tokens will never work for SOL. But that's okay.
-      let buy_base_royalties_acc: Account<'info, TokenAccount> = Account::try_from(buy_base_royalties)?;
-      let buy_target_royalties_acc: Account<'info, TokenAccount> = Account::try_from(buy_target_royalties)?;
-      let sell_base_royalties_acc: Account<'info, TokenAccount> = Account::try_from(sell_base_royalties)?;
-      let sell_target_royalties_acc: Account<'info, TokenAccount> = Account::try_from(sell_target_royalties)?;
-      (!defaults.buy_base_royalties.owned_by_name
-        || buy_base_royalties_acc.owner == *mint_token_ref_key)
-        && (!defaults.buy_target_royalties.owned_by_name
-          || buy_target_royalties_acc.owner == *mint_token_ref_key)
-        && (!defaults.sell_base_royalties.owned_by_name
-          || sell_base_royalties_acc.owner == *mint_token_ref_key)
-        && (!defaults.sell_target_royalties.owned_by_name
-          || sell_target_royalties_acc.owner == *mint_token_ref_key)
-    };
-    let valid = valid_unclaimed && valid_claimed;
+
+  let valid_unclaimed = if claimed {
+    true
+  } else {
+    // Unclaimed tokens will never work for SOL. But that's okay.
+    let buy_base_royalties_acc: Account<'info, TokenAccount> =
+      Account::try_from(buy_base_royalties)?;
+    let buy_target_royalties_acc: Account<'info, TokenAccount> =
+      Account::try_from(buy_target_royalties)?;
+    let sell_base_royalties_acc: Account<'info, TokenAccount> =
+      Account::try_from(sell_base_royalties)?;
+    let sell_target_royalties_acc: Account<'info, TokenAccount> =
+      Account::try_from(sell_target_royalties)?;
+    (!defaults.buy_base_royalties.owned_by_name
+      || buy_base_royalties_acc.owner == *mint_token_ref_key)
+      && (!defaults.buy_target_royalties.owned_by_name
+        || buy_target_royalties_acc.owner == *mint_token_ref_key)
+      && (!defaults.sell_base_royalties.owned_by_name
+        || sell_base_royalties_acc.owner == *mint_token_ref_key)
+      && (!defaults.sell_target_royalties.owned_by_name
+        || sell_target_royalties_acc.owner == *mint_token_ref_key)
+  };
+  let valid = valid_unclaimed && valid_claimed;
 
   if valid {
     Ok(())
