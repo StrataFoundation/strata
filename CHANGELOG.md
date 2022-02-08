@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.2.1](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.2.0...v3.2.1) (2022-02-08)
+
+### Changed
+
+  * Transactions executed via transactions.ts (this includes all sdks) now have candymachine retry logic. This should improve reliability
+    when the network is congested
+
 # [3.2.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.1.0...v3.2.0) (2022-02-03)
 
   * Push all native sol operations into the program layer, and remove wrapping from the client
