@@ -49,6 +49,7 @@ export const MintSelect = ({ value, onChange }: { value: string, onChange: (i: s
       {isOpen && (
         <Box>
           <TokenSearch
+            includeSol
             resultsStackProps={{
               zIndex: 1000,
               position: "absolute",

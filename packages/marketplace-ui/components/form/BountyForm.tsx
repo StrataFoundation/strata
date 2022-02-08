@@ -174,7 +174,7 @@ export const BountyForm: React.FC = () => {
             help="The wallet that signs to disburse the funds of this bounty when it is completed. 
             For social tokens, this defaults to the wallet associated with the social token. This
             can also be an SPL Governance address or a multisig."
-            label="Bounty Authority"
+            label="Approver"
             errors={errors}
           >
             {publicKey && (

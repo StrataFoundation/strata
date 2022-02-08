@@ -38,7 +38,7 @@ export const AuthorityAndTokenInfo = ({ mintKey }: { mintKey: PublicKey | undefi
       <InfoItem
         creator={tokenBonding?.reserveAuthority as PublicKey}
         loading={loading}
-        name="Authority"
+        name="Approver"
       />
     </SimpleGrid>
   );

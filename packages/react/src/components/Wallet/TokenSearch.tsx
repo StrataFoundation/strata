@@ -49,16 +49,19 @@ export const TokenSearch = React.memo(
     onSelect,
     placeholder = "Search Tokens",
     resultsStackProps,
-    onBlur
+    onBlur,
+    includeSol = false
   }: {
     onBlur?: () => void;
     placeholder?: string;
     resultsStackProps?: StackProps;
     onSelect: (tokenWithMeta: ITokenWithMetaAndAccount) => void;
+    includeSol?: boolean;
   }) => {
     const { publicKey } = useWallet();
     const { data: tokens, loading } = useUserTokensWithMeta(
-      publicKey || undefined
+      publicKey || undefined,
+      includeSol
     );
     const [search, setSearch] = useState("");
     const [focusIndex, setFocusIndex] = useState(0);

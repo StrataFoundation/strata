@@ -1,20 +1,27 @@
 import { useState, useEffect, useMemo } from "react";
 import { PublicKey } from "@solana/web3.js";
-import { toMetadata, useStrataSdks, useWalletTokenAccounts } from "./";
+import { solMetadata, toMetadata, useAccount, useStrataSdks, useWalletTokenAccounts } from "./";
 import { ITokenWithMetaAndAccount } from "@strata-foundation/spl-token-collective";
 import { useTokenList } from "./useTokenList";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { NATIVE_MINT } from "@solana/spl-token";
+import { SplTokenMetadata } from "@strata-foundation/spl-utils";
 
 export const useUserTokensWithMeta = (
-  owner?: PublicKey
+  owner?: PublicKey,
+  includeSol= false
 ): {
   data: ITokenWithMetaAndAccount[];
   loading: boolean;
   error: Error | undefined;
+  includeSol?: boolean;
 } => {
   const { tokenCollectiveSdk } = useStrataSdks();
   const [data, setData] = useState<ITokenWithMetaAndAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | undefined>();
+  const { publicKey } = useWallet();
+  const { account } = useAccount(publicKey);
 
   const {
     result: tokenAccounts,
@@ -31,7 +38,27 @@ export const useUserTokensWithMeta = (
           const tokenAccountsWithMeta =
             await tokenCollectiveSdk!.getUserTokensWithMeta(tokenAccounts);
 
-          setData(tokenAccountsWithMeta);
+          // @ts-ignore
+          setData([
+            ...(includeSol
+              ? [
+                  {
+                    publicKey: publicKey || undefined,
+                    displayName: "SOL",
+                    metadata: solMetadata,
+                    account: {
+                      address: publicKey,
+                      mint: NATIVE_MINT,
+                      amount: account?.lamports,
+                    },
+                    image: await SplTokenMetadata.getImage(
+                      solMetadata.data.uri
+                    ),
+                  },
+                ]
+              : []),
+            ...tokenAccountsWithMeta,
+          ]);
         } catch (e: any) {
           setError(e);
         } finally {

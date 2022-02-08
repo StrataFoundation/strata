@@ -50,7 +50,7 @@ async function enrich(
 const BATCH_SIZE = 20;
 const LIMIT = 20;
 type EnrichedBountyItem = GetBountyItem & { tokenMetadata?: MetadataData };
-// Enrich batch size at a time with token metadata. This 
+// Enrich batch size at a time with token metadata. This
 // keeps us from hitting metadata for every single bounty, only
 // the ones we may need. Batch fetches up to limit results returned
 function useEnriched(
@@ -60,6 +60,10 @@ function useEnriched(
   batchSize: number = BATCH_SIZE,
   limit: number = LIMIT
 ): EnrichedBountyItem[] | undefined {
+  if (batchSize > limit) {
+    batchSize = limit;
+  }
+
   const [enriched, setEnriched] = useState<EnrichedBountyItem[][]>([]);
   const batched = useMemo(
     () => bountyItems && chunks(bountyItems, batchSize),

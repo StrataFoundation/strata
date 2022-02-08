@@ -4,7 +4,7 @@ import {
   MetadataData,
 } from "@metaplex-foundation/mpl-token-metadata";
 import { AccountsCoder, Provider } from "@project-serum/anchor";
-import { Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
+import { NATIVE_MINT, Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
 import { Finality, Keypair, PublicKey } from "@solana/web3.js";
 import {
   ExponentialCurveConfig,
@@ -200,6 +200,10 @@ export class MarketplaceSdk {
   }: {
     baseMint?: PublicKey;
   }): Promise<GetBountyItem[]> {
+    const state = await this.tokenBondingSdk.getState();
+    if (baseMint?.equals(NATIVE_MINT)) {
+      baseMint = state!.wrappedSolMint;
+    }
     const descriminator = AccountsCoder.accountDiscriminator("tokenBondingV0");
     const filters = [
       {
@@ -494,8 +498,8 @@ export class MarketplaceSdk {
       tokenBonding.curveAuthority == null &&
       !tokenBonding.ignoreExternalReserveChanges &&
       !tokenBonding.ignoreExternalSupplyChanges &&
-      tokenBonding.mintCap == 0 &&
-      tokenBonding.purchaseCap == 0
+      tokenBonding.mintCap == null &&
+      tokenBonding.purchaseCap == null
     );
   }
 

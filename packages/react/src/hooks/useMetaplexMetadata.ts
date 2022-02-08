@@ -44,7 +44,7 @@ export function toMetadata(tokenInfo: TokenInfo | null | undefined): MetadataDat
 
 const parser = (key: any, acct: any): MetadataData =>
   acct && new Metadata(key, acct).data;
-const solMetadata = new MetadataData({
+export const solMetadata = new MetadataData({
   updateAuthority: "",
   mint: NATIVE_MINT.toBase58(),
   data: new DataV2({

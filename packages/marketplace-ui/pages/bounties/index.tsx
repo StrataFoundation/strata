@@ -5,26 +5,31 @@ import {
   Box, Button, Center, Container, Heading, Icon,
   Input, InputGroup, InputLeftElement, Link, Select, Stack, VStack
 } from "@chakra-ui/react";
-import { PublicKey } from "@solana/web3.js";
 import { useErrorHandler, usePublicKey } from "@strata-foundation/react";
-import { SortDirection, useBounties } from "hooks/useBounties";
+import { useBounties } from "hooks/useBounties";
 import { useQueryString } from "hooks/useQueryString";
 import { NextPage } from "next";
 import Head from "next/head";
 import { useState } from "react";
 import { AiOutlineSearch } from "react-icons/ai";
 import { routes } from "../routes";
+import { BsChevronDown } from "react-icons/bs";
 
+const PAGE_SIZE= 1;
 export const Bounties: NextPage = () => {
   const [mint, setMint] = useQueryString("mint", "");
   const [search, setSearch] = useQueryString("search", "");
   const [sort, setSort] = useQueryString("sort", "newest");
+  const [limit, setLimit] = useState(PAGE_SIZE);
+  const fetchMore = () => setLimit((limit) => limit + PAGE_SIZE);
+  
   const baseMint = usePublicKey(mint);
   const { result: bounties, error } = useBounties({
     baseMint,
     search,
     sortType: sort.includes("contribution") ? "CONTRIBUTION" : "GO_LIVE",
-    sortDirection: sort.includes("asc") ? "ASC" : "DESC"
+    sortDirection: sort.includes("asc") ? "ASC" : "DESC",
+    limit
   });
   const { handleErrors } = useErrorHandler();
   handleErrors(error);
@@ -80,13 +85,13 @@ export const Bounties: NextPage = () => {
               </InputLeftElement>
               <Input
                 value={search}
-                onChange={e => setSearch(e.target.value)}
+                onChange={(e) => setSearch(e.target.value)}
                 borderColor="gray.200"
                 placeholder="Search text, token name, or token symbol"
               />
             </InputGroup>
             <Select
-              onChange={e => setSort(e.target.value)}
+              onChange={(e) => setSort(e.target.value)}
               borderColor="gray.200"
               w={[null, null, "248px"]}
               placeholder="Sort by"
@@ -115,6 +120,15 @@ export const Bounties: NextPage = () => {
               />
             ))}
           </BountyList>
+          {bounties?.length == PAGE_SIZE && (
+            <Button
+              onClick={fetchMore}
+              variant="link"
+              colorScheme="orange"
+            >
+              See More <Icon ml="6px" w="14px" h="14px" as={BsChevronDown} />
+            </Button>
+          )}
         </VStack>
       </Container>
     </Box>
