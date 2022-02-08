@@ -3,7 +3,7 @@
 use crate::arg::*;
 use crate::{error::ErrorCode, name::NameRecordHeader};
 use anchor_lang::{prelude::*, solana_program::hash::hashv};
-use anchor_spl::token::{Mint, TokenAccount};
+use anchor_spl::token::TokenAccount;
 use spl_token_bonding::state::TokenBondingV0;
 
 pub fn verify_authority(authority: Option<Pubkey>, key: &Pubkey) -> Result<bool, ProgramError> {
