@@ -109,10 +109,10 @@ pub struct InitializeSocialTokenV0<'info> {
     constraint = target_mint.supply == 0
   )]
   pub target_mint: Box<Account<'info, Mint>>,
-  pub buy_base_royalties: Box<Account<'info, TokenAccount>>,
-  pub buy_target_royalties: Box<Account<'info, TokenAccount>>,
-  pub sell_base_royalties: Box<Account<'info, TokenAccount>>,
-  pub sell_target_royalties: Box<Account<'info, TokenAccount>>,
+  pub buy_base_royalties: UncheckedAccount<'info>,
+  pub buy_target_royalties: UncheckedAccount<'info>,
+  pub sell_base_royalties: UncheckedAccount<'info>,
+  pub sell_target_royalties: UncheckedAccount<'info>,
   pub system_program: Program<'info, System>,
   pub rent: Sysvar<'info, Rent>,
   pub clock: Sysvar<'info, Clock>,
@@ -263,25 +263,10 @@ pub struct UpdateTokenBondingV0Wrapper<'info> {
     constraint = *target_mint.to_account_info().owner == *base_mint.to_account_info().owner
   )]
   pub target_mint: Box<Account<'info, Mint>>,
-  #[account(
-    constraint = buy_base_royalties.mint == *base_mint.to_account_info().key
-  )]
-  pub buy_base_royalties: Box<Account<'info, TokenAccount>>,
-
-  #[account(
-    constraint = buy_target_royalties.mint == *target_mint.to_account_info().key
-  )] // Will init for you, since target mint doesn't exist yet.
-  pub buy_target_royalties: Box<Account<'info, TokenAccount>>,
-
-  #[account(
-    constraint = sell_base_royalties.mint == *base_mint.to_account_info().key
-  )]
-  pub sell_base_royalties: Box<Account<'info, TokenAccount>>,
-
-  #[account(
-    constraint = sell_target_royalties.mint == *target_mint.to_account_info().key
-  )] // Will init for you, since target mint doesn't exist yet.
-  pub sell_target_royalties: Box<Account<'info, TokenAccount>>,
+  pub buy_base_royalties: UncheckedAccount<'info>,
+  pub buy_target_royalties: UncheckedAccount<'info>,
+  pub sell_base_royalties: UncheckedAccount<'info>,
+  pub sell_target_royalties: UncheckedAccount<'info>,
 }
 
 #[derive(Accounts)]
