@@ -112,7 +112,6 @@ async function run() {
       governanceKey
     );
   }
-
   await withInsertTransaction(
     instructions,
     GOVERNANCE_PROGRAM_ID,
@@ -129,33 +128,21 @@ async function run() {
         programId: upgradeIx.programId,
         accounts: upgradeIx.keys.map((key) => new AccountMetaData(key)),
         data: upgradeIx.data,
-      })
+      }),
+      ...(upgradeIdlIx
+        ? [
+            new InstructionData({
+              programId: upgradeIdlIx.programId,
+              accounts: upgradeIdlIx.keys.map(
+                (key) => new AccountMetaData(key)
+              ),
+              data: upgradeIdlIx.data,
+            }),
+          ]
+        : []),
     ],
     wallet.publicKey
   );
-
-  if (upgradeIdlIx) {
-    await withInsertTransaction(
-      instructions,
-      GOVERNANCE_PROGRAM_ID,
-      version,
-      governanceKey,
-      proposal,
-      tokenOwner,
-      wallet.publicKey,
-      1,
-      0,
-      0,
-      [
-        new InstructionData({
-          programId: upgradeIdlIx.programId,
-          accounts: upgradeIdlIx.keys.map((key) => new AccountMetaData(key)),
-          data: upgradeIdlIx.data,
-        }),
-      ],
-      wallet.publicKey
-    );
-  }
 
   if (!signatory) {
     await withSignOffProposal(
@@ -174,7 +161,8 @@ async function run() {
   tx.add(...instructions);
   tx.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
   tx.sign(wallet)
-  await sendAndConfirmTransaction(connection, tx, [wallet]);
+  console.log(await connection.sendRawTransaction(tx.serialize(), { skipPreflight: true }))
+  // await sendAndConfirmTransaction(connection, tx, [wallet]);
   console.log(proposal.toBase58());
 }
 
