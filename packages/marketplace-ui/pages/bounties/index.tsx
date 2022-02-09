@@ -16,6 +16,7 @@ import {
   Select,
   Stack,
   VStack,
+  Spinner,
 } from "@chakra-ui/react";
 import { useErrorHandler, usePublicKey } from "@strata-foundation/react";
 import { useBounties } from "hooks/useBounties";
@@ -36,7 +37,7 @@ export const Bounties: NextPage = () => {
   const fetchMore = () => setLimit((limit) => limit + PAGE_SIZE);
   
   const baseMint = usePublicKey(mint);
-  const { result: bounties, error } = useBounties({
+  const { result: bounties, error, loading } = useBounties({
     baseMint,
     search,
     sortType: sort.includes("contribution") ? "CONTRIBUTION" : "GO_LIVE",
@@ -138,7 +139,7 @@ export const Bounties: NextPage = () => {
                 mintKey={bounty.targetMint}
               />
             ))}
-            {bounties?.length === 0 && (
+            {!loading && bounties?.length === 0 && (
               <Center w="full" h="350px">
                 <VStack spacing={4}>
                   <Text color="gray.500" fontWeight={600} fontSize="18px">
@@ -148,6 +149,11 @@ export const Bounties: NextPage = () => {
                     There were no bounties found for these search parameters
                   </Text>
                 </VStack>
+              </Center>
+            )}
+            {loading && (
+              <Center w="full" h="350px">
+                <Spinner />
               </Center>
             )}
           </BountyList>
