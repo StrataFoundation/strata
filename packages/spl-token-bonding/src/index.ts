@@ -933,7 +933,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         !createdAccts.has(buyBaseRoyalties.toBase58()) &&
         !(await this.accountExists(buyBaseRoyalties))
       ) {
-        console.log("Creating base royalties...");
+        console.log("Creating base royalties...", buyBaseRoyalties.toBase58());
         instructions.push(
           Token.createAssociatedTokenAccountInstruction(
             ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -961,7 +961,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         !createdAccts.has(sellBaseRoyalties.toBase58()) &&
         !(await this.accountExists(sellBaseRoyalties))
       ) {
-        console.log("Creating base royalties...");
+        console.log("Creating base royalties...", sellBaseRoyalties.toBase58());
         instructions.push(
           Token.createAssociatedTokenAccountInstruction(
             ASSOCIATED_TOKEN_PROGRAM_ID,
