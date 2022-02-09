@@ -10,16 +10,14 @@ import {
 } from "@chakra-ui/react";
 import { NATIVE_MINT } from "@solana/spl-token";
 import { useWallet } from "@solana/wallet-adapter-react";
-import {
-  useErrorHandler, usePriceInUsd,
-  useSolOwnedAmount, useTwWrappedSolMint
-} from "../../hooks";
 import { ITokenWithMetaAndAccount } from "@strata-foundation/spl-token-collective";
 import React from "react";
 import toast from "react-hot-toast";
 import { RiCoinLine } from "react-icons/ri";
-import { Link } from "react-router-dom";
-import { useUserTokensWithMeta } from "../../hooks";
+import {
+  useErrorHandler, usePriceInUsd,
+  useSolOwnedAmount, useTwWrappedSolMint, useUserTokensWithMeta
+} from "../../hooks";
 import { Notification } from "../Notification";
 import { Spinner } from "../Spinner";
 import { TokenInfo } from "./TokenInfo";

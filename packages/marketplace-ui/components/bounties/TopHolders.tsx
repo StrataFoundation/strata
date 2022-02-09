@@ -1,17 +1,17 @@
 import { HStack, Spinner, StackDivider, VStack, Text, Center } from "@chakra-ui/react";
 import { useConnection } from "@solana/wallet-adapter-react";
 import { Connection, PublicKey } from "@solana/web3.js";
-import { GetCreatorLink, Creator, useTokenAccount, useMint, useTokenMetadata, roundToDecimals } from "@strata-foundation/react";
+import { OnCreatorClick, Creator, useTokenAccount, useMint, useTokenMetadata, roundToDecimals } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import { useAsync } from "react-async-hook";
 import { numberWithCommas } from "utils/numberWithCommas";
 
-const getCreatorLink: GetCreatorLink = (c, t, tokenRef, handle) => {
-  return tokenRef
+const onCreatorClick: OnCreatorClick = (c, t, tokenRef, handle) => {
+  window.open(tokenRef
     ? `https://wum.bo/profile/${tokenRef.mint}`
     : handle
     ? `https://twitter.com/${handle}`
-    : `https://explorer.solana.com/address/${c.toBase58()}`;
+    : `https://explorer.solana.com/address/${c.toBase58()}`, "_blank");
 };
 
 async function getLargestTokenAccounts(
@@ -69,7 +69,7 @@ const LeaderboardItem = ({
         <Text fontWeight={500} color="gray.500">
           {rank}
         </Text>
-        <Creator creator={account.owner} getCreatorLink={getCreatorLink} />
+        <Creator creator={account.owner} onClick={onCreatorClick} />
       </HStack>
       <Text fontWeight={700} color="gray.600" marginLeft="auto">
         {mint &&

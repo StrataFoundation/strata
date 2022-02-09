@@ -1,14 +1,11 @@
-import { Avatar, HStack, Link as PlainLink, Text } from "@chakra-ui/react";
+import { Avatar, Box, Button, HStack, Link, Text } from "@chakra-ui/react";
 import { MetadataData } from "@metaplex-foundation/mpl-token-metadata";
 import { PublicKey } from "@solana/web3.js";
 import { ITokenRef } from "@strata-foundation/spl-token-collective";
-import { useGovernance } from "../hooks/useGovernance";
 import React from "react";
-import { Link } from "react-router-dom";
-import {
-  useAccount, useErrorHandler, useSocialTokenMetadata
-} from "../hooks";
+import { useErrorHandler, useSocialTokenMetadata } from "../hooks";
 import { useReverseName } from "../hooks/nameService";
+import { useGovernance } from "../hooks/useGovernance";
 
 export const WUMBO_TWITTER_VERIFIER = new PublicKey(
   "DTok7pfUzNeNPqU3Q6foySCezPQE82eRyhX1HdhVNLVC"
@@ -23,32 +20,34 @@ export const truncatePubkey = (pkey: PublicKey): string => {
   return `${pkeyStr.substr(0, 4)}...${pkeyStr.substr(pkeyStr.length - 4)}`;
 };
 
-export type GetCreatorLink = (
+export type OnCreatorClick = (
   c: PublicKey,
   t: MetadataData | undefined,
   b: ITokenRef | undefined,
   h: string | undefined
-) => string;
-
-
+) => void;
 
 export const Creator = React.memo(
   ({
     creator,
-    getCreatorLink,
+    onClick
   }: {
     creator: PublicKey;
-    getCreatorLink: GetCreatorLink;
+    onClick: OnCreatorClick;
   }) => {
     const { handleErrors } = useErrorHandler();
     const { metadata, tokenRef, error, image } =
       useSocialTokenMetadata(creator);
 
-    const { nameString: handle, error: reverseTwitterError2 } = useReverseName(creator, WUMBO_TWITTER_VERIFIER, WUMBO_TWITTER_TLD);
+    const { nameString: handle, error: reverseTwitterError2 } = useReverseName(
+      creator,
+      WUMBO_TWITTER_VERIFIER,
+      WUMBO_TWITTER_TLD
+    );
     handleErrors(error, reverseTwitterError2);
 
     const { info: governance } = useGovernance(creator);
-    
+
     const children = (
       <>
         {metadata && (
@@ -63,22 +62,22 @@ export const Creator = React.memo(
     );
 
     if (governance) {
-      <Link to={`https://realms.today/dao/${governance.realm.toBase58()}`}>
+      <Link isExternal href={`https://realms.today/dao/${governance.realm.toBase58()}`}>
         {children}
       </Link>;
     }
 
-    // @ts-ignore
-    const link = getCreatorLink(creator, metadata, tokenRef, handle);
-
-    if (link.includes("http")) {
-      return (
-        <PlainLink ml="1" mr="1" href={link}>
-          {children}
-        </PlainLink>
-      );
-    }
-
-    return <Link to={link}>{children}</Link>;
+    return (
+      <Box
+        _hover={{ cursor: 'pointer', textDecoration: 'underline'}}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClick(creator, metadata, tokenRef, handle)
+        }}
+      >
+        {children}
+      </Box>
+    );
   }
 );

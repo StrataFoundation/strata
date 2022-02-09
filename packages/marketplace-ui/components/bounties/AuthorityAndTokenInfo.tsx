@@ -1,15 +1,19 @@
 import React from "react";
 import { SimpleGrid, HStack, Text, Spinner } from "@chakra-ui/react";
-import { Creator, GetCreatorLink, usePublicKey, useTokenBondingFromMint, useTokenMetadata } from "@strata-foundation/react";
+import { Creator, OnCreatorClick, usePublicKey, useTokenBondingFromMint, useTokenMetadata } from "@strata-foundation/react";
 import { PublicKey } from "@solana/web3.js";
 
-const getCreatorLink: GetCreatorLink = (c, t, tokenRef, handle) => {
-  return tokenRef
-    ? `https://wum.bo/profile/${tokenRef.mint}`
-    : handle
-    ? `https://twitter.com/${handle}`
-    : `https://explorer.solana.com/address/${c.toBase58()}`;
+const onCreatorClick: OnCreatorClick = (c, t, tokenRef, handle) => {
+  window.open(
+    tokenRef
+      ? `https://wum.bo/profile/${tokenRef.mint}`
+      : handle
+      ? `https://twitter.com/${handle}`
+      : `https://explorer.solana.com/address/${c.toBase58()}`,
+    "_blank"
+  );
 };
+
 const InfoItem = ({ name, creator, loading }: { name: string, loading: boolean, creator: PublicKey | undefined }) => {
   return (
     <HStack spacing={2}>
@@ -21,7 +25,7 @@ const InfoItem = ({ name, creator, loading }: { name: string, loading: boolean, 
       ) : creator ? (
         <Creator
           creator={creator}
-          getCreatorLink={getCreatorLink}
+          onClick={onCreatorClick}
         />
       ) : "None"}
     </HStack>
