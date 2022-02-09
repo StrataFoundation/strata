@@ -1,7 +1,7 @@
 import { Box, Heading, HStack, Image, Link, SimpleGrid, VStack, Text } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
 import { useReserveAmount, useTokenBondingFromMint, useTokenMetadata } from "@strata-foundation/react";
-import { route, routes } from "@/utils/routes";
+import { route, routes } from "utils/routes";
 import { AuthorityAndTokenInfo } from "./AuthorityAndTokenInfo";
 import { BountyCardContribution } from "./BountyCardContribution";
 import moment from "moment";
