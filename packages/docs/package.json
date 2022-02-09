@@ -1,7 +1,10 @@
 {
-  "name": "docs",
+  "name": "@strata-foundation/docs",
   "version": "3.2.3",
-  "private": true,
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "scripts": {
     "docusaurus": "docusaurus",
     "start": "docusaurus start",
