@@ -2,13 +2,23 @@
 import "./borshFill";
 import { Cluster, clusterApiUrl, Connection, Keypair, PublicKey, sendAndConfirmTransaction, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { createUpgradeInstruction } from "./createUpgradeInstruction";
-import { getTokenOwnerRecordAddress, Governance, Realm, VoteType } from "./governance/accounts";
-import { getInstructionDataFromBase64, GovernanceAccountParser, serializeInstructionToBase64 } from "./governance/serialisation";
-import { withCreateProposal } from "./governance/withCreateProposal";
-import { withInsertInstruction } from "./governance/withInsertInstruction";
-import { withAddSignatory } from "./governance/withAddSignatory";
+import {
+  getTokenOwnerRecordAddress,
+  Governance,
+  Realm,
+  VoteType,
+  getInstructionDataFromBase64,
+  GovernanceAccountParser,
+  serializeInstructionToBase64,
+  withCreateProposal,
+  withAddSignatory,
+  withSignOffProposal,
+  withInsertTransaction,
+  InstructionData,
+  AccountMetaData,
+  getGovernanceProgramVersion
+} from "@solana/spl-governance";
 import { createIdlUpgradeInstruction } from "./createIdlUpgradeInstruction";
-import { withSignOffProposal } from "./governance/withSignOffProposal";
 
 const GOVERNANCE_PROGRAM_ID = new PublicKey("GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw");
 
@@ -36,35 +46,39 @@ async function run() {
   const tx = new Transaction();
   const instructions: TransactionInstruction[] = [];
   const info = await connection.getAccountInfo(governanceKey);
-  const gov = GovernanceAccountParser(Governance)(
+  const gov = (GovernanceAccountParser(Governance)(
     governanceKey,
     info!,
-  );
-  const realmKey = gov.info.realm;
+  )).account;
+  const realmKey = gov.realm;
   const realmInfo = await connection.getAccountInfo(realmKey);
-  const realm = GovernanceAccountParser(Realm)(
+  const realm = (GovernanceAccountParser(Realm)(
     governanceKey,
     realmInfo!,
-  );
+  )).account;
+  PublicKey.prototype.toString = PublicKey.prototype.toBase58;
 
   const tokenOwner = await getTokenOwnerRecordAddress(
     GOVERNANCE_PROGRAM_ID,
     realmKey,
-    realm.info.communityMint,
+    realm.communityMint,
     wallet.publicKey,
   );
+  console.log(tokenOwner.toBase58());
+  const version = await getGovernanceProgramVersion(connection, GOVERNANCE_PROGRAM_ID);
+
   const proposal = await withCreateProposal(
     instructions,
     GOVERNANCE_PROGRAM_ID,
-    1,
+    version,
     realmKey,
     governanceKey,
     tokenOwner,
     process.env.NAME!,
     process.env.DESCRIPTION!,
-    realm.info.communityMint,
+    realm.communityMint,
     wallet.publicKey,
-    gov.info.proposalCount,
+    gov.proposalCount,
     VoteType.SINGLE_CHOICE,
     ["Approve"],
     true,
@@ -75,6 +89,7 @@ async function run() {
   const signatoryRecord = await withAddSignatory(
     instructions,
     GOVERNANCE_PROGRAM_ID,
+    1,
     proposal,
     tokenOwner,
     wallet.publicKey,
@@ -82,42 +97,62 @@ async function run() {
     wallet.publicKey,
   );
 
-  await withInsertInstruction(
+  const upgradeIx = await createUpgradeInstruction(
+          programId,
+          bufferKey,
+          governanceKey,
+          wallet.publicKey
+        );
+
+  let upgradeIdlIx: TransactionInstruction | null = null;
+  if (idlBufferKey) {
+    upgradeIdlIx = await createIdlUpgradeInstruction(
+      programId,
+      idlBufferKey,
+      governanceKey
+    );
+  }
+
+  await withInsertTransaction(
     instructions,
     GOVERNANCE_PROGRAM_ID,
-    1,
+    version,
     governanceKey,
     proposal,
     tokenOwner,
     wallet.publicKey,
     0,
     0,
-    getInstructionDataFromBase64(serializeInstructionToBase64(await createUpgradeInstruction(
-      programId,
-      bufferKey,
-      governanceKey,
-      wallet.publicKey
-    ))),
+    0,
+    [
+      new InstructionData({
+        programId: upgradeIx.programId,
+        accounts: upgradeIx.keys.map((key) => new AccountMetaData(key)),
+        data: upgradeIx.data,
+      })
+    ],
     wallet.publicKey
   );
 
-  // Upgrade idl
-  if (idlBufferKey) {
-    await withInsertInstruction(
+  if (upgradeIdlIx) {
+    await withInsertTransaction(
       instructions,
       GOVERNANCE_PROGRAM_ID,
-      1,
+      version,
       governanceKey,
       proposal,
       tokenOwner,
       wallet.publicKey,
       1,
       0,
-      getInstructionDataFromBase64(serializeInstructionToBase64(await createIdlUpgradeInstruction(
-        programId,
-        idlBufferKey,
-        governanceKey,
-      ))),
+      0,
+      [
+        new InstructionData({
+          programId: upgradeIdlIx.programId,
+          accounts: upgradeIdlIx.keys.map((key) => new AccountMetaData(key)),
+          data: upgradeIdlIx.data,
+        }),
+      ],
       wallet.publicKey
     );
   }
@@ -126,14 +161,19 @@ async function run() {
     await withSignOffProposal(
       instructions,
       GOVERNANCE_PROGRAM_ID,
+      version,
+      realmKey,
+      governanceKey,
       proposal,
+      wallet.publicKey,
       signatoryRecord,
-      wallet.publicKey
-    )
+      undefined,
+    );
   }
 
   tx.add(...instructions);
   tx.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
+  tx.sign(wallet)
   await sendAndConfirmTransaction(connection, tx, [wallet]);
   console.log(proposal.toBase58());
 }
