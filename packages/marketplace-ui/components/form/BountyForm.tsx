@@ -21,7 +21,7 @@ import {
 } from "@strata-foundation/react";
 import { useMarketplaceSdk } from "contexts/marketplaceSdkContext";
 import { useRouter } from "next/router";
-import { route, routes } from "utils/routes";
+import { route, routes } from "@/utils/routes";
 import React, { useEffect } from "react";
 import { useAsyncCallback } from "react-async-hook";
 import { FormProvider, useForm } from "react-hook-form";

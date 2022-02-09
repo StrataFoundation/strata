@@ -12,7 +12,7 @@ import { NextPage } from "next";
 import Head from "next/head";
 import { useState } from "react";
 import { AiOutlineSearch } from "react-icons/ai";
-import { routes } from "../../utils/routes";
+import { routes } from "@/utils/routes";
 import { BsChevronDown } from "react-icons/bs";
 
 const PAGE_SIZE= 20;
