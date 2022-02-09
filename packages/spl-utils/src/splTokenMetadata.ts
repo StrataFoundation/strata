@@ -158,9 +158,9 @@ export class SplTokenMetadata {
     this.provider = opts.provider;
   }
 
-  static attributesToRecord(attributes: Attribute[] | undefined): Record<string, string | number> {
+  static attributesToRecord(attributes: Attribute[] | undefined): Record<string, string | number> | undefined {
     if (!attributes) {
-      return {}
+      return undefined;
     }
     
     return attributes?.reduce((acc, att) => {

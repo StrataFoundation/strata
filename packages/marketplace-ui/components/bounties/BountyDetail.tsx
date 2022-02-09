@@ -13,6 +13,7 @@ import {
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import { SplTokenMetadata } from "@strata-foundation/spl-utils";
 import debounce from "lodash/debounce";
+import moment from "moment";
 import React, { useMemo, useState } from "react";
 import { AsyncButton } from "../AsyncButton";
 import { BurnButton } from "../BurnButton";
@@ -99,7 +100,7 @@ export const BountyDetail = ({
     data: targetData,
     loading: targetMetaLoading,
     displayName
-  } = useTokenMetadata(tokenBonding?.targetMint);
+  } = useTokenMetadata(mintKey);
   const { metadata: baseMetadata, loading: metadataLoading } = useTokenMetadata(
     tokenBonding?.baseMint
   );
@@ -147,10 +148,10 @@ export const BountyDetail = ({
   image = targetImage || image;
   description = targetData?.description || description;
 
-  const dataMissing = !name && !image && !description;
+  const dataMissing = useMemo(() => !name && !image && !description, [name, image, description]);
 
   if (
-    (!metadataLoading && dataMissing) ||
+    (!targetMetaLoading && dataMissing) ||
     (attributes && !attributes.is_strata_bounty)
   ) {
     return <Text>Not found</Text>;
@@ -165,6 +166,12 @@ export const BountyDetail = ({
       <VStack spacing={4}>
         <Heading textAlign="center">{name}</Heading>
         <AuthorityAndTokenInfo mintKey={mintKey} />
+        {tokenBonding && (
+          <Text fontSize="15px" color="gray.400">
+            Created{" "}
+            {moment(tokenBonding.goLiveUnixTime.toNumber() * 1000).fromNow()}
+          </Text>
+        )}
       </VStack>
 
       <Text
@@ -188,10 +195,12 @@ export const BountyDetail = ({
         </Alert>
       )}
 
-      {!MarketplaceSdk.isNormalBounty(tokenBonding) && <Alert status="warning">
-        This bounty does not have normal bonding curve parameters. It may have royalties set, or
-        be using a non fixed price curve. Buyer beware.
-      </Alert>}
+      {!MarketplaceSdk.isNormalBounty(tokenBonding) && (
+        <Alert status="warning">
+          This bounty does not have normal bonding curve parameters. It may have
+          royalties set, or be using a non fixed price curve. Buyer beware.
+        </Alert>
+      )}
       {bountyClosed && (
         <>
           <Alert status="error">

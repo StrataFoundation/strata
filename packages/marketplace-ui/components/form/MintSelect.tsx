@@ -8,12 +8,14 @@ import {
   useDisclosure,
   Input,
 } from "@chakra-ui/react";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { TokenSearch } from "@strata-foundation/react";
 import { useCallback, useEffect } from "react";
 import { AiOutlineSearch } from "react-icons/ai";
 
 export const MintSelect = ({ value, onChange }: { value: string, onChange: (i: string) => void}) => {
   const { isOpen, onClose, onOpen } = useDisclosure();
+  const { publicKey } = useWallet();
   const escFunction = useCallback((event) => {
     if (event.key === "Escape") {
       onClose();
@@ -36,12 +38,13 @@ export const MintSelect = ({ value, onChange }: { value: string, onChange: (i: s
           <Input value={value} onChange={(e) => onChange(e.target.value)} />
           <InputRightElement width="5.5rem">
             <Button
+              isDisabled={!publicKey}
               h="1.75rem"
               size="sm"
               onClick={() => (isOpen ? onClose() : onOpen())}
             >
               <Icon as={AiOutlineSearch} />
-              Wallet
+              { publicKey ? "Wallet" : "No Wallet" }
             </Button>
           </InputRightElement>
         </InputGroup>

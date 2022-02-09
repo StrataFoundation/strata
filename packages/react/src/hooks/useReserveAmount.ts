@@ -6,17 +6,18 @@ import { useTokenAccount } from "./useTokenAccount";
 import { useTokenBonding } from "./useTokenBonding";
 
 export function useReserveAmount(tokenBonding?: PublicKey | undefined): number | undefined {
-  const { info: tokenBondingAcc } = useTokenBonding(tokenBonding);
-  const { info: reserves, loading } = useTokenAccount(
+  const { info: tokenBondingAcc, loading: loadingBonding } = useTokenBonding(tokenBonding);
+  const { info: reserves, loading: loadingToken } = useTokenAccount(
     tokenBondingAcc?.baseStorage
   );
   const baseMint = useMint(tokenBondingAcc?.baseMint);
+  const loading = useMemo(() => loadingBonding || loadingToken, [loadingBonding, loadingToken]);
   const reserveAmount = useMemo(
     () =>
       !reserves && !loading
         ? 0
         : reserves && baseMint && amountAsNum(reserves.amount, baseMint),
-    [reserves]
+    [reserves, baseMint, loading]
   );
 
   return reserveAmount

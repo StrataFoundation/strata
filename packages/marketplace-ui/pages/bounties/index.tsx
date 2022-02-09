@@ -15,7 +15,7 @@ import { AiOutlineSearch } from "react-icons/ai";
 import { routes } from "../routes";
 import { BsChevronDown } from "react-icons/bs";
 
-const PAGE_SIZE= 1;
+const PAGE_SIZE= 20;
 export const Bounties: NextPage = () => {
   const [mint, setMint] = useQueryString("mint", "");
   const [search, setSearch] = useQueryString("search", "");
@@ -91,14 +91,15 @@ export const Bounties: NextPage = () => {
               />
             </InputGroup>
             <Select
+              value={sort}
               onChange={(e) => setSort(e.target.value)}
               borderColor="gray.200"
               w={[null, null, "248px"]}
               placeholder="Sort by"
               backgroundColor="white"
             >
-              <option value="newest">Most Recent</option>
-              <option value="oldest">Oldest</option>
+              <option value="go_live_desc">Most Recent</option>
+              <option value="go_live_asc">Oldest</option>
               <option value="contribution_asc">
                 Contribution: Low to high
               </option>

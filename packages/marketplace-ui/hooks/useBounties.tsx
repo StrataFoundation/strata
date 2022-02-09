@@ -65,15 +65,11 @@ function useEnriched(
   }
 
   const [enriched, setEnriched] = useState<EnrichedBountyItem[][]>([]);
-  const batched = useMemo(
-    () => bountyItems && chunks(bountyItems, batchSize),
-    [bountyItems, batchSize]
-  );
   const flat = useMemo(() => enriched.flat(), [enriched]);
-
   useEffect(() => {
     (async () => {
-      if (batched) {
+      if (bountyItems) {
+        const batched = chunks(bountyItems, batchSize);
         for (const [index, batch] of batched.entries()) {
           let nextSet = await enrich(!!search, batch, tokenMetadataSdk);
           if (search) {
@@ -94,7 +90,7 @@ function useEnriched(
         }
       }
     })().catch(console.error);
-  }, [batched, search, tokenMetadataSdk]);
+  }, [bountyItems, batchSize, search, tokenMetadataSdk, limit]);
 
   if (!bountyItems || !tokenMetadataSdk) {
     return undefined;
@@ -124,7 +120,7 @@ export function useBounties({
   ]);
   const sorted = useMemo(() => {
     if (bounties) {
-      return bounties.sort((a, b) => {
+      return [...bounties.sort((a, b) => {
         const sortField =
           sortType === "GO_LIVE"
             ? (thing: GetBountyItem) => thing.goLiveUnixTime.toNumber()
@@ -134,7 +130,7 @@ export function useBounties({
         return sortDirection === "DESC"
           ? sortField(b) - sortField(a)
           : sortField(a) - sortField(b);
-      });
+      })];
     }
     return [];
   }, [bounties, sortType, sortDirection]);

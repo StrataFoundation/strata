@@ -25,7 +25,7 @@ export const MarketDisplay: NextPage = ({
   
 
   const mintKey = usePublicKey(mintKeyRaw as string);
-const { image: targetImage } = useTokenMetadata(mintKey);
+  const { image: targetImage } = useTokenMetadata(mintKey);
 
   return (
     <Box
