@@ -96,13 +96,11 @@ export function useMetaplexTokenMetadata(
   const mint = useMint(token);
 
   const isLoading =
-    !token ||
     loading ||
     accountLoading ||
     dataLoading ||
-    imageLoading ||
-    !metadata;
-
+    imageLoading;
+    
   return {
     loading: isLoading,
     error: error || dataError || imageError,

@@ -242,6 +242,9 @@ export class ProgramError {
       if (err.InstructionError[1]?.Custom) {
         errorCode = err.InstructionError[1].Custom;
       }
+      if (err.InstructionError[0] && typeof err.InstructionError[0] == "number") {
+        errorCode = err.InstructionError[0];
+      }
     }
 
     if (errorCode == null) {
@@ -259,7 +262,7 @@ export class ProgramError {
       }
     }
 
-    let errorMsg = idlErrors.get(errorCode) || LangErrorMessage.get(errorCode) || SystemErrorMessage.get(errorCode);
+    let errorMsg = (err.InstructionErr && err.InstructionErr[1]) || idlErrors.get(errorCode) || LangErrorMessage.get(errorCode) || SystemErrorMessage.get(errorCode);
     if (errorMsg !== undefined) {
       return new ProgramError(errorCode, errorMsg, errorCode + ': ' + errorMsg);
     }
