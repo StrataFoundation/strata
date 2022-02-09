@@ -1,4 +1,10 @@
-import { DataV2, EditionData, MasterEditionData, Metadata, MetadataData } from "@metaplex-foundation/mpl-token-metadata";
+import {
+  DataV2,
+  EditionData,
+  MasterEditionData,
+  Metadata,
+  MetadataData,
+} from "@metaplex-foundation/mpl-token-metadata";
 import { NATIVE_MINT } from "@solana/spl-token";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { PublicKey } from "@solana/web3.js";
@@ -54,7 +60,7 @@ export const solMetadata = new MetadataData({
     creators: null,
     sellerFeeBasisPoints: 0,
     collection: null,
-    uses: null
+    uses: null,
   }),
   primarySaleHappened: false,
   isMutable: false,
@@ -84,7 +90,7 @@ export function useMetaplexTokenMetadata(
     metadataAccountKey,
     parser
   );
-  
+
   const wrappedSolMint = useTwWrappedSolMint();
   const isSol =
     token?.equals(NATIVE_MINT) ||
@@ -113,6 +119,7 @@ export function useMetaplexTokenMetadata(
     loading: dataLoading,
     error: dataError,
   } = useAsync(SplTokenMetadata.getArweaveMetadata, [metadata?.data.uri]);
+
   const {
     result: image,
     loading: imageLoading,

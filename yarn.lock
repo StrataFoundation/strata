@@ -5197,10 +5197,10 @@
     tweetnacl "^1.0.3"
     webpack-dev-server "^3.11.2"
 
-"@solana/spl-token-registry@^0.2.2039":
-  version "0.2.2039"
-  resolved "https://registry.yarnpkg.com/@solana/spl-token-registry/-/spl-token-registry-0.2.2039.tgz#44af29caf7cc20b823972b6caca50aa153bd4482"
-  integrity sha512-py279DMAheK9ylWKN1ZWjdoQXHB6FKKwXWt6xq4dHk7Ne9Xioz1HuKlC3z726L0uLEC4rrDPy/1xAk22xKflGA==
+"@solana/spl-token-registry@^0.2.2130":
+  version "0.2.2130"
+  resolved "https://registry.yarnpkg.com/@solana/spl-token-registry/-/spl-token-registry-0.2.2130.tgz#9c0f64cb2f00615d97306439f87b66b2ea6506aa"
+  integrity sha512-CqlLD+aXFS5drsFteZV8fqrFrsgYf4KH09uBAR0nXYn/3b8w6Al6hIdPHq1llqJ/2qvnMNRGYXpgkoVRl6mj5A==
   dependencies:
     cross-fetch "3.0.6"
 
@@ -6299,9 +6299,9 @@
   integrity sha512-jhuKLIRrhvCPLqwPcx6INqmKeiA5EWrsCOPhrlFSrbrmU4ZMPjj5Ul/oLCMDO98XRUIwVm78xICz4EPCektzeQ==
 
 "@types/mocha@^9.0.0":
-  version "9.0.0"
-  resolved "https://registry.yarnpkg.com/@types/mocha/-/mocha-9.0.0.tgz#3205bcd15ada9bc681ac20bef64e9e6df88fd297"
-  integrity sha512-scN0hAWyLVAvLR9AyW7HoFF5sJZglyBsbPuHO4fv7JRvfmPBMfp1ozWqOf/e4wwPNxezBZXRfWzMb6iFLgEVRA==
+  version "9.1.0"
+  resolved "https://registry.yarnpkg.com/@types/mocha/-/mocha-9.1.0.tgz#baf17ab2cca3fcce2d322ebc30454bff487efad5"
+  integrity sha512-QCWHkbMv4Y5U9oW10Uxbr45qMMSzl4OzijsozynUAgx3kEHUdXB00udx2dWDQ7f2TU2a2uuiFaRZjCe3unPpeg==
 
 "@types/node-localstorage@^1.3.0":
   version "1.3.0"

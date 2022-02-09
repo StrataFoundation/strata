@@ -1,6 +1,6 @@
 {
   "name": "@strata-foundation/react",
-  "version": "3.1.0",
+  "version": "3.2.3",
   "description": "React utils for strata foundation",
   "source": "src/index.ts",
   "main": "dist/lib/index.js",
@@ -29,15 +29,15 @@
     "@project-serum/serum": "^0.13.61",
     "@solana/spl-governance": "^0.0.27",
     "@solana/spl-token": "^0.1.8",
-    "@solana/spl-token-registry": "^0.2.2039",
+    "@solana/spl-token-registry": "^0.2.2130",
     "@solana/wallet-adapter-base": "^0.9.1",
     "@solana/wallet-adapter-react": "^0.15.1",
     "@solana/wallet-adapter-wallets": "^0.14.0",
     "@solana/web3.js": "^1.32.0",
-    "@strata-foundation/marketplace-sdk": "^3.1.0",
-    "@strata-foundation/spl-token-bonding": "^3.1.0",
-    "@strata-foundation/spl-token-collective": "^3.1.0",
-    "@strata-foundation/spl-utils": "^3.1.0",
+    "@strata-foundation/marketplace-sdk": "^3.2.3",
+    "@strata-foundation/spl-token-bonding": "^3.2.3",
+    "@strata-foundation/spl-token-collective": "^3.2.3",
+    "@strata-foundation/spl-utils": "^3.2.3",
     "@toruslabs/solana-embed": "0.0.9",
     "axios": "^0.25.0",
     "buffer": "^6.0.3",
@@ -66,5 +66,5 @@
     "react-dom": "^17.0.2",
     "typescript": "^4.4.4"
   },
-  "gitHead": "396e6f4df8c4ea021da409e499dba0b0136f1953"
+  "gitHead": "b9f0568f49a2c0f68225b40286dc729560546b45"
 }

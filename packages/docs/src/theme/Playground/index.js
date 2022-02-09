@@ -49,17 +49,20 @@ function ThemedLiveEditor() {
 }
 
 let index = 1;
-function transformAsync(code, scope, name, deps) {
+function transformAsync(code, scope, name, deps, allowMainnet) {
   return `
 function AsyncExec() {
   const scope = { ${Object.keys(scope).join(", ")} };
   const code = \`${code}\`
-  return <AsyncButton name={"${name || index++}"} deps={[${(deps ||"").split(",").map(d => `"${d}"`).join(",")}]} code={code} scope={scope} />
+  return <AsyncButton name={"${name || index++}"} deps={[${(deps || "")
+    .split(",")
+    .map((d) => `"${d}"`)
+    .join(",")}]} code={code} scope={scope} allowMainnet={${allowMainnet ? "true" : "false"}} />
 }
-  `
+  `;
 }
 
-export default function Playground({children, transformCode, async, scope, name, deps, ...props}) {
+export default function Playground({children, transformCode, async, scope, name, deps, allowMainnet, ...props}) {
   const {
     siteConfig: {
       themeConfig: {
@@ -68,7 +71,9 @@ export default function Playground({children, transformCode, async, scope, name,
     },
   } = useDocusaurusContext();
   const prismTheme = usePrismTheme();
-  const transform = async ? (c) => transformAsync(c, scope, name, deps) : ((code) => `${code};`);
+  const transform = async
+    ? (c) => transformAsync(c, scope, name, deps, allowMainnet)
+    : (code) => `${code};`;
 
   return (
     <div className={styles.playgroundContainer}>

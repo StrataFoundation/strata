@@ -81,13 +81,13 @@ pub fn verify_token_bonding_royalties<'info>(
   defaults: &TokenBondingSettingsV0,
   token_bonding: &Account<'info, TokenBondingV0>,
   mint_token_ref_key: &Pubkey,
-  buy_base_royalties: &Account<'info, TokenAccount>,
-  buy_target_royalties: &Account<'info, TokenAccount>,
-  sell_base_royalties: &Account<'info, TokenAccount>,
-  sell_target_royalties: &Account<'info, TokenAccount>,
+  buy_base_royalties: &AccountInfo<'info>,
+  buy_target_royalties: &AccountInfo<'info>,
+  sell_base_royalties: &AccountInfo<'info>,
+  sell_target_royalties: &AccountInfo<'info>,
   claimed: bool,
 ) -> ProgramResult {
-  let valid = (!claimed
+  let valid_claimed = !claimed
     || (defaults
       .buy_base_royalties
       .address
@@ -107,16 +107,30 @@ pub fn verify_token_bonding_royalties<'info>(
         .address
         .map_or(true, |royalty| {
           royalty == token_bonding.sell_target_royalties
-        })))
-    && (claimed
-      || ((!defaults.buy_base_royalties.owned_by_name
-        || buy_base_royalties.owner == *mint_token_ref_key)
-        && (!defaults.buy_target_royalties.owned_by_name
-          || buy_target_royalties.owner == *mint_token_ref_key)
-        && (!defaults.sell_base_royalties.owned_by_name
-          || sell_base_royalties.owner == *mint_token_ref_key)
-        && (!defaults.sell_target_royalties.owned_by_name
-          || sell_target_royalties.owner == *mint_token_ref_key)));
+        }));
+
+  let valid_unclaimed = if claimed {
+    true
+  } else {
+    // Unclaimed tokens will never work for SOL. But that's okay.
+    let buy_base_royalties_acc: Account<'info, TokenAccount> =
+      Account::try_from(buy_base_royalties)?;
+    let buy_target_royalties_acc: Account<'info, TokenAccount> =
+      Account::try_from(buy_target_royalties)?;
+    let sell_base_royalties_acc: Account<'info, TokenAccount> =
+      Account::try_from(sell_base_royalties)?;
+    let sell_target_royalties_acc: Account<'info, TokenAccount> =
+      Account::try_from(sell_target_royalties)?;
+    (!defaults.buy_base_royalties.owned_by_name
+      || buy_base_royalties_acc.owner == *mint_token_ref_key)
+      && (!defaults.buy_target_royalties.owned_by_name
+        || buy_target_royalties_acc.owner == *mint_token_ref_key)
+      && (!defaults.sell_base_royalties.owned_by_name
+        || sell_base_royalties_acc.owner == *mint_token_ref_key)
+      && (!defaults.sell_target_royalties.owned_by_name
+        || sell_target_royalties_acc.owner == *mint_token_ref_key)
+  };
+  let valid = valid_unclaimed && valid_claimed;
 
   if valid {
     Ok(())

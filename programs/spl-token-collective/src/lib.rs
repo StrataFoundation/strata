@@ -413,10 +413,10 @@ pub mod spl_token_collective {
         token_bonding_settings_opt.unwrap(),
         &ctx.accounts.token_bonding,
         &ctx.accounts.mint_token_ref.key(),
-        &ctx.accounts.buy_base_royalties,
-        &ctx.accounts.buy_target_royalties,
-        &ctx.accounts.sell_base_royalties,
-        &ctx.accounts.sell_target_royalties,
+        &ctx.accounts.buy_base_royalties.to_account_info(),
+        &ctx.accounts.buy_target_royalties.to_account_info(),
+        &ctx.accounts.sell_base_royalties.to_account_info(),
+        &ctx.accounts.sell_target_royalties.to_account_info(),
         true,
       )?;
     }

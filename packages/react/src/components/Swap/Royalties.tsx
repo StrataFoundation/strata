@@ -19,14 +19,21 @@ export function Royalties({
   isBuying: boolean;
   formRef: React.MutableRefObject<HTMLInputElement>;
 }) {
+  const { metadata: baseMeta, loading: baseMetaLoading } = useTokenMetadata(
+    tokenBonding.baseMint
+  );
+
+  const { metadata: targetMeta, loading: targetMetaLoading } = useTokenMetadata(
+    tokenBonding.targetMint
+  );
+
   const baseRoyalties = isBuying
     ? tokenBonding.buyBaseRoyaltyPercentage
     : tokenBonding.sellBaseRoyaltyPercentage;
+
   const targetRoyalties = isBuying
     ? tokenBonding.buyTargetRoyaltyPercentage
     : tokenBonding.sellTargetRoyaltyPercentage;
-  const { metadata: baseMeta } = useTokenMetadata(tokenBonding.baseMint);
-  const { metadata: targetMeta } = useTokenMetadata(tokenBonding.targetMint);
 
   return (
     <>

@@ -3,11 +3,38 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-# [Unreleased]
+## [3.2.3](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.2.2...v3.2.3) (2022-02-09)
+
+**Note:** Version bump only for package @strata-foundation/strata
+
+### Fixed
+
+  * useMetaplexTokenMetadata hook always showing as loading if no metadata found
+  * Better tx errors
+
+
+## [3.2.2](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.2.1...v3.2.2) (2022-02-08)
+
+### Fixed
+
+  * Social tokens can be created now with no collective. A recent change to the bonding contract broke this.
+
+
+## [3.2.1](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.2.0...v3.2.1) (2022-02-08)
 
 ### Changed
 
+  * Transactions executed via transactions.ts (this includes all sdks) now have candymachine retry logic. This should improve reliability
+    when the network is congested
+
+# [3.2.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.1.0...v3.2.0) (2022-02-03)
+
   * Push all native sol operations into the program layer, and remove wrapping from the client
+  
+### Added
+
+  * Swap form allows bottom amount
+  * Docs playground
 
 
 # [3.1.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.0.0...v3.1.0) (2022-01-29)

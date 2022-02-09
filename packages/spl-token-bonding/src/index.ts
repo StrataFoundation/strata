@@ -8,7 +8,7 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID, NATIVE_MINT,
   Token,
   TOKEN_PROGRAM_ID,
-  u64
+  u64,
 } from "@solana/spl-token";
 import {
   Commitment,
@@ -18,15 +18,17 @@ import {
   SystemProgram,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
-  TransactionInstruction
+  TransactionInstruction,
 } from "@solana/web3.js";
 import {
   AnchorSdk,
-  createMintInstructions, getMintInfo,
+  createMintInstructions,
+  getMintInfo,
   getTokenAccount,
   InstructionResult,
   percent,
-  TypedAccountParser
+  SplTokenMetadata,
+  TypedAccountParser,
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
 import { BondingHierarchy } from "./bondingHierarchy";
@@ -35,7 +37,7 @@ import {
   CurveV0,
   ProgramStateV0,
   SplTokenBondingIDL,
-  TokenBondingV0
+  TokenBondingV0,
 } from "./generated/spl-token-bonding";
 import { BondingPricing } from "./pricing";
 import { amountAsNum, asDecimal, toBN, toNumber, toU128 } from "./utils";
@@ -47,7 +49,7 @@ export * from "./pricing";
 export * from "./utils";
 
 async function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms))
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -187,6 +189,7 @@ export interface IInitializeCurveArgs {
 
 export interface ICreateTokenBondingOutput {
   tokenBonding: PublicKey;
+  baseMint: PublicKey;
   targetMint: PublicKey;
   buyBaseRoyalties: PublicKey;
   buyTargetRoyalties: PublicKey;
@@ -354,6 +357,9 @@ export interface IBuyArgs {
   /** Must provide either base amount or desired target amount */
   desiredTargetAmount?: BN | number;
   baseAmount?: BN | number;
+  expectedOutputAmount?:
+    | BN
+    | number /** Expected output amount of `targetMint` before slippage */;
   /** Decimal number. max price will be (1 + slippage) * price_for_desired_target_amount */
   slippage: number;
 }
@@ -367,6 +373,9 @@ export interface ISwapArgs {
   sourceAuthority?: PublicKey;
   /** The amount of baseMint to purchase with */
   baseAmount: BN | number;
+  expectedOutputAmount?:
+    | BN
+    | number /** Expected output amount before slippage */;
   /** The slippage PER TRANSACTION */
   slippage: number;
   /** Optionally inject extra instructions before each trade. Usefull for adding txn fees */
@@ -385,6 +394,9 @@ export interface ISellArgs {
   destination?: PublicKey /** `baseMint` destination for tokens from the reserve. **Default:** ATA of wallet */;
   sourceAuthority?: PublicKey /** **Default:** wallet */;
   targetAmount: BN | number /** The amount of `targetMint` tokens to sell. */;
+  expectedOutputAmount?:
+    | BN
+    | number /** Expected output amount of `baseMint` before slippage */;
   slippage: number /* Decimal number. max price will be (1 + slippage) * price_for_desired_target_amount */;
 }
 
@@ -566,24 +578,29 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       ]
     );
 
-    instructions.push(...new CreateMetadataV2({
-      feePayer: this.wallet.publicKey
-    }, {
-      metadata: await Metadata.getPDA(mintKeypair.publicKey),
-      mint: mintKeypair.publicKey,
-      metadataData: new DataV2({
-        name: "Token Bonding Wrapped SOL",
-        symbol: "twSOL",
-        uri: "",
-        sellerFeeBasisPoints: 0,
-        // @ts-ignore
-        creators: null,
-        collection: null,
-        uses: null
-      }),
-      mintAuthority: this.wallet.publicKey,
-      updateAuthority: this.wallet.publicKey
-    }).instructions);
+    instructions.push(
+      ...new CreateMetadataV2(
+        {
+          feePayer: this.wallet.publicKey,
+        },
+        {
+          metadata: await Metadata.getPDA(mintKeypair.publicKey),
+          mint: mintKeypair.publicKey,
+          metadataData: new DataV2({
+            name: "Token Bonding Wrapped SOL",
+            symbol: "twSOL",
+            uri: "",
+            sellerFeeBasisPoints: 0,
+            // @ts-ignore
+            creators: null,
+            collection: null,
+            uses: null,
+          }),
+          mintAuthority: this.wallet.publicKey,
+          updateAuthority: this.wallet.publicKey,
+        }
+      ).instructions
+    );
 
     instructions.push(
       Token.createSetAuthorityInstruction(
@@ -918,7 +935,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         !createdAccts.has(buyBaseRoyalties.toBase58()) &&
         !(await this.accountExists(buyBaseRoyalties))
       ) {
-        console.log("Creating base royalties...");
+        console.log("Creating base royalties...", buyBaseRoyalties.toBase58());
         instructions.push(
           Token.createAssociatedTokenAccountInstruction(
             ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -946,7 +963,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         !createdAccts.has(sellBaseRoyalties.toBase58()) &&
         !(await this.accountExists(sellBaseRoyalties))
       ) {
-        console.log("Creating base royalties...");
+        console.log("Creating base royalties...", sellBaseRoyalties.toBase58());
         instructions.push(
           Token.createAssociatedTokenAccountInstruction(
             ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -1008,6 +1025,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
 
     return {
       output: {
+        baseMint,
         tokenBonding,
         targetMint,
         buyBaseRoyalties,
@@ -1317,6 +1335,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     destination,
     desiredTargetAmount,
     baseAmount,
+    expectedOutputAmount,
     slippage,
     payer = this.wallet.publicKey,
   }: IBuyArgs): Promise<InstructionResult<null>> {
@@ -1329,15 +1348,17 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       this.provider,
       tokenBondingAcct.targetMint
     );
+
     const baseMint = await getMintInfo(
       this.provider,
       tokenBondingAcct.baseMint
     );
+
     const baseStorage = await getTokenAccount(
       this.provider,
       tokenBondingAcct.baseStorage
     );
-    // @ts-ignore
+
     const curve = await this.getPricingCurve(
       tokenBondingAcct.curve,
       amountAsNum(tokenBondingAcct.sellFrozen ? tokenBondingAcct.reserveBalanceFromBonding : baseStorage.amount, baseMint),
@@ -1347,6 +1368,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
 
     const instructions = [];
     const signers = [];
+
     if (!destination) {
       destination = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -1373,17 +1395,23 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     let buyTargetAmount = null;
     let buyWithBase = null;
     let maxPrice: number = 0;
+
     if (desiredTargetAmount) {
       const desiredTargetAmountNum = toNumber(desiredTargetAmount, targetMint);
+
       const neededAmount =
         desiredTargetAmountNum *
         (1 / (1 - asDecimal(tokenBondingAcct.buyTargetRoyaltyPercentage)));
-      const curveAmount = curve.buyTargetAmount(
-        desiredTargetAmountNum,
-        tokenBondingAcct.buyBaseRoyaltyPercentage,
-        tokenBondingAcct.buyTargetRoyaltyPercentage
-      );
-      maxPrice = curveAmount * (1 + slippage);
+
+      const min = expectedOutputAmount
+        ? toNumber(expectedOutputAmount, targetMint)
+        : curve.buyTargetAmount(
+            desiredTargetAmountNum,
+            tokenBondingAcct.buyBaseRoyaltyPercentage,
+            tokenBondingAcct.buyTargetRoyaltyPercentage
+          );
+
+      maxPrice = min * (1 + slippage);
 
       buyTargetAmount = {
         targetAmount: new BN(
@@ -1395,21 +1423,20 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
 
     if (baseAmount) {
       const baseAmountNum = toNumber(baseAmount, baseMint);
-      const min =
-        curve.buyWithBaseAmount(
-          baseAmountNum,
-          tokenBondingAcct.buyBaseRoyaltyPercentage,
-          tokenBondingAcct.buyTargetRoyaltyPercentage
-        ) *
-        (1 - slippage);
       maxPrice = baseAmountNum;
+
+      const min = expectedOutputAmount
+        ? toNumber(expectedOutputAmount, targetMint)
+        : curve.buyWithBaseAmount(
+            baseAmountNum,
+            tokenBondingAcct.buyBaseRoyaltyPercentage,
+            tokenBondingAcct.buyTargetRoyaltyPercentage
+          );
 
       buyWithBase = {
         baseAmount: toBN(baseAmount, baseMint),
         minimumTargetAmount: new BN(
-          Math.ceil(
-            Math.ceil(min * Math.pow(10, targetMint.decimals) * (1 - slippage))
-          )
+          Math.ceil(min * (1 - slippage) * Math.pow(10, targetMint.decimals))
         ),
       };
     }
@@ -1437,6 +1464,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       // @ts-ignore
       buyWithBase,
     };
+
     const common = {
       tokenBonding,
       // @ts-ignore
@@ -1517,6 +1545,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     baseMint,
     targetMint,
     baseAmount,
+    expectedOutputAmount,
     slippage,
     extraInstructions = () =>
       Promise.resolve({
@@ -1531,31 +1560,38 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       )[0],
       baseMint
     );
+
     const hierarchyFromBase = await this.getBondingHierarchy(
       (
         await SplTokenBonding.tokenBondingKey(baseMint)
       )[0],
       targetMint
     );
+
     const hierarchy = [hierarchyFromTarget, hierarchyFromBase].find(
       (hierarchy) => hierarchy?.contains(baseMint, targetMint)
     );
+
     if (!hierarchy) {
       throw new Error(
         `No bonding curve hierarchies found for base or target that contain both ${baseMint.toBase58()} and ${targetMint.toBase58()}`
       );
     }
+
     const isBuy = hierarchy.tokenBonding.targetMint.equals(targetMint);
     const arrHierarchy = hierarchy?.toArray() || [];
-
     const baseMintInfo = await getMintInfo(this.provider, baseMint);
-
     let currAmount = toBN(baseAmount, baseMintInfo);
-    for (const subHierarchy of isBuy ? arrHierarchy.reverse() : arrHierarchy) {
+
+    const hierarchyToTraverse = isBuy ? arrHierarchy.reverse() : arrHierarchy;
+    const processedMints = [];
+    for (const [index, subHierarchy] of hierarchyToTraverse.entries()) {
+      const isLastHop = index === arrHierarchy.length - 1;
       const tokenBonding = subHierarchy.tokenBonding;
       const baseIsSol = tokenBonding.baseMint.equals(
         (await this.getState())?.wrappedSolMint!
       );
+
       const ata = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
@@ -1577,10 +1613,12 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           return this.getTokenAccountBalance(ata, "single");
         }
       };
-      const preBalance = await getBalance();
 
+      const preBalance = await getBalance();
       let instructions: TransactionInstruction[];
       let signers: Signer[];
+
+      let currMint;
       if (isBuy) {
         console.log(
           `Actually doing ${tokenBonding.baseMint.toBase58()} to ${tokenBonding.targetMint.toBase58()}`
@@ -1590,8 +1628,10 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           sourceAuthority,
           baseAmount: currAmount,
           tokenBonding: tokenBonding.publicKey,
+          expectedOutputAmount: isLastHop ? expectedOutputAmount : undefined,
           slippage,
         }));
+        currMint = tokenBonding.targetMint;
       } else {
         console.log(
           `SELL doing ${tokenBonding.baseMint.toBase58()} to ${tokenBonding.targetMint.toBase58()}`
@@ -1601,8 +1641,10 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           sourceAuthority,
           targetAmount: currAmount,
           tokenBonding: tokenBonding.publicKey,
+          expectedOutputAmount: isLastHop ? expectedOutputAmount : undefined,
           slippage,
         }));
+        currMint = tokenBonding.baseMint;
       }
 
       const { instructions: extraInstrs, signers: extaSigners } =
@@ -1611,11 +1653,34 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           amount: currAmount,
           isBuy,
         });
-      await this.sendInstructions(
-        [...instructions, ...extraInstrs],
-        [...signers, ...extaSigners],
-        payer
-      );
+
+      try {
+        await this.sendInstructions(
+          [...instructions, ...extraInstrs],
+          [...signers, ...extaSigners],
+          payer
+        );
+      } catch (e: any) {
+        // Throw a nice error if the swap partially succeeded.
+        if (processedMints.length > 0) {
+          const splTokenMetadata = await SplTokenMetadata.init(this.provider);
+          const lastMint = processedMints[processedMints.length - 1];
+          const metadataKey = await Metadata.getPDA(lastMint);
+          const metadata = await splTokenMetadata.getMetadata(metadataKey);
+          const name = metadata?.data.symbol || lastMint.toBase58();
+          
+          const err = new Error(
+            `Swap partially failed, check your wallet for ${name} tokens. Error: ${e.toString()}`,
+          );
+          err.stack = e.stack;
+
+          throw err;
+        }
+
+        throw e;
+      }
+      
+      processedMints.push(currMint);
 
       async function newBalance(tries: number = 0): Promise<BN> {
         if (tries >= 4) {
@@ -1696,6 +1761,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     sourceAuthority = this.wallet.publicKey,
     destination,
     targetAmount,
+    expectedOutputAmount,
     slippage,
     payer = this.wallet.publicKey,
   }: ISellArgs): Promise<InstructionResult<null>> {
@@ -1770,18 +1836,22 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     }
 
     const targetAmountNum = toNumber(targetAmount, targetMint);
-    const reclaimedAmount = curve.sellTargetAmount(
-      targetAmountNum,
-      tokenBondingAcct.sellBaseRoyaltyPercentage,
-      tokenBondingAcct.sellTargetRoyaltyPercentage
-    );
-    const minPrice = Math.ceil(
-      reclaimedAmount * (1 - slippage) * Math.pow(10, baseMint.decimals)
-    );
+
+    const min = expectedOutputAmount
+      ? toNumber(expectedOutputAmount, baseMint)
+      : curve.sellTargetAmount(
+          targetAmountNum,
+          tokenBondingAcct.sellBaseRoyaltyPercentage,
+          tokenBondingAcct.sellTargetRoyaltyPercentage
+        );
+
     const args: IdlTypes<SplTokenBondingIDL>["SellV0Args"] = {
       targetAmount: toBN(targetAmount, targetMint),
-      minimumPrice: new BN(minPrice),
+      minimumPrice: new BN(
+        Math.ceil(min * (1 - slippage) * Math.pow(10, baseMint.decimals))
+      ),
     };
+
     const common = {
       tokenBonding,
       // @ts-ignore
