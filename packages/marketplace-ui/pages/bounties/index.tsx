@@ -2,8 +2,20 @@ import { BountyCard } from "@/components/bounties/BountyCard";
 import { BountyList } from "@/components/bounties/BountyList";
 import { MintSelectModal } from "@/components/bounties/MintSelectModal";
 import {
-  Box, Button, Center, Container, Heading, Icon,
-  Input, InputGroup, InputLeftElement, Link, Select, Stack, VStack
+  Text,
+  Box,
+  Button,
+  Center,
+  Container,
+  Heading,
+  Icon,
+  Input,
+  InputGroup,
+  InputLeftElement,
+  Link,
+  Select,
+  Stack,
+  VStack,
 } from "@chakra-ui/react";
 import { useErrorHandler, usePublicKey } from "@strata-foundation/react";
 import { useBounties } from "hooks/useBounties";
@@ -35,7 +47,13 @@ export const Bounties: NextPage = () => {
   handleErrors(error);
 
   return (
-    <Box w="full" backgroundColor="#f9f9f9" height="100vh" overflow="auto">
+    <Box
+      w="full"
+      backgroundColor="#f9f9f9"
+      height="100vh"
+      overflow="auto"
+      paddingBottom="200px"
+    >
       <Head>
         <title>Strata Bounties</title>
         <meta name="twitter:card" content="summary_large_image" />
@@ -120,13 +138,21 @@ export const Bounties: NextPage = () => {
                 mintKey={bounty.targetMint}
               />
             ))}
+            {bounties?.length === 0 && (
+              <Center w="full" h="350px">
+                <VStack spacing={4}>
+                  <Text color="gray.500" fontWeight={600} fontSize="18px">
+                    Nothing to show...
+                  </Text>
+                  <Text color="gray.400" fontWeight={400} fontSize="16px">
+                    There were no bounties found for these search parameters
+                  </Text>
+                </VStack>
+              </Center>
+            )}
           </BountyList>
           {bounties?.length == PAGE_SIZE && (
-            <Button
-              onClick={fetchMore}
-              variant="link"
-              colorScheme="orange"
-            >
+            <Button onClick={fetchMore} variant="link" colorScheme="orange">
               See More <Icon ml="6px" w="14px" h="14px" as={BsChevronDown} />
             </Button>
           )}
