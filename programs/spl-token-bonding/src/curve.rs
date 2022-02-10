@@ -63,7 +63,7 @@ impl Curve for PrimitiveCurve {
               reserve_change.checked_div(&b_prec)
             } else {
               target_supply
-                .checked_mul(&reserve_change)?
+                .checked_mul(reserve_change)?
                 .checked_div(&b_prec)
             }
           } else {
