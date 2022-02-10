@@ -1,12 +1,8 @@
 import {
   Box,
   Button,
-  Icon,
-  InputGroup,
-  InputProps,
-  InputRightElement,
-  useDisclosure,
-  Input,
+  Icon, Input, InputGroup, InputRightElement,
+  useDisclosure
 } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { TokenSearch } from "@strata-foundation/react";

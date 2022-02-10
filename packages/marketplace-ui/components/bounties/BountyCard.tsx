@@ -19,17 +19,21 @@ import { AuthorityAndTokenInfo } from "./AuthorityAndTokenInfo";
 import { BountyCardContribution } from "./BountyCardContribution";
 import moment from "moment";
 import Link from "next/link";
+import { useRouter } from "next/router";
 
 export const BountyCard = ({ mintKey }: { mintKey: PublicKey }) => {
   const { image, displayName, loading } = useTokenMetadata(mintKey);
   const { info: tokenBonding, loading: bondingLoading } = useTokenBondingFromMint(mintKey);
   const { metadata } = useTokenMetadata(tokenBonding?.baseMint);
   const reserveAmount = useReserveAmount(tokenBonding?.publicKey);
+  const router = useRouter();
+  
   return (
     <HStack
       w="full"
-      as={Link}
-      href={route(routes.bounty, { mintKey: mintKey.toBase58() })}
+      onClick={() =>
+        router.push(route(routes.bounty, { mintKey: mintKey.toBase58() }))
+      }
       align="flex-start"
       spacing={4}
       _hover={{
