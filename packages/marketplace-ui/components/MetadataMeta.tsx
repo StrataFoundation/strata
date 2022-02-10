@@ -1,8 +1,7 @@
-export const MetadataMeta = ({ name, description, image }: { name: string; description: string; image: string; }) => {
+export const MetadataMeta = ({ name, description, image, cardType = "summary" }: { name: string; description: string; image: string; cardType?: string }) => {
   return (
     <>
       <title>{name}</title>
-      <meta name="twitter:card" content="summary_large_image" />
       <meta property="og:type" content="website" />
       <meta name="description" content={description} />
       <meta property="og:title" content={name} />
@@ -10,7 +9,7 @@ export const MetadataMeta = ({ name, description, image }: { name: string; descr
       <meta property="og:description" content={description} />
       <link rel="icon" href="/favicon.ico" />
 
-      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:card" content={cardType} />
       <meta
         property="twitter:domain"
         content="marketplace.strataprotocol.com"
