@@ -151,7 +151,7 @@ export const BountyForm: React.FC = () => {
 
           <FormControlWithError
             id="mint"
-            help={`The mint that should be used to on this bounty, example ${NATIVE_MINT.toBase58()} for SOL`}
+            help={`The mint that should be used on this bounty, example ${NATIVE_MINT.toBase58()} for SOL`}
             label="Mint"
             errors={errors}
           >
