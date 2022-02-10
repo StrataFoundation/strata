@@ -1,4 +1,4 @@
-import { Alert, Box, Button, ButtonProps, Divider, Heading, HStack, Icon, Input, InputGroup, InputProps, InputRightElement, Link, SimpleGrid, Spinner, Text, VStack } from "@chakra-ui/react";
+import { Alert, Box, Button, ButtonProps, Center, Divider, Heading, HStack, Icon, Input, InputGroup, InputProps, InputRightElement, Link, SimpleGrid, Spinner, Text, VStack } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
@@ -160,7 +160,13 @@ export const BountyDetail = ({
     (!targetMetaLoading && dataMissing) ||
     (attributes && !attributes.is_strata_bounty)
   ) {
-    return <Text>Not found</Text>;
+    return (
+      <Center height="300px">
+        <Text>
+          <b>404: </b> Not found
+        </Text>
+      </Center>
+    );
   }
 
   if (dataMissing) {

@@ -8,6 +8,9 @@ export const routes = {
   newBounty: { path: "/bounties/new", params: [] },
   bounty: { path: "/bounties/:mintKey", params: ["mintKey"] },
   editBounty: { path: "/bounties/:mintKey/edit", params: ["mintKey"] },
+  sales: { path: "/sales", params: [] },
+  newSale: { path: "/sales/new", params: [] },
+  sale: { path: "/sales/:mintKey", params: ["mintKey"] },
 };
 
 export function route(route: IRoute, params: Record<string, string | undefined>): string {

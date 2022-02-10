@@ -1,6 +1,6 @@
-import { MarketplaceItem } from "@/components/MarketplaceItem";
+import { SaleItem } from "@/components/sales/SaleItem";
 import { MetadataMeta } from "@/components/MetadataMeta";
-import { Box, Center } from "@chakra-ui/react";
+import { Box, Center, Container } from "@chakra-ui/react";
 import { usePublicKey } from "@strata-foundation/react";
 import { GetServerSideProps, InferGetServerSidePropsType, NextPage } from "next";
 import Head from "next/head";
@@ -20,7 +20,13 @@ export const MarketDisplay: NextPage = ({ name, image, description }: InferGetSe
   const mintKey = usePublicKey(mintKeyRaw as string);
 
   return (
-    <Box h="100vh">
+    <Box
+      w="full"
+      backgroundColor="#f9f9f9"
+      height="100vh"
+      overflow="auto"
+      paddingBottom="200px"
+    >
       <Head>
         <meta
           property="twitter:url"
@@ -28,18 +34,17 @@ export const MarketDisplay: NextPage = ({ name, image, description }: InferGetSe
         />
         <MetadataMeta name={name} description={description} image={image} />
       </Head>
-      <Box w="full" h="full" overflow="auto" paddingTop={{ sm: "18px" }}>
-        <Center flexGrow={1}>
-          <Center bg="white" shadow="xl" rounded="lg" maxW="600px">
-            <MarketplaceItem
-              name={name}
-              description={description}
-              image={image}
-              mintKey={mintKey}
-            />
-          </Center>
-        </Center>
-      </Box>
+      <Box padding="54px" backgroundColor="black.500" />
+      <Container mt={"-50px"} justify="stretch" maxW="640px">
+        <Box zIndex={1} bg="white" shadow="xl" rounded="lg">
+          <SaleItem
+            name={name}
+            description={description}
+            image={image}
+            mintKey={mintKey}
+          />
+        </Box>
+      </Container>
     </Box>
   );
 }

@@ -72,7 +72,7 @@ interface ICreateMarketItemArgs {
   /**
    * Optionally -- override bonding params
    */
-  bondingArgs?: ICreateTokenBondingArgs;
+  bondingArgs?: Partial<ICreateTokenBondingArgs>;
 }
 
 interface ICreateBountyArgs {
@@ -102,7 +102,7 @@ interface ICreateBountyArgs {
   /**
    * Optionally -- override bonding params
    */
-  bondingArgs?: ICreateTokenBondingArgs;
+  bondingArgs?: Partial<ICreateTokenBondingArgs>;
 }
 
 interface ICreateMetadataForBondingArgs {

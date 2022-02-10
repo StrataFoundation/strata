@@ -2,9 +2,9 @@ import { HStack } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
 import { useMint, useStrataSdks, useTokenAccount, useTokenBonding, useTokenMetadata } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
-import { AsyncButton } from "./AsyncButton";
+import { AsyncButton } from "../AsyncButton";
 
-export const MarketplaceItemAdmin = ({
+export const SaleItemAdmin = ({
   tokenBondingKey,
 }: {
   tokenBondingKey: PublicKey;
@@ -22,7 +22,8 @@ export const MarketplaceItemAdmin = ({
   return (
     <HStack spacing={2} borderBottom={1} borderBottomColor={"gray.300"}>
       <AsyncButton
-        colorScheme="green"
+        variant="outline"
+        colorScheme="orange"
         isDisabled={!tokenBondingSdk || !amount}
         action={() =>
           tokenBondingSdk!.transferReserves({

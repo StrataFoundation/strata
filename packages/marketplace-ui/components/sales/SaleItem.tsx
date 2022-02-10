@@ -1,4 +1,4 @@
-import { Alert, Button, Heading, Image, Input, Spinner, Text, VStack } from "@chakra-ui/react";
+import { Alert, Button, Center, Heading, Image, Input, Spinner, Text, VStack } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { Notification, useBondingPricing, useMint, useOwnedAmount, useProvider, useStrataSdks, useTokenBondingFromMint, useTokenMetadata } from "@strata-foundation/react";
@@ -7,7 +7,7 @@ import BN from "bn.js";
 import React, { useState } from "react";
 import { useAsyncCallback } from "react-async-hook";
 import toast from "react-hot-toast";
-import { MarketplaceItemAdmin } from "./MarketplaceItemAdmin";
+import { SaleItemAdmin } from "./SaleItemAdmin";
 
 
 async function buy(tokenBondingSdk: SplTokenBonding, tokenBonding: PublicKey, quantity: number): Promise<void> {
@@ -28,7 +28,7 @@ async function buy(tokenBondingSdk: SplTokenBonding, tokenBonding: PublicKey, qu
   ))
 }
 
-export const MarketplaceItem = ({
+export const SaleItem = ({
   mintKey,
   name,
   description,
@@ -76,8 +76,14 @@ export const MarketplaceItem = ({
 
   const dataMissing = !name && !image && !description;
 
-  if (!metadataLoading && dataMissing) {
-    return <Text>Not found</Text>;
+  if (!targetMetaLoading && dataMissing) {
+    return (
+      <Center height="300px">
+        <Text>
+          <b>404: </b> Not found
+        </Text>
+      </Center>
+    );
   }
 
   if (dataMissing) {
@@ -87,10 +93,10 @@ export const MarketplaceItem = ({
   return (
     <VStack p={4} align="start">
       {isAdmin && tokenBonding && (
-        <MarketplaceItemAdmin tokenBondingKey={tokenBonding.publicKey} />
+        <SaleItemAdmin tokenBondingKey={tokenBonding.publicKey} />
       )}
-      <Image alt={name} w="full" src={image} />
       <Heading>{name}</Heading>
+      <Image alt={name} w="full" src={image} />
       <Text whiteSpace="pre-line">{description}</Text>
       <div id="price">
         <Input
