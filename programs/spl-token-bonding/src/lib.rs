@@ -240,6 +240,15 @@ pub mod spl_token_bonding {
 
     Ok(())
   }
+  
+  pub fn update_reserve_authority_v0(
+    ctx: Context<UpdateReserveAuthorityV0>,
+    args: UpdateReserveAuthorityV0Args,
+  ) -> ProgramResult {
+    ctx.accounts.token_bonding.reserve_authority = args.new_reserve_authority;
+
+    Ok(())
+  }
 
   pub fn update_token_bonding_v0(
     ctx: Context<UpdateTokenBondingV0>,

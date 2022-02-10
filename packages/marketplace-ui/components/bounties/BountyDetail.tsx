@@ -1,4 +1,4 @@
-import { Alert, Box, Button, ButtonProps, Divider, Heading, HStack, Input, InputGroup, InputProps, InputRightElement, SimpleGrid, Spinner, Text, VStack } from "@chakra-ui/react";
+import { Alert, Box, Button, ButtonProps, Divider, Heading, HStack, Input, InputGroup, InputProps, InputRightElement, Link, SimpleGrid, Spinner, Text, VStack } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
@@ -15,12 +15,14 @@ import { SplTokenMetadata } from "@strata-foundation/spl-utils";
 import debounce from "lodash/debounce";
 import moment from "moment";
 import React, { useMemo, useState } from "react";
+import { route, routes } from "utils/routes";
 import { AsyncButton } from "../AsyncButton";
 import { BurnButton } from "../BurnButton";
 import { AuthorityAndTokenInfo } from "./AuthorityAndTokenInfo";
 import { BountyCardContribution } from "./BountyCardContribution";
 import { DisburseFunds } from "./DisburseFunds";
 import { TopHolders } from "./TopHolders";
+import NextLink from "next/link";
 
 export const AsyncQtyButton = ({
   inputProps = {},
@@ -97,6 +99,7 @@ export const BountyDetail = ({
   const {
     image: targetImage,
     metadata: targetMetadata,
+    metadataKey,
     data: targetData,
     loading: targetMetaLoading,
     displayName
@@ -164,7 +167,17 @@ export const BountyDetail = ({
   return (
     <VStack p={8} spacing={8} w="full">
       <VStack spacing={4}>
-        <Heading textAlign="center">{name}</Heading>
+        <Heading textAlign="center">
+          {name}
+          <Link
+            as={NextLink}
+            href={route(routes.editBounty, {
+              mintKey: mintKey?.toBase58(),
+            })}
+          >
+            Edit
+          </Link>
+        </Heading>
         <AuthorityAndTokenInfo mintKey={mintKey} />
         {tokenBonding && (
           <Text fontSize="15px" color="gray.400">

@@ -105,6 +105,7 @@ describe("spl-token-bonding", () => {
           baseMint,
           targetMintDecimals: DECIMALS,
           generalAuthority: me,
+          reserveAuthority: me,
           buyBaseRoyaltyPercentage: 5,
           buyTargetRoyaltyPercentage: 10,
           sellBaseRoyaltyPercentage: 0,
@@ -180,6 +181,15 @@ describe("spl-token-bonding", () => {
         tokenBonding
       ))!;
       expect(tokenBondingNow.generalAuthority).to.equal(null);
+
+      await tokenBondingProgram.updateTokenBonding({
+        tokenBonding,
+        reserveAuthority: null,
+      });
+      tokenBondingNow = (await tokenBondingProgram.getTokenBonding(
+        tokenBonding
+      ))!;
+      expect(tokenBondingNow.reserveAuthority).to.equal(null);
     });
 
     it("allows buying the bonding curve", async () => {

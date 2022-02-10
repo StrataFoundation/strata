@@ -29,14 +29,24 @@ export const Recipient = ({ value, onChange, name }: { name: string, value: stri
   );
   const invalidAddress = Boolean(!recipient && internalValue);
   const recipientRef = React.useRef<HTMLParagraphElement>(null);
+  const prevRecipientRef = usePrevious(recipientRef);
   
   useEffect(() => {
-    if (recipientRef.current && value != internalValue && prevValue != value) {
-      recipientRef.current.innerText = value;
-      console.log(value);
+    if (value != internalValue && prevValue != value) {
+      if (recipientRef.current) {
+        recipientRef.current.innerText = value;
+      }
       setInternalValue(value);
     }
   }, [recipientRef, value, internalValue, prevValue]);
+
+  useEffect(() => {
+    if (
+      (!prevRecipientRef || !prevRecipientRef.current) && recipientRef.current
+    ) {
+      recipientRef.current.innerText = internalValue;
+    }
+  }, [prevRecipientRef, recipientRef, internalValue])
 
   return (
     <FormControl>

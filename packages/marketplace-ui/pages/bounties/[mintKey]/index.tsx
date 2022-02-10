@@ -22,7 +22,6 @@ export const MarketDisplay: NextPage = ({
 }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const router = useRouter();
   const { mintKey: mintKeyRaw } = router.query;
-  
 
   const mintKey = usePublicKey(mintKeyRaw as string);
   const { image: targetImage } = useTokenMetadata(mintKey);

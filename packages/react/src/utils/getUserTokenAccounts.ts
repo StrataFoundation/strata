@@ -86,7 +86,7 @@ export const getWalletTokenAccounts = async (
   const tokenAccounts = accounts.value
     .map((info) => TokenAccountParser(info.pubkey, info.account))
     .filter(truthy)
-    .filter((t) => t.info.amount.toNumber() > 0);
+    .filter((t) => t.info.amount.gt(new u64(0)));
 
   return tokenAccounts;
 };
