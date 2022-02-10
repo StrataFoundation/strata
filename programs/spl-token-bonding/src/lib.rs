@@ -240,7 +240,7 @@ pub mod spl_token_bonding {
 
     Ok(())
   }
-  
+
   pub fn update_reserve_authority_v0(
     ctx: Context<UpdateReserveAuthorityV0>,
     args: UpdateReserveAuthorityV0Args,

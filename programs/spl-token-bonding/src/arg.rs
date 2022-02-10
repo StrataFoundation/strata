@@ -163,5 +163,5 @@ impl Default for PiecewiseCurve {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct UpdateReserveAuthorityV0Args {
-  pub new_reserve_authority: Option<Pubkey>
+  pub new_reserve_authority: Option<Pubkey>,
 }

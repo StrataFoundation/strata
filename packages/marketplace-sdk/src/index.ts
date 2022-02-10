@@ -327,7 +327,6 @@ export class MarketplaceSdk {
   }: ICreateMetadataForBondingArgs): Promise<
     InstructionResult<{ metadata: PublicKey; mint: PublicKey }>
   > {
-    console.log("decimals", decimals);
     const targetMint = targetMintKeypair.publicKey;
     const instructions = [];
     const signers = [];
