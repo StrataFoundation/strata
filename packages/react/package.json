@@ -1,6 +1,6 @@
 {
   "name": "@strata-foundation/react",
-  "version": "3.2.3",
+  "version": "3.2.4-alpha.3",
   "description": "React utils for strata foundation",
   "source": "src/index.ts",
   "main": "dist/lib/index.js",
@@ -27,21 +27,24 @@
     "@hookform/resolvers": "^2.8.3",
     "@project-serum/anchor": "^0.20.1",
     "@project-serum/serum": "^0.13.61",
+    "@solana/spl-governance": "^0.0.27",
     "@solana/spl-token": "^0.1.8",
+    "@solana/spl-token-registry": "^0.2.2130",
     "@solana/wallet-adapter-base": "^0.9.1",
     "@solana/wallet-adapter-react": "^0.15.1",
     "@solana/wallet-adapter-wallets": "^0.14.0",
     "@solana/web3.js": "^1.32.0",
-    "@strata-foundation/marketplace-sdk": "^3.2.3",
-    "@strata-foundation/spl-token-bonding": "^3.2.3",
-    "@strata-foundation/spl-token-collective": "^3.2.3",
-    "@strata-foundation/spl-utils": "^3.2.3",
+    "@strata-foundation/marketplace-sdk": "^3.2.4-alpha.3",
+    "@strata-foundation/spl-token-bonding": "^3.2.4-alpha.2",
+    "@strata-foundation/spl-token-collective": "^3.2.4-alpha.2",
+    "@strata-foundation/spl-utils": "^3.2.4-alpha.1",
     "@toruslabs/solana-embed": "0.0.9",
     "axios": "^0.25.0",
     "buffer": "^6.0.3",
     "dotenv": "^10.0.0",
     "eventemitter3": "^4.0.7",
     "framer-motion": "^5.3.0",
+    "fuse.js": "^6.5.3",
     "path": "^0.12.7",
     "react-async-hook": "^4.0.0",
     "react-hook-form": "^7.19.5",
@@ -63,5 +66,5 @@
     "react-dom": "^17.0.2",
     "typescript": "^4.4.4"
   },
-  "gitHead": "b9f0568f49a2c0f68225b40286dc729560546b45"
+  "gitHead": "16f947718749b59d5a2dfdfaa9c34370da7e3bcf"
 }
