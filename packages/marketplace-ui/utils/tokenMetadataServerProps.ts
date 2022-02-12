@@ -21,9 +21,14 @@ export const mintMetadataServerSideProps: GetServerSideProps = async (
     (await tokenMetadataSdk.getMetadata(
       await Metadata.getPDA(mint)
     ));
-  const metadata = await SplTokenMetadata.getArweaveMetadata(
-    metadataAcc?.data.uri
-  );
+  let metadata = null;
+  try {
+    metadata = await SplTokenMetadata.getArweaveMetadata(
+      metadataAcc?.data.uri
+    );
+  } catch (e: any) {
+    console.error(e);
+  }
 
   const name = metadataAcc?.data?.name.length == 32 ? metadata?.name : metadataAcc?.data?.name;
 
