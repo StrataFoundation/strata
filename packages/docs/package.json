@@ -1,6 +1,6 @@
 {
   "name": "@strata-foundation/docs",
-  "version": "3.2.4-alpha.3",
+  "version": "3.2.4-alpha.4",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
@@ -32,9 +32,9 @@
     "@solana/wallet-adapter-react-ui": "0.9.2",
     "@solana/wallet-adapter-wallets": "0.14.0",
     "@solana/web3.js": "^1.32.0",
-    "@strata-foundation/react": "^3.2.4-alpha.3",
-    "@strata-foundation/spl-token-bonding": "^3.2.4-alpha.2",
-    "@strata-foundation/spl-token-collective": "^3.2.4-alpha.2",
+    "@strata-foundation/react": "^3.2.4-alpha.4",
+    "@strata-foundation/spl-token-bonding": "^3.2.4-alpha.4",
+    "@strata-foundation/spl-token-collective": "^3.2.4-alpha.4",
     "@svgr/webpack": "^5.5.0",
     "assert": "^2.0.0",
     "browserify-zlib": "^0.2.0",
@@ -85,5 +85,5 @@
       "last 1 safari version"
     ]
   },
-  "gitHead": "16f947718749b59d5a2dfdfaa9c34370da7e3bcf"
+  "gitHead": "4623c709db43b3503af871ddbdf325da202e0e62"
 }

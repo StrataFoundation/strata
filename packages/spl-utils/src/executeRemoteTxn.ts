@@ -1,6 +1,6 @@
 import { Provider } from "@project-serum/anchor";
 import { Transaction } from "@solana/web3.js";
-import { ProgramError } from ".";
+import { ProgramError } from "./anchorError";
 import axios from "axios";
 
 async function promiseAllInOrder<T>(
