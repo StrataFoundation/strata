@@ -133,6 +133,65 @@ export class ExponentialCurveConfig implements ICurveConfig, IPrimitiveCurve {
 }
 
 /**
+ * Curve configuration for c(S^(pow/frac)) + b
+ */
+export class TimeDecayExponentialCurveConfig implements ICurveConfig, IPrimitiveCurve {
+  c: BN;
+  k0: BN;
+  k1: BN;
+  interval: number;
+
+  constructor({
+    c = 1,
+    k0 = 0,
+    k1 = 1,
+    interval = 24 * 60 * 60,
+  }: {
+    c?: number | BN;
+    k0?: number | BN;
+    k1?: number | BN;
+    interval?: number;
+  }) {
+    this.c = toU128(c);
+    this.k0 = toU128(k0);
+    this.k1 = toU128(k1);
+    this.interval = interval;
+  }
+
+  toRawPrimitiveConfig(): any {
+    return {
+      timeDecayExponentialCurveV0: {
+        // @ts-ignore
+        c: this.c,
+        // @ts-ignore
+        k0: this.k0,
+        k1: this.k1,
+        // @ts-ignore
+        interval: this.interval,
+      },
+    };
+  }
+
+  toRawConfig(): CurveV0 {
+    return {
+      definition: {
+        timeV0: {
+          curves: [
+            {
+              // @ts-ignore
+              offset: new BN(0),
+              // @ts-ignore
+              curve: this.toRawPrimitiveConfig(),
+            },
+          ],
+        },
+      },
+    };
+  }
+}
+
+
+/**
  * Curve configuration that allows the curve to change parameters at discrete time offsets from the go live date
  */
 export class TimeCurveConfig implements ICurveConfig {
@@ -365,6 +424,8 @@ export interface IBuyArgs {
   expectedOutputAmount?:
     | BN
     | number /** Expected output amount of `targetMint` before slippage */;
+  /** When using desiredTargetAmount, the expected base amount used before slippage */
+  expectedBaseAmount?: BN | number;
   /** Decimal number. max price will be (1 + slippage) * price_for_desired_target_amount */
   slippage: number;
 }
@@ -381,6 +442,14 @@ export interface ISwapArgs {
   expectedOutputAmount?:
     | BN
     | number /** Expected output amount before slippage */;
+  expectedBaseAmount?:
+    | BN
+    | number /** Only when `desiredOutputAmount` present: Expected base amount before slippage */;
+  /**
+   * Desired output amount. If specified, uses buy({ desiredTargetAmount }) for the last stage of the swap. This
+   * is useful in decimals 0 type situation where you want the whole item or nothing
+   */
+  desiredTargetAmount?: BN | number;
   /** The slippage PER TRANSACTION */
   slippage: number;
   /** Optionally inject extra instructions before each trade. Usefull for adding txn fees */
@@ -1384,6 +1453,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     desiredTargetAmount,
     baseAmount,
     expectedOutputAmount,
+    expectedBaseAmount,
     slippage,
     payer = this.wallet.publicKey,
   }: IBuyArgs): Promise<InstructionResult<null>> {
@@ -1451,8 +1521,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         desiredTargetAmountNum *
         (1 / (1 - asDecimal(tokenBondingAcct.buyTargetRoyaltyPercentage)));
 
-      const min = expectedOutputAmount
-        ? toNumber(expectedOutputAmount, targetMint)
+      const min = expectedBaseAmount
+        ? toNumber(expectedBaseAmount, targetMint)
         : curve.buyTargetAmount(
             desiredTargetAmountNum,
             tokenBondingAcct.buyBaseRoyaltyPercentage,
@@ -1593,6 +1663,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     baseMint,
     targetMint,
     baseAmount,
+    expectedBaseAmount,
+    desiredTargetAmount,
     expectedOutputAmount,
     slippage,
     extraInstructions = () =>
@@ -1649,13 +1721,15 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
 
       const getBalance = async (): Promise<BN> => {
         if (!isBuy && baseIsSol) {
-          return new BN(
+          const amount =
             (
               await this.provider.connection.getAccountInfo(
                 sourceAuthority,
                 "single"
               )
-            )?.lamports || 0
+            )?.lamports || 0;
+          return new BN(
+            amount
           );
         } else {
           return this.getTokenAccountBalance(ata, "single");
@@ -1676,9 +1750,16 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           sourceAuthority,
           baseAmount: currAmount,
           tokenBonding: tokenBonding.publicKey,
-          expectedOutputAmount: isLastHop ? expectedOutputAmount : undefined,
+          expectedOutputAmount:
+            isLastHop && !desiredTargetAmount
+              ? expectedOutputAmount
+              : undefined,
+          desiredTargetAmount:
+            isLastHop && desiredTargetAmount ? desiredTargetAmount : undefined,
+          expectedBaseAmount:
+            isLastHop && desiredTargetAmount ? expectedBaseAmount : undefined,
           slippage,
-        }));
+        }));        
         currMint = tokenBonding.targetMint;
       } else {
         console.log(

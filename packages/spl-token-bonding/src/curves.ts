@@ -16,6 +16,13 @@ export type ExponentialCurveV0 = {
   frac: number;
 };
 
+export type TimeDecayExponentialCurveV0 = {
+  c: BN;
+  k0: BN;
+  k1: BN;
+  interval: number;
+};
+
 export function fromCurve(
   curve: any,
   baseAmount: number,
@@ -124,11 +131,19 @@ export class TimeCurve implements IPricingCurve {
     }
 
     return {
-      subCurve: new ExponentialCurve(
-        subCurve.curve.exponentialCurveV0 as ExponentialCurveV0,
-        this.baseAmount,
-        this.targetSupply,
-      ),
+      subCurve: subCurve.curve.exponentialCurveV0
+        ? new ExponentialCurve(
+            subCurve.curve.exponentialCurveV0 as ExponentialCurveV0,
+            this.baseAmount,
+            this.targetSupply,
+            this.goLiveUnixTime
+          )
+        : new TimeDecayExponentialCurve(
+            subCurve.curve.timeDecayExponentialCurveV0 as TimeDecayExponentialCurveV0,
+            this.baseAmount,
+            this.targetSupply,
+            this.goLiveUnixTime
+          ),
       offset: subCurve.offset.toNumber(),
       buyTransitionFees: subCurve.buyTransitionFees,
       sellTransitionFees: subCurve.sellTransitionFees,
@@ -180,7 +195,8 @@ export class TimeCurve implements IPricingCurve {
     const price = subCurve.buyTargetAmount(
       targetAmountNum,
       baseRoyaltiesPercent,
-      targetRoyaltiesPercent
+      targetRoyaltiesPercent,
+      unixTime
     );
 
     return (
@@ -215,28 +231,25 @@ export class TimeCurve implements IPricingCurve {
   }
 }
 
-export class ExponentialCurve implements IPricingCurve {
+export abstract class BaseExponentialCurve implements IPricingCurve {
   c: number;
-  b: number;
-  k: number;
-  pow: number;
-  frac: number;
   baseAmount: number;
   targetSupply: number;
+  goLiveUnixTime: number;
+
+  abstract k(timeElapsed: number): number;
+  abstract get b(): number;
 
   constructor(
-    curve: ExponentialCurveV0,
+    c: number,
     baseAmount: number,
-    targetSupply: number
+    targetSupply: number,
+    goLiveUnixTime: number
   ) {
-    this.c = curve.c.toNumber() / 1000000000000;
-    this.b = curve.b.toNumber() / 1000000000000;
-    this.k = curve.pow / curve.frac;
-    this.pow = curve.pow;
-    this.frac = curve.frac;
-
+    this.c = c;
     this.baseAmount = baseAmount;
     this.targetSupply = targetSupply;
+    this.goLiveUnixTime = goLiveUnixTime;
   }
 
   current(): number {
@@ -244,24 +257,26 @@ export class ExponentialCurve implements IPricingCurve {
   }
 
   locked(): number {
-    return this.baseAmount
+    return this.baseAmount;
   }
 
   changeInTargetAmount(
     targetAmountNum: number,
     baseRoyaltiesPercent: number,
-    targetRoyaltiesPercent: number
+    targetRoyaltiesPercent: number,
+    unixTime: number = now()
   ): number {
     const R = this.baseAmount;
     const S = this.targetSupply;
-    
+    const k = this.k(unixTime - this.goLiveUnixTime);
+
     // Calculate with the actual target amount they will need to get the target amount after royalties
     const dS = targetAmountNum * (1 / (1 - asDecimal(targetRoyaltiesPercent)));
 
     if (R == 0 || S == 0) {
       // b dS + (c dS^(1 + k))/(1 + k)
       return (
-        (this.b * dS + (this.c * Math.pow(dS, 1 + this.k)) / (1 + this.k)) *
+        (this.b * dS + (this.c * Math.pow(dS, 1 + k)) / (1 + k)) *
         (1 / (1 - asDecimal(baseRoyaltiesPercent)))
       );
     } else {
@@ -270,8 +285,8 @@ export class ExponentialCurve implements IPricingCurve {
           (R / S^(1 + k)) ((S + dS)(S + dS)^k - S^(1 + k))
         */
         return (
-          (R / Math.pow(S, 1 + this.k)) *
-          ((S + dS) * Math.pow(S + dS, this.k) - Math.pow(S, 1 + this.k)) *
+          (R / Math.pow(S, 1 + k)) *
+          ((S + dS) * Math.pow(S + dS, k) - Math.pow(S, 1 + k)) *
           (1 / (1 - asDecimal(baseRoyaltiesPercent)))
         );
       } else if (this.c == 0) {
@@ -288,13 +303,15 @@ export class ExponentialCurve implements IPricingCurve {
   sellTargetAmount(
     targetAmountNum: number,
     baseRoyaltiesPercent: number,
-    targetRoyaltiesPercent: number
+    targetRoyaltiesPercent: number,
+    unixTime: number = now()
   ): number {
     return (
       -this.changeInTargetAmount(
         -targetAmountNum * (1 - asDecimal(targetRoyaltiesPercent)),
         0,
-        0
+        0,
+        unixTime
       ) *
       (1 - asDecimal(baseRoyaltiesPercent))
     );
@@ -303,32 +320,33 @@ export class ExponentialCurve implements IPricingCurve {
   buyTargetAmount(
     targetAmountNum: number,
     baseRoyaltiesPercent: number,
-    targetRoyaltiesPercent: number
+    targetRoyaltiesPercent: number,
+    unixTime: number = now()
   ): number {
     return this.changeInTargetAmount(
       targetAmountNum,
       baseRoyaltiesPercent,
-      targetRoyaltiesPercent
+      targetRoyaltiesPercent,
+      unixTime
     );
   }
 
   buyWithBaseAmount(
     baseAmountNum: number,
     baseRoyaltiesPercent: number,
-    targetRoyaltiesPercent: number
+    targetRoyaltiesPercent: number,
+    unixTime: number = now()
   ): number {
+    const k = this.k(unixTime - this.goLiveUnixTime);
+
     const dR = baseAmountNum * (1 - asDecimal(baseRoyaltiesPercent));
-    if (
-      this.baseAmount == 0 ||
-      this.targetSupply == 0
-    ) {
+    if (this.baseAmount == 0 || this.targetSupply == 0) {
       if (this.b == 0) {
         /*
          * -S + (((1 + k) dR)/c)^(1/(1 + k))
          */
         return (
-          (Math.pow(((1 + this.k) * dR) / this.c, 1 / (1 + this.k)) -
-            this.targetSupply) *
+          (Math.pow(((1 + k) * dR) / this.c, 1 / (1 + k)) - this.targetSupply) *
           (1 - asDecimal(targetRoyaltiesPercent))
         );
       } else if (this.c == 0) {
@@ -347,17 +365,13 @@ export class ExponentialCurve implements IPricingCurve {
       );
     } else {
       const R = this.baseAmount;
-      const S = this.targetSupply
+      const S = this.targetSupply;
       if (this.b == 0) {
         /*
          * dS = -S + ((S^(1 + k) (R + dR))/R)^(1/(1 + k))
          */
         return (
-          (-S +
-            Math.pow(
-              (Math.pow(S, 1 + this.k) * (R + dR)) / R,
-              1 / (1 + this.k)
-            )) *
+          (-S + Math.pow((Math.pow(S, 1 + k) * (R + dR)) / R, 1 / (1 + k))) *
           (1 - asDecimal(targetRoyaltiesPercent))
         );
       } else if (this.c == 0) {
@@ -369,5 +383,71 @@ export class ExponentialCurve implements IPricingCurve {
         );
       }
     }
+  }
+}
+
+export class ExponentialCurve extends BaseExponentialCurve {
+  b: number;
+  _k: number;
+  pow: number;
+  frac: number;
+
+  k(_: number = now()) {
+    return this._k;
+  }
+
+  constructor(
+    curve: ExponentialCurveV0,
+    baseAmount: number,
+    targetSupply: number,
+    goLiveUnixTime: number = now()
+  ) {
+    super(
+      curve.c.toNumber() / 1000000000000,
+      baseAmount,
+      targetSupply,
+      goLiveUnixTime
+    );
+    this.b = curve.b.toNumber() / 1000000000000;
+    this._k = curve.pow / curve.frac;
+    this.pow = curve.pow;
+    this.frac = curve.frac;
+
+    this.baseAmount = baseAmount;
+    this.targetSupply = targetSupply;
+  }
+}
+
+export class TimeDecayExponentialCurve extends BaseExponentialCurve {
+  b: number = 0;
+  k0: number;
+  k1: number;
+  interval: number;
+
+  k(timeElapsed: number): number {
+    const ret = (
+      this.k0 - (this.k0 - this.k1) * Math.min(timeElapsed / this.interval, 1)
+    );
+    return ret;
+  }
+
+  constructor(
+    curve: TimeDecayExponentialCurveV0,
+    baseAmount: number,
+    targetSupply: number,
+    goLiveUnixTime: number
+  ) {
+    super(
+      curve.c.toNumber() / 1000000000000,
+      baseAmount,
+      targetSupply,
+      goLiveUnixTime
+    );
+    this.k1 = curve.k1.toNumber() / 1000000000000;
+    this.k0 = curve.k0.toNumber() / 1000000000000;
+    this.interval = curve.interval;
+
+    this.baseAmount = baseAmount;
+    this.targetSupply = targetSupply;
   }
 }

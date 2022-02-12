@@ -11,6 +11,7 @@ import {
   ICreateTokenBondingArgs,
   ITokenBonding,
   SplTokenBonding,
+  TimeDecayExponentialCurveConfig
 } from "@strata-foundation/spl-token-bonding";
 import {
   Attribute,
@@ -98,6 +99,46 @@ interface ICreateBountyArgs {
    * The mint to base the sales off of
    */
   baseMint: PublicKey;
+
+  /**
+   * Optionally -- override bonding params
+   */
+  bondingArgs?: Partial<ICreateTokenBondingArgs>;
+}
+
+interface ICreateLbpArgs {
+  payer?: PublicKey;
+  /**
+   * Optionally, use this keypair to create the target mint
+   */
+  targetMintKeypair?: Keypair;
+  /**
+   * Optionally, use this mint. You must have mint authority
+   */
+  targetMint?: PublicKey;
+  /**
+   * Wallet who will recieve the funds from the liquidity bootstrapping
+   */
+  authority?: PublicKey;
+  /**
+   * The token metadata for the LBP item
+   */
+  metadata: DataV2;
+
+  /**
+   * The update authority on the metadata created. **Default:** authority
+   */
+  metadataUpdateAuthority?: PublicKey;
+
+  /**
+   * The mint to base the sales off of
+   */
+  baseMint: PublicKey;
+
+  c: BN | number;
+  k0: BN | number;
+  k1: BN | number;
+  interval: number;
 
   /**
    * Optionally -- override bonding params
@@ -231,7 +272,7 @@ export class MarketplaceSdk {
               new u64(0).toBuffer(),
               new u64(0).toBuffer(),
               new PublicKey(MarketplaceSdk.FIXED_CURVE).toBuffer(),
-              new Uint8Array([0, 0])
+              new Uint8Array([0, 0]),
             ])
           ),
         },
@@ -305,18 +346,17 @@ export class MarketplaceSdk {
       }
     );
 
-    return mints
-      .map((mint, index) => {
-        const goLive = goLives[index];
-        const contribution = contributions[index];
-        return {
-          tokenBondingKey: mint.pubkey,
-          baseMint: new PublicKey(mint.account.data.slice(0, 32)),
-          targetMint: new PublicKey(mint.account.data.slice(32, 64)),
-          goLiveUnixTime: new BN(goLive.account.data, 10, "le"),
-          reserveBalanceFromBonding: new BN(contribution.account.data, 10, "le"),
-        };
-      });
+    return mints.map((mint, index) => {
+      const goLive = goLives[index];
+      const contribution = contributions[index];
+      return {
+        tokenBondingKey: mint.pubkey,
+        baseMint: new PublicKey(mint.account.data.slice(0, 32)),
+        targetMint: new PublicKey(mint.account.data.slice(32, 64)),
+        goLiveUnixTime: new BN(goLive.account.data, 10, "le"),
+        reserveBalanceFromBonding: new BN(contribution.account.data, 10, "le"),
+      };
+    });
   }
 
   async createMetadataForBondingInstructions({
@@ -584,6 +624,145 @@ export class MarketplaceSdk {
   ): Promise<{ tokenBonding: PublicKey; targetMint: PublicKey }> {
     return this.tokenBondingSdk.executeBig(
       this.createBountyInstructions(args),
+      args.payer,
+      finality
+    );
+  }
+
+  /**
+   * Creates an LBP
+   *
+   * @param param0
+   * @returns
+   */
+  async createLbpInstructions({
+    payer = this.provider.wallet.publicKey,
+    authority = this.provider.wallet.publicKey,
+    targetMint,
+    targetMintKeypair,
+    metadata,
+    metadataUpdateAuthority = authority,
+    k0,
+    k1,
+    interval,
+    c,
+    bondingArgs,
+    baseMint,
+  }: ICreateLbpArgs): Promise<
+    BigInstructionResult<{ tokenBonding: PublicKey; targetMint: PublicKey }>
+  > {
+    const instructions = [];
+    const signers = [];
+
+    let curve: PublicKey | undefined = bondingArgs?.curve;
+    if (!curve) {
+      const {
+        output: { curve: outCurve },
+        instructions: curveInstructions,
+        signers: curveSigners,
+      } = await this.tokenBondingSdk.initializeCurveInstructions({
+        config: new TimeDecayExponentialCurveConfig({
+          k0,
+          k1,
+          interval,
+          c,
+        }),
+      });
+      instructions.push(...curveInstructions);
+      signers.push(...curveSigners);
+      curve = outCurve;
+    }
+
+    const baseMintAcct = await getMintInfo(this.provider, baseMint);
+
+
+    metadataUpdateAuthority = metadataUpdateAuthority || authority;
+
+    if (targetMintKeypair) {
+      const {
+        output: { mint: outTargetMint },
+        signers: metadataSigners,
+        instructions: metadataInstructions,
+      } = await this.createMetadataForBondingInstructions({
+        metadata,
+        targetMintKeypair,
+        metadataUpdateAuthority: metadataUpdateAuthority!,
+        decimals:
+          typeof bondingArgs?.targetMintDecimals == "undefined"
+            ? baseMintAcct.decimals
+            : bondingArgs.targetMintDecimals,
+      });
+      targetMint = outTargetMint;
+      instructions.push(...metadataInstructions);
+      signers.push(...metadataSigners);
+    }
+
+    if (!targetMint) {
+      throw new Error("No target mint provided");
+    }
+    
+    if (await this.tokenBondingSdk.accountExists(targetMint)) {
+      const mint = await getMintInfo(this.provider, targetMint);
+      const mintAuthority = (
+        await SplTokenBonding.tokenBondingKey(targetMint)
+      )[0];
+      if (!mint.mintAuthority) {
+        throw new Error("Mint must have an authority");
+      }
+
+      if (!mint.mintAuthority!.equals(mintAuthority)) {
+        instructions.push(
+          await Token.createSetAuthorityInstruction(
+            TOKEN_PROGRAM_ID,
+            targetMint,
+            mintAuthority,
+            "MintTokens",
+            mint.mintAuthority!,
+            []
+          )
+        );
+      }
+    }
+    
+    const {
+      output: { tokenBonding },
+      instructions: tokenBondingInstructions,
+      signers: tokenBondingSigners,
+    } = await this.tokenBondingSdk.createTokenBondingInstructions({
+      payer,
+      curve: curve!,
+      reserveAuthority: authority,
+      generalAuthority: authority,
+      targetMint,
+      buyBaseRoyaltyPercentage: 0,
+      sellBaseRoyaltyPercentage: 0,
+      sellTargetRoyaltyPercentage: 0,
+      buyTargetRoyaltyPercentage: 0,
+      baseMint,
+      ...bondingArgs,
+    });
+
+    return {
+      output: {
+        tokenBonding,
+        targetMint,
+      },
+      instructions: [instructions, tokenBondingInstructions],
+      signers: [signers, tokenBondingSigners],
+    };
+  }
+
+  /**
+   * Executes `createBountyIntructions`
+   * @param args
+   * @returns
+   */
+  async createLbp(
+    args: ICreateLbpArgs,
+    finality?: Finality
+  ): Promise<{ tokenBonding: PublicKey; targetMint: PublicKey }> {
+    return this.tokenBondingSdk.executeBig(
+      this.createLbpInstructions(args),
       args.payer,
       finality
     );

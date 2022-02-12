@@ -1,6 +1,7 @@
 import { Alert, Button, Input, VStack } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
+import { BN } from "@project-serum/anchor";
 import { NATIVE_MINT } from "@solana/spl-token";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Keypair, PublicKey } from "@solana/web3.js";
@@ -10,7 +11,7 @@ import {
   useMintTokenRef,
   usePrimaryClaimedTokenRef,
   useProvider,
-  usePublicKey
+  usePublicKey,
 } from "@strata-foundation/react";
 import { useMarketplaceSdk } from "contexts/marketplaceSdkContext";
 import { useRouter } from "next/router";
@@ -22,17 +23,18 @@ import * as yup from "yup";
 import { FormControlWithError } from "./FormControlWithError";
 import { MintSelect } from "./MintSelect";
 import { Recipient } from "./Recipient";
-import {
-  IMetadataFormProps,
-  TokenMetadataInputs
-} from "./TokenMetadataInputs";
+import { IMetadataFormProps, TokenMetadataInputs } from "./TokenMetadataInputs";
 
-interface IBountyFormProps extends IMetadataFormProps {
+interface ILbpFormProps extends IMetadataFormProps {
   mint: string;
-  shortName: string;
-  contact: string;
-  discussion: string;
+  symbol: string;
   authority: string;
+  c: number;
+  k0: number;
+  k1: number;
+  decimals: number;
+  interval: number;
+  mintCap: number;
 }
 
 const validationSchema = yup.object({
@@ -40,40 +42,42 @@ const validationSchema = yup.object({
   image: yup.mixed(),
   name: yup.string().required().min(2),
   description: yup.string(),
-  shortName: yup.string().min(2).max(10),
-  contact: yup.string(),
-  discussion: yup.string(),
+  symbol: yup.string().min(2).max(10),
   authority: yup.string().required(),
+  k0: yup.number().min(0).required(),
+  k1: yup.number().min(0).required(),
+  interval: yup.number().min(0).required(),
+  decimals: yup.number().min(0).required(),
+  mintCap: yup.number().min(1).required(),
 });
 
-async function createBounty(
+async function createLbp(
   marketplaceSdk: MarketplaceSdk,
-  values: IBountyFormProps
+  values: ILbpFormProps
 ): Promise<PublicKey> {
-  const mint = new PublicKey(values.mint);
-  const authority = new PublicKey(values.authority);
-
   const targetMintKeypair = Keypair.generate();
-  const uri = await marketplaceSdk.tokenMetadataSdk.createArweaveMetadata({
-    name: values.name,
-    symbol: values.shortName,
-    description: values.description,
-    image: values.image?.name,
-    files: [values.image].filter(truthy),
-    mint: targetMintKeypair.publicKey,
-    attributes: MarketplaceSdk.bountyAttributes({
-      mint,
-      discussion: values.discussion,
-      contact: values.contact
-    }),
-  });
-  const { targetMint } = await marketplaceSdk.createBounty({
+  const authority = new PublicKey(values.authority);
+  const mint = new PublicKey(values.mint);
+
+  // const uri = await marketplaceSdk.tokenMetadataSdk.createArweaveMetadata({
+  //   name: values.name,
+  //   symbol: values.symbol,
+  //   description: values.description,
+  //   image: values.image?.name,
+  //   files: [values.image].filter(truthy),
+  //   mint: targetMintKeypair.publicKey,
+  // });
+
+  const uri =
+    "https://strata-token-metadata.s3.us-east-2.amazonaws.com/unclaimed.json";
+
+  const { targetMint } = await marketplaceSdk.createLbp({
     targetMintKeypair,
     authority,
     metadata: new DataV2({
       // Max name len 32
       name: values.name.substring(0, 32),
-      symbol: values.shortName.substring(0, 10),
+      symbol: values.symbol.substring(0, 10),
       uri,
       sellerFeeBasisPoints: 0,
       creators: null,
@@ -81,13 +85,22 @@ async function createBounty(
       uses: null,
     }),
     baseMint: mint,
+    c: Number(values.c),
+    k0: Number(values.k0),
+    k1: Number(values.k1),
+    interval: Number(values.interval),
+    bondingArgs: {
+      targetMintDecimals: Number(values.decimals),
+      mintCap: new BN(values.mintCap * Math.pow(10, values.decimals)),
+    }
   });
 
   return targetMint;
 }
 
-export const BountyForm: React.FC = () => {
-  const formProps = useForm<IBountyFormProps>({
+
+export const LbpForm: React.FC = () => {
+  const formProps = useForm<ILbpFormProps>({
     resolver: yupResolver(validationSchema),
   });
   const {
@@ -100,30 +113,16 @@ export const BountyForm: React.FC = () => {
   const { publicKey } = useWallet();
   const { info: tokenRef } = usePrimaryClaimedTokenRef(publicKey);
   const { awaitingApproval } = useProvider();
-  const { execute, loading, error } = useAsyncCallback(createBounty);
+  const { execute, loading, error } = useAsyncCallback(createLbp);
   const { marketplaceSdk } = useMarketplaceSdk();
   const router = useRouter();
   const { authority, mint } = watch();
   const mintKey = usePublicKey(mint);
   const { info: mintTokenRef } = useMintTokenRef(mintKey);
 
-  // Social tokens should default bounties to the owner of the social token
-  // as the authority. This is generally better because if the owner acts in 
-  // bad faith, they'll collapse the value of their own token. Vs a fan who can
-  // easily not give money to the creator
-  useEffect(() => {
-    if (!authority && mintTokenRef) {
-      const owner = mintTokenRef.owner as PublicKey | undefined;
-      if (owner) {
-        setValue("authority", owner.toBase58());
-      }
-    }
-  }, [mintTokenRef]);
-
-
-  const onSubmit = async (values: IBountyFormProps) => {
+  const onSubmit = async (values: ILbpFormProps) => {
     const mintKey = await execute(marketplaceSdk!, values);
-    router.push(route(routes.bounty, { mintKey: mintKey.toBase58() }));
+    router.push(route(routes.lbp, { mintKey: mintKey.toBase58() }));
   };
 
   const authorityRegister = register("authority");
@@ -134,17 +133,17 @@ export const BountyForm: React.FC = () => {
         <VStack spacing={8}>
           <TokenMetadataInputs />
           <FormControlWithError
-            id="shortName"
-            help="A less than 10 character name for this bounty. This will be the bounty token's symbol."
-            label="Short Name"
+            id="symbol"
+            help="A less than 10 character symbol for the token being sold"
+            label="Symbol"
             errors={errors}
           >
-            <Input {...register("shortName")} />
+            <Input {...register("symbol")} />
           </FormControlWithError>
 
           <FormControlWithError
             id="mint"
-            help={`The mint that should be used on this bounty, example ${NATIVE_MINT.toBase58()} for SOL`}
+            help={`The mint that should be used to buy this token, example ${NATIVE_MINT.toBase58()} for SOL`}
             label="Mint"
             errors={errors}
           >
@@ -164,9 +163,7 @@ export const BountyForm: React.FC = () => {
 
           <FormControlWithError
             id="authority"
-            help="The wallet that signs to disburse the funds of this bounty when it is completed. 
-            For social tokens, this defaults to the wallet associated with the social token. This
-            can also be an SPL Governance address or a multisig."
+            help="The wallet that receives the bootstrapped liquidity"
             label="Approver"
             errors={errors}
           >
@@ -185,27 +182,70 @@ export const BountyForm: React.FC = () => {
             />
           </FormControlWithError>
           <FormControlWithError
-            id="contact"
-            help="Who to contact regarding the bounty. This can be an email address, twitter handle, etc."
-            label="Contact Information"
+            id="decimals"
+            help="The number of decimals on this mint"
+            label="Mint Decimals"
             errors={errors}
           >
-            <Input {...register("contact")} />
+            <Input
+              type="number"
+              min={0}
+              step={0.000000000001}
+              {...register("decimals")}
+            />
+          </FormControlWithError>
+          <FormControlWithError id="c" help="" label="C" errors={errors}>
+            <Input
+              type="number"
+              min={0}
+              step={0.000000000001}
+              {...register("c")}
+            />
+          </FormControlWithError>
+          <FormControlWithError id="k0" help="" label="K0" errors={errors}>
+            <Input
+              type="number"
+              min={0}
+              step={0.000000000001}
+              {...register("k0")}
+            />
+          </FormControlWithError>
+          <FormControlWithError id="k1" help="" label="K1" errors={errors}>
+            <Input
+              type="number"
+              min={0}
+              step={0.000000000001}
+              {...register("k1")}
+            />
           </FormControlWithError>
           <FormControlWithError
-            id="discussion"
-            help="A link to where this bounty is actively being discussed. This can be a github issue, forum link, etc. Use this to coordinate the bounty."
-            label="Discussion"
+            id="interval"
+            help="The time in seconds that it will take to go from k0 to k1"
+            label="Interval"
             errors={errors}
           >
-            <Input {...register("discussion")} />
+            <Input
+              type="number"
+              min={0}
+              step={0.000000000001}
+              {...register("interval")}
+            />
+          </FormControlWithError>
+          <FormControlWithError
+            id="mintCap"
+            help="The maximum number of tokens that may be minted"
+            label="Mint Cap"
+            errors={errors}
+          >
+            <Input
+              type="number"
+              min={0}
+              step={0.000000000001}
+              {...register("mintCap")}
+            />
           </FormControlWithError>
 
-          {error && (
-            <Alert status="error">
-              {error.toString()}
-            </Alert>
-          )}
+          {error && <Alert status="error">{error.toString()}</Alert>}
 
           <Button
             type="submit"
@@ -214,7 +254,7 @@ export const BountyForm: React.FC = () => {
             isLoading={isSubmitting || loading}
             loadingText={awaitingApproval ? "Awaiting Approval" : "Loading"}
           >
-            Send Bounty
+            Create Lbp
           </Button>
         </VStack>
       </form>

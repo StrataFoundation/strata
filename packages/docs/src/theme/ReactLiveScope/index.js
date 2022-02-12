@@ -3,7 +3,7 @@ import { createInstruction, createNameRegistry, getHashedName, getNameAccountKey
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, NATIVE_MINT, Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
 import { Keypair, PublicKey, sendAndConfirmRawTransaction, SystemProgram, Transaction } from "@solana/web3.js";
 import { useBondingPricing, useStrataSdks, useTokenBonding, useTokenMetadata, useTokenRef } from '@strata-foundation/react';
-import { ExponentialCurveConfig, SplTokenBonding, TimeCurveConfig } from "@strata-foundation/spl-token-bonding";
+import { TimeDecayExponentialCurveConfig, ExponentialCurveConfig, SplTokenBonding, TimeCurveConfig } from "@strata-foundation/spl-token-bonding";
 import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
 import { createMetadata, Data, getAssociatedAccountBalance, getMintInfo, getTokenAccount, sendMultipleInstructions } from "@strata-foundation/spl-utils";
 import { BN } from "bn.js";
@@ -36,6 +36,7 @@ function Swap(props) {
 const ReactLiveScope = {
   u64,
   TOKEN_PROGRAM_ID,
+  TimeDecayExponentialCurveConfig,
   ASSOCIATED_TOKEN_PROGRAM_ID,
   Token,
   createMetadata,

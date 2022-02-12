@@ -186,11 +186,27 @@ export const useSwapDriver = ({
   const handleSubmit = async (values: ISwapFormValues) => {
     if (values.topAmount) {
       try {
-        await swap({
+        // They explicitly set the amount they want. Accomodate this if we're not doing a multi
+        // level swap
+        const path = pricing?.hierarchy.path(baseMint!, targetMint!);
+        let shouldUseDesiredTargetAmount = values.lastSet == "bottom" && path && path.length == 1 &&
+          path[0].tokenBonding.targetMint.equals(targetMint!);
+
+        let outputAmountSetting: any = {
           baseAmount: +values.topAmount,
+          expectedOutputAmount: +values.bottomAmount,
+        };
+        if (shouldUseDesiredTargetAmount) {
+          outputAmountSetting = {
+            desiredTargetAmount: +values.bottomAmount,
+            expectedBaseAmount: +values.topAmount
+          };
+        }
+
+        await swap({
           baseMint: baseMint!,
           targetMint: targetMint!,
-          expectedOutputAmount: +values.bottomAmount,
+          ...outputAmountSetting,
           slippage: +values.slippage / 100,
           ticker: target!.ticker,
         });

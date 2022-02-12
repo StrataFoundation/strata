@@ -25,24 +25,26 @@ import { Spinner } from "../Spinner";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
-import { ITokenBonding } from "@strata-foundation/spl-token-bonding";
+import { ITokenBonding, toNumber } from "@strata-foundation/spl-token-bonding";
 import { BondingPricing } from "@strata-foundation/spl-token-bonding/dist/lib/pricing";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { BsChevronDown } from "react-icons/bs";
 import { RiArrowUpDownFill, RiInformationLine } from "react-icons/ri";
 import * as yup from "yup";
-import { useFtxPayLink, useProvider, useTokenMetadata } from "../../hooks";
+import { useFtxPayLink, useMint, useProvider, useTokenMetadata } from "../../hooks";
 import { Royalties } from "./Royalties";
 import { TransactionInfo, TransactionInfoArgs } from "./TransactionInfo";
 import { useTwWrappedSolMint } from "../../hooks/useTwWrappedSolMint";
 import { NATIVE_MINT } from "@solana/spl-token";
 import { roundToDecimals } from "../../utils";
+import BN from "bn.js";
 
 export interface ISwapFormValues {
   topAmount: number;
   bottomAmount: number;
   slippage: number;
+  lastSet: "bottom" | "top";
 }
 
 const validationSchema = yup
@@ -155,16 +157,30 @@ export const SwapForm = ({
     (base?.publicKey.equals(wrappedSolMint) ||
       base?.publicKey.equals(NATIVE_MINT));
   const topAmount = watch("topAmount");
+  const bottomAmount = watch("bottomAmount");
   const slippage = watch("slippage");
   const hasBaseAmount = (ownedBase || 0) >= +(topAmount || 0);
   const moreThanSpendCap = +(topAmount || 0) > spendCap;
+  const targetMintAcct = useMint(target?.publicKey);
 
   const lowMint =
     base &&
     target &&
     pricing?.hierarchy.lowest(base.publicKey, target.publicKey);
   const isBuying = lowMint && lowMint.equals(target?.publicKey!);
+  const targetMintSupply = targetMintAcct && toNumber(
+    targetMintAcct.supply,
+    targetMintAcct
+  );
   const targetBonding = lowMint && pricing?.hierarchy.findTarget(lowMint);
+  const mintCap: number | undefined = 
+    targetBonding &&
+    (targetBonding.mintCap as BN | undefined) && 
+    toNumber(targetBonding.mintCap as BN, targetMintAcct);
+
+  const numRemaining = targetMintSupply && mintCap && (mintCap - targetMintSupply);
+  const passedMintCap =
+    numRemaining && numRemaining < bottomAmount;
 
   const notLive =
     targetBonding &&
@@ -177,11 +193,25 @@ export const SwapForm = ({
     setRate("--");
     setFee("--");
   };
+  const [lastSet, setLastSet] = useState<"bottom" | "top">("top");
 
+  function updatePrice() {
+    if (lastSet == "bottom" && bottomAmount) {
+      handleBottomChange(bottomAmount);
+    } else if (topAmount) {
+      handleTopChange(topAmount);
+    }
+  }
+
+  useEffect(() => {
+    const interval = setInterval(updatePrice, 1000);
+    return () => clearInterval(interval)
+  }, [bottomAmount, topAmount])
+  
   const handleTopChange = (value: number | undefined = 0) => {
     if (tokenBonding && pricing && base && target && value && +value >= 0) {
+      setLastSet("top");
       const amount = pricing.swap(+value, base.publicKey, target.publicKey);
-
       if (isNaN(amount)) {
         setInsufficientLiq(true);
       } else {
@@ -200,6 +230,7 @@ export const SwapForm = ({
       let amount = Math.abs(
         pricing.swapTargetAmount(+value, target.publicKey, base.publicKey)
       );
+      setLastSet("bottom");
 
       if (isNaN(amount)) {
         setInsufficientLiq(true);
@@ -238,7 +269,7 @@ export const SwapForm = ({
   };
 
   const handleSwap = async (values: ISwapFormValues) => {
-    await onSubmit(values);
+    await onSubmit({ ...values, lastSet });
     reset();
   };
 
@@ -537,7 +568,11 @@ export const SwapForm = ({
             <ScaleFade
               initialScale={0.9}
               in={
-                !hasBaseAmount || moreThanSpendCap || notLive || insufficientLiq
+                !hasBaseAmount ||
+                moreThanSpendCap ||
+                notLive ||
+                insufficientLiq ||
+                passedMintCap
               }
             >
               <Center
@@ -550,6 +585,7 @@ export const SwapForm = ({
                 top={-10}
                 fontSize="sm"
               >
+                {passedMintCap && <Text>{numRemaining > 0 ? `Only ${numRemaining} left` : "Sold Out"}</Text>}
                 {moreThanSpendCap && (
                   <Text>
                     Spend Cap is {spendCap} {base.ticker}. Please adjust amount
@@ -589,7 +625,8 @@ export const SwapForm = ({
                 !hasBaseAmount ||
                 moreThanSpendCap ||
                 notLive ||
-                insufficientLiq
+                insufficientLiq ||
+                passedMintCap
               }
               w="full"
               colorScheme="indigo"

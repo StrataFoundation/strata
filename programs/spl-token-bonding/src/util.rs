@@ -121,6 +121,9 @@ pub fn primitive_curve_is_valid(curve: &PrimitiveCurve) -> bool {
   match *curve {
     PrimitiveCurve::ExponentialCurveV0 { frac, c, b, pow } => {
       (c == 0 || b == 0) && frac > 0 && frac <= 10 && pow <= 10
+    },
+    PrimitiveCurve::TimeDecayExponentialCurveV0 { .. } => {
+      true
     }
   }
 }

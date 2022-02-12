@@ -110,6 +110,17 @@ pub enum PrimitiveCurve {
     pow: u8,
     frac: u8,
   },
+  // c(x^(k_0 - ((k_0 - k_1) (t_0 - t) / i))
+  // t_0 = go live date
+  // t = current time
+  // i = interval
+  // (t_0 - t) / i <= 1
+  TimeDecayExponentialCurveV0 {
+    c: u128,
+    k1: u128,
+    k0: u128,
+    interval: u32
+  },
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]

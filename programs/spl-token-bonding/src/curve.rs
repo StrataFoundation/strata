@@ -23,10 +23,147 @@ pub trait Curve {
   ) -> Option<PreciseNumber>;
 }
 
+fn expected_target_amount_exp_initial(
+  c_prec: &PreciseNumber, 
+  k_prec: &PreciseNumber, 
+  reserve_change: &PreciseNumber
+) -> Option<PreciseNumber> {
+  /*
+    * (((1 + k) dR)/c)^(1/(1 + k))
+    */
+  let one_plus_k = ONE_PREC.checked_add(&k_prec)?;
+
+  let res = one_plus_k
+    .checked_mul(reserve_change)?
+    .checked_div(&c_prec)?
+    .pow(&ONE_PREC.checked_div(&one_plus_k)?);
+
+  res
+}
+
+
+fn expected_target_amount_exp(
+   k_prec: &PreciseNumber, 
+   reserve_change: &PreciseNumber,
+   base_amount: &PreciseNumber,
+   target_supply: &PreciseNumber
+) -> Option<PreciseNumber> {
+  /*
+  dS = -S + ((S^(1 + k) (R + dR))/R)^(1/(1 + k))
+  dS + S = ((S^(1 + k) (R + dR))/R)^(1/(1 + k))
+  log(dS + S) = log((S^(1 + k) (R + dR))/R)^(1/(1 + k)))
+  log(dS + S) = (1/(1 + k))log(S^(1 + k) (R + dR))/R)
+  log(dS + S) = (1/(1 + k))(log(S^(1 + k)/R) + log(R + dR))
+  log(dS + S) = (1/(1 + k))(log(S^(1 + k)) - log(R) + log(R + dR)))
+  log(dS + S) = (1/(1 + k))(log(S^(1 + k)) + log(R + dR) - log(R))
+  log(dS + S) = (1/(1 + k))((1 + k) log(S) + log(R + dR) - log(R))
+  log(dS + S) = log(S) + (1/(1 + k))(log(R + dR) - log(R))
+  log(dS + S) = log(S) + (1/(1 + k))(log((R + dR / R)))
+  dS + S = e^(log(S) + (1/(1 + k))(log((R + dR / R))))
+  dS = e^(log(S) + (1/(1 + k))(log((R + dR / R)))) - S
+  */
+  target_supply
+    .log()?
+    .checked_add(
+      &ONE_PREC
+        .checked_div(&ONE_PREC.checked_add(k_prec)?)?
+        .signed()
+        .checked_mul(
+          &base_amount
+            .checked_add(reserve_change)?
+            .checked_div(base_amount)?
+            .log()?,
+        )?,
+    )?
+    .exp()?
+    .checked_sub(target_supply)
+}
+
+fn price_exp_initial(
+  c_prec: &PreciseNumber, 
+  k_prec: &PreciseNumber, 
+  amount: &PreciseNumber,
+) -> Option<PreciseNumber> {
+        // (c dS^(1 + pow/frac))/(1 + pow/frac)
+  let one_plus_k_prec = &ONE_PREC.checked_add(k_prec)?;
+  c_prec
+              .checked_mul(&amount.pow(one_plus_k_prec)?)?
+              .checked_div(&one_plus_k_prec)
+}
+
+fn price_exp(
+   k_prec: &PreciseNumber, 
+   amount: &PreciseNumber,
+   base_amount: &PreciseNumber,
+   target_supply: &PreciseNumber,
+  sell: bool,
+) -> Option<PreciseNumber> {
+/*
+  dR = (R / S^(1 + k)) ((S + dS)^(1 + k) - S^(1 + k))
+  dR = (R(S + dS)^(1 + k))/S^(1 + k) - R
+  log(dR + R) = log((R(S + dS)^(1 + k))/S^(1 + k))
+  log(dR + R) = log((R(S + dS)^(1 + k))) - log(S^(1 + k))
+  log(dR + R) = log(R) + (1 + k) log((S + dS)) - (1 + k)log(S)
+  log(dR + R) = (1 + k) (log(R(S + dS)) - log(S))
+  dR + R = e^(log(R) + (1 + k) (log((S + dS)) - log(S)))
+  dR = e^(log(R) + (1 + k) (log((S + dS)) - log(S))) - R
+  dR = e^(log(R) + (1 + k) (log((S + dS) / S))) - R
+
+  Edge case: selling where dS = S. Just charge them the full base amount
+*/
+  let s_plus_ds = if sell {
+    target_supply.checked_sub(amount)?
+  } else {
+    target_supply.checked_add(amount)?
+  };
+  let one_plus_k_prec = &ONE_PREC.checked_add(k_prec)?;
+
+
+  // They're killing the curve, so it should cost the full reserves
+  if s_plus_ds.eq(&ZERO_PREC) {
+    return Some(base_amount.clone());
+  }
+
+  let log1 = base_amount.log()?;
+  let log2 = s_plus_ds.checked_div(target_supply)?.log()?;
+  let logs = log1.checked_add(&one_plus_k_prec.signed().checked_mul(&log2)?)?;
+  let exp = logs.exp()?;
+
+  Some(exp.signed().checked_sub(&base_amount.signed())?.value)
+}
+
+fn to_prec(i: u128) -> PreciseNumber {
+  PreciseNumber {
+    value: InnerUint::from(i) * 1_000_000_u64, // Add 6 precision
+  }
+}
+
+fn time_decay_k(k0: u128, k1: u128, time_offset: i64, interval: u32) -> Option<PreciseNumber> {
+  let k0_prec = to_prec(k0);
+  let k1_prec = to_prec(k1);
+  let interval_prec = PreciseNumber {
+    value: InnerUint::from(interval) * 1_000_000_u64, // Add 6 precision
+  };
+  let time_offset_prec = PreciseNumber {
+    value: InnerUint::from(time_offset) * 1_000_000_u64, // Add 6 precision
+  };
+  let interval_completion = time_offset_prec.checked_div(&interval_prec)?;
+  let time_multiplier = if interval_completion.less_than(&ONE_PREC) {
+    interval_completion
+  } else {
+    PreciseNumber::one()
+  };
+
+  Some(k0_prec.signed().checked_sub(
+    &k0_prec.signed().checked_sub(&k1_prec.signed())?
+      .checked_mul(&time_multiplier.signed())?
+  )?.value)
+}
+
 impl Curve for PrimitiveCurve {
   fn expected_target_amount(
     &self,
-    _time_offset: i64,
+    time_offset: i64,
     base_amount: &PreciseNumber,
     target_supply: &PreciseNumber,
     reserve_change: &PreciseNumber,
@@ -35,29 +172,16 @@ impl Curve for PrimitiveCurve {
       match *self {
         // b dS + (c dS^(1 + pow/frac))/(1 + pow/frac)
         PrimitiveCurve::ExponentialCurveV0 { pow, frac, b, c } => {
-          let b_prec = PreciseNumber {
-            value: InnerUint::from(b) * 1_000_000_u64,
-          };
-          let c_prec = PreciseNumber {
-            value: InnerUint::from(c) * 1_000_000_u64,
-          };
+          let pow_prec = PreciseNumber::new(u128::try_from(pow).ok()?)?;
+          let frac_prec = PreciseNumber::new(u128::try_from(frac).ok()?)?;
+          let c_prec = to_prec(c);
+          let b_prec = to_prec(b);
           if b == 0 && c != 0 {
-            /*
-             * (((1 + k) dR)/c)^(1/(1 + k))
-             */
-            let pow_prec = PreciseNumber::new(u128::try_from(pow).ok()?)?;
-            let frac_prec = PreciseNumber::new(u128::try_from(frac).ok()?)?;
-            let pow = pow_prec.checked_div(&frac_prec)?;
-            let one_plus_k = ONE_PREC.checked_add(&pow)?;
-
-            let res = one_plus_k
-              .checked_mul(reserve_change)?
-              .checked_div(&c_prec)?
-              .pow(&ONE_PREC.checked_div(&one_plus_k)?);
-
-            res.clone()?.print();
-
-            res
+            expected_target_amount_exp_initial(
+              &c_prec,
+              &pow_prec.checked_div(&frac_prec)?,
+              reserve_change
+            )
           } else if c == 0 {
             if base_amount.eq(&ZERO_PREC) {
               reserve_change.checked_div(&b_prec)
@@ -69,6 +193,14 @@ impl Curve for PrimitiveCurve {
           } else {
             None // This math is too hard, have not implemented yet.
           }
+        },
+        PrimitiveCurve::TimeDecayExponentialCurveV0 { c, k1, k0, interval } => {
+          time_decay_k(k0, k1, time_offset, interval)?.print();
+          expected_target_amount_exp_initial(
+            &to_prec(c),
+            &time_decay_k(k0, k1, time_offset, interval)?,
+            reserve_change
+          )
         }
       }
     } else {
@@ -77,37 +209,13 @@ impl Curve for PrimitiveCurve {
           let pow_prec = PreciseNumber::new(u128::try_from(pow).ok()?)?;
           let frac_prec = PreciseNumber::new(u128::try_from(frac).ok()?)?;
 
-          let one_plus_k_prec = pow_prec.checked_div(&frac_prec)?.checked_add(&ONE_PREC)?;
           if b == 0 && c != 0 {
-            /*
-            dS = -S + ((S^(1 + k) (R + dR))/R)^(1/(1 + k))
-            dS + S = ((S^(1 + k) (R + dR))/R)^(1/(1 + k))
-            log(dS + S) = log((S^(1 + k) (R + dR))/R)^(1/(1 + k)))
-            log(dS + S) = (1/(1 + k))log(S^(1 + k) (R + dR))/R)
-            log(dS + S) = (1/(1 + k))(log(S^(1 + k)/R) + log(R + dR))
-            log(dS + S) = (1/(1 + k))(log(S^(1 + k)) - log(R) + log(R + dR)))
-            log(dS + S) = (1/(1 + k))(log(S^(1 + k)) + log(R + dR) - log(R))
-            log(dS + S) = (1/(1 + k))((1 + k) log(S) + log(R + dR) - log(R))
-            log(dS + S) = log(S) + (1/(1 + k))(log(R + dR) - log(R))
-            log(dS + S) = log(S) + (1/(1 + k))(log((R + dR / R)))
-            dS + S = e^(log(S) + (1/(1 + k))(log((R + dR / R))))
-            dS = e^(log(S) + (1/(1 + k))(log((R + dR / R)))) - S
-            */
-            target_supply
-              .log()?
-              .checked_add(
-                &ONE_PREC
-                  .checked_div(&one_plus_k_prec)?
-                  .signed()
-                  .checked_mul(
-                    &base_amount
-                      .checked_add(reserve_change)?
-                      .checked_div(base_amount)?
-                      .log()?,
-                  )?,
-              )?
-              .exp()?
-              .checked_sub(target_supply)
+            expected_target_amount_exp(
+              &pow_prec.checked_div(&frac_prec)?, 
+              reserve_change,
+              base_amount,
+              target_supply
+            )
           } else if c == 0 {
             /*
              * dS = S dR / R
@@ -118,6 +226,14 @@ impl Curve for PrimitiveCurve {
           } else {
             None // This math is too hard, have not implemented yet.
           }
+        },
+        PrimitiveCurve::TimeDecayExponentialCurveV0 { c: _, k1, k0, interval } => {
+          expected_target_amount_exp(
+            &time_decay_k(k0, k1, time_offset, interval)?,
+            reserve_change,
+            base_amount,
+            target_supply
+          )
         }
       }
     }
@@ -125,7 +241,7 @@ impl Curve for PrimitiveCurve {
 
   fn price(
     &self,
-    _time_offset: i64,
+    time_offset: i64,
     base_amount: &PreciseNumber,
     target_supply: &PreciseNumber,
     amount: &PreciseNumber,
@@ -135,19 +251,23 @@ impl Curve for PrimitiveCurve {
       match *self {
         // b dS + (c dS^(1 + pow/frac))/(1 + pow/frac)
         PrimitiveCurve::ExponentialCurveV0 { pow, frac, c, b } => {
-          let b_prec = PreciseNumber {
-            value: InnerUint::from(b) * 1_000_000_u64, // Add 6 precision
-          };
-          let c_prec = PreciseNumber {
-            value: InnerUint::from(c) * 1_000_000_u64, // Add 6 precision
-          };
+          let b_prec = to_prec(b);
+          let c_prec = to_prec(c);
           let pow_prec = PreciseNumber::new(u128::try_from(pow).ok()?)?;
           let frac_prec = PreciseNumber::new(u128::try_from(frac).ok()?)?;
-          let one_plus_k_prec = pow_prec.checked_div(&frac_prec)?.checked_add(&ONE_PREC)?;
           b_prec.checked_mul(amount)?.checked_add(
-            &c_prec
-              .checked_mul(&amount.pow(&one_plus_k_prec)?)?
-              .checked_div(&one_plus_k_prec)?,
+            &price_exp_initial(
+              &c_prec,
+              &pow_prec.checked_div(&frac_prec)?,
+              amount,
+            )?
+          )
+        },
+        PrimitiveCurve::TimeDecayExponentialCurveV0 { c, k1, k0, interval } => {
+          price_exp_initial(
+            &to_prec(c),
+            &time_decay_k(k0, k1, time_offset, interval)?,
+            amount,
           )
         }
       }
@@ -155,46 +275,31 @@ impl Curve for PrimitiveCurve {
       match *self {
         PrimitiveCurve::ExponentialCurveV0 { pow, frac, c, b } => {
           if b == 0 && c != 0 {
-            /*
-              dR = (R / S^(1 + k)) ((S + dS)^(1 + k) - S^(1 + k))
-              dR = (R(S + dS)^(1 + k))/S^(1 + k) - R
-              log(dR + R) = log((R(S + dS)^(1 + k))/S^(1 + k))
-              log(dR + R) = log((R(S + dS)^(1 + k))) - log(S^(1 + k))
-              log(dR + R) = log(R) + (1 + k) log((S + dS)) - (1 + k)log(S)
-              log(dR + R) = (1 + k) (log(R(S + dS)) - log(S))
-              dR + R = e^(log(R) + (1 + k) (log((S + dS)) - log(S)))
-              dR = e^(log(R) + (1 + k) (log((S + dS)) - log(S))) - R
-              dR = e^(log(R) + (1 + k) (log((S + dS) / S))) - R
-
-              Edge case: selling where dS = S. Just charge them the full base amount
-            */
-            let s_plus_ds = if sell {
-              target_supply.checked_sub(amount)?
-            } else {
-              target_supply.checked_add(amount)?
-            };
-
-            // They're killing the curve, so it should cost the full reserves
-            if s_plus_ds.eq(&ZERO_PREC) {
-              return Some(base_amount.clone());
-            }
-
             let pow_prec = PreciseNumber::new(u128::try_from(pow).ok()?)?;
             let frac_prec = PreciseNumber::new(u128::try_from(frac).ok()?)?;
-            let one_plus_k_prec = pow_prec.checked_div(&frac_prec)?.checked_add(&ONE_PREC)?;
-
-            let log1 = base_amount.log()?;
-            let log2 = s_plus_ds.checked_div(target_supply)?.log()?;
-            let logs = log1.checked_add(&one_plus_k_prec.signed().checked_mul(&log2)?)?;
-            let exp = logs.exp()?;
-
-            Some(exp.signed().checked_sub(&base_amount.signed())?.value)
+            let k = pow_prec.checked_div(&frac_prec)?;
+            price_exp(
+              &k,
+              amount,
+              base_amount,
+              target_supply,
+              sell
+            )
           } else if c == 0 {
             // R dS / S
             base_amount.checked_mul(amount)?.checked_div(target_supply)
           } else {
             None // Math is too hard, haven't implemented yet
           }
+        },
+        PrimitiveCurve::TimeDecayExponentialCurveV0 { c: _, k1, k0, interval } => {
+          price_exp(
+            &&time_decay_k(k0, k1, time_offset, interval)?,
+            amount,
+            base_amount,
+            target_supply,
+            sell
+          )
         }
       }
     }
