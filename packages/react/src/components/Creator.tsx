@@ -7,11 +7,17 @@ import { useErrorHandler, useSocialTokenMetadata } from "../hooks";
 import { useReverseName } from "../hooks/nameService";
 import { useGovernance } from "../hooks/useGovernance";
 
+// export const WUMBO_TWITTER_VERIFIER = new PublicKey(
+//   "DTok7pfUzNeNPqU3Q6foySCezPQE82eRyhX1HdhVNLVC"
+// );
+// export const WUMBO_TWITTER_TLD = new PublicKey(
+//   "Fhqd3ostRQQE65hzoA7xFMgT9kge2qPnsTNAKuL2yrnx"
+// );
 export const WUMBO_TWITTER_VERIFIER = new PublicKey(
-  "DTok7pfUzNeNPqU3Q6foySCezPQE82eRyhX1HdhVNLVC"
+  "GibysS6yTqHWw4AZap416Xs26rAo9nV9HTRviKuutytp"
 );
 export const WUMBO_TWITTER_TLD = new PublicKey(
-  "Fhqd3ostRQQE65hzoA7xFMgT9kge2qPnsTNAKuL2yrnx"
+  "EEbZHaBD4mreYS6enRqytXvXfmRESLWXXrXbtZLWyd6X"
 );
 
 export const truncatePubkey = (pkey: PublicKey): string => {

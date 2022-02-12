@@ -1,19 +1,10 @@
-import React from "react";
 import {
-  Image,
-  Container,
-  Box,
-  Center,
-  Flex,
-  HStack,
-  Icon,
-  Text,
-  Link,
-  LinkProps,
-  Button,
+  Box, Button, Center, Container, HStack, Image, Link,
+  LinkProps, Text
 } from "@chakra-ui/react";
-import { disconnect } from "process";
 import { useWallet } from "@solana/wallet-adapter-react";
+import React from "react";
+import { TwitterLink } from "./TwitterLink";
 import { WalletModalButton } from "./WalletModalButton";
 
 interface IMenuItemProps extends LinkProps {
@@ -67,8 +58,10 @@ export const Header: React.FC = () => {
               align="center"
               justify={["center", "space-between", "flex-end", "flex-end"]}
               direction={["column", "row", "row", "row"]}
+              display={["none", "none", "flex"]}
               pt={[4, 4, 0, 0]}
             >
+              <TwitterLink />
               {connected && (
                 <Button
                   _hover={{ backgroundColor: "black.500" }}

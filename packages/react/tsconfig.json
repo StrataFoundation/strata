@@ -20,6 +20,6 @@
     "target": "es6",
     "typeRoots": ["node_modules/@types"]
   },
-  "include": ["src"],
+  "include": ["src", "../spl-utils/src/executeRemoteTxn.ts"],
   "exclude": ["./dist/**/*", "./node_modules"]
 }
