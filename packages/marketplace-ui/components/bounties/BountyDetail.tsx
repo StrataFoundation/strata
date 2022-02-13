@@ -175,22 +175,26 @@ export const BountyDetail = ({
 
   return (
     <VStack p={2} spacing={2} w="full">
-      <Button
-        color="gray.400"
-        // __hover={{ rounded: "lg", borderColor: "gray.200", backgroundColor: "gray.100" }}
-        leftIcon={<Icon as={RiPencilFill} mr="-1px" />}
-        variant="ghost"
-        marginLeft="auto"
-        onClick={() =>
-          router.push(
-            route(routes.editBounty, {
-              mintKey: mintKey?.toBase58(),
-            })
-          )
-        }
-      >
-        Edit
-      </Button>
+      {targetMetadata?.updateAuthority &&
+        targetMetadata.updateAuthority == publicKey?.toBase58() && (
+          <Button
+            color="gray.400"
+            // __hover={{ rounded: "lg", borderColor: "gray.200", backgroundColor: "gray.100" }}
+            leftIcon={<Icon as={RiPencilFill} mr="-1px" />}
+            variant="ghost"
+            marginLeft="auto"
+            onClick={() =>
+              router.push(
+                route(routes.editBounty, {
+                  mintKey: mintKey?.toBase58(),
+                })
+              )
+            }
+          >
+            Edit
+          </Button>
+        )
+      }
 
       <VStack w="full" p={6} pt={0} spacing={8}>
         <VStack spacing={4}>

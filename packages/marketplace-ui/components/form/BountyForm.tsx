@@ -70,6 +70,7 @@ async function createBounty(
   const { targetMint } = await marketplaceSdk.createBounty({
     targetMintKeypair,
     authority,
+    metadataUpdateAuthority: marketplaceSdk.provider.wallet.publicKey,
     metadata: new DataV2({
       // Max name len 32
       name: values.name.substring(0, 32),
