@@ -80,12 +80,14 @@ async function editBounty(
   instructions.push(...metaInstrs);
   signers.push(...metaSigners);
 
-  if (values.authority) {
+  const tokenBondingKey = (await SplTokenBonding.tokenBondingKey(mintKey))[0];
+  const tokenBondingAcct = await tokenBondingSdk.getTokenBonding(tokenBondingKey);
+  if (values.authority && tokenBondingSdk.wallet.publicKey.equals(tokenBondingAcct!.reserveAuthority as PublicKey)) {
     const authority = new PublicKey(values.authority);
 
     const { instructions: bondInstrs, signers: bondSigners } =
       await tokenBondingSdk.updateTokenBondingInstructions({
-        tokenBonding: (await SplTokenBonding.tokenBondingKey(mintKey))[0],
+        tokenBonding: tokenBondingKey,
         generalAuthority: authority,
         reserveAuthority: authority,
       });
