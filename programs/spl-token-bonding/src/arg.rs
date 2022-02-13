@@ -119,7 +119,7 @@ pub enum PrimitiveCurve {
     c: u128,
     k1: u128,
     k0: u128,
-    interval: u32
+    interval: u32,
   },
 }
 
