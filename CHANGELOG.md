@@ -3,7 +3,7 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-[Unreleased]
+## [3.2.4](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.2.4-alpha.5...v3.2.4) (2022-02-12)
 
 ### Added
   * Bounties UI

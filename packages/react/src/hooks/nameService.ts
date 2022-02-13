@@ -1,14 +1,12 @@
 import {
   getHashedName,
   getNameAccountKey,
-  NameRegistryState, ReverseTwitterRegistryState
+  NameRegistryState,
+  ReverseTwitterRegistryState,
 } from "@bonfida/spl-name-service";
 import { useConnection } from "@solana/wallet-adapter-react";
 import { Connection, PublicKey } from "@solana/web3.js";
-import {
-  getOwnerForName,
-  useAccountFetchCache
-} from ".";
+import { getOwnerForName, useAccount, useAccountFetchCache } from ".";
 import { deserialize } from "borsh";
 import { useAsync } from "react-async-hook";
 
@@ -20,11 +18,7 @@ export async function reverseNameLookup(
 ): Promise<ReverseTwitterRegistryState> {
   const hashedName = await getHashedName(owner.toString());
 
-  const key = await getNameAccountKey(
-    hashedName,
-    verifier,
-    tld
-  );
+  const key = await getNameAccountKey(hashedName, verifier, tld);
 
   const reverseAccount = await connection.getAccountInfo(key);
   if (!reverseAccount) {
@@ -47,7 +41,8 @@ async function getNameString(
     return;
   }
 
-  return (await reverseNameLookup(connection, owner, verifier, tld)).twitterHandle;
+  return (await reverseNameLookup(connection, owner, verifier, tld))
+    .twitterHandle;
 }
 
 interface ReverseNameState {
@@ -55,24 +50,59 @@ interface ReverseNameState {
   nameString: string | undefined;
   error: Error | undefined;
 }
+
+async function getHashedNameNullable(
+  owner: PublicKey | undefined
+): Promise<Buffer | undefined> {
+  if (!owner) {
+    return undefined;
+  }
+
+  return getHashedName(owner.toString());
+}
+
+async function getNameAccountKeyNullable(
+  hashedName: Buffer | undefined,
+  verifier?: PublicKey,
+  tld?: PublicKey
+): Promise<PublicKey | undefined> {
+  if (!hashedName) {
+    return undefined;
+  }
+
+  return getNameAccountKey(hashedName, verifier, tld);
+}
+
 export function useReverseName(
   owner: PublicKey | undefined,
   verifier?: PublicKey,
   tld?: PublicKey
 ): ReverseNameState {
   const { connection } = useConnection();
-  const {
-    loading,
-    error,
-    result: handle,
-  } = useAsync(getNameString, [connection, owner, verifier, tld]);
 
+  const {
+    result: hashedName,
+    error: nameError,
+    loading: loading1,
+  } = useAsync(getHashedNameNullable, [owner]);
+  const {
+    result: key,
+    error: keyError,
+    loading: loading2,
+  } = useAsync(getNameAccountKeyNullable, [hashedName, verifier, tld]);
+  const { info: reverseAccount } = useAccount(key, (key, acct) => {
+    return deserialize(
+      ReverseTwitterRegistryState.schema,
+      ReverseTwitterRegistryState,
+      acct.data.slice(NameRegistryState.HEADER_LEN)
+    );
+  });
+  console.log(reverseAccount);
   return {
-    loading,
-    error: error?.message?.includes("Invalid reverse account provided")
-      ? undefined
-      : error,
-    nameString: handle,
+    loading: loading1 || loading2,
+    error: nameError || keyError,
+    // @ts-ignore
+    nameString: reverseAccount?.twitterHandle,
   };
 }
 
@@ -81,7 +111,10 @@ interface NameState {
   owner: PublicKey | undefined;
   error: Error | undefined;
 }
-export function useNameOwner(nameString: string | undefined, tld?: PublicKey): NameState {
+export function useNameOwner(
+  nameString: string | undefined,
+  tld?: PublicKey
+): NameState {
   const cache = useAccountFetchCache();
   const {
     loading,

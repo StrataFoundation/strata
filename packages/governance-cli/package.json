@@ -1,6 +1,6 @@
 {
   "name": "@strata-foundation/governance-cli",
-  "version": "3.2.4-alpha.2",
+  "version": "3.2.4",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
@@ -19,5 +19,5 @@
     "borsh": "^0.7.0",
     "shelljs": "^0.8.4"
   },
-  "gitHead": "16f947718749b59d5a2dfdfaa9c34370da7e3bcf"
+  "gitHead": "4623c709db43b3503af871ddbdf325da202e0e62"
 }
