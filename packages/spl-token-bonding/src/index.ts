@@ -59,11 +59,11 @@ function anyDefined(...args: any | undefined[]): boolean {
 /**
  * The curve config required by the smart contract is unwieldy, implementors of `CurveConfig` wrap the interface
  */
-interface ICurveConfig {
+export interface ICurveConfig {
   toRawConfig(): CurveV0;
 }
 
-interface IPrimitiveCurve {
+export interface IPrimitiveCurve {
   toRawPrimitiveConfig(): any;
 }
 

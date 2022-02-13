@@ -9,7 +9,7 @@ import { createMetadata, Data, getAssociatedAccountBalance, getMintInfo, getToke
 import { BN } from "bn.js";
 import React from 'react';
 import { useVariables, useVariablesContext } from "../Root/variables";
-
+import { CurveConfigurator } from "../../components/CurveConfigurator";
 function BrowserOnlyAsyncButton(props) {
   return (
     <BrowserOnly fallback={<div>...</div>}>
@@ -38,6 +38,7 @@ const ReactLiveScope = {
   TOKEN_PROGRAM_ID,
   TimeDecayExponentialCurveConfig,
   ASSOCIATED_TOKEN_PROGRAM_ID,
+  CurveConfigurator,
   Token,
   createMetadata,
   Data,

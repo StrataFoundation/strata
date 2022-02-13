@@ -18,9 +18,12 @@ import {
   VStack,
   Spinner,
 } from "@chakra-ui/react";
-import { useErrorHandler, usePublicKey } from "@strata-foundation/react";
+import {
+  useErrorHandler,
+  usePublicKey,
+  useQueryString,
+} from "@strata-foundation/react";
 import { useBounties } from "hooks/useBounties";
-import { useQueryString } from "hooks/useQueryString";
 import { NextPage } from "next";
 import Head from "next/head";
 import { useState } from "react";

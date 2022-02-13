@@ -173,7 +173,8 @@ export class TimeCurve implements IPricingCurve {
     const price = subCurve.sellTargetAmount(
       targetAmountNum,
       baseRoyaltiesPercent,
-      targetRoyaltiesPercent
+      targetRoyaltiesPercent,
+      unixTime
     );
 
     return (
