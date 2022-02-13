@@ -173,10 +173,11 @@ export const BountyDetail = ({
     return <Spinner />;
   }
 
+  const editVisible = targetMetadata?.updateAuthority &&
+        targetMetadata.updateAuthority == publicKey?.toBase58();
   return (
     <VStack p={2} spacing={2} w="full">
-      {targetMetadata?.updateAuthority &&
-        targetMetadata.updateAuthority == publicKey?.toBase58() && (
+      { editVisible && (
           <Button
             color="gray.400"
             // __hover={{ rounded: "lg", borderColor: "gray.200", backgroundColor: "gray.100" }}
@@ -196,7 +197,7 @@ export const BountyDetail = ({
         )
       }
 
-      <VStack w="full" p={6} pt={0} spacing={8}>
+      <VStack w="full" p={6} pt={editVisible ? 0 : 8} spacing={8}>
         <VStack spacing={4}>
           <Heading textAlign="center">{name}</Heading>
           <AuthorityAndTokenInfo mintKey={mintKey} />
