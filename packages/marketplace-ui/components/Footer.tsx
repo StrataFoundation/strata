@@ -1,43 +1,74 @@
-import { Text, Container, SimpleGrid, VStack } from "@chakra-ui/react";
-
-const sections = [{
-  name: "Docs",
-  items: [{
-    name: "tutorial",
-    link: ""
-  }]
-}, {
-    name: "Community",
-    items: [{
-      name: "Discord",
-      link: ""
-    }, {
-      name: "Twitter",
-      link: ""
-    }]
-  }, {
-    name: "More",
-    items: [{
-      name: "Blog",
-      link: ""
-    }, {
-      name: "GitHub",
-      link: ""
-    }]
-  }]
+import { Link, Text, Container, SimpleGrid, VStack, Box, Stack, Icon, HStack, Center } from "@chakra-ui/react";
+import { RiExternalLinkLine } from "react-icons/ri";
+const sections = [
+  {
+    title: "Docs",
+    items: [
+      {
+        title: "Tutorial",
+        href: "https://strataprotocol.com/docs/getting_started",
+      },
+    ],
+  },
+  {
+    title: "Community",
+    items: [
+      {
+        title: "Discord",
+        href: "https://discord.gg/XQhCFg77WM",
+      },
+      {
+        title: "Twitter",
+        href: "https://twitter.com/StrataProtocol",
+      },
+    ],
+  },
+  {
+    title: "More",
+    items: [
+      {
+        title: "Blog",
+        href: "https://www.strataprotocol.com/blog",
+      },
+      {
+        title: "GitHub",
+        href: "https://github.com/StrataFoundation/strata",
+      },
+    ],
+  },
+];
 export const Footer = () => {
-  return <Container maxW="container.lg" padding="29px" backgroundColor="black.300">
-    <SimpleGrid columns={[1, 3]}>
-      {sections.map(({ name, items }) => {
-      <VStack key={name}>
-        <Text fontWeight={700} fontSize="15px" color="white">
-          {name}
-        </Text>
-        <Text fontWeight={400} fontSize="15px" color="orange.500">
-          {name}
-        </Text>
-      </VStack>;
-      })}
-    </SimpleGrid>
-  </Container>;
+  return (
+    <VStack backgroundColor="#303846" padding="29px">
+      <Container maxW="container.lg">
+        <Stack spacing={16} direction={["column", "row"]}>
+          {sections.map(({ title, items }) => (
+            <VStack align="left" key={title}>
+              <Text fontWeight={700} fontSize="15px" color="white">
+                {title}
+              </Text>
+              {items.map((item) => (
+                <Link
+                  href={item.href}
+                  key={item.title}
+                  fontWeight={400}
+                  fontSize="15px"
+                  color="orange.500"
+                  isExternal
+                >
+                  <HStack spacing={1}>
+                    <Text>{item.title}</Text>
+                    <Icon as={RiExternalLinkLine} />
+                  </HStack>
+                </Link>
+              ))}
+            </VStack>
+          ))}
+        </Stack>
+      </Container>
+      <Center textColor="rgba(255, 255, 255, 0.49)" w="full">
+        Copyright © 2022 Strata Foundation.
+      </Center>
+    </VStack>
+  );
 }

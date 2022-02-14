@@ -23,8 +23,7 @@ export const MarketDisplay: NextPage = ({ name, image, description }: InferGetSe
     <Box
       w="full"
       backgroundColor="#f9f9f9"
-      height="100vh"
-      overflow="auto"
+      minHeight="100vh"
       paddingBottom="200px"
     >
       <Head>
@@ -32,7 +31,12 @@ export const MarketDisplay: NextPage = ({ name, image, description }: InferGetSe
           property="twitter:url"
           content={`https://marketplace.strataprotocol.com/item/${mintKey}/`}
         />
-        <MetadataMeta name={name} description={description} image={image} cardType="summary_large_image" />
+        <MetadataMeta
+          name={name}
+          description={description}
+          image={image}
+          cardType="summary_large_image"
+        />
       </Head>
       <Box padding="54px" backgroundColor="black.500" />
       <Container mt={"-50px"} justify="stretch" maxW="640px">
