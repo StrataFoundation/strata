@@ -273,7 +273,7 @@ export const CurveConfiguratorFromVariables = () => {
   const [reserves, setReserves] = useQueryString("reserves", "0");
   const [supply, setSupply] = useQueryString("supply", "0");
   const [startSupply, setStartSupply] = useQueryString("startSupply", passedStartSupply || "0");
-  const [endSupply, setEndSupply] = useQueryString("endSupply", passedEndSupply || "0");
+  const [endSupply, setEndSupply] = useQueryString("endSupply", passedEndSupply || "100");
   const [maxTime, setMaxTime] = useQueryString("maxTime", "10");
   const args = {
     timeOffset,
@@ -291,16 +291,16 @@ export const CurveConfiguratorFromVariables = () => {
   }
 
   useEffect(() => {
-    setReserves(passedReserves);
+    passedReserves && setReserves(passedReserves);
   }, [passedReserves]);
   useEffect(() => {
-    setSupply(passedSupply);
+    passedSupply && setSupply(passedSupply);
   }, [passedSupply]);
   useEffect(() => {
-    setEndSupply(passedEndSupply);
+    passedEndSupply && setEndSupply(passedEndSupply);
   }, [passedEndSupply]);
   useEffect(() => {
-    setStartSupply(passedStartSupply);
+    passedStartSupply && setStartSupply(passedStartSupply);
   }, [passedStartSupply]);
 
   if (!curveConfig) {
