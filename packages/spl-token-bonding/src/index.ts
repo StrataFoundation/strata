@@ -52,6 +52,10 @@ async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function anyDefined(...args: any | undefined[]): boolean {
+  return args.some((a: any | undefined) => typeof a !== "undefined")
+}
+
 /**
  * The curve config required by the smart contract is unwieldy, implementors of `CurveConfig` wrap the interface
  */
@@ -183,6 +187,8 @@ export interface IInitializeCurveArgs {
   config: ICurveConfig;
   /** The payer to create this curve, defaults to provider.wallet */
   payer?: PublicKey;
+  /** The keypair to use for this curve */
+  curveKeypair?: Keypair;
 }
 
 export interface ICreateTokenBondingOutput {
@@ -338,6 +344,7 @@ export interface IUpdateTokenBondingArgs {
   /** A new account to store royalties. **Default:** current */
   sellTargetRoyalties?: PublicKey;
   generalAuthority?: PublicKey | null;
+  reserveAuthority?: PublicKey | null;
   /** Should this bonding curve be frozen, disabling buy and sell? It can be unfrozen using {@link SplTokenBonding.updateTokenBonding}. **Default:** current */
   buyFrozen?: boolean;
 }
@@ -660,9 +667,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
   async initializeCurveInstructions({
     payer = this.wallet.publicKey,
     config: curveConfig,
+    curveKeypair = anchor.web3.Keypair.generate()
   }: IInitializeCurveArgs): Promise<InstructionResult<{ curve: PublicKey }>> {
     const curve = curveConfig.toRawConfig();
-    const curveKeypair = anchor.web3.Keypair.generate();
     return {
       output: {
         curve: curveKeypair.publicKey,
@@ -1075,43 +1082,57 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     sellBaseRoyalties,
     sellTargetRoyalties,
     generalAuthority,
+    reserveAuthority,
     buyFrozen,
   }: IUpdateTokenBondingArgs): Promise<InstructionResult<null>> {
     const tokenBondingAcct = (await this.getTokenBonding(tokenBonding))!;
-    if (!tokenBondingAcct.generalAuthority) {
-      throw new Error(
-        "Cannot update a token bonding account that has no authority"
-      );
-    }
 
-    const args: IdlTypes<SplTokenBondingIDL>["UpdateTokenBondingV0Args"] = {
-      buyBaseRoyaltyPercentage:
-        percent(buyBaseRoyaltyPercentage) ||
-        tokenBondingAcct.buyBaseRoyaltyPercentage,
-      buyTargetRoyaltyPercentage:
-        percent(buyTargetRoyaltyPercentage) ||
-        tokenBondingAcct.buyTargetRoyaltyPercentage,
-      sellBaseRoyaltyPercentage:
-        percent(sellBaseRoyaltyPercentage) ||
-        tokenBondingAcct.sellBaseRoyaltyPercentage,
-      sellTargetRoyaltyPercentage:
-        percent(sellTargetRoyaltyPercentage) ||
-        tokenBondingAcct.sellTargetRoyaltyPercentage,
-      generalAuthority:
-        generalAuthority === null
-          ? null
-          : generalAuthority! ||
-            (tokenBondingAcct.generalAuthority as PublicKey),
-      buyFrozen:
-        typeof buyFrozen === "undefined"
-          ? (tokenBondingAcct.buyFrozen as boolean)
-          : buyFrozen,
-    };
+    const generalChanges = anyDefined(
+      buyBaseRoyaltyPercentage,
+      buyTargetRoyaltyPercentage,
+      sellBaseRoyaltyPercentage,
+      sellTargetRoyaltyPercentage,
+      buyBaseRoyalties,
+      buyTargetRoyalties,
+      sellBaseRoyalties,
+      sellTargetRoyalties,
+      generalAuthority,
+      buyFrozen
+    );
+    const reserveAuthorityChanges = anyDefined(reserveAuthority);
+    const instructions = [];
+    if (generalChanges) {
+      if (!tokenBondingAcct.generalAuthority) {
+        throw new Error(
+          "Cannot update a token bonding account that has no authority"
+        );
+      }
 
-    return {
-      output: null,
-      signers: [],
-      instructions: [
+      const args: IdlTypes<SplTokenBondingIDL>["UpdateTokenBondingV0Args"] =
+        {
+          buyBaseRoyaltyPercentage:
+            percent(buyBaseRoyaltyPercentage) ||
+            tokenBondingAcct.buyBaseRoyaltyPercentage,
+          buyTargetRoyaltyPercentage:
+            percent(buyTargetRoyaltyPercentage) ||
+            tokenBondingAcct.buyTargetRoyaltyPercentage,
+          sellBaseRoyaltyPercentage:
+            percent(sellBaseRoyaltyPercentage) ||
+            tokenBondingAcct.sellBaseRoyaltyPercentage,
+          sellTargetRoyaltyPercentage:
+            percent(sellTargetRoyaltyPercentage) ||
+            tokenBondingAcct.sellTargetRoyaltyPercentage,
+          generalAuthority:
+            generalAuthority === null
+              ? null
+              : generalAuthority! ||
+                (tokenBondingAcct.generalAuthority as PublicKey),
+          buyFrozen:
+            typeof buyFrozen === "undefined"
+              ? (tokenBondingAcct.buyFrozen as boolean)
+              : buyFrozen,
+        };
+      instructions.push(
         await this.instruction.updateTokenBondingV0(args, {
           accounts: {
             tokenBonding,
@@ -1127,8 +1148,37 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
             sellBaseRoyalties:
               sellBaseRoyalties || tokenBondingAcct.sellBaseRoyalties,
           },
-        }),
-      ],
+        })
+      );
+    }
+
+    if (reserveAuthorityChanges) {
+      if (!tokenBondingAcct.reserveAuthority) {
+        throw new Error(
+          "Cannot update reserve authority of a token bonding account that has no reserve authority"
+        );
+      }
+
+      instructions.push(
+        await this.instruction.updateReserveAuthorityV0(
+          {
+            newReserveAuthority: reserveAuthority,
+          },
+          {
+            accounts: {
+              tokenBonding,
+              reserveAuthority:
+                (tokenBondingAcct.reserveAuthority as PublicKey)!,
+            },
+          }
+        )
+      );
+    }
+
+    return {
+      output: null,
+      signers: [],
+      instructions
     };
   }
 
@@ -1979,18 +2029,33 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           tokenBondingAcct.baseMint,
           this.wallet.publicKey
         );
+      }
+    }
 
-        if (!await this.accountExists(destination)) {
-          instructions.push(Token.createAssociatedTokenAccountInstruction(
+    const destAcct = await this.provider.connection.getAccountInfo(destination);
+
+    // Destination is a wallet, need to get the ATA
+    if (!isNative && (!destAcct || destAcct.owner.equals(SystemProgram.programId))) {
+      const ataDestination = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        tokenBondingAcct.baseMint,
+        destination
+      );
+      if (!(await this.accountExists(ataDestination))) {
+        instructions.push(
+          Token.createAssociatedTokenAccountInstruction(
             ASSOCIATED_TOKEN_PROGRAM_ID,
             TOKEN_PROGRAM_ID,
             tokenBondingAcct.baseMint,
+            ataDestination,
             destination,
-            this.wallet.publicKey,
             payer
-          ))
-        }
+          )
+        );
       }
+
+      destination = ataDestination;
     }
     
     const common = {

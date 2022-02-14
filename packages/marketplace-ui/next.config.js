@@ -5,7 +5,11 @@ module.exports = {
   reactStrictMode: false,
   webpack5: true,
   webpack: (config) => {
-    config.resolve.fallback = { ...config.resolve.fallback, fs: false, os: false };
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      os: false,
+    };
     config.module.rules.push({
       test: /\.mjs$/,
       include: /node_modules/,
@@ -13,8 +17,19 @@ module.exports = {
     });
     config.resolve.alias = {
       ...config.resolve.alias,
-      "@solana/wallet-adapter-react": path.resolve("../../node_modules/@solana/wallet-adapter-react")
-    }
+      "@solana/wallet-adapter-react": path.resolve(
+        "../../node_modules/@solana/wallet-adapter-react"
+      ),
+    };
     return config;
+  },
+  async redirects() {
+    return [
+      {
+        source: "/",
+        destination: "/bounties",
+        permanent: false,
+      },
+    ];
   },
 };

@@ -15,9 +15,7 @@ export const NetworkSelect = () => {
         <option value={clusterApiUrl(WalletAdapterNetwork.Devnet)}>
           Devnet
         </option>
-        <option value={clusterApiUrl(WalletAdapterNetwork.Mainnet)}>
-          Mainnet
-        </option>
+        <option value={"https://wumbo.genesysgo.net"}>Mainnet</option>
       </Select>
     </VStack>
   );

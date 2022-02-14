@@ -270,6 +270,17 @@ pub struct UpdateTokenBondingV0<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(args: UpdateReserveAuthorityV0Args)]
+pub struct UpdateReserveAuthorityV0<'info> {
+  #[account(
+    mut,
+    constraint = token_bonding.reserve_authority.ok_or::<ProgramError>(ErrorCode::NoAuthority.into())? == reserve_authority.key(),
+  )]
+  pub token_bonding: Box<Account<'info, TokenBondingV0>>,
+  pub reserve_authority: Signer<'info>,
+}
+
+#[derive(Accounts)]
 pub struct BuyV0<'info> {
   #[account(
     mut,

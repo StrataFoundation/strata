@@ -1,6 +1,11 @@
+import {
+  Box, Button, Center, Container, HStack, Image, Link,
+  LinkProps, Text
+} from "@chakra-ui/react";
+import { useWallet } from "@solana/wallet-adapter-react";
 import React from "react";
-import { Box, Center, Flex, HStack, Icon, Text, Link, LinkProps } from "@chakra-ui/react";
-import { WalletDisconnectButton, WalletModalProvider, WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { TwitterLink } from "./TwitterLink";
+import { WalletModalButton } from "./WalletModalButton";
 
 interface IMenuItemProps extends LinkProps {
   isLast?: boolean;
@@ -23,29 +28,55 @@ const MenuItem: React.FC<IMenuItemProps> = ({
   </Text>
 );
 
-export const Header: React.FC = () => (
-  <Center
-    w="full"
-    paddingX={14}
-    paddingY={2}
-    justifyContent="space-between"
-    alignItems="center"
-    color="white"
-    bg="grey"
-  >
-    <HStack spacing={4}>
-      <Text fontSize="xl">Strata Marketplace</Text>
-    </HStack>
-    <Box display={{ md: "block" }} flexBasis={{ base: "100%", md: "auto" }}>
-      <HStack
-        align="center"
-        justify={["center", "space-between", "flex-end", "flex-end"]}
-        direction={["column", "row", "row", "row"]}
-        pt={[4, 4, 0, 0]}
+export const Header: React.FC = () => {
+  const { disconnect, connected } = useWallet();
+  return (
+    <>
+      <Center
+        zIndex={100}
+        position="fixed"
+        w="full"
+        height="56px"
+        alignItems="center"
+        color="white"
+        bg="black.300"
       >
-        <WalletMultiButton />
-        <WalletDisconnectButton />
-      </HStack>
-    </Box>
-  </Center>
-);
+        <Container
+          maxW="container.lg"
+          w="full"
+          display="flex"
+          justifyContent="space-between"
+        >
+          <Link href="/bounties">
+            <Image alt="Strata Marketplace" src="/logo.svg" />
+          </Link>
+          <Box
+            display={{ md: "block" }}
+            flexBasis={{ base: "100%", md: "auto" }}
+          >
+            <HStack
+              align="center"
+              justify={["center", "space-between", "flex-end", "flex-end"]}
+              direction={["column", "row", "row", "row"]}
+              display={["none", "none", "flex"]}
+              pt={[4, 4, 0, 0]}
+            >
+              <TwitterLink />
+              {connected && (
+                <Button
+                  _hover={{ backgroundColor: "black.500" }}
+                  variant="ghost"
+                  onClick={() => disconnect()}
+                >
+                  Disconnect
+                </Button>
+              )}
+              <WalletModalButton />
+            </HStack>
+          </Box>
+        </Container>
+      </Center>
+      <Box height="56px" />
+    </>
+  );
+};

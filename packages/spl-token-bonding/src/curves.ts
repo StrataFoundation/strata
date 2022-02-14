@@ -332,7 +332,14 @@ export class ExponentialCurve implements IPricingCurve {
           (1 - asDecimal(targetRoyaltiesPercent))
         );
       } else if (this.c == 0) {
-        return (dR / this.b) * (1 - asDecimal(targetRoyaltiesPercent));
+        if (this.baseAmount == 0) {
+          return (dR / this.b) * (1 - asDecimal(targetRoyaltiesPercent));
+        } else {
+          return (
+            ((this.targetSupply * dR) / this.baseAmount) *
+            (1 - asDecimal(targetRoyaltiesPercent))
+          );
+        }
       }
 
       throw new Error(

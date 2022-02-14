@@ -98,6 +98,7 @@ export enum MetadataCategory {
 }
 
 export interface ITokenWithMeta {
+  displayName?: string;
   metadataKey?: PublicKey;
   metadata?: MetadataData;
   mint?: MintInfo;
@@ -155,6 +156,17 @@ export class SplTokenMetadata {
 
   constructor(opts: { provider: Provider }) {
     this.provider = opts.provider;
+  }
+
+  static attributesToRecord(attributes: Attribute[] | undefined): Record<string, string | number> | undefined {
+    if (!attributes) {
+      return undefined;
+    }
+    
+    return attributes?.reduce((acc, att) => {
+      if (att.trait_type) acc[att.trait_type] = att.value;
+      return acc;
+    }, {} as Record<string, string | number>);
   }
 
   static async getArweaveMetadata(
@@ -255,7 +267,13 @@ export class SplTokenMetadata {
     const mint =
       metadata &&
       (await getMintInfo(this.provider, new PublicKey(metadata.mint)));
+
+    const displayName =
+      metadata?.data.name.length == 32
+        ? data?.name
+        : metadata?.data.name; 
     return {
+      displayName,
       metadata: metadata || undefined,
       metadataKey,
       image,
@@ -292,11 +310,22 @@ export class SplTokenMetadata {
     mint: PublicKey;
   }): Promise<string> {
     const { txid, files } = await this.presignCreateArweaveUrl(args);
+    let env = args.env;
+    if (!env) {
+      // @ts-ignore
+      const url: string = this.provider.connection._rpcEndpoint;
+      if (url.includes("devnet")) {
+        env = "devnet";
+      } else {
+        env = "mainnet-beta";
+      }
+    }
+
     const uri = await this.getArweaveUrl({
       txid,
       mint: args.mint,
       files,
-      env: args.env || "mainnet-beta",
+      env,
       uploadUrl: args.uploadUrl || ARWEAVE_UPLOAD_URL
     });
 
@@ -403,13 +432,6 @@ export class SplTokenMetadata {
     InstructionResult<{ metadata: PublicKey }>
   > {
     const metadata = await Metadata.getPDA(mint);
-    console.log({
-      metadata,
-      mint,
-      metadataData: data,
-      mintAuthority,
-      updateAuthority: authority
-    })
     const instructions: TransactionInstruction[] = new CreateMetadataV2({
       feePayer: payer
     }, {

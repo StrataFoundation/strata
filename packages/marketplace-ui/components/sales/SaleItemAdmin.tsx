@@ -1,27 +1,10 @@
-import { Button, ButtonProps, Heading, HStack, Spinner } from "@chakra-ui/react";
+import { HStack } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
-import { useErrorHandler, useMint, useProvider, useStrataSdks, useTokenAccount, useTokenBonding, useTokenMetadata } from "@strata-foundation/react";
+import { useMint, useStrataSdks, useTokenAccount, useTokenBonding, useTokenMetadata } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
-import { useAsyncCallback } from "react-async-hook";
+import { AsyncButton } from "../AsyncButton";
 
-const AsyncButton = ({ action, children, ...props }: { children: React.ReactNode, action: () => Promise<void> | undefined } & ButtonProps) => {
-  const { awaitingApproval } = useProvider();
-  const { execute, loading, error } = useAsyncCallback(action);
-  const { handleErrors } = useErrorHandler();
-
-  handleErrors(error);
-
-  return <Button
-    isLoading={loading}
-    loadingText={awaitingApproval ? "Awaiting Approval" : "Loading"}
-    onClick={execute}
-    {...props}
-  >
-    {children}
-  </Button>
-}
-
-export const MarketplaceItemAdmin = ({
+export const SaleItemAdmin = ({
   tokenBondingKey,
 }: {
   tokenBondingKey: PublicKey;
@@ -39,7 +22,8 @@ export const MarketplaceItemAdmin = ({
   return (
     <HStack spacing={2} borderBottom={1} borderBottomColor={"gray.300"}>
       <AsyncButton
-        colorScheme="green"
+        variant="outline"
+        colorScheme="orange"
         isDisabled={!tokenBondingSdk || !amount}
         action={() =>
           tokenBondingSdk!.transferReserves({

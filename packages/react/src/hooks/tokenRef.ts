@@ -17,7 +17,7 @@ import { useAccountFetchCache } from "../hooks/useAccountFetchCache";
 import { getTwitterRegistryKey } from "../utils/nameServiceTwitter";
 import { UseAccountState } from "./useAccount";
 import { IUseTokenMetadataResult, useTokenMetadata } from "./useTokenMetadata";
-import { deserializeUnchecked } from "borsh";
+import { deserialize } from "borsh";
 
 export async function getOwnerForName(
   cache: AccountFetchCache | undefined,
@@ -29,7 +29,7 @@ export async function getOwnerForName(
     const [registry, dispose] = await cache.searchAndWatch(
       key,
       (pubkey, account) => {
-        const info = deserializeUnchecked(
+        const info = deserialize(
           NameRegistryState.schema,
           NameRegistryState,
           account.data
