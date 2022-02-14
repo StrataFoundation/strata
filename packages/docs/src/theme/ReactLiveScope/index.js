@@ -9,7 +9,8 @@ import { createMetadata, Data, getAssociatedAccountBalance, getMintInfo, getToke
 import { BN } from "bn.js";
 import React from 'react';
 import { useVariables, useVariablesContext } from "../Root/variables";
-import { CurveConfigurator } from "../../components/CurveConfigurator";
+import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
+import { PriceVsTimeDisplay } from "../../components/CurveConfigurator";
 function BrowserOnlyAsyncButton(props) {
   return (
     <BrowserOnly fallback={<div>...</div>}>
@@ -34,11 +35,12 @@ function Swap(props) {
 
 // Add react-live imports you need here
 const ReactLiveScope = {
+  MarketplaceSdk,
   u64,
   TOKEN_PROGRAM_ID,
   TimeDecayExponentialCurveConfig,
   ASSOCIATED_TOKEN_PROGRAM_ID,
-  CurveConfigurator,
+  CurveConfigurator: PriceVsTimeDisplay,
   Token,
   createMetadata,
   Data,

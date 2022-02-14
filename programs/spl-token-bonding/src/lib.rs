@@ -135,6 +135,17 @@ pub mod spl_token_bonding {
     bonding.bump_seed = args.bump_seed;
     bonding.index = args.index;
 
+    if args.initial_reserves_pad > 0 || args.initial_supply_pad > 0 {
+      if !args.ignore_external_supply_changes || !args.ignore_external_supply_changes {
+        return Err(ErrorCode::InvalidPad.into())
+      }
+      bonding.reserve_balance_from_bonding = args.initial_reserves_pad;
+      bonding.supply_from_bonding = args.initial_supply_pad;
+    } else {
+      bonding.reserve_balance_from_bonding = 0;
+      bonding.supply_from_bonding = 0;
+    }
+
     Ok(())
   }
 

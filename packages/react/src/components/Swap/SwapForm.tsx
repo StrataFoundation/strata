@@ -585,10 +585,16 @@ export const SwapForm = ({
                 top={-10}
                 fontSize="sm"
               >
-                {passedMintCap && <Text>{numRemaining > 0 ? `Only ${numRemaining} left` : "Sold Out"}</Text>}
+                {passedMintCap && (
+                  <Text>
+                    {numRemaining > 0
+                      ? `Only ${numRemaining} left`
+                      : "Sold Out"}
+                  </Text>
+                )}
                 {moreThanSpendCap && (
                   <Text>
-                    Spend Cap is {spendCap} {base.ticker}. Please adjust amount
+                    You cannot buy more than {spendCap} {base.ticker} at a time.
                   </Text>
                 )}
                 {notLive && (

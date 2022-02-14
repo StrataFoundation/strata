@@ -9,6 +9,7 @@ import { Finality, Keypair, PublicKey } from "@solana/web3.js";
 import {
   ExponentialCurveConfig,
   ICreateTokenBondingArgs,
+  ICurveConfig,
   ITokenBonding,
   SplTokenBonding,
   TimeDecayExponentialCurveConfig
@@ -106,7 +107,22 @@ interface ICreateBountyArgs {
   bondingArgs?: Partial<ICreateTokenBondingArgs>;
 }
 
-interface ICreateLbpArgs {
+interface ILbpCurveArgs {
+/** Max tokens to be sold */
+  maxSupply: number;
+  /** Interval in seconds to sell them over */
+  interval: number;
+  /**
+   * Maximum price (starting price)
+   */
+  maxPrice: number;
+  /**
+   * Minimum price (finishing price if no one buys anything)
+   */
+  minPrice: number;
+}
+
+interface ICreateLbpArgs extends ILbpCurveArgs {
   payer?: PublicKey;
   /**
    * Optionally, use this keypair to create the target mint
@@ -135,11 +151,7 @@ interface ICreateLbpArgs {
    */
   baseMint: PublicKey;
 
-  c: BN | number;
-  k0: BN | number;
-  k1: BN | number;
-  interval: number;
-
+  
   /**
    * Optionally -- override bonding params
    */
@@ -629,6 +641,41 @@ export class MarketplaceSdk {
     );
   }
 
+  static lbpCurve({
+    interval,
+    maxPrice,
+    minPrice,
+    maxSupply
+  }: ILbpCurveArgs): { reserves: number, supply: number, curveConfig: ICurveConfig } {
+    if (maxPrice < minPrice) {
+      throw new Error("Max price must be more than min price");
+    }
+    if (minPrice == 0) {
+      throw new Error("Min price must be more than 0")
+    }
+    // end price = start price / (1 + k0)
+    // (1 + k0) (end price) = start price
+    // (1 + k0)  = (start price) / (end price)
+    // 01  = (start price) / (end price) - 1
+    const k0 = maxPrice/minPrice - 1;
+    const k1 = 0;
+
+    if (k1 > 9) {
+      throw new Error("Max price must be within 10x min price. Wider ranges are not supported")
+    }
+
+    return {
+      curveConfig: new TimeDecayExponentialCurveConfig({
+        k1,
+        k0,
+        interval,
+        c: 1 // Not needed
+      }),
+      reserves: minPrice * maxSupply,
+      supply: maxSupply
+    }
+  }
+
   /**
    * Creates an LBP
    *
@@ -642,10 +689,10 @@ export class MarketplaceSdk {
     targetMintKeypair,
     metadata,
     metadataUpdateAuthority = authority,
-    k0,
-    k1,
     interval,
-    c,
+    maxPrice,
+    minPrice,
+    maxSupply,
     bondingArgs,
     baseMint,
   }: ICreateLbpArgs): Promise<
@@ -654,6 +701,13 @@ export class MarketplaceSdk {
     const instructions = [];
     const signers = [];
 
+    const { reserves: initialReservesPad, supply: initialSupplyPad, curveConfig } = MarketplaceSdk.lbpCurve({
+      interval,
+      maxPrice,
+      minPrice,
+      maxSupply
+    });
+    
     let curve: PublicKey | undefined = bondingArgs?.curve;
     if (!curve) {
       const {
@@ -661,12 +715,7 @@ export class MarketplaceSdk {
         instructions: curveInstructions,
         signers: curveSigners,
       } = await this.tokenBondingSdk.initializeCurveInstructions({
-        config: new TimeDecayExponentialCurveConfig({
-          k0,
-          k1,
-          interval,
-          c,
-        }),
+        config: curveConfig,
       });
       instructions.push(...curveInstructions);
       signers.push(...curveSigners);
@@ -674,7 +723,6 @@ export class MarketplaceSdk {
     }
 
     const baseMintAcct = await getMintInfo(this.provider, baseMint);
-
 
     metadataUpdateAuthority = metadataUpdateAuthority || authority;
 
@@ -700,7 +748,7 @@ export class MarketplaceSdk {
     if (!targetMint) {
       throw new Error("No target mint provided");
     }
-    
+
     if (await this.tokenBondingSdk.accountExists(targetMint)) {
       const mint = await getMintInfo(this.provider, targetMint);
       const mintAuthority = (
@@ -723,7 +771,7 @@ export class MarketplaceSdk {
         );
       }
     }
-    
+
     const {
       output: { tokenBonding },
       instructions: tokenBondingInstructions,
@@ -739,6 +787,10 @@ export class MarketplaceSdk {
       sellTargetRoyaltyPercentage: 0,
       buyTargetRoyaltyPercentage: 0,
       baseMint,
+      advanced: {
+        initialSupplyPad,
+        initialReservesPad,
+      },
       ...bondingArgs,
     });
 

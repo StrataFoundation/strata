@@ -15,14 +15,22 @@ var curveConfig = new TimeDecayExponentialCurveConfig({
   interval: 10
 })
 ```
+import { CurveConfiguratorFromVariables } from "@site/src/components/CurveConfigurator";
 
-```jsx live allowMainnet
- function ShowCurveConfigurator() {
-   const { curveConfig } = useVariables(); // Getting token bonding from above code;
-   if (curveConfig) {
-      return <CurveConfigurator curve={curveConfig} />
-   }
+<CurveConfiguratorFromVariables />
 
-   return <div>Please run the code block above</div>
- }
+## LBP Configurator
+
+```jsx async
+var { curveConfig, reserves, supply } = MarketplaceSdk.lbpCurve({
+  interval: 10, // 10 seconds
+  maxPrice: 5,
+  minPrice: 0.5,
+  targetMintDecimals: 0,
+  maxSupply: 5000
+});
+var startSupply = supply;
+var endSupply = 2 * supply;
 ```
+
+<CurveConfiguratorFromVariables />

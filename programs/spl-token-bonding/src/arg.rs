@@ -26,6 +26,14 @@ pub struct InitializeTokenBondingV0Args {
   /** Whether or not to ignore changes to base storage and target supply outside of the curve */
   pub ignore_external_reserve_changes: bool,
   pub ignore_external_supply_changes: bool,
+
+  /** 
+   * Allow starting a curve from a later reserve/supply ratio of ignor reserve and supply changes.
+   * 
+   * This allows for things like the LBP where you don't need to provide any initial liquidity
+   */
+  pub initial_reserves_pad: u64,
+  pub initial_supply_pad: u64,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]

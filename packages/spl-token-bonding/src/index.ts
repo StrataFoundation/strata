@@ -359,18 +359,18 @@ export interface ICreateTokenBondingArgs {
   buyFrozen?: boolean;
   /** Should this bonding curve have sell functionality? **Default:** false */
   sellFrozen?: boolean;
-  /** 
-   * 
+  /**
+   *
    * Should the bonding curve's price change based on funds entering or leaving the reserves account outside of buy/sell
-   * 
+   *
    * Setting this to `false` means that sending tokens into the reserves improves value for all holders,
    * withdrawing money from reserves (via reserve authority) detracts value from holders.
-   * 
+   *
    */
   ignoreExternalReserveChanges?: boolean;
-  /** 
+  /**
    * Should the bonding curve's price change based on external burning of target tokens?
-   * 
+   *
    * Setting this to `false` enables what is called a "sponsored burn". With a sponsored burn,
    * burning tokens increases the value for all holders
    */
@@ -381,6 +381,21 @@ export interface ICreateTokenBondingArgs {
    * markeplace curves
    */
   index?: number;
+
+  advanced?: {
+    /**
+     * Initial padding is an advanced feature, incorrect use could lead to insufficient resreves to cover sells
+     *
+     * Start the curve off at a given reserve and supply synthetically. This means price can start nonzero. The current use case
+     * for this is LBPs. Note that a curve cannot be adaptive. ignoreExternalReserveChanges and ignoreExternalSupplyChanges
+     * must be true
+     * */
+    initialSupplyPad: BN | number;
+    /**
+     * Initial padding is an advanced feature, incorrect use could lead to insufficient resreves to cover sells
+     * */
+    initialReservesPad: BN | number;
+  };
 }
 
 export interface IUpdateTokenBondingArgs {
@@ -844,6 +859,10 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     ignoreExternalSupplyChanges = false,
     sellFrozen = false,
     index,
+    advanced = {
+      initialSupplyPad: 0,
+      initialReservesPad: 0
+    }
   }: ICreateTokenBondingArgs): Promise<
     InstructionResult<ICreateTokenBondingOutput>
   > {
@@ -1074,7 +1093,20 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           buyFrozen,
           ignoreExternalReserveChanges,
           ignoreExternalSupplyChanges,
-          sellFrozen
+          sellFrozen,
+          initialReservesPad: advanced.initialReservesPad
+            ? toBN(
+                advanced.initialReservesPad,
+                await getMintInfo(this.provider, baseMint)
+              )
+            : new BN(0),
+          initialSupplyPad: advanced.initialSupplyPad ? toBN(
+            advanced.initialSupplyPad,
+            targetMintDecimals ||
+              (
+                await getMintInfo(this.provider, targetMint)
+              ).decimals
+          ) : new BN(0),
         },
         {
           accounts: {
