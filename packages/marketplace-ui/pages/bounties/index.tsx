@@ -51,8 +51,7 @@ export const Bounties: NextPage = () => {
     <Box
       w="full"
       backgroundColor="#f9f9f9"
-      height="100vh"
-      overflow="auto"
+      minHeight="100vh"
       paddingBottom="200px"
     >
       <Head>
