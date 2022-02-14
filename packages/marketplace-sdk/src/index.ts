@@ -12,7 +12,8 @@ import {
   ICurveConfig,
   ITokenBonding,
   SplTokenBonding,
-  TimeDecayExponentialCurveConfig
+  TimeDecayExponentialCurveConfig,
+  toBN
 } from "@strata-foundation/spl-token-bonding";
 import {
   Attribute,
@@ -725,6 +726,10 @@ export class MarketplaceSdk {
     const baseMintAcct = await getMintInfo(this.provider, baseMint);
 
     metadataUpdateAuthority = metadataUpdateAuthority || authority;
+    const decimals =
+      typeof bondingArgs?.targetMintDecimals == "undefined"
+        ? baseMintAcct.decimals
+        : bondingArgs.targetMintDecimals;
 
     if (targetMintKeypair) {
       const {
@@ -735,10 +740,7 @@ export class MarketplaceSdk {
         metadata,
         targetMintKeypair,
         metadataUpdateAuthority: metadataUpdateAuthority!,
-        decimals:
-          typeof bondingArgs?.targetMintDecimals == "undefined"
-            ? baseMintAcct.decimals
-            : bondingArgs.targetMintDecimals,
+        decimals,
       });
       targetMint = outTargetMint;
       instructions.push(...metadataInstructions);
@@ -791,6 +793,7 @@ export class MarketplaceSdk {
         initialSupplyPad,
         initialReservesPad,
       },
+      mintCap: toBN(maxSupply, decimals),
       ...bondingArgs,
     });
 

@@ -29,9 +29,8 @@ interface ILbpFormProps extends IMetadataFormProps {
   mint: string;
   symbol: string;
   authority: string;
-  c: number;
-  k0: number;
-  k1: number;
+  maxPrice: number;
+  minPrice: number;
   decimals: number;
   interval: number;
   mintCap: number;
@@ -44,8 +43,8 @@ const validationSchema = yup.object({
   description: yup.string(),
   symbol: yup.string().min(2).max(10),
   authority: yup.string().required(),
-  k0: yup.number().min(0).required(),
-  k1: yup.number().min(0).required(),
+  maxPrice: yup.number().min(0).required(),
+  minPrice: yup.number().min(0).required(),
   interval: yup.number().min(0).required(),
   decimals: yup.number().min(0).required(),
   mintCap: yup.number().min(1).required(),
@@ -85,14 +84,13 @@ async function createLbp(
       uses: null,
     }),
     baseMint: mint,
-    c: Number(values.c),
-    k0: Number(values.k0),
-    k1: Number(values.k1),
+    maxPrice: Number(values.maxPrice),
+    minPrice: Number(values.minPrice),
     interval: Number(values.interval),
+    maxSupply: Number(values.mintCap),
     bondingArgs: {
       targetMintDecimals: Number(values.decimals),
-      mintCap: new BN(values.mintCap * Math.pow(10, values.decimals)),
-    }
+    },
   });
 
   return targetMint;
@@ -194,33 +192,25 @@ export const LbpForm: React.FC = () => {
               {...register("decimals")}
             />
           </FormControlWithError>
-          <FormControlWithError id="c" help="" label="C" errors={errors}>
+          <FormControlWithError id="maxPrice" help="" label="Max Price" errors={errors}>
             <Input
               type="number"
               min={0}
               step={0.000000000001}
-              {...register("c")}
+              {...register("maxPrice")}
             />
           </FormControlWithError>
-          <FormControlWithError id="k0" help="" label="K0" errors={errors}>
+          <FormControlWithError id="minPrice" help="" label="Min Price" errors={errors}>
             <Input
               type="number"
               min={0}
               step={0.000000000001}
-              {...register("k0")}
-            />
-          </FormControlWithError>
-          <FormControlWithError id="k1" help="" label="K1" errors={errors}>
-            <Input
-              type="number"
-              min={0}
-              step={0.000000000001}
-              {...register("k1")}
+              {...register("minPrice")}
             />
           </FormControlWithError>
           <FormControlWithError
             id="interval"
-            help="The time in seconds that it will take to go from k0 to k1"
+            help="The time in seconds that it will take to go from maxPrice to minPrice"
             label="Interval"
             errors={errors}
           >
