@@ -8,7 +8,7 @@ import { numberWithCommas } from "utils/numberWithCommas";
 
 const onCreatorClick: OnCreatorClick = (c, t, tokenRef, handle) => {
   window.open(tokenRef
-    ? `https://wum.bo/profile/${tokenRef.mint}`
+    ? `https://wum.bo/app/profile/${tokenRef.mint}`
     : handle
     ? `https://twitter.com/${handle}`
     : `https://explorer.solana.com/address/${c.toBase58()}`, "_blank");
