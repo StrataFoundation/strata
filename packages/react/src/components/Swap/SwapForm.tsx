@@ -548,6 +548,14 @@ export const SwapForm = ({
               <Text>Solana Network Fees</Text>
               <Flex>{fee}</Flex>
             </Flex>
+            {numRemaining && (
+              <Flex justify="space-between" alignItems="center">
+                <Text>Num Remaining</Text>
+                <Flex>
+                  {numRemaining} / {mintCap}
+                </Flex>
+              </Flex>
+            )}
             {base &&
               target &&
               pricing?.hierarchy

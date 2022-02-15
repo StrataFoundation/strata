@@ -114,16 +114,16 @@ interface ILbpCurveArgs {
   /** Interval in seconds to sell them over */
   interval: number;
   /**
-   * Maximum price (starting price)
+   * Starting price
    */
-  maxPrice: number;
+  startPrice: number;
   /**
    * Minimum price (finishing price if no one buys anything)
    */
   minPrice: number;
 }
 
-interface ICreateLbpArgs extends ILbpCurveArgs {
+interface ICreateLiquidityBootstrapperArgs extends ILbpCurveArgs {
   payer?: PublicKey;
   /**
    * Optionally, use this keypair to create the target mint
@@ -644,7 +644,7 @@ export class MarketplaceSdk {
 
   static lbpCurve({
     interval,
-    maxPrice,
+    startPrice: maxPrice,
     minPrice,
     maxSupply
   }: ILbpCurveArgs): { reserves: number, supply: number, curveConfig: ICurveConfig } {
@@ -683,7 +683,7 @@ export class MarketplaceSdk {
    * @param param0
    * @returns
    */
-  async createLbpInstructions({
+  async createLiquidityBootstrapperInstructions({
     payer = this.provider.wallet.publicKey,
     authority = this.provider.wallet.publicKey,
     targetMint,
@@ -691,12 +691,12 @@ export class MarketplaceSdk {
     metadata,
     metadataUpdateAuthority = authority,
     interval,
-    maxPrice,
+    startPrice: maxPrice,
     minPrice,
     maxSupply,
     bondingArgs,
     baseMint,
-  }: ICreateLbpArgs): Promise<
+  }: ICreateLiquidityBootstrapperArgs): Promise<
     BigInstructionResult<{ tokenBonding: PublicKey; targetMint: PublicKey }>
   > {
     const instructions = [];
@@ -704,7 +704,7 @@ export class MarketplaceSdk {
 
     const { reserves: initialReservesPad, supply: initialSupplyPad, curveConfig } = MarketplaceSdk.lbpCurve({
       interval,
-      maxPrice,
+      startPrice: maxPrice,
       minPrice,
       maxSupply
     });
@@ -774,6 +774,25 @@ export class MarketplaceSdk {
       }
     }
 
+    console.log({
+      payer,
+      curve: curve!,
+      reserveAuthority: authority,
+      generalAuthority: authority,
+      targetMint,
+      buyBaseRoyaltyPercentage: 0,
+      sellBaseRoyaltyPercentage: 0,
+      sellTargetRoyaltyPercentage: 0,
+      buyTargetRoyaltyPercentage: 0,
+      baseMint,
+      advanced: {
+        initialSupplyPad,
+        initialReservesPad,
+      },
+      mintCap: toBN(maxSupply, decimals),
+      ...bondingArgs,
+    });
+
     const {
       output: { tokenBonding },
       instructions: tokenBondingInstructions,
@@ -808,16 +827,16 @@ export class MarketplaceSdk {
   }
 
   /**
-   * Executes `createBountyIntructions`
+   * Executes `createLiquidityBootstrapperIntructions`
    * @param args
    * @returns
    */
-  async createLbp(
-    args: ICreateLbpArgs,
+  async createLiqduitiyBootstrapper(
+    args: ICreateLiquidityBootstrapperArgs,
     finality?: Finality
   ): Promise<{ tokenBonding: PublicKey; targetMint: PublicKey }> {
     return this.tokenBondingSdk.executeBig(
-      this.createLbpInstructions(args),
+      this.createLiquidityBootstrapperInstructions(args),
       args.payer,
       finality
     );

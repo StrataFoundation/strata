@@ -29,7 +29,7 @@ interface ILbpFormProps extends IMetadataFormProps {
   mint: string;
   symbol: string;
   authority: string;
-  maxPrice: number;
+  startPrice: number;
   minPrice: number;
   decimals: number;
   interval: number;
@@ -43,14 +43,14 @@ const validationSchema = yup.object({
   description: yup.string(),
   symbol: yup.string().min(2).max(10),
   authority: yup.string().required(),
-  maxPrice: yup.number().min(0).required(),
+  startPrice: yup.number().min(0).required(),
   minPrice: yup.number().min(0).required(),
   interval: yup.number().min(0).required(),
   decimals: yup.number().min(0).required(),
   mintCap: yup.number().min(1).required(),
 });
 
-async function createLbp(
+async function createLiquidityBootstrapper(
   marketplaceSdk: MarketplaceSdk,
   values: ILbpFormProps
 ): Promise<PublicKey> {
@@ -70,7 +70,7 @@ async function createLbp(
   const uri =
     "https://strata-token-metadata.s3.us-east-2.amazonaws.com/unclaimed.json";
 
-  const { targetMint } = await marketplaceSdk.createLbp({
+  const { targetMint } = await marketplaceSdk.createLiqduitiyBootstrapper({
     targetMintKeypair,
     authority,
     metadata: new DataV2({
@@ -84,7 +84,7 @@ async function createLbp(
       uses: null,
     }),
     baseMint: mint,
-    maxPrice: Number(values.maxPrice),
+    startPrice: Number(values.startPrice),
     minPrice: Number(values.minPrice),
     interval: Number(values.interval),
     maxSupply: Number(values.mintCap),
@@ -97,7 +97,7 @@ async function createLbp(
 }
 
 
-export const LbpForm: React.FC = () => {
+export const LiquidityBootstrapperForm: React.FC = () => {
   const formProps = useForm<ILbpFormProps>({
     resolver: yupResolver(validationSchema),
   });
@@ -111,7 +111,7 @@ export const LbpForm: React.FC = () => {
   const { publicKey } = useWallet();
   const { info: tokenRef } = usePrimaryClaimedTokenRef(publicKey);
   const { awaitingApproval } = useProvider();
-  const { execute, loading, error } = useAsyncCallback(createLbp);
+  const { execute, loading, error } = useAsyncCallback(createLiquidityBootstrapper);
   const { marketplaceSdk } = useMarketplaceSdk();
   const router = useRouter();
   const { authority, mint } = watch();
@@ -120,7 +120,7 @@ export const LbpForm: React.FC = () => {
 
   const onSubmit = async (values: ILbpFormProps) => {
     const mintKey = await execute(marketplaceSdk!, values);
-    router.push(route(routes.lbp, { mintKey: mintKey.toBase58() }));
+    router.push(route(routes.swap, { mintKey: mintKey.toBase58() }));
   };
 
   const authorityRegister = register("authority");
@@ -192,15 +192,25 @@ export const LbpForm: React.FC = () => {
               {...register("decimals")}
             />
           </FormControlWithError>
-          <FormControlWithError id="maxPrice" help="" label="Max Price" errors={errors}>
+          <FormControlWithError
+            id="startPrice"
+            help="The starting price for this token. You should set this a little above the expected price of the token. Prices will fall to the fair price. Note that if there's enough demand, they can also increae from this price"
+            label="Staring Price"
+            errors={errors}
+          >
             <Input
               type="number"
               min={0}
               step={0.000000000001}
-              {...register("maxPrice")}
+              {...register("startPrice")}
             />
           </FormControlWithError>
-          <FormControlWithError id="minPrice" help="" label="Min Price" errors={errors}>
+          <FormControlWithError
+            id="minPrice"
+            help="The minimum possible price for this token, if nobody buys during the bootstrapping interval."
+            label="Minimum Price"
+            errors={errors}
+          >
             <Input
               type="number"
               min={0}
@@ -210,7 +220,7 @@ export const LbpForm: React.FC = () => {
           </FormControlWithError>
           <FormControlWithError
             id="interval"
-            help="The time in seconds that it will take to go from maxPrice to minPrice"
+            help="The time in seconds that it will take to go from startPrice to minPrice"
             label="Interval"
             errors={errors}
           >
@@ -223,8 +233,8 @@ export const LbpForm: React.FC = () => {
           </FormControlWithError>
           <FormControlWithError
             id="mintCap"
-            help="The maximum number of tokens that may be minted"
-            label="Mint Cap"
+            help="The number of tokens to mint. Note that, depending on the above parameters this liqudity bootstrapping may not sell out"
+            label="Number of Tokens"
             errors={errors}
           >
             <Input
@@ -244,7 +254,7 @@ export const LbpForm: React.FC = () => {
             isLoading={isSubmitting || loading}
             loadingText={awaitingApproval ? "Awaiting Approval" : "Loading"}
           >
-            Create Lbp
+            Create Liquidity Bootstrapper
           </Button>
         </VStack>
       </form>

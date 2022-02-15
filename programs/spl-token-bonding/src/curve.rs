@@ -29,6 +29,8 @@ fn expected_target_amount_exp_initial(
   reserve_change: &PreciseNumber
 ) -> Option<PreciseNumber> {
   /*
+  * R = c S ^ (1 + k) / (1 + k)
+  * R (1 + k) / c = S^(1+k)
     * (((1 + k) dR)/c)^(1/(1 + k))
     */
   let one_plus_k = ONE_PREC.checked_add(&k_prec)?;
