@@ -4,7 +4,7 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
-  "version": "3.2.5-alpha.2",
+  "version": "3.2.5-alpha.3",
   "description": "Interface to the strata marketplace",
   "repository": {
     "type": "git",
