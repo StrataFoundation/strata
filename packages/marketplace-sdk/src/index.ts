@@ -656,6 +656,7 @@ export class MarketplaceSdk {
     if (minPrice == 0) {
       throw new Error("Min price must be more than 0")
     }
+    maxSupply = maxSupply * 2
     minPrice = minPrice / 2;  // Account for the 0.1 k1
     // end price = start price / (1 + k0)
     // (1 + k0) (end price) = start price

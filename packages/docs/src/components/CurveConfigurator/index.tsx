@@ -28,7 +28,8 @@ export const PriceVsSupplyDisplay = ({
   endSupply,
   setEndSupply,
   setSupply,
-  supply
+  supply,
+  supplyOffset,
 }: {
   curve: ICurveConfig;
   timeOffset: string;
@@ -41,17 +42,21 @@ export const PriceVsSupplyDisplay = ({
   setStartSupply(args: string): void;
   endSupply: string;
   setEndSupply(args: string): void;
+  supplyOffset: number;
 }) => {
+  const startSupplyNum = Number(startSupply) + supplyOffset;
+  const endSupplyNum = Number(endSupply) + supplyOffset;
+  const supplyNum = Number(supply);
   const curveConfig = useMemo(() => curve.toRawConfig(), [curve]);
   const data = useMemo(() => {
     const beforeCurrPoint: { supply: number; price: number; total: number }[] =
       [];
-    const step = (Number(endSupply) - Number(startSupply)) / NUM_DATAPOINTS;
+    const step = (endSupplyNum - startSupplyNum) / NUM_DATAPOINTS;
     if (step <= 0) {
       return [];
     }
     let tempReserves = Number(reserves);
-    for (let i = Number(supply); i > Number(startSupply); i -= step) {
+    for (let i = supplyNum; i > startSupplyNum; i -= step) {
       const currPricing = fromCurve(curveConfig, tempReserves, i, 0);
       const decr = currPricing.sellTargetAmount(step, 0, 0, Number(timeOffset));
       tempReserves -= decr;
@@ -73,7 +78,7 @@ export const PriceVsSupplyDisplay = ({
     const afterCurrPoint: { supply: number; price: number; total: number }[] =
       [];
     let tempReserves2 = Number(reserves);
-    if (Number(startSupply) > Number(supply)) {
+    if (startSupplyNum > supplyNum) {
       tempReserves2 =
         tempReserves2 +
         fromCurve(
@@ -81,16 +86,11 @@ export const PriceVsSupplyDisplay = ({
           tempReserves2,
           Number(supply),
           0
-        ).buyTargetAmount(
-          Number(startSupply) - Number(supply),
-          0,
-          0,
-          Number(timeOffset)
-        );
+        ).buyTargetAmount(startSupplyNum - supplyNum, 0, 0, Number(timeOffset));
     }
     for (
-      let i = Math.max(Number(supply), Number(startSupply));
-      i <= Number(endSupply);
+      let i = Math.max(supplyNum, startSupplyNum);
+      i <= endSupplyNum;
       i += step
     ) {
       const currPricing = fromCurve(curveConfig, tempReserves2, i, 0);
@@ -123,14 +123,17 @@ export const PriceVsSupplyDisplay = ({
               bottom: 5,
             }}
           >
-            <ReferenceLine x={Number(supply)} stroke="orange"/>
+            <ReferenceLine x={Number(supply)} stroke="orange" />
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis
+              tickFormatter={(amount) =>
+                Math.floor(amount - supplyOffset).toString()
+              }
               tickCount={10}
               type="number"
               dataKey="supply"
               label={{ value: "Supply", dy: 10 }}
-              domain={[Number(startSupply), Number(endSupply)]}
+              domain={[startSupplyNum, endSupplyNum]}
             />
             <YAxis
               type="number"
@@ -395,14 +398,23 @@ function formatTime(time: number, maxTime: number): number {
   }
 }
 
-export const CurveConfiguratorFromVariables = () => {
+export const CurveConfiguratorFromVariables = ({ 
+  priceVsSupply = true,
+  priceVsTime = true,
+  rateVsTime = false
+}: {
+  priceVsSupply: boolean;
+  priceVsTime: boolean;
+  rateVsTime: boolean;
+}) => {
   const {
     curveConfig,
     startSupply: passedStartSupply,
     endSupply: passedEndSupply,
     reserves: passedReserves,
     supply: passedSupply,
-    maxTime: passedMaxTime
+    maxTime: passedMaxTime,
+    supplyOffset,
   } = useVariables();
 
   const [timeOffset, setTimeOffset] = useQueryString("timeOffset", "0");
@@ -506,9 +518,9 @@ export const CurveConfiguratorFromVariables = () => {
         </VStack>
       </SimpleGrid>
       <SimpleGrid columns={[1, 1, 2]} w="full">
-        <PriceVsSupplyDisplay curve={curveConfig} {...args} />
-        <PriceVsTimeDisplay curve={curveConfig} {...args} />
-        <RateVsTimeDisplay curve={curveConfig} {...args} />
+        { priceVsSupply && <PriceVsSupplyDisplay supplyOffset={supplyOffset || 0} curve={curveConfig} {...args} /> }
+        { priceVsTime && <PriceVsTimeDisplay curve={curveConfig} {...args} /> }
+        { rateVsTime && <RateVsTimeDisplay curve={curveConfig} {...args} /> }
       </SimpleGrid>
     </VStack>
   );
