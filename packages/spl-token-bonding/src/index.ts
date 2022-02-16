@@ -139,22 +139,26 @@ export class TimeDecayExponentialCurveConfig implements ICurveConfig, IPrimitive
   c: BN;
   k0: BN;
   k1: BN;
+  d: BN;
   interval: number;
 
   constructor({
     c = 1,
     k0 = 0,
     k1 = 1,
+    d = 1,
     interval = 24 * 60 * 60,
   }: {
     c?: number | BN;
     k0?: number | BN;
     k1?: number | BN;
+    d?: number | BN;
     interval?: number;
   }) {
     this.c = toU128(c);
     this.k0 = toU128(k0);
     this.k1 = toU128(k1);
+    this.d = toU128(d);
     this.interval = interval;
   }
 
@@ -166,6 +170,7 @@ export class TimeDecayExponentialCurveConfig implements ICurveConfig, IPrimitive
         // @ts-ignore
         k0: this.k0,
         k1: this.k1,
+        d: this.d,
         // @ts-ignore
         interval: this.interval,
       },
@@ -1070,6 +1075,21 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         createdAccts.add(sellBaseRoyalties.toBase58());
       }
     }
+    const pads = {
+      initialReservesPad: advanced.initialReservesPad
+        ? toBN(
+            advanced.initialReservesPad,
+            await getMintInfo(this.provider, baseMint)
+          )
+        : new BN(0),
+      initialSupplyPad: advanced.initialSupplyPad
+        ? toBN(
+            advanced.initialSupplyPad,
+            typeof targetMintDecimals == "undefined" ?
+              (await getMintInfo(this.provider, targetMint)).decimals : targetMintDecimals
+          )
+        : new BN(0),
+    };
 
     instructions.push(
       await this.instruction.initializeTokenBondingV0(
@@ -1094,19 +1114,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           ignoreExternalReserveChanges,
           ignoreExternalSupplyChanges,
           sellFrozen,
-          initialReservesPad: advanced.initialReservesPad
-            ? toBN(
-                advanced.initialReservesPad,
-                await getMintInfo(this.provider, baseMint)
-              )
-            : new BN(0),
-          initialSupplyPad: advanced.initialSupplyPad ? toBN(
-            advanced.initialSupplyPad,
-            targetMintDecimals ||
-              (
-                await getMintInfo(this.provider, targetMint)
-              ).decimals
-          ) : new BN(0),
+          ...pads,
         },
         {
           accounts: {
@@ -1511,8 +1519,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
 
     const curve = await this.getPricingCurve(
       tokenBondingAcct.curve,
-      amountAsNum(tokenBondingAcct.sellFrozen ? tokenBondingAcct.reserveBalanceFromBonding : baseStorage.amount, baseMint),
-      amountAsNum(tokenBondingAcct.sellFrozen ? tokenBondingAcct.supplyFromBonding : targetMint.supply, targetMint),
+      amountAsNum(tokenBondingAcct.ignoreExternalReserveChanges ? tokenBondingAcct.reserveBalanceFromBonding : baseStorage.amount, baseMint),
+      amountAsNum(tokenBondingAcct.ignoreExternalSupplyChanges ? tokenBondingAcct.supplyFromBonding : targetMint.supply, targetMint),
       tokenBondingAcct.goLiveUnixTime.toNumber(),
     );
 
@@ -1950,8 +1958,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     // @ts-ignore
     const curve =  await this.getPricingCurve(
       tokenBondingAcct.curve,
-      amountAsNum(tokenBondingAcct.sellFrozen ? tokenBondingAcct.reserveBalanceFromBonding : baseStorage.amount, baseMint),
-      amountAsNum(tokenBondingAcct.sellFrozen ? tokenBondingAcct.supplyFromBonding : targetMint.supply, targetMint),
+      amountAsNum(tokenBondingAcct.ignoreExternalReserveChanges ? tokenBondingAcct.reserveBalanceFromBonding : baseStorage.amount, baseMint),
+      amountAsNum(tokenBondingAcct.ignoreExternalSupplyChanges ? tokenBondingAcct.supplyFromBonding : targetMint.supply, targetMint),
       tokenBondingAcct.goLiveUnixTime.toNumber(),
     );
 
@@ -2241,9 +2249,19 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
 
     return await this.getPricingCurve(
       tokenBondingAcct.curve,
-      amountAsNum(tokenBondingAcct.sellFrozen ? tokenBondingAcct.reserveBalanceFromBonding : baseStorage.amount, baseMint),
-      amountAsNum(tokenBondingAcct.sellFrozen ? tokenBondingAcct.supplyFromBonding : targetMint.supply, targetMint),
-      tokenBondingAcct.goLiveUnixTime.toNumber(),
+      amountAsNum(
+        tokenBondingAcct.ignoreExternalReserveChanges
+          ? tokenBondingAcct.reserveBalanceFromBonding
+          : baseStorage.amount,
+        baseMint
+      ),
+      amountAsNum(
+        tokenBondingAcct.ignoreExternalSupplyChanges
+          ? tokenBondingAcct.supplyFromBonding
+          : targetMint.supply,
+        targetMint
+      ),
+      tokenBondingAcct.goLiveUnixTime.toNumber()
     );
   }
 

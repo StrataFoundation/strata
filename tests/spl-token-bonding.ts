@@ -445,8 +445,9 @@ describe("spl-token-bonding", () => {
           c: 1,
           k0: 2,
           k1: 0.5,
-          interval: 10
-        })
+          interval: 10,
+          d: 0.5,
+        }),
       });
 
       ({ tokenBonding } = await tokenBondingProgram.createTokenBonding({

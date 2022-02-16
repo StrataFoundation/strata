@@ -20,6 +20,7 @@ export type TimeDecayExponentialCurveV0 = {
   c: BN;
   k0: BN;
   k1: BN;
+  d: BN;
   interval: number;
 };
 
@@ -423,12 +424,14 @@ export class TimeDecayExponentialCurve extends BaseExponentialCurve {
   b: number = 0;
   k0: number;
   k1: number;
+  d: number;
   interval: number;
 
   k(timeElapsed: number): number {
-    const ret = (
-      this.k0 - (this.k0 - this.k1) * Math.min(timeElapsed / this.interval, 1)
-    );
+    const ret =
+      this.k0 -
+      (this.k0 - this.k1) *
+        Math.min(Math.pow(timeElapsed / this.interval, this.d), 1);
     return ret;
   }
 
@@ -446,6 +449,7 @@ export class TimeDecayExponentialCurve extends BaseExponentialCurve {
     );
     this.k1 = curve.k1.toNumber() / 1000000000000;
     this.k0 = curve.k0.toNumber() / 1000000000000;
+    this.d = curve.d.toNumber() / 1000000000000;
     this.interval = curve.interval;
 
     this.baseAmount = baseAmount;

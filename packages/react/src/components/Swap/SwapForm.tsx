@@ -84,6 +84,8 @@ export interface ISwapFormProps {
     | undefined;
   ownedBase: number | undefined;
   spendCap: number;
+  mintCap?: number;
+  numRemaining?: number;
   feeAmount?: number;
   extraTransactionInfo?: Omit<TransactionInfoArgs, "formRef">[];
 }
@@ -101,7 +103,7 @@ function MintMenuItem({
     <MenuItem
       onClick={onClick}
       icon={
-        <Center w={8} h={8} color="white" bg="indigo.500" rounded="full">
+        <Center w={8} h={8} color="white" bg="primary.500" rounded="full">
           <Avatar w={"100%"} h={"100%"} size="sm" src={image} />
         </Center>
       }
@@ -128,6 +130,8 @@ export const SwapForm = ({
   feeAmount,
   baseOptions,
   targetOptions,
+  mintCap,
+  numRemaining
 }: ISwapFormProps) => {
   const formRef = useRef() as React.MutableRefObject<HTMLInputElement>;
   const { connected } = useWallet();
@@ -161,26 +165,15 @@ export const SwapForm = ({
   const slippage = watch("slippage");
   const hasBaseAmount = (ownedBase || 0) >= +(topAmount || 0);
   const moreThanSpendCap = +(topAmount || 0) > spendCap;
-  const targetMintAcct = useMint(target?.publicKey);
 
   const lowMint =
     base &&
     target &&
     pricing?.hierarchy.lowest(base.publicKey, target.publicKey);
   const isBuying = lowMint && lowMint.equals(target?.publicKey!);
-  const targetMintSupply = targetMintAcct && toNumber(
-    targetMintAcct.supply,
-    targetMintAcct
-  );
   const targetBonding = lowMint && pricing?.hierarchy.findTarget(lowMint);
-  const mintCap: number | undefined = 
-    targetBonding &&
-    (targetBonding.mintCap as BN | undefined) && 
-    toNumber(targetBonding.mintCap as BN, targetMintAcct);
-
-  const numRemaining = targetMintSupply && mintCap && (mintCap - targetMintSupply);
   const passedMintCap =
-    numRemaining && numRemaining < bottomAmount;
+    !!numRemaining && numRemaining < bottomAmount;
 
   const notLive =
     targetBonding &&
@@ -270,7 +263,6 @@ export const SwapForm = ({
 
   const handleSwap = async (values: ISwapFormValues) => {
     await onSubmit({ ...values, lastSet });
-    reset();
   };
 
   if (isLoading || !base || !target || (connected && !pricing)) {
@@ -287,7 +279,7 @@ export const SwapForm = ({
                 You Pay
               </Text>
               {base && (
-                <Link color="indigo.500" fontSize="xs" onClick={handleBuyBase}>
+                <Link color="primary.500" fontSize="xs" onClick={handleBuyBase}>
                   Buy More {base.ticker}
                 </Link>
               )}
@@ -327,7 +319,7 @@ export const SwapForm = ({
                           w={8}
                           h={8}
                           color="white"
-                          bg="indigo.500"
+                          bg="primary.500"
                           rounded="full"
                         >
                           <Avatar src={base.image} w="100%" h="100%" />
@@ -383,7 +375,7 @@ export const SwapForm = ({
               {connected && (
                 <Button
                   size="xs"
-                  colorScheme="indigo"
+                  colorScheme="primary"
                   variant="ghost"
                   onClick={handleUseMax}
                 >
@@ -444,7 +436,7 @@ export const SwapForm = ({
                           w={8}
                           h={8}
                           color="white"
-                          bg="indigo.500"
+                          bg="primary.500"
                           rounded="full"
                         >
                           <Avatar src={target.image} w="100%" h="100%" />
@@ -510,7 +502,7 @@ export const SwapForm = ({
                       w={5}
                       h={5}
                       as={RiInformationLine}
-                      _hover={{ color: "indigo.500", cursor: "pointer" }}
+                      _hover={{ color: "primary.500", cursor: "pointer" }}
                     />
                   </Flex>
                 </Tooltip>
@@ -550,7 +542,7 @@ export const SwapForm = ({
             </Flex>
             {numRemaining && (
               <Flex justify="space-between" alignItems="center">
-                <Text>Num Remaining</Text>
+                <Text>Remaining</Text>
                 <Flex>
                   {numRemaining} / {mintCap}
                 </Flex>
@@ -619,8 +611,8 @@ export const SwapForm = ({
                     Insufficient funds for this trade.{" "}
                     <Text as="u">
                       <Link
-                        color="indigo.100"
-                        _hover={{ color: "indigo.200" }}
+                        color="primary.100"
+                        _hover={{ color: "primary.200" }}
                         onClick={handleBuyBase}
                       >
                         {`Buy more now.`}
@@ -643,7 +635,7 @@ export const SwapForm = ({
                 passedMintCap
               }
               w="full"
-              colorScheme="indigo"
+              colorScheme="primary"
               size="lg"
               type="submit"
               isLoading={awaitingApproval || isSubmitting}

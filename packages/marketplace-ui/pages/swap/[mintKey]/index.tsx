@@ -1,11 +1,14 @@
-import { BountyDetail } from "@/components/bounties/BountyDetail";
 import { MetadataMeta } from "@/components/MetadataMeta";
-import { Box, Center, Container, Image, Spinner } from "@chakra-ui/react";
-import { Swap, usePublicKey, useTokenBondingFromMint, useTokenMetadata } from "@strata-foundation/react";
+import { Box, Center, Container, Heading, Spinner } from "@chakra-ui/react";
+import {
+  Swap,
+  usePublicKey,
+  useTokenBondingFromMint
+} from "@strata-foundation/react";
 import {
   GetServerSideProps,
   InferGetServerSidePropsType,
-  NextPage,
+  NextPage
 } from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";
@@ -15,7 +18,7 @@ import { mintMetadataServerSideProps } from "utils/tokenMetadataServerProps";
 export const getServerSideProps: GetServerSideProps =
   mintMetadataServerSideProps;
 
-export const LbpDisplay: NextPage = ({
+export const SwapDisplay: NextPage = ({
   name,
   image,
   description,
@@ -23,7 +26,7 @@ export const LbpDisplay: NextPage = ({
   const router = useRouter();
   const { mintKey: mintKeyRaw } = router.query;
   const mintKey = usePublicKey(mintKeyRaw as string);
-  const { info: tokenBonding, loading } = useTokenBondingFromMint(mintKey)
+  const { info: tokenBonding, loading } = useTokenBondingFromMint(mintKey);
 
   return (
     <Box
@@ -41,14 +44,23 @@ export const LbpDisplay: NextPage = ({
         <MetadataMeta name={name} description={description} image={image} />
       </Head>
       <Box padding="54px" backgroundColor="black.500" />
-      <Container justify="stretch" maxW="640px">
-        <Box zIndex={1} bg="white" shadow="xl" rounded="lg">
-          {loading && <Spinner />}
-          {!loading && tokenBonding && <Swap tokenBondingKey={tokenBonding!.publicKey} />}
+      <Container mt="-72px" justify="stretch" maxW="460px">
+        <Heading mb={2} color="white" fontSize="24px" fontWeight={600}>
+          Swap
+        </Heading>
+        <Box zIndex={1} bg="white" shadow="xl" rounded="lg" minH="400px">
+          {loading && (
+            <Center>
+              <Spinner />
+            </Center>
+          )}
+          {!loading && tokenBonding && (
+            <Swap tokenBondingKey={tokenBonding!.publicKey} />
+          )}
         </Box>
       </Container>
     </Box>
   );
 };
 
-export default LbpDisplay;
+export default SwapDisplay;

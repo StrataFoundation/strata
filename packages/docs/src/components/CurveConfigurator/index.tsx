@@ -164,6 +164,111 @@ export const PriceVsSupplyDisplay = ({
   );
 };
 
+export const RateVsTimeDisplay = ({
+  curve,
+  reserves,
+  supply,
+  setTimeOffset,
+  maxTime,
+  timeOffset,
+  setMaxTime,
+}: {
+  curve: ICurveConfig;
+  maxTime: string;
+  timeOffset: string;
+  setMaxTime(args: string): void;
+  setTimeOffset(args: string): void;
+  reserves: string;
+  supply: string;
+}) => {
+  const curveConfig = useMemo(() => curve.toRawConfig(), [curve]);
+  const data = useMemo(() => {
+    const step = Number(maxTime) / NUM_DATAPOINTS;
+    const ret: { timeOffset: number; rate: number }[] = [];
+    for (let i = 0; i < Number(maxTime); i += step) {
+      const currPricing = fromCurve(
+        curveConfig,
+        Number(reserves),
+        Number(supply),
+        0
+      );
+      const incAmt = 1
+      const plusOnePricing = fromCurve(
+        curveConfig,
+        Number(reserves) + currPricing.buyTargetAmount(incAmt, 0, 0, Number(i)),
+        Number(supply + incAmt),
+        0
+      );
+      const priceIncrease =
+        plusOnePricing.buyTargetAmount(incAmt, 0, 0, Number(i)) -
+        currPricing.buyTargetAmount(incAmt, 0, 0, Number(i));
+      const priceFall =
+        currPricing.buyTargetAmount(incAmt, 0, 0, Number(i)) -
+        currPricing.buyTargetAmount(incAmt, 0, 0, Number(i + 1));
+      ret.push({
+        rate: priceFall / priceIncrease,
+        timeOffset: i,
+      });
+    }
+
+    return ret;
+  }, [curveConfig, reserves, supply, maxTime]);
+
+  return (
+    <VStack justify="stretch">
+      <Box w="full" h="500px">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart
+            width={500}
+            height={300}
+            data={data}
+            margin={{
+              top: 5,
+              right: 30,
+              left: 20,
+              bottom: 5,
+            }}
+          >
+            <ReferenceLine x={Number(timeOffset)} stroke="orange" />
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis
+              tickCount={10}
+              type="number"
+              tickFormatter={(seconds) => Math.floor(formatTime(seconds, Number(maxTime))).toString()}
+              dataKey="timeOffset"
+              label={{ value: `Time (${getUnit(Number(maxTime))})`, dy: 10 }}
+              domain={[0, Number(maxTime)]}
+            />
+            <YAxis
+              type="number"
+              label={{
+                value: "Breakeven Sell Rate (units/sec)",
+                position: "insideLeft",
+                angle: -90,
+                dy: 0,
+              }}
+            />
+            <Tooltip />
+            <Legend />
+
+            <Line
+              activeDot={{
+                onClick: (e, payload) => {
+                  //@ts-ignore
+                  setTimeOffset(payload.payload.timeOffset);
+                },
+              }}
+              type="monotone"
+              dataKey="rate"
+              stroke="#8884d8"
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </Box>
+    </VStack>
+  );
+};
+
 export const PriceVsTimeDisplay = ({
   curve,
   reserves,
@@ -217,16 +322,16 @@ export const PriceVsTimeDisplay = ({
               bottom: 5,
             }}
           >
-            <ReferenceLine
-              x={Number(timeOffset)}
-              stroke="orange"
-            />
+            <ReferenceLine x={Number(timeOffset)} stroke="orange" />
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis
               tickCount={10}
               type="number"
+              tickFormatter={(seconds) =>
+                Math.floor(formatTime(seconds, Number(maxTime))).toString()
+              }
               dataKey="timeOffset"
-              label={{ value: "Time (seconds)", dy: 10 }}
+              label={{ value: `Time (${getUnit(Number(maxTime))})`, dy: 10 }}
               domain={[0, Number(maxTime)]}
             />
             <YAxis
@@ -259,6 +364,36 @@ export const PriceVsTimeDisplay = ({
   );
 };
 
+function getUnit(maxTime: number): "seconds" | "hours" | "minutes" | "days" {
+  if (maxTime < 60) {
+    return "seconds"
+  } else if (maxTime < 60 * 60) {
+    return "minutes"
+  } else if (maxTime < 60 * 60 * 72) {
+    return "hours"
+  } else {
+    return "days"
+  }
+}
+
+/**
+ * Seconds from 0 to 60
+ * Minutes from 0 to 60 minutes
+ * Hours from 0 to 72 hours
+ * Days onward
+ */
+function formatTime(time: number, maxTime: number): number {
+  const unit = getUnit(maxTime);
+  if (unit === "seconds") {
+    return time
+  } else if (unit === "minutes") {
+    return time / 60
+  } else if (unit === "hours") {
+    return time / (60 * 60)
+  } else {
+    return time / (60 * 60 * 24)
+  }
+}
 
 export const CurveConfiguratorFromVariables = () => {
   const {
@@ -266,7 +401,8 @@ export const CurveConfiguratorFromVariables = () => {
     startSupply: passedStartSupply,
     endSupply: passedEndSupply,
     reserves: passedReserves,
-    supply: passedSupply
+    supply: passedSupply,
+    maxTime: passedMaxTime
   } = useVariables();
 
   const [timeOffset, setTimeOffset] = useQueryString("timeOffset", "0");
@@ -274,7 +410,7 @@ export const CurveConfiguratorFromVariables = () => {
   const [supply, setSupply] = useQueryString("supply", "0");
   const [startSupply, setStartSupply] = useQueryString("startSupply", passedStartSupply || "0");
   const [endSupply, setEndSupply] = useQueryString("endSupply", passedEndSupply || "100");
-  const [maxTime, setMaxTime] = useQueryString("maxTime", "10");
+  const [maxTime, setMaxTime] = useQueryString("maxTime", passedMaxTime || "10");
   const args = {
     timeOffset,
     setTimeOffset,
@@ -302,6 +438,9 @@ export const CurveConfiguratorFromVariables = () => {
   useEffect(() => {
     passedStartSupply && setStartSupply(passedStartSupply);
   }, [passedStartSupply]);
+  useEffect(() => {
+    passedMaxTime && setMaxTime(passedMaxTime);
+  }, [passedMaxTime]);
 
   if (!curveConfig) {
     return <div>Run the above code block to show curve</div>
@@ -369,6 +508,7 @@ export const CurveConfiguratorFromVariables = () => {
       <SimpleGrid columns={[1, 1, 2]} w="full">
         <PriceVsSupplyDisplay curve={curveConfig} {...args} />
         <PriceVsTimeDisplay curve={curveConfig} {...args} />
+        <RateVsTimeDisplay curve={curveConfig} {...args} />
       </SimpleGrid>
     </VStack>
   );

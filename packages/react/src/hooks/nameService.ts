@@ -97,7 +97,6 @@ export function useReverseName(
       acct.data.slice(NameRegistryState.HEADER_LEN)
     );
   });
-  console.log(reverseAccount);
   return {
     loading: loading1 || loading2,
     error: nameError || keyError,

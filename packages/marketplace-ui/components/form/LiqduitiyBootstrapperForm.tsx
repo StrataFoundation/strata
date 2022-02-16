@@ -162,7 +162,7 @@ export const LiquidityBootstrapperForm: React.FC = () => {
           <FormControlWithError
             id="authority"
             help="The wallet that receives the bootstrapped liquidity"
-            label="Approver"
+            label="Beneficiary"
             errors={errors}
           >
             {publicKey && (

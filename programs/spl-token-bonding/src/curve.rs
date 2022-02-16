@@ -140,18 +140,20 @@ fn to_prec(i: u128) -> PreciseNumber {
   }
 }
 
-fn time_decay_k(k0: u128, k1: u128, time_offset: i64, interval: u32) -> Option<PreciseNumber> {
+fn time_decay_k(d: u128, k0: u128, k1: u128, time_offset: i64, interval: u32) -> Option<PreciseNumber> {
   let k0_prec = to_prec(k0);
   let k1_prec = to_prec(k1);
+  let d_prec = to_prec(d);
   let interval_prec = PreciseNumber {
     value: InnerUint::from(interval) * 1_000_000_u64, // Add 6 precision
   };
   let time_offset_prec = PreciseNumber {
     value: InnerUint::from(time_offset) * 1_000_000_u64, // Add 6 precision
   };
-  let interval_completion = time_offset_prec.checked_div(&interval_prec)?;
-  let time_multiplier = if interval_completion.less_than(&ONE_PREC) {
-    interval_completion
+
+  let time_multiplier = if time_offset_prec.less_than(&interval_prec) {
+    let interval_completion = time_offset_prec.checked_div(&interval_prec)?;
+    interval_completion.log()?.checked_mul(&d_prec.signed())?.exp()?
   } else {
     PreciseNumber::one()
   };
@@ -196,11 +198,11 @@ impl Curve for PrimitiveCurve {
             None // This math is too hard, have not implemented yet.
           }
         },
-        PrimitiveCurve::TimeDecayExponentialCurveV0 { c, k1, k0, interval } => {
-          time_decay_k(k0, k1, time_offset, interval)?.print();
+        PrimitiveCurve::TimeDecayExponentialCurveV0 { d, c, k1, k0, interval } => {
+          time_decay_k(d, k0, k1, time_offset, interval)?.print();
           expected_target_amount_exp_initial(
             &to_prec(c),
-            &time_decay_k(k0, k1, time_offset, interval)?,
+            &time_decay_k(d, k0, k1, time_offset, interval)?,
             reserve_change
           )
         }
@@ -229,9 +231,9 @@ impl Curve for PrimitiveCurve {
             None // This math is too hard, have not implemented yet.
           }
         },
-        PrimitiveCurve::TimeDecayExponentialCurveV0 { c: _, k1, k0, interval } => {
+        PrimitiveCurve::TimeDecayExponentialCurveV0 { d, c: _, k1, k0, interval } => {
           expected_target_amount_exp(
-            &time_decay_k(k0, k1, time_offset, interval)?,
+            &time_decay_k(d, k0, k1, time_offset, interval)?,
             reserve_change,
             base_amount,
             target_supply
@@ -265,10 +267,10 @@ impl Curve for PrimitiveCurve {
             )?
           )
         },
-        PrimitiveCurve::TimeDecayExponentialCurveV0 { c, k1, k0, interval } => {
+        PrimitiveCurve::TimeDecayExponentialCurveV0 {d,  c, k1, k0, interval } => {
           price_exp_initial(
             &to_prec(c),
-            &time_decay_k(k0, k1, time_offset, interval)?,
+            &time_decay_k(d, k0, k1, time_offset, interval)?,
             amount,
           )
         }
@@ -294,9 +296,9 @@ impl Curve for PrimitiveCurve {
             None // Math is too hard, haven't implemented yet
           }
         },
-        PrimitiveCurve::TimeDecayExponentialCurveV0 { c: _, k1, k0, interval } => {
+        PrimitiveCurve::TimeDecayExponentialCurveV0 { d, c: _, k1, k0, interval } => {
           price_exp(
-            &&time_decay_k(k0, k1, time_offset, interval)?,
+            &&time_decay_k(d, k0, k1, time_offset, interval)?,
             amount,
             base_amount,
             target_supply,

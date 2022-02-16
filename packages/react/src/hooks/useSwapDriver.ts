@@ -1,4 +1,4 @@
-import { Provider } from "@project-serum/anchor";
+import { BN, Provider } from "@project-serum/anchor";
 import {
   AccountLayout,
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -10,6 +10,7 @@ import { PublicKey } from "@solana/web3.js";
 import {
   BondingHierarchy,
   ISwapArgs,
+  toNumber,
 } from "@strata-foundation/spl-token-bonding";
 import React, { useEffect, useState } from "react";
 import { useAsync } from "react-async-hook";
@@ -54,6 +55,7 @@ async function getMissingSpace(
   }
 
   const path = hierarchy.path(baseMint, targetMint);
+  console.log(hierarchy.tokenBonding)
   const accounts = (
     await Promise.all(
       path.map(async (hierarchy) => {
@@ -183,13 +185,35 @@ export const useSwapDriver = ({
     publicKey: targetMint,
   };
 
+  const lowMint =
+    base &&
+    target &&
+    pricing?.hierarchy.lowest(base.publicKey, target.publicKey);
+  const targetMintSupply =
+    targetMintAcct && toNumber(targetMintAcct.supply, targetMintAcct);
+  const targetBonding = lowMint && pricing?.hierarchy.findTarget(lowMint);
+  const mintCap: number | undefined =
+    targetBonding &&
+    targetMintAcct &&
+    (targetBonding.mintCap as BN | undefined) &&
+    toNumber(targetBonding.mintCap as BN, targetMintAcct);
+
+  const isBuying = lowMint && lowMint.equals(target?.publicKey!);
+  const numRemaining =
+    typeof targetMintSupply != "undefined" && !!mintCap && isBuying
+      ? mintCap - targetMintSupply
+      : undefined;
+
   const handleSubmit = async (values: ISwapFormValues) => {
     if (values.topAmount) {
       try {
         // They explicitly set the amount they want. Accomodate this if we're not doing a multi
         // level swap
         const path = pricing?.hierarchy.path(baseMint!, targetMint!);
-        let shouldUseDesiredTargetAmount = values.lastSet == "bottom" && path && path.length == 1 &&
+        let shouldUseDesiredTargetAmount =
+          values.lastSet == "bottom" &&
+          path &&
+          path.length == 1 &&
           path[0].tokenBonding.targetMint.equals(targetMint!);
 
         let outputAmountSetting: any = {
@@ -199,7 +223,7 @@ export const useSwapDriver = ({
         if (shouldUseDesiredTargetAmount) {
           outputAmountSetting = {
             desiredTargetAmount: +values.bottomAmount,
-            expectedBaseAmount: +values.topAmount
+            expectedBaseAmount: +values.topAmount,
           };
         }
 
@@ -218,6 +242,8 @@ export const useSwapDriver = ({
 
   return {
     extraTransactionInfo,
+    numRemaining,
+    mintCap,
     loading:
       targetMetaLoading ||
       baseMetaLoading ||

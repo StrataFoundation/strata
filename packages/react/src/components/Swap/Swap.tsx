@@ -34,6 +34,7 @@ export const Swap = ({ tokenBondingKey }: { tokenBondingKey: PublicKey }) => {
     onTradingMintsChange: setTradingMints,
     swap: (args) =>
       execute(args).then(({ targetAmount }) => {
+        console.log("Yay", targetAmount);
         toast.custom((t) => (
           <Notification
             show={t.visible}
@@ -45,7 +46,7 @@ export const Swap = ({ tokenBondingKey }: { tokenBondingKey: PublicKey }) => {
             onDismiss={() => toast.dismiss(t.id)}
           />
         ));
-      }),
+      }).catch(console.error),
     onConnectWallet: identity,
     tokenBondingKey: tokenBondingKey,
   });

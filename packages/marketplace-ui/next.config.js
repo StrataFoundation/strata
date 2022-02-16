@@ -20,6 +20,9 @@ module.exports = {
       "@solana/wallet-adapter-react": path.resolve(
         "../../node_modules/@solana/wallet-adapter-react"
       ),
+      "react-hot-toast": path.resolve(
+        "../../node_modules/react-hot-toast"
+      ),
     };
     return config;
   },

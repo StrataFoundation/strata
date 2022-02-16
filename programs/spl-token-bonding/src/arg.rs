@@ -118,7 +118,7 @@ pub enum PrimitiveCurve {
     pow: u8,
     frac: u8,
   },
-  // c(x^(k_0 - ((k_0 - k_1) (t_0 - t) / i))
+  // c(x^(k_0 - ((k_0 - k_1) ((t_0 - t) / i)^d)
   // t_0 = go live date
   // t = current time
   // i = interval
@@ -128,6 +128,7 @@ pub enum PrimitiveCurve {
     k1: u128,
     k0: u128,
     interval: u32,
+    d: u128
   },
 }
 

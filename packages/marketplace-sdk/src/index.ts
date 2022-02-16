@@ -12,6 +12,7 @@ import {
   ICurveConfig,
   ITokenBonding,
   SplTokenBonding,
+  TimeCurveConfig,
   TimeDecayExponentialCurveConfig,
   toBN
 } from "@strata-foundation/spl-token-bonding";
@@ -23,6 +24,7 @@ import {
   IMetadataExtension,
   InstructionResult,
   ITokenWithMeta,
+  percent,
   SplTokenMetadata,
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
@@ -442,7 +444,7 @@ export class MarketplaceSdk {
     price,
     bondingArgs,
     baseMint,
-    targetMintKeypair,
+    targetMintKeypair = Keypair.generate(),
   }: ICreateMarketItemArgs): Promise<
     BigInstructionResult<{ tokenBonding: PublicKey }>
   > {
@@ -564,7 +566,7 @@ export class MarketplaceSdk {
   async createBountyInstructions({
     payer = this.provider.wallet.publicKey,
     authority = this.provider.wallet.publicKey,
-    targetMintKeypair,
+    targetMintKeypair = Keypair.generate(),
     metadata,
     metadataUpdateAuthority = authority,
     bondingArgs,
@@ -644,11 +646,11 @@ export class MarketplaceSdk {
 
   static lbpCurve({
     interval,
-    startPrice: maxPrice,
+    startPrice,
     minPrice,
     maxSupply
   }: ILbpCurveArgs): { reserves: number, supply: number, curveConfig: ICurveConfig } {
-    if (maxPrice < minPrice) {
+    if (startPrice < minPrice) {
       throw new Error("Max price must be more than min price");
     }
     if (minPrice == 0) {
@@ -658,7 +660,7 @@ export class MarketplaceSdk {
     // (1 + k0) (end price) = start price
     // (1 + k0)  = (start price) / (end price)
     // 01  = (start price) / (end price) - 1
-    const k0 = maxPrice/minPrice - 1;
+    const k0 = startPrice / minPrice - 1;
     const k1 = 0;
 
     if (k1 > 9) {
@@ -670,11 +672,12 @@ export class MarketplaceSdk {
         k1,
         k0,
         interval,
-        c: 1 // Not needed
+        c: 1, // Not needed
+        d: 1 / k0,
       }),
       reserves: minPrice * maxSupply,
-      supply: maxSupply
-    }
+      supply: maxSupply,
+    };
   }
 
   /**
@@ -687,7 +690,7 @@ export class MarketplaceSdk {
     payer = this.provider.wallet.publicKey,
     authority = this.provider.wallet.publicKey,
     targetMint,
-    targetMintKeypair,
+    targetMintKeypair = Keypair.generate(),
     metadata,
     metadataUpdateAuthority = authority,
     interval,
@@ -774,25 +777,6 @@ export class MarketplaceSdk {
       }
     }
 
-    console.log({
-      payer,
-      curve: curve!,
-      reserveAuthority: authority,
-      generalAuthority: authority,
-      targetMint,
-      buyBaseRoyaltyPercentage: 0,
-      sellBaseRoyaltyPercentage: 0,
-      sellTargetRoyaltyPercentage: 0,
-      buyTargetRoyaltyPercentage: 0,
-      baseMint,
-      advanced: {
-        initialSupplyPad,
-        initialReservesPad,
-      },
-      mintCap: toBN(maxSupply, decimals),
-      ...bondingArgs,
-    });
-
     const {
       output: { tokenBonding },
       instructions: tokenBondingInstructions,
@@ -802,6 +786,8 @@ export class MarketplaceSdk {
       curve: curve!,
       reserveAuthority: authority,
       generalAuthority: authority,
+      ignoreExternalReserveChanges: true,
+      ignoreExternalSupplyChanges: true,
       targetMint,
       buyBaseRoyaltyPercentage: 0,
       sellBaseRoyaltyPercentage: 0,
