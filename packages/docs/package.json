@@ -1,6 +1,6 @@
 {
   "name": "@strata-foundation/docs",
-  "version": "3.2.5-alpha.3",
+  "version": "3.2.5-alpha.4",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
@@ -32,8 +32,8 @@
     "@solana/wallet-adapter-react-ui": "0.9.2",
     "@solana/wallet-adapter-wallets": "0.14.0",
     "@solana/web3.js": "^1.32.0",
-    "@strata-foundation/marketplace-sdk": "^3.2.5-alpha.3",
-    "@strata-foundation/react": "^3.2.5-alpha.3",
+    "@strata-foundation/marketplace-sdk": "^3.2.5-alpha.4",
+    "@strata-foundation/react": "^3.2.5-alpha.4",
     "@strata-foundation/spl-token-bonding": "^3.2.5-alpha.2",
     "@strata-foundation/spl-token-collective": "^3.2.5-alpha.2",
     "@svgr/webpack": "^5.5.0",
