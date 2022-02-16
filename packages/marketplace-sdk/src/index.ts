@@ -656,16 +656,13 @@ export class MarketplaceSdk {
     if (minPrice == 0) {
       throw new Error("Min price must be more than 0")
     }
+    minPrice = minPrice / 2;  // Account for the 0.1 k1
     // end price = start price / (1 + k0)
     // (1 + k0) (end price) = start price
     // (1 + k0)  = (start price) / (end price)
     // 01  = (start price) / (end price) - 1
     const k0 = startPrice / minPrice - 1;
-    const k1 = 0;
-
-    if (k1 > 9) {
-      throw new Error("Max price must be within 10x min price. Wider ranges are not supported")
-    }
+    const k1 = 1; // Price should never stop increasing, or it's easy to have a big price drop at the end.
 
     return {
       curveConfig: new TimeDecayExponentialCurveConfig({
