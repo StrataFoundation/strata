@@ -1,10 +1,10 @@
 import { AppProps } from 'next/app';
 import { FC } from 'react';
 import { Toaster } from 'react-hot-toast';
-import "../components/bufferFill";
-import { Header } from "..//components/Header";
-import { Footer } from '../components/Footer';
-import { Providers } from '../components/Providers';
+import "../src/components/bufferFill";
+import { Header } from "../src/components/Header";
+import { Footer } from '../src/components/Footer';
+import { Providers } from '../src/components/Providers';
 
 // Use require instead of import since order matters
 require('../styles/globals.css');

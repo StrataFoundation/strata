@@ -2,7 +2,7 @@ import { Container } from '@chakra-ui/react';
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import React from 'react';
-import { SaleForm } from '../components/form/SaleForm';
+import { SaleForm } from '../lib/components/form/SaleForm';
 
 const Home: NextPage = () => {
   return (

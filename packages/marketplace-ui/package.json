@@ -7,7 +7,9 @@
   "version": "3.2.4",
   "license": "Apache-2.0",
   "files": [
+    "dist",
     "pages",
+    "hooks",
     "public",
     "styles",
     ".eslintrc.json",
@@ -17,9 +19,16 @@
     "README.md",
     "tsconfig.json"
   ],
+  "exports": {
+    ".": "./dist/lib/index.js"
+  },
+  "main": "dist/lib/index.js",
+  "types": "dist/lib/index.d.ts",
   "scripts": {
     "clean": "shx rm -rf .next",
     "dev": "NODE_OPTIONS='--inspect' next dev",
+    "watch": "tsc --watch --project .tsconfig-build.json",
+    "build-lib": "tsc --project .tsconfig-build.json",
     "build": "yarn clean && next build",
     "start": "next start",
     "lint": "next lint",

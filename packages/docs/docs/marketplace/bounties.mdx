@@ -1,0 +1,242 @@
+---
+sidebar_position: 1
+---
+
+# Bounties
+
+Strata Bounties are an easy way to crowsource funds for an event or task, on chain. They are a wrapper around [Bonding Curves](/learn/bonding_curves).
+
+## How it Works
+
+You can visit the [marketplace](https://marketplace.strataprotocol.com/bounties) to see bounties in action.
+
+When a bounty is created, anyone may deposit funds on the bounty. Currently, bounties only support one mint. If the token is created for SOL, users donate SOL.
+
+Following a deposit, users will recieve a token in equal quantity to their deposit representing their contribution. 
+For example, if we are creating a bounty to purchase the Constitution of the United States, contributing 2 SOL to the cause would net you 2 CONSTITUTION tokens.
+
+When a bounty is completed, the `Approver` on the bounty is allowed to disburse the funds. Note that the approver has the ability to do this at any point in time. 
+
+A user can burn their tokens to receive their contributions back until the bounty has been disbursed.
+
+## Anatomy of a Bounty
+
+### The Bonding Curve
+
+Every bounty is a fixed price bonding curve. Put base mint in, get target mint out. Burn target mint, receive base mint. For example, a SOL based bounty would take SOL as the base mint and output a bounty token.
+
+The bonding curve has a `Reserve Authority` that is allowed to withdraw tokens from the reserves of the bonding curve. 
+
+The bonding curve collects all contributions to the bounty. When the bounty is complete, the Approver uses this authority to transfer the tokens and close the bonding curve.
+
+Note that this authority can be a DAO, multisig, or normal wallet.
+
+### The Metadata
+
+In order for a bounty to have a name, symbol, description, and other nice attributes we use [Metaplex Token Metadata](https://github.com/metaplex-foundation/metaplex-program-library/tree/master/token-metadata).
+
+This means that a momento of your contribution will show up in collectibles in most wallets.
+
+## Marketplace SDK
+
+You can initialize the marketplace sdk using an Anchor `Provider` as follows:
+
+```
+const marketplaceSdk = await MarketplaceSdk.init(provider)
+```
+
+### Creating a Bounty
+
+To create a bounty using SOL, you can run
+
+```js name=create async
+var { tokenBonding, targetMint } = await marketplaceSdk.createBounty({
+  authority: publicKey, // The approver to disburse the funds
+  // The authority to edit the metadata (name, description, etc)
+  metadataUpdateAuthority: publicKey, 
+  // Metaplex token metadata for the bounty
+  metadata: new DataV2({
+    // Max name len 32
+    name: "Test Bounty",
+    symbol: "test",
+    // This should be a URI pointing to NFT-like json that includes 
+    // name, symbol, description, and attributes from MarketplaceSdk.bountyAttributes
+    uri: "",
+    sellerFeeBasisPoints: 0,
+    creators: null,
+    collection: null,
+    uses: null,
+  }),
+  baseMint: NATIVE_MINT,
+});
+```
+
+Now to deposit money on that bounty, just use a token bonding buy:
+
+```js async deps=create name=buy
+await tokenBondingSdk.buy({
+  tokenBonding,
+  baseAmount: 0.5,
+  slippage: 0.05
+});
+```
+
+To sell,
+
+```js async deps=buy name=sell
+await tokenBondingSdk.sell({
+  tokenBonding,
+  targetAmount: 0.5,
+  slippage: 0.05
+});
+```
+
+To create a bounty with metadata on the frontend, you can use code like this. Assuming that image is a `File` from a file picker:
+
+```js
+const targetMintKeypair = Keypair.generate();
+const uri = await marketplaceSdk.tokenMetadataSdk.createArweaveMetadata({
+  name: "Test ",
+  symbol: "test",
+  description: "Bounty Description",
+  image: image?.name,
+  files: [image],
+  mint: targetMintKeypair.publicKey,
+  attributes: MarketplaceSdk.bountyAttributes({
+    mint,
+    discussion: values.discussion,
+    contact: values.contact
+  }),
+});
+const { targetMint } = await marketplaceSdk.createBounty({
+  targetMintKeypair,
+  authority,
+  metadataUpdateAuthority: marketplaceSdk.provider.wallet.publicKey,
+  metadata: new DataV2({
+    // Max name len 32
+    name: values.name.substring(0, 32),
+    symbol: values.shortName.substring(0, 10),
+    uri,
+    sellerFeeBasisPoints: 0,
+    creators: null,
+    collection: null,
+    uses: null,
+  }),
+  baseMint: mint,
+});
+```
+
+You can see more on filling out metadata via the UI looking at [this code](https://github.com/StrataFoundation/strata/blob/master/packages/marketplace-ui/lib/components/form/TokenMetadataInputs.tsx)
+
+This will trigger two transactions. One will pay the arweave fee in SOL, then get your URI. The second will create the bounty.
+
+## Updating a Bounty
+
+To update the metadata of a bounty, you can run:
+
+
+```js async deps=create
+await tokenMetadataSdk.updateMetadata({
+  metadata: await Metadata.getPDA(targetMint),
+  data: new DataV2({
+    // Max name len 32
+    name: "New Name",
+    symbol: "newSYM,
+    uri: "",
+    sellerFeeBasisPoints: 0,
+    creators: null,
+    collection: null,
+    uses: null,
+  }),
+})
+```
+
+To update the approver, you can run:
+
+```js async 
+await tokenBondingSdk.updateTokenBonding({
+  tokenBonding,
+  generalAuthority: publicKey,
+  reserveAuthority: publicKey,
+});
+```
+
+### Searching Bounties
+
+If you're using react, you can use the `useBounties` hook from `@strata-foundation/marketplace-ui`
+
+Otherwise, you can search by mint:
+
+```js async
+var bounties = await marketplaceSdk.getBounties({
+  baseMint: NATIVE_MINT
+})
+```
+
+## React
+
+See the basic [React](/react) setup to get your Solana setup with wallets working. Then,
+
+```jsx
+import { MarketplaceSdkProvider } from "@strata-foundation/marketplace-ui";
+
+<MarketplaceSdkProvider>
+  { ... your components ... }
+</MarketplaceSdkProvider>
+```
+
+This will allow you to use the `useMarketplaceSdk` hook,
+
+```jsx
+const { marketplaceSdk } = useMarketplaceSdk();
+```
+
+### Bounty List
+
+```
+import { BountyCard, useBounties } from "@strata-foundation/marketplace-ui";
+```
+
+```jsx live
+function BountyList() {
+  const { result: bounties, error, loading } = useBounties({
+    baseMint: NATIVE_MINT,
+    search: "",
+    sortType: "GO_LIVE",
+    sortDirection: "DESC",
+    limit: 5
+  });
+
+  if (loading || !bounties) {
+    return <div>Loading</div>
+  }
+
+  return bounties && bounties.map((bounty) => (
+            <BountyCard
+              onClick={() => console.log("Clicked: ", bounty.targetMint.toBase58())}
+              key={bounty.tokenBondingKey.toBase58()}
+              mintKey={bounty.targetMint}
+            />
+          ))  
+}
+```
+
+### Bounty Details
+```
+import { BountyDetail } from "@strata-foundation/marketplace-ui";
+```
+```jsx async
+  const mintKey = new PublicKey("5RgTTRS6E6RVQZKwuYbZa29FjMk3Dhq8bT6dKpkF4DL3")
+
+```
+```jsx live
+
+function Bounty() {
+  const { mintKey } = useVariables();
+  return <BountyDetail mintKey={mintKey} />
+}
+```
+
+### More Components
+
+The full source of the strata marketplace is open, see https://github.com/StrataFoundation/strata/tree/master/packages/marketplace-ui
