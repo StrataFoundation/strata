@@ -173,7 +173,7 @@ export const SwapForm = ({
   const isBuying = lowMint && lowMint.equals(target?.publicKey!);
   const targetBonding = lowMint && pricing?.hierarchy.findTarget(lowMint);
   const passedMintCap =
-    !!numRemaining && numRemaining < bottomAmount;
+    typeof numRemaining !== "undefined" && numRemaining < bottomAmount;
 
   const notLive =
     targetBonding &&
