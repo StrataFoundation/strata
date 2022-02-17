@@ -95,7 +95,7 @@ const config = {
       // Plugin / TypeDoc options
       {
         id: "marketplace-ui",
-        entryPoints: ["../react/src/index.ts"],
+        entryPoints: ["../marketplace-ui/src/index.ts"],
         tsconfig: "../marketplace-ui/.tsconfig-build.json",
         out: "api/marketplace-ui",
       },
