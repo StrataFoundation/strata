@@ -10,7 +10,7 @@ import {
 import Head from "next/head";
 import { useRouter } from "next/router";
 import React from "react";
-import { mintMetadataServerSideProps } from "utils/tokenMetadataServerProps";
+import { mintMetadataServerSideProps } from "@/utils/tokenMetadataServerProps";
 
 export const getServerSideProps: GetServerSideProps =
   mintMetadataServerSideProps;
@@ -30,8 +30,7 @@ export const MarketDisplay: NextPage = ({
     <Box
       w="full"
       backgroundColor="#f9f9f9"
-      height="100vh"
-      overflow="auto"
+      minHeight="100vh"
       paddingBottom="200px"
     >
       <Head>

@@ -1,5 +1,6 @@
 import "./bufferFill";
 import { Wallet } from "../../contexts/Wallet";
+import { MarketplaceSdkProvider } from "@strata-foundation/marketplace-ui";
 import { EndpointProvider } from "../../contexts/Endpoint";
 import {
   AccountProvider,
@@ -58,18 +59,20 @@ export default ({ children }) => {
           <ErrorHandlerProvider onError={onError}>
             <Wallet>
               <StrataSdksProvider>
-                <AccountProvider commitment="confirmed">
-                  <VariablesProvider>
-                    {children}
-                    <Toaster
-                      position="bottom-center"
-                      containerStyle={{
-                        margin: "auto",
-                        width: "420px",
-                      }}
-                    />
-                  </VariablesProvider>
-                </AccountProvider>
+                <MarketplaceSdkProvider>
+                  <AccountProvider commitment="confirmed">
+                    <VariablesProvider>
+                      {children}
+                      <Toaster
+                        position="bottom-center"
+                        containerStyle={{
+                          margin: "auto",
+                          width: "420px",
+                        }}
+                      />
+                    </VariablesProvider>
+                  </AccountProvider>
+                </MarketplaceSdkProvider>
               </StrataSdksProvider>
             </Wallet>
           </ErrorHandlerProvider>
