@@ -29,7 +29,7 @@ import { getAssociatedAccountBalance, SplTokenMetadata } from "@strata-foundatio
 anchor.setProvider(anchor.Provider.local());
 const provider = anchor.getProvider();
 
-const tokenCollectiveSdk, tokenBondingSdk;
+const tokenCollectiveSdk, tokenBondingSdk, tokenMetadataSdk;
 async function getPrograms() {
   tokenCollectiveSdk = await SplTokenCollective.init(provider);
   tokenBondingSdk = await SplTokenBonding.init(provider);
