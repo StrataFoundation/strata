@@ -4,7 +4,7 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
-  "version": "3.2.5-bounty.0",
+  "version": "3.2.5-bounty.1",
   "license": "Apache-2.0",
   "files": [
     "dist",
