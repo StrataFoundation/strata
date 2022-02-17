@@ -165,6 +165,7 @@ export const awaitTransactionSignatureConfirmation = async (
       reject({ timeout: true });
     }, timeout);
     try {
+      console.log("COMMIMENT", commitment)
       subId = connection.onSignature(
         txid,
         (result: any, context: any) => {
@@ -203,12 +204,17 @@ export const awaitTransactionSignatureConfirmation = async (
               console.log("REST error for", txid, status);
               done = true;
               reject(status.err);
-            } else if (!status.confirmations) {
+            } else if (!status.confirmations && !status.confirmationStatus) {
               console.log("REST no confirmations for", txid, status);
             } else {
               console.log("REST confirmation for", txid, status);
-              done = true;
-              resolve(status);
+              if (
+                !status.confirmationStatus || status.confirmationStatus ==
+                commitment
+              ) {
+                done = true;
+                resolve(status);
+              }
             }
           }
         } catch (e) {

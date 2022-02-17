@@ -22,7 +22,7 @@ Creating a collective is easy, at minimum you need to provide a mint.
 
 Most collectives themselves are bonded to SOL. Let's create a simple collective bonded to SOL.
 
-```js async
+```js async name=create
 // Create a simple exponential curve 0.001 sqrt(S)
 var curve = await tokenBondingSdk.initializeCurve({
     config: new ExponentialCurveConfig({
@@ -52,7 +52,11 @@ var { collective, tokenBonding } = await tokenCollectiveSdk.createCollective({
   authority: publicKey,
   config: {}
 });
+```
 
+We can fetch that data:
+
+```js async deps=create
 var tokenBondingAcct = await tokenBondingSdk.getTokenBonding(tokenBonding);
 var collectiveAcct = await tokenCollectiveSdk.getCollective(collective);
 ```
@@ -158,9 +162,6 @@ var { collective, tokenBonding } = await tokenCollectiveSdk.createCollective({
     }
   }
 });
-
-var tokenBondingAcct = await tokenBondingSdk.getTokenBonding(tokenBonding);
-var collectiveAcct = await tokenCollectiveSdk.getCollective(collective);
 ```
 
 ## Movement and Curve Changes (not yet implemented)

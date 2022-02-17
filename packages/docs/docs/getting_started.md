@@ -29,7 +29,7 @@ import { getAssociatedAccountBalance, SplTokenMetadata } from "@strata-foundatio
 anchor.setProvider(anchor.Provider.local());
 const provider = anchor.getProvider();
 
-const tokenCollectiveSdk, tokenBondingSdk;
+const tokenCollectiveSdk, tokenBondingSdk, tokenMetadataSdk;
 async function getPrograms() {
   tokenCollectiveSdk = await SplTokenCollective.init(provider);
   tokenBondingSdk = await SplTokenBonding.init(provider);
@@ -99,8 +99,13 @@ await tokenBondingSdk.buy({
   baseAmount: 10,
   slippage: 0.05
 });
+```
+
+Now we can check the balance:
+```jsx async name=buy_target deps=fetch
 var testBalance = await getAssociatedAccountBalance(connection, publicKey, tokenBondingAcct.targetMint);
 ```
+
 
 We can also do the last two steps all at once:
 
@@ -112,6 +117,11 @@ var { targetAmount } = await tokenBondingSdk.swap({
   baseAmount: 0.01,
   slippage: 0.05
 })
+```
+
+Now check the balance:
+
+```jsx async name=balance deps=fetch
 var testBalance = await getAssociatedAccountBalance(connection, publicKey, tokenBondingAcct.targetMint);
 ```
 
@@ -123,6 +133,12 @@ await tokenBondingSdk.sell({
   targetAmount: 5,
   slippage: 0.05
 });
+
+```
+
+Now check the balance:
+
+```jsx async name=balance deps=fetch
 var testBalance = await getAssociatedAccountBalance(connection, publicKey, tokenBondingAcct.targetMint);
 ```
 
