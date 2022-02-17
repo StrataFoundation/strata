@@ -20,7 +20,7 @@ import {
   usePublicKey,
   useQueryString
 } from "@strata-foundation/react";
-import { useBounties } from "hooks/useBounties";
+import { useBounties } from "@/hooks/useBounties";
 import { NextPage } from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";

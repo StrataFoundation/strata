@@ -142,7 +142,7 @@ interface ICreateLiquidityBootstrapperArgs extends ILbpCurveArgs {
   /**
    * The token metadata for the LBP item
    */
-  metadata: DataV2;
+  metadata?: DataV2;
 
   /**
    * The update authority on the metadata created. **Default:** authority
@@ -688,11 +688,11 @@ export class MarketplaceSdk {
     payer = this.provider.wallet.publicKey,
     authority = this.provider.wallet.publicKey,
     targetMint,
-    targetMintKeypair = Keypair.generate(),
+    targetMintKeypair,
     metadata,
     metadataUpdateAuthority = authority,
     interval,
-    startPrice: maxPrice,
+    startPrice,
     minPrice,
     maxSupply,
     bondingArgs,
@@ -705,7 +705,7 @@ export class MarketplaceSdk {
 
     const { reserves: initialReservesPad, supply: initialSupplyPad, curveConfig } = MarketplaceSdk.lbpCurve({
       interval,
-      startPrice: maxPrice,
+      startPrice,
       minPrice,
       maxSupply
     });
@@ -732,7 +732,7 @@ export class MarketplaceSdk {
         ? baseMintAcct.decimals
         : bondingArgs.targetMintDecimals;
 
-    if (targetMintKeypair) {
+    if (targetMintKeypair && metadata) {
       const {
         output: { mint: outTargetMint },
         signers: metadataSigners,
@@ -748,11 +748,7 @@ export class MarketplaceSdk {
       signers.push(...metadataSigners);
     }
 
-    if (!targetMint) {
-      throw new Error("No target mint provided");
-    }
-
-    if (await this.tokenBondingSdk.accountExists(targetMint)) {
+    if (targetMint && await this.tokenBondingSdk.accountExists(targetMint)) {
       const mint = await getMintInfo(this.provider, targetMint);
       const mintAuthority = (
         await SplTokenBonding.tokenBondingKey(targetMint)
@@ -776,7 +772,7 @@ export class MarketplaceSdk {
     }
 
     const {
-      output: { tokenBonding },
+      output: { tokenBonding, targetMint: bondingTargetMint },
       instructions: tokenBondingInstructions,
       signers: tokenBondingSigners,
     } = await this.tokenBondingSdk.createTokenBondingInstructions({
@@ -803,7 +799,7 @@ export class MarketplaceSdk {
     return {
       output: {
         tokenBonding,
-        targetMint,
+        targetMint: bondingTargetMint,
       },
       instructions: [instructions, tokenBondingInstructions],
       signers: [signers, tokenBondingSigners],
@@ -815,7 +811,7 @@ export class MarketplaceSdk {
    * @param args
    * @returns
    */
-  async createLiqduitiyBootstrapper(
+  async createLiquidityBootstrapper(
     args: ICreateLiquidityBootstrapperArgs,
     finality?: Finality
   ): Promise<{ tokenBonding: PublicKey; targetMint: PublicKey }> {

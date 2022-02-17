@@ -15,7 +15,7 @@ import {
 } from "recharts";
 import { useVariables } from "../../theme/Root/variables";
 
-const NUM_DATAPOINTS = 30;
+const NUM_DATAPOINTS = 40;
 
 export const PriceVsSupplyDisplay = ({
   curve,
@@ -438,6 +438,8 @@ export const CurveConfiguratorFromVariables = ({
     setMaxTime,
   }
 
+  const numCharts = +priceVsSupply + +priceVsTime + +rateVsTime;
+
   useEffect(() => {
     passedReserves && setReserves(passedReserves);
   }, [passedReserves]);
@@ -455,7 +457,7 @@ export const CurveConfiguratorFromVariables = ({
   }, [passedMaxTime]);
 
   if (!curveConfig) {
-    return <div>Run the above code block to show curve</div>
+    return <Box padding={4} mb={4} rounded="lg" backgroundColor="gray.200" >Run the above code block to show curve</Box>
   }
 
   return (
@@ -517,7 +519,7 @@ export const CurveConfiguratorFromVariables = ({
           />
         </VStack>
       </SimpleGrid>
-      <SimpleGrid columns={[1, 1, 2]} w="full">
+      <SimpleGrid columns={[1, 1, 1, Math.min(numCharts, 2)]} w="full">
         { priceVsSupply && <PriceVsSupplyDisplay supplyOffset={supplyOffset || 0} curve={curveConfig} {...args} /> }
         { priceVsTime && <PriceVsTimeDisplay curve={curveConfig} {...args} /> }
         { rateVsTime && <RateVsTimeDisplay curve={curveConfig} {...args} /> }

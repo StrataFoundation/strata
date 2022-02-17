@@ -1,5 +1,4 @@
 import BrowserOnly from '@docusaurus/BrowserOnly';
-import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
 import { createInstruction, createNameRegistry, getHashedName, getNameAccountKey, NameRegistryState, NAME_PROGRAM_ID, Numberu32, Numberu64 } from "@solana/spl-name-service";
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, NATIVE_MINT, Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
 import { Keypair, PublicKey, sendAndConfirmRawTransaction, SystemProgram, Transaction } from "@solana/web3.js";

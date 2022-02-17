@@ -329,7 +329,7 @@ export async function sendAndConfirmWithRetry(
       throw err.err
     }
 
-    throw new Error('Transaction failed');
+    throw err;
   } finally {
     done = true;
   }

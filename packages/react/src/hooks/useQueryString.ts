@@ -1,5 +1,6 @@
 import qs from "query-string";
 import { useState, useCallback } from "react";
+import { useInterval } from "./useInterval";
 
 const setQueryStringWithoutPageReload = (qsValue: string) => {
   if (typeof window !== "undefined") {
@@ -39,6 +40,12 @@ export function useQueryString<A>(
   initialValue: A
 ): [A, (v: A) => void] {
   const [value, setValue] = useState(getQueryStringValue(key) || initialValue);
+  useInterval(() => {
+    const newValue = getQueryStringValue(key) as string
+    if (newValue && newValue != value) {
+      setValue(newValue);
+    }
+  }, 500)
   const onSetValue = useCallback(
     (newValue) => {
       setValue(newValue);

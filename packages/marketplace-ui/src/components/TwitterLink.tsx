@@ -11,7 +11,7 @@ import {
   WUMBO_TWITTER_VERIFIER
 } from "@strata-foundation/react";
 import { executeRemoteTxn } from "@strata-foundation/spl-utils";
-import { useLinkTwitter } from "hooks/useLinkTwitter";
+import { useLinkTwitter } from "../hooks/useLinkTwitter";
 import React, { useEffect } from "react";
 import { useAsync } from "react-async-hook";
 import { FaTwitter } from "react-icons/fa";

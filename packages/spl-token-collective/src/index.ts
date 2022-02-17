@@ -695,7 +695,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
    */
   createCollective(
     args: ICreateCollectiveArgs,
-    commitment: Finality
+    commitment: Finality = "confirmed"
   ): Promise<{ collective: PublicKey; tokenBonding?: PublicKey }> {
     return this.executeBig(
       this.createCollectiveInstructions(args),
@@ -1406,7 +1406,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
    */
   async createSocialToken(
     args: ICreateSocialTokenArgs,
-    commitment: Finality
+    commitment: Finality = "confirmed",
   ): Promise<{
     ownerTokenRef: PublicKey;
     mintTokenRef: PublicKey;

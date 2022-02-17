@@ -13,12 +13,12 @@ import {
   useProvider,
   usePublicKey,
 } from "@strata-foundation/react";
-import { useMarketplaceSdk } from "contexts/marketplaceSdkContext";
+import { useMarketplaceSdk } from "../../contexts/marketplaceSdkContext";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
 import { useAsyncCallback } from "react-async-hook";
 import { FormProvider, useForm } from "react-hook-form";
-import { route, routes } from "utils/routes";
+import { route, routes } from "../../utils/routes";
 import * as yup from "yup";
 import { FormControlWithError } from "./FormControlWithError";
 import { MintSelect } from "./MintSelect";
@@ -70,7 +70,7 @@ async function createLiquidityBootstrapper(
   const uri =
     "https://strata-token-metadata.s3.us-east-2.amazonaws.com/unclaimed.json";
 
-  const { targetMint } = await marketplaceSdk.createLiqduitiyBootstrapper({
+  const { targetMint } = await marketplaceSdk.createLiquidityBootstrapper({
     targetMintKeypair,
     authority,
     metadata: new DataV2({
