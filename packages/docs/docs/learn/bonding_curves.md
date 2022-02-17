@@ -84,9 +84,10 @@ var curve = await tokenBondingSdk.initializeCurve({
     })
 });
 ```
+
 We can fetch that curve:
 
-```js async name=curve
+```js async name=fetch_curve deps=curve
 var curveAcct = await tokenBondingSdk.getCurve(curve);
 ```
 

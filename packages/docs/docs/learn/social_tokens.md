@@ -150,8 +150,12 @@ var { collective, tokenBonding } = await tokenCollectiveSdk.createCollective({
     }
   }
 });
-
 var collectiveTokenBonding = tokenBonding;
+```
+
+We can fetch that data:
+
+```js async deps=collective
 var collectiveAcct = await tokenCollectiveSdk.getCollective(collective);
 var collectiveBondingAcct = await tokenBondingSdk.getTokenBonding(tokenBonding);
 ```
@@ -176,7 +180,11 @@ var { ownerTokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken
     sellTargetRoyaltyPercentage: 0
   }
 });
+```
 
+Fetch the created token:
+
+```js async name=fetch_token deps=token
 var tokenBondingAcct = await tokenBondingSdk.getTokenBonding(tokenBonding);
 var ownerTokenRefAcct = await tokenCollectiveSdk.getTokenRef(ownerTokenRef);
 ```
