@@ -134,7 +134,9 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
   }, [publicKey, ...Object.values(sdks)]);
 
   useEffect(() => {
-    console.error(error);
+    if (error) {
+      console.error(error);
+    }
   },[error])
 
   const fullLoading =
