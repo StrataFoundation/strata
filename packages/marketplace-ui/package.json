@@ -17,7 +17,8 @@
     "next.config.js",
     "next-env.d.ts",
     "README.md",
-    "tsconfig.json"
+    "tsconfig.json",
+    "tsconfig-build.json"
   ],
   "exports": {
     ".": "./dist/lib/index.js"
@@ -27,8 +28,8 @@
   "scripts": {
     "clean": "shx rm -rf .next",
     "dev": "NODE_OPTIONS='--inspect' next dev",
-    "watch": "tsc --watch --project .tsconfig-build.json",
-    "build-lib": "tsc --project .tsconfig-build.json",
+    "watch": "tsc --watch --project tsconfig-build.json",
+    "build-lib": "tsc --project tsconfig-build.json",
     "build": "yarn clean && next build",
     "start": "next start",
     "lint": "next lint",

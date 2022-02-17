@@ -18,7 +18,8 @@
     "sourceMap": true,
     "strict": true,
     "target": "es6",
-    "typeRoots": ["node_modules/@types"]
+    "typeRoots": ["node_modules/@types"],
+    "preserveSymlinks": true,
   },
   "include": ["src"],
   "exclude": ["./dist/**/*", "./node_modules"]

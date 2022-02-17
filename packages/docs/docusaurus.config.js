@@ -96,7 +96,7 @@ const config = {
       {
         id: "marketplace-ui",
         entryPoints: ["../marketplace-ui/src/index.ts"],
-        tsconfig: "../marketplace-ui/.tsconfig-build.json",
+        tsconfig: "../marketplace-ui/tsconfig-build.json",
         out: "api/marketplace-ui",
       },
     ],
