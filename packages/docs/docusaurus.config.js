@@ -89,17 +89,7 @@ const config = {
         tsconfig: "../marketplace-sdk/tsconfig.json",
         out: "api/marketplace-sdk",
       },
-    ],
-    [
-      "docusaurus-plugin-typedoc",
-      // Plugin / TypeDoc options
-      {
-        id: "marketplace-ui",
-        entryPoints: ["../marketplace-ui/src/index.ts"],
-        tsconfig: "../marketplace-ui/tsconfig-build.json",
-        out: "api/marketplace-ui",
-      },
-    ],
+    ]
   ],
   stylesheets: [
     {
