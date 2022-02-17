@@ -10,7 +10,6 @@ import { BN } from "bn.js";
 import React from 'react';
 import { useVariables, useVariablesContext } from "../Root/variables";
 import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
-import { PriceVsTimeDisplay } from "../../components/CurveConfigurator";
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
 import {
   BountyDetail,
@@ -51,7 +50,6 @@ const ReactLiveScope = {
   TOKEN_PROGRAM_ID,
   TimeDecayExponentialCurveConfig,
   ASSOCIATED_TOKEN_PROGRAM_ID,
-  CurveConfigurator: PriceVsTimeDisplay,
   Token,
   createMetadata,
   Data,

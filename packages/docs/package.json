@@ -47,6 +47,7 @@
     "file-loader": "^6.2.0",
     "gatsby-remark-plantuml": "^0.7.0",
     "hast-util-is-element": "1.1.0",
+    "moment": "^2.29.1",
     "os-browserify": "^0.3.0",
     "path-browserify": "^1.0.1",
     "prism-react-renderer": "^1.2.1",

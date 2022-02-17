@@ -58,17 +58,14 @@ async function createLiquidityBootstrapper(
   const authority = new PublicKey(values.authority);
   const mint = new PublicKey(values.mint);
 
-  // const uri = await marketplaceSdk.tokenMetadataSdk.createArweaveMetadata({
-  //   name: values.name,
-  //   symbol: values.symbol,
-  //   description: values.description,
-  //   image: values.image?.name,
-  //   files: [values.image].filter(truthy),
-  //   mint: targetMintKeypair.publicKey,
-  // });
-
-  const uri =
-    "https://strata-token-metadata.s3.us-east-2.amazonaws.com/unclaimed.json";
+  const uri = await marketplaceSdk.tokenMetadataSdk.createArweaveMetadata({
+    name: values.name,
+    symbol: values.symbol,
+    description: values.description,
+    image: values.image?.name,
+    files: [values.image].filter(truthy),
+    mint: targetMintKeypair.publicKey,
+  });
 
   const { targetMint } = await marketplaceSdk.createLiquidityBootstrapper({
     targetMintKeypair,

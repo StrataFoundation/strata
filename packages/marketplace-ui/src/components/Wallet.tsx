@@ -13,10 +13,9 @@ import {
 } from "@solana/wallet-adapter-wallets";
 import React, { FC, useMemo } from "react";
 
-export const DEFAULT_ENDPOINT = "http://localhost:8899"
 // export const DEFAULT_ENDPOINT = "https://wumbo.genesysgo.net";
-// export const DEFAULT_ENDPOINT =
-//   process.env.NEXT_PUBLIC_SOLANA_URL || "https://api.devnet.solana.com";
+export const DEFAULT_ENDPOINT =
+  process.env.NEXT_PUBLIC_SOLANA_URL || "https://api.devnet.solana.com";
 
 // Default styles that can be overridden by your app
 require("@solana/wallet-adapter-react-ui/styles.css");
