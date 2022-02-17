@@ -1,6 +1,6 @@
 {
     "name": "@strata-foundation/spl-token-staking",
-    "version": "3.2.5-alpha.2",
+    "version": "3.2.5-alpha.5",
     "publishConfig": {
         "access": "public",
         "registry": "https://registry.npmjs.org/"
@@ -27,7 +27,7 @@
     },
     "dependencies": {
         "@solana/web3.js": "^1.32.0",
-        "@strata-foundation/spl-utils": "^3.2.5-alpha.2",
+        "@strata-foundation/spl-utils": "^3.2.5-alpha.5",
         "bn.js": "^5.2.0",
         "semver": "^7.3.5"
     },
