@@ -4,10 +4,10 @@ sidebar_position: 1
 
 # Liquidity Bootstrapping Curve (LBC)
 
-Strata allows you to bootstrap liquidity selling tokens. This style of sale is done by starting with a high price. 
-Then, the price of the token increases for every purchase, and decreases over time.
+Strata allows you to bootstrap liquidity by selling tokens with a dynamic price discovery mechanism. This style of sale is done by starting with a high price that lowers over time and
+increases with every purchase.
 
-This idea is borrowed from Balancer LBPs on Etherium, but differs in that there is no initial liquidity needed.
+This idea is borrowed from Balancer LBPs on Etherium. Strata LBC's differ in that there is no initial liquidity needed.
 
 Below is an image of an LBP price vs time:
 
@@ -19,7 +19,8 @@ but reaches a balance at the fair price where continued demand matches the fall 
 ## Configuration
 
 Strata LBCs require minimal configuration. All you need to specify is
-  * **mint** - What mint would you like to use to collect funds?
+
+  * **mint** - What mint would you like to use to collect funds? This is the token users will use to purchase the token you are selling.
   * **startPrice** - What price should the LBC start at?
   * **minPrice** - What is the minimum price the LBC should allow?
   * **interval** - How long should this LBC last for? Generally these take course over 1-3 days.
