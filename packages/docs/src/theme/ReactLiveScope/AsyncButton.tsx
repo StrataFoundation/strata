@@ -133,10 +133,6 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
     register(name, deps.filter(Boolean), exec);
   }, [publicKey, ...Object.values(sdks)]);
 
-  if (error) {
-    throw error;
-  }
-
   const fullLoading =
     loading || !sdks.tokenBondingSdk || !sdks.tokenCollectiveSdk;
 
@@ -164,7 +160,9 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
         <div>Running previous commands...</div>
       )}
       {loading && runningThisCommand && <div>Loading...</div>}
-      {!fullLoading && (
+      {error ? (
+        <div>{error.toString()}</div>
+      ) : fullLoading ? undefined : (
         <ReactJson
           theme="bright:inverted"
           collapsed={1}
