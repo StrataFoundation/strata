@@ -17,7 +17,7 @@ import { useRouter } from "next/router";
 import React from "react";
 import { useAsync, useAsyncCallback } from "react-async-hook";
 import { DefaultValues, FormProvider, useForm } from "react-hook-form";
-import { route, routes } from "utils/routes";
+import { route, routes } from "../../utils/routes";
 import * as yup from "yup";
 import { FormControlWithError } from "./FormControlWithError";
 import { Recipient } from "./Recipient";
@@ -80,12 +80,14 @@ async function editBounty(
   instructions.push(...metaInstrs);
   signers.push(...metaSigners);
 
-  if (values.authority) {
+  const tokenBondingKey = (await SplTokenBonding.tokenBondingKey(mintKey))[0];
+  const tokenBondingAcct = await tokenBondingSdk.getTokenBonding(tokenBondingKey);
+  if (values.authority && tokenBondingSdk.wallet.publicKey.equals(tokenBondingAcct!.reserveAuthority as PublicKey)) {
     const authority = new PublicKey(values.authority);
 
     const { instructions: bondInstrs, signers: bondSigners } =
       await tokenBondingSdk.updateTokenBondingInstructions({
-        tokenBonding: (await SplTokenBonding.tokenBondingKey(mintKey))[0],
+        tokenBonding: tokenBondingKey,
         generalAuthority: authority,
         reserveAuthority: authority,
       });

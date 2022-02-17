@@ -1,15 +1,25 @@
+import React from "react";
 import {
   Box,
   Button,
-  Icon, Input, InputGroup, InputRightElement,
-  useDisclosure
+  Icon,
+  Input,
+  InputGroup,
+  InputRightElement,
+  useDisclosure,
 } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { TokenSearch } from "@strata-foundation/react";
 import { useCallback, useEffect } from "react";
 import { AiOutlineSearch } from "react-icons/ai";
 
-export const MintSelect = ({ value, onChange }: { value: string, onChange: (i: string) => void}) => {
+export const MintSelect = ({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (i: string) => void;
+}) => {
   const { isOpen, onClose, onOpen } = useDisclosure();
   const { publicKey } = useWallet();
   const escFunction = useCallback((event) => {
@@ -26,7 +36,6 @@ export const MintSelect = ({ value, onChange }: { value: string, onChange: (i: s
     };
   }, []);
 
-
   return (
     <>
       {!isOpen && (
@@ -40,7 +49,7 @@ export const MintSelect = ({ value, onChange }: { value: string, onChange: (i: s
               onClick={() => (isOpen ? onClose() : onOpen())}
             >
               <Icon as={AiOutlineSearch} />
-              { publicKey ? "Wallet" : "No Wallet" }
+              {publicKey ? "Wallet" : "No Wallet"}
             </Button>
           </InputRightElement>
         </InputGroup>

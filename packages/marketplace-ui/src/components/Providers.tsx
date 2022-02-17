@@ -1,7 +1,7 @@
 import { CSSReset } from "@chakra-ui/css-reset";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { AccountProvider, ErrorHandlerProvider, Notification, StrataSdksProvider, ThemeProvider, TokenListProvider } from "@strata-foundation/react";
-import { MarketplaceSdkProvider } from "contexts/marketplaceSdkContext";
+import { MarketplaceSdkProvider } from "../contexts/marketplaceSdkContext";
 import React from "react";
 import toast from "react-hot-toast";
 import { Wallet } from "./Wallet";

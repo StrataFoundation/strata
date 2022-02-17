@@ -80,6 +80,26 @@ const config = {
         out: "api/react",
       },
     ],
+    [
+      "docusaurus-plugin-typedoc",
+      // Plugin / TypeDoc options
+      {
+        id: "marketplace",
+        entryPoints: ["../marketplace-sdk/src/index.ts"],
+        tsconfig: "../marketplace-sdk/tsconfig.json",
+        out: "api/marketplace-sdk",
+      },
+    ],
+    [
+      "docusaurus-plugin-typedoc",
+      // Plugin / TypeDoc options
+      {
+        id: "marketplace-ui",
+        entryPoints: ["../marketplace-ui/src/index.ts"],
+        tsconfig: "../marketplace-ui/tsconfig-build.json",
+        out: "api/marketplace-ui",
+      },
+    ],
   ],
   stylesheets: [
     {

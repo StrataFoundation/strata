@@ -1,8 +1,8 @@
 import { BountyCard } from "@/components/bounties/BountyCard";
 import { BountyList } from "@/components/bounties/BountyList";
 import { MintSelectModal } from "@/components/bounties/MintSelectModal";
+import { route, routes } from "@/utils/routes";
 import {
-  Text,
   Box,
   Button,
   Center,
@@ -13,22 +13,19 @@ import {
   InputGroup,
   InputLeftElement,
   Link,
-  Select,
-  Stack,
-  VStack,
-  Spinner,
+  Select, Spinner, Stack, Text, VStack
 } from "@chakra-ui/react";
 import {
   useErrorHandler,
   usePublicKey,
-  useQueryString,
+  useQueryString
 } from "@strata-foundation/react";
 import { useBounties } from "hooks/useBounties";
 import { NextPage } from "next";
 import Head from "next/head";
+import { useRouter } from "next/router";
 import { useState } from "react";
 import { AiOutlineSearch } from "react-icons/ai";
-import { routes } from "utils/routes";
 import { BsChevronDown } from "react-icons/bs";
 
 const PAGE_SIZE= 20;
@@ -38,6 +35,7 @@ export const Bounties: NextPage = () => {
   const [sort, setSort] = useQueryString("sort", "newest");
   const [limit, setLimit] = useState(PAGE_SIZE);
   const fetchMore = () => setLimit((limit) => limit + PAGE_SIZE);
+  const router = useRouter();
   
   const baseMint = usePublicKey(mint);
   const { result: bounties, error, loading } = useBounties({
@@ -54,8 +52,7 @@ export const Bounties: NextPage = () => {
     <Box
       w="full"
       backgroundColor="#f9f9f9"
-      height="100vh"
-      overflow="auto"
+      minHeight="100vh"
       paddingBottom="200px"
     >
       <Head>
@@ -138,6 +135,11 @@ export const Bounties: NextPage = () => {
           <BountyList>
             {bounties?.map((bounty) => (
               <BountyCard
+                onClick={() =>
+                  router.push(
+                    route(routes.bounty, { mintKey: bounty.targetMint.toBase58() })
+                  )
+                }
                 key={bounty.tokenBondingKey.toBase58()}
                 mintKey={bounty.targetMint}
               />

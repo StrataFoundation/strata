@@ -2,7 +2,7 @@ import { Provider } from "@project-serum/anchor";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import { GetServerSideProps } from "next";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
-import { DEFAULT_ENDPOINT } from "@/components/Wallet";
+import { DEFAULT_ENDPOINT } from "../components/Wallet";
 import { SplTokenMetadata } from "@strata-foundation/spl-utils";
 import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 

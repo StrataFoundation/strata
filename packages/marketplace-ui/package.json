@@ -5,22 +5,19 @@
     "registry": "https://registry.npmjs.org/"
   },
   "version": "3.2.5-alpha.4",
+  "source": "src/index.ts",
   "license": "Apache-2.0",
-  "files": [
-    "pages",
-    "public",
-    "styles",
-    ".eslintrc.json",
-    "LICENSE",
-    "next.config.js",
-    "next-env.d.ts",
-    "README.md",
-    "tsconfig.json"
-  ],
+  "exports": {
+    ".": "./dist/lib/index.js"
+  },
+  "main": "dist/lib/index.js",
+  "types": "dist/lib/index.d.ts",
   "scripts": {
     "clean": "shx rm -rf .next",
     "dev": "NODE_OPTIONS='--inspect' next dev",
-    "build": "yarn clean && next build",
+    "watch": "tsc --watch --project tsconfig-build.json",
+    "build-lib": "tsc --project tsconfig-build.json",
+    "build": "yarn clean && next build && tsc --project tsconfig-build.json",
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",

@@ -1,25 +1,21 @@
 import {
-  Box, Input, FormLabel, Button, Heading, Icon, VStack
+  Box, Button, FormLabel, Icon, VStack
 } from "@chakra-ui/react";
 import { serializeInstructionToBase64 } from "@solana/spl-governance";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import {
-  useReserveAmount,
-  useStrataSdks,
-  useGovernance,
-  useTokenBonding,
-  usePublicKey,
-  Notification,
+  Notification, useGovernance, usePublicKey, useReserveAmount,
+  useStrataSdks, useTokenBonding
 } from "@strata-foundation/react";
 import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import { InstructionResult } from "@strata-foundation/spl-utils";
 import React, { useState } from "react";
 import { useAsync } from "react-async-hook";
+import toast from "react-hot-toast";
+import { BsClipboard } from "react-icons/bs";
 import { AsyncButton } from "../AsyncButton";
 import { Recipient } from "../form/Recipient";
-import { BsClipboard } from "react-icons/bs";
-import toast from "react-hot-toast";
 
 async function getInstructions(tokenBondingSdk: SplTokenBonding | undefined, reserveAmount: number | undefined, tokenBondingKey: PublicKey, address: PublicKey | undefined): Promise<InstructionResult<null> | undefined> {
    if (tokenBondingSdk && address && reserveAmount) {

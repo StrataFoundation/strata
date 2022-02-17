@@ -1,15 +1,16 @@
+import React from "react";
 import { HStack, VStack, Text, Spinner } from "@chakra-ui/react";
 import { roundToDecimals } from "@strata-foundation/react";
-import { numberWithCommas } from "utils/numberWithCommas";
+import { numberWithCommas } from "../../utils/numberWithCommas";
 
 export const BountyCardContribution = ({
   amount,
   symbol,
-  text = "Contributed"
+  text = "Contributed",
 }: {
   amount: number | undefined;
   symbol: string | undefined;
-  text?: string
+  text?: string;
 }) => {
   return (
     <VStack
@@ -22,11 +23,15 @@ export const BountyCardContribution = ({
     >
       <HStack spacing={2}>
         <Text fontWeight={800} color="gray.700">
-          {typeof amount != "undefined" ? numberWithCommas(roundToDecimals(amount, 4)) : <Spinner size="sm" />}
+          {typeof amount != "undefined" ? (
+            numberWithCommas(roundToDecimals(amount, 4))
+          ) : (
+            <Spinner size="sm" />
+          )}
         </Text>
         <Text color="gray.700">{symbol}</Text>
       </HStack>
-      <Text color="gray.500">{ text }</Text>
+      <Text color="gray.500">{text}</Text>
     </VStack>
   );
 };

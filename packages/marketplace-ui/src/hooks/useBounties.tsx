@@ -2,7 +2,7 @@ import {
   GetBountyItem,
   MarketplaceSdk,
 } from "@strata-foundation/marketplace-sdk";
-import { useMarketplaceSdk } from "contexts/marketplaceSdkContext";
+import { useMarketplaceSdk } from "../contexts/marketplaceSdkContext";
 import { useAsync } from "react-async-hook";
 import Fuse from "fuse.js";
 import { useMemo, useState } from "react";

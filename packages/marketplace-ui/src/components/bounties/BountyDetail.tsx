@@ -1,4 +1,4 @@
-import { Alert, Box, Button, ButtonProps, Center, Divider, Heading, HStack, Icon, Input, InputGroup, InputProps, InputRightElement, Link, SimpleGrid, Spinner, Text, VStack } from "@chakra-ui/react";
+import { Alert, Box, Button, ButtonProps, Center, Divider, Heading, HStack, Icon, Input, InputGroup, InputProps, InputRightElement, SimpleGrid, Spinner, Text, VStack } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
@@ -14,17 +14,16 @@ import { toNumber } from "@strata-foundation/spl-token-bonding";
 import { SplTokenMetadata } from "@strata-foundation/spl-utils";
 import debounce from "lodash/debounce";
 import moment from "moment";
+import { useRouter } from "next/router";
 import React, { useMemo, useState } from "react";
-import { route, routes } from "utils/routes";
+import { RiPencilFill } from "react-icons/ri";
+import { route, routes } from "../..//utils/routes";
 import { AsyncButton } from "../AsyncButton";
 import { BurnButton } from "../BurnButton";
 import { AuthorityAndTokenInfo } from "./AuthorityAndTokenInfo";
 import { BountyCardContribution } from "./BountyCardContribution";
 import { DisburseFunds } from "./DisburseFunds";
 import { TopHolders } from "./TopHolders";
-import NextLink from "next/link";
-import { RiPencilFill } from "react-icons/ri";
-import { useRouter } from "next/router";
 
 export const AsyncQtyButton = ({
   inputProps = {},
@@ -90,9 +89,9 @@ export const BountyDetail = ({
   mintKey,
 }: {
   mintKey?: PublicKey;
-  name: string;
-  description: string;
-  image: string;
+  name?: string;
+  description?: string;
+  image?: string;
 }) => {
   const { info: tokenBonding, loading: bondingLoading } =
     useTokenBondingFromMint(mintKey);
@@ -173,10 +172,11 @@ export const BountyDetail = ({
     return <Spinner />;
   }
 
+  const editVisible = targetMetadata?.updateAuthority &&
+        targetMetadata.updateAuthority == publicKey?.toBase58();
   return (
     <VStack p={2} spacing={2} w="full">
-      {targetMetadata?.updateAuthority &&
-        targetMetadata.updateAuthority == publicKey?.toBase58() && (
+      { editVisible && (
           <Button
             color="gray.400"
             // __hover={{ rounded: "lg", borderColor: "gray.200", backgroundColor: "gray.100" }}
@@ -196,7 +196,7 @@ export const BountyDetail = ({
         )
       }
 
-      <VStack w="full" p={6} pt={0} spacing={8}>
+      <VStack w="full" p={6} pt={editVisible ? 0 : 8} spacing={8}>
         <VStack spacing={4}>
           <Heading textAlign="center">{name}</Heading>
           <AuthorityAndTokenInfo mintKey={mintKey} />

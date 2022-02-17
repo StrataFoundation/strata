@@ -1,6 +1,13 @@
+import React from "react";
 import { HStack } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
-import { useMint, useStrataSdks, useTokenAccount, useTokenBonding, useTokenMetadata } from "@strata-foundation/react";
+import {
+  useMint,
+  useStrataSdks,
+  useTokenAccount,
+  useTokenBonding,
+  useTokenMetadata,
+} from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import { AsyncButton } from "../AsyncButton";
 

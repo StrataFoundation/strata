@@ -1,7 +1,4 @@
-import {
-  Button,
-  Icon
-} from "@chakra-ui/react";
+import { Button, Icon } from "@chakra-ui/react";
 import { Provider } from "@project-serum/anchor";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
@@ -15,7 +12,7 @@ import {
 } from "@strata-foundation/react";
 import { executeRemoteTxn } from "@strata-foundation/spl-utils";
 import { useLinkTwitter } from "hooks/useLinkTwitter";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { useAsync } from "react-async-hook";
 import { FaTwitter } from "react-icons/fa";
 
@@ -38,12 +35,12 @@ const link = async (
           pubkey: publicKey.toBase58(),
           redirectUri: localStorage.getItem("redirectUri"),
           code,
-          state
+          state,
         }
       );
       localStorage.removeItem("state");
       localStorage.removeItem("redirectUri");
-      return true
+      return true;
     }
   }
 };
@@ -63,20 +60,18 @@ export const TwitterLink = () => {
   const { handleErrors } = useErrorHandler();
   const { execute } = useLinkTwitter();
 
-  const { loading: linkLoading, error: linkError, result } = useAsync(link, [
-    publicKey,
-    state,
-    code,
-    ownerTwitterHandle,
-    provider,
-  ]);
+  const {
+    loading: linkLoading,
+    error: linkError,
+    result,
+  } = useAsync(link, [publicKey, state, code, ownerTwitterHandle, provider]);
   handleErrors(reverseTwitterError, linkError);
   useEffect(() => {
     if (result) {
       setCode("");
       setState("");
     }
-  }, [result, setCode, setState])
+  }, [result, setCode, setState]);
 
   if (publicKey) {
     return (

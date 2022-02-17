@@ -11,7 +11,6 @@ import {
   SolletWalletAdapter,
   TorusWalletAdapter
 } from "@solana/wallet-adapter-wallets";
-import { clusterApiUrl } from "@solana/web3.js";
 import React, { FC, useMemo } from "react";
 
 export const DEFAULT_ENDPOINT = "http://localhost:8899"

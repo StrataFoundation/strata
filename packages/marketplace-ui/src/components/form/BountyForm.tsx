@@ -12,13 +12,13 @@ import {
   useProvider,
   usePublicKey
 } from "@strata-foundation/react";
-import { useMarketplaceSdk } from "contexts/marketplaceSdkContext";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
 import { useAsyncCallback } from "react-async-hook";
 import { FormProvider, useForm } from "react-hook-form";
-import { route, routes } from "utils/routes";
 import * as yup from "yup";
+import { useMarketplaceSdk } from "../../contexts/marketplaceSdkContext";
+import { route, routes } from "../../utils/routes";
 import { FormControlWithError } from "./FormControlWithError";
 import { MintSelect } from "./MintSelect";
 import { Recipient } from "./Recipient";

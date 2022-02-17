@@ -1,3 +1,5 @@
+import React from "react";
+
 export const MetadataMeta = ({ name, description, image, cardType = "summary" }: { name: string; description: string; image: string; cardType?: string }) => {
   return (
     <>

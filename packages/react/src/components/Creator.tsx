@@ -7,18 +7,18 @@ import { useErrorHandler, useSocialTokenMetadata } from "../hooks";
 import { useReverseName } from "../hooks/nameService";
 import { useGovernance } from "../hooks/useGovernance";
 
-// export const WUMBO_TWITTER_VERIFIER = new PublicKey(
-//   "DTok7pfUzNeNPqU3Q6foySCezPQE82eRyhX1HdhVNLVC"
-// );
-// export const WUMBO_TWITTER_TLD = new PublicKey(
-//   "Fhqd3ostRQQE65hzoA7xFMgT9kge2qPnsTNAKuL2yrnx"
-// );
 export const WUMBO_TWITTER_VERIFIER = new PublicKey(
-  "GibysS6yTqHWw4AZap416Xs26rAo9nV9HTRviKuutytp"
+  "DTok7pfUzNeNPqU3Q6foySCezPQE82eRyhX1HdhVNLVC"
 );
 export const WUMBO_TWITTER_TLD = new PublicKey(
-  "EEbZHaBD4mreYS6enRqytXvXfmRESLWXXrXbtZLWyd6X"
+  "Fhqd3ostRQQE65hzoA7xFMgT9kge2qPnsTNAKuL2yrnx"
 );
+// export const WUMBO_TWITTER_VERIFIER = new PublicKey(
+//   "GibysS6yTqHWw4AZap416Xs26rAo9nV9HTRviKuutytp"
+// );
+// export const WUMBO_TWITTER_TLD = new PublicKey(
+//   "EEbZHaBD4mreYS6enRqytXvXfmRESLWXXrXbtZLWyd6X"
+// );
 
 export const truncatePubkey = (pkey: PublicKey): string => {
   const pkeyStr = pkey.toString();

@@ -83,6 +83,11 @@ var curve = await tokenBondingSdk.initializeCurve({
       frac: 2
     })
 });
+```
+
+We can fetch that curve:
+
+```js async name=fetch_curve deps=curve
 var curveAcct = await tokenBondingSdk.getCurve(curve);
 ```
 
@@ -121,7 +126,6 @@ var timeCurve = await tokenBondingSdk.initializeCurve({
       })
     )
 });
-var timeCurveAcct = await tokenBondingSdk.getCurve(timeCurve);
 ```
 
 ## Bonding
@@ -143,6 +147,11 @@ var { tokenBonding } = await tokenBondingSdk.createTokenBonding({
   sellBaseRoyaltyPercentage: 0,
   sellTargetRoyaltyPercentage: 0
 })
+```
+
+Now fetch that bonding:
+
+```js async name=bonding_fetch deps=bonding
 var tokenBondingAcct = await tokenBondingSdk.getTokenBonding(tokenBonding);
 ```
 
@@ -154,6 +163,11 @@ await tokenBondingSdk.buy({
   baseAmount: 0.01,
   slippage: 0.05
 })
+```
+
+Now fetch the balance:
+
+```js async name=balance deps=bonding_fetch
 var balance = await getAssociatedAccountBalance(connection, publicKey, tokenBondingAcct.targetMint);
 ```
 
@@ -163,8 +177,14 @@ await tokenBondingSdk.sell({
   targetAmount: 1,
   slippage: 0.05
 })
+```
+
+Now fetch the balance again:
+
+```js async name=balance deps=bonding_fetch
 var balance = await getAssociatedAccountBalance(connection, publicKey, tokenBondingAcct.targetMint);
 ```
+
 
 ## Pricing
 
@@ -197,5 +217,9 @@ await tokenBondingSdk.updateTokenBonding({
   sellTargetRoyaltyPercentage: 0,
   sellBaseRoyalties: tokenBondingAcct.baseStorage,
 });
+```
+
+You should now see it has updated: 
+```js async name=royalties_check deps=royalties
 var tokenBondingAcct = await tokenBondingSdk.getTokenBonding(tokenBonding);
 ```
