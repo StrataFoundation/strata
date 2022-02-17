@@ -12,6 +12,8 @@ import {
 } from "@solana/spl-token";
 import {
   AccountInfo,
+  Commitment,
+  Finality,
   PublicKey,
   Signer,
   SystemProgram,
@@ -576,7 +578,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
               creators: null,
               sellerFeeBasisPoints: 0,
               collection: null,
-              uses: null
+              uses: null,
             }),
           });
         instructions.push(...metadataInstructions);
@@ -692,9 +694,14 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
    * @returns
    */
   createCollective(
-    args: ICreateCollectiveArgs
+    args: ICreateCollectiveArgs,
+    commitment: Finality
   ): Promise<{ collective: PublicKey; tokenBonding?: PublicKey }> {
-    return this.executeBig(this.createCollectiveInstructions(args), args.payer);
+    return this.executeBig(
+      this.createCollectiveInstructions(args),
+      args.payer,
+      commitment
+    );
   }
 
   /**
@@ -860,21 +867,25 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       const tokenMetadataRaw = await this.provider.connection.getAccountInfo(
         tokenRefAcct.tokenMetadata
       );
-      const tokenMetadata = new Metadata(tokenRefAcct.tokenMetadata, tokenMetadataRaw!).data;
-      const { instructions: updateInstructions } = await this.splTokenMetadata.updateMetadataInstructions({
-        data: new DataV2({
-          name: tokenName || tokenMetadata.data.name,
-          symbol: symbol || tokenMetadata.data.symbol,
-          uri: tokenMetadata.data.uri,
-          sellerFeeBasisPoints: 0,
-          creators: null,
-          collection: null,
-          uses: null
-        }),
-        newAuthority: owner,
-        updateAuthority: owner,
-        metadata: tokenRefAcct.tokenMetadata
-      })
+      const tokenMetadata = new Metadata(
+        tokenRefAcct.tokenMetadata,
+        tokenMetadataRaw!
+      ).data;
+      const { instructions: updateInstructions } =
+        await this.splTokenMetadata.updateMetadataInstructions({
+          data: new DataV2({
+            name: tokenName || tokenMetadata.data.name,
+            symbol: symbol || tokenMetadata.data.symbol,
+            uri: tokenMetadata.data.uri,
+            sellerFeeBasisPoints: 0,
+            creators: null,
+            collection: null,
+            uses: null,
+          }),
+          newAuthority: owner,
+          updateAuthority: owner,
+          metadata: tokenRefAcct.tokenMetadata,
+        });
       instructions1.push(...updateInstructions);
     }
 
@@ -1120,10 +1131,12 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
 
     let collectiveBumpSeed: number = 0;
     if (!collective) {
-      ([collective, collectiveBumpSeed] = (await SplTokenCollective.collectiveKey(mint!)));
+      [collective, collectiveBumpSeed] = await SplTokenCollective.collectiveKey(
+        mint!
+      );
     }
 
-    const collectiveAcct = (await this.getCollective(collective));
+    const collectiveAcct = await this.getCollective(collective);
     if (collectiveAcct) {
       collectiveBumpSeed = collectiveAcct.bumpSeed;
     }
@@ -1132,7 +1145,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       | undefined;
     if (!mint) {
       if (!collectiveAcct) {
-        throw new Error("Must either provide a collective or a mint")
+        throw new Error("Must either provide a collective or a mint");
       }
       mint = collectiveAcct.mint;
     }
@@ -1237,8 +1250,9 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       : config?.unclaimedTokenBondingSettings;
     const signers2: Signer[] = [];
     const curveToUse = (curve ||
-      // @ts-ignore
-      (!owner && collectiveAcct?.config?.unclaimedTokenBondingSettings?.curve) ||
+      (!owner &&
+        // @ts-ignore
+        collectiveAcct?.config?.unclaimedTokenBondingSettings?.curve) ||
       // @ts-ignore
       (owner && collectiveAcct?.config?.claimedTokenBondingSettings?.curve) ||
       // @ts-ignore
@@ -1258,7 +1272,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
         buyTargetRoyalties,
         sellBaseRoyalties,
         sellTargetRoyalties,
-        baseMint
+        baseMint,
       },
     } = await this.splTokenBondingProgram.createTokenBondingInstructions({
       payer,
@@ -1390,7 +1404,10 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
    * @param args
    * @returns
    */
-  async createSocialToken(args: ICreateSocialTokenArgs): Promise<{
+  async createSocialToken(
+    args: ICreateSocialTokenArgs,
+    commitment: Finality
+  ): Promise<{
     ownerTokenRef: PublicKey;
     mintTokenRef: PublicKey;
     tokenBonding: PublicKey | null;
@@ -1398,7 +1415,8 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
   }> {
     return this.executeBig(
       this.createSocialTokenInstructions(args),
-      args.payer
+      args.payer,
+      commitment
     );
   }
 
@@ -1571,9 +1589,14 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
    * @retruns
    */
   async updateTokenBonding(
-    args: IUpdateTokenBondingViaCollectiveArgs
+    args: IUpdateTokenBondingViaCollectiveArgs,
+    commitment: Commitment = "confirmed"
   ): Promise<void> {
-    await this.execute(this.updateTokenBondingInstructions(args));
+    await this.execute(
+      this.updateTokenBondingInstructions(args),
+      this.wallet.publicKey,
+      commitment
+    );
   }
 
   async getOptionalNameRecord(
@@ -1663,23 +1686,26 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     if (tokenRefAcct.isClaimed) {
       const [primaryTokenRef] = await SplTokenCollective.ownerTokenRefKey({
         owner: tokenRefAcct.owner as PublicKey,
-        isPrimary: true
+        isPrimary: true,
       });
 
       instructions.push(
-        await this.instruction.changeOptStatusClaimedV0({
-          isOptedOut: true
-        }, {
-          accounts: {
-            primaryTokenRef,
-            ownerTokenRef,
-            mintTokenRef,
-            owner: tokenRefAcct.owner!,
-            tokenBondingUpdateAccounts,
-            tokenBondingProgram: this.splTokenBondingProgram.programId,
+        await this.instruction.changeOptStatusClaimedV0(
+          {
+            isOptedOut: true,
+          },
+          {
+            accounts: {
+              primaryTokenRef,
+              ownerTokenRef,
+              mintTokenRef,
+              owner: tokenRefAcct.owner!,
+              tokenBondingUpdateAccounts,
+              tokenBondingProgram: this.splTokenBondingProgram.programId,
+            },
           }
-        })
-      )
+        )
+      );
     } else {
       instructions.push(
         await this.instruction.changeOptStatusUnclaimedV0(
@@ -1730,26 +1756,26 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
    * @param args
    * @retruns
    */
-  async optOut(args: IOptOutArgs): Promise<void> {
-    await this.execute(this.optOutInstructions(args), args.payer);
+  async optOut(args: IOptOutArgs, commitment: Commitment = "confirmed"): Promise<void> {
+    await this.execute(this.optOutInstructions(args), args.payer, commitment);
   }
 
   /**
-  * Update the owner wallet of a social token
-  *
-  * @param args
-  * @returns
-  */
+   * Update the owner wallet of a social token
+   *
+   * @param args
+   * @returns
+   */
   async updateOwnerInstructions({
     payer = this.wallet.publicKey,
     tokenRef,
-    newOwner
-  }: IUpdateOwnerArgs): Promise<InstructionResult<{ ownerTokenRef: PublicKey }>> {
+    newOwner,
+  }: IUpdateOwnerArgs): Promise<
+    InstructionResult<{ ownerTokenRef: PublicKey }>
+  > {
     const tokenRefAcct = (await this.getTokenRef(tokenRef))!;
     if (!tokenRefAcct.tokenBonding) {
-      throw new Error(
-        "Cannot update a token ref that has no token bonding"
-      );
+      throw new Error("Cannot update a token ref that has no token bonding");
     }
     if (!tokenRefAcct.isClaimed) {
       throw new Error("Cannot update owner on an unclaimed token ref");
@@ -1767,42 +1793,47 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       owner: tokenRefAcct.owner! as PublicKey,
       mint: tokenBondingAcct?.baseMint,
     });
-    const [newOwnerTokenRef, ownerTokenRefBumpSeed] = await SplTokenCollective.ownerTokenRefKey({
-      owner: newOwner,
-      mint: tokenBondingAcct?.baseMint,
-    });
+    const [newOwnerTokenRef, ownerTokenRefBumpSeed] =
+      await SplTokenCollective.ownerTokenRefKey({
+        owner: newOwner,
+        mint: tokenBondingAcct?.baseMint,
+      });
     const [oldPrimaryTokenRef] = await SplTokenCollective.ownerTokenRefKey({
       owner: tokenRefAcct.owner! as PublicKey,
-      isPrimary: true
+      isPrimary: true,
     });
-    const [newPrimaryTokenRef, primaryTokenRefBumpSeed] = await SplTokenCollective.ownerTokenRefKey({
-      owner: newOwner,
-      isPrimary: true
-    });
+    const [newPrimaryTokenRef, primaryTokenRefBumpSeed] =
+      await SplTokenCollective.ownerTokenRefKey({
+        owner: newOwner,
+        isPrimary: true,
+      });
     return {
       output: {
-        ownerTokenRef: newOwnerTokenRef
+        ownerTokenRef: newOwnerTokenRef,
       },
       signers: [],
       instructions: [
-        await this.instruction.updateOwnerV0({
-          ownerTokenRefBumpSeed,
-          primaryTokenRefBumpSeed
-        }, {
-          accounts: {
-            newOwner,
-            payer,
-            baseMint: tokenBondingAcct.baseMint,
-            oldOwnerTokenRef,
-            oldPrimaryTokenRef,
-            newPrimaryTokenRef,
-            newOwnerTokenRef,
-            mintTokenRef,
-            owner: tokenRefAcct.owner! as PublicKey,
-            systemProgram: SystemProgram.programId,
-            rent: SYSVAR_RENT_PUBKEY
+        await this.instruction.updateOwnerV0(
+          {
+            ownerTokenRefBumpSeed,
+            primaryTokenRefBumpSeed,
+          },
+          {
+            accounts: {
+              newOwner,
+              payer,
+              baseMint: tokenBondingAcct.baseMint,
+              oldOwnerTokenRef,
+              oldPrimaryTokenRef,
+              newPrimaryTokenRef,
+              newOwnerTokenRef,
+              mintTokenRef,
+              owner: tokenRefAcct.owner! as PublicKey,
+              systemProgram: SystemProgram.programId,
+              rent: SYSVAR_RENT_PUBKEY,
+            },
           }
-        })
+        ),
       ],
     };
   }
@@ -1813,33 +1844,34 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
    * @param args
    * @retruns
    */
-  updateOwner(args: IUpdateOwnerArgs): Promise<{ ownerTokenRef: PublicKey }> {
-    return this.execute(this.updateOwnerInstructions(args), args.payer);
+  updateOwner(
+    args: IUpdateOwnerArgs,
+    commitment: Commitment = "confirmed"
+  ): Promise<{ ownerTokenRef: PublicKey }> {
+    return this.execute(this.updateOwnerInstructions(args), args.payer, commitment);
   }
 
   /**
-  * Update the authority of a social token
-  *
-  * @param args
-  * @returns
-  */
+   * Update the authority of a social token
+   *
+   * @param args
+   * @returns
+   */
   async updateAuthorityInstructions({
     payer = this.wallet.publicKey,
     tokenRef,
     newAuthority,
-    owner
+    owner,
   }: IUpdateAuthorityArgs): Promise<InstructionResult<null>> {
     const tokenRefAcct = (await this.getTokenRef(tokenRef))!;
     if (!tokenRefAcct.tokenBonding) {
-      throw new Error(
-        "Cannot update a token ref that has no token bonding"
-      );
+      throw new Error("Cannot update a token ref that has no token bonding");
     }
     if (!tokenRefAcct.isClaimed) {
       throw new Error("Cannot update authority on an unclaimed token ref");
     }
 
-    owner = owner || tokenRefAcct.owner! as PublicKey;
+    owner = owner || (tokenRefAcct.owner! as PublicKey);
 
     const tokenBondingAcct = (await this.splTokenBondingProgram.getTokenBonding(
       tokenRefAcct.tokenBonding
@@ -1856,25 +1888,28 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
 
     const [primaryTokenRef] = await SplTokenCollective.ownerTokenRefKey({
       owner,
-      isPrimary: true
+      isPrimary: true,
     });
 
     return {
       output: null,
       signers: [],
       instructions: [
-        await this.instruction.updateAuthorityV0({
-          newAuthority,
-        }, {
-          accounts: {
-            payer,
-            primaryTokenRef,
-            baseMint: tokenBondingAcct.baseMint,
-            ownerTokenRef,
-            mintTokenRef,
-            authority: tokenRefAcct.authority! as PublicKey
+        await this.instruction.updateAuthorityV0(
+          {
+            newAuthority,
+          },
+          {
+            accounts: {
+              payer,
+              primaryTokenRef,
+              baseMint: tokenBondingAcct.baseMint,
+              ownerTokenRef,
+              mintTokenRef,
+              authority: tokenRefAcct.authority! as PublicKey,
+            },
           }
-        })
+        ),
       ],
     };
   }
