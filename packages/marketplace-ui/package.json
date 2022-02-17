@@ -6,20 +6,6 @@
   },
   "version": "3.2.5-bounty.1",
   "license": "Apache-2.0",
-  "files": [
-    "dist",
-    "pages",
-    "hooks",
-    "public",
-    "styles",
-    ".eslintrc.json",
-    "LICENSE",
-    "next.config.js",
-    "next-env.d.ts",
-    "README.md",
-    "tsconfig.json",
-    "tsconfig-build.json"
-  ],
   "exports": {
     ".": "./dist/lib/index.js"
   },
@@ -30,7 +16,7 @@
     "dev": "NODE_OPTIONS='--inspect' next dev",
     "watch": "tsc --watch --project tsconfig-build.json",
     "build-lib": "tsc --project tsconfig-build.json",
-    "build": "yarn clean && next build",
+    "build": "yarn clean && next build && tsc --project tsconfig-build.json",
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
