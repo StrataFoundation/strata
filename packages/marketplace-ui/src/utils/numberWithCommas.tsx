@@ -1,3 +1,5 @@
-export function numberWithCommas(x: number): string {
-  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+import { roundToDecimals } from "@strata-foundation/react";
+
+export function numberWithCommas(x: number, decimals: number = 4): string {
+  return roundToDecimals(x, decimals).toLocaleString("en-US");
 }
