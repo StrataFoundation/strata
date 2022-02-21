@@ -1,49 +1,9 @@
-use anchor_lang::{
-  prelude::*,
-  solana_program::{program::invoke, system_instruction},
-};
+use anchor_lang::prelude::*;
 use anchor_spl::token::{self, MintTo};
 
-use crate::{
-  account::*,
-  arg::{BuyV0Args, BuyWrappedSolV0Args},
-  curve::*,
-  error::ErrorCode,
-  util::*,
-};
+use crate::{curve::*, error::ErrorCode, util::*};
 
-pub fn buy_wrapped_sol(accounts: &BuyWrappedSolV0, args: &BuyWrappedSolV0Args) -> ProgramResult {
-  invoke(
-    &system_instruction::transfer(
-      &accounts.source.key(),
-      &accounts.sol_storage.key(),
-      args.amount,
-    ),
-    &[
-      accounts.source.to_account_info().clone(),
-      accounts.sol_storage.to_account_info().clone(),
-      accounts.system_program.to_account_info().clone(),
-    ],
-  )?;
-
-  token::mint_to(
-    CpiContext::new_with_signer(
-      accounts.token_program.to_account_info().clone(),
-      MintTo {
-        mint: accounts.wrapped_sol_mint.to_account_info().clone(),
-        to: accounts.destination.to_account_info().clone(),
-        authority: accounts.mint_authority.to_account_info().clone(),
-      },
-      &[&[
-        b"wrapped-sol-authority",
-        &[accounts.state.mint_authority_bump_seed],
-      ]],
-    ),
-    args.amount,
-  )?;
-
-  Ok(())
-}
+use super::{buy_account_common::BuyCommonV0, buy_arg_common::BuyV0Args};
 
 pub struct BuyAmount {
   pub price: u64,
@@ -52,10 +12,7 @@ pub struct BuyAmount {
   pub target_royalties: u64,
 }
 
-pub fn buy_shared_logic(
-  common: &mut BuyCommonV0,
-  args: &BuyV0Args,
-) -> Result<BuyAmount, ProgramError> {
+pub fn buy_shared_logic(common: &mut BuyCommonV0, args: &BuyV0Args) -> Result<BuyAmount> {
   let token_bonding = &mut common.token_bonding;
   let curve = &common.curve;
   let base_mint = &common.base_mint;
@@ -92,17 +49,17 @@ pub fn buy_shared_logic(
   );
 
   if token_bonding.go_live_unix_time > clock.unix_timestamp {
-    return Err(ErrorCode::NotLiveYet.into());
+    return Err(error!(ErrorCode::NotLiveYet));
   }
 
   if token_bonding.buy_frozen {
-    return Err(ErrorCode::BuyFrozen.into());
+    return Err(error!(ErrorCode::BuyFrozen));
   }
 
   if token_bonding.freeze_buy_unix_time.is_some()
     && token_bonding.freeze_buy_unix_time.unwrap() < clock.unix_timestamp
   {
-    return Err(ErrorCode::BuyFrozen.into());
+    return Err(error!(ErrorCode::BuyFrozen));
   }
 
   let base_royalties_percent = token_bonding.buy_base_royalty_percentage;
@@ -141,7 +98,7 @@ pub fn buy_shared_logic(
         price + base_royalties,
         buy_target_amount.maximum_price
       );
-      return Err(ErrorCode::PriceTooHigh.into());
+      return Err(error!(ErrorCode::PriceTooHigh));
     }
   } else {
     let buy_with_base = args.buy_with_base.clone().unwrap();
@@ -178,7 +135,7 @@ pub fn buy_shared_logic(
         target_amount_minus_royalties,
         buy_with_base.minimum_target_amount
       );
-      return Err(ErrorCode::PriceTooHigh.into());
+      return Err(error!(ErrorCode::PriceTooHigh));
     }
   }
 
@@ -191,11 +148,11 @@ pub fn buy_shared_logic(
       target_mint.supply,
       total_amount
     );
-    return Err(ErrorCode::PassedMintCap.into());
+    return Err(error!(ErrorCode::PassedMintCap));
   }
 
   if token_bonding.purchase_cap.is_some() && total_amount > token_bonding.purchase_cap.unwrap() {
-    return Err(ErrorCode::OverPurchaseCap.into());
+    return Err(error!(ErrorCode::OverPurchaseCap));
   }
 
   token_bonding.supply_from_bonding = token_bonding
@@ -221,7 +178,7 @@ pub fn mint_to_dest<'info>(
   target_royalties: u64,
   common: &BuyCommonV0<'info>,
   destination: &AccountInfo<'info>,
-) -> ProgramResult {
+) -> Result<()> {
   let token_bonding = &common.token_bonding;
   let token_program = &common.token_program.to_account_info();
   let target_mint = &common.target_mint.to_account_info();

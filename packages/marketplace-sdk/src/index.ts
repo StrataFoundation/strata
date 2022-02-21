@@ -1,9 +1,7 @@
 import {
-  DataV2,
-  Metadata,
-  MetadataData,
+  DataV2
 } from "@metaplex-foundation/mpl-token-metadata";
-import { AccountsCoder, Provider } from "@project-serum/anchor";
+import { BorshAccountsCoder, Provider } from "@project-serum/anchor";
 import { NATIVE_MINT, Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
 import { Finality, Keypair, PublicKey } from "@solana/web3.js";
 import {
@@ -11,21 +9,14 @@ import {
   ICreateTokenBondingArgs,
   ICurveConfig,
   ITokenBonding,
-  SplTokenBonding,
-  TimeCurveConfig,
-  TimeDecayExponentialCurveConfig,
+  SplTokenBonding, TimeDecayExponentialCurveConfig,
   toBN
 } from "@strata-foundation/spl-token-bonding";
 import {
   Attribute,
   BigInstructionResult,
   createMintInstructions,
-  getMintInfo,
-  IMetadataExtension,
-  InstructionResult,
-  ITokenWithMeta,
-  percent,
-  SplTokenMetadata,
+  getMintInfo, InstructionResult, SplTokenMetadata
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
 import bs58 from "bs58";
@@ -260,7 +251,8 @@ export class MarketplaceSdk {
     if (baseMint?.equals(NATIVE_MINT)) {
       baseMint = state!.wrappedSolMint;
     }
-    const descriminator = AccountsCoder.accountDiscriminator("tokenBondingV0");
+    const descriminator =
+      BorshAccountsCoder.accountDiscriminator("tokenBondingV0");
     const filters = [
       {
         memcmp: {
@@ -657,11 +649,11 @@ export class MarketplaceSdk {
       throw new Error("Min price must be more than 0")
     }
     maxSupply = maxSupply * 2
-    minPrice = minPrice / 2;  // Account for the 0.1 k1
+    minPrice = minPrice / 2;  // Account for ending with k = 1 instead of k = 0
     // end price = start price / (1 + k0)
     // (1 + k0) (end price) = start price
     // (1 + k0)  = (start price) / (end price)
-    // 01  = (start price) / (end price) - 1
+    // k0  = (start price) / (end price) - 1
     const k0 = startPrice / minPrice - 1;
     const k1 = 1; // Price should never stop increasing, or it's easy to have a big price drop at the end.
 

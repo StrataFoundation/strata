@@ -42,7 +42,7 @@ describe("marketplace-sdk", () => {
 
   it("allows creation of an lbp", async () => {
     const { targetMint, tokenBonding } =
-      await marketplaceSdk.createLiqduitiyBootstrapper({
+      await marketplaceSdk.createLiquidityBootstrapper({
         authority: me,
         metadata: new DataV2({
           // Max name len 32
@@ -74,6 +74,7 @@ describe("marketplace-sdk", () => {
       baseAmount: 1,
       slippage: 0.01
     });
-    expect(targetAmount).to.eq(1.999999999);
+    // Price should shift slightly because k = 1 at this point
+    expect(targetAmount).to.eq(1.990098767);
   });
 })

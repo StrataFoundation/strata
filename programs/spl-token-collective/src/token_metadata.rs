@@ -1,6 +1,4 @@
-use anchor_lang::prelude::{
-  AnchorDeserialize, AnchorSerialize, ProgramError, ProgramResult, Pubkey,
-};
+use anchor_lang::prelude::*;
 use anchor_lang::solana_program::account_info::AccountInfo;
 use anchor_lang::{context::CpiContext, solana_program, Accounts};
 use mpl_token_metadata::state::DataV2;
@@ -22,22 +20,23 @@ impl Deref for Metadata {
 }
 
 impl anchor_lang::AccountDeserialize for Metadata {
-  fn try_deserialize(buf: &mut &[u8]) -> Result<Self, ProgramError> {
-    Metadata::try_deserialize_unchecked(buf)
+  fn try_deserialize(buf: &mut &[u8]) -> Result<Self> {
+    Metadata::try_deserialize_unchecked(buf).map_err(|e| e.into())
   }
 
-  fn try_deserialize_unchecked(buf: &mut &[u8]) -> Result<Self, ProgramError> {
+  fn try_deserialize_unchecked(buf: &mut &[u8]) -> Result<Self> {
     try_from_slice_checked(
       buf,
       mpl_token_metadata::state::Key::MetadataV1,
       mpl_token_metadata::state::MAX_METADATA_LEN,
     )
     .map(Metadata)
+    .map_err(|e| e.into())
   }
 }
 
 impl anchor_lang::AccountSerialize for Metadata {
-  fn try_serialize<W: Write>(&self, _writer: &mut W) -> Result<(), ProgramError> {
+  fn try_serialize<W: Write>(&self, _writer: &mut W) -> Result<()> {
     // no-op
     Ok(())
   }
@@ -61,15 +60,18 @@ pub struct UpdateMetadataAccountArgs {
 
 #[derive(Accounts)]
 pub struct UpdateMetadataAccount<'info> {
+  /// CHECK: Checked with cpi
   pub token_metadata: AccountInfo<'info>,
+  /// CHECK: Checked with cpi
   pub update_authority: AccountInfo<'info>,
+  /// CHECK: Checked with cpi
   pub new_update_authority: AccountInfo<'info>,
 }
 
 pub fn update_metadata_account_v2<'a, 'b, 'c, 'info>(
   ctx: CpiContext<'a, 'b, 'c, 'info, UpdateMetadataAccount<'info>>,
   args: UpdateMetadataAccountArgs,
-) -> ProgramResult {
+) -> Result<()> {
   let ix = mpl_token_metadata::instruction::update_metadata_accounts_v2(
     mpl_token_metadata::ID,
     *ctx.accounts.token_metadata.key,
@@ -97,4 +99,5 @@ pub fn update_metadata_account_v2<'a, 'b, 'c, 'info>(
     ],
     ctx.signer_seeds,
   )
+  .map_err(|e| e.into())
 }

@@ -1,6 +1,6 @@
 use crate::{
-  arg::{PiecewiseCurve, PrimitiveCurve, TimeCurveV0},
   precise_number::{InnerUint, PreciseNumber, ONE_PREC, ZERO_PREC},
+  state::{PiecewiseCurve, PrimitiveCurve, TimeCurveV0},
   util::get_percent_prec,
 };
 use std::convert::*;
@@ -24,15 +24,15 @@ pub trait Curve {
 }
 
 fn expected_target_amount_exp_initial(
-  c_prec: &PreciseNumber, 
-  k_prec: &PreciseNumber, 
-  reserve_change: &PreciseNumber
+  c_prec: &PreciseNumber,
+  k_prec: &PreciseNumber,
+  reserve_change: &PreciseNumber,
 ) -> Option<PreciseNumber> {
   /*
-  * R = c S ^ (1 + k) / (1 + k)
-  * R (1 + k) / c = S^(1+k)
-    * (((1 + k) dR)/c)^(1/(1 + k))
-    */
+   * R = c S ^ (1 + k) / (1 + k)
+   * R (1 + k) / c = S^(1+k)
+   * (((1 + k) dR)/c)^(1/(1 + k))
+   */
   let one_plus_k = ONE_PREC.checked_add(&k_prec)?;
 
   let res = one_plus_k
@@ -43,12 +43,11 @@ fn expected_target_amount_exp_initial(
   res
 }
 
-
 fn expected_target_amount_exp(
-   k_prec: &PreciseNumber, 
-   reserve_change: &PreciseNumber,
-   base_amount: &PreciseNumber,
-   target_supply: &PreciseNumber
+  k_prec: &PreciseNumber,
+  reserve_change: &PreciseNumber,
+  base_amount: &PreciseNumber,
+  target_supply: &PreciseNumber,
 ) -> Option<PreciseNumber> {
   /*
   dS = -S + ((S^(1 + k) (R + dR))/R)^(1/(1 + k))
@@ -82,44 +81,43 @@ fn expected_target_amount_exp(
 }
 
 fn price_exp_initial(
-  c_prec: &PreciseNumber, 
-  k_prec: &PreciseNumber, 
+  c_prec: &PreciseNumber,
+  k_prec: &PreciseNumber,
   amount: &PreciseNumber,
 ) -> Option<PreciseNumber> {
-        // (c dS^(1 + pow/frac))/(1 + pow/frac)
+  // (c dS^(1 + pow/frac))/(1 + pow/frac)
   let one_plus_k_prec = &ONE_PREC.checked_add(k_prec)?;
   c_prec
-              .checked_mul(&amount.pow(one_plus_k_prec)?)?
-              .checked_div(&one_plus_k_prec)
+    .checked_mul(&amount.pow(one_plus_k_prec)?)?
+    .checked_div(&one_plus_k_prec)
 }
 
 fn price_exp(
-   k_prec: &PreciseNumber, 
-   amount: &PreciseNumber,
-   base_amount: &PreciseNumber,
-   target_supply: &PreciseNumber,
+  k_prec: &PreciseNumber,
+  amount: &PreciseNumber,
+  base_amount: &PreciseNumber,
+  target_supply: &PreciseNumber,
   sell: bool,
 ) -> Option<PreciseNumber> {
-/*
-  dR = (R / S^(1 + k)) ((S + dS)^(1 + k) - S^(1 + k))
-  dR = (R(S + dS)^(1 + k))/S^(1 + k) - R
-  log(dR + R) = log((R(S + dS)^(1 + k))/S^(1 + k))
-  log(dR + R) = log((R(S + dS)^(1 + k))) - log(S^(1 + k))
-  log(dR + R) = log(R) + (1 + k) log((S + dS)) - (1 + k)log(S)
-  log(dR + R) = (1 + k) (log(R(S + dS)) - log(S))
-  dR + R = e^(log(R) + (1 + k) (log((S + dS)) - log(S)))
-  dR = e^(log(R) + (1 + k) (log((S + dS)) - log(S))) - R
-  dR = e^(log(R) + (1 + k) (log((S + dS) / S))) - R
+  /*
+    dR = (R / S^(1 + k)) ((S + dS)^(1 + k) - S^(1 + k))
+    dR = (R(S + dS)^(1 + k))/S^(1 + k) - R
+    log(dR + R) = log((R(S + dS)^(1 + k))/S^(1 + k))
+    log(dR + R) = log((R(S + dS)^(1 + k))) - log(S^(1 + k))
+    log(dR + R) = log(R) + (1 + k) log((S + dS)) - (1 + k)log(S)
+    log(dR + R) = (1 + k) (log(R(S + dS)) - log(S))
+    dR + R = e^(log(R) + (1 + k) (log((S + dS)) - log(S)))
+    dR = e^(log(R) + (1 + k) (log((S + dS)) - log(S))) - R
+    dR = e^(log(R) + (1 + k) (log((S + dS) / S))) - R
 
-  Edge case: selling where dS = S. Just charge them the full base amount
-*/
+    Edge case: selling where dS = S. Just charge them the full base amount
+  */
   let s_plus_ds = if sell {
     target_supply.checked_sub(amount)?
   } else {
     target_supply.checked_add(amount)?
   };
   let one_plus_k_prec = &ONE_PREC.checked_add(k_prec)?;
-
 
   // They're killing the curve, so it should cost the full reserves
   if s_plus_ds.eq(&ZERO_PREC) {
@@ -140,7 +138,13 @@ fn to_prec(i: u128) -> PreciseNumber {
   }
 }
 
-fn time_decay_k(d: u128, k0: u128, k1: u128, time_offset: i64, interval: u32) -> Option<PreciseNumber> {
+fn time_decay_k(
+  d: u128,
+  k0: u128,
+  k1: u128,
+  time_offset: i64,
+  interval: u32,
+) -> Option<PreciseNumber> {
   let k0_prec = to_prec(k0);
   let k1_prec = to_prec(k1);
   let d_prec = to_prec(d);
@@ -153,15 +157,25 @@ fn time_decay_k(d: u128, k0: u128, k1: u128, time_offset: i64, interval: u32) ->
 
   let time_multiplier = if time_offset_prec.less_than(&interval_prec) {
     let interval_completion = time_offset_prec.checked_div(&interval_prec)?;
-    interval_completion.log()?.checked_mul(&d_prec.signed())?.exp()?
+    interval_completion
+      .log()?
+      .checked_mul(&d_prec.signed())?
+      .exp()?
   } else {
     PreciseNumber::one()
   };
 
-  Some(k0_prec.signed().checked_sub(
-    &k0_prec.signed().checked_sub(&k1_prec.signed())?
-      .checked_mul(&time_multiplier.signed())?
-  )?.value)
+  Some(
+    k0_prec
+      .signed()
+      .checked_sub(
+        &k0_prec
+          .signed()
+          .checked_sub(&k1_prec.signed())?
+          .checked_mul(&time_multiplier.signed())?,
+      )?
+      .value,
+  )
 }
 
 impl Curve for PrimitiveCurve {
@@ -184,7 +198,7 @@ impl Curve for PrimitiveCurve {
             expected_target_amount_exp_initial(
               &c_prec,
               &pow_prec.checked_div(&frac_prec)?,
-              reserve_change
+              reserve_change,
             )
           } else if c == 0 {
             if base_amount.eq(&ZERO_PREC) {
@@ -197,15 +211,18 @@ impl Curve for PrimitiveCurve {
           } else {
             None // This math is too hard, have not implemented yet.
           }
-        },
-        PrimitiveCurve::TimeDecayExponentialCurveV0 { d, c, k1, k0, interval } => {
-          time_decay_k(d, k0, k1, time_offset, interval)?.print();
-          expected_target_amount_exp_initial(
-            &to_prec(c),
-            &time_decay_k(d, k0, k1, time_offset, interval)?,
-            reserve_change
-          )
         }
+        PrimitiveCurve::TimeDecayExponentialCurveV0 {
+          d,
+          c,
+          k1,
+          k0,
+          interval,
+        } => expected_target_amount_exp_initial(
+          &to_prec(c),
+          &time_decay_k(d, k0, k1, time_offset, interval)?,
+          reserve_change,
+        ),
       }
     } else {
       match *self {
@@ -215,10 +232,10 @@ impl Curve for PrimitiveCurve {
 
           if b == 0 && c != 0 {
             expected_target_amount_exp(
-              &pow_prec.checked_div(&frac_prec)?, 
+              &pow_prec.checked_div(&frac_prec)?,
               reserve_change,
               base_amount,
-              target_supply
+              target_supply,
             )
           } else if c == 0 {
             /*
@@ -230,15 +247,19 @@ impl Curve for PrimitiveCurve {
           } else {
             None // This math is too hard, have not implemented yet.
           }
-        },
-        PrimitiveCurve::TimeDecayExponentialCurveV0 { d, c: _, k1, k0, interval } => {
-          expected_target_amount_exp(
-            &time_decay_k(d, k0, k1, time_offset, interval)?,
-            reserve_change,
-            base_amount,
-            target_supply
-          )
         }
+        PrimitiveCurve::TimeDecayExponentialCurveV0 {
+          d,
+          c: _,
+          k1,
+          k0,
+          interval,
+        } => expected_target_amount_exp(
+          &time_decay_k(d, k0, k1, time_offset, interval)?,
+          reserve_change,
+          base_amount,
+          target_supply,
+        ),
       }
     }
   }
@@ -259,21 +280,23 @@ impl Curve for PrimitiveCurve {
           let c_prec = to_prec(c);
           let pow_prec = PreciseNumber::new(u128::try_from(pow).ok()?)?;
           let frac_prec = PreciseNumber::new(u128::try_from(frac).ok()?)?;
-          b_prec.checked_mul(amount)?.checked_add(
-            &price_exp_initial(
-              &c_prec,
-              &pow_prec.checked_div(&frac_prec)?,
-              amount,
-            )?
-          )
-        },
-        PrimitiveCurve::TimeDecayExponentialCurveV0 {d,  c, k1, k0, interval } => {
-          price_exp_initial(
-            &to_prec(c),
-            &time_decay_k(d, k0, k1, time_offset, interval)?,
+          b_prec.checked_mul(amount)?.checked_add(&price_exp_initial(
+            &c_prec,
+            &pow_prec.checked_div(&frac_prec)?,
             amount,
-          )
+          )?)
         }
+        PrimitiveCurve::TimeDecayExponentialCurveV0 {
+          d,
+          c,
+          k1,
+          k0,
+          interval,
+        } => price_exp_initial(
+          &to_prec(c),
+          &time_decay_k(d, k0, k1, time_offset, interval)?,
+          amount,
+        ),
       }
     } else {
       match *self {
@@ -282,29 +305,27 @@ impl Curve for PrimitiveCurve {
             let pow_prec = PreciseNumber::new(u128::try_from(pow).ok()?)?;
             let frac_prec = PreciseNumber::new(u128::try_from(frac).ok()?)?;
             let k = pow_prec.checked_div(&frac_prec)?;
-            price_exp(
-              &k,
-              amount,
-              base_amount,
-              target_supply,
-              sell
-            )
+            price_exp(&k, amount, base_amount, target_supply, sell)
           } else if c == 0 {
             // R dS / S
             base_amount.checked_mul(amount)?.checked_div(target_supply)
           } else {
             None // Math is too hard, haven't implemented yet
           }
-        },
-        PrimitiveCurve::TimeDecayExponentialCurveV0 { d, c: _, k1, k0, interval } => {
-          price_exp(
-            &&time_decay_k(d, k0, k1, time_offset, interval)?,
-            amount,
-            base_amount,
-            target_supply,
-            sell
-          )
         }
+        PrimitiveCurve::TimeDecayExponentialCurveV0 {
+          d,
+          c: _,
+          k1,
+          k0,
+          interval,
+        } => price_exp(
+          &&time_decay_k(d, k0, k1, time_offset, interval)?,
+          amount,
+          base_amount,
+          target_supply,
+          sell,
+        ),
       }
     }
   }

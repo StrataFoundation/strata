@@ -1,42 +1,40 @@
-use crate::arg::PiecewiseCurve;
 use crate::error::ErrorCode;
 use crate::precise_number::{InnerUint, PreciseNumber};
-use crate::PrimitiveCurve;
-use anchor_lang::prelude::*;
 use anchor_lang::solana_program::system_program;
+use anchor_lang::{prelude::*, solana_program};
 use anchor_spl::token::{Mint, TokenAccount};
 use std::convert::*;
 
 pub trait OrArithError<T> {
-  fn or_arith_error(self) -> Result<T, ProgramError>;
+  fn or_arith_error(self) -> Result<T>;
 }
 
 impl OrArithError<PreciseNumber> for Option<PreciseNumber> {
-  fn or_arith_error(self) -> Result<PreciseNumber, ProgramError> {
+  fn or_arith_error(self) -> Result<PreciseNumber> {
     self.ok_or(ErrorCode::ArithmeticError.into())
   }
 }
 
 impl OrArithError<u128> for Option<u128> {
-  fn or_arith_error(self) -> Result<u128, ProgramError> {
+  fn or_arith_error(self) -> Result<u128> {
     self.ok_or(ErrorCode::ArithmeticError.into())
   }
 }
 
 impl OrArithError<u64> for Option<u64> {
-  fn or_arith_error(self) -> Result<u64, ProgramError> {
+  fn or_arith_error(self) -> Result<u64> {
     self.ok_or(ErrorCode::ArithmeticError.into())
   }
 }
 
-pub fn get_percent_prec(percent: u32) -> Result<PreciseNumber, ProgramError> {
+pub fn get_percent_prec(percent: u32) -> Result<PreciseNumber> {
   let max_u32 = PreciseNumber::new(u32::MAX as u128).or_arith_error()?;
   let percent_prec = PreciseNumber::new(percent as u128).or_arith_error()?;
 
   percent_prec.checked_div(&max_u32).or_arith_error()
 }
 
-pub fn get_percent(value: u64, percent: u32) -> Result<u64, ProgramError> {
+pub fn get_percent(value: u64, percent: u32) -> Result<u64> {
   u64::try_from(
     u128::try_from(value)
       .ok()
@@ -117,35 +115,10 @@ pub fn to_mint_amount(amt: &PreciseNumber, mint: &Mint, ceil: bool) -> u64 {
   post_round.to_imprecise().unwrap() as u64
 }
 
-pub fn primitive_curve_is_valid(curve: &PrimitiveCurve) -> bool {
-  match *curve {
-    PrimitiveCurve::ExponentialCurveV0 { frac, c, b, pow } => {
-      (c == 0 || b == 0) && frac > 0 && frac <= 10 && pow <= 10
-    },
-    PrimitiveCurve::TimeDecayExponentialCurveV0 { .. } => {
-      true
-    }
-  }
-}
-
-pub fn curve_is_valid(curve: &PiecewiseCurve) -> bool {
-  match curve {
-    PiecewiseCurve::TimeV0 { curves } =>
-    // All inner curves are valid
-    {
-      curves.iter().all(|c| primitive_curve_is_valid(&c.curve) && c.offset >= 0) &&
-        // The first curve starts at time 0
-        curves.get(0).map(|c| c.offset).unwrap_or(1) == 0 &&
-        // The curves list is ordered by offset
-        curves.windows(2).all(|c| c[0].offset <= c[1].offset)
-    }
-  }
-}
-
 pub fn verify_empty_or_mint<'info>(
   maybe_token_account: &UncheckedAccount<'info>,
   mint: &Pubkey,
-) -> ProgramResult {
+) -> Result<()> {
   if *maybe_token_account.owner == system_program::ID {
     Ok(())
   } else {
@@ -153,7 +126,40 @@ pub fn verify_empty_or_mint<'info>(
     if acc.mint == *mint {
       Ok(())
     } else {
-      Err(ErrorCode::InvalidMint.into())
+      Err(error!(ErrorCode::InvalidMint))
     }
   }
+}
+
+#[derive(Accounts)]
+pub struct CloseTokenAccount<'info> {
+  /// CHECK: Used in cpi
+  pub from: AccountInfo<'info>,
+  /// CHECK: Used in cpi
+  pub to: AccountInfo<'info>,
+  /// CHECK: Used in cpi
+  pub authority: AccountInfo<'info>,
+}
+
+pub fn close_token_account<'a, 'b, 'c, 'info>(
+  ctx: CpiContext<'a, 'b, 'c, 'info, CloseTokenAccount<'info>>,
+) -> Result<()> {
+  let ix = spl_token::instruction::close_account(
+    &spl_token::ID,
+    ctx.accounts.from.key,
+    ctx.accounts.to.key,
+    ctx.accounts.authority.key,
+    &[],
+  )?;
+  solana_program::program::invoke_signed(
+    &ix,
+    &[
+      ctx.accounts.from.clone(),
+      ctx.accounts.to.clone(),
+      ctx.accounts.authority.clone(),
+      ctx.program.clone(),
+    ],
+    ctx.signer_seeds,
+  )
+  .map_err(|e| e.into())
 }

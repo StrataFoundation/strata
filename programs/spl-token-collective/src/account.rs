@@ -1,7 +1,7 @@
 #![allow(clippy::or_fun_call)]
 
 use crate::arg::*;
-use crate::error::*;
+use crate::error::ErrorCode;
 use crate::name::NameRecordHeader;
 use crate::state::*;
 use crate::util::*;
@@ -12,14 +12,17 @@ use spl_token_bonding::state::TokenBondingV0;
 
 #[derive(Accounts)]
 pub struct CloseTokenAccount<'info> {
+  /// CHECK: Used in cpi
   pub from: AccountInfo<'info>,
+  /// CHECK: Used in cpi
   pub to: AccountInfo<'info>,
+  /// CHECK: Used in cpi
   pub authority: AccountInfo<'info>,
 }
 
 pub fn close_token_account<'a, 'b, 'c, 'info>(
   ctx: CpiContext<'a, 'b, 'c, 'info, CloseTokenAccount<'info>>,
-) -> ProgramResult {
+) -> Result<()> {
   let ix = spl_token::instruction::close_account(
     &spl_token::ID,
     ctx.accounts.from.key,
@@ -37,6 +40,7 @@ pub fn close_token_account<'a, 'b, 'c, 'info>(
     ],
     ctx.signer_seeds,
   )
+  .map_err(|e| e.into())
 }
 
 #[derive(Accounts)]
@@ -46,7 +50,7 @@ pub struct InitializeCollectiveV0<'info> {
     b"collective", 
     mint.key().as_ref()],
     payer=payer,
-    bump=args.bump_seed,
+    bump,
     space=312
   )]
   pub collective: Box<Account<'info, CollectiveV0>>,
@@ -54,11 +58,12 @@ pub struct InitializeCollectiveV0<'info> {
     constraint = mint.mint_authority.unwrap() == mint_authority.key()
   )]
   pub mint: Box<Account<'info, Mint>>,
+  /// CHECK: Checked by cpi to spl token
   #[account(signer)]
   pub mint_authority: AccountInfo<'info>,
 
-  #[account(mut, signer)]
-  pub payer: AccountInfo<'info>,
+  #[account(mut)]
+  pub payer: Signer<'info>,
   pub system_program: Program<'info, System>,
   pub rent: Sysvar<'info, Rent>,
 }
@@ -68,7 +73,7 @@ pub struct InitializeCollectiveV0<'info> {
 pub struct UpdateCollectiveV0<'info> {
   #[account(
     mut,
-    constraint = authority.key() == collective.authority.ok_or::<ProgramError>(ErrorCode::InvalidAuthority.into())?
+    constraint = authority.key() == collective.authority.ok_or(error!(ErrorCode::InvalidAuthority))?
   )]
   pub collective: Box<Account<'info, CollectiveV0>>,
   pub authority: Signer<'info>,
@@ -76,9 +81,11 @@ pub struct UpdateCollectiveV0<'info> {
 
 #[derive(Accounts)]
 pub struct InitializeSocialTokenV0<'info> {
+  /// CHECK: Authority is checked as a signer if collective is provided and isn't open
   pub authority: UncheckedAccount<'info>,
-  #[account(mut, signer)]
-  pub payer: AccountInfo<'info>,
+  #[account(mut)]
+  pub payer: Signer<'info>,
+  /// CHECK: Collective is not required, but will be deserialized if it exists at this pda. Then, settings will be enforced
   #[account(
     seeds = [
       b"collective", 
@@ -109,9 +116,13 @@ pub struct InitializeSocialTokenV0<'info> {
     constraint = target_mint.supply == 0
   )]
   pub target_mint: Box<Account<'info, Mint>>,
+  /// CHECK: May be uninitialized if there's no royalties of this type
   pub buy_base_royalties: UncheckedAccount<'info>,
+  /// CHECK: May be uninitialized if there's no royalties of this type
   pub buy_target_royalties: UncheckedAccount<'info>,
+  /// CHECK: May be uninitialized if there's no royalties of this type
   pub sell_base_royalties: UncheckedAccount<'info>,
+  /// CHECK: May be uninitialized if there's no royalties of this type
   pub sell_target_royalties: UncheckedAccount<'info>,
   pub system_program: Program<'info, System>,
   pub rent: Sysvar<'info, Rent>,
@@ -122,8 +133,8 @@ pub struct InitializeSocialTokenV0<'info> {
 #[instruction(args: InitializeSocialTokenV0Args)]
 pub struct InitializeOwnedSocialTokenV0<'info> {
   pub initialize_args: InitializeSocialTokenV0<'info>,
-  #[account(mut, signer)]
-  pub payer: AccountInfo<'info>,
+  #[account(mut)]
+  pub payer: Signer<'info>,
   #[account(
     init,
     seeds = [
@@ -131,7 +142,7 @@ pub struct InitializeOwnedSocialTokenV0<'info> {
         owner.key().as_ref(),
         initialize_args.base_mint.key().as_ref()
     ],
-    bump = args.owner_token_ref_bump_seed,
+    bump,
     payer = payer,
     space = 312
   )]
@@ -143,7 +154,7 @@ pub struct InitializeOwnedSocialTokenV0<'info> {
         initialize_args.token_bonding.target_mint.as_ref()
     ],
     constraint = verify_bonding_authorities(&initialize_args.token_bonding, &mint_token_ref.key())?,
-    bump = args.mint_token_ref_bump_seed,
+    bump,
     payer = payer,
     space = 312,
   )]
@@ -166,7 +177,7 @@ pub struct InitializeUnclaimedSocialTokenV0<'info> {
         name.key().as_ref(),
         initialize_args.base_mint.key().as_ref(),
     ],
-    bump = args.owner_token_ref_bump_seed,
+    bump,
     payer = payer,
     space = 312
   )]
@@ -177,7 +188,7 @@ pub struct InitializeUnclaimedSocialTokenV0<'info> {
         b"mint-token-ref",
         initialize_args.token_bonding.target_mint.as_ref()
     ],
-    bump = args.mint_token_ref_bump_seed,
+    bump,
     payer = payer,
     space = 312,
     constraint = verify_bonding_authorities(&initialize_args.token_bonding, &mint_token_ref.key())?,
@@ -193,6 +204,7 @@ pub struct InitializeUnclaimedSocialTokenV0<'info> {
     constraint = token_metadata.update_authority == mint_token_ref.key() @ ErrorCode::InvalidAuthority
   )]
   pub token_metadata: Box<Account<'info, Metadata>>,
+  /// CHECK: Checking id with constraint
   #[account(
     // Deserialize name account checked in token metadata constraint
     constraint = (*name.to_account_info().owner == system_program::ID && **name.try_borrow_lamports()? == 0_u64) || *name.to_account_info().owner == spl_name_service::ID,
@@ -209,7 +221,7 @@ pub struct SetAsPrimaryV0<'info> {
   pub payer: Signer<'info>,
   pub owner: Signer<'info>,
   #[account(
-    constraint = owner.key() == token_ref.owner.ok_or::<ProgramError>(ErrorCode::IncorrectOwner.into())?
+    constraint = owner.key() == token_ref.owner.ok_or(error!(ErrorCode::IncorrectOwner))?
   )]
   pub token_ref: Account<'info, TokenRefV0>,
   #[account(
@@ -218,7 +230,7 @@ pub struct SetAsPrimaryV0<'info> {
         b"owner-token-ref",
         owner.key().as_ref()
     ],
-    bump = args.bump_seed,
+    bump,
     payer = payer,
     space = 312,
   )]
@@ -231,6 +243,7 @@ pub struct SetAsPrimaryV0<'info> {
 #[instruction(args: UpdateTokenBondingV0ArgsWrapper)]
 pub struct UpdateTokenBondingV0Wrapper<'info> {
   pub collective: Box<Account<'info, CollectiveV0>>,
+  /// CHECK: Checked via constraints
   #[account(
     address = collective.authority.unwrap_or(Pubkey::default()),
     constraint = collective.config.is_open || authority.is_signer
@@ -238,9 +251,9 @@ pub struct UpdateTokenBondingV0Wrapper<'info> {
   pub authority: AccountInfo<'info>,
   #[account(
     // For now, social tokens without a bonding curve are not supported. We may support them later
-    constraint = mint_token_ref.token_bonding.ok_or::<ProgramError>(ErrorCode::NoBonding.into())? == token_bonding.key(),
+    constraint = mint_token_ref.token_bonding.ok_or(error!(ErrorCode::NoBonding))? == token_bonding.key(),
     constraint = mint_token_ref.collective.is_none() || collective.key() == mint_token_ref.collective.unwrap() @ ErrorCode::InvalidCollective,
-    constraint = token_ref_authority.key() == mint_token_ref.authority.ok_or::<ProgramError>(ErrorCode::IncorrectOwner.into())?,
+    constraint = token_ref_authority.key() == mint_token_ref.authority.ok_or(error!(ErrorCode::IncorrectOwner))?,
   )]
   pub mint_token_ref: Box<Account<'info, TokenRefV0>>,
   #[account(
@@ -251,6 +264,7 @@ pub struct UpdateTokenBondingV0Wrapper<'info> {
   pub token_bonding: Box<Account<'info, TokenBondingV0>>,
   pub token_ref_authority: Signer<'info>,
 
+  /// CHECK: Checked with constraints
   #[account(address = spl_token_bonding::id())]
   pub token_bonding_program: AccountInfo<'info>,
 
@@ -263,22 +277,28 @@ pub struct UpdateTokenBondingV0Wrapper<'info> {
     constraint = *target_mint.to_account_info().owner == *base_mint.to_account_info().owner
   )]
   pub target_mint: Box<Account<'info, Mint>>,
+  /// CHECK: May be uninitialized if there's no royalties of this type
   pub buy_base_royalties: UncheckedAccount<'info>,
+  /// CHECK: May be uninitialized if there's no royalties of this type
   pub buy_target_royalties: UncheckedAccount<'info>,
+  /// CHECK: May be uninitialized if there's no royalties of this type
   pub sell_base_royalties: UncheckedAccount<'info>,
+  /// CHECK: May be uninitialized if there's no royalties of this type
   pub sell_target_royalties: UncheckedAccount<'info>,
 }
 
 #[derive(Accounts)]
 #[instruction(args: ClaimSocialTokenV0Args)]
 pub struct ClaimSocialTokenV0<'info> {
+  #[account(mut)]
   pub payer: Signer<'info>,
+  /// CHECK: May be uninitialized if there's no collective for this social token
   pub collective: UncheckedAccount<'info>,
   #[account(
     mut,
     constraint = owner_token_ref.collective.is_none() || collective.key() == owner_token_ref.collective.unwrap() @ ErrorCode::InvalidCollective,
     // For now, social tokens without a bonding curve are not supported. We may support them later
-    constraint = owner_token_ref.token_bonding.ok_or::<ProgramError>(ErrorCode::NoBonding.into())? == token_bonding.key(),
+    constraint = owner_token_ref.token_bonding.ok_or(error!(ErrorCode::NoBonding))? == token_bonding.key(),
     has_one = token_metadata,
     seeds = [
         b"owner-token-ref",
@@ -296,7 +316,7 @@ pub struct ClaimSocialTokenV0<'info> {
         owner.key().as_ref(),
         base_mint.key().as_ref()
     ],
-    bump = args.owner_token_ref_bump_seed,
+    bump,
     payer = payer,
     space = 312,
   )]
@@ -354,9 +374,11 @@ pub struct ClaimSocialTokenV0<'info> {
   #[account(mut)]
   pub new_sell_target_royalties: Box<Account<'info, TokenAccount>>,
 
+  /// CHECK: Checked with constraints
   #[account(address = spl_token_bonding::id())]
   pub token_bonding_program: AccountInfo<'info>,
   pub token_program: Program<'info, Token>,
+  /// CHECK: Checked with constraints
   #[account(address = token_metadata::ID)]
   pub token_metadata_program: AccountInfo<'info>,
   pub system_program: Program<'info, System>,
@@ -406,6 +428,7 @@ pub struct ChangeOptStatusUnclaimedV0<'info> {
     bump = mint_token_ref.bump_seed
   )]
   pub mint_token_ref: Account<'info, TokenRefV0>,
+  /// CHECK: Checked with constraints
   #[account(
     constraint = mint_token_ref.name.is_none() || (
       // name is the name on the token ref
@@ -414,6 +437,7 @@ pub struct ChangeOptStatusUnclaimedV0<'info> {
   )]
   pub name: UncheckedAccount<'info>,
   pub token_bonding_update_accounts: StaticUpdateTokenBondingV0<'info>,
+  /// CHECK: Checked with constraints
   #[account(address = spl_token_bonding::id())]
   pub token_bonding_program: AccountInfo<'info>,
 }
@@ -430,7 +454,7 @@ pub struct ChangeOptStatusClaimedV0<'info> {
     ],
     bump = owner_token_ref.bump_seed,
     constraint = mint_token_ref.mint == owner_token_ref.mint,
-    constraint = owner.key() == owner_token_ref.owner.ok_or::<ProgramError>(ErrorCode::InvalidAuthority.into())?
+    constraint = owner.key() == owner_token_ref.owner.ok_or(error!(ErrorCode::InvalidAuthority))?
   )]
   pub owner_token_ref: Account<'info, TokenRefV0>,
   #[account(
@@ -441,7 +465,7 @@ pub struct ChangeOptStatusClaimedV0<'info> {
     ],
     bump = primary_token_ref.bump_seed,
     constraint = mint_token_ref.mint == primary_token_ref.mint,
-    constraint = owner.key() == primary_token_ref.owner.ok_or::<ProgramError>(ErrorCode::InvalidAuthority.into())?
+    constraint = owner.key() == primary_token_ref.owner.ok_or(error!(ErrorCode::InvalidAuthority))?
   )]
   pub primary_token_ref: Account<'info, TokenRefV0>,
   pub owner: Signer<'info>,
@@ -451,17 +475,17 @@ pub struct ChangeOptStatusClaimedV0<'info> {
       b"mint-token-ref",
       token_bonding_update_accounts.target_mint.key().as_ref()
     ],
-    constraint = owner.key() == mint_token_ref.owner.ok_or::<ProgramError>(ErrorCode::InvalidAuthority.into())?,
+    constraint = owner.key() == mint_token_ref.owner.ok_or(error!(ErrorCode::InvalidAuthority))?,
     bump = mint_token_ref.bump_seed
   )]
   pub mint_token_ref: Account<'info, TokenRefV0>,
   pub token_bonding_update_accounts: StaticUpdateTokenBondingV0<'info>,
+  /// CHECK: Checked with constraints
   #[account(address = spl_token_bonding::id())]
   pub token_bonding_program: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
-#[instruction(args: UpdateOwnerV0Args)]
 pub struct UpdateOwnerV0<'info> {
   #[account(mut)]
   pub payer: Signer<'info>,
@@ -477,7 +501,7 @@ pub struct UpdateOwnerV0<'info> {
       base_mint.key().as_ref()
     ],
     bump = old_owner_token_ref.bump_seed,
-    constraint = owner.key() == old_owner_token_ref.owner.ok_or::<ProgramError>(ErrorCode::InvalidAuthority.into())?,
+    constraint = owner.key() == old_owner_token_ref.owner.ok_or(error!(ErrorCode::InvalidAuthority))?,
   )]
   pub old_owner_token_ref: Box<Account<'info, TokenRefV0>>,
   #[account(
@@ -487,7 +511,7 @@ pub struct UpdateOwnerV0<'info> {
       new_owner.key().as_ref(),
       base_mint.key().as_ref()
     ],
-    bump = args.owner_token_ref_bump_seed,
+    bump,
     payer = payer,
     space = 312,
   )]
@@ -496,9 +520,9 @@ pub struct UpdateOwnerV0<'info> {
     mut,
     seeds = [
       b"mint-token-ref",
-      mint_token_ref.mint.key().as_ref()
+      mint_token_ref.mint.as_ref()
     ],
-    constraint = owner.key() == mint_token_ref.owner.ok_or::<ProgramError>(ErrorCode::InvalidAuthority.into())?,
+    constraint = owner.key() == mint_token_ref.owner.ok_or(error!(ErrorCode::InvalidAuthority))?,
     constraint = old_owner_token_ref.mint == mint_token_ref.mint,
     bump = mint_token_ref.bump_seed
   )]
@@ -510,7 +534,7 @@ pub struct UpdateOwnerV0<'info> {
       owner.key().as_ref()
     ],
     bump = old_primary_token_ref.bump_seed,
-    constraint = owner.key() == old_primary_token_ref.owner.ok_or::<ProgramError>(ErrorCode::InvalidAuthority.into())?
+    constraint = owner.key() == old_primary_token_ref.owner.ok_or(error!(ErrorCode::InvalidAuthority))?
   )]
   pub old_primary_token_ref: Box<Account<'info, TokenRefV0>>,
   #[account(
@@ -519,7 +543,7 @@ pub struct UpdateOwnerV0<'info> {
       b"owner-token-ref",
       new_owner.key().as_ref(),
     ],
-    bump = args.primary_token_ref_bump_seed,
+    bump,
     payer = payer,
     space = 312,
   )]
@@ -539,20 +563,20 @@ pub struct UpdateAuthorityV0<'info> {
     mut,
     seeds = [
       b"owner-token-ref",
-      owner_token_ref.owner.unwrap().key().as_ref(),
+      owner_token_ref.owner.unwrap().as_ref(),
       base_mint.key().as_ref()
     ],
     bump = owner_token_ref.bump_seed,
-    constraint = authority.key() == owner_token_ref.authority.ok_or::<ProgramError>(ErrorCode::InvalidAuthority.into())?,
+    constraint = authority.key() == owner_token_ref.authority.ok_or(error!(ErrorCode::InvalidAuthority))?,
   )]
   pub owner_token_ref: Account<'info, TokenRefV0>,
   #[account(
     mut,
     seeds = [
       b"mint-token-ref",
-      mint_token_ref.mint.key().as_ref()
+      mint_token_ref.mint.as_ref()
     ],
-    constraint = authority.key() == mint_token_ref.authority.ok_or::<ProgramError>(ErrorCode::InvalidAuthority.into())?,
+    constraint = authority.key() == mint_token_ref.authority.ok_or(error!(ErrorCode::InvalidAuthority))?,
     constraint = owner_token_ref.mint == mint_token_ref.mint,
     bump = mint_token_ref.bump_seed
   )]
@@ -561,7 +585,7 @@ pub struct UpdateAuthorityV0<'info> {
     mut,
     seeds = [
       b"owner-token-ref",
-      owner_token_ref.owner.unwrap().key().as_ref(),
+      owner_token_ref.owner.unwrap().as_ref(),
     ],
     bump = primary_token_ref.bump_seed
   )]
