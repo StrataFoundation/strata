@@ -1794,7 +1794,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       owner: tokenRefAcct.owner! as PublicKey,
       mint: tokenBondingAcct?.baseMint,
     });
-    const [newOwnerTokenRef] =
+    const [newOwnerTokenRef, ownerTokenRefBumpSeed] =
       await SplTokenCollective.ownerTokenRefKey({
         owner: newOwner,
         mint: tokenBondingAcct?.baseMint,
@@ -1803,7 +1803,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       owner: tokenRefAcct.owner! as PublicKey,
       isPrimary: true,
     });
-    const [newPrimaryTokenRef] =
+    const [newPrimaryTokenRef, primaryTokenRefBumpSeed] =
       await SplTokenCollective.ownerTokenRefKey({
         owner: newOwner,
         isPrimary: true,
@@ -1815,7 +1815,10 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       signers: [],
       instructions: [
         await this.instruction.updateOwnerV0(
-          {},
+          {
+            ownerTokenRefBumpSeed,
+            primaryTokenRefBumpSeed,
+          },
           {
             accounts: {
               newOwner,
