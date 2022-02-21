@@ -153,7 +153,7 @@ pub fn handler(
   bonding.index = args.index;
 
   if args.initial_reserves_pad > 0 || args.initial_supply_pad > 0 {
-    if !args.ignore_external_supply_changes || !args.ignore_external_supply_changes {
+    if !args.ignore_external_supply_changes || !args.ignore_external_reserve_changes {
       return Err(error!(ErrorCode::InvalidPad));
     }
     bonding.reserve_balance_from_bonding = args.initial_reserves_pad;

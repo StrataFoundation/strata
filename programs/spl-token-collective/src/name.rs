@@ -18,7 +18,7 @@ impl Deref for NameRecordHeader {
 
 impl anchor_lang::AccountDeserialize for NameRecordHeader {
   fn try_deserialize(buf: &mut &[u8]) -> Result<Self> {
-    NameRecordHeader::try_deserialize_unchecked(buf).map_err(|e| e.into())
+    NameRecordHeader::try_deserialize_unchecked(buf)
   }
 
   fn try_deserialize_unchecked(buf: &mut &[u8]) -> Result<Self> {

@@ -33,14 +33,12 @@ fn expected_target_amount_exp_initial(
    * R (1 + k) / c = S^(1+k)
    * (((1 + k) dR)/c)^(1/(1 + k))
    */
-  let one_plus_k = ONE_PREC.checked_add(&k_prec)?;
+  let one_plus_k = ONE_PREC.checked_add(k_prec)?;
 
-  let res = one_plus_k
+  one_plus_k
     .checked_mul(reserve_change)?
-    .checked_div(&c_prec)?
-    .pow(&ONE_PREC.checked_div(&one_plus_k)?);
-
-  res
+    .checked_div(c_prec)?
+    .pow(&ONE_PREC.checked_div(&one_plus_k)?)
 }
 
 fn expected_target_amount_exp(
@@ -89,7 +87,7 @@ fn price_exp_initial(
   let one_plus_k_prec = &ONE_PREC.checked_add(k_prec)?;
   c_prec
     .checked_mul(&amount.pow(one_plus_k_prec)?)?
-    .checked_div(&one_plus_k_prec)
+    .checked_div(one_plus_k_prec)
 }
 
 fn price_exp(
@@ -320,7 +318,7 @@ impl Curve for PrimitiveCurve {
           k0,
           interval,
         } => price_exp(
-          &&time_decay_k(d, k0, k1, time_offset, interval)?,
+          &time_decay_k(d, k0, k1, time_offset, interval)?,
           amount,
           base_amount,
           target_supply,

@@ -611,7 +611,10 @@ pub mod spl_token_collective {
         new_token_ref.set_inner(mint_token_ref.clone().into_inner());
         primary.close(ctx.accounts.payer.to_account_info())?;
         new_token_ref.is_primary = true;
-        new_token_ref.bump_seed = *ctx.bumps.get("new_primary_token_ref").unwrap_or(&args.primary_token_ref_bump_seed);
+        new_token_ref.bump_seed = *ctx
+          .bumps
+          .get("new_primary_token_ref")
+          .unwrap_or(&args.primary_token_ref_bump_seed);
       }
     } else {
       // Wasn't a primary for the current wallet, and wasn't a primary for the new wallet
@@ -626,7 +629,10 @@ pub mod spl_token_collective {
     // Copy old token ref to new token ref
     let new_token_ref = &mut ctx.accounts.new_owner_token_ref;
     new_token_ref.set_inner(mint_token_ref.clone().into_inner());
-    new_token_ref.bump_seed = *ctx.bumps.get("new_owner_token_ref").unwrap_or(&args.owner_token_ref_bump_seed);
+    new_token_ref.bump_seed = *ctx
+      .bumps
+      .get("new_owner_token_ref")
+      .unwrap_or(&args.owner_token_ref_bump_seed);
     Ok(())
   }
 
