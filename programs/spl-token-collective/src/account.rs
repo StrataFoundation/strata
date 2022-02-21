@@ -486,6 +486,7 @@ pub struct ChangeOptStatusClaimedV0<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(args: UpdateOwnerV0Args)]
 pub struct UpdateOwnerV0<'info> {
   #[account(mut)]
   pub payer: Signer<'info>,

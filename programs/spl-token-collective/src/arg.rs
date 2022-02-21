@@ -41,6 +41,12 @@ pub struct RoyaltySettingV0 {
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
+pub struct UpdateOwnerV0Args {
+  pub owner_token_ref_bump_seed: u8,
+  pub primary_token_ref_bump_seed: u8,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct TokenBondingSettingsV0 {
   pub curve: Option<Pubkey>,
   pub min_sell_base_royalty_percentage: Option<u32>,

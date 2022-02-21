@@ -1815,6 +1815,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       signers: [],
       instructions: [
         await this.instruction.updateOwnerV0(
+          {},
           {
             accounts: {
               newOwner,
