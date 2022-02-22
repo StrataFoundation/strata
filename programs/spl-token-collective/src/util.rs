@@ -6,9 +6,9 @@ use anchor_lang::{prelude::*, solana_program::hash::hashv};
 use anchor_spl::token::TokenAccount;
 use spl_token_bonding::state::TokenBondingV0;
 
-pub fn verify_authority(authority: Option<Pubkey>, key: &Pubkey) -> Result<bool, ProgramError> {
-  if *key != authority.ok_or::<ProgramError>(ErrorCode::NoAuthority.into())? {
-    return Err(ErrorCode::InvalidAuthority.into());
+pub fn verify_authority(authority: Option<Pubkey>, key: &Pubkey) -> Result<bool> {
+  if *key != authority.ok_or(error!(ErrorCode::NoAuthority))? {
+    return Err(error!(ErrorCode::InvalidAuthority));
   }
 
   Ok(true)
@@ -17,7 +17,7 @@ pub fn verify_authority(authority: Option<Pubkey>, key: &Pubkey) -> Result<bool,
 pub fn verify_bonding_authorities(
   bonding: &TokenBondingV0,
   mint_token_ref_key: &Pubkey,
-) -> Result<bool, ProgramError> {
+) -> Result<bool> {
   Ok(
     verify_authority(bonding.general_authority, mint_token_ref_key)?
       && verify_authority(bonding.curve_authority, mint_token_ref_key)?
@@ -53,11 +53,11 @@ pub fn get_seeds_and_key(
   (name_account_key, seeds_vec)
 }
 
-pub fn get_name(name_parent: &AccountInfo) -> Result<NameRecordHeader, ProgramError> {
+pub fn get_name(name_parent: &AccountInfo) -> Result<NameRecordHeader> {
   let mut data: &[u8] = &name_parent
     .data
     .try_borrow()
-    .map_err(|_| ProgramError::AccountBorrowFailed)?;
+    .map_err(|_| Error::from(ProgramError::AccountBorrowFailed))?;
   NameRecordHeader::try_deserialize(&mut data)
 }
 
@@ -66,9 +66,9 @@ pub fn verify_name(
   name_class: Option<Pubkey>,
   name_parent: Option<Pubkey>,
   expected: &str,
-) -> Result<bool, ProgramError> {
+) -> Result<bool> {
   let hashed_name: Vec<u8> = hashv(&[("SPL Name Service".to_owned() + expected).as_bytes()])
-    .0
+    .as_ref()
     .to_vec();
 
   let (address, _) = get_seeds_and_key(&spl_name_service::ID, hashed_name, name_class, name_parent);
@@ -86,7 +86,7 @@ pub fn verify_token_bonding_royalties<'info>(
   sell_base_royalties: &AccountInfo<'info>,
   sell_target_royalties: &AccountInfo<'info>,
   claimed: bool,
-) -> ProgramResult {
+) -> Result<()> {
   let valid_claimed = !claimed
     || (defaults
       .buy_base_royalties
@@ -135,14 +135,14 @@ pub fn verify_token_bonding_royalties<'info>(
   if valid {
     Ok(())
   } else {
-    Err(ErrorCode::InvalidTokenBondingRoyalties.into())
+    Err(error!(ErrorCode::InvalidTokenBondingRoyalties))
   }
 }
 
 pub fn verify_token_bonding_defaults<'info>(
   defaults: &TokenBondingSettingsV0,
   token_bonding: &Account<'info, TokenBondingV0>,
-) -> ProgramResult {
+) -> Result<()> {
   let valid = defaults
     .curve
     .map_or(true, |curve| token_bonding.curve == curve)
@@ -208,6 +208,6 @@ pub fn verify_token_bonding_defaults<'info>(
   if valid {
     Ok(())
   } else {
-    Err(ErrorCode::InvalidTokenBondingSettings.into())
+    Err(error!(ErrorCode::InvalidTokenBondingSettings))
   }
 }

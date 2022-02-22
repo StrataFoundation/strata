@@ -1,6 +1,6 @@
 {
   "name": "@strata-foundation/governance-cli",
-  "version": "3.2.5-bounty.0",
+  "version": "3.2.5-alpha.5",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
@@ -13,7 +13,7 @@
     "start": "tsc && node bin/createProposal.js"
   },
   "dependencies": {
-    "@project-serum/anchor": "^0.20.1",
+    "@project-serum/anchor": "^0.22.0",
     "@solana/spl-governance": "^0.0.27",
     "@solana/web3.js": "^1.32.0",
     "borsh": "^0.7.0",

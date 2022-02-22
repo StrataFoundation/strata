@@ -1,4 +1,3 @@
-import React from "react";
 import { Button, Icon } from "@chakra-ui/react";
 import { Provider } from "@project-serum/anchor";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -6,14 +5,14 @@ import { PublicKey } from "@solana/web3.js";
 import {
   useErrorHandler,
   useProvider,
+  useQueryString,
   useReverseName,
   WUMBO_TWITTER_TLD,
-  WUMBO_TWITTER_VERIFIER,
+  WUMBO_TWITTER_VERIFIER
 } from "@strata-foundation/react";
 import { executeRemoteTxn } from "@strata-foundation/spl-utils";
 import { useLinkTwitter } from "../hooks/useLinkTwitter";
-import { useQueryString } from "../hooks/useQueryString";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { useAsync } from "react-async-hook";
 import { FaTwitter } from "react-icons/fa";
 

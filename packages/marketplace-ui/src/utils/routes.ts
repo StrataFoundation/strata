@@ -11,6 +11,8 @@ export const routes = {
   sales: { path: "/sales", params: [] },
   newSale: { path: "/sales/new", params: [] },
   sale: { path: "/sales/:mintKey", params: ["mintKey"] },
+  newLiquidityBootstrapper: { path: "/liquidity-bootstrappers/new", params: [] },
+  swap: { path: "/swap/:mintKey", params: ["mintKey"] },
 };
 
 export function route(route: IRoute, params: Record<string, string | undefined>): string {

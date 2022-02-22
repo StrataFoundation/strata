@@ -468,6 +468,8 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       splCollectiveProgramId,
       provider
     );
+
+    // @ts-ignore
     const splCollective = new anchor.Program(
       SplCollectiveIDLJson!,
       splCollectiveProgramId,
@@ -695,7 +697,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
    */
   createCollective(
     args: ICreateCollectiveArgs,
-    commitment: Finality
+    commitment: Finality = "confirmed"
   ): Promise<{ collective: PublicKey; tokenBonding?: PublicKey }> {
     return this.executeBig(
       this.createCollectiveInstructions(args),
@@ -815,7 +817,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     const [mintTokenRef] = await SplTokenCollective.mintTokenRefKey(
       tokenBondingAcct.targetMint
     );
-    const [newTokenRef, ownerTokenRefBumpSeed] =
+    const [newTokenRef] =
       await PublicKey.findProgramAddress(
         SplTokenCollective.ownerTokenRefSeeds({
           mint: tokenBondingAcct.baseMint,
@@ -828,7 +830,6 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     instructions1.push(
       await this.instruction.claimSocialTokenV0(
         {
-          ownerTokenRefBumpSeed,
           isPrimary,
           authority,
         },
@@ -991,7 +992,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       owner = (await this.getTokenRef(tokenRef)).owner;
     }
 
-    const [primaryTokenRef, primaryTokenRefBumpSeed] =
+    const [primaryTokenRef, bumpSeed] =
       await SplTokenCollective.ownerTokenRefKey({
         isPrimary: true,
         owner,
@@ -1002,7 +1003,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       instructions: [
         await this.instruction.setAsPrimaryV0(
           {
-            bumpSeed: primaryTokenRefBumpSeed,
+            bumpSeed,
           },
           {
             accounts: {
@@ -1406,7 +1407,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
    */
   async createSocialToken(
     args: ICreateSocialTokenArgs,
-    commitment: Finality
+    commitment: Finality = "confirmed",
   ): Promise<{
     ownerTokenRef: PublicKey;
     mintTokenRef: PublicKey;

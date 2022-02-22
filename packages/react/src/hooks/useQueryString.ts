@@ -1,5 +1,6 @@
 import qs from "query-string";
 import { useState, useCallback } from "react";
+import { useInterval } from "./useInterval";
 
 const setQueryStringWithoutPageReload = (qsValue: string) => {
   if (typeof window !== "undefined") {
@@ -14,14 +15,14 @@ const setQueryStringWithoutPageReload = (qsValue: string) => {
   }
 };
 
-const setQueryStringValue = ( 
-   key: string, 
-   value: string, 
-   queryString = window.location.search
-) => { 
-    const values = qs.parse(queryString); 
-    const newQsValue = qs.stringify({ ...values, [key]: value }); 
-    setQueryStringWithoutPageReload(`?${newQsValue}`);
+const setQueryStringValue = (
+  key: string,
+  value: string,
+  queryString = window.location.search
+) => {
+  const values = qs.parse(queryString);
+  const newQsValue = qs.stringify({ ...values, [key]: value });
+  setQueryStringWithoutPageReload(`?${newQsValue}`);
 };
 
 export const getQueryStringValue = (
@@ -34,10 +35,19 @@ export const getQueryStringValue = (
   }
 };
 
-export function useQueryString<A>(key: string, initialValue: A): [A, (v: A) => void] {
+export function useQueryString<A>(
+  key: string,
+  initialValue: A
+): [A, (v: A) => void] {
   const [value, setValue] = useState(getQueryStringValue(key) || initialValue);
+  useInterval(() => {
+    const newValue = getQueryStringValue(key) as string
+    if (newValue && newValue != value) {
+      setValue(newValue);
+    }
+  }, 500)
   const onSetValue = useCallback(
-    newValue => {
+    (newValue) => {
       setValue(newValue);
       setQueryStringValue(key, newValue);
     },

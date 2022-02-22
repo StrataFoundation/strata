@@ -59,11 +59,11 @@ function anyDefined(...args: any | undefined[]): boolean {
 /**
  * The curve config required by the smart contract is unwieldy, implementors of `CurveConfig` wrap the interface
  */
-interface ICurveConfig {
+export interface ICurveConfig {
   toRawConfig(): CurveV0;
 }
 
-interface IPrimitiveCurve {
+export interface IPrimitiveCurve {
   toRawPrimitiveConfig(): any;
 }
 
@@ -131,6 +131,70 @@ export class ExponentialCurveConfig implements ICurveConfig, IPrimitiveCurve {
     };
   }
 }
+
+/**
+ * Curve configuration for c(S^(pow/frac)) + b
+ */
+export class TimeDecayExponentialCurveConfig implements ICurveConfig, IPrimitiveCurve {
+  c: BN;
+  k0: BN;
+  k1: BN;
+  d: BN;
+  interval: number;
+
+  constructor({
+    c = 1,
+    k0 = 0,
+    k1 = 1,
+    d = 1,
+    interval = 24 * 60 * 60,
+  }: {
+    c?: number | BN;
+    k0?: number | BN;
+    k1?: number | BN;
+    d?: number | BN;
+    interval?: number;
+  }) {
+    this.c = toU128(c);
+    this.k0 = toU128(k0);
+    this.k1 = toU128(k1);
+    this.d = toU128(d);
+    this.interval = interval;
+  }
+
+  toRawPrimitiveConfig(): any {
+    return {
+      timeDecayExponentialCurveV0: {
+        // @ts-ignore
+        c: this.c,
+        // @ts-ignore
+        k0: this.k0,
+        k1: this.k1,
+        d: this.d,
+        // @ts-ignore
+        interval: this.interval,
+      },
+    };
+  }
+
+  toRawConfig(): CurveV0 {
+    return {
+      definition: {
+        timeV0: {
+          curves: [
+            {
+              // @ts-ignore
+              offset: new BN(0),
+              // @ts-ignore
+              curve: this.toRawPrimitiveConfig(),
+            },
+          ],
+        },
+      },
+    };
+  }
+}
+
 
 /**
  * Curve configuration that allows the curve to change parameters at discrete time offsets from the go live date
@@ -300,18 +364,18 @@ export interface ICreateTokenBondingArgs {
   buyFrozen?: boolean;
   /** Should this bonding curve have sell functionality? **Default:** false */
   sellFrozen?: boolean;
-  /** 
-   * 
+  /**
+   *
    * Should the bonding curve's price change based on funds entering or leaving the reserves account outside of buy/sell
-   * 
+   *
    * Setting this to `false` means that sending tokens into the reserves improves value for all holders,
    * withdrawing money from reserves (via reserve authority) detracts value from holders.
-   * 
+   *
    */
   ignoreExternalReserveChanges?: boolean;
-  /** 
+  /**
    * Should the bonding curve's price change based on external burning of target tokens?
-   * 
+   *
    * Setting this to `false` enables what is called a "sponsored burn". With a sponsored burn,
    * burning tokens increases the value for all holders
    */
@@ -322,6 +386,21 @@ export interface ICreateTokenBondingArgs {
    * markeplace curves
    */
   index?: number;
+
+  advanced?: {
+    /**
+     * Initial padding is an advanced feature, incorrect use could lead to insufficient resreves to cover sells
+     *
+     * Start the curve off at a given reserve and supply synthetically. This means price can start nonzero. The current use case
+     * for this is LBPs. Note that a curve cannot be adaptive. ignoreExternalReserveChanges and ignoreExternalSupplyChanges
+     * must be true
+     * */
+    initialSupplyPad: BN | number;
+    /**
+     * Initial padding is an advanced feature, incorrect use could lead to insufficient resreves to cover sells
+     * */
+    initialReservesPad: BN | number;
+  };
 }
 
 export interface IUpdateTokenBondingArgs {
@@ -365,6 +444,8 @@ export interface IBuyArgs {
   expectedOutputAmount?:
     | BN
     | number /** Expected output amount of `targetMint` before slippage */;
+  /** When using desiredTargetAmount, the expected base amount used before slippage */
+  expectedBaseAmount?: BN | number;
   /** Decimal number. max price will be (1 + slippage) * price_for_desired_target_amount */
   slippage: number;
 }
@@ -381,6 +462,14 @@ export interface ISwapArgs {
   expectedOutputAmount?:
     | BN
     | number /** Expected output amount before slippage */;
+  expectedBaseAmount?:
+    | BN
+    | number /** Only when `desiredOutputAmount` present: Expected base amount before slippage */;
+  /**
+   * Desired output amount. If specified, uses buy({ desiredTargetAmount }) for the last stage of the swap. This
+   * is useful in decimals 0 type situation where you want the whole item or nothing
+   */
+  desiredTargetAmount?: BN | number;
   /** The slippage PER TRANSACTION */
   slippage: number;
   /** Optionally inject extra instructions before each trade. Usefull for adding txn fees */
@@ -778,6 +867,10 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     ignoreExternalSupplyChanges = false,
     sellFrozen = false,
     index,
+    advanced = {
+      initialSupplyPad: 0,
+      initialReservesPad: 0
+    }
   }: ICreateTokenBondingArgs): Promise<
     InstructionResult<ICreateTokenBondingOutput>
   > {
@@ -986,6 +1079,21 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         createdAccts.add(sellBaseRoyalties.toBase58());
       }
     }
+    const pads = {
+      initialReservesPad: advanced.initialReservesPad
+        ? toBN(
+            advanced.initialReservesPad,
+            await getMintInfo(this.provider, baseMint)
+          )
+        : new BN(0),
+      initialSupplyPad: advanced.initialSupplyPad
+        ? toBN(
+            advanced.initialSupplyPad,
+            typeof targetMintDecimals == "undefined" ?
+              (await getMintInfo(this.provider, targetMint)).decimals : targetMintDecimals
+          )
+        : new BN(0),
+    };
 
     instructions.push(
       await this.instruction.initializeTokenBondingV0(
@@ -1010,6 +1118,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           ignoreExternalReserveChanges,
           ignoreExternalSupplyChanges,
           sellFrozen,
+          ...pads,
         },
         {
           accounts: {
@@ -1170,7 +1279,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       instructions.push(
         await this.instruction.updateReserveAuthorityV0(
           {
-            newReserveAuthority: reserveAuthority,
+            newReserveAuthority: reserveAuthority || null,
           },
           {
             accounts: {
@@ -1407,6 +1516,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     desiredTargetAmount,
     baseAmount,
     expectedOutputAmount,
+    expectedBaseAmount,
     slippage,
     payer = this.wallet.publicKey,
   }: IBuyArgs): Promise<InstructionResult<null>> {
@@ -1434,19 +1544,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
 
     const curve = await this.getPricingCurve(
       tokenBondingAcct.curve,
-      amountAsNum(
-        tokenBondingAcct.sellFrozen
-          ? tokenBondingAcct.reserveBalanceFromBonding
-          : baseStorage.amount,
-        baseMint
-      ),
-      amountAsNum(
-        tokenBondingAcct.sellFrozen
-          ? tokenBondingAcct.supplyFromBonding
-          : targetMint.supply,
-        targetMint
-      ),
-      tokenBondingAcct.goLiveUnixTime.toNumber()
+      amountAsNum(tokenBondingAcct.ignoreExternalReserveChanges ? tokenBondingAcct.reserveBalanceFromBonding : baseStorage.amount, baseMint),
+      amountAsNum(tokenBondingAcct.ignoreExternalSupplyChanges ? tokenBondingAcct.supplyFromBonding : targetMint.supply, targetMint),
+      tokenBondingAcct.goLiveUnixTime.toNumber(),
     );
 
     const instructions = [];
@@ -1486,8 +1586,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         desiredTargetAmountNum *
         (1 / (1 - asDecimal(tokenBondingAcct.buyTargetRoyaltyPercentage)));
 
-      const min = expectedOutputAmount
-        ? toNumber(expectedOutputAmount, targetMint)
+      const min = expectedBaseAmount
+        ? toNumber(expectedBaseAmount, targetMint)
         : curve.buyTargetAmount(
             desiredTargetAmountNum,
             tokenBondingAcct.buyBaseRoyaltyPercentage,
@@ -1634,6 +1734,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     baseMint,
     targetMint,
     baseAmount,
+    expectedBaseAmount,
+    desiredTargetAmount,
     expectedOutputAmount,
     slippage,
     extraInstructions = () =>
@@ -1690,13 +1792,15 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
 
       const getBalance = async (): Promise<BN> => {
         if (!isBuy && baseIsSol) {
-          return new BN(
+          const amount =
             (
               await this.provider.connection.getAccountInfo(
                 sourceAuthority,
                 "single"
               )
-            )?.lamports || 0
+            )?.lamports || 0;
+          return new BN(
+            amount
           );
         } else {
           return this.getTokenAccountBalance(ata, "single");
@@ -1717,9 +1821,16 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           sourceAuthority,
           baseAmount: currAmount,
           tokenBonding: tokenBonding.publicKey,
-          expectedOutputAmount: isLastHop ? expectedOutputAmount : undefined,
+          expectedOutputAmount:
+            isLastHop && !desiredTargetAmount
+              ? expectedOutputAmount
+              : undefined,
+          desiredTargetAmount:
+            isLastHop && desiredTargetAmount ? desiredTargetAmount : undefined,
+          expectedBaseAmount:
+            isLastHop && desiredTargetAmount ? expectedBaseAmount : undefined,
           slippage,
-        }));
+        }));        
         currMint = tokenBonding.targetMint;
       } else {
         console.log(
@@ -1884,19 +1995,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     // @ts-ignore
     const curve = await this.getPricingCurve(
       tokenBondingAcct.curve,
-      amountAsNum(
-        tokenBondingAcct.sellFrozen
-          ? tokenBondingAcct.reserveBalanceFromBonding
-          : baseStorage.amount,
-        baseMint
-      ),
-      amountAsNum(
-        tokenBondingAcct.sellFrozen
-          ? tokenBondingAcct.supplyFromBonding
-          : targetMint.supply,
-        targetMint
-      ),
-      tokenBondingAcct.goLiveUnixTime.toNumber()
+      amountAsNum(tokenBondingAcct.ignoreExternalReserveChanges ? tokenBondingAcct.reserveBalanceFromBonding : baseStorage.amount, baseMint),
+      amountAsNum(tokenBondingAcct.ignoreExternalSupplyChanges ? tokenBondingAcct.supplyFromBonding : targetMint.supply, targetMint),
+      tokenBondingAcct.goLiveUnixTime.toNumber(),
     );
 
     const instructions = [];
@@ -2140,6 +2241,11 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       amount: toBN(amount, baseMint),
     };
     if (isNative) {
+      console.log(
+        "HEU",
+        this.wallet.publicKey.toBase58(),
+        common.reserveAuthority.toBase58()
+      );
       instructions.push(
         await this.instruction.transferReservesNativeV0(args, {
           accounts: {
@@ -2213,13 +2319,13 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     return await this.getPricingCurve(
       tokenBondingAcct.curve,
       amountAsNum(
-        tokenBondingAcct.sellFrozen
+        tokenBondingAcct.ignoreExternalReserveChanges
           ? tokenBondingAcct.reserveBalanceFromBonding
           : baseStorage.amount,
         baseMint
       ),
       amountAsNum(
-        tokenBondingAcct.sellFrozen
+        tokenBondingAcct.ignoreExternalSupplyChanges
           ? tokenBondingAcct.supplyFromBonding
           : targetMint.supply,
         targetMint

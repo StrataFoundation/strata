@@ -11,6 +11,7 @@ import {
   ITokenBonding,
   SplTokenBonding,
   TimeCurveConfig,
+  TimeDecayExponentialCurveConfig,
   TokenBondingV0,
 } from "../packages/spl-token-bonding/src";
 import { BondingPricing } from "../packages/spl-token-bonding/src/pricing";
@@ -50,7 +51,7 @@ describe("spl-token-bonding", () => {
         pow: 1,
         // @ts-ignore
         frac: 2
-      }, 0, 0);
+      }, 0, 0,);
 
       const baseAmount = curve.buyTargetAmount(10, percent(5), percent(5));
       expect(baseAmount).to.be.closeTo(23.96623025761275, 0.005);
@@ -426,6 +427,65 @@ describe("spl-token-bonding", () => {
         tokenBondingAcct.baseMint,
         INITIAL_BALANCE / Math.pow(10, DECIMALS) - 0.25
       );
+    });
+  });
+
+  describe("time decay curve", () => {
+    let curve: PublicKey;
+    let tokenBonding: PublicKey;
+    let tokenBondingAcct: TokenBondingV0;
+    const INITIAL_BALANCE = 1000;
+    const DECIMALS = 2;
+
+    before(async () => {
+      const baseMint = await createMint(provider, me, DECIMALS);
+      await tokenUtils.createAtaAndMint(provider, baseMint, INITIAL_BALANCE);
+      curve = await tokenBondingProgram.initializeCurve({
+        config: new TimeDecayExponentialCurveConfig({
+          c: 1,
+          k0: 2,
+          k1: 0.5,
+          interval: 10,
+          d: 0.5,
+        }),
+      });
+
+      ({ tokenBonding } = await tokenBondingProgram.createTokenBonding({
+        curve,
+        baseMint,
+        targetMintDecimals: DECIMALS,
+        generalAuthority: me,
+        buyBaseRoyaltyPercentage: 0,
+        buyTargetRoyaltyPercentage: 0,
+        sellBaseRoyaltyPercentage: 0,
+        sellTargetRoyaltyPercentage: 0,
+        mintCap: new BN(1000), // 10.0
+      }));
+      tokenBondingAcct = (await tokenBondingProgram.getTokenBonding(
+        tokenBonding
+      )) as TokenBondingV0;
+    });
+
+    it("The price slowly drops over the interval", async () => {
+      const { targetAmount: amount0 } = await tokenBondingProgram.swap({
+        baseMint: tokenBondingAcct.baseMint,
+        targetMint: tokenBondingAcct.targetMint,
+        baseAmount: 1,
+        slippage: 1
+      });
+      // expect(amount0).to.within(0.001, 0.5);
+      await waitForUnixTime(
+        provider.connection,
+        BigInt(tokenBondingAcct.goLiveUnixTime.toNumber() + 10)
+      );
+      
+      const { targetAmount: amount1 } = await tokenBondingProgram.swap({
+        baseMint: tokenBondingAcct.baseMint,
+        targetMint: tokenBondingAcct.targetMint,
+        baseAmount: 1,
+        slippage: 0.05,
+      });
+      expect(amount1).lt(amount0);
     });
   });
 

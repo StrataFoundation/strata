@@ -97,6 +97,7 @@ export async function sendMultipleInstructions(
     .map((instructions, index) => {
       const signers = signerGroups[index];
       if (instructions.length > 0) {
+        console.log(provider.wallet.publicKey.toBase58(), payer?.toBase58());
         const tx = new Transaction({
           feePayer: payer || provider.wallet.publicKey,
           recentBlockhash,
@@ -271,7 +272,7 @@ const DEFAULT_TIMEOUT = 3 * 60 * 1000; // 3 minutes
     that means it’s definitely been dropped. If you do get a response back, you can keep pinging 
     until it’s gone to a confirmed status to move on.
   */
-async function sendAndConfirmWithRetry(
+export async function sendAndConfirmWithRetry(
   connection: Connection,
   txn: Buffer,
   sendOptions: SendOptions,
@@ -329,7 +330,7 @@ async function sendAndConfirmWithRetry(
       throw err.err
     }
 
-    throw new Error('Transaction failed');
+    throw err;
   } finally {
     done = true;
   }

@@ -1,8 +1,8 @@
 import { BountyCard } from "@/components/bounties/BountyCard";
 import { BountyList } from "@/components/bounties/BountyList";
 import { MintSelectModal } from "@/components/bounties/MintSelectModal";
+import { route, routes } from "@/utils/routes";
 import {
-  Text,
   Box,
   Button,
   Center,
@@ -13,21 +13,20 @@ import {
   InputGroup,
   InputLeftElement,
   Link,
-  Select,
-  Stack,
-  VStack,
-  Spinner,
+  Select, Spinner, Stack, Text, VStack
 } from "@chakra-ui/react";
-import { useErrorHandler, usePublicKey } from "@strata-foundation/react";
+import {
+  useErrorHandler,
+  usePublicKey,
+  useQueryString
+} from "@strata-foundation/react";
 import { useBounties } from "@/hooks/useBounties";
-import { useQueryString } from "@/hooks/useQueryString";
 import { NextPage } from "next";
 import Head from "next/head";
+import { useRouter } from "next/router";
 import { useState } from "react";
 import { AiOutlineSearch } from "react-icons/ai";
-import { route, routes } from "@/utils/routes";
 import { BsChevronDown } from "react-icons/bs";
-import { useRouter } from "next/router";
 
 const PAGE_SIZE= 20;
 export const Bounties: NextPage = () => {

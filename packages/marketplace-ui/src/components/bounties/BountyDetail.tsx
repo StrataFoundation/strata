@@ -1,4 +1,4 @@
-import { Alert, Box, Button, ButtonProps, Center, Divider, Heading, HStack, Icon, Input, InputGroup, InputProps, InputRightElement, Link, SimpleGrid, Spinner, Text, VStack } from "@chakra-ui/react";
+import { Alert, Box, Button, ButtonProps, Center, Divider, Heading, HStack, Icon, Input, InputGroup, InputProps, InputRightElement, SimpleGrid, Spinner, Text, VStack } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
@@ -14,7 +14,9 @@ import { toNumber } from "@strata-foundation/spl-token-bonding";
 import { SplTokenMetadata } from "@strata-foundation/spl-utils";
 import debounce from "lodash/debounce";
 import moment from "moment";
+import { useRouter } from "next/router";
 import React, { useMemo, useState } from "react";
+import { RiPencilFill } from "react-icons/ri";
 import { route, routes } from "../..//utils/routes";
 import { AsyncButton } from "../AsyncButton";
 import { BurnButton } from "../BurnButton";
@@ -22,9 +24,6 @@ import { AuthorityAndTokenInfo } from "./AuthorityAndTokenInfo";
 import { BountyCardContribution } from "./BountyCardContribution";
 import { DisburseFunds } from "./DisburseFunds";
 import { TopHolders } from "./TopHolders";
-import NextLink from "next/link";
-import { RiPencilFill } from "react-icons/ri";
-import { useRouter } from "next/router";
 
 export const AsyncQtyButton = ({
   inputProps = {},

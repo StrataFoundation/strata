@@ -1,59 +1,7 @@
-use anchor_lang::{
-  prelude::*,
-  solana_program::{program::invoke_signed, system_instruction},
-};
+use super::{sell_account_common::SellCommonV0, sell_arg_common::SellV0Args};
+use crate::{curve::Curve, error::ErrorCode, util::*};
+use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Burn, Transfer};
-
-use crate::{
-  account::*,
-  arg::{SellV0Args, SellWrappedSolV0Args},
-  curve::*,
-  error::ErrorCode,
-  util::*,
-};
-
-pub fn sell_wrapped_sol(
-  accounts: &SellWrappedSolV0,
-  args: &SellWrappedSolV0Args,
-  seeds: Option<&[&[&[u8]]]>,
-) -> ProgramResult {
-  let amount = if args.all {
-    accounts.source.amount
-  } else {
-    args.amount
-  };
-
-  invoke_signed(
-    &system_instruction::transfer(
-      &accounts.sol_storage.key(),
-      &accounts.destination.key(),
-      amount,
-    ),
-    &[
-      accounts.sol_storage.to_account_info().clone(),
-      accounts.destination.to_account_info().clone(),
-      accounts.system_program.to_account_info().clone(),
-    ],
-    &[&[
-      "sol-storage".as_bytes(),
-      &[accounts.state.sol_storage_bump_seed],
-    ]],
-  )?;
-
-  let token_program = accounts.token_program.to_account_info().clone();
-  let command = Burn {
-    mint: accounts.wrapped_sol_mint.to_account_info().clone(),
-    to: accounts.source.to_account_info().clone(),
-    authority: accounts.owner.to_account_info().clone(),
-  };
-  let context = match seeds {
-    Some(seeds) => CpiContext::new_with_signer(token_program, command, seeds),
-    None => CpiContext::new(token_program, command),
-  };
-  token::burn(context, amount)?;
-
-  Ok(())
-}
 
 pub struct SellAmount {
   pub reclaimed: u64,
@@ -61,10 +9,7 @@ pub struct SellAmount {
   pub target_royalties: u64,
 }
 
-pub fn sell_shared_logic(
-  common: &mut SellCommonV0,
-  args: &SellV0Args,
-) -> Result<SellAmount, ProgramError> {
+pub fn sell_shared_logic(common: &mut SellCommonV0, args: &SellV0Args) -> Result<SellAmount> {
   let token_bonding = &mut common.token_bonding;
   let curve = &common.curve;
   let base_mint = &common.base_mint;
@@ -102,11 +47,11 @@ pub fn sell_shared_logic(
   }
 
   if token_bonding.go_live_unix_time > clock.unix_timestamp {
-    return Err(ErrorCode::NotLiveYet.into());
+    return Err(error!(ErrorCode::NotLiveYet));
   }
 
   if token_bonding.sell_frozen {
-    return Err(ErrorCode::SellDisabled.into());
+    return Err(error!(ErrorCode::SellDisabled));
   }
 
   let base_royalties_percent = token_bonding.sell_base_royalty_percentage;
@@ -151,7 +96,7 @@ pub fn sell_shared_logic(
       args.minimum_price,
       reclaimed
     );
-    return Err(ErrorCode::PriceTooLow.into());
+    return Err(error!(ErrorCode::PriceTooLow));
   }
 
   Ok(SellAmount {
@@ -165,7 +110,7 @@ pub fn burn_and_pay_sell_royalties(
   amount: u64,
   target_royalties: u64,
   common: &SellCommonV0,
-) -> ProgramResult {
+) -> Result<()> {
   let token_program = &common.token_program.to_account_info();
   let target_mint = &common.target_mint.to_account_info();
   let target_royalties_account = &common.sell_target_royalties.to_account_info();
