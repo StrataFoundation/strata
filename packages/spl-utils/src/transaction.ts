@@ -271,7 +271,7 @@ const DEFAULT_TIMEOUT = 3 * 60 * 1000; // 3 minutes
     that means it’s definitely been dropped. If you do get a response back, you can keep pinging 
     until it’s gone to a confirmed status to move on.
   */
-async function sendAndConfirmWithRetry(
+export async function sendAndConfirmWithRetry(
   connection: Connection,
   txn: Buffer,
   sendOptions: SendOptions,

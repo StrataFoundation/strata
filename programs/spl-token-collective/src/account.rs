@@ -272,6 +272,7 @@ pub struct UpdateTokenBondingV0Wrapper<'info> {
 #[derive(Accounts)]
 #[instruction(args: ClaimSocialTokenV0Args)]
 pub struct ClaimSocialTokenV0<'info> {
+  #[account(mut)]
   pub payer: Signer<'info>,
   pub collective: UncheckedAccount<'info>,
   #[account(
