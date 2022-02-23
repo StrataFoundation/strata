@@ -11,7 +11,8 @@ export const routes = {
   sales: { path: "/sales", params: [] },
   newSale: { path: "/sales/new", params: [] },
   sale: { path: "/sales/:mintKey", params: ["mintKey"] },
-  newLiquidityBootstrapper: { path: "/liquidity-bootstrappers/new", params: [] },
+  newLbc: { path: "/lbcs/new", params: [] },
+  mintLbc: { path: "/lbcs/mint/:mintKey", params: ["mintKey"] },
   swap: { path: "/swap/:mintKey", params: ["mintKey"] },
 };
 

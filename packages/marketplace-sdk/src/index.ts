@@ -636,7 +636,7 @@ export class MarketplaceSdk {
     );
   }
 
-  static lbpCurve({
+  static lbcCurve({
     interval,
     startPrice,
     minPrice,
@@ -663,7 +663,7 @@ export class MarketplaceSdk {
         k0,
         interval,
         c: 1, // Not needed
-        d: 1 / k0,
+        d: 1 / Math.max(k0 - 1, 1),
       }),
       reserves: minPrice * maxSupply,
       supply: maxSupply,
@@ -695,7 +695,7 @@ export class MarketplaceSdk {
     const instructions = [];
     const signers = [];
 
-    const { reserves: initialReservesPad, supply: initialSupplyPad, curveConfig } = MarketplaceSdk.lbpCurve({
+    const { reserves: initialReservesPad, supply: initialSupplyPad, curveConfig } = MarketplaceSdk.lbcCurve({
       interval,
       startPrice,
       minPrice,

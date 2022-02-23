@@ -22,6 +22,8 @@ export const theme: any = extendTheme({
   shadows: {
     outline: "none",
   },
+  initialColorMode: "light",
+  useSystemColorMode: false,
   components: {
     Button: {
       baseStyle: { _focus: { boxShadow: "none" } },

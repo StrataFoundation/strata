@@ -29,6 +29,7 @@ export const Notification = ({
     borderTop="1px"
     borderTopColor="gray.200"
     fontFamily="body"
+    color="black"
     status={type}
   >
     <AlertIcon />

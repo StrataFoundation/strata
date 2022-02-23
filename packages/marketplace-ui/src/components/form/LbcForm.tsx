@@ -1,25 +1,22 @@
 import { Alert, Button, Input, VStack } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
-import { BN } from "@project-serum/anchor";
 import { NATIVE_MINT } from "@solana/spl-token";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
 import {
-  truthy,
-  useMintTokenRef,
-  usePrimaryClaimedTokenRef,
+  truthy, usePrimaryClaimedTokenRef,
   useProvider,
-  usePublicKey,
+  usePublicKey
 } from "@strata-foundation/react";
-import { useMarketplaceSdk } from "../../contexts/marketplaceSdkContext";
 import { useRouter } from "next/router";
-import React, { useEffect } from "react";
+import React from "react";
 import { useAsyncCallback } from "react-async-hook";
 import { FormProvider, useForm } from "react-hook-form";
-import { route, routes } from "../../utils/routes";
 import * as yup from "yup";
+import { useMarketplaceSdk } from "../../contexts/marketplaceSdkContext";
+import { route, routes } from "../../utils/routes";
 import { FormControlWithError } from "./FormControlWithError";
 import { MintSelect } from "./MintSelect";
 import { Recipient } from "./Recipient";
@@ -94,7 +91,7 @@ async function createLiquidityBootstrapper(
 }
 
 
-export const LiquidityBootstrapperForm: React.FC = () => {
+export const LbcForm: React.FC = () => {
   const formProps = useForm<ILbpFormProps>({
     resolver: yupResolver(validationSchema),
   });
@@ -113,11 +110,10 @@ export const LiquidityBootstrapperForm: React.FC = () => {
   const router = useRouter();
   const { authority, mint } = watch();
   const mintKey = usePublicKey(mint);
-  const { info: mintTokenRef } = useMintTokenRef(mintKey);
 
   const onSubmit = async (values: ILbpFormProps) => {
     const mintKey = await execute(marketplaceSdk!, values);
-    router.push(route(routes.swap, { mintKey: mintKey.toBase58() }));
+    router.push(route(routes.mintLbc, { mintKey: mintKey.toBase58() }));
   };
 
   const authorityRegister = register("authority");

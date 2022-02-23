@@ -17,10 +17,7 @@ import React, { FC, useMemo } from "react";
 export const DEFAULT_ENDPOINT =
   process.env.NEXT_PUBLIC_SOLANA_URL || "https://api.devnet.solana.com";
 
-// Default styles that can be overridden by your app
-require("@solana/wallet-adapter-react-ui/styles.css");
-
-export const Wallet: FC = ({ children }) => {
+export const Wallet = ({ children, cluster }: { children: React.ReactNode, cluster?: string }) => {
   // @solana/wallet-adapter-wallets includes all the adapters but supports tree shaking and lazy loading --
   // Only the wallets you configure here will be compiled into your application, and only the dependencies
   // of wallets that your users connect to will be loaded
@@ -39,7 +36,7 @@ export const Wallet: FC = ({ children }) => {
 
 
   return (
-    <ConnectionProvider endpoint={DEFAULT_ENDPOINT}>
+    <ConnectionProvider endpoint={cluster || DEFAULT_ENDPOINT}>
       <WalletProvider wallets={wallets} autoConnect>
         {children}
       </WalletProvider>
