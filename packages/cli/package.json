@@ -33,6 +33,6 @@
         "ts-loader": "^9.2.3",
         "typescript": "^4.3.4"
     },
-    "gitHead": "32401f1dd5d6f0127c8aedbf5698c4a6f9e4001b",
+    "gitHead": "ff670e6a6211209648c56dd69e5f5dfbda631b42",
     "version": "3.2.5-lbc.1"
 }
