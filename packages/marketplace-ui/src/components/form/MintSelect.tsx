@@ -1,5 +1,6 @@
 import React from "react";
 import {
+  useColorModeValue,
   Box,
   Button,
   Icon,
@@ -27,6 +28,7 @@ export const MintSelect = ({
       onClose();
     }
   }, []);
+  const backgroundColor = useColorModeValue("white", "black.300");
 
   useEffect(() => {
     document.addEventListener("keydown", escFunction, false);
@@ -65,7 +67,7 @@ export const MintSelect = ({
               shadow: "lg",
               maxHeight: "500px",
               overflow: "auto",
-              backgroundColor: "white",
+              backgroundColor,
               top: "110px",
             }}
             placeholder="Press Escape to Close"
