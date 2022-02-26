@@ -180,7 +180,7 @@ export const SaleForm: React.FC = () => {
           <Button
             type="submit"
             alignSelf="flex-end"
-            colorScheme="orange"
+            colorScheme="primary"
             isLoading={isSubmitting || loading}
             loadingText={awaitingApproval ? "Awaiting Approval" : "Loading"}
           >

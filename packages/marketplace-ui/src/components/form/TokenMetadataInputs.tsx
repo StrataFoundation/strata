@@ -77,7 +77,7 @@ export function TokenMetadataInputs() {
         <HStack w="full" spacing={4}>
           <Button
             size="md"
-            colorScheme="orange"
+            colorScheme="primary"
             variant="outline"
             onClick={() => hiddenFileInput.current!.click()}
           >

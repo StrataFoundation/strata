@@ -69,7 +69,7 @@ export const DisburseFunds = ({ tokenBondingKey }: { tokenBondingKey: PublicKey 
           mt={4}
           isLoading={bondingLoading || governanceLoading}
           variant="outline"
-          colorScheme="orange"
+          colorScheme="primary"
           w="full"
           action={async () => {
             if (tokenBondingSdk) {
@@ -100,7 +100,7 @@ export const DisburseFunds = ({ tokenBondingKey }: { tokenBondingKey: PublicKey 
             <Button
               key={index}
               variant="outline"
-              colorScheme="orange"
+              colorScheme="primary"
               leftIcon={<Icon as={BsClipboard} />}
               onClick={() => {
                 const ixData = serializeInstructionToBase64(i);

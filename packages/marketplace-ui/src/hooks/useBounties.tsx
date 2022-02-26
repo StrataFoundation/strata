@@ -19,6 +19,7 @@ async function getBounties(
   marketplaceSdk: MarketplaceSdk | undefined,
   baseMint: PublicKey | undefined
 ): Promise<GetBountyItem[] | undefined> {
+  console.log(marketplaceSdk, baseMint?.toBase58());
   if (marketplaceSdk) {
     return marketplaceSdk.getBounties({ baseMint });
   }

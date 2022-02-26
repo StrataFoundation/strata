@@ -32,6 +32,7 @@
     "@solana/wallet-adapter-react": "^0.15.2",
     "@solana/wallet-adapter-react-ui": "^0.9.1",
     "@solana/wallet-adapter-wallets": "^0.14.3",
+    "@strata-foundation/spl-token-bonding": "^3.2.5-lbc.2",
     "@strata-foundation/marketplace-sdk": "^3.2.5-lbc.2",
     "@strata-foundation/react": "^3.2.5-lbc.2",
     "@types/auth0-js": "^9.14.5",

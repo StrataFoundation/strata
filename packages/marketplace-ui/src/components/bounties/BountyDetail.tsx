@@ -14,7 +14,6 @@ import { toNumber } from "@strata-foundation/spl-token-bonding";
 import { SplTokenMetadata } from "@strata-foundation/spl-utils";
 import debounce from "lodash/debounce";
 import moment from "moment";
-import { useRouter } from "next/router";
 import React, { useMemo, useState } from "react";
 import { RiPencilFill } from "react-icons/ri";
 import { route, routes } from "../..//utils/routes";
@@ -87,11 +86,13 @@ export const BountyDetail = ({
   description,
   image,
   mintKey,
+  onEdit,
 }: {
   mintKey?: PublicKey;
   name?: string;
   description?: string;
   image?: string;
+  onEdit?: () => void
 }) => {
   const { info: tokenBonding, loading: bondingLoading } =
     useTokenBondingFromMint(mintKey);
@@ -153,7 +154,6 @@ export const BountyDetail = ({
   description = targetData?.description || description;
 
   const dataMissing = useMemo(() => !name && !image && !description, [name, image, description]);
-  const router = useRouter();
 
   if (
     (!targetMetaLoading && dataMissing) ||
@@ -184,11 +184,7 @@ export const BountyDetail = ({
             variant="ghost"
             marginLeft="auto"
             onClick={() =>
-              router.push(
-                route(routes.editBounty, {
-                  mintKey: mintKey?.toBase58(),
-                })
-              )
+              onEdit && onEdit()
             }
           >
             Edit
@@ -272,7 +268,7 @@ export const BountyDetail = ({
             <VStack align="flex-end" w="full">
               <AsyncQtyButton
                 buttonProps={{
-                  colorScheme: "orange",
+                  colorScheme: "primary",
                   w: "180px",
                 }}
                 symbol={baseMetadata?.data.symbol}
@@ -330,7 +326,7 @@ export const BountyDetail = ({
                 w="180px"
                 variant="link"
                 size="sm"
-                colorScheme="orange"
+                colorScheme="primary"
               >
                 {isWithdraw ? "Contribute Funds" : "Withdraw Funds"}
               </Button>
