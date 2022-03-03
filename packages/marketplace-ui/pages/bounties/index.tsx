@@ -77,7 +77,6 @@ export const Bounties: NextPage = () => {
               display="inline"
               background="linear-gradient(to right,#FFCD01, #E17E44);"
               backgroundClip="text"
-              textFillColor="transparent"
             >
               valuable
             </Box>

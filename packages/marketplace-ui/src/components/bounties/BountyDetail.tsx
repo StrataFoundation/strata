@@ -155,9 +155,14 @@ export const BountyDetail = ({
   );
 
   const bountyClosed = useMemo(
-    debounce(() => !tokenBonding && !bondingLoading, 200),
+    () => debounce(() => !tokenBonding && !bondingLoading, 200),
     [tokenBonding, bondingLoading]
   );
+
+  console.log("tokenBonding", tokenBonding);
+  console.log("bondingLoading", bondingLoading);
+  console.log("bountyClosed", bountyClosed);
+
   const [topHolderKey, setTopHolderKey] = useState(0);
   const refreshTopHolders = () => setTopHolderKey((k) => k + 1);
 
@@ -206,6 +211,7 @@ export const BountyDetail = ({
   const editVisible =
     targetMetadata?.updateAuthority &&
     targetMetadata.updateAuthority == publicKey?.toBase58();
+
   return (
     <VStack p={2} spacing={2} w="full">
       {editVisible && (
