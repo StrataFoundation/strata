@@ -278,7 +278,7 @@ export const BountyDetail = ({
             beware.
           </Alert>
         )}
-        {bountyClosed && (
+        {bountyClosed() && (
           <>
             <Alert status="info">This bounty has been closed.</Alert>
             <Divider color="gray.200" />
@@ -288,7 +288,7 @@ export const BountyDetail = ({
             <TopHolders key={topHolderKey} mintKey={mintKey} />
           </>
         )}
-        {!bountyClosed && (
+        {!bountyClosed() && (
           <>
             <SimpleGrid
               w="full"
