@@ -1,14 +1,35 @@
-import { Alert, Box, Button, ButtonProps, Center, Divider, Heading, HStack, Icon, Input, InputGroup, InputProps, InputRightElement, Link, SimpleGrid, Spinner, Text, VStack } from "@chakra-ui/react";
+import {
+  Alert,
+  Box,
+  Button,
+  ButtonProps,
+  Center,
+  Divider,
+  Heading,
+  HStack,
+  Icon,
+  Input,
+  InputGroup,
+  InputProps,
+  InputRightElement,
+  Link,
+  SimpleGrid,
+  Spinner,
+  Text,
+  VStack,
+} from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
 import {
-  useBondingPricing, useGovernance, useMint,
+  useBondingPricing,
+  useGovernance,
+  useMint,
   useOwnedAmount,
   useReserveAmount,
   useStrataSdks,
   useTokenBondingFromMint,
-  useTokenMetadata
+  useTokenMetadata,
 } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import { SplTokenMetadata } from "@strata-foundation/spl-utils";
@@ -32,7 +53,7 @@ export const AsyncQtyButton = ({
   action,
   children,
   validate,
-  symbol
+  symbol,
 }: {
   symbol?: string;
   children: React.ReactNode;
@@ -104,13 +125,14 @@ export const BountyDetail = ({
     metadataKey,
     data: targetData,
     loading: targetMetaLoading,
-    displayName
+    displayName,
   } = useTokenMetadata(mintKey);
   const { metadata: baseMetadata, loading: metadataLoading } = useTokenMetadata(
     tokenBonding?.baseMint
   );
-  const { pricing, loading: pricingLoading } =
-    useBondingPricing(tokenBonding?.publicKey);
+  const { pricing, loading: pricingLoading } = useBondingPricing(
+    tokenBonding?.publicKey
+  );
   const { tokenBondingSdk } = useStrataSdks();
   const baseBalance = useOwnedAmount(tokenBonding?.baseMint);
   const targetBalance = useOwnedAmount(tokenBonding?.targetMint);
@@ -131,13 +153,17 @@ export const BountyDetail = ({
     ),
     [tokenBonding, baseMint, reserveAmount]
   );
-    
-  const bountyClosed = useMemo(debounce(() => !tokenBonding && !bondingLoading, 200), [tokenBonding, bondingLoading]);
+
+  const bountyClosed = useMemo(
+    debounce(() => !tokenBonding && !bondingLoading, 200),
+    [tokenBonding, bondingLoading]
+  );
   const [topHolderKey, setTopHolderKey] = useState(0);
-  const refreshTopHolders = () => setTopHolderKey(k => k+1);
-  
+  const refreshTopHolders = () => setTopHolderKey((k) => k + 1);
+
   const attributes = React.useMemo(
-    () => SplTokenMetadata.attributesToRecord(targetData?.attributes), [targetData]
+    () => SplTokenMetadata.attributesToRecord(targetData?.attributes),
+    [targetData]
   );
 
   const { info: governance } = useGovernance(
@@ -146,14 +172,18 @@ export const BountyDetail = ({
 
   const isAdmin =
     (publicKey &&
-    (tokenBonding?.reserveAuthority as PublicKey | undefined)?.equals(
-      publicKey
-    )) || governance;
+      (tokenBonding?.reserveAuthority as PublicKey | undefined)?.equals(
+        publicKey
+      )) ||
+    governance;
   name = displayName || name;
   image = targetImage || image;
   description = targetData?.description || description;
 
-  const dataMissing = useMemo(() => !name && !image && !description, [name, image, description]);
+  const dataMissing = useMemo(
+    () => !name && !image && !description,
+    [name, image, description]
+  );
   const router = useRouter();
 
   if (
@@ -173,29 +203,29 @@ export const BountyDetail = ({
     return <Spinner />;
   }
 
-  const editVisible = targetMetadata?.updateAuthority &&
-        targetMetadata.updateAuthority == publicKey?.toBase58();
+  const editVisible =
+    targetMetadata?.updateAuthority &&
+    targetMetadata.updateAuthority == publicKey?.toBase58();
   return (
     <VStack p={2} spacing={2} w="full">
-      { editVisible && (
-          <Button
-            color="gray.400"
-            // __hover={{ rounded: "lg", borderColor: "gray.200", backgroundColor: "gray.100" }}
-            leftIcon={<Icon as={RiPencilFill} mr="-1px" />}
-            variant="ghost"
-            marginLeft="auto"
-            onClick={() =>
-              router.push(
-                route(routes.editBounty, {
-                  mintKey: mintKey?.toBase58(),
-                })
-              )
-            }
-          >
-            Edit
-          </Button>
-        )
-      }
+      {editVisible && (
+        <Button
+          color="gray.400"
+          // __hover={{ rounded: "lg", borderColor: "gray.200", backgroundColor: "gray.100" }}
+          leftIcon={<Icon as={RiPencilFill} mr="-1px" />}
+          variant="ghost"
+          marginLeft="auto"
+          onClick={() =>
+            router.push(
+              route(routes.editBounty, {
+                mintKey: mintKey?.toBase58(),
+              })
+            )
+          }
+        >
+          Edit
+        </Button>
+      )}
 
       <VStack w="full" p={6} pt={editVisible ? 0 : 8} spacing={8}>
         <VStack spacing={4}>
@@ -239,11 +269,12 @@ export const BountyDetail = ({
         )}
         {bountyClosed && (
           <>
-            <Alert status="error">
-              This bounty has been closed. You can burn the bounty tokens if you
-              no longer have use for them.{" "}
-            </Alert>
-            {mintKey && <BurnButton mintKey={mintKey} />}
+            <Alert status="info">This bounty has been closed.</Alert>
+            <Divider color="gray.200" />
+            <Heading mb={"-6px"} alignSelf="flex-start" size="sm">
+              Top Contributors
+            </Heading>
+            <TopHolders key={topHolderKey} mintKey={mintKey} />
           </>
         )}
         {!bountyClosed && (
