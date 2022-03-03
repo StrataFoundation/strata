@@ -159,10 +159,6 @@ export const BountyDetail = ({
     [tokenBonding, bondingLoading]
   );
 
-  console.log("tokenBonding", tokenBonding);
-  console.log("bondingLoading", bondingLoading);
-  console.log("bountyClosed", bountyClosed);
-
   const [topHolderKey, setTopHolderKey] = useState(0);
   const refreshTopHolders = () => setTopHolderKey((k) => k + 1);
 
