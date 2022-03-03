@@ -35,7 +35,7 @@ import { toNumber } from "@strata-foundation/spl-token-bonding";
 import { SplTokenMetadata } from "@strata-foundation/spl-utils";
 import debounce from "lodash/debounce";
 import moment from "moment";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { route, routes } from "../..//utils/routes";
 import { AsyncButton } from "../AsyncButton";
 import { BurnButton } from "../BurnButton";
@@ -158,6 +158,15 @@ export const BountyDetail = ({
     () => debounce(() => !tokenBonding && !bondingLoading, 200),
     [tokenBonding, bondingLoading]
   );
+
+  // Stop the invocation of the debounced function
+  // after unmounting
+  useEffect(() => {
+    return () => {
+      bountyClosed.cancel();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [topHolderKey, setTopHolderKey] = useState(0);
   const refreshTopHolders = () => setTopHolderKey((k) => k + 1);
