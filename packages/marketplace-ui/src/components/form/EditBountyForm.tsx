@@ -265,16 +265,17 @@ export const EditBountyForm = ({ mintKey, onComplete, hide = new Set()}: { mintK
 
   return (
     <EditBountyFormRaw
+      hide={new Set(["contact", "discussion"])}
       onComplete={onComplete}
       mintKey={mintKey}
       values={{
         authority: (tokenBonding!.reserveAuthority as PublicKey).toBase58(),
         name: displayName!,
         image: file,
-        description: data!.description,
-        shortName: metadata!.data.symbol,
-        contact: attributes!.contact as string,
-        discussion: attributes!.discussion as string,
+        description: data?.description,
+        shortName: metadata?.data.symbol,
+        contact: attributes?.contact as string,
+        discussion: attributes?.discussion as string,
       }}
     />
   );
