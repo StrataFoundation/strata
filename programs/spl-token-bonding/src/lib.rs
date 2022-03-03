@@ -708,7 +708,7 @@ pub mod spl_token_bonding {
           system_program: ctx.accounts.system_program.clone(),
         },
         &SellWrappedSolV0Args {
-          amount: reclaimed,
+          amount: base_royalties,
           all: false,
         },
         Some(bonding_seeds),
