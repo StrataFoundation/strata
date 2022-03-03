@@ -141,6 +141,7 @@ export const BountyDetail = ({
   const baseMint = useMint(tokenBonding?.baseMint);
   // Debounce because this can cause it to flash a notification when reserves change at the
   // same time as bonding, but one comes through before the other.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const fundsHaveBeenUsed = useMemo(
     debounce(
       () =>
