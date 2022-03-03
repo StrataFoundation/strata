@@ -389,7 +389,7 @@ export interface ICreateTokenBondingArgs {
 
   advanced?: {
     /**
-     * Initial padding is an advanced feature, incorrect use could lead to insufficient resreves to cover sells
+     * Initial padding is an advanced feature, incorrect use could lead to insufficient reserves to cover sells
      *
      * Start the curve off at a given reserve and supply synthetically. This means price can start nonzero. The current use case
      * for this is LBPs. Note that a curve cannot be adaptive. ignoreExternalReserveChanges and ignoreExternalSupplyChanges
