@@ -2241,11 +2241,6 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       amount: toBN(amount, baseMint),
     };
     if (isNative) {
-      console.log(
-        "HEU",
-        this.wallet.publicKey.toBase58(),
-        common.reserveAuthority.toBase58()
-      );
       instructions.push(
         await this.instruction.transferReservesNativeV0(args, {
           accounts: {
