@@ -46,15 +46,15 @@ export const Providers: React.FC = ({ children }) => {
     <ThemeProvider>
       <CSSReset />
       <ErrorHandlerProvider onError={onError}>
-        <Wallet>
-          <WalletModalProvider>
-            <StrataSdksProvider>
-              <AccountProvider commitment="confirmed">
-                <TokenListProvider>{children}</TokenListProvider>
-              </AccountProvider>
-            </StrataSdksProvider>
-          </WalletModalProvider>
-        </Wallet>
+        {/* <Wallet>
+          <WalletModalProvider> */}
+        <StrataSdksProvider>
+          <AccountProvider commitment="confirmed">
+            <TokenListProvider>{children}</TokenListProvider>
+          </AccountProvider>
+        </StrataSdksProvider>
+        {/*           </WalletModalProvider>
+        </Wallet> */}
       </ErrorHandlerProvider>
     </ThemeProvider>
   );

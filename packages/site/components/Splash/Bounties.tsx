@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from "react";
-import Image from "next/image";
+import React from "react";
 import {
   Box,
   Container,
   Flex,
   Stack,
-  Heading,
   Text,
   Button,
   Link,
+  Image,
+  Divider,
 } from "@chakra-ui/react";
 
 export const Bounties = () => (
-  <Box w="full" bg="#191C2A" color="white">
+  <Box w="full" bg="gray.900" color="white">
     <Container maxW="container.lg">
       <Flex
         align="center"
@@ -23,11 +23,11 @@ export const Bounties = () => (
         }}
         direction={{ base: "column-reverse", md: "row" }}
         wrap="nowrap"
-        py={20}
+        pt={20}
       >
         <Stack
           gap={2}
-          w={{ base: "80%", md: "45%" }}
+          w={{ base: "80%", md: "38%" }}
           align={["center", "center", "flex-start", "flex-start"]}
         >
           <Text fontSize="sm" fontWeight="semibold" color="cyan.500">
@@ -62,12 +62,132 @@ export const Bounties = () => (
               _hover={{ bg: "orange.500", textDecoration: "none" }}
               as={Link}
               href="/docs/marketplace/bounties"
+              px={16}
             >
               View Bounties Docs
             </Button>
           </Stack>
         </Stack>
-        <Box>Image here</Box>
+        <Box
+          lineHeight="normal"
+          mb={{ base: 0, sm: 16 }}
+          ml={{
+            base: 0,
+            md: 14,
+          }}
+        >
+          <Stack
+            bg="#191C2A"
+            direction="row"
+            gap={4}
+            rounded="lg"
+            border="1px solid white"
+            p={8}
+            ml="30px"
+          >
+            <Image
+              src="/dtpBounty.png"
+              alt="Degen Trash Pandas Bounty"
+              width="48px"
+              height="48px"
+            />
+            <Stack spacing="4">
+              <Text fontSize="xl" fontWeight="bold">
+                The Degens take on plastic: Becuase a global problem needs a
+                global $SOLution
+              </Text>
+              <Stack direction="row" gap={2} fontSize="sm">
+                <Text>
+                  <Text as="span" fontWeight="bold">
+                    Requester
+                  </Text>{" "}
+                  @EndangeredDegen
+                </Text>
+                <Text>
+                  <Text as="span" fontWeight="bold">
+                    Approver
+                  </Text>{" "}
+                  @EndangeredDegen
+                </Text>
+              </Stack>
+              <Text fontSize="sm" color="gray.400">
+                Created 1 day ago
+              </Text>
+            </Stack>
+          </Stack>
+          <Box
+            bg="gray.900"
+            display="inline-block"
+            rounded="lg"
+            border="1px solid"
+            borderColor="cyan.500"
+            p={4}
+            pr={12}
+            mt="-20px"
+          >
+            <Stack spacing="2">
+              <Text>
+                <Text as="span" fontWeight="bold">
+                  1,018.201
+                </Text>{" "}
+                SOL
+              </Text>
+              <Text>Contributed</Text>
+            </Stack>
+          </Box>
+          <Box
+            mt="-40px"
+            ml="180px"
+            bgGradient="linear(to-b, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0))"
+            bgClip="text"
+          >
+            <Stack>
+              <Text fontSize="sm" fontWeight="bold" mb={2}>
+                Top Contributors
+              </Text>
+              <Stack fontSize="sm" lineHeight="normal">
+                <Stack direction="row" spacing={4} w="full" alignItems="center">
+                  <Text>1</Text>
+                  <Text>Gc9kFEDJaSv8PEGks...</Text>
+                  <Text flexGrow="1" align="right" fontWeight="bold">
+                    129.00
+                  </Text>
+                </Stack>
+                <Divider color="gray.300" />
+              </Stack>
+              <Stack gap={1} fontSize="sm" lineHeight="normal">
+                <Stack direction="row" spacing={4} w="full" alignItems="center">
+                  <Text>2</Text>
+                  <Stack direction="row" spacing={2} align="center">
+                    <Image
+                      src="/wumbo.png"
+                      alt="Wumbo Logo"
+                      height="24px"
+                      opacity="0.6"
+                    />
+                    <Stack spacing={0}>
+                      <Text>Wumbo Social</Text>
+                      <Text fontSize="xs">soWum | @TeamWumbo</Text>
+                    </Stack>
+                  </Stack>
+                  <Text flexGrow="1" align="right" fontWeight="bold">
+                    61.07
+                  </Text>
+                </Stack>
+                <Divider color="gray.500" />
+              </Stack>
+              <Stack fontSize="sm" lineHeight="normal">
+                <Stack direction="row" spacing={4} w="full" alignItems="center">
+                  <Text>3</Text>
+                  <Text>7G8ocssMyZdvKZXD...</Text>
+                  <Text flexGrow="1" align="right" fontWeight="bold">
+                    43.50
+                  </Text>
+                </Stack>
+              </Stack>
+            </Stack>
+          </Box>
+        </Box>
       </Flex>
     </Container>
   </Box>

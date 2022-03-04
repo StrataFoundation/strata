@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from "react";
-import Image from "next/image";
 import {
   Box,
   Container,
   Flex,
   Stack,
-  Heading,
+  Image,
   Text,
   Button,
   Link,
 } from "@chakra-ui/react";
 
-export const Bootstrapper = () => (
+export const Lbc = () => (
   <Box w="full" bg="gray.900" color="white">
     <Container maxW="container.lg">
       <Flex
@@ -23,9 +22,14 @@ export const Bootstrapper = () => (
         }}
         direction={{ base: "column-reverse", md: "row" }}
         wrap="nowrap"
-        py={20}
+        pb={20}
       >
-        <Box>Image here</Box>
+        <Image
+          src="lbcChart.png"
+          alt="Lbc Chart"
+          height="340px"
+          mt={{ base: 0, sm: 16 }}
+        />
         <Stack
           gap={2}
           w={{ base: "80%", md: "45%" }}

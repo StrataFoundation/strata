@@ -77,7 +77,7 @@ export const Header: React.FC = () => {
               direction={["column", "row", "row", "row"]}
               pt="0"
             >
-              {connected && (
+              {/* {connected && (
                 <Button
                   size="sm"
                   _hover={{ backgroundColor: "black.500" }}
@@ -87,7 +87,7 @@ export const Header: React.FC = () => {
                   Disconnect
                 </Button>
               )}
-              <WalletModalButton />
+              <WalletModalButton /> */}
             </HStack>
           </Container>
         </Center>
