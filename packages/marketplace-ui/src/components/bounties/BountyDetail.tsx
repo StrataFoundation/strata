@@ -1,9 +1,28 @@
-import { Alert, Box, Button, ButtonProps, Center, Divider, Heading, HStack, Icon, Input, InputGroup, InputProps, InputRightElement, SimpleGrid, Spinner, Text, VStack } from "@chakra-ui/react";
+import {
+  Alert,
+  Box,
+  Button,
+  ButtonProps,
+  Center,
+  Divider,
+  Heading,
+  HStack,
+  Icon,
+  Input,
+  InputGroup,
+  InputProps,
+  InputRightElement, SimpleGrid,
+  Spinner,
+  Text,
+  VStack
+} from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
 import {
-  useBondingPricing, useGovernance, useMint,
+  useBondingPricing,
+  useGovernance,
+  useMint,
   useOwnedAmount,
   useReserveAmount,
   useStrataSdks,
@@ -14,11 +33,9 @@ import { toNumber } from "@strata-foundation/spl-token-bonding";
 import { SplTokenMetadata } from "@strata-foundation/spl-utils";
 import debounce from "lodash/debounce";
 import moment from "moment";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { RiPencilFill } from "react-icons/ri";
-import { route, routes } from "../..//utils/routes";
 import { AsyncButton } from "../AsyncButton";
-import { BurnButton } from "../BurnButton";
 import { AuthorityAndTokenInfo } from "./AuthorityAndTokenInfo";
 import { BountyCardContribution } from "./BountyCardContribution";
 import { DisburseFunds } from "./DisburseFunds";
@@ -30,7 +47,7 @@ export const AsyncQtyButton = ({
   action,
   children,
   validate,
-  symbol
+  symbol,
 }: {
   symbol?: string;
   children: React.ReactNode;
@@ -104,13 +121,14 @@ export const BountyDetail = ({
     metadataKey,
     data: targetData,
     loading: targetMetaLoading,
-    displayName
+    displayName,
   } = useTokenMetadata(mintKey);
   const { metadata: baseMetadata, loading: metadataLoading } = useTokenMetadata(
     tokenBonding?.baseMint
   );
-  const { pricing, loading: pricingLoading } =
-    useBondingPricing(tokenBonding?.publicKey);
+  const { pricing, loading: pricingLoading } = useBondingPricing(
+    tokenBonding?.publicKey
+  );
   const { tokenBondingSdk } = useStrataSdks();
   const baseBalance = useOwnedAmount(tokenBonding?.baseMint);
   const targetBalance = useOwnedAmount(tokenBonding?.targetMint);
@@ -119,6 +137,7 @@ export const BountyDetail = ({
   const baseMint = useMint(tokenBonding?.baseMint);
   // Debounce because this can cause it to flash a notification when reserves change at the
   // same time as bonding, but one comes through before the other.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const fundsHaveBeenUsed = useMemo(
     debounce(
       () =>
@@ -131,13 +150,27 @@ export const BountyDetail = ({
     ),
     [tokenBonding, baseMint, reserveAmount]
   );
-    
-  const bountyClosed = useMemo(debounce(() => !tokenBonding && !bondingLoading, 200), [tokenBonding, bondingLoading]);
+
+  const bountyClosed = useMemo(
+    () => debounce(() => !tokenBonding && !bondingLoading, 200),
+    [tokenBonding, bondingLoading]
+  );
+
+  // Stop the invocation of the debounced function
+  // after unmounting
+  useEffect(() => {
+    return () => {
+      bountyClosed.cancel();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [topHolderKey, setTopHolderKey] = useState(0);
-  const refreshTopHolders = () => setTopHolderKey(k => k+1);
-  
+  const refreshTopHolders = () => setTopHolderKey((k) => k + 1);
+
   const attributes = React.useMemo(
-    () => SplTokenMetadata.attributesToRecord(targetData?.attributes), [targetData]
+    () => SplTokenMetadata.attributesToRecord(targetData?.attributes),
+    [targetData]
   );
 
   const { info: governance } = useGovernance(
@@ -146,9 +179,10 @@ export const BountyDetail = ({
 
   const isAdmin =
     (publicKey &&
-    (tokenBonding?.reserveAuthority as PublicKey | undefined)?.equals(
-      publicKey
-    )) || governance;
+      (tokenBonding?.reserveAuthority as PublicKey | undefined)?.equals(
+        publicKey
+      )) ||
+    governance;
   name = displayName || name;
   image = targetImage || image;
   description = targetData?.description || description;
@@ -172,8 +206,10 @@ export const BountyDetail = ({
     return <Spinner />;
   }
 
-  const editVisible = targetMetadata?.updateAuthority &&
-        targetMetadata.updateAuthority == publicKey?.toBase58();
+  const editVisible =
+    targetMetadata?.updateAuthority &&
+    targetMetadata.updateAuthority == publicKey?.toBase58();
+
   return (
     <VStack p={2} spacing={2} w="full">
       { editVisible && (
@@ -232,16 +268,17 @@ export const BountyDetail = ({
             beware.
           </Alert>
         )}
-        {bountyClosed && (
+        {bountyClosed() && (
           <>
-            <Alert status="error">
-              This bounty has been closed. You can burn the bounty tokens if you
-              no longer have use for them.{" "}
-            </Alert>
-            {mintKey && <BurnButton mintKey={mintKey} />}
+            <Alert status="info">This bounty has been closed.</Alert>
+            <Divider color="gray.200" />
+            <Heading mb={"-6px"} alignSelf="flex-start" size="sm">
+              Top Contributors
+            </Heading>
+            <TopHolders key={topHolderKey} mintKey={mintKey} />
           </>
         )}
-        {!bountyClosed && (
+        {!bountyClosed() && (
           <>
             <SimpleGrid
               w="full"

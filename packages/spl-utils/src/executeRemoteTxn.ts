@@ -2,6 +2,7 @@ import { Provider } from "@project-serum/anchor";
 import { Transaction } from "@solana/web3.js";
 import { ProgramError } from "./anchorError";
 import axios from "axios";
+import { sendAndConfirmWithRetry } from "./transaction";
 
 async function promiseAllInOrder<T>(
   it: (() => Promise<T>)[]
@@ -66,21 +67,11 @@ export async function executeTxnsInOrder(
     return [
       ...(await promiseAllInOrder(
         txns.map((txn) => async () => {
-          const txid = await provider.connection.sendRawTransaction(txn, {
+          const { txid } = await sendAndConfirmWithRetry(provider.connection, txn, {
             skipPreflight: true,
-          });
-          const result = await provider.connection.confirmTransaction(
-            txid,
-            "confirmed"
-          );
-          if (result.value.err) {
-            const tx = await provider.connection.getTransaction(txid, {
-              commitment: "confirmed",
-            });
-            console.error(tx?.meta?.logMessages?.join("\n"));
-            throw result.value.err;
-          }
-          return txid as string;
+          }, "confirmed");
+
+          return txid;
         })
       )),
     ];
