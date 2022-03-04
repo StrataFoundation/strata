@@ -38,12 +38,12 @@ pub fn handler(ctx: Context<SellNativeV0>, args: SellV0Args) -> Result<()> {
     target_royalties,
   } = sell_shared_logic(&mut ctx.accounts.common, &args)?;
 
-  msg!(
-    "Total reclaimed is {}, with {} to base royalties, {} to target royalties",
-    reclaimed,
-    base_royalties,
-    target_royalties
-  );
+  // msg!(
+  //   "Total reclaimed is {}, with {} to base royalties, {} to target royalties",
+  //   reclaimed,
+  //   base_royalties,
+  //   target_royalties
+  // );
 
   burn_and_pay_sell_royalties(amount, target_royalties, &ctx.accounts.common)?;
 
@@ -52,11 +52,11 @@ pub fn handler(ctx: Context<SellNativeV0>, args: SellV0Args) -> Result<()> {
   let token_bonding = &mut ctx.accounts.common.token_bonding;
   let target_mint = &mut ctx.accounts.common.target_mint;
 
-  msg!(
-    "Paying out {} from base storage, {}",
-    reclaimed,
-    ctx.accounts.common.base_storage.amount
-  );
+  // msg!(
+  //   "Paying out {} from base storage, {}",
+  //   reclaimed,
+  //   ctx.accounts.common.base_storage.amount
+  // );
   let bonding_seeds: &[&[&[u8]]] = &[&[
     b"token-bonding",
     target_mint.to_account_info().key.as_ref(),

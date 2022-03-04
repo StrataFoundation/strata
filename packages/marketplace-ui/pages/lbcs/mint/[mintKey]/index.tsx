@@ -1,3 +1,4 @@
+import { LbcStatus } from "@/components/lbc";
 import { Branding } from "@/components/lbc/Branding";
 import { LbcInfo } from "@/components/lbc/LbcInfo";
 import { MintButton } from "@/components/lbc/MintButton";
@@ -6,17 +7,22 @@ import { useLivePrice } from "@/hooks/useLivePrice";
 import { mintMetadataServerSideProps } from "@/utils/tokenMetadataServerProps";
 import {
   Box,
-  Center, Container, DarkMode, Heading,
-  Spinner, useColorModeValue, VStack
+  Center,
+  Container,
+  DarkMode,
+  Heading,
+  Spinner,
+  useColorModeValue,
+  VStack,
 } from "@chakra-ui/react";
 import {
   usePublicKey,
-  useTokenBondingFromMint
+  useTokenBondingFromMint,
 } from "@strata-foundation/react";
 import {
   GetServerSideProps,
   InferGetServerSidePropsType,
-  NextPage
+  NextPage,
 } from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";
@@ -53,34 +59,40 @@ export const LbcDisplay: NextPage = ({
         <MetadataMeta name={name} description={description} image={image} />
       </Head>
       <Container mt={"35px"} justify="stretch" maxW="460px">
-        <Heading mb={2} fontSize="24px" fontWeight={600}>
-          Mint
-        </Heading>
-        <Box
-          zIndex={1}
-          shadow="xl"
-          rounded="lg"
-          p="16px"
-          pb="29px"
-          minH="300px"
-          bg="black.300"
-        >
-          {loading && (
-            <Center>
-              <Spinner />
-            </Center>
-          )}
-          {!loading && tokenBonding && (
-            <VStack align="stretch" spacing={8}>
-              <LbcInfo price={price} tokenBondingKey={tokenBonding.publicKey} />
-              <MintButton
-                price={price}
-                tokenBondingKey={tokenBonding.publicKey}
-              />
-              <Branding />
-            </VStack>
-          )}
-        </Box>
+        <VStack spacing={2} align="left">
+          <Heading mb={2} fontSize="24px" fontWeight={600}>
+            Mint
+          </Heading>
+          <LbcStatus tokenBondingKey={tokenBonding?.publicKey} />
+          <Box
+            zIndex={1}
+            shadow="xl"
+            rounded="lg"
+            p="16px"
+            pb="29px"
+            minH="300px"
+            bg="black.300"
+          >
+            {loading && (
+              <Center>
+                <Spinner />
+              </Center>
+            )}
+            {!loading && tokenBonding && (
+              <VStack align="stretch" spacing={8}>
+                <LbcInfo
+                  price={price}
+                  tokenBondingKey={tokenBonding.publicKey}
+                />
+                <MintButton
+                  price={price}
+                  tokenBondingKey={tokenBonding.publicKey}
+                />
+                <Branding />
+              </VStack>
+            )}
+          </Box>
+        </VStack>
       </Container>
     </Box>
   );

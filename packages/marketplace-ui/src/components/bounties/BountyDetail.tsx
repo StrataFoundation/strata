@@ -11,12 +11,10 @@ import {
   Input,
   InputGroup,
   InputProps,
-  InputRightElement,
-  Link,
-  SimpleGrid,
+  InputRightElement, SimpleGrid,
   Spinner,
   Text,
-  VStack,
+  VStack
 } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
@@ -29,16 +27,17 @@ import {
   useReserveAmount,
   useStrataSdks,
   useTokenBondingFromMint,
-  useTokenMetadata,
+  useTokenMetadata
 } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import { SplTokenMetadata } from "@strata-foundation/spl-utils";
 import debounce from "lodash/debounce";
 import moment from "moment";
-import React, { useMemo, useState, useEffect } from "react";
+import { useRouter } from "next/router";
+import React, { useEffect, useMemo, useState } from "react";
+import { RiPencilFill } from "react-icons/ri";
 import { route, routes } from "../..//utils/routes";
 import { AsyncButton } from "../AsyncButton";
-import { BurnButton } from "../BurnButton";
 import { AuthorityAndTokenInfo } from "./AuthorityAndTokenInfo";
 import { BountyCardContribution } from "./BountyCardContribution";
 import { DisburseFunds } from "./DisburseFunds";

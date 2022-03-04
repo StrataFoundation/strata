@@ -55,7 +55,6 @@ async function getMissingSpace(
   }
 
   const path = hierarchy.path(baseMint, targetMint);
-  console.log(hierarchy.tokenBonding)
   const accounts = (
     await Promise.all(
       path.map(async (hierarchy) => {

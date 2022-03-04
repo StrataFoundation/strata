@@ -239,7 +239,6 @@ export class ProgramError {
     let errorCode: number | null = null;
     if (err.InstructionError) {
       if (
-        err.InstructionError[0] &&
         typeof err.InstructionError[0] == "number"
       ) {
         errorCode = err.InstructionError[0];

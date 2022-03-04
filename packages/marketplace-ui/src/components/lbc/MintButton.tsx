@@ -23,8 +23,8 @@ import {
   useProvider,
   useStrataSdks,
   useTokenBonding,
-  useUserOwnedAmount,
   Notification,
+  useUserOwnedAmount,
 } from "@strata-foundation/react";
 import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import { useState } from "react";
@@ -100,6 +100,7 @@ export const MintButton = ({
     useTokenBonding(tokenBondingKey);
   const { price } = useLivePrice(tokenBonding?.publicKey);
   const priceToUse = inputPrice || price;
+  const targetBalance = useUserOwnedAmount(publicKey, tokenBonding?.targetMint)
 
   const ownedAmount = useUserOwnedAmount(publicKey, tokenBonding?.baseMint);
   const insufficientBalance = (priceToUse || 0) > (ownedAmount || 0);
@@ -121,7 +122,10 @@ export const MintButton = ({
           isLoading={bondingLoading || pricingLoading || loading}
           colorScheme="primary"
           isDisabled={
-            numRemaining == 0 || insufficientBalance || notLive || isDisabled
+            (numRemaining == 0 && !targetBalance) ||
+            insufficientBalance ||
+            notLive ||
+            isDisabled
           }
           loadingText={
             awaitingApproval
@@ -131,7 +135,9 @@ export const MintButton = ({
               : "Loading"
           }
         >
-          {numRemaining == 0
+          {(targetBalance || 0) > 0
+            ? "Finish previous Mint Transaction"
+            : numRemaining == 0
             ? "Sold Out"
             : insufficientBalance
             ? "Insufficient Balance"

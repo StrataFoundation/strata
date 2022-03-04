@@ -3,7 +3,7 @@ import { PublicKey } from "@solana/web3.js";
 import { useMint, useTokenBonding } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 
-export const useCapInfo = (tokenBondingKey: PublicKey) => {
+export const useCapInfo = (tokenBondingKey: PublicKey | undefined) => {
   const { info: tokenBonding, loading: loadingBonding } =
     useTokenBonding(tokenBondingKey);
   const targetMintAcct = useMint(tokenBonding?.targetMint);
