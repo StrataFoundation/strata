@@ -35,9 +35,7 @@ import { toNumber } from "@strata-foundation/spl-token-bonding";
 import { SplTokenMetadata } from "@strata-foundation/spl-utils";
 import debounce from "lodash/debounce";
 import moment from "moment";
-import { useRouter } from "next/router";
-import React, { useMemo, useState } from "react";
-import { RiPencilFill } from "react-icons/ri";
+import React, { useMemo, useState, useEffect } from "react";
 import { route, routes } from "../..//utils/routes";
 import { AsyncButton } from "../AsyncButton";
 import { BurnButton } from "../BurnButton";
@@ -140,6 +138,7 @@ export const BountyDetail = ({
   const baseMint = useMint(tokenBonding?.baseMint);
   // Debounce because this can cause it to flash a notification when reserves change at the
   // same time as bonding, but one comes through before the other.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const fundsHaveBeenUsed = useMemo(
     debounce(
       () =>
@@ -154,9 +153,19 @@ export const BountyDetail = ({
   );
 
   const bountyClosed = useMemo(
-    debounce(() => !tokenBonding && !bondingLoading, 200),
+    () => debounce(() => !tokenBonding && !bondingLoading, 200),
     [tokenBonding, bondingLoading]
   );
+
+  // Stop the invocation of the debounced function
+  // after unmounting
+  useEffect(() => {
+    return () => {
+      bountyClosed.cancel();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [topHolderKey, setTopHolderKey] = useState(0);
   const refreshTopHolders = () => setTopHolderKey((k) => k + 1);
 
@@ -205,6 +214,7 @@ export const BountyDetail = ({
   const editVisible =
     targetMetadata?.updateAuthority &&
     targetMetadata.updateAuthority == publicKey?.toBase58();
+
   return (
     <VStack p={2} spacing={2} w="full">
       {editVisible && (
@@ -266,7 +276,7 @@ export const BountyDetail = ({
             beware.
           </Alert>
         )}
-        {bountyClosed && (
+        {bountyClosed() && (
           <>
             <Alert status="info">This bounty has been closed.</Alert>
             <Divider color="gray.200" />
@@ -276,7 +286,7 @@ export const BountyDetail = ({
             <TopHolders key={topHolderKey} mintKey={mintKey} />
           </>
         )}
-        {!bountyClosed && (
+        {!bountyClosed() && (
           <>
             <SimpleGrid
               w="full"
