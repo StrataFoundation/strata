@@ -137,7 +137,7 @@ export const Bounties = () => (
           </Box>
           <Box
             mt="-40px"
-            ml="180px"
+            ml="200px"
             bgGradient="linear(to-b, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0))"
             bgClip="text"
           >
