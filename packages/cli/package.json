@@ -16,6 +16,7 @@
         "copy-files": "copyfiles -u 1 src/**/*.js dist/lib",
         "watch": "yarn run copy-files && node src/idlToTs",
         "bootstrap": "tsc && node dist/lib/bootstrap",
+        "bounty-dist": "tsc && node dist/lib/bounty-dist",
         "create-governance-token": "tsc && node dist/lib/createGovernanceToken"
     },
     "dependencies": {

@@ -8,6 +8,8 @@ import { Providers } from '../src/components/Providers';
 
 // Use require instead of import since order matters
 require('../styles/globals.css');
+require("react-circular-progressbar/dist/styles.css");
+require("@solana/wallet-adapter-react-ui/styles.css");
 
 const App: FC<AppProps> = ({ Component, pageProps }) => {
   return (

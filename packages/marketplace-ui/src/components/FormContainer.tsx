@@ -9,7 +9,7 @@ export const FormContainer = ({
   title: string;
 }) => {
   return (
-    <Box w="full" backgroundColor="#f9f9f9" height="100vh" overflow="auto">
+    <Box w="full" backgroundColor="#f9f9f9" >
       <Container maxW="container.md" pt={8} pb={"200px"}>
         <Heading mb={4} size="lg">
           {title}

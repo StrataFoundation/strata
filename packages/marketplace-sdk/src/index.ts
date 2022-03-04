@@ -1,26 +1,22 @@
 import {
-  DataV2,
-  Metadata,
-  MetadataData,
+  DataV2
 } from "@metaplex-foundation/mpl-token-metadata";
-import { AccountsCoder, Provider } from "@project-serum/anchor";
+import { BorshAccountsCoder, Provider } from "@project-serum/anchor";
 import { NATIVE_MINT, Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
 import { Finality, Keypair, PublicKey } from "@solana/web3.js";
 import {
   ExponentialCurveConfig,
   ICreateTokenBondingArgs,
+  ICurveConfig,
   ITokenBonding,
-  SplTokenBonding,
+  SplTokenBonding, TimeDecayExponentialCurveConfig,
+  toBN
 } from "@strata-foundation/spl-token-bonding";
 import {
   Attribute,
   BigInstructionResult,
   createMintInstructions,
-  getMintInfo,
-  IMetadataExtension,
-  InstructionResult,
-  ITokenWithMeta,
-  SplTokenMetadata,
+  getMintInfo, InstructionResult, SplTokenMetadata
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
 import bs58 from "bs58";
@@ -99,6 +95,57 @@ interface ICreateBountyArgs {
    */
   baseMint: PublicKey;
 
+  /**
+   * Optionally -- override bonding params
+   */
+  bondingArgs?: Partial<ICreateTokenBondingArgs>;
+}
+
+interface ILbpCurveArgs {
+/** Max tokens to be sold */
+  maxSupply: number;
+  /** Interval in seconds to sell them over */
+  interval: number;
+  /**
+   * Starting price
+   */
+  startPrice: number;
+  /**
+   * Minimum price (finishing price if no one buys anything)
+   */
+  minPrice: number;
+}
+
+interface ICreateLiquidityBootstrapperArgs extends ILbpCurveArgs {
+  payer?: PublicKey;
+  /**
+   * Optionally, use this keypair to create the target mint
+   */
+  targetMintKeypair?: Keypair;
+  /**
+   * Optionally, use this mint. You must have mint authority
+   */
+  targetMint?: PublicKey;
+  /**
+   * Wallet who will recieve the funds from the liquidity bootstrapping
+   */
+  authority?: PublicKey;
+  /**
+   * The token metadata for the LBP item
+   */
+  metadata?: DataV2;
+
+  /**
+   * The update authority on the metadata created. **Default:** authority
+   */
+  metadataUpdateAuthority?: PublicKey;
+
+  /**
+   * The mint to base the sales off of
+   */
+  baseMint: PublicKey;
+
+  
   /**
    * Optionally -- override bonding params
    */
@@ -204,7 +251,8 @@ export class MarketplaceSdk {
     if (baseMint?.equals(NATIVE_MINT)) {
       baseMint = state!.wrappedSolMint;
     }
-    const descriminator = AccountsCoder.accountDiscriminator("tokenBondingV0");
+    const descriminator =
+      BorshAccountsCoder.accountDiscriminator("tokenBondingV0");
     const filters = [
       {
         memcmp: {
@@ -231,7 +279,7 @@ export class MarketplaceSdk {
               new u64(0).toBuffer(),
               new u64(0).toBuffer(),
               new PublicKey(MarketplaceSdk.FIXED_CURVE).toBuffer(),
-              new Uint8Array([0, 0])
+              new Uint8Array([0, 0]),
             ])
           ),
         },
@@ -305,18 +353,17 @@ export class MarketplaceSdk {
       }
     );
 
-    return mints
-      .map((mint, index) => {
-        const goLive = goLives[index];
-        const contribution = contributions[index];
-        return {
-          tokenBondingKey: mint.pubkey,
-          baseMint: new PublicKey(mint.account.data.slice(0, 32)),
-          targetMint: new PublicKey(mint.account.data.slice(32, 64)),
-          goLiveUnixTime: new BN(goLive.account.data, 10, "le"),
-          reserveBalanceFromBonding: new BN(contribution.account.data, 10, "le"),
-        };
-      });
+    return mints.map((mint, index) => {
+      const goLive = goLives[index];
+      const contribution = contributions[index];
+      return {
+        tokenBondingKey: mint.pubkey,
+        baseMint: new PublicKey(mint.account.data.slice(0, 32)),
+        targetMint: new PublicKey(mint.account.data.slice(32, 64)),
+        goLiveUnixTime: new BN(goLive.account.data, 10, "le"),
+        reserveBalanceFromBonding: new BN(contribution.account.data, 10, "le"),
+      };
+    });
   }
 
   async createMetadataForBondingInstructions({
@@ -389,7 +436,7 @@ export class MarketplaceSdk {
     price,
     bondingArgs,
     baseMint,
-    targetMintKeypair,
+    targetMintKeypair = Keypair.generate(),
   }: ICreateMarketItemArgs): Promise<
     BigInstructionResult<{ tokenBonding: PublicKey }>
   > {
@@ -511,7 +558,7 @@ export class MarketplaceSdk {
   async createBountyInstructions({
     payer = this.provider.wallet.publicKey,
     authority = this.provider.wallet.publicKey,
-    targetMintKeypair,
+    targetMintKeypair = Keypair.generate(),
     metadata,
     metadataUpdateAuthority = authority,
     bondingArgs,
@@ -584,6 +631,184 @@ export class MarketplaceSdk {
   ): Promise<{ tokenBonding: PublicKey; targetMint: PublicKey }> {
     return this.tokenBondingSdk.executeBig(
       this.createBountyInstructions(args),
+      args.payer,
+      finality
+    );
+  }
+
+  static lbcCurve({
+    interval,
+    startPrice,
+    minPrice,
+    maxSupply
+  }: ILbpCurveArgs): { reserves: number, supply: number, curveConfig: ICurveConfig } {
+    if (startPrice < minPrice) {
+      throw new Error("Max price must be more than min price");
+    }
+    if (minPrice == 0) {
+      throw new Error("Min price must be more than 0")
+    }
+    maxSupply = maxSupply * 2
+    minPrice = minPrice / 2;  // Account for ending with k = 1 instead of k = 0
+    // end price = start price / (1 + k0)
+    // (1 + k0) (end price) = start price
+    // (1 + k0)  = (start price) / (end price)
+    // k0  = (start price) / (end price) - 1
+    const k0 = startPrice / minPrice - 1;
+    const k1 = 1; // Price should never stop increasing, or it's easy to have a big price drop at the end.
+
+    return {
+      curveConfig: new TimeDecayExponentialCurveConfig({
+        k1,
+        k0,
+        interval,
+        c: 1, // Not needed
+        d: 1 / Math.max(k0 - 1, 1),
+      }),
+      reserves: minPrice * maxSupply,
+      supply: maxSupply,
+    };
+  }
+
+  /**
+   * Creates an LBP
+   *
+   * @param param0
+   * @returns
+   */
+  async createLiquidityBootstrapperInstructions({
+    payer = this.provider.wallet.publicKey,
+    authority = this.provider.wallet.publicKey,
+    targetMint,
+    targetMintKeypair,
+    metadata,
+    metadataUpdateAuthority = authority,
+    interval,
+    startPrice,
+    minPrice,
+    maxSupply,
+    bondingArgs,
+    baseMint,
+  }: ICreateLiquidityBootstrapperArgs): Promise<
+    BigInstructionResult<{ tokenBonding: PublicKey; targetMint: PublicKey }>
+  > {
+    const instructions = [];
+    const signers = [];
+
+    const { reserves: initialReservesPad, supply: initialSupplyPad, curveConfig } = MarketplaceSdk.lbcCurve({
+      interval,
+      startPrice,
+      minPrice,
+      maxSupply
+    });
+    
+    let curve: PublicKey | undefined = bondingArgs?.curve;
+    if (!curve) {
+      const {
+        output: { curve: outCurve },
+        instructions: curveInstructions,
+        signers: curveSigners,
+      } = await this.tokenBondingSdk.initializeCurveInstructions({
+        config: curveConfig,
+      });
+      instructions.push(...curveInstructions);
+      signers.push(...curveSigners);
+      curve = outCurve;
+    }
+
+    const baseMintAcct = await getMintInfo(this.provider, baseMint);
+
+    metadataUpdateAuthority = metadataUpdateAuthority || authority;
+    const decimals =
+      typeof bondingArgs?.targetMintDecimals == "undefined"
+        ? baseMintAcct.decimals
+        : bondingArgs.targetMintDecimals;
+
+    if (targetMintKeypair && metadata) {
+      const {
+        output: { mint: outTargetMint },
+        signers: metadataSigners,
+        instructions: metadataInstructions,
+      } = await this.createMetadataForBondingInstructions({
+        metadata,
+        targetMintKeypair,
+        metadataUpdateAuthority: metadataUpdateAuthority!,
+        decimals,
+      });
+      targetMint = outTargetMint;
+      instructions.push(...metadataInstructions);
+      signers.push(...metadataSigners);
+    }
+
+    if (targetMint && await this.tokenBondingSdk.accountExists(targetMint)) {
+      const mint = await getMintInfo(this.provider, targetMint);
+      const mintAuthority = (
+        await SplTokenBonding.tokenBondingKey(targetMint)
+      )[0];
+      if (!mint.mintAuthority) {
+        throw new Error("Mint must have an authority");
+      }
+
+      if (!mint.mintAuthority!.equals(mintAuthority)) {
+        instructions.push(
+          await Token.createSetAuthorityInstruction(
+            TOKEN_PROGRAM_ID,
+            targetMint,
+            mintAuthority,
+            "MintTokens",
+            mint.mintAuthority!,
+            []
+          )
+        );
+      }
+    }
+
+    const {
+      output: { tokenBonding, targetMint: bondingTargetMint },
+      instructions: tokenBondingInstructions,
+      signers: tokenBondingSigners,
+    } = await this.tokenBondingSdk.createTokenBondingInstructions({
+      payer,
+      curve: curve!,
+      reserveAuthority: authority,
+      generalAuthority: authority,
+      ignoreExternalReserveChanges: true,
+      ignoreExternalSupplyChanges: true,
+      targetMint,
+      buyBaseRoyaltyPercentage: 0,
+      sellBaseRoyaltyPercentage: 0,
+      sellTargetRoyaltyPercentage: 0,
+      buyTargetRoyaltyPercentage: 0,
+      baseMint,
+      advanced: {
+        initialSupplyPad,
+        initialReservesPad,
+      },
+      mintCap: toBN(maxSupply, decimals),
+      ...bondingArgs,
+    });
+
+    return {
+      output: {
+        tokenBonding,
+        targetMint: bondingTargetMint,
+      },
+      instructions: [instructions, tokenBondingInstructions],
+      signers: [signers, tokenBondingSigners],
+    };
+  }
+
+  /**
+   * Executes `createLiquidityBootstrapperIntructions`
+   * @param args
+   * @returns
+   */
+  async createLiquidityBootstrapper(
+    args: ICreateLiquidityBootstrapperArgs,
+    finality?: Finality
+  ): Promise<{ tokenBonding: PublicKey; targetMint: PublicKey }> {
+    return this.tokenBondingSdk.executeBig(
+      this.createLiquidityBootstrapperInstructions(args),
       args.payer,
       finality
     );

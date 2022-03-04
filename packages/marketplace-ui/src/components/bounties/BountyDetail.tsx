@@ -43,9 +43,6 @@ import { AuthorityAndTokenInfo } from "./AuthorityAndTokenInfo";
 import { BountyCardContribution } from "./BountyCardContribution";
 import { DisburseFunds } from "./DisburseFunds";
 import { TopHolders } from "./TopHolders";
-import NextLink from "next/link";
-import { RiPencilFill } from "react-icons/ri";
-import { useRouter } from "next/router";
 
 export const AsyncQtyButton = ({
   inputProps = {},

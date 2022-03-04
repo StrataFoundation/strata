@@ -16,6 +16,7 @@ export const NetworkSelect = () => {
           Devnet
         </option>
         <option value={"https://wumbo.genesysgo.net"}>Mainnet</option>
+        <option value="http://localhost:8899">Localnet</option>
       </Select>
     </VStack>
   );

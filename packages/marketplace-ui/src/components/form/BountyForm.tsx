@@ -1,11 +1,4 @@
-import {
-  Input, Alert,
-  Box,
-  Button,
-  Heading,
-  usePrevious,
-  VStack,
-} from "@chakra-ui/react";
+import { Alert, Button, Input, VStack } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
 import { NATIVE_MINT } from "@solana/spl-token";
@@ -17,22 +10,22 @@ import {
   useMintTokenRef,
   usePrimaryClaimedTokenRef,
   useProvider,
-  usePublicKey,
+  usePublicKey
 } from "@strata-foundation/react";
-import { useMarketplaceSdk } from "../../contexts/marketplaceSdkContext";
 import { useRouter } from "next/router";
-import { route, routes } from "../../utils/routes";
 import React, { useEffect } from "react";
 import { useAsyncCallback } from "react-async-hook";
 import { FormProvider, useForm } from "react-hook-form";
 import * as yup from "yup";
+import { useMarketplaceSdk } from "../../contexts/marketplaceSdkContext";
+import { route, routes } from "../../utils/routes";
 import { FormControlWithError } from "./FormControlWithError";
+import { MintSelect } from "./MintSelect";
 import { Recipient } from "./Recipient";
 import {
   IMetadataFormProps,
-  TokenMetadataInputs,
+  TokenMetadataInputs
 } from "./TokenMetadataInputs";
-import { MintSelect } from "./MintSelect";
 
 interface IBountyFormProps extends IMetadataFormProps {
   mint: string;

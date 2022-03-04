@@ -1,6 +1,6 @@
 [package]
 name = "spl-token-collective"
-version = "0.4.1"
+version = "3.2.5"
 description = "Created with Anchor"
 edition = "2018"
 
@@ -15,15 +15,15 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = "0.20.1"
-anchor-spl = "0.20.1"
+anchor-lang = { version = "0.22.0", features = ["init-if-needed"] }
+anchor-spl = "0.22.0"
 uint = "0.9"
 spl-token = "3.2.0"
 spl-associated-token-account = { version = "1.0.3",  features = [ "no-entrypoint" ] }
 spl-name-service = { version = "0.2.0", features = ["no-entrypoint"] }
-mpl-token-metadata = { git = "https://github.com/metaplex-foundation/metaplex-program-library", features = ["no-entrypoint"] }
+mpl-token-metadata = { version = "1.2.4", features = ["no-entrypoint"] }
 spl-token-bonding = { path = '../spl-token-bonding', features = ["no-entrypoint", "cpi"] }
-sha2 = "0.9.8"
+sha2 = "0.10.2"
 borsh = "0.9.1"
 
 [dev-dependencies]
