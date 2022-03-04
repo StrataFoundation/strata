@@ -30,7 +30,7 @@ export const SaleItemAdmin = ({
     <HStack spacing={2} borderBottom={1} borderBottomColor={"gray.300"}>
       <AsyncButton
         variant="outline"
-        colorScheme="orange"
+        colorScheme="primary"
         isDisabled={!tokenBondingSdk || !amount}
         action={() =>
           tokenBondingSdk!.transferReserves({

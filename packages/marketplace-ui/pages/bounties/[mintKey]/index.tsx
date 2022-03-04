@@ -11,6 +11,7 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import React from "react";
 import { mintMetadataServerSideProps } from "@/utils/tokenMetadataServerProps";
+import { route, routes } from "@/utils/routes";
 
 export const getServerSideProps: GetServerSideProps =
   mintMetadataServerSideProps;
@@ -58,6 +59,11 @@ export const MarketDisplay: NextPage = ({
         />
         <Box zIndex={1} bg="white" shadow="xl" rounded="lg">
           <BountyDetail
+            onEdit={() => router.push(
+              route(routes.editBounty, {
+                mintKey: mintKey?.toBase58(),
+              })
+            )}
             name={name}
             description={description}
             image={image}

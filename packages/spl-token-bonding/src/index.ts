@@ -397,7 +397,7 @@ export interface ICreateTokenBondingArgs {
      * */
     initialSupplyPad: BN | number;
     /**
-     * Initial padding is an advanced feature, incorrect use could lead to insufficient resreves to cover sells
+     * Initial padding is an advanced feature, incorrect use could lead to insufficient reserves to cover sells
      * */
     initialReservesPad: BN | number;
   };

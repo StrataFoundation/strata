@@ -20,6 +20,7 @@ import {
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
 import bs58 from "bs58";
+import { Buffer } from "buffer";
 
 type Truthy<T> = T extends false | "" | 0 | null | undefined ? never : T; // from lodash
 

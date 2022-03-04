@@ -19,7 +19,6 @@ export const BountyCardContribution = ({
       padding={4}
       border="1px solid"
       borderColor="gray.200"
-      minWidth="200px"
     >
       <HStack spacing={2}>
         <Text fontWeight={800} color="gray.700">

@@ -44,7 +44,9 @@ export const Recipient = ({ value, onChange, name }: { name: string, value: stri
     if (
       (!prevRecipientRef || !prevRecipientRef.current) && recipientRef.current
     ) {
-      recipientRef.current.innerText = internalValue;
+      if (internalValue) {
+        recipientRef.current.innerText = internalValue;
+      }
     }
   }, [prevRecipientRef, recipientRef, internalValue])
 

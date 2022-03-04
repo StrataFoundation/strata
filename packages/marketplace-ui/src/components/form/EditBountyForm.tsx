@@ -104,9 +104,13 @@ async function editBounty(
 export const EditBountyFormRaw = ({
   mintKey,
   values,
+  onComplete,
+  hide = new Set()
 }: {
   mintKey: PublicKey;
   values: DefaultValues<IEditBountyFormProps>;
+  onComplete?: () => void;
+  hide?: Set<string>;
 }) => {
   const formProps = useForm<IEditBountyFormProps>({
     resolver: yupResolver(validationSchema),
@@ -128,7 +132,7 @@ export const EditBountyFormRaw = ({
 
   const onSubmit = async (values: IEditBountyFormProps) => {
     await execute(tokenMetadataSdk!, tokenBondingSdk!, values, mintKey);
-    router.push(route(routes.bounty, { mintKey: mintKey.toBase58() }));
+    onComplete && onComplete();
   };
 
   const authorityRegister = register("authority");
@@ -138,60 +142,68 @@ export const EditBountyFormRaw = ({
       <form onSubmit={handleSubmit(onSubmit)}>
         <VStack spacing={8}>
           <TokenMetadataInputs />
-          <FormControlWithError
-            id="shortName"
-            help="A less than 10 character name for this bounty. This will be the bounty token's symbol."
-            label="Short Name"
-            errors={errors}
-          >
-            <Input {...register("shortName")} />
-          </FormControlWithError>
+          {!hide.has("shortName") && (
+            <FormControlWithError
+              id="shortName"
+              help="A less than 10 character name for this bounty. This will be the bounty token's symbol."
+              label="Short Name"
+              errors={errors}
+            >
+              <Input {...register("shortName")} />
+            </FormControlWithError>
+          )}
 
-          <FormControlWithError
-            id="authority"
-            help="The wallet that signs to disburse the funds of this bounty when it is completed. 
+          {!hide.has("authority") && (
+            <FormControlWithError
+              id="authority"
+              help="The wallet that signs to disburse the funds of this bounty when it is completed. 
             For social tokens, this defaults to the wallet associated with the social token. This
             can also be an SPL Governance address or a multisig."
-            label="Approver"
-            errors={errors}
-          >
-            {publicKey && (
-              <Button
-                variant="link"
-                onClick={() => setValue("authority", publicKey.toBase58())}
-              >
-                Set to My Wallet
-              </Button>
-            )}
-            <Recipient
-              name={authorityRegister.name}
-              value={authority}
-              onChange={authorityRegister.onChange}
-            />
-          </FormControlWithError>
-          <FormControlWithError
-            id="contact"
-            help="Who to contact regarding the bounty. This can be an email address, twitter handle, etc."
-            label="Contact Information"
-            errors={errors}
-          >
-            <Input {...register("contact")} />
-          </FormControlWithError>
-          <FormControlWithError
-            id="discussion"
-            help="A link to where this bounty is actively being discussed. This can be a github issue, forum link, etc. Use this to coordinate the bounty."
-            label="Discussion"
-            errors={errors}
-          >
-            <Input {...register("discussion")} />
-          </FormControlWithError>
+              label="Approver"
+              errors={errors}
+            >
+              {publicKey && (
+                <Button
+                  variant="link"
+                  onClick={() => setValue("authority", publicKey.toBase58())}
+                >
+                  Set to My Wallet
+                </Button>
+              )}
+              <Recipient
+                name={authorityRegister.name}
+                value={authority}
+                onChange={authorityRegister.onChange}
+              />
+            </FormControlWithError>
+          )}
+          {!hide.has("contact") && (
+            <FormControlWithError
+              id="contact"
+              help="Who to contact regarding the bounty. This can be an email address, twitter handle, etc."
+              label="Contact Information"
+              errors={errors}
+            >
+              <Input {...register("contact")} />
+            </FormControlWithError>
+          )}
+          {!hide.has("discussion") && (
+            <FormControlWithError
+              id="discussion"
+              help="A link to where this bounty is actively being discussed. This can be a github issue, forum link, etc. Use this to coordinate the bounty."
+              label="Discussion"
+              errors={errors}
+            >
+              <Input {...register("discussion")} />
+            </FormControlWithError>
+          )}
 
           {error && <Alert status="error">{error.toString()}</Alert>}
 
           <Button
             type="submit"
             alignSelf="flex-end"
-            colorScheme="orange"
+            colorScheme="primary"
             isLoading={isSubmitting || loading}
             loadingText={awaitingApproval ? "Awaiting Approval" : "Loading"}
           >
@@ -220,7 +232,7 @@ const getFileFromUrl = async (
   return file;
 };
 
-export const EditBountyForm = ({ mintKey }: { mintKey: PublicKey }) => {
+export const EditBountyForm = ({ mintKey, onComplete, hide = new Set()}: { mintKey: PublicKey; onComplete?: () => void; hide?: Set<string> }) => {
   const { info: tokenBonding, loading: loadingBonding } =
     useTokenBondingFromMint(mintKey);
 
@@ -253,15 +265,17 @@ export const EditBountyForm = ({ mintKey }: { mintKey: PublicKey }) => {
 
   return (
     <EditBountyFormRaw
+      hide={new Set(["contact", "discussion"])}
+      onComplete={onComplete}
       mintKey={mintKey}
       values={{
         authority: (tokenBonding!.reserveAuthority as PublicKey).toBase58(),
         name: displayName!,
         image: file,
-        description: data!.description,
-        shortName: metadata!.data.symbol,
-        contact: attributes!.contact as string,
-        discussion: attributes!.discussion as string,
+        description: data?.description,
+        shortName: metadata?.data.symbol,
+        contact: attributes?.contact as string,
+        discussion: attributes?.discussion as string,
       }}
     />
   );

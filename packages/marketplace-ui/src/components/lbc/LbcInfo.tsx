@@ -141,7 +141,7 @@ export const LbcInfo = ({ tokenBondingKey, price: inputPrice }: { tokenBondingKe
               auction, starting with a high price that lowers over time and
               increases with every purchase.{" "}
               <Link
-                color="orange"
+                color="primary"
                 href="https://www.strataprotocol.com/docs/marketplace/lbc"
               >
                 Learn More
