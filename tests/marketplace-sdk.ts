@@ -2,9 +2,7 @@ import * as anchor from "@project-serum/anchor";
 import { Keypair } from "@solana/web3.js";
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
-import {
-  MarketplaceSdk
-} from "@strata-foundation/marketplace-sdk";
+import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
 import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import { TokenUtils } from "./utils/token";
 import { SplTokenMetadata } from "@strata-foundation/spl-utils";
@@ -63,7 +61,9 @@ describe("marketplace-sdk", () => {
           targetMintDecimals: 9,
         },
       });
-    const tokenBondingAcct = (await tokenBondingProgram.getTokenBonding(tokenBonding))!
+    const tokenBondingAcct = (await tokenBondingProgram.getTokenBonding(
+      tokenBonding
+    ))!;
     await waitForUnixTime(
       provider.connection,
       BigInt(tokenBondingAcct.goLiveUnixTime.toNumber() + 2)
@@ -72,9 +72,49 @@ describe("marketplace-sdk", () => {
       baseMint: NATIVE_MINT,
       targetMint,
       baseAmount: 1,
-      slippage: 0.01
+      slippage: 0.01,
     });
     // Price should shift slightly because k = 1 at this point
     expect(targetAmount).to.eq(1.990098767);
   });
-})
+
+  // This test was created because with msg! enabled, we were blowing compute.
+  it("can sell the full supply with no issues", async () => {
+    const { targetMint, tokenBonding } =
+      await marketplaceSdk.createLiquidityBootstrapper({
+        authority: me,
+        metadata: new DataV2({
+          // Max name len 32
+          name: "test",
+          symbol: "test",
+          uri: "",
+          sellerFeeBasisPoints: 0,
+          creators: null,
+          collection: null,
+          uses: null,
+        }),
+        baseMint: NATIVE_MINT,
+        startPrice: 2.5,
+        minPrice: 0.5,
+        interval: 60 * 60,
+        maxSupply: 25,
+        bondingArgs: {
+          targetMintDecimals: 0,
+        },
+      });
+    const tokenBondingAcct = (await tokenBondingProgram.getTokenBonding(
+      tokenBonding
+    ))!;
+    await waitForUnixTime(
+      provider.connection,
+      BigInt(tokenBondingAcct.goLiveUnixTime.toNumber() + 2)
+    );
+    for(let i = 0; i < 25; i++) {
+      await tokenBondingProgram.buy({
+        tokenBonding,
+        desiredTargetAmount: 1,
+        slippage: 0.05,
+      });
+    }
+  });
+});

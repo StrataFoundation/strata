@@ -250,7 +250,7 @@ describe("spl-token-collective", () => {
 
   it("should allow creating a social token with no collective", async () => {
     const keypair = Keypair.generate();
-    const { instructions, signers, output } = await tokenCollectiveProgram.createSocialTokenInstructions({
+    const { instructions, signers } = await tokenCollectiveProgram.createSocialTokenInstructions({
       owner: keypair.publicKey,
       mint: NATIVE_MINT,
       authority: keypair.publicKey,
@@ -267,7 +267,6 @@ describe("spl-token-collective", () => {
         sellTargetRoyaltyPercentage: 0,
       },
     });
-    console.log(output.mint.toBase58());
     await sendMultipleInstructions(
       tokenCollectiveProgram.errors || new Map(),
       provider,

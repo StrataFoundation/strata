@@ -115,6 +115,8 @@ interface ILbpCurveArgs {
    * Minimum price (finishing price if no one buys anything)
    */
   minPrice: number;
+  /** Optional, the time decay exponential */
+  timeDecay?: number;
 }
 
 interface ICreateLiquidityBootstrapperArgs extends ILbpCurveArgs {
@@ -641,7 +643,8 @@ export class MarketplaceSdk {
     interval,
     startPrice,
     minPrice,
-    maxSupply
+    maxSupply,
+    timeDecay
   }: ILbpCurveArgs): { reserves: number, supply: number, curveConfig: ICurveConfig } {
     if (startPrice < minPrice) {
       throw new Error("Max price must be more than min price");
@@ -664,7 +667,7 @@ export class MarketplaceSdk {
         k0,
         interval,
         c: 1, // Not needed
-        d: 1 / Math.max(k0 - 1, 1),
+        d: timeDecay || 1 / Math.max(k0 - 1, 1),
       }),
       reserves: minPrice * maxSupply,
       supply: maxSupply,

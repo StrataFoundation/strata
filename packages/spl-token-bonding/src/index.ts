@@ -389,7 +389,7 @@ export interface ICreateTokenBondingArgs {
 
   advanced?: {
     /**
-     * Initial padding is an advanced feature, incorrect use could lead to insufficient resreves to cover sells
+     * Initial padding is an advanced feature, incorrect use could lead to insufficient reserves to cover sells
      *
      * Start the curve off at a given reserve and supply synthetically. This means price can start nonzero. The current use case
      * for this is LBPs. Note that a curve cannot be adaptive. ignoreExternalReserveChanges and ignoreExternalSupplyChanges
@@ -397,7 +397,7 @@ export interface ICreateTokenBondingArgs {
      * */
     initialSupplyPad: BN | number;
     /**
-     * Initial padding is an advanced feature, incorrect use could lead to insufficient resreves to cover sells
+     * Initial padding is an advanced feature, incorrect use could lead to insufficient reserves to cover sells
      * */
     initialReservesPad: BN | number;
   };
@@ -2241,11 +2241,6 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       amount: toBN(amount, baseMint),
     };
     if (isNative) {
-      console.log(
-        "HEU",
-        this.wallet.publicKey.toBase58(),
-        common.reserveAuthority.toBase58()
-      );
       instructions.push(
         await this.instruction.transferReservesNativeV0(args, {
           accounts: {

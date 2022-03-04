@@ -42,11 +42,11 @@ pub fn buy_shared_logic(common: &mut BuyCommonV0, args: &BuyV0Args) -> Result<Bu
   };
   let target_supply = precise_supply_amt(target_supply_u64, target_mint);
 
-  msg!(
-    "Current reserves {} and supply {}",
-    base_storage.amount,
-    target_mint.supply
-  );
+  // msg!(
+  //   "Current reserves {} and supply {}",
+  //   base_storage.amount,
+  //   target_mint.supply
+  // );
 
   if token_bonding.go_live_unix_time > clock.unix_timestamp {
     return Err(error!(ErrorCode::NotLiveYet));

@@ -36,14 +36,14 @@ pub fn get_seeds_and_key(
 
   let name_class = name_class_opt.unwrap_or_default();
 
-  for b in name_class.to_bytes().to_vec() {
-    seeds_vec.push(b);
+  for b in name_class.to_bytes().iter() {
+    seeds_vec.push(*b);
   }
 
   let parent_name_address = parent_name_address_opt.unwrap_or_default();
 
-  for b in parent_name_address.to_bytes().to_vec() {
-    seeds_vec.push(b);
+  for b in parent_name_address.to_bytes().iter() {
+    seeds_vec.push(*b);
   }
 
   let (name_account_key, bump) =

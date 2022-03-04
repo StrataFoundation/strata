@@ -225,8 +225,6 @@ impl SignedPreciseNumber {
   pub fn exp(&self) -> Option<PreciseNumber> {
     let hi: Self;
     let lo: Self;
-    let xx: Self;
-    let y: Self;
     let k: Self;
     let x: Self;
 
@@ -271,7 +269,7 @@ impl SignedPreciseNumber {
     }
 
     /* x is now in primary range */
-    xx = x.checked_mul(&x)?;
+    let xx = x.checked_mul(&x)?;
     // c = x - xx * (P1 + xx * (P2 + xx * (P3 + xx * (P4 + xx * P5))));
     let p4p5 = P4.checked_add(&xx.checked_mul(&P5)?)?;
     let p3p4p5 = P3.checked_add(&xx.checked_mul(&p4p5)?)?;
@@ -280,7 +278,7 @@ impl SignedPreciseNumber {
     let c = x.checked_sub(&p1p2p3p4p5.checked_mul(&xx)?)?;
 
     // y = 1. + (x * c / (2. - c) - lo + hi);
-    y = ONE_PREC.signed().checked_add(
+    let y = ONE_PREC.signed().checked_add(
       &x.checked_mul(&c)?
         .checked_div(&TWO_PREC.signed().checked_sub(&c)?)?
         .checked_sub(&lo)?

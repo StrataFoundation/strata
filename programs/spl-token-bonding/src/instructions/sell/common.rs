@@ -117,7 +117,7 @@ pub fn burn_and_pay_sell_royalties(
   let source = &common.source.to_account_info();
   let source_authority = &common.source_authority.to_account_info();
 
-  msg!("Burning {}", amount);
+  // msg!("Burning {}", amount);
   token::burn(
     CpiContext::new(
       token_program.clone(),
