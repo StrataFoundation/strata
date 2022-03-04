@@ -5,10 +5,25 @@ import {
   
 } from "@chakra-ui/react";
 
+const primary = {
+  50: "#fdefe7",
+  100: "#fbd6c2",
+  200: "#f8bb99",
+  300: "#f5a070",
+  400: "#f28b52",
+  500: "#f07733",
+  600: "#ee6f2e",
+  700: "#ec6427",
+  800: "#e95a20",
+  900: "#e54714",
+};
+
 export const theme: any = extendTheme({
   shadows: {
     outline: "none",
   },
+  initialColorMode: "light",
+  useSystemColorMode: false,
   components: {
     Button: {
       baseStyle: { _focus: { boxShadow: "none" } },
@@ -18,10 +33,10 @@ export const theme: any = extendTheme({
         outline: {
           field: {
             borderColor: "#E5E7EB",
-          } 
-        }
-      }
-    }
+          },
+        },
+      },
+    },
   },
   colors: {
     gray: {
@@ -65,18 +80,8 @@ export const theme: any = extendTheme({
       500: "#0F1324",
       700: "#363135",
     },
-    orange: {
-      50: "#fdefe7",
-      100: "#fbd6c2",
-      200: "#f8bb99",
-      300: "#f5a070",
-      400: "#f28b52",
-      500: "#f07733",
-      600: "#ee6f2e",
-      700: "#ec6427",
-      800: "#e95a20",
-      900: "#e54714",
-    },
+    orange: primary,
+    primary,
   },
 });
 

@@ -324,7 +324,8 @@ describe("spl-token-collective", () => {
         tokenCollectiveProgram.errors || new Map(),
         provider,
         instructions,
-        [signers[0], signers[1], [...signers[2], ownerKeypair]]
+        [signers[0], signers[1], [...signers[2], ownerKeypair]],
+        provider.wallet.publicKey
       );
     });
 

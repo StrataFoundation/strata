@@ -33,7 +33,7 @@ export const Recipient = ({ value, onChange, name }: { name: string, value: stri
   
   useEffect(() => {
     if (value != internalValue && prevValue != value) {
-      if (recipientRef.current) {
+      if (recipientRef.current && value) {
         recipientRef.current.innerText = value;
       }
       setInternalValue(value);

@@ -133,6 +133,12 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
     register(name, deps.filter(Boolean), exec);
   }, [publicKey, ...Object.values(sdks)]);
 
+  useEffect(() => {
+    if (error) {
+      console.error(error);
+    }
+  },[error])
+
   const fullLoading =
     loading || !sdks.tokenBondingSdk || !sdks.tokenCollectiveSdk;
 

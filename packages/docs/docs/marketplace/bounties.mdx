@@ -161,6 +161,43 @@ await tokenBondingSdk.updateTokenBonding({
 });
 ```
 
+### Withdrawing Funds
+
+The `authority` param (defaulted to the wallet creating the bounty) is allowed to withdraw the funds from
+the bounty. This is done via the `transferReserves` command.
+
+```js async deps=lbc
+await tokenBondingSdk.transferReserves({
+  tokenBonding,
+  amount: 0.001,
+  destination: publicKey
+})
+```
+
+You can also close and permanently shutdown the curve via `close`, which can only be done when the reserves are empty. This will
+recover the rent fees stored in the curve.
+```js
+import { getAssociatedAccountBalance } from "@strata-foundation/spl-utils";
+```
+
+```js async deps=lbc
+var tokenBondingAcct = await tokenBondingSdk.getTokenBonding(tokenBonding);
+var transferInstrs =
+  await tokenBondingSdk.transferReservesInstructions({
+    amount: (await provider.connection.getTokenAccountBalance(tokenBondingAcct.baseStorage)).value.uiAmount,
+    destination: publicKey,
+    tokenBonding,
+  });
+var { instructions, signers } =
+  await tokenBondingSdk.closeInstructions({
+    tokenBonding
+  });
+await tokenBondingSdk.sendInstructions(
+  [...transferInstrs.instructions, ...instructions],
+  [...transferInstrs.signers, ...signers]
+);
+```
+
 ### Searching Bounties
 
 If you're using react, you can use the `useBounties` hook from `@strata-foundation/marketplace-ui`

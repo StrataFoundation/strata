@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-#[error]
+#[error_code]
 pub enum ErrorCode {
   #[msg("Target mint must have an authority")]
   NoMintAuthority,
@@ -52,4 +52,7 @@ pub enum ErrorCode {
 
   #[msg("Ignoring external changes is only supported on v1 of buy and sell endpoints. Please upgrade your client")]
   IgnoreExternalV1Only,
+
+  #[msg("Cannot pad token bonding without ignoring external reserve and supply changes. This is an advanced feature, incorrect use could lead to insufficient resreves to cover sells")]
+  InvalidPad,
 }

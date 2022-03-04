@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-#[error]
+#[error_code]
 pub enum ErrorCode {
   #[msg("Provided account does not have an authority")]
   NoAuthority,

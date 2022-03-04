@@ -97,6 +97,7 @@ export async function sendMultipleInstructions(
     .map((instructions, index) => {
       const signers = signerGroups[index];
       if (instructions.length > 0) {
+        console.log(provider.wallet.publicKey.toBase58(), payer?.toBase58());
         const tx = new Transaction({
           feePayer: payer || provider.wallet.publicKey,
           recentBlockhash,
@@ -329,7 +330,7 @@ export async function sendAndConfirmWithRetry(
       throw err.err
     }
 
-    throw new Error('Transaction failed');
+    throw err;
   } finally {
     done = true;
   }
