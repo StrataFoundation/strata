@@ -59,7 +59,11 @@ export const LbcInfo = ({ tokenBondingKey, price: inputPrice }: { tokenBondingKe
               <Spinner size="lg" />
             ) : (
               <BigText>
-                {isNaN(priceToUse) ? "Not Started" :`${numberWithCommas(priceToUse, 4)} ${metadata?.data.symbol}`}
+                {isNaN(priceToUse)
+                  ? "Not Started"
+                  : `${numberWithCommas(priceToUse, 4)} ${
+                      metadata?.data.symbol
+                    }`}
               </BigText>
             )}
             <Tooltip
@@ -134,14 +138,16 @@ export const LbcInfo = ({ tokenBondingKey, price: inputPrice }: { tokenBondingKe
         <VStack align="left" spacing={4} padding={4}>
           {isOpen && <BondingPlot tokenBondingKey={tokenBondingKey} />}
           <VStack spacing={1} align="left">
-            <Text fontSize="14px" fontWeight="700">How does Dynamic Pricing work?</Text>
+            <Text fontSize="14px" fontWeight="700">
+              How does Dynamic Pricing work?
+            </Text>
             <Text fontSize="12px">
-              Strata uses a price discovery mechanism called a Liquidity
-              Bootstrapping Curve (LBC). This functions similar to a dutch
-              auction, starting with a high price that lowers over time and
-              increases with every purchase.{" "}
+              Dynamic Pricing functions similarly to a
+              Dutch Auction. The price starts high, lowering gradually, and
+              increasing only when people buy. This price discovery mechanism is powered by a Strata Liquidity
+              Bootstrapping Curve (LBC).{" "}
               <Link
-                color="primary"
+                color="primary.500"
                 href="https://www.strataprotocol.com/docs/marketplace/lbc"
               >
                 Learn More
