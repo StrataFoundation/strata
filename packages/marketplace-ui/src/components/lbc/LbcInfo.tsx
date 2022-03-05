@@ -142,9 +142,9 @@ export const LbcInfo = ({ tokenBondingKey, price: inputPrice }: { tokenBondingKe
               How does Dynamic Pricing work?
             </Text>
             <Text fontSize="12px">
-              Dynamic Pricing functions similarly to a
-              Dutch Auction. The price starts high, lowering gradually, and
-              increasing only when people buy. This price discovery mechanism is powered by a Strata Liquidity
+              Dynamic Pricing is similiar to a Dutch Auction. The price starts
+              high, lowers gradually, and only increases when people buy. This
+              price discovery mechanism is powered by a Strata Liquidity
               Bootstrapping Curve (LBC).{" "}
               <Link
                 color="primary.500"
