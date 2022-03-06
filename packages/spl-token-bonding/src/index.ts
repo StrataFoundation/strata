@@ -56,6 +56,14 @@ function anyDefined(...args: any | undefined[]): boolean {
   return args.some((a: any | undefined) => typeof a !== "undefined")
 }
 
+function definedOr<A>(value: A | undefined, def: A): A {
+  if (typeof value == "undefined") {
+    return def;
+  }
+
+  return value!;
+}
+
 /**
  * The curve config required by the smart contract is unwieldy, implementors of `CurveConfig` wrap the interface
  */
@@ -1227,18 +1235,22 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       }
 
       const args: IdlTypes<SplTokenBondingIDL>["UpdateTokenBondingV0Args"] = {
-        buyBaseRoyaltyPercentage:
-          percent(buyBaseRoyaltyPercentage) ||
-          tokenBondingAcct.buyBaseRoyaltyPercentage,
-        buyTargetRoyaltyPercentage:
-          percent(buyTargetRoyaltyPercentage) ||
-          tokenBondingAcct.buyTargetRoyaltyPercentage,
-        sellBaseRoyaltyPercentage:
-          percent(sellBaseRoyaltyPercentage) ||
-          tokenBondingAcct.sellBaseRoyaltyPercentage,
-        sellTargetRoyaltyPercentage:
-          percent(sellTargetRoyaltyPercentage) ||
-          tokenBondingAcct.sellTargetRoyaltyPercentage,
+        buyBaseRoyaltyPercentage: definedOr(
+          percent(buyBaseRoyaltyPercentage),
+          tokenBondingAcct.buyBaseRoyaltyPercentage
+        ),
+        buyTargetRoyaltyPercentage: definedOr(
+          percent(buyTargetRoyaltyPercentage),
+          tokenBondingAcct.buyTargetRoyaltyPercentage
+        ),
+        sellBaseRoyaltyPercentage: definedOr(
+          percent(sellBaseRoyaltyPercentage),
+          tokenBondingAcct.sellBaseRoyaltyPercentage
+        ),
+        sellTargetRoyaltyPercentage: definedOr(
+          percent(sellTargetRoyaltyPercentage),
+          tokenBondingAcct.sellTargetRoyaltyPercentage
+        ),
         generalAuthority:
           generalAuthority === null
             ? null

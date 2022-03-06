@@ -6023,6 +6023,16 @@
     superstruct "^0.14.2"
     tweetnacl "^1.0.0"
 
+"@strata-foundation/spl-token-staking@^3.2.6":
+  version "3.2.6"
+  resolved "https://registry.yarnpkg.com/@strata-foundation/spl-token-staking/-/spl-token-staking-3.2.6.tgz#fcf0e0e12733452496482c84d2d78f88797489c6"
+  integrity sha512-+8nNfVXE7Oti978yOWrkxasmmEGPuJ3uZnrL++lPfjg4qD4yv3U9UZieTox05dfjz1R7Y/EzRCwudhBRIRs8Hw==
+  dependencies:
+    "@solana/web3.js" "^1.32.0"
+    "@strata-foundation/spl-utils" "^3.2.6"
+    bn.js "^5.2.0"
+    semver "^7.3.5"
+
 "@svgr/babel-plugin-add-jsx-attribute@^5.4.0":
   version "5.4.0"
   resolved "https://registry.npmjs.org/@svgr/babel-plugin-add-jsx-attribute/-/babel-plugin-add-jsx-attribute-5.4.0.tgz"
