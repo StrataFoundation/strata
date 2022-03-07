@@ -5,9 +5,7 @@
   "scripts": {
     "clean": "shx rm -rf .next",
     "dev": "NODE_OPTIONS='--inspect' next dev",
-    "watch": "tsc --watch --project tsconfig-build.json",
-    "build-lib": "tsc --project tsconfig-build.json",
-    "build": "yarn clean && next build && tsc --project tsconfig-build.json",
+    "build": "yarn clean && next build",
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
