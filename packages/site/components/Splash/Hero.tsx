@@ -9,7 +9,7 @@ import {
   Button,
   Link,
 } from "@chakra-ui/react";
-import { DISCORD_INVITE_URL } from "@/constants";
+import { DISCORD_INVITE_URL, DOCS_URL } from "@/constants";
 
 const callouts = [
   {
@@ -100,7 +100,7 @@ export const Hero = () => (
               borderColor="orange.500"
               _hover={{ bg: "orange.500", textDecoration: "none" }}
               as={Link}
-              href="/docs/getting_started"
+              href={DOCS_URL}
             >
               Developers Docs
             </Button>

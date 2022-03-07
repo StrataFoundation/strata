@@ -10,7 +10,7 @@ import {
 } from "@chakra-ui/react";
 import React from "react";
 import { RiExternalLinkLine } from "react-icons/ri";
-import { DISCORD_INVITE_URL } from "@/constants";
+import { BLOG_URL, DISCORD_INVITE_URL, DOCS_URL } from "@/constants";
 
 const sections = [
   {
@@ -19,7 +19,7 @@ const sections = [
       {
         title: "Tutorial",
         isExternal: false,
-        href: "https://strataprotocol.com/docs/getting_started",
+        href: `${DOCS_URL}/getting_started`,
       },
     ],
   },
@@ -44,7 +44,7 @@ const sections = [
       {
         title: "Blog",
         isExternal: false,
-        href: "https://www.strataprotocol.com/blog",
+        href: BLOG_URL,
       },
       {
         title: "GitHub",

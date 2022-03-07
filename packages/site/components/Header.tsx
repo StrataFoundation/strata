@@ -11,14 +11,15 @@ import {
   IconButton,
   useDisclosure,
 } from "@chakra-ui/react";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletModalButton } from "@/components/WalletModalButton";
+/* import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletModalButton } from "@/components/WalletModalButton"; */
 import { HamburgerIcon, CloseIcon } from "@chakra-ui/icons";
+import { DOCS_URL, MARKETPLACE_URL } from "@/constants";
 
 const Links = [
-  { link: "Features", href: "/features" },
-  { link: "Bounties", href: "/bounties" },
-  { link: "Investors", href: "/investors" },
+  { link: "Docs", href: DOCS_URL },
+  { link: "Bounties", href: `${MARKETPLACE_URL}/bounties` },
+  /*   { link: "Investors", href: "/investors" }, */
 ];
 
 const NavLink = ({ href, children }: { href: string; children: ReactNode }) => (
@@ -29,7 +30,7 @@ const NavLink = ({ href, children }: { href: string; children: ReactNode }) => (
 
 export const Header: React.FC = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const { disconnect, connected } = useWallet();
+  /* const { disconnect, connected } = useWallet(); */
 
   return (
     <>

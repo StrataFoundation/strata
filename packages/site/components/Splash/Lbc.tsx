@@ -9,6 +9,7 @@ import {
   Button,
   Link,
 } from "@chakra-ui/react";
+import { DOCS_URL, MARKETPLACE_URL } from "@/constants";
 
 export const Lbc = () => (
   <Box w="full" bg="gray.900" color="white">
@@ -61,7 +62,7 @@ export const Lbc = () => (
               borderColor="orange.500"
               _hover={{ bg: "orange.500", textDecoration: "none" }}
               as={Link}
-              href="/lbc/new"
+              href={`${MARKETPLACE_URL}/lbcs/new`}
             >
               Create LBC
             </Button>
@@ -69,7 +70,7 @@ export const Lbc = () => (
               isFullWidth
               variant="link"
               as={Link}
-              href="/docs/lbc"
+              href={`${DOCS_URL}/marketplace/lbc`}
               color="white"
             >
               How it Works

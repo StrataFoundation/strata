@@ -10,6 +10,7 @@ import {
   Image,
   Divider,
 } from "@chakra-ui/react";
+import { MARKETPLACE_URL, DOCS_URL } from "@/constants";
 
 export const Bounties = () => (
   <Box w="full" bg="gray.900" color="white">
@@ -46,7 +47,7 @@ export const Bounties = () => (
               isFullWidth
               colorScheme="orange"
               as={Link}
-              href="/bounties"
+              href={`${MARKETPLACE_URL}/bounties`}
               _hover={{
                 textDecoration: "none",
               }}
@@ -61,7 +62,7 @@ export const Bounties = () => (
               borderColor="orange.500"
               _hover={{ bg: "orange.500", textDecoration: "none" }}
               as={Link}
-              href="/docs/marketplace/bounties"
+              href={`${DOCS_URL}/marketplace/bounties`}
               px={16}
             >
               View Bounties Docs
