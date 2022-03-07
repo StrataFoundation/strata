@@ -21,9 +21,6 @@ module.exports = {
         "../../node_modules/@solana/wallet-adapter-react"
       ),
       "@chakra-ui/react": path.resolve("../../node_modules/@chakra-ui/react"),
-      "@chakra-ui/color-mode": path.resolve(
-        "../../node_modules/@chakra-ui/color-mode"
-      ),
     };
     return config;
   },
