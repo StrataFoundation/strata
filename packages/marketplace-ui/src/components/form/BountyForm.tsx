@@ -54,19 +54,19 @@ async function createBounty(
   const authority = new PublicKey(values.authority);
 
   const targetMintKeypair = Keypair.generate();
-  // const uri = await marketplaceSdk.tokenMetadataSdk.createArweaveMetadata({
-  //   name: values.name,
-  //   symbol: values.shortName,
-  //   description: values.description,
-  //   image: values.image?.name,
-  //   files: [values.image].filter(truthy),
-  //   mint: targetMintKeypair.publicKey,
-  //   attributes: MarketplaceSdk.bountyAttributes({
-  //     mint,
-  //     discussion: values.discussion,
-  //     contact: values.contact
-  //   }),
-  // });
+  const uri = await marketplaceSdk.tokenMetadataSdk.createArweaveMetadata({
+    name: values.name,
+    symbol: values.shortName,
+    description: values.description,
+    image: values.image?.name,
+    files: [values.image].filter(truthy),
+    mint: targetMintKeypair.publicKey,
+    attributes: MarketplaceSdk.bountyAttributes({
+      mint,
+      discussion: values.discussion,
+      contact: values.contact
+    }),
+  });
   const { targetMint } = await marketplaceSdk.createBounty({
     targetMintKeypair,
     authority,
@@ -75,7 +75,7 @@ async function createBounty(
       // Max name len 32
       name: values.name.substring(0, 32),
       symbol: values.shortName.substring(0, 10),
-      uri: "",
+      uri,
       sellerFeeBasisPoints: 0,
       creators: null,
       collection: null,
