@@ -23,6 +23,7 @@ export const Lbc = () => (
         }}
         direction={{ base: "column-reverse", md: "row" }}
         wrap="nowrap"
+        pt={{ base: 20, md: 0 }}
         pb={20}
       >
         <Image
