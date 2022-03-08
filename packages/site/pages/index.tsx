@@ -12,7 +12,7 @@ const Home: NextPage = () => (
     <Hero />
     <Bounties />
     <Lbc />
-    <Investors />
+    {/* <Investors /> */}
     <GetStarted />
   </>
 );
