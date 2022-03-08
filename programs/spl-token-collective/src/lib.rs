@@ -85,6 +85,10 @@ pub fn get_collective(collective: &UncheckedAccount) -> Option<CollectiveV0> {
 pub mod spl_token_collective {
 
   use anchor_lang::AccountsClose;
+  use spl_token_bonding::{
+    cpi::{accounts::UpdateReserveAuthorityV0, update_reserve_authority_v0},
+    instructions::UpdateReserveAuthorityV0Args,
+  };
 
   use super::*;
 
@@ -650,6 +654,80 @@ pub mod spl_token_collective {
 
     ctx.accounts.mint_token_ref.authority = Some(args.new_authority);
     ctx.accounts.owner_token_ref.authority = Some(args.new_authority);
+    Ok(())
+  }
+
+  pub fn claim_bonding_authority_v0(ctx: Context<ClaimBondingAuthorityV0>) -> Result<()> {
+    let mint_token_ref = &ctx.accounts.mint_token_ref;
+    let token_bonding_update_accts = &ctx.accounts.token_bonding_update_accounts;
+    let token_bonding = &token_bonding_update_accts.token_bonding;
+
+    let seeds: &[&[&[u8]]] = &[&[
+      b"mint-token-ref",
+      mint_token_ref.mint.as_ref(),
+      &[mint_token_ref.bump_seed],
+    ]];
+
+    update_reserve_authority_v0(
+      CpiContext::new_with_signer(
+        ctx.accounts.token_bonding_program.clone(),
+        UpdateReserveAuthorityV0 {
+          token_bonding: token_bonding_update_accts.token_bonding.to_account_info(),
+          reserve_authority: mint_token_ref.to_account_info(),
+        },
+        seeds,
+      ),
+      UpdateReserveAuthorityV0Args {
+        new_reserve_authority: mint_token_ref.authority,
+      },
+    )?;
+
+    spl_token_bonding::cpi::update_token_bonding_v0(
+      CpiContext::new_with_signer(
+        ctx.accounts.token_bonding_program.clone(),
+        UpdateTokenBondingV0 {
+          token_bonding: token_bonding_update_accts
+            .token_bonding
+            .to_account_info()
+            .clone(),
+          base_mint: token_bonding_update_accts
+            .base_mint
+            .to_account_info()
+            .clone(),
+          target_mint: token_bonding_update_accts
+            .target_mint
+            .to_account_info()
+            .clone(),
+          general_authority: ctx.accounts.mint_token_ref.to_account_info().clone(),
+          buy_base_royalties: token_bonding_update_accts
+            .buy_base_royalties
+            .to_account_info()
+            .clone(),
+          buy_target_royalties: token_bonding_update_accts
+            .buy_target_royalties
+            .to_account_info()
+            .clone(),
+          sell_base_royalties: token_bonding_update_accts
+            .sell_base_royalties
+            .to_account_info()
+            .clone(),
+          sell_target_royalties: token_bonding_update_accts
+            .sell_target_royalties
+            .to_account_info()
+            .clone(),
+        },
+        seeds,
+      ),
+      UpdateTokenBondingV0Args {
+        general_authority: mint_token_ref.authority,
+        buy_base_royalty_percentage: token_bonding.buy_base_royalty_percentage,
+        buy_target_royalty_percentage: token_bonding.buy_target_royalty_percentage,
+        sell_base_royalty_percentage: token_bonding.sell_base_royalty_percentage,
+        sell_target_royalty_percentage: token_bonding.sell_target_royalty_percentage,
+        buy_frozen: token_bonding.buy_frozen,
+      },
+    )?;
+
     Ok(())
   }
 }

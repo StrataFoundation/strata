@@ -321,6 +321,10 @@ export interface IUpdateTokenBondingViaCollectiveArgs
   tokenRef: PublicKey;
 }
 
+export interface IClaimBondingAuthorityArgs {
+  tokenBonding: PublicKey;
+}
+
 type CollectiveConfigV0 = IdlTypes<SplTokenCollectiveIDL>["CollectiveConfigV0"];
 type TokenBondingSettingsV0 =
   IdlTypes<SplTokenCollectiveIDL>["TokenBondingSettingsV0"];
@@ -817,14 +821,13 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     const [mintTokenRef] = await SplTokenCollective.mintTokenRefKey(
       tokenBondingAcct.targetMint
     );
-    const [newTokenRef] =
-      await PublicKey.findProgramAddress(
-        SplTokenCollective.ownerTokenRefSeeds({
-          mint: tokenBondingAcct.baseMint,
-          owner,
-        }),
-        this.programId
-      );
+    const [newTokenRef] = await PublicKey.findProgramAddress(
+      SplTokenCollective.ownerTokenRefSeeds({
+        mint: tokenBondingAcct.baseMint,
+        owner,
+      }),
+      this.programId
+    );
 
     const instructions1 = [];
     instructions1.push(
@@ -1407,7 +1410,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
    */
   async createSocialToken(
     args: ICreateSocialTokenArgs,
-    commitment: Finality = "confirmed",
+    commitment: Finality = "confirmed"
   ): Promise<{
     ownerTokenRef: PublicKey;
     mintTokenRef: PublicKey;
@@ -1456,6 +1459,65 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
           account: info,
         };
       })
+    );
+  }
+
+  /**
+   * Claims the reserve and general authority from any bonding curve
+   * that has this token ref as the authority. Useful for setting bonding curves
+   * that can later be claimed by the social token holder.
+   * 
+   * @param param0 
+   * @returns 
+   */
+  async claimBondingAuthorityInstructions({
+    tokenBonding,
+  }: IClaimBondingAuthorityArgs): Promise<InstructionResult<null>> {
+    const tokenBondingAcct = (await this.splTokenBondingProgram.getTokenBonding(
+      tokenBonding
+    ))!;
+
+    const [mintTokenRef] = await SplTokenCollective.mintTokenRefKey(
+      tokenBondingAcct.baseMint
+    );
+
+    return {
+      output: null,
+      signers: [],
+      instructions: [
+        await this.instruction.claimBondingAuthorityV0({
+          accounts: {
+            mintTokenRef,
+            tokenBondingUpdateAccounts: {
+              tokenBonding: tokenBonding,
+              baseMint: tokenBondingAcct.baseMint,
+              targetMint: tokenBondingAcct.targetMint,
+              buyBaseRoyalties: tokenBondingAcct.buyBaseRoyalties,
+              sellBaseRoyalties: tokenBondingAcct.sellBaseRoyalties,
+              buyTargetRoyalties: tokenBondingAcct.buyTargetRoyalties,
+              sellTargetRoyalties: tokenBondingAcct.sellTargetRoyalties,
+            },
+            tokenBondingProgram: this.splTokenBondingProgram.programId,
+          },
+        }),
+      ],
+    };
+  }
+
+  /**
+   * Runs {@link `claimBondingAuthorityInstructions`}
+   *
+   * @param args
+   * @retruns
+   */
+  async claimBondingAuthority(
+    args: IClaimBondingAuthorityArgs,
+    commitment: Commitment = "confirmed"
+  ): Promise<void> {
+    await this.execute(
+      this.claimBondingAuthorityInstructions(args),
+      this.wallet.publicKey,
+      commitment
     );
   }
 
@@ -1757,7 +1819,10 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
    * @param args
    * @retruns
    */
-  async optOut(args: IOptOutArgs, commitment: Commitment = "confirmed"): Promise<void> {
+  async optOut(
+    args: IOptOutArgs,
+    commitment: Commitment = "confirmed"
+  ): Promise<void> {
     await this.execute(this.optOutInstructions(args), args.payer, commitment);
   }
 
@@ -1849,7 +1914,11 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     args: IUpdateOwnerArgs,
     commitment: Commitment = "confirmed"
   ): Promise<{ ownerTokenRef: PublicKey }> {
-    return this.execute(this.updateOwnerInstructions(args), args.payer, commitment);
+    return this.execute(
+      this.updateOwnerInstructions(args),
+      args.payer,
+      commitment
+    );
   }
 
   /**

@@ -3,9 +3,19 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-# [3.3.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.2.6...v3.3.0) (2022-03-04)
+# [Unreleased]
 
-**Note:** Version bump only for package @strata-foundation/strata
+### Added
+
+  * Set a mint token ref as the authority on a bounty, and the owner of that social token can disburse the bounty
+  * Add `disburseBounty` to marketplace sdk
+
+### Changed
+
+  * Refactor BountyDetails UI, breaking into components
+
+
+# [3.3.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.2.6...v3.3.0) (2022-03-04)
 
 ### Changed
 

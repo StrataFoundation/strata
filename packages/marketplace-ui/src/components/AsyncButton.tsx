@@ -21,7 +21,7 @@ export const AsyncButton = ({
 
   return (
     <Button
-      isLoading={loading}
+      isLoading={loading || awaitingApproval}
       loadingText={awaitingApproval ? "Awaiting Approval" : "Loading"}
       onClick={execute}
       {...props}

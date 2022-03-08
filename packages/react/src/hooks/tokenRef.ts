@@ -238,14 +238,17 @@ export interface IUseSocialTokenMetadataResult extends IUseTokenMetadataResult {
 /**
  * Get all metadata associated with a given wallet's social token.
  *
- * @param owner
+ * @param ownerOrTokenRef
  * @returns
  */
 export function useSocialTokenMetadata(
-  owner: PublicKey | undefined | null
+  ownerOrTokenRef: PublicKey | undefined | null
 ): IUseSocialTokenMetadataResult {
-  const { info: tokenRef, loading } = usePrimaryClaimedTokenRef(owner);
-  const { info: tokenBonding } = useTokenBonding(
+  const { info: tokenRef1, loading: loading1 } =
+    usePrimaryClaimedTokenRef(ownerOrTokenRef);
+  const { info: tokenRef2, loading: loading2 } = useTokenRef(ownerOrTokenRef);
+  const tokenRef = tokenRef1 || tokenRef2;
+  const { info: tokenBonding, loading: loading3 } = useTokenBonding(
     tokenRef?.tokenBonding || undefined
   );
 
@@ -253,5 +256,6 @@ export function useSocialTokenMetadata(
     ...useTokenMetadata(tokenBonding?.targetMint),
     tokenRef,
     tokenBonding,
+    loading: loading1 || loading2 || loading3
   };
 }

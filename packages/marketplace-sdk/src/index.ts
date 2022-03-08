@@ -12,6 +12,8 @@ import {
   SplTokenBonding, TimeDecayExponentialCurveConfig,
   toBN
 } from "@strata-foundation/spl-token-bonding";
+import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
+
 import {
   Attribute,
   BigInstructionResult,
@@ -174,6 +176,18 @@ interface ICreateMetadataForBondingArgs {
   decimals: number;
 }
 
+interface IDisburseBountyArgs {
+  payer?: PublicKey;
+  /**
+   * The token bonding id of the bounty
+   */
+  tokenBonding: PublicKey;
+  /**
+   * The destination to disburse funds tos
+   */
+  destination: PublicKey;
+}
+
 export class MarketplaceSdk {
   static FIXED_CURVE = "fixmyQQ8cCVFh8Pp5LwZg4N3rXkym7sUXmGehxHqTAS";
 
@@ -212,11 +226,13 @@ export class MarketplaceSdk {
 
   static async init(
     provider: Provider,
-    splTokenBondingProgramId: PublicKey = SplTokenBonding.ID
+    splTokenBondingProgramId: PublicKey = SplTokenBonding.ID,
+    splTokenCollectiveProgramId: PublicKey = SplTokenCollective.ID
   ): Promise<MarketplaceSdk> {
     return new this(
       provider,
       await SplTokenBonding.init(provider, splTokenBondingProgramId),
+      await SplTokenCollective.init(provider, splTokenCollectiveProgramId),
       await SplTokenMetadata.init(provider)
     );
   }
@@ -224,6 +240,7 @@ export class MarketplaceSdk {
   constructor(
     readonly provider: Provider,
     readonly tokenBondingSdk: SplTokenBonding,
+    readonly tokenCollectiveSdk: SplTokenCollective,
     readonly tokenMetadataSdk: SplTokenMetadata
   ) {}
 
@@ -243,6 +260,81 @@ export class MarketplaceSdk {
     });
 
     return curve;
+  }
+
+  /**
+   * Disburses all of the funds from the bounty to the specified address
+   * and closes the bonding curve
+   * 
+   * If the bounty is owned by a previous unclaimed social token, handles the changeover of owners
+   * 
+   * @param param0 
+   * @returns 
+   */
+  async disburseBountyInstructions({
+    tokenBonding,
+    destination,
+  }: IDisburseBountyArgs): Promise<InstructionResult<null>> {
+    const instructions = [];
+    const signers = [];
+    const tokenBondingAcct = (await this.tokenBondingSdk.getTokenBonding(
+      tokenBonding
+    ))!;
+    const tokenRef = (await this.tokenCollectiveSdk.getTokenRef(
+      tokenBondingAcct.reserveAuthority! as PublicKey
+    ));
+
+    if (tokenRef) {
+      const { instructions: i0, signers: s0 } =
+        await this.tokenCollectiveSdk.claimBondingAuthorityInstructions({
+          tokenBonding,
+        });
+      instructions.push(...i0);
+      signers.push(...s0);
+    }
+    const reserveAmount = await this.tokenBondingSdk.getTokenAccountBalance(
+      tokenBondingAcct.baseStorage
+    );
+    const authority = tokenRef ? tokenRef.owner || undefined : undefined;
+    const { instructions: i1, signers: s1 } =
+      await this.tokenBondingSdk?.transferReservesInstructions({
+        amount: reserveAmount!,
+        destination,
+        tokenBonding,
+        reserveAuthority: authority
+      });
+    instructions.push(...i1);
+    signers.push(...s1);
+    const { instructions: i2, signers: s2 } =
+      await this.tokenBondingSdk.closeInstructions({
+        tokenBonding,
+        generalAuthority: authority
+      });
+
+    instructions.push(...i2);
+    signers.push(...s2);
+
+    return {
+      output: null,
+      instructions,
+      signers,
+    };
+  }
+
+  /**
+   * Executes `disburseBountyInstructions`
+   * @param args
+   * @returns
+   */
+  async disburseBounty(
+    args: IDisburseBountyArgs,
+    finality?: Finality
+  ): Promise<null> {
+    return this.tokenBondingSdk.execute(
+      this.disburseBountyInstructions(args),
+      args.payer,
+      finality
+    );
   }
 
   async getBounties({
@@ -644,16 +736,20 @@ export class MarketplaceSdk {
     startPrice,
     minPrice,
     maxSupply,
-    timeDecay
-  }: ILbpCurveArgs): { reserves: number, supply: number, curveConfig: ICurveConfig } {
+    timeDecay,
+  }: ILbpCurveArgs): {
+    reserves: number;
+    supply: number;
+    curveConfig: ICurveConfig;
+  } {
     if (startPrice < minPrice) {
       throw new Error("Max price must be more than min price");
     }
     if (minPrice == 0) {
-      throw new Error("Min price must be more than 0")
+      throw new Error("Min price must be more than 0");
     }
-    maxSupply = maxSupply * 2
-    minPrice = minPrice / 2;  // Account for ending with k = 1 instead of k = 0
+    maxSupply = maxSupply * 2;
+    minPrice = minPrice / 2; // Account for ending with k = 1 instead of k = 0
     // end price = start price / (1 + k0)
     // (1 + k0) (end price) = start price
     // (1 + k0)  = (start price) / (end price)
@@ -699,13 +795,17 @@ export class MarketplaceSdk {
     const instructions = [];
     const signers = [];
 
-    const { reserves: initialReservesPad, supply: initialSupplyPad, curveConfig } = MarketplaceSdk.lbcCurve({
+    const {
+      reserves: initialReservesPad,
+      supply: initialSupplyPad,
+      curveConfig,
+    } = MarketplaceSdk.lbcCurve({
       interval,
       startPrice,
       minPrice,
-      maxSupply
+      maxSupply,
     });
-    
+
     let curve: PublicKey | undefined = bondingArgs?.curve;
     if (!curve) {
       const {
@@ -744,7 +844,7 @@ export class MarketplaceSdk {
       signers.push(...metadataSigners);
     }
 
-    if (targetMint && await this.tokenBondingSdk.accountExists(targetMint)) {
+    if (targetMint && (await this.tokenBondingSdk.accountExists(targetMint))) {
       const mint = await getMintInfo(this.provider, targetMint);
       const mintAuthority = (
         await SplTokenBonding.tokenBondingKey(targetMint)

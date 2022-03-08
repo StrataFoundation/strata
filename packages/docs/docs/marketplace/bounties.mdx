@@ -163,10 +163,12 @@ await tokenBondingSdk.updateTokenBonding({
 
 ### Withdrawing Funds
 
-The `authority` param (defaulted to the wallet creating the bounty) is allowed to withdraw the funds from
-the bounty. This is done via the `transferReserves` command.
+The canonical way to withdraw funds from a bounty is all at once via the `disburseBounty` command on `marketplaceSdk` (shown later). We can also
+transfer funds from the bounty without closing it via `transferReserves`. The `authority` param (defaulted to the wallet creating the bounty) is allowed to withdraw the funds from
+the bounty.
 
-```js async deps=lbc
+
+```js async deps=create
 await tokenBondingSdk.transferReserves({
   tokenBonding,
   amount: 0.001,
@@ -174,28 +176,13 @@ await tokenBondingSdk.transferReserves({
 })
 ```
 
-You can also close and permanently shutdown the curve via `close`, which can only be done when the reserves are empty. This will
-recover the rent fees stored in the curve.
-```js
-import { getAssociatedAccountBalance } from "@strata-foundation/spl-utils";
-```
+To fully disburse and close the bounty:
 
-```js async deps=lbc
-var tokenBondingAcct = await tokenBondingSdk.getTokenBonding(tokenBonding);
-var transferInstrs =
-  await tokenBondingSdk.transferReservesInstructions({
-    amount: (await provider.connection.getTokenAccountBalance(tokenBondingAcct.baseStorage)).value.uiAmount,
-    destination: publicKey,
-    tokenBonding,
-  });
-var { instructions, signers } =
-  await tokenBondingSdk.closeInstructions({
-    tokenBonding
-  });
-await tokenBondingSdk.sendInstructions(
-  [...transferInstrs.instructions, ...instructions],
-  [...transferInstrs.signers, ...signers]
-);
+```js async deps=create
+await marketplaceSdk.disburseBounty({
+  tokenBonding,
+  destination: publicKey
+})
 ```
 
 ### Searching Bounties

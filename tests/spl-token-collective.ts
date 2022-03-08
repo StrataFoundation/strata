@@ -413,6 +413,36 @@ describe("spl-token-collective", () => {
       expect(mintTokenRef.isOptedOut).to.be.true;
     });
 
+    // This is a bounties use case
+    it("Allows claiming authority over bonding curves owned by the mint token ref with social token mint as the base token", async () => {
+      const tokenRef = (await tokenCollectiveProgram.getTokenRef(
+        claimedReverseTokenRef
+      ))!;
+      const { tokenBonding } = await splTokenBondingProgram.createTokenBonding({
+        baseMint: tokenRef.mint,
+        targetMintDecimals: 0,
+        buyBaseRoyaltyPercentage: 0,
+        buyTargetRoyaltyPercentage: 0,
+        sellBaseRoyaltyPercentage: 0,
+        sellTargetRoyaltyPercentage: 0,
+        curve,
+        generalAuthority: claimedReverseTokenRef,
+        reserveAuthority: claimedReverseTokenRef
+      });
+
+      await tokenCollectiveProgram.claimBondingAuthority({
+        tokenBonding,
+      });
+      const tokenRefAuthority = tokenRef.authority?.toBase58();
+      const tokenBondingAcct = (await splTokenBondingProgram.getTokenBonding(tokenBonding))!
+      expect((tokenBondingAcct.generalAuthority! as PublicKey).toBase58()).to.eq(
+        tokenRefAuthority
+      );
+      expect(
+        (tokenBondingAcct.generalAuthority! as PublicKey).toBase58()
+      ).to.eq(tokenRefAuthority);
+    })
+
     it("Allows changing the authority", async () => {
       await tokenCollectiveProgram.updateAuthority({
         tokenRef: claimedTokenRef,

@@ -27,6 +27,7 @@
     "@chakra-ui/react": "^1.8.1",
     "@hookform/resolvers": "^2.8.8",
     "@metaplex-foundation/mpl-token-metadata": "^1.1.0",
+    "@sevenoutman/use-debounced-memo": "^1.0.0",
     "@solana/spl-governance": "^0.0.26",
     "@solana/spl-token": "^0.1.8",
     "@solana/wallet-adapter-react": "^0.15.2",

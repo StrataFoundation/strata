@@ -12,13 +12,11 @@ import {
   useProvider,
   usePublicKey
 } from "@strata-foundation/react";
-import { useRouter } from "next/router";
 import React, { useEffect } from "react";
 import { useAsyncCallback } from "react-async-hook";
 import { DefaultValues, FormProvider, useForm } from "react-hook-form";
 import * as yup from "yup";
 import { useMarketplaceSdk } from "../../contexts/marketplaceSdkContext";
-import { route, routes } from "../../utils/routes";
 import { FormControlWithError } from "./FormControlWithError";
 import { MintSelect } from "./MintSelect";
 import { Recipient } from "./Recipient";
@@ -54,19 +52,19 @@ async function createBounty(
   const authority = new PublicKey(values.authority);
 
   const targetMintKeypair = Keypair.generate();
-  // const uri = await marketplaceSdk.tokenMetadataSdk.createArweaveMetadata({
-  //   name: values.name,
-  //   symbol: values.shortName,
-  //   description: values.description,
-  //   image: values.image?.name,
-  //   files: [values.image].filter(truthy),
-  //   mint: targetMintKeypair.publicKey,
-  //   attributes: MarketplaceSdk.bountyAttributes({
-  //     mint,
-  //     discussion: values.discussion,
-  //     contact: values.contact
-  //   }),
-  // });
+  const uri = await marketplaceSdk.tokenMetadataSdk.createArweaveMetadata({
+    name: values.name,
+    symbol: values.shortName,
+    description: values.description,
+    image: values.image?.name,
+    files: [values.image].filter(truthy),
+    mint: targetMintKeypair.publicKey,
+    attributes: MarketplaceSdk.bountyAttributes({
+      mint,
+      discussion: values.discussion,
+      contact: values.contact
+    }),
+  });
   const { targetMint } = await marketplaceSdk.createBounty({
     targetMintKeypair,
     authority,
@@ -75,7 +73,7 @@ async function createBounty(
       // Max name len 32
       name: values.name.substring(0, 32),
       symbol: values.shortName.substring(0, 10),
-      uri: "",
+      uri,
       sellerFeeBasisPoints: 0,
       creators: null,
       collection: null,
@@ -125,6 +123,8 @@ export const BountyForm = ({
       const owner = mintTokenRef.owner as PublicKey | undefined;
       if (owner) {
         setValue("authority", owner.toBase58());
+      } else {
+        setValue("authority", mintTokenRef.publicKey.toBase58())
       }
     }
   }, [mintTokenRef]);
