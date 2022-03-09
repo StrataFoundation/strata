@@ -14,7 +14,7 @@ const onCreatorClick: OnCreatorClick = (c, t, tokenRef, handle) => {
   );
 };
 
-const InfoItem = ({ name, creator, loading }: { name: string, loading: boolean, creator: PublicKey | undefined }) => {
+export const InfoItem = ({ name, creator, loading }: { name: string, loading: boolean, creator: PublicKey | undefined }) => {
   return (
     <HStack spacing={2}>
       <Text fontWeight={800} color="gray.700">
@@ -37,13 +37,13 @@ export const AuthorityAndTokenInfo = ({ mintKey }: { mintKey: PublicKey | undefi
   const { metadata, loading: loadingMeta } = useTokenMetadata(mintKey);
   const updateAuthority = usePublicKey(metadata?.updateAuthority);
   return (
-    <SimpleGrid columns={[1, 1, 2]} fontSize="14px" spacing={4}>
+    <HStack justify="center" gap={1} flexWrap="wrap" fontSize="14px" spacing={4}>
       <InfoItem creator={updateAuthority} loading={loading} name="Requester" />
       <InfoItem
         creator={tokenBonding?.reserveAuthority as PublicKey}
         loading={loading}
         name="Approver"
       />
-    </SimpleGrid>
+    </HStack>
   );
 };
