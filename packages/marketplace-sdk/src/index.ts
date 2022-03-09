@@ -282,7 +282,7 @@ export class MarketplaceSdk {
               new u64(0).toBuffer(),
               new u64(0).toBuffer(),
               new PublicKey(MarketplaceSdk.FIXED_CURVE).toBuffer(),
-              new Uint8Array([0, 0]),
+              Buffer.from(new Uint8Array([0, 0])),
             ])
           ),
         },
