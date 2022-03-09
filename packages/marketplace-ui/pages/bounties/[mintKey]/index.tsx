@@ -57,7 +57,7 @@ export const MarketDisplay: NextPage = ({
           alt={name}
           src={targetImage || image}
         />
-        <Box zIndex={1} bg="white" shadow="xl" rounded="lg">
+        <Box zIndex={1} bg="white" shadow="xl" rounded="lg" p={2}>
           <BountyDetail
             onEdit={() => router.push(
               route(routes.editBounty, {

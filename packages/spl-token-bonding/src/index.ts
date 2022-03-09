@@ -508,6 +508,11 @@ export interface ICloseArgs {
   payer?: PublicKey;
   /** Account to receive the rent sol. **Default**: provide.wallet */
   refund?: PublicKey;
+  /**
+   * Optional (**Default**: General authority on the token bonding). This parameter is only needed when updating the general
+   * authority in the same txn as ruunning close
+   */
+  generalAuthority?: PublicKey;
 }
 
 export interface ITransferReservesArgs {
@@ -519,6 +524,11 @@ export interface ITransferReservesArgs {
    * The destination for the reserves **Default:** ata of wallet
    */
   destination?: PublicKey;
+  /**
+   * Optional (**Default**: Reserve authority on the token bonding). This parameter is only needed when updating the reserve
+   * authority in the same txn as ruunning transfer
+   */
+  reserveAuthority?: PublicKey;
 }
 
 export interface IBuyBondingWrappedSolArgs {
@@ -2135,6 +2145,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
    */
   async closeInstructions({
     tokenBonding,
+    generalAuthority,
     refund = this.wallet.publicKey,
   }: ICloseArgs): Promise<InstructionResult<null>> {
     const tokenBondingAcct = (await this.getTokenBonding(tokenBonding))!;
@@ -2153,7 +2164,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           accounts: {
             refund,
             tokenBonding,
-            generalAuthority: tokenBondingAcct.generalAuthority! as PublicKey,
+            generalAuthority: generalAuthority || tokenBondingAcct.generalAuthority! as PublicKey,
             targetMint: tokenBondingAcct.targetMint,
             baseStorage: tokenBondingAcct.baseStorage,
             tokenProgram: TOKEN_PROGRAM_ID,
@@ -2181,6 +2192,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     tokenBonding,
     destination,
     amount,
+    reserveAuthority,
     payer = this.wallet.publicKey,
   }: ITransferReservesArgs): Promise<InstructionResult<null>> {
     const tokenBondingAcct = (await this.getTokenBonding(tokenBonding))!;
@@ -2244,7 +2256,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
 
     const common = {
       tokenBonding,
-      reserveAuthority: tokenBondingAcct.reserveAuthority! as PublicKey,
+      reserveAuthority: reserveAuthority || tokenBondingAcct.reserveAuthority! as PublicKey,
       baseMint: tokenBondingAcct.baseMint,
       baseStorage: tokenBondingAcct.baseStorage,
       tokenProgram: TOKEN_PROGRAM_ID,
