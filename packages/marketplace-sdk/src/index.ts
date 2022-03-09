@@ -771,7 +771,7 @@ export class MarketplaceSdk {
   }
 
   /**
-   * Creates an LBP
+   * Creates an LBC
    *
    * @param param0
    * @returns
