@@ -25,6 +25,17 @@ module.exports = {
     return config;
   },
   async redirects() {
-    return [];
+    return [
+      {
+        source: "/docs/:path*",
+        destination: `${process.env.NEXT_PUBLIC_DOCS_URL}/:path*`,
+        permanent: false,
+      },
+      {
+        source: "/blog/:path*",
+        destination: `${process.env.NEXT_PUBLIC_BLOG_URL}/:path*`,
+        permanent: false,
+      },
+    ];
   },
 };
