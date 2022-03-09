@@ -104,9 +104,9 @@ export const useClaimedTokenRefKeyForName = (
   name: string | undefined | null,
   mint: PublicKey | undefined | null,
   tld: PublicKey | undefined
-): { result: PublicKey | undefined; loading: boolean } => {
+): { result: PublicKey | undefined; loading: boolean; error?: Error } => {
   const cache = useAccountFetchCache();
-  const { result: key, loading } = useAsync(
+  const { result: key, loading, error } = useAsync(
     async (
       cache: AccountFetchCache | undefined,
       name: string | undefined | null,
@@ -119,7 +119,7 @@ export const useClaimedTokenRefKeyForName = (
     },
     [cache, name, mint, tld]
   );
-  return { result: key, loading };
+  return { result: key, loading, error };
 };
 
 export const useClaimedTokenRefKey = (
@@ -197,8 +197,11 @@ export const useTokenRefForName = (
   mint: PublicKey | null,
   tld: PublicKey | undefined
 ): UseAccountState<ITokenRef> => {
-  const { result: claimedKey, loading: twitterLoading } =
+  const { result: claimedKey, loading: twitterLoading, error } =
     useClaimedTokenRefKeyForName(name, mint, tld);
+  if (error) {
+    console.error(error)
+  }
   const { result: unclaimedKey, loading: claimedLoading } =
     useUnclaimedTokenRefKeyForName(name, mint, tld);
   const claimed = useTokenRef(claimedKey);
