@@ -22,24 +22,30 @@ const config = {
       "@docusaurus/preset-classic",
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
-        docs: {
-          remarkPlugins: [math, plantuml],
-          rehypePlugins: [katex],
-          sidebarPath: require.resolve("./sidebars.js"),
-          // Please change this to your repo.
-          editUrl:
-            "https://github.com/StrataFoundation/strata/edit/master/packages/docs",
-        },
-        blog: {
-          blogSidebarTitle: "Posts",
-          blogSidebarCount: "ALL",
-          remarkPlugins: [math, plantuml],
-          rehypePlugins: [katex],
-          showReadingTime: true,
-          // Please change this to your repo.
-          editUrl:
-            "https://github.com/StrataFoundation/strata/edit/master/packages/docs/blog",
-        },
+        docs: process.env.BLOG_ONLY
+          ? false
+          : {
+              remarkPlugins: [math, plantuml],
+              rehypePlugins: [katex],
+              sidebarPath: require.resolve("./sidebars.js"),
+              // Please change this to your repo.
+              editUrl:
+                "https://github.com/StrataFoundation/strata/edit/master/packages/docs",
+              ...(process.env.DOCS_ONLY ? { routeBasePath: "/" } : {}),
+            },
+        blog: process.env.DOCS_ONLY
+          ? false
+          : {
+              blogSidebarTitle: "Posts",
+              blogSidebarCount: "ALL",
+              remarkPlugins: [math, plantuml],
+              rehypePlugins: [katex],
+              showReadingTime: true,
+              // Please change this to your repo.
+              editUrl:
+                "https://github.com/StrataFoundation/strata/edit/master/packages/docs/blog",
+              ...(process.env.BLOG_ONLY ? { routeBasePath: "/" } : {}),
+            },
         theme: {
           customCss: require.resolve("./src/css/custom.css"),
         },
@@ -127,13 +133,17 @@ const config = {
           src: "img/logo.png",
         },
         items: [
-          {
-            type: "doc",
-            docId: "getting_started",
-            position: "left",
-            label: "Docs",
-          },
-          { to: "/blog", label: "Blog", position: "left" },
+          // {
+          //   type: "doc",
+          //   docId: "getting_started",
+          //   position: "left",
+          //   label: "Docs",
+          // },
+          // {
+          //   to: "/blog",
+          //   label: "Blog",
+          //   position: "left",
+          // },
           {
             href: "https://github.com/StrataFoundation/strata",
             label: "GitHub",
@@ -171,7 +181,7 @@ const config = {
             items: [
               {
                 label: "Blog",
-                to: "/blog",
+                to: "https://blog.strataprotocol.com",
               },
               {
                 label: "GitHub",
