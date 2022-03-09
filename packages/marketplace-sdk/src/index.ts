@@ -2,7 +2,6 @@ import {
   DataV2
 } from "@metaplex-foundation/mpl-token-metadata";
 import { BorshAccountsCoder, Provider } from "@project-serum/anchor";
-import instruction from "@project-serum/anchor/dist/cjs/program/namespace/instruction";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, NATIVE_MINT, Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
 import { Finality, Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
 import {
@@ -14,8 +13,7 @@ import {
   SplTokenBonding, TimeDecayExponentialCurveConfig,
   toBN
 } from "@strata-foundation/spl-token-bonding";
-import { ITokenBondingParams, SplTokenCollective } from "@strata-foundation/spl-token-collective";
-
+import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
 import {
   Attribute,
   BigInstructionResult,
@@ -25,6 +23,7 @@ import {
 import BN from "bn.js";
 import bs58 from "bs58";
 import { Buffer } from "buffer";
+
 
 type Truthy<T> = T extends false | "" | 0 | null | undefined ? never : T; // from lodash
 
