@@ -3,16 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-# [Unreleased]
+## [3.3.1](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.3.1-alpha.1...v3.3.1) (2022-03-09)
 
 ### Added
 
   * Set a mint token ref as the authority on a bounty, and the owner of that social token can disburse the bounty
   * Add `disburseBounty` to marketplace sdk
+  * Add ability to sell some initial supply of tokens using bonding curves without the need for bonding to take mint authority. Instead send the tokens to a second sell-only bonding curve. See `marketplaceSdk.createTokenBondingForSetSupply`
+  * Prices for any top level token that has its mpl or token list metadata.name set to its coingecko id (case insensitive)
 
 ### Changed
 
   * Refactor BountyDetails UI, breaking into components
+
+### Fixed
+
+  * Swallowed errors on `useClaimedTokenRefKey` and a version conflict in borsh that causes errors
 
 
 # [3.3.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.2.6...v3.3.0) (2022-03-04)
