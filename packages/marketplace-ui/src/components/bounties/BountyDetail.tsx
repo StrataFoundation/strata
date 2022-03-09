@@ -167,7 +167,7 @@ export const BountyDetail = ({
           <>
             <SimpleGrid
               w="full"
-              justify="stretch"
+              justifyContent="stretch"
               columns={[1, 1, 2]}
               spacing={2}
               gap={2}

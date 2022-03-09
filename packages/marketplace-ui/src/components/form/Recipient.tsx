@@ -63,7 +63,6 @@ export const Recipient = ({ value, onChange, name }: { name: string, value: stri
               w="57px"
               h="57px"
               src={image}
-              direction="column"
             />
           )}
           {!metadata && (
