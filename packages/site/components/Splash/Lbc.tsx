@@ -30,7 +30,7 @@ export const Lbc = () => (
           src="lbcChart.png"
           alt="Lbc Chart"
           height="340px"
-          mt={{ base: 0, sm: 16 }}
+          mt={{ base: 16, md: 16 }}
         />
         <Stack
           gap={2}

@@ -71,11 +71,13 @@ export const Bounties = () => (
         </Stack>
         <Box
           lineHeight="normal"
+          width={{ base: "100%", md: "80%" }}
           mb={{ base: 0, sm: 16 }}
           ml={{
             base: 0,
             md: 14,
           }}
+          mb={{ base: 6, md: 0 }}
         >
           <Stack
             bg="#191C2A"
@@ -84,7 +86,7 @@ export const Bounties = () => (
             rounded="lg"
             border="1px solid white"
             p={8}
-            ml="30px"
+            ml={30}
           >
             <Image
               src="/dtpBounty.png"
@@ -92,19 +94,24 @@ export const Bounties = () => (
               width="48px"
               height="48px"
             />
-            <Stack spacing="4">
+            <Stack spacing="4" justifyContent="left" flexWrap="wrap">
               <Text fontSize="xl" fontWeight="bold">
                 The Degens take on plastic: Becuase a global problem needs a
                 global $SOLution
               </Text>
-              <Stack direction="row" gap={2} fontSize="sm">
-                <Text>
+              <Stack
+                direction="row"
+                gap={2}
+                fontSize="sm"
+                display={{ base: "none", sm: "flex" }}
+              >
+                <Text align="left">
                   <Text as="span" fontWeight="bold">
                     Requester
                   </Text>{" "}
                   @EndangeredDegen
                 </Text>
-                <Text>
+                <Text align="left">
                   <Text as="span" fontWeight="bold">
                     Approver
                   </Text>{" "}
@@ -141,6 +148,7 @@ export const Bounties = () => (
             ml="200px"
             bgGradient="linear(to-b, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0))"
             bgClip="text"
+            display={{ base: "none", sm: "flex" }}
           >
             <Stack>
               <Text fontSize="sm" fontWeight="bold" mb={2}>
