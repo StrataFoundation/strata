@@ -1,5 +1,6 @@
 ---
 sidebar_position: 1
+slug: /
 ---
 
 # Getting Started
@@ -54,20 +55,21 @@ Use `var` instead of `let` or `const` so that these blocks can be re-run
 Let's create a Social Token named TEST within the Open Collective that gives us 10% of every TEST token minted in royalties.
 
 ```jsx async name=create_social
-var { ownerTokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
-  ignoreIfExists: true, // If a Social Token already exists for this wallet, ignore.
-  metadata: {
-    name: "Learning Strata Token",
-    symbol: "luvSTRAT",
-    uri: "https://strataprotocol.com/luvSTRAT.json",
-  },
-  tokenBondingParams: {
-    buyBaseRoyaltyPercentage: 0,
-    buyTargetRoyaltyPercentage: 10,
-    sellBaseRoyaltyPercentage: 0,
-    sellTargetRoyaltyPercentage: 0
-  }
-});
+var { ownerTokenRef, tokenBonding } =
+  await tokenCollectiveSdk.createSocialToken({
+    ignoreIfExists: true, // If a Social Token already exists for this wallet, ignore.
+    metadata: {
+      name: "Learning Strata Token",
+      symbol: "luvSTRAT",
+      uri: "https://strataprotocol.com/luvSTRAT.json",
+    },
+    tokenBondingParams: {
+      buyBaseRoyaltyPercentage: 0,
+      buyTargetRoyaltyPercentage: 10,
+      sellBaseRoyaltyPercentage: 0,
+      sellTargetRoyaltyPercentage: 0,
+    },
+  });
 ```
 
 We can fetch the accounts we just created
@@ -86,9 +88,13 @@ To buy a social token, first we should buy into the collective of which that soc
 await tokenBondingSdk.buy({
   tokenBonding: SplTokenCollective.OPEN_COLLECTIVE_BONDING_ID,
   desiredTargetAmount: 10,
-  slippage: 0.05
+  slippage: 0.05,
 });
-var openBalance = await getAssociatedAccountBalance(connection, publicKey, tokenBondingAcct.baseMint);
+var openBalance = await getAssociatedAccountBalance(
+  connection,
+  publicKey,
+  tokenBondingAcct.baseMint
+);
 ```
 
 Now, we can buy the social token using our 10 OPEN tokens:
@@ -97,32 +103,39 @@ Now, we can buy the social token using our 10 OPEN tokens:
 await tokenBondingSdk.buy({
   tokenBonding,
   baseAmount: 10,
-  slippage: 0.05
+  slippage: 0.05,
 });
 ```
 
 Now we can check the balance:
-```jsx async name=buy_target deps=fetch
-var testBalance = await getAssociatedAccountBalance(connection, publicKey, tokenBondingAcct.targetMint);
-```
 
+```jsx async name=buy_target deps=fetch
+var testBalance = await getAssociatedAccountBalance(
+  connection,
+  publicKey,
+  tokenBondingAcct.targetMint
+);
+```
 
 We can also do the last two steps all at once:
 
 ```jsx async name=buy_all deps=fetch
-
 var { targetAmount } = await tokenBondingSdk.swap({
   baseMint: NATIVE_MINT,
   targetMint: tokenBondingAcct.targetMint,
   baseAmount: 0.01,
-  slippage: 0.05
-})
+  slippage: 0.05,
+});
 ```
 
 Now check the balance:
 
 ```jsx async name=balance deps=fetch
-var testBalance = await getAssociatedAccountBalance(connection, publicKey, tokenBondingAcct.targetMint);
+var testBalance = await getAssociatedAccountBalance(
+  connection,
+  publicKey,
+  tokenBondingAcct.targetMint
+);
 ```
 
 We can also sell those tokens
@@ -131,15 +144,18 @@ We can also sell those tokens
 await tokenBondingSdk.sell({
   tokenBonding,
   targetAmount: 5,
-  slippage: 0.05
+  slippage: 0.05,
 });
-
 ```
 
 Now check the balance:
 
 ```jsx async name=balance deps=fetch
-var testBalance = await getAssociatedAccountBalance(connection, publicKey, tokenBondingAcct.targetMint);
+var testBalance = await getAssociatedAccountBalance(
+  connection,
+  publicKey,
+  tokenBondingAcct.targetMint
+);
 ```
 
 ## Next Steps
@@ -148,6 +164,6 @@ Interested in using Strata with React? Checkout our [React Examples](./react).
 
 To gain a deeper understanding of the API through examples, check out the Learn pages on
 
-  * [Bonding Curves](./learn/bonding_curves)
-  * [Collectives](./learn/bonding_curves)
-  * [Social Tokens](./learn/bonding_curves)
+- [Bonding Curves](./learn/bonding_curves)
+- [Collectives](./learn/bonding_curves)
+- [Social Tokens](./learn/bonding_curves)

@@ -1,6 +1,29 @@
-import { Box, BoxProps, Button, Center, Collapse, Icon, LightMode, Link, Progress, Spinner, Stack, Text, TextProps, Tooltip, useColorModeValue, useDisclosure, useInterval, VStack } from "@chakra-ui/react";
+import {
+  Box,
+  BoxProps,
+  Button,
+  Center,
+  Collapse,
+  Icon,
+  LightMode,
+  Link,
+  Progress,
+  Spinner,
+  Stack,
+  Text,
+  TextProps,
+  Tooltip,
+  useColorModeValue,
+  useDisclosure,
+  useInterval,
+  VStack,
+} from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
-import { useCurve, useTokenBonding, useTokenMetadata } from "@strata-foundation/react";
+import {
+  useCurve,
+  useTokenBonding,
+  useTokenMetadata,
+} from "@strata-foundation/react";
 import moment from "moment";
 import React, { useState } from "react";
 import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
@@ -12,41 +35,60 @@ import { BondingPlot } from "./BondingPlot";
 
 const BlackBox = ({ children, ...other }: BoxProps) => {
   return (
-    <Center p="26px" rounded="lg" backgroundColor={useColorModeValue("gray.200", "black.500")} {...other}>
+    <Center
+      p="26px"
+      rounded="lg"
+      backgroundColor={useColorModeValue("gray.200", "black.500")}
+      {...other}
+    >
       {children}
     </Center>
   );
-}
+};
 
 const BigText = ({ children, ...other }: TextProps) => {
-  return <Text fontWeight={700} fontSize="24px" {...other}>{ children }</Text>
-}
+  return (
+    <Text fontWeight={700} fontSize="24px" {...other}>
+      {children}
+    </Text>
+  );
+};
 
-export const LbcInfo = ({ tokenBondingKey, price: inputPrice }: { tokenBondingKey: PublicKey, price?: number }) => {
+export const LbcInfo = ({
+  tokenBondingKey,
+  price: inputPrice,
+}: {
+  tokenBondingKey: PublicKey;
+  price?: number;
+}) => {
   const { isOpen, onToggle } = useDisclosure({
     defaultIsOpen: true,
   });
   const { info: tokenBonding, loading: loadingBonding } =
     useTokenBonding(tokenBondingKey);
-  const { price, loading: loadingPricing } = useLivePrice(tokenBondingKey)
+  const { price, loading: loadingPricing } = useLivePrice(tokenBondingKey);
   const { numRemaining, mintCap } = useCapInfo(tokenBondingKey);
 
   const priceToUse = inputPrice || price;
-  
+
   const { info: curve } = useCurve(tokenBonding?.curve);
-  // @ts-ignore
-  const maxTime = curve?.definition.timeV0.curves[0].curve.timeDecayExponentialCurveV0.interval;
-  const [elapsedTime, setElapsedTime] = useState<number | undefined>()
+  const maxTime =
+    // @ts-ignore
+    curve?.definition.timeV0.curves[0].curve.timeDecayExponentialCurveV0
+      .interval;
+  const [elapsedTime, setElapsedTime] = useState<number | undefined>();
   useInterval(() => {
     setElapsedTime(
       tokenBonding
-        ? (new Date().valueOf() / 1000) - tokenBonding.goLiveUnixTime.toNumber()
+        ? new Date().valueOf() / 1000 - tokenBonding.goLiveUnixTime.toNumber()
         : undefined
     );
   }, 500);
-  
+
   const endDate = new Date(0);
-  endDate.setUTCSeconds((tokenBonding?.goLiveUnixTime.toNumber() || 0) + (maxTime || 0))
+  endDate.setUTCSeconds(
+    (tokenBonding?.goLiveUnixTime.toNumber() || 0) + (maxTime || 0)
+  );
 
   const { metadata } = useTokenMetadata(tokenBonding?.baseMint);
 
@@ -148,7 +190,7 @@ export const LbcInfo = ({ tokenBondingKey, price: inputPrice }: { tokenBondingKe
               Bootstrapping Curve (LBC).{" "}
               <Link
                 color="primary.500"
-                href="https://www.strataprotocol.com/docs/marketplace/lbc"
+                href="https://docs.strataprotocol.com/marketplace/lbc"
               >
                 Learn More
               </Link>
@@ -159,4 +201,4 @@ export const LbcInfo = ({ tokenBondingKey, price: inputPrice }: { tokenBondingKe
       </Collapse>
     </VStack>
   );
-}
+};

@@ -1,4 +1,9 @@
-import { Metadata, Creator, DataV2, MetadataProgram } from "@metaplex-foundation/mpl-token-metadata";
+import {
+  Metadata,
+  Creator,
+  DataV2,
+  MetadataProgram,
+} from "@metaplex-foundation/mpl-token-metadata";
 import * as anchor from "@project-serum/anchor";
 import { IdlTypes, Program, Provider } from "@project-serum/anchor";
 import { getHashedName, NameRegistryState } from "@solana/spl-name-service";
@@ -8,7 +13,7 @@ import {
   MintLayout,
   NATIVE_MINT,
   Token,
-  TOKEN_PROGRAM_ID
+  TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import {
   AccountInfo,
@@ -19,28 +24,30 @@ import {
   SystemProgram,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
-  TransactionInstruction
+  TransactionInstruction,
 } from "@solana/web3.js";
 import {
   ICreateTokenBondingArgs,
   ITokenBonding,
   IUpdateTokenBondingArgs,
-  SplTokenBonding
+  SplTokenBonding,
 } from "@strata-foundation/spl-token-bonding";
 import {
   AnchorSdk,
-  BigInstructionResult, createMintInstructions, extendBorsh,
+  BigInstructionResult,
+  createMintInstructions,
+  extendBorsh,
   InstructionResult,
   ITokenWithMeta,
   percent,
   SplTokenMetadata,
-  TypedAccountParser
+  TypedAccountParser,
 } from "@strata-foundation/spl-utils";
 import { deserializeUnchecked } from "borsh";
 import {
   CollectiveV0,
   SplTokenCollectiveIDL,
-  TokenRefV0
+  TokenRefV0,
 } from "./generated/spl-token-collective";
 
 export * from "./generated/spl-token-collective";
@@ -88,7 +95,7 @@ export interface ICreateCollectiveArgs {
 }
 
 // Taken from token bonding initialize
-/** See [InitializeTokenBondingArgs](/docs/api/spl-token-bonding/interfaces/ICreateTokenBondingArgs) */
+/** See [InitializeTokenBondingArgs](https://docs.strataprotocol.com/api/spl-token-bonding/interfaces/ICreateTokenBondingArgs) */
 export interface ITokenBondingParams
   extends Omit<ICreateTokenBondingArgs, "curve" | "baseMint"> {
   /** The curve to create this social token on. **Default:** Curve from the collective's config */
@@ -1466,9 +1473,9 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
    * Claims the reserve and general authority from any bonding curve
    * that has this token ref as the authority. Useful for setting bonding curves
    * that can later be claimed by the social token holder.
-   * 
-   * @param param0 
-   * @returns 
+   *
+   * @param param0
+   * @returns
    */
   async claimBondingAuthorityInstructions({
     tokenBonding,

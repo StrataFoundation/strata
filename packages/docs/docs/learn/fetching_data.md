@@ -38,7 +38,7 @@ entity Wallet {
 
 entity TokenRef {
   ["owner-token-ref", owner] PRIMARY
-  -- 
+  --
   ["owner-token-ref", name, collective_mint]
   --
   ["owner-token-ref", owner, collective_mint]
@@ -101,13 +101,13 @@ How do we use this to get and display the data we need? The answer is that we tr
 
 At its core, Solana is just a giant Key/Value store. A public key is the key, and there's some blob of data at that value. Some blobs we make use of are
 
-  * Collectives
-  * Token Ref
-  * Token Bonding
-  * Curve
-  * Token Account
-  * Token Mint
-  * Token Metadata
+- Collectives
+- Token Ref
+- Token Bonding
+- Curve
+- Token Account
+- Token Mint
+- Token Metadata
 
 The list goes on. Every one of these has a public key.
 
@@ -121,19 +121,22 @@ These deterministically derived addresses give us another tool. Don't have the P
 
 ```js async name=owner
 // Get the primary social token for your wallet.
-var tokenRefKey = (await SplTokenCollective.ownerTokenRefKey({
-  owner: provider.wallet.publicKey,
-  isPrimary: true
-}))[0]
+var tokenRefKey = (
+  await SplTokenCollective.ownerTokenRefKey({
+    owner: provider.wallet.publicKey,
+    isPrimary: true,
+  })
+)[0];
 ```
 
 Now we can fetch that object
+
 ```js async deps=owner name=token
-var tokenRef = (await tokenCollectiveSdk.getTokenRef(tokenRefKey))
+var tokenRef = await tokenCollectiveSdk.getTokenRef(tokenRefKey);
 ```
 
 :::note React
-Most of the calls in this guide have React hook equivalents. For example, `useTokenRef`, `useTokenBonding`, `useClaimedTokenRefKey`, etc. Be sure to take a look at the [React Guide](/docs/react) and [React API](http://localhost:3000/docs/api/react/modules#functions)
+Most of the calls in this guide have React hook equivalents. For example, `useTokenRef`, `useTokenBonding`, `useClaimedTokenRefKey`, etc. Be sure to take a look at the [React Guide](https://docs.strataprotocol.com/react) and [React API](https://docs.strataprotocol.com/api/react/modules#functions)
 :::
 
 ## The Star Schema: TokenRefs
@@ -143,41 +146,53 @@ The Token Ref is at the heart of Strata. Given a token ref, you can fetch any in
 ```js
 import { getMintInfo, getTokenAccount } from "@strata-foundation/spl-utils";
 ```
+
 ```js async deps=token
 var metadata = await tokenMetadataSdk.getMetadata(tokenRef.tokenMetadata);
 var tokenBonding = await tokenBondingSdk.getTokenBonding(tokenRef.tokenBonding);
 var collective = await tokenCollectiveSdk.getCollective(tokenRef.collective);
 var mint = await getMintInfo(provider, tokenRef.mint);
 var collectiveMint = await getMintInfo(provider, collective.mint);
-var buyBaseRoyalties = await getTokenAccount(provider, tokenBonding.buyBaseRoyalties);
+var buyBaseRoyalties = await getTokenAccount(
+  provider,
+  tokenBonding.buyBaseRoyalties
+);
 ```
 
 ### Getting to the Token Ref
 
 You can get to a token ref if you know any of the following sets of information:
 
-   * **owner** - The wallet of the individual, where you want to access their primary social token
-   * **owner, collective** - The social token of a wallet within a particular collective
-   * **name, collective** - An unclaimed social token registered to a name service name within a collective
-   * **mint** - The Mint of the social token
+- **owner** - The wallet of the individual, where you want to access their primary social token
+- **owner, collective** - The social token of a wallet within a particular collective
+- **name, collective** - An unclaimed social token registered to a name service name within a collective
+- **mint** - The Mint of the social token
 
 All of these can be accessed from `SplTokenCollective.ownerTokenRefKey` and `SplTokenCollective.mintTokenRefKey`:
+
 ```js
 import { getNameAccountKey, getHashedName } from "@solana/spl-name-service";
 ```
+
 ```js async deps=token
-var primaryTokenRef = (await SplTokenCollective.ownerTokenRefKey({
-  owner: provider.wallet.publicKey,
-  isPrimary: true
-}))[0];
-var collectiveTokenRef = (await SplTokenCollective.ownerTokenRefKey({
-  owner: provider.wallet.publicKey,
-  mint: collective.mint
-}))[0];
-var unclaimedCollectiveTokenRef = (await SplTokenCollective.ownerTokenRefKey({
-  name: await getNameAccountKey(await getHashedName("some-name")),
-  mint: collective.mint
-}))[0];
+var primaryTokenRef = (
+  await SplTokenCollective.ownerTokenRefKey({
+    owner: provider.wallet.publicKey,
+    isPrimary: true,
+  })
+)[0];
+var collectiveTokenRef = (
+  await SplTokenCollective.ownerTokenRefKey({
+    owner: provider.wallet.publicKey,
+    mint: collective.mint,
+  })
+)[0];
+var unclaimedCollectiveTokenRef = (
+  await SplTokenCollective.ownerTokenRefKey({
+    name: await getNameAccountKey(await getHashedName("some-name")),
+    mint: collective.mint,
+  })
+)[0];
 var mintTokenRef = (await SplTokenCollective.mintTokenRefKey(tokenRef.mint))[0];
 ```
 
@@ -186,11 +201,17 @@ var mintTokenRef = (await SplTokenCollective.mintTokenRefKey(tokenRef.mint))[0];
 Token bonding instances are also indexed by mint. You can get a token bonding from a mint using `SplTokenBonding.tokenBondingKey(mint)`
 
 ```js async
-var tokenBondingKey = (await SplTokenBonding.tokenBondingKey(SplTokenCollective.OPEN_COLLECTIVE_MINT_ID))[0];
-var openCollectiveBonding = await tokenBondingSdk.getTokenBonding(tokenBondingKey);
-var isTheRightCurve = SplTokenCollective.OPEN_COLLECTIVE_BONDING_ID.equals(tokenBondingKey);
+var tokenBondingKey = (
+  await SplTokenBonding.tokenBondingKey(
+    SplTokenCollective.OPEN_COLLECTIVE_MINT_ID
+  )
+)[0];
+var openCollectiveBonding = await tokenBondingSdk.getTokenBonding(
+  tokenBondingKey
+);
+var isTheRightCurve =
+  SplTokenCollective.OPEN_COLLECTIVE_BONDING_ID.equals(tokenBondingKey);
 ```
-
 
 ## Solana as a Graph
 
