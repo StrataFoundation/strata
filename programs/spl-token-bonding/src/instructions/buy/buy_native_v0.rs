@@ -48,12 +48,12 @@ pub fn handler(ctx: Context<BuyNativeV0>, args: BuyV0Args) -> Result<()> {
     &ctx.accounts.common.destination.to_account_info(),
   )?;
 
-  msg!(
-    "Total price is {}, with {} to base royalties and {} to target royalties",
-    price + base_royalties,
-    base_royalties,
-    target_royalties
-  );
+  // msg!(
+  //   "Total price is {}, with {} to base royalties and {} to target royalties",
+  //   price + base_royalties,
+  //   base_royalties,
+  //   target_royalties
+  // );
   let source = &ctx.accounts.source;
   let base_storage_account = &ctx.accounts.common.base_storage;
   let base_royalties_account = ctx
@@ -64,7 +64,7 @@ pub fn handler(ctx: Context<BuyNativeV0>, args: BuyV0Args) -> Result<()> {
     .to_account_info();
 
   if base_royalties > 0 {
-    msg!("Paying out {} base royalties", base_royalties);
+    // msg!("Paying out {} base royalties", base_royalties);
     invoke(
       &system_instruction::transfer(&source.key(), &base_royalties_account.key(), base_royalties),
       &[
@@ -75,7 +75,7 @@ pub fn handler(ctx: Context<BuyNativeV0>, args: BuyV0Args) -> Result<()> {
     )?;
   }
 
-  msg!("Paying out {} to base storage", price);
+  // msg!("Paying out {} to base storage", price);
   buy_wrapped_sol(
     &BuyWrappedSolV0 {
       state: ctx.accounts.state.clone(),

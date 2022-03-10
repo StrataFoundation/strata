@@ -23,7 +23,8 @@ pub fn buy_shared_logic(common: &mut BuyCommonV0, args: &BuyV0Args) -> Result<Bu
   // Not yet initialized since reserve_balance_from_bonding is a new feature
   if !token_bonding.sell_frozen
     && target_mint.supply > 0
-    && token_bonding.reserve_balance_from_bonding == 0
+    && token_bonding.reserve_balance_from_bonding == 0 
+    && token_bonding.go_live_unix_time < 1646092800_i64
   {
     token_bonding.reserve_balance_from_bonding = base_storage.amount;
     token_bonding.supply_from_bonding = target_mint.supply;
@@ -42,11 +43,11 @@ pub fn buy_shared_logic(common: &mut BuyCommonV0, args: &BuyV0Args) -> Result<Bu
   };
   let target_supply = precise_supply_amt(target_supply_u64, target_mint);
 
-  msg!(
-    "Current reserves {} and supply {}",
-    base_storage.amount,
-    target_mint.supply
-  );
+  // msg!(
+  //   "Current reserves {} and supply {}",
+  //   base_storage.amount,
+  //   target_mint.supply
+  // );
 
   if token_bonding.go_live_unix_time > clock.unix_timestamp {
     return Err(error!(ErrorCode::NotLiveYet));

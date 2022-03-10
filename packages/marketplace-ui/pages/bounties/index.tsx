@@ -28,7 +28,7 @@ import { useState } from "react";
 import { AiOutlineSearch } from "react-icons/ai";
 import { BsChevronDown } from "react-icons/bs";
 
-const PAGE_SIZE= 20;
+const PAGE_SIZE = 20;
 export const Bounties: NextPage = () => {
   const [mint, setMint] = useQueryString("mint", "");
   const [search, setSearch] = useQueryString("search", "");

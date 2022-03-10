@@ -31,6 +31,7 @@ interface ILbpFormProps extends IMetadataFormProps {
   decimals: number;
   interval: number;
   mintCap: number;
+  goLiveDate: Date;
 }
 
 const validationSchema = yup.object({
@@ -45,6 +46,7 @@ const validationSchema = yup.object({
   interval: yup.number().min(0).required(),
   decimals: yup.number().min(0).required(),
   mintCap: yup.number().min(1).required(),
+  goLiveDate: yup.date().required()
 });
 
 async function createLiquidityBootstrapper(
@@ -84,6 +86,7 @@ async function createLiquidityBootstrapper(
     maxSupply: Number(values.mintCap),
     bondingArgs: {
       targetMintDecimals: Number(values.decimals),
+      goLiveDate: values.goLiveDate
     },
   });
 
@@ -238,16 +241,25 @@ export const LbcForm: React.FC = () => {
             />
           </FormControlWithError>
 
+          <FormControlWithError
+            id="goLiveDate"
+            help="The time this LBC will go live, in your browser's local timezone"
+            label="Launch Date"
+            errors={errors}
+          >
+            <Input type="datetime-local" {...register("goLiveDate")} />
+          </FormControlWithError>
+
           {error && <Alert status="error">{error.toString()}</Alert>}
 
           <Button
             type="submit"
             alignSelf="flex-end"
-            colorScheme="orange"
+            colorScheme="primary"
             isLoading={isSubmitting || loading}
             loadingText={awaitingApproval ? "Awaiting Approval" : "Loading"}
           >
-            Create Liquidity Bootstrapper
+            Create LBC
           </Button>
         </VStack>
       </form>

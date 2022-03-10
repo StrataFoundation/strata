@@ -23,7 +23,9 @@ const BigText = ({ children, ...other }: TextProps) => {
 }
 
 export const LbcInfo = ({ tokenBondingKey, price: inputPrice }: { tokenBondingKey: PublicKey, price?: number }) => {
-  const { isOpen, onToggle } = useDisclosure();
+  const { isOpen, onToggle } = useDisclosure({
+    defaultIsOpen: true,
+  });
   const { info: tokenBonding, loading: loadingBonding } =
     useTokenBonding(tokenBondingKey);
   const { price, loading: loadingPricing } = useLivePrice(tokenBondingKey)
@@ -49,7 +51,7 @@ export const LbcInfo = ({ tokenBondingKey, price: inputPrice }: { tokenBondingKe
   const { metadata } = useTokenMetadata(tokenBonding?.baseMint);
 
   return (
-    <VStack spacing={8} align="stretch">
+    <VStack spacing={4} align="stretch">
       <Stack direction={["column", "row"]}>
         <VStack flexGrow={2}>
           <BlackBox w="full" position="relative">
@@ -57,7 +59,11 @@ export const LbcInfo = ({ tokenBondingKey, price: inputPrice }: { tokenBondingKe
               <Spinner size="lg" />
             ) : (
               <BigText>
-                {numberWithCommas(priceToUse, 4)} {metadata?.data.symbol}
+                {isNaN(priceToUse)
+                  ? "Not Started"
+                  : `${numberWithCommas(priceToUse, 4)} ${
+                      metadata?.data.symbol
+                    }`}
               </BigText>
             )}
             <Tooltip
@@ -132,21 +138,23 @@ export const LbcInfo = ({ tokenBondingKey, price: inputPrice }: { tokenBondingKe
         <VStack align="left" spacing={4} padding={4}>
           {isOpen && <BondingPlot tokenBondingKey={tokenBondingKey} />}
           <VStack spacing={1} align="left">
-            <Text fontWeight="700">How does Dynamic Pricing work?</Text>
-            <Text fontSize="13px">
-              Strata uses a price discovery mechanism called a Liquidity
-              Bootstrapping Curve (LBC). This functions similar to a dutch
-              auction, starting with a high price that lowers over time and
-              increases with every purchase.{" "}
+            <Text fontSize="14px" fontWeight="700">
+              How does Dynamic Pricing work?
+            </Text>
+            <Text fontSize="12px">
+              Dynamic Pricing is similiar to a Dutch Auction. The price starts
+              high, lowers gradually, and only increases when people buy. This
+              price discovery mechanism is powered by a Strata Liquidity
+              Bootstrapping Curve (LBC).{" "}
               <Link
-                color="orange"
+                color="primary.500"
                 href="https://www.strataprotocol.com/docs/marketplace/lbc"
               >
                 Learn More
               </Link>
             </Text>
           </VStack>
-          <Text>End Date: {moment(endDate).format("LLL")}</Text>
+          <Text fontSize="14px">End Date: {moment(endDate).format("LLL")}</Text>
         </VStack>
       </Collapse>
     </VStack>

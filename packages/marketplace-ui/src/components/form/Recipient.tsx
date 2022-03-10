@@ -8,8 +8,9 @@ import {
   usePublicKey,
   useReverseName,
   useTokenMetadata,
+  useTokenRef,
 } from "@strata-foundation/react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { FormEvent } from "react";
 import { AiOutlineExclamation } from "react-icons/ai";
 import { BiCheck } from "react-icons/bi";
@@ -17,7 +18,10 @@ import { BiCheck } from "react-icons/bi";
 export const Recipient = ({ value, onChange, name }: { name: string, value: string, onChange: (e: FormEvent<HTMLParagraphElement>) => void }) => {
   const [internalValue, setInternalValue] = useState(value);
   const recipient = usePublicKey(internalValue);
-  const { info: tokenRef } = usePrimaryClaimedTokenRef(recipient);
+  const { info: tokenRefForOwner } = usePrimaryClaimedTokenRef(recipient);
+  const { info: recipientAsTokenRef } = useTokenRef(recipient);
+  const tokenRef = useMemo(() => tokenRefForOwner || recipientAsTokenRef, [tokenRefForOwner, recipientAsTokenRef]);
+  
   const { metadata, image, loading: metadataLoading } = useTokenMetadata(
     tokenRef?.mint
   );
@@ -44,7 +48,9 @@ export const Recipient = ({ value, onChange, name }: { name: string, value: stri
     if (
       (!prevRecipientRef || !prevRecipientRef.current) && recipientRef.current
     ) {
-      recipientRef.current.innerText = internalValue;
+      if (internalValue) {
+        recipientRef.current.innerText = internalValue;
+      }
     }
   }, [prevRecipientRef, recipientRef, internalValue])
 
@@ -57,7 +63,6 @@ export const Recipient = ({ value, onChange, name }: { name: string, value: stri
               w="57px"
               h="57px"
               src={image}
-              direction="column"
             />
           )}
           {!metadata && (

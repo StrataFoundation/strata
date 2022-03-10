@@ -104,9 +104,9 @@ export const useClaimedTokenRefKeyForName = (
   name: string | undefined | null,
   mint: PublicKey | undefined | null,
   tld: PublicKey | undefined
-): { result: PublicKey | undefined; loading: boolean } => {
+): { result: PublicKey | undefined; loading: boolean; error?: Error } => {
   const cache = useAccountFetchCache();
-  const { result: key, loading } = useAsync(
+  const { result: key, loading, error } = useAsync(
     async (
       cache: AccountFetchCache | undefined,
       name: string | undefined | null,
@@ -119,7 +119,7 @@ export const useClaimedTokenRefKeyForName = (
     },
     [cache, name, mint, tld]
   );
-  return { result: key, loading };
+  return { result: key, loading, error };
 };
 
 export const useClaimedTokenRefKey = (
@@ -197,8 +197,11 @@ export const useTokenRefForName = (
   mint: PublicKey | null,
   tld: PublicKey | undefined
 ): UseAccountState<ITokenRef> => {
-  const { result: claimedKey, loading: twitterLoading } =
+  const { result: claimedKey, loading: twitterLoading, error } =
     useClaimedTokenRefKeyForName(name, mint, tld);
+  if (error) {
+    console.error(error)
+  }
   const { result: unclaimedKey, loading: claimedLoading } =
     useUnclaimedTokenRefKeyForName(name, mint, tld);
   const claimed = useTokenRef(claimedKey);
@@ -238,14 +241,17 @@ export interface IUseSocialTokenMetadataResult extends IUseTokenMetadataResult {
 /**
  * Get all metadata associated with a given wallet's social token.
  *
- * @param owner
+ * @param ownerOrTokenRef
  * @returns
  */
 export function useSocialTokenMetadata(
-  owner: PublicKey | undefined | null
+  ownerOrTokenRef: PublicKey | undefined | null
 ): IUseSocialTokenMetadataResult {
-  const { info: tokenRef, loading } = usePrimaryClaimedTokenRef(owner);
-  const { info: tokenBonding } = useTokenBonding(
+  const { info: tokenRef1, loading: loading1 } =
+    usePrimaryClaimedTokenRef(ownerOrTokenRef);
+  const { info: tokenRef2, loading: loading2 } = useTokenRef(ownerOrTokenRef);
+  const tokenRef = tokenRef1 || tokenRef2;
+  const { info: tokenBonding, loading: loading3 } = useTokenBonding(
     tokenRef?.tokenBonding || undefined
   );
 
@@ -253,5 +259,6 @@ export function useSocialTokenMetadata(
     ...useTokenMetadata(tokenBonding?.targetMint),
     tokenRef,
     tokenBonding,
+    loading: loading1 || loading2 || loading3
   };
 }

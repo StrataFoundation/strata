@@ -272,6 +272,118 @@ export const RateVsTimeDisplay = ({
   );
 };
 
+export const EstimatedSalesVsTime = ({
+  curve,
+  reserves,
+  supply,
+  setTimeOffset,
+  maxTime,
+  timeOffset,
+  setMaxTime,
+  endSupply
+}: {
+  curve: ICurveConfig;
+  maxTime: string;
+  timeOffset: string;
+  setMaxTime(args: string): void;
+  setTimeOffset(args: string): void;
+  reserves: string;
+  supply: string;
+  endSupply: string;
+}) => {
+  const curveConfig = useMemo(() => curve.toRawConfig(), [curve]);
+  const data = useMemo(() => {
+    const step = Number(maxTime) / NUM_DATAPOINTS;
+    const ret: { timeOffset: number; total: number }[] = [];
+    for (let i = 0; i < Number(maxTime); i += step) {
+      const currPricing = fromCurve(
+        curveConfig,
+        Number(reserves),
+        Number(supply),
+        0
+      );
+      const incAmt = 1;
+      const plusOnePricing = fromCurve(
+        curveConfig,
+        Number(reserves) + currPricing.buyTargetAmount(incAmt, 0, 0, Number(i)),
+        Number(supply + incAmt),
+        0
+      );
+      const priceIncrease =
+        plusOnePricing.buyTargetAmount(incAmt, 0, 0, Number(i)) -
+        currPricing.buyTargetAmount(incAmt, 0, 0, Number(i));
+      const priceFall =
+        currPricing.buyTargetAmount(incAmt, 0, 0, Number(i)) -
+        currPricing.buyTargetAmount(incAmt, 0, 0, Number(i + 1));
+
+      const prev = ret[ret.length - 1] ? ret[ret.length - 1].total : 0;
+      let total = (priceFall / priceIncrease) * step + prev;
+      ret.push({
+        total: total > Number(endSupply) ? 0 : total,
+        timeOffset: i,
+      });
+    }
+
+    return ret;
+  }, [curveConfig, reserves, supply, maxTime]);
+
+  return (
+    <VStack justify="stretch">
+      <Box w="full" h="500px">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart
+            width={500}
+            height={300}
+            data={data}
+            margin={{
+              top: 5,
+              right: 30,
+              left: 20,
+              bottom: 5,
+            }}
+          >
+            <ReferenceLine x={Number(timeOffset)} stroke="orange" />
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis
+              tickCount={10}
+              type="number"
+              tickFormatter={(seconds) =>
+                Math.floor(formatTime(seconds, Number(maxTime))).toString()
+              }
+              dataKey="timeOffset"
+              label={{ value: `Time (${getUnit(Number(maxTime))})`, dy: 10 }}
+              domain={[0, Number(maxTime)]}
+            />
+            <YAxis
+              type="number"
+              label={{
+                value: "Estimated Total Sales",
+                position: "insideLeft",
+                angle: -90,
+                dy: 0,
+              }}
+            />
+            <Tooltip />
+            <Legend />
+
+            <Line
+              activeDot={{
+                onClick: (e, payload) => {
+                  //@ts-ignore
+                  setTimeOffset(payload.payload.timeOffset);
+                },
+              }}
+              type="monotone"
+              dataKey="total"
+              stroke="#8884d8"
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </Box>
+    </VStack>
+  );
+};
+
 export const PriceVsTimeDisplay = ({
   curve,
   reserves,
@@ -401,11 +513,13 @@ function formatTime(time: number, maxTime: number): number {
 export const CurveConfiguratorFromVariables = ({ 
   priceVsSupply = true,
   priceVsTime = true,
-  rateVsTime = false
+  rateVsTime = false,
+  salesVsTime = false
 }: {
   priceVsSupply: boolean;
   priceVsTime: boolean;
   rateVsTime: boolean;
+  salesVsTime: boolean;
 }) => {
   const {
     curveConfig,
@@ -520,9 +634,16 @@ export const CurveConfiguratorFromVariables = ({
         </VStack>
       </SimpleGrid>
       <SimpleGrid columns={[1, 1, 1, Math.min(numCharts, 2)]} w="full">
-        { priceVsSupply && <PriceVsSupplyDisplay supplyOffset={supplyOffset || 0} curve={curveConfig} {...args} /> }
-        { priceVsTime && <PriceVsTimeDisplay curve={curveConfig} {...args} /> }
-        { rateVsTime && <RateVsTimeDisplay curve={curveConfig} {...args} /> }
+        {priceVsSupply && (
+          <PriceVsSupplyDisplay
+            supplyOffset={supplyOffset || 0}
+            curve={curveConfig}
+            {...args}
+          />
+        )}
+        {priceVsTime && <PriceVsTimeDisplay curve={curveConfig} {...args} />}
+        {rateVsTime && <RateVsTimeDisplay curve={curveConfig} {...args} />}
+        {salesVsTime && <EstimatedSalesVsTime curve={curveConfig} {...args} />}
       </SimpleGrid>
     </VStack>
   );

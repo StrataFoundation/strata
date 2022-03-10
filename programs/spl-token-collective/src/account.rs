@@ -592,3 +592,23 @@ pub struct UpdateAuthorityV0<'info> {
   )]
   pub primary_token_ref: Account<'info, TokenRefV0>,
 }
+
+// Allow claiming the reserve authority of any bonding curve whose
+// base mint is the social token and whose current authority is mint token ref
+#[derive(Accounts)]
+pub struct ClaimBondingAuthorityV0<'info> {
+  #[account(
+    seeds = [
+      b"mint-token-ref",
+      mint_token_ref.mint.as_ref()
+    ],
+    bump = mint_token_ref.bump_seed,
+    constraint = token_bonding_update_accounts.token_bonding.base_mint == mint_token_ref.mint,
+    constraint = token_bonding_update_accounts.token_bonding.reserve_authority.ok_or(error!(ErrorCode::NoAuthority))? == mint_token_ref.key(),
+ )]
+  pub mint_token_ref: Account<'info, TokenRefV0>,
+  pub token_bonding_update_accounts: StaticUpdateTokenBondingV0<'info>,
+  /// CHECK: Checked with constraints
+  #[account(address = spl_token_bonding::id())]
+  pub token_bonding_program: AccountInfo<'info>,
+}

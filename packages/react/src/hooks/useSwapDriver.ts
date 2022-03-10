@@ -30,7 +30,7 @@ import {
 
 export interface ISwapDriverArgs
   extends Pick<ISwapFormProps, "onConnectWallet" | "extraTransactionInfo"> {
-  tokenBondingKey: PublicKey;
+  tokenBondingKey: PublicKey | undefined;
   tradingMints: { base?: PublicKey; target?: PublicKey };
   onTradingMintsChange(mints: { base: PublicKey; target: PublicKey }): void;
   swap(args: ISwapArgs & { ticker: string }): void;
@@ -55,7 +55,6 @@ async function getMissingSpace(
   }
 
   const path = hierarchy.path(baseMint, targetMint);
-  console.log(hierarchy.tokenBonding)
   const accounts = (
     await Promise.all(
       path.map(async (hierarchy) => {

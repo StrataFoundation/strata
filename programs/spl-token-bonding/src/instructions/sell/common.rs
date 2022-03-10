@@ -41,6 +41,7 @@ pub fn sell_shared_logic(common: &mut SellCommonV0, args: &SellV0Args) -> Result
   if !token_bonding.sell_frozen
     && target_mint.supply > 0
     && token_bonding.reserve_balance_from_bonding == 0
+    && token_bonding.go_live_unix_time < 1646092800_i64
   {
     token_bonding.reserve_balance_from_bonding = base_storage.amount;
     token_bonding.supply_from_bonding = target_mint.supply;
@@ -117,7 +118,7 @@ pub fn burn_and_pay_sell_royalties(
   let source = &common.source.to_account_info();
   let source_authority = &common.source_authority.to_account_info();
 
-  msg!("Burning {}", amount);
+  // msg!("Burning {}", amount);
   token::burn(
     CpiContext::new(
       token_program.clone(),

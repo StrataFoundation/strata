@@ -19,9 +19,8 @@ export const BountyCardContribution = ({
       padding={4}
       border="1px solid"
       borderColor="gray.200"
-      minWidth="200px"
     >
-      <HStack spacing={2}>
+      <HStack spacing={2} justify="center" flexWrap="wrap">
         <Text fontWeight={800} color="gray.700">
           {typeof amount != "undefined" ? (
             numberWithCommas(roundToDecimals(amount, 4))

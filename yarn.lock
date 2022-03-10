@@ -5286,6 +5286,13 @@
   resolved "https://registry.yarnpkg.com/@rushstack/eslint-patch/-/eslint-patch-1.1.0.tgz#7f698254aadf921e48dda8c0a6b304026b8a9323"
   integrity sha512-JLo+Y592QzIE+q7Dl2pMUtt4q8SKYI5jDrZxrozEQxnGVOyYE+GWK9eLkwTaeN9DDctlaRAQ3TBmzZ1qdLE30A==
 
+"@sevenoutman/use-debounced-memo@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@sevenoutman/use-debounced-memo/-/use-debounced-memo-1.0.0.tgz#1df884fa47b03b5f9f71dfbaba479f0d68f18f0d"
+  integrity sha512-TQ5Jw21WybUkX4+S3ibLMw2uLp8x4QmvTkmkijlZCYPC+6whgTLwLHVx19TGAvVaCTY4nNO3kAhKhtw7WX0jeQ==
+  dependencies:
+    lodash.debounce "^4.0.8"
+
 "@sideway/address@^4.1.0":
   version "4.1.2"
   resolved "https://registry.npmjs.org/@sideway/address/-/address-4.1.2.tgz"
@@ -6048,6 +6055,7 @@
     superstruct "^0.14.2"
     tweetnacl "^1.0.0"
 
+<<<<<<< HEAD
 "@strata-foundation/marketplace-sdk@^3.3.0":
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/@strata-foundation/marketplace-sdk/-/marketplace-sdk-3.3.0.tgz#58a8bd43c101ad7f57cb24990d069d67becd8a7f"
@@ -6147,6 +6155,19 @@
     superstruct "0.14.2"
     tweetnacl "^1.0.3"
 
+||||||| 2b24eda
+=======
+"@strata-foundation/spl-token-staking@^3.2.6":
+  version "3.2.6"
+  resolved "https://registry.yarnpkg.com/@strata-foundation/spl-token-staking/-/spl-token-staking-3.2.6.tgz#fcf0e0e12733452496482c84d2d78f88797489c6"
+  integrity sha512-+8nNfVXE7Oti978yOWrkxasmmEGPuJ3uZnrL++lPfjg4qD4yv3U9UZieTox05dfjz1R7Y/EzRCwudhBRIRs8Hw==
+  dependencies:
+    "@solana/web3.js" "^1.32.0"
+    "@strata-foundation/spl-utils" "^3.2.6"
+    bn.js "^5.2.0"
+    semver "^7.3.5"
+
+>>>>>>> master
 "@svgr/babel-plugin-add-jsx-attribute@^5.4.0":
   version "5.4.0"
   resolved "https://registry.npmjs.org/@svgr/babel-plugin-add-jsx-attribute/-/babel-plugin-add-jsx-attribute-5.4.0.tgz"
@@ -18632,6 +18653,13 @@ react-clientside-effect@^1.2.5:
   integrity sha512-2bL8qFW1TGBHozGGbVeyvnggRpMjibeZM2536AKNENLECutp2yfs44IL8Hmpn8qjFQ2K7A9PnYf3vc7aQq/cPA==
   dependencies:
     "@babel/runtime" "^7.12.13"
+
+react-countdown@^2.3.2:
+  version "2.3.2"
+  resolved "https://registry.yarnpkg.com/react-countdown/-/react-countdown-2.3.2.tgz#4cc27f28f2dcd47237ee66e4b9f6d2a21fc0b0ad"
+  integrity sha512-Q4SADotHtgOxNWhDdvgupmKVL0pMB9DvoFcxv5AzjsxVhzOVxnttMbAywgqeOdruwEAmnPhOhNv/awAgkwru2w==
+  dependencies:
+    prop-types "^15.7.2"
 
 react-dev-utils@12.0.0-next.47:
   version "12.0.0-next.47"

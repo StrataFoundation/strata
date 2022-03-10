@@ -27,7 +27,7 @@ export const BondingPlot = ({ tokenBondingKey }: { tokenBondingKey: PublicKey })
   const labelColor = useColorModeValue("black", "white");
 
   const data = useMemo(() => {
-    return tokenBonding && transactions.map(transaction => {
+    return tokenBonding ? transactions.map(transaction => {
       const reserveIdx = transaction.transaction.message.accountKeys
         .map((k) => k.toBase58())
         .indexOf(tokenBonding.baseStorage.toBase58());
@@ -57,7 +57,7 @@ export const BondingPlot = ({ tokenBondingKey }: { tokenBondingKey: PublicKey })
         price: reserveChange/tokenChange,
         time: (transaction.blockTime || 0) * 1000
       };
-    }).filter(d => d.price)
+    }).filter(d => d.price) : []
   }, [transactions, tokenBonding])
   const icoColor = useColorModeValue("black", "white");
 
@@ -69,14 +69,10 @@ export const BondingPlot = ({ tokenBondingKey }: { tokenBondingKey: PublicKey })
     );
   }
 
-  if (!data || data.length == 0) {
-    return <Text>No trades yet</Text>
-  }
-
   return (
     <VStack spacing={4} w="full" align="left">
       <HStack spacing={0}>
-        <Text fontWeight="700">Price History</Text>
+        <Text fontSize="14px" fontWeight="700">Price History</Text>
 
         <IconButton
           aria-label="Fetch More"

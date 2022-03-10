@@ -66,7 +66,7 @@ export const BountyCard = ({
           )}
           {bondingLoading && <Skeleton w="80px" />}
         </VStack>
-        <Box justifySelf={[null, "flex-end"]} alignSelf="center" align="left">
+        <Box justifySelf={[null, "flex-end"]} alignSelf="center" alignContent="left">
           <BountyCardContribution
             amount={reserveAmount}
             symbol={metadata?.data.symbol}
