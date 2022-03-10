@@ -72,12 +72,11 @@ export const Bounties = () => (
         <Box
           lineHeight="normal"
           width={{ base: "100%", md: "80%" }}
-          mb={{ base: 0, sm: 16 }}
           ml={{
             base: 0,
             md: 14,
           }}
-          mb={{ base: 6, md: 0 }}
+          mb={{ base: 16, md: 0 }}
         >
           <Stack
             bg="#191C2A"
