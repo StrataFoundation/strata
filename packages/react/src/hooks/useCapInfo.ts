@@ -1,8 +1,13 @@
 import { BN } from "@project-serum/anchor";
 import { PublicKey } from "@solana/web3.js";
-import { useMint, useTokenBonding } from "@strata-foundation/react";
+import { useMint } from "./useMint";
+import { useTokenBonding } from "./useTokenBonding";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 
+/**
+ * Use mint cap information for a token bonding curve to get information like the number of
+ * items remaining
+ */
 export const useCapInfo = (tokenBondingKey: PublicKey | undefined) => {
   const { info: tokenBonding, loading: loadingBonding } =
     useTokenBonding(tokenBondingKey);
@@ -22,6 +27,6 @@ export const useCapInfo = (tokenBondingKey: PublicKey | undefined) => {
   return {
     loading: loadingBonding,
     numRemaining,
-    mintCap
-  }
+    mintCap,
+  };
 };

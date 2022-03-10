@@ -13,3 +13,4 @@ export * from "./Wallet";
 export * from "./WalletModalButton";
 export * from "./AsyncButton";
 export * from "./lbc";
+export * from "./DisburseFunds";

@@ -23,7 +23,7 @@ pub fn buy_shared_logic(common: &mut BuyCommonV0, args: &BuyV0Args) -> Result<Bu
   // Not yet initialized since reserve_balance_from_bonding is a new feature
   if !token_bonding.sell_frozen
     && target_mint.supply > 0
-    && token_bonding.reserve_balance_from_bonding == 0 
+    && token_bonding.reserve_balance_from_bonding == 0
     && token_bonding.go_live_unix_time < 1646092800_i64
   {
     token_bonding.reserve_balance_from_bonding = base_storage.amount;

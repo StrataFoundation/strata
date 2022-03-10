@@ -1,5 +1,5 @@
 import { MetadataMeta } from "@/components/MetadataMeta";
-import { Box, Center, Container, Heading, Spinner } from "@chakra-ui/react";
+import { Box, Center, Container, Divider, Heading, Spinner } from "@chakra-ui/react";
 import {
   Swap,
   usePublicKey,
@@ -15,6 +15,9 @@ import { useRouter } from "next/router";
 import React from "react";
 import { mintMetadataServerSideProps } from "@/utils/tokenMetadataServerProps";
 import { TokenOffering } from "@/components/TokenOffering";
+import { DisburseFunds } from "@/components/DisburseFunds";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useIsBountyAdmin } from "@/hooks/useIsBountyAdmin";
 
 export const getServerSideProps: GetServerSideProps =
   mintMetadataServerSideProps;
@@ -27,6 +30,9 @@ export const SwapDisplay: NextPage = ({
   const router = useRouter();
   const { mintKey: mintKeyRaw } = router.query;
   const mintKey = usePublicKey(mintKeyRaw as string);
+  const { info: tokenBonding } = useTokenBondingFromMint(mintKey);
+  const { publicKey } = useWallet();
+  const { isAdmin } = useIsBountyAdmin(publicKey || undefined, tokenBonding?.publicKey);
 
   return (
     <Box
@@ -49,7 +55,13 @@ export const SwapDisplay: NextPage = ({
           Swap
         </Heading>
         <Box zIndex={1} bg="white" shadow="xl" rounded="lg" minH="400px">
-          { typeof window != "undefined" && <TokenOffering mintKey={mintKey} /> }
+          {isAdmin && tokenBonding && (
+            <Box p={4} borderBottom="3px solid" borderRadius="lg" borderColor="gray.300">
+              <Heading size="md">Disburse Funds</Heading>
+              <DisburseFunds tokenBondingKey={tokenBonding?.publicKey} />
+            </Box>
+          )}
+          {typeof window != "undefined" && <TokenOffering mintKey={mintKey} />}
         </Box>
       </Container>
     </Box>

@@ -1658,7 +1658,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         );
 
         if (!(await this.accountExists(source))) {
-          throw new Error("Source account does not exist");
+          console.warn("Source account for bonding buy does not exist, if it is not created in an earlier instruction this can cause an error");
         }
       }
     }
@@ -2032,7 +2032,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       );
 
       if (!(await this.accountExists(source))) {
-        throw new Error("Source account does not exist");
+        console.warn(
+          "Source account for bonding buy does not exist, if it is not created in an earlier instruction this can cause an error"
+        );
       }
     }
 

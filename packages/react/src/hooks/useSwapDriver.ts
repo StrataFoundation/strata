@@ -7,6 +7,7 @@ import {
   u64,
 } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
+import { useCapInfo } from "./useCapInfo";
 import {
   BondingHierarchy,
   ISwapArgs,
@@ -198,10 +199,7 @@ export const useSwapDriver = ({
     toNumber(targetBonding.mintCap as BN, targetMintAcct);
 
   const isBuying = lowMint && lowMint.equals(target?.publicKey!);
-  const numRemaining =
-    typeof targetMintSupply != "undefined" && !!mintCap && isBuying
-      ? mintCap - targetMintSupply
-      : undefined;
+  const { numRemaining } = useCapInfo(tokenBondingKey);
 
   const handleSubmit = async (values: ISwapFormValues) => {
     if (values.topAmount) {
