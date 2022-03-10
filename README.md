@@ -1,8 +1,8 @@
 # Strata
 
-What is strata? Check out our [Hello World](https://strataprotocol.com/blog/welcome)
+What is strata? Check out our [Hello World](https://blog.strataprotocol.com/welcome)
 
-View the live documentation [here](https://strataprotocol.com/docs/getting_started)
+View the live documentation [here](https://docs.strataprotocol.com/getting_started)
 
 This series of smart contracts serves to standardizing and indexing all social tokens.
 
@@ -47,18 +47,17 @@ If you wish to use this on devnet, first the open collective needs to be created
 env ANCHOR_WALLET=~/.config/solana/id.json ANCHOR_PROVIDER_URL=https://api.devnet.solana.com yarn run bootstrap
 ```
 
-
 ## Development Philosophy: On Initializing vs Passing
 
 In Solana programs, you can either
 
-  * (a) Pass a fully initialized account to your contract, and verify that it looks the way you expect it to
-  * (b) Pass an empty account to the program and have it initialize it as a PDA.
+- (a) Pass a fully initialized account to your contract, and verify that it looks the way you expect it to
+- (b) Pass an empty account to the program and have it initialize it as a PDA.
 
 Let's take token bonding as an example. Token bonding bonds a base mint to a target mint. We could either
 
-  * (a) Pass in a target mint that is already initialized and verify it has supply 0 and authority set to token bonding program. 
-  * (b) Pass an empty account and have token bonding initialize it with the authority set to itself
+- (a) Pass in a target mint that is already initialized and verify it has supply 0 and authority set to token bonding program.
+- (b) Pass an empty account and have token bonding initialize it with the authority set to itself
 
 ### Benefits of Passing:
 
@@ -66,12 +65,12 @@ When we pass the target mint to token bonding, someone could have done something
 
 ### Detriments of Passing:
 
-Someone could have done something nefarious _before_ it got to token bonding. In the case of a token account, they could have placed a nefarious delegate. You have to be very careful about verifying the pased in account. Additionally, if the smart contract changes to support more fields that could be nefarious, you need to update your own smart contract code to blacklist these fields. 
+Someone could have done something nefarious _before_ it got to token bonding. In the case of a token account, they could have placed a nefarious delegate. You have to be very careful about verifying the pased in account. Additionally, if the smart contract changes to support more fields that could be nefarious, you need to update your own smart contract code to blacklist these fields.
 
 ### Benefits of Initializing
 
-  * **PDAs** - You can only have a PDA of a value that is being initialized by the program. PDAs are useful for quick hash lookups. 
-  * **Safety** You can guarentee the object fits the spec of your program and is not nefarious
+- **PDAs** - You can only have a PDA of a value that is being initialized by the program. PDAs are useful for quick hash lookups.
+- **Safety** You can guarentee the object fits the spec of your program and is not nefarious
 
 ### Detriments of Initializing
 
@@ -85,9 +84,9 @@ Use passing when the account has utility outside of this contract. For example a
 
 ### Initializing
 
-Use initializing for actual program data. For example, for the bonding curve or for the Wumbo token ref. This way users can directly lookup the account via PDA. 
+Use initializing for actual program data. For example, for the bonding curve or for the Wumbo token ref. This way users can directly lookup the account via PDA.
 
-You should also use initializing on Token accounts that are exclusively for the program, for example a holding account in token staking. 
+You should also use initializing on Token accounts that are exclusively for the program, for example a holding account in token staking.
 
 ## Contribution
 

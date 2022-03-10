@@ -22,17 +22,15 @@ const config = {
       "@docusaurus/preset-classic",
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
-        docs: process.env.BLOG_ONLY
-          ? false
-          : {
-              remarkPlugins: [math, plantuml],
-              rehypePlugins: [katex],
-              sidebarPath: require.resolve("./sidebars.js"),
-              // Please change this to your repo.
-              editUrl:
-                "https://github.com/StrataFoundation/strata/edit/master/packages/docs",
-              ...(process.env.DOCS_ONLY ? { routeBasePath: "/" } : {}),
-            },
+        docs: {
+          remarkPlugins: [math, plantuml],
+          rehypePlugins: [katex],
+          sidebarPath: require.resolve("./sidebars.js"),
+          // Please change this to your repo.
+          editUrl:
+            "https://github.com/StrataFoundation/strata/edit/master/packages/docs",
+          ...(process.env.DOCS_ONLY ? { routeBasePath: "/" } : {}),
+        },
         blog: process.env.DOCS_ONLY
           ? false
           : {
@@ -52,7 +50,6 @@ const config = {
       }),
     ],
   ],
-
   plugins: [
     "./src/plugins/webpack-loader",
     [
