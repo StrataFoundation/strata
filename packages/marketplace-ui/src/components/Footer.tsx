@@ -1,5 +1,12 @@
 import {
-  Center, Container, HStack, Icon, Link, Stack, Text, VStack
+  Center,
+  Container,
+  HStack,
+  Icon,
+  Link,
+  Stack,
+  Text,
+  VStack,
 } from "@chakra-ui/react";
 import React from "react";
 import { RiExternalLinkLine } from "react-icons/ri";
@@ -9,7 +16,7 @@ const sections = [
     items: [
       {
         title: "Tutorial",
-        href: "https://strataprotocol.com/docs/getting_started",
+        href: "https://docs.strataprotocol.com/getting_started",
       },
     ],
   },

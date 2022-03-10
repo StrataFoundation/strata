@@ -150,7 +150,7 @@ export const Bounties = () => (
                 <Stack direction="row" spacing={4} w="full" alignItems="center">
                   <Text>1</Text>
                   <Text>Gc9kFEDJaSv8PEGks...</Text>
-                  <Text flexGrow="1" align="right" fontWeight="bold">
+                  <Text flexGrow={1} align="right" fontWeight="bold">
                     129.00
                   </Text>
                 </Stack>
@@ -171,7 +171,7 @@ export const Bounties = () => (
                       <Text fontSize="xs">soWum | @TeamWumbo</Text>
                     </Stack>
                   </Stack>
-                  <Text flexGrow="1" align="right" fontWeight="bold">
+                  <Text flexGrow={1} align="right" fontWeight="bold">
                     61.07
                   </Text>
                 </Stack>
@@ -181,7 +181,7 @@ export const Bounties = () => (
                 <Stack direction="row" spacing={4} w="full" alignItems="center">
                   <Text>3</Text>
                   <Text>7G8ocssMyZdvKZXD...</Text>
-                  <Text flexGrow="1" align="right" fontWeight="bold">
+                  <Text flexGrow={1} align="right" fontWeight="bold">
                     43.50
                   </Text>
                 </Stack>

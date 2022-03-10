@@ -159,7 +159,7 @@ const config = {
             items: [
               {
                 label: "Tutorial",
-                to: "/docs/getting_started",
+                to: "https://docs.strataprotocol.com/getting_started",
               },
             ],
           },
