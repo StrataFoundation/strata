@@ -14,10 +14,11 @@ import {
 /* import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletModalButton } from "@/components/WalletModalButton"; */
 import { HamburgerIcon, CloseIcon } from "@chakra-ui/icons";
-import { DOCS_URL, MARKETPLACE_URL } from "@/constants";
+import { DOCS_URL, MARKETPLACE_URL, BLOG_URL } from "@/constants";
 
 const Links = [
   { link: "Docs", href: DOCS_URL },
+  { link: "Blog", href: BLOG_URL },
   { link: "Bounties", href: `${MARKETPLACE_URL}/bounties` },
   /*   { link: "Investors", href: "/investors" }, */
 ];
