@@ -1,11 +1,10 @@
 import {
-  Box,
   Button,
   HStack,
   Input,
   InputGroup,
   InputRightElement,
-  VStack,
+  VStack
 } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
@@ -14,7 +13,7 @@ import {
   useOwnedAmount,
   useStrataSdks,
   useTokenBondingFromMint,
-  useTokenMetadata,
+  useTokenMetadata
 } from "@strata-foundation/react";
 import React, { useMemo, useState } from "react";
 import { AsyncButton } from "..";

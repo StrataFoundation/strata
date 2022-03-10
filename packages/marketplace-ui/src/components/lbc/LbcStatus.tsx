@@ -1,8 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { PublicKey } from "@solana/web3.js";
-import { useTokenBonding } from "@strata-foundation/react";
+import { useTokenBonding, useCapInfo } from "@strata-foundation/react";
 import { Countdown } from "../Countdown";
-import { useCapInfo } from "../../hooks/useCapInfo";
 import { Center, Text, useInterval } from "@chakra-ui/react";
 
 export const LbcStatus = ({

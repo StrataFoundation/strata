@@ -21,7 +21,7 @@ import { useIsBountyAdmin } from "../../hooks/useIsBountyAdmin";
 import { AuthorityAndTokenInfo } from "./AuthorityAndTokenInfo";
 import { BountyCardContribution } from "./BountyCardContribution";
 import { BountyContribute } from "./BountyContribute";
-import { DisburseFunds } from "./DisburseFunds";
+import { DisburseFunds } from "../DisburseFunds";
 import { TopHolders } from "./TopHolders";
 
 export const BountyDetail = ({

@@ -141,7 +141,7 @@ pub fn buy_shared_logic(common: &mut BuyCommonV0, args: &BuyV0Args) -> Result<Bu
   }
 
   if token_bonding.mint_cap.is_some()
-    && target_mint.supply.checked_add(total_amount).unwrap() > token_bonding.mint_cap.unwrap()
+    && target_supply_u64.checked_add(total_amount).unwrap() > token_bonding.mint_cap.unwrap()
   {
     msg!(
       "Mint cap is {} {} {}",

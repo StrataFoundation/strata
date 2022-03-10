@@ -1,12 +1,16 @@
 import { Box, BoxProps, Button, Center, Collapse, Icon, LightMode, Link, Progress, Spinner, Stack, Text, TextProps, Tooltip, useColorModeValue, useDisclosure, useInterval, VStack } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
-import { useCurve, useTokenBonding, useTokenMetadata } from "@strata-foundation/react";
+import {
+  useCurve,
+  useTokenBonding,
+  useTokenMetadata,
+  useCapInfo,
+} from "@strata-foundation/react";
 import moment from "moment";
 import React, { useState } from "react";
 import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
 import { BsChevronDown, BsChevronUp } from "react-icons/bs";
 import { useLivePrice } from "../..//hooks/useLivePrice";
-import { useCapInfo } from "../../hooks/useCapInfo";
 import { numberWithCommas } from "../../utils/numberWithCommas";
 import { BondingPlot } from "./BondingPlot";
 
