@@ -9,10 +9,9 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
   * Moved `useCapInfo` to `react` package from `marketplace-ui`
 
-### Changed
+### Added
 
-   * Mint cap pulls supply either from supplyFromBonding or mint supply depending on whether `ignoreExternalSupplyChanges` was set. This is more in line with existing behavior of the curve.
-
+  * Disburse funds to token offering
 
 ## [3.3.1](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.3.1-alpha.1...v3.3.1) (2022-03-09)
 

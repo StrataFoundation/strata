@@ -12,9 +12,8 @@ export const useCapInfo = (tokenBondingKey: PublicKey | undefined) => {
   const { info: tokenBonding, loading: loadingBonding } =
     useTokenBonding(tokenBondingKey);
   const targetMintAcct = useMint(tokenBonding?.targetMint);
-  const targetMintSupplyU64 = tokenBonding?.ignoreExternalSupplyChanges ? tokenBonding.supplyFromBonding : targetMintAcct?.supply;
   const targetMintSupply =
-    targetMintAcct && toNumber(targetMintSupplyU64, targetMintAcct);
+    targetMintAcct && toNumber(targetMintAcct.supply, targetMintAcct);
   const mintCap: number | undefined =
     tokenBonding &&
     targetMintAcct &&

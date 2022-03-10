@@ -8,10 +8,12 @@ import {
   useTokenBonding,
   useSwapDriver,
   ISwapFormValues,
-  useStrataSdks
+  useStrataSdks,
+  useTokenAccount,
+  useMint
 } from "@strata-foundation/react";
 import { useAsync, useAsyncCallback, UseAsyncReturn } from "react-async-hook";
-import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
+import { SplTokenBonding, toNumber } from "@strata-foundation/spl-token-bonding";
 
 async function tokenBondingKey(mintKey: PublicKey | undefined, index: number) {
   return mintKey
@@ -38,6 +40,8 @@ export const TokenOffering = ({ mintKey, index = 1 }: { mintKey: PublicKey | und
     0
   );
   const { info: tokenBonding } = useTokenBonding(tokenBondingKey);
+  const { info: supplyAcc } = useTokenAccount(sellOnlyTokenBonding?.baseStorage);
+  const supplyMint = useMint(sellOnlyTokenBonding?.baseMint);
 
   const { execute: onSubmit, loading: submitting, error: submitError } = useAsyncCallback(async function(values: ISwapFormValues) {
     const { instructions: i1, signers: s1 } = await tokenBondingSdk!.buyInstructions({
@@ -83,6 +87,7 @@ export const TokenOffering = ({ mintKey, index = 1 }: { mintKey: PublicKey | und
       isSubmitting={submitting}
       {...swapProps}
       onSubmit={onSubmit}
+      numRemaining={supplyAcc && supplyMint && toNumber(supplyAcc.amount, supplyMint)}
     />
   );
 };
