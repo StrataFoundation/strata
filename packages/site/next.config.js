@@ -21,18 +21,19 @@ module.exports = {
         "../../node_modules/@solana/wallet-adapter-react"
       ),
       "@chakra-ui/react": path.resolve("../../node_modules/@chakra-ui/react"),
-      "@chakra-ui/color-mode": path.resolve(
-        "../../node_modules/@chakra-ui/color-mode"
-      ),
-      "react-hot-toast": path.resolve("../../node_modules/react-hot-toast"),
     };
     return config;
   },
   async redirects() {
     return [
       {
-        source: "/",
-        destination: "/bounties",
+        source: "/docs/:path*",
+        destination: `${process.env.NEXT_PUBLIC_DOCS_URL}/:path*`,
+        permanent: false,
+      },
+      {
+        source: "/blog/:path*",
+        destination: `${process.env.NEXT_PUBLIC_BLOG_URL}/:path*`,
         permanent: false,
       },
     ];

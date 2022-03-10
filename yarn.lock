@@ -1734,6 +1734,21 @@
   dependencies:
     "@chakra-ui/utils" "1.10.0"
 
+"@chakra-ui/icon@2.0.5":
+  version "2.0.5"
+  resolved "https://registry.yarnpkg.com/@chakra-ui/icon/-/icon-2.0.5.tgz#d57f53e6a2c7ae1bae7292a1778fd466c02e2e29"
+  integrity sha512-ZrqRvCCIxGr4qFd/r1pmtd9tobRmv8KAxV7ygFoc/t4vOSKTcVIjhE12gsI3FzgvXM15ZFVwsxa1zodwgo5neQ==
+  dependencies:
+    "@chakra-ui/utils" "1.10.4"
+
+"@chakra-ui/icons@^1.1.7":
+  version "1.1.7"
+  resolved "https://registry.yarnpkg.com/@chakra-ui/icons/-/icons-1.1.7.tgz#f8c0c44a969c8654b90026b7d375b550c4bfbc49"
+  integrity sha512-YIHxey/B4M2PyFASlHXtAWFyW+tsAtGAChOJ8dsM2kpu1MbVUqm/6nMI1KIFd7Te5IWuNYA75rAHBdLI0Yu61A==
+  dependencies:
+    "@chakra-ui/icon" "2.0.5"
+    "@types/react" "^17.0.15"
+
 "@chakra-ui/image@1.1.1":
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/@chakra-ui/image/-/image-1.1.1.tgz#39ecb77155e9e1fbbc68e825eb46405808805a8c"
@@ -2465,6 +2480,16 @@
   version "1.10.0"
   resolved "https://registry.yarnpkg.com/@chakra-ui/utils/-/utils-1.10.0.tgz#c7d35c831ee0972841efe3a5171d22c16141d718"
   integrity sha512-Zm0RoZRBDXEhDCuj2oPeLyGTEH+SwCgbFPTSuwpKSVXOXCtjvA2zWC7cY6Fk1RDcMCVbL2cPlQTTgKnKPh79Lg==
+  dependencies:
+    "@types/lodash.mergewith" "4.6.6"
+    css-box-model "1.2.1"
+    framesync "5.3.0"
+    lodash.mergewith "4.6.2"
+
+"@chakra-ui/utils@1.10.4":
+  version "1.10.4"
+  resolved "https://registry.yarnpkg.com/@chakra-ui/utils/-/utils-1.10.4.tgz#40a32d4efd8684b2e7432a40b285796383eacfd3"
+  integrity sha512-AM91VQQxw8F4F1WDA28mqKY6NFIOuzc2Ekkna88imy2OiqqmYH0xkq8J16L2qj4cLiLozpYqba3C79pWioy6FA==
   dependencies:
     "@types/lodash.mergewith" "4.6.6"
     css-box-model "1.2.1"
@@ -6653,6 +6678,15 @@
   version "17.0.38"
   resolved "https://registry.yarnpkg.com/@types/react/-/react-17.0.38.tgz#f24249fefd89357d5fa71f739a686b8d7c7202bd"
   integrity sha512-SI92X1IA+FMnP3qM5m4QReluXzhcmovhZnLNm3pyeQlooi02qI7sLiepEYqT678uNiyc25XfCqxREFpy3W7YhQ==
+  dependencies:
+    "@types/prop-types" "*"
+    "@types/scheduler" "*"
+    csstype "^3.0.2"
+
+"@types/react@^17.0.15":
+  version "17.0.40"
+  resolved "https://registry.yarnpkg.com/@types/react/-/react-17.0.40.tgz#dc010cee6254d5239a138083f3799a16638e6bad"
+  integrity sha512-UrXhD/JyLH+W70nNSufXqMZNuUD2cXHu6UjCllC6pmOQgBX4SGXOH8fjRka0O0Ee0HrFxapDD8Bwn81Kmiz6jQ==
   dependencies:
     "@types/prop-types" "*"
     "@types/scheduler" "*"
@@ -15977,6 +16011,11 @@ neo-async@^2.6.0, neo-async@^2.6.2:
   resolved "https://registry.npmjs.org/neo-async/-/neo-async-2.6.2.tgz"
   integrity sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==
 
+next-seo@^5.1.0:
+  version "5.1.0"
+  resolved "https://registry.yarnpkg.com/next-seo/-/next-seo-5.1.0.tgz#aa9fd6249a11bf93e6da06fa2a6bc89268936edf"
+  integrity sha512-ampuQfNTOi1x+xtRIb6CZGunIo6rQXtMo2Tyu861d5GjJFIwfOXsA4lzCa4+e2rLkyXDyVpavNNUZWa3US9ELw==
+
 next@12.0.7:
   version "12.0.7"
   resolved "https://registry.yarnpkg.com/next/-/next-12.0.7.tgz#33ebf229b81b06e583ab5ae7613cffe1ca2103fc"
@@ -18579,6 +18618,15 @@ react-dev-utils@^11.0.1:
     strip-ansi "6.0.0"
     text-table "0.2.0"
 
+react-dom@17.0.2, react-dom@^17.0.0, react-dom@^17.0.1, react-dom@^17.0.2:
+  version "17.0.2"
+  resolved "https://registry.npmjs.org/react-dom/-/react-dom-17.0.2.tgz"
+  integrity sha512-s4h96KtLDUQlsENhMn1ar8t2bEa+q/YAtj8pPPdIjPDGBDIVNsrD9aXNWqspUe6AzKCIG0C1HZZLqLV7qpOBGA==
+  dependencies:
+    loose-envify "^1.1.0"
+    object-assign "^4.1.1"
+    scheduler "^0.20.2"
+
 react-dom@^16.8.4:
   version "16.14.0"
   resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-16.14.0.tgz#7ad838ec29a777fb3c75c3a190f661cf92ab8b89"
@@ -18588,15 +18636,6 @@ react-dom@^16.8.4:
     object-assign "^4.1.1"
     prop-types "^15.6.2"
     scheduler "^0.19.1"
-
-react-dom@^17.0.0, react-dom@^17.0.1, react-dom@^17.0.2:
-  version "17.0.2"
-  resolved "https://registry.npmjs.org/react-dom/-/react-dom-17.0.2.tgz"
-  integrity sha512-s4h96KtLDUQlsENhMn1ar8t2bEa+q/YAtj8pPPdIjPDGBDIVNsrD9aXNWqspUe6AzKCIG0C1HZZLqLV7qpOBGA==
-  dependencies:
-    loose-envify "^1.1.0"
-    object-assign "^4.1.1"
-    scheduler "^0.20.2"
 
 react-error-overlay@7.0.0-next.54+1465357b:
   version "7.0.0-next.54"
@@ -18855,6 +18894,14 @@ react-transition-group@2.9.0:
     prop-types "^15.6.2"
     react-lifecycles-compat "^3.0.4"
 
+react@17.0.2, react@^17.0.0, react@^17.0.1, react@^17.0.2:
+  version "17.0.2"
+  resolved "https://registry.npmjs.org/react/-/react-17.0.2.tgz"
+  integrity sha512-gnhPt75i/dq/z3/6q/0asP78D0u592D5L1pd7M8P+dck6Fu/jJeL6iVVK23fptSUZj8Vjf++7wXA8UNclGQcbA==
+  dependencies:
+    loose-envify "^1.1.0"
+    object-assign "^4.1.1"
+
 react@^16.8.4:
   version "16.14.0"
   resolved "https://registry.yarnpkg.com/react/-/react-16.14.0.tgz#94d776ddd0aaa37da3eda8fc5b6b18a4c9a3114d"
@@ -18863,14 +18910,6 @@ react@^16.8.4:
     loose-envify "^1.1.0"
     object-assign "^4.1.1"
     prop-types "^15.6.2"
-
-react@^17.0.0, react@^17.0.1, react@^17.0.2:
-  version "17.0.2"
-  resolved "https://registry.npmjs.org/react/-/react-17.0.2.tgz"
-  integrity sha512-gnhPt75i/dq/z3/6q/0asP78D0u592D5L1pd7M8P+dck6Fu/jJeL6iVVK23fptSUZj8Vjf++7wXA8UNclGQcbA==
-  dependencies:
-    loose-envify "^1.1.0"
-    object-assign "^4.1.1"
 
 read-cmd-shim@^2.0.0:
   version "2.0.0"

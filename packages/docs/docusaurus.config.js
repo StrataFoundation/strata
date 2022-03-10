@@ -1,9 +1,9 @@
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
-const math = require('remark-math');
-const katex = require('rehype-katex');
-const lightCodeTheme = require('prism-react-renderer/themes/github');
-const darkCodeTheme = require('prism-react-renderer/themes/dracula');
+const math = require("remark-math");
+const katex = require("rehype-katex");
+const lightCodeTheme = require("prism-react-renderer/themes/github");
+const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 const plantuml = require("@akebifiky/remark-simple-plantuml");
 
 /** @type {import('@docusaurus/types').Config} */
@@ -29,24 +29,27 @@ const config = {
           // Please change this to your repo.
           editUrl:
             "https://github.com/StrataFoundation/strata/edit/master/packages/docs",
+          ...(process.env.DOCS_ONLY ? { routeBasePath: "/" } : {}),
         },
-        blog: {
-          blogSidebarTitle: "Posts",
-          blogSidebarCount: "ALL",
-          remarkPlugins: [math, plantuml],
-          rehypePlugins: [katex],
-          showReadingTime: true,
-          // Please change this to your repo.
-          editUrl:
-            "https://github.com/StrataFoundation/strata/edit/master/packages/docs/blog",
-        },
+        blog: process.env.DOCS_ONLY
+          ? false
+          : {
+              blogSidebarTitle: "Posts",
+              blogSidebarCount: "ALL",
+              remarkPlugins: [math, plantuml],
+              rehypePlugins: [katex],
+              showReadingTime: true,
+              // Please change this to your repo.
+              editUrl:
+                "https://github.com/StrataFoundation/strata/edit/master/packages/docs/blog",
+              ...(process.env.BLOG_ONLY ? { routeBasePath: "/" } : {}),
+            },
         theme: {
           customCss: require.resolve("./src/css/custom.css"),
         },
       }),
     ],
   ],
-
   plugins: [
     "./src/plugins/webpack-loader",
     [
@@ -127,13 +130,17 @@ const config = {
           src: "img/logo.png",
         },
         items: [
-          {
-            type: "doc",
-            docId: "getting_started",
-            position: "left",
-            label: "Docs",
-          },
-          { to: "/blog", label: "Blog", position: "left" },
+          // {
+          //   type: "doc",
+          //   docId: "getting_started",
+          //   position: "left",
+          //   label: "Docs",
+          // },
+          // {
+          //   to: "/blog",
+          //   label: "Blog",
+          //   position: "left",
+          // },
           {
             href: "https://github.com/StrataFoundation/strata",
             label: "GitHub",
@@ -149,7 +156,7 @@ const config = {
             items: [
               {
                 label: "Tutorial",
-                to: "/docs/getting_started",
+                to: "https://docs.strataprotocol.com/getting_started",
               },
             ],
           },
@@ -171,7 +178,7 @@ const config = {
             items: [
               {
                 label: "Blog",
-                to: "/blog",
+                to: "https://blog.strataprotocol.com",
               },
               {
                 label: "GitHub",

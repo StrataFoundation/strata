@@ -10,13 +10,16 @@ import {
 } from "@chakra-ui/react";
 import React from "react";
 import { RiExternalLinkLine } from "react-icons/ri";
+import { BLOG_URL, DISCORD_INVITE_URL, DOCS_URL } from "@/constants";
+
 const sections = [
   {
     title: "Docs",
     items: [
       {
         title: "Tutorial",
-        href: "https://docs.strataprotocol.com/getting_started",
+        isExternal: false,
+        href: `${DOCS_URL}/getting_started`,
       },
     ],
   },
@@ -25,10 +28,12 @@ const sections = [
     items: [
       {
         title: "Discord",
-        href: "https://discord.gg/XQhCFg77WM",
+        isExternal: true,
+        href: DISCORD_INVITE_URL,
       },
       {
         title: "Twitter",
+        isExternal: true,
         href: "https://twitter.com/StrataProtocol",
       },
     ],
@@ -38,10 +43,12 @@ const sections = [
     items: [
       {
         title: "Blog",
-        href: "https://www.strataprotocol.com/blog",
+        isExternal: false,
+        href: BLOG_URL,
       },
       {
         title: "GitHub",
+        isExternal: true,
         href: "https://github.com/StrataFoundation/strata",
       },
     ],
@@ -49,7 +56,7 @@ const sections = [
 ];
 export const Footer = () => {
   return (
-    <VStack backgroundColor="#303846" padding="29px">
+    <VStack bg="#191C2A" pt="60px" pb="120px">
       <Container maxW="container.lg">
         <Stack spacing={16} direction={["column", "row"]}>
           {sections.map(({ title, items }) => (
@@ -68,7 +75,7 @@ export const Footer = () => {
                 >
                   <HStack spacing={1}>
                     <Text>{item.title}</Text>
-                    <Icon as={RiExternalLinkLine} />
+                    {item.isExternal && <Icon as={RiExternalLinkLine} />}
                   </HStack>
                 </Link>
               ))}
@@ -76,7 +83,7 @@ export const Footer = () => {
           ))}
         </Stack>
       </Container>
-      <Center textColor="rgba(255, 255, 255, 0.49)" w="full">
+      <Center textColor="gray.400" w="full">
         Copyright © 2022 Strata Foundation.
       </Center>
     </VStack>
