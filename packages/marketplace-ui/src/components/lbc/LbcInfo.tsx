@@ -72,8 +72,8 @@ export const LbcInfo = ({
   const priceToUse = inputPrice || price;
 
   const { info: curve } = useCurve(tokenBonding?.curve);
-  // @ts-ignore
   const maxTime =
+    // @ts-ignore
     curve?.definition.timeV0.curves[0].curve.timeDecayExponentialCurveV0
       .interval;
   const [elapsedTime, setElapsedTime] = useState<number | undefined>();
