@@ -60,7 +60,7 @@ export const Hero = () => (
       >
         <Stack
           spacing={6}
-          w={{ base: "80%", md: "60%" }}
+          w={{ base: "80%", md: "40%" }}
           align={["center", "center", "flex-start", "flex-start"]}
         >
           <Text
@@ -80,7 +80,7 @@ export const Hero = () => (
               bg="linear-gradient(273.71deg, #E4873E 14.63%, #FBC00E 100.31%);"
               bgClip="text"
             >
-              <SlidingText /> token ecosystem
+              <SlidingText /> token
             </Text>
           </Text>
           <Text
@@ -120,7 +120,7 @@ export const Hero = () => (
             </Button>
           </Stack>
         </Stack>
-        <Box w="60%">
+        <Box>
           <Image src="/hero.png" alt="herotop" height="488px" width="714px" />
         </Box>
       </Flex>
