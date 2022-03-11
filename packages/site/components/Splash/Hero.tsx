@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import {
   Box,
@@ -8,6 +8,7 @@ import {
   Text,
   Button,
   Link,
+  Fade,
 } from "@chakra-ui/react";
 import { DISCORD_INVITE_URL, DOCS_URL } from "@/constants";
 
@@ -29,6 +30,21 @@ const callouts = [
   },
 ];
 
+const SlidingText = () => {
+  const options = ["Social", "Gaming", "Community"];
+  const [currentOptionIndex, setCurrentOptionIndex] = useState(0);
+
+  useEffect(() => {
+    setTimeout(() => {
+      setCurrentOptionIndex(
+        currentOptionIndex == options.length - 1 ? 0 : currentOptionIndex + 1
+      );
+    }, 5000);
+  }, [currentOptionIndex, setCurrentOptionIndex, options]);
+
+  return <Text as="span">{options[currentOptionIndex]}</Text>;
+};
+
 export const Hero = () => (
   <Box w="full" bg="#191C2A" color="white">
     <Container maxW="container.lg">
@@ -45,7 +61,7 @@ export const Hero = () => (
       >
         <Stack
           spacing={6}
-          w={{ base: "80%", md: "40%" }}
+          w={{ base: "80%", md: "60%" }}
           align={["center", "center", "flex-start", "flex-start"]}
         >
           <Text
@@ -65,7 +81,7 @@ export const Hero = () => (
               bg="linear-gradient(273.71deg, #E4873E 14.63%, #FBC00E 100.31%);"
               bgClip="text"
             >
-              social token ecosystem
+              <SlidingText /> token ecosystem
             </Text>
           </Text>
           <Text
@@ -75,9 +91,8 @@ export const Hero = () => (
             lineHeight={1.5}
             textAlign={["center", "center", "left", "left"]}
           >
-            The Strata Protocol provides open-source standards and apps to help
-            your developers effortlessly create Social Token collectives on
-            Solana.
+            Strata Protocol is an open-source standard to launch tokens around a
+            person, idea, or collective on Solana.
           </Text>
           <Stack direction="row" gap={2} w="full">
             <Button
