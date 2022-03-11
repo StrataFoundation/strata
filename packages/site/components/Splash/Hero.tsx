@@ -30,7 +30,7 @@ const callouts = [
 ];
 
 const SlidingText = () => {
-  const options = useMemo(() => ["Socials", "Gaming", "Community"], []);
+  const options = useMemo(() => ["Social", "Gaming", "Community"], []);
   const [currentOptionIndex, setCurrentOptionIndex] = useState(0);
 
   useEffect(() => {
