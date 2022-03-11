@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import {
   Box,
@@ -28,6 +28,21 @@ const callouts = [
     body: "Strata comes with hooks and helpers to make coding using React a breeze.",
   },
 ];
+
+const SlidingText = () => {
+  const options = useMemo(() => ["Social", "Gaming", "Community"], []);
+  const [currentOptionIndex, setCurrentOptionIndex] = useState(0);
+
+  useEffect(() => {
+    setTimeout(() => {
+      setCurrentOptionIndex(
+        currentOptionIndex == options.length - 1 ? 0 : currentOptionIndex + 1
+      );
+    }, 5000);
+  }, [currentOptionIndex, setCurrentOptionIndex, options]);
+
+  return <Text as="span">{options[currentOptionIndex]}</Text>;
+};
 
 export const Hero = () => (
   <Box w="full" bg="#191C2A" color="white">
@@ -65,7 +80,7 @@ export const Hero = () => (
               bg="linear-gradient(273.71deg, #E4873E 14.63%, #FBC00E 100.31%);"
               bgClip="text"
             >
-              Social token ecosystem
+              <SlidingText /> token ecosystem
             </Text>
           </Text>
           <Text
