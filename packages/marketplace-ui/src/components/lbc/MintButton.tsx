@@ -1,38 +1,22 @@
-import React from "react";
 import {
-  useDisclosure,
-  Button,
-  Icon,
-  useColorModeValue,
-  VStack,
-  Collapse,
-  Flex,
-  Text,
-  InputGroup,
-  Input,
-  Tooltip,
-  HStack,
-  InputRightElement,
-  LightMode,
+  Button, Collapse,
+  Flex, HStack, Icon, Input, InputGroup, InputRightElement,
+  LightMode, Text, Tooltip, useColorModeValue, useDisclosure, VStack
 } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import {
-  useBondingPricing,
-  useErrorHandler,
+  Notification, useBondingPricing, useCapInfo, useErrorHandler,
   useProvider,
   useStrataSdks,
-  useTokenBonding,
-  Notification,
-  useUserOwnedAmount,
+  useTokenBonding, useUserOwnedAmount
 } from "@strata-foundation/react";
 import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useAsyncCallback } from "react-async-hook";
-import { BsChevronDown, BsChevronUp } from "react-icons/bs";
-import { RiArrowUpDownFill, RiInformationLine } from "react-icons/ri";
-import { useCapInfo } from "../../hooks/useCapInfo";
 import toast from "react-hot-toast";
+import { BsChevronDown, BsChevronUp } from "react-icons/bs";
+import { RiInformationLine } from "react-icons/ri";
 import { useLivePrice } from "../../hooks/useLivePrice";
 
 async function buy({

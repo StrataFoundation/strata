@@ -292,35 +292,42 @@ export class MarketplaceSdk {
     const tokenBondingAcct = (await this.tokenBondingSdk.getTokenBonding(
       tokenBonding
     ))!;
-    const tokenRef = await this.tokenCollectiveSdk.getTokenRef(
-      tokenBondingAcct.reserveAuthority! as PublicKey
-    );
+    let authority: PublicKey | null = null;
+    try {
+      const tokenRef = await this.tokenCollectiveSdk.getTokenRef(
+        tokenBondingAcct.reserveAuthority! as PublicKey
+      );
 
-    if (tokenRef) {
-      const { instructions: i0, signers: s0 } =
-        await this.tokenCollectiveSdk.claimBondingAuthorityInstructions({
-          tokenBonding,
-        });
-      instructions.push(...i0);
-      signers.push(...s0);
+      if (tokenRef) {
+        authority = tokenRef.owner;
+
+        const { instructions: i0, signers: s0 } =
+          await this.tokenCollectiveSdk.claimBondingAuthorityInstructions({
+            tokenBonding,
+          });
+        instructions.push(...i0);
+        signers.push(...s0);
+      }
+    } catch (e: any) {
+      // ignore
     }
+    
     const reserveAmount = await this.tokenBondingSdk.getTokenAccountBalance(
       tokenBondingAcct.baseStorage
     );
-    const authority = tokenRef ? tokenRef.owner || undefined : undefined;
     const { instructions: i1, signers: s1 } =
       await this.tokenBondingSdk?.transferReservesInstructions({
         amount: reserveAmount!,
         destination,
         tokenBonding,
-        reserveAuthority: authority,
+        reserveAuthority: authority || undefined,
       });
     instructions.push(...i1);
     signers.push(...s1);
     const { instructions: i2, signers: s2 } =
       await this.tokenBondingSdk.closeInstructions({
         tokenBonding,
-        generalAuthority: authority,
+        generalAuthority: authority || undefined,
       });
 
     instructions.push(...i2);

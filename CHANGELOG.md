@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.3.2]
+
+### Breaking
+
+  * Moved `useCapInfo` to `react` package from `marketplace-ui`
+
+### Added
+
+  * Disburse funds to token offering
+
 ## [3.3.1](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.3.1-alpha.1...v3.3.1) (2022-03-09)
 
 ### Added

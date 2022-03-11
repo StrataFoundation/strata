@@ -15,10 +15,10 @@ import React, { useState } from "react";
 import { useAsync } from "react-async-hook";
 import toast from "react-hot-toast";
 import { BsClipboard } from "react-icons/bs";
-import { useIsBountyAdmin } from "../../hooks/useIsBountyAdmin";
-import { useMarketplaceSdk } from "../../contexts/marketplaceSdkContext";
-import { AsyncButton } from "../AsyncButton";
-import { Recipient } from "../form/Recipient";
+import { useIsBountyAdmin } from "../hooks/useIsBountyAdmin";
+import { useMarketplaceSdk } from "../contexts/marketplaceSdkContext";
+import { AsyncButton } from "./AsyncButton";
+import { Recipient } from "./form/Recipient";
 
 async function getInstructions(
   marketplaceSdk: MarketplaceSdk | undefined,

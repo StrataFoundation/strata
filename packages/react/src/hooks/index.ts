@@ -41,3 +41,4 @@ export * from "./useUserTokensWithMeta";
 export * from "./useGovernance";
 export * from "./useQueryString";
 export * from "./useUsdLocked";
+export * from "./useCapInfo";
