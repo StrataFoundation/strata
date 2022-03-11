@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import {
   Box,
@@ -31,7 +31,7 @@ const callouts = [
 ];
 
 const SlidingText = () => {
-  const options = ["Social", "Gaming", "Community"];
+  const options = useMemo(() => ["Social", "Gaming", "Community"], []);
   const [currentOptionIndex, setCurrentOptionIndex] = useState(0);
 
   useEffect(() => {
