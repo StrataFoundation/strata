@@ -8,7 +8,6 @@ import {
   Text,
   Button,
   Link,
-  Fade,
 } from "@chakra-ui/react";
 import { DISCORD_INVITE_URL, DOCS_URL } from "@/constants";
 
