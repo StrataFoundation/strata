@@ -95,7 +95,7 @@ export const Bounties = () => (
             />
             <Stack spacing="4" justifyContent="left" flexWrap="wrap">
               <Text fontSize="xl" fontWeight="bold">
-                The Degens take on plastic: Becuase a global problem needs a
+                The Degens take on plastic: Because a global problem needs a
                 global $SOLution
               </Text>
               <Stack
