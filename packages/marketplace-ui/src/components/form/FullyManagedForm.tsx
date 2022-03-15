@@ -33,6 +33,7 @@ import { route, routes } from "../../utils/routes";
 import { FormControlWithError } from "./FormControlWithError";
 import { MintSelect } from "./MintSelect";
 import { IMetadataFormProps, TokenMetadataInputs } from "./TokenMetadataInputs";
+import { Disclosures, disclosuresSchema, IDisclosures } from "./Disclosures";
 
 type CurveType = "aggressive" | "stable" | "utility";
 interface IFullyManagedForm extends IMetadataFormProps {
@@ -46,6 +47,7 @@ interface IFullyManagedForm extends IMetadataFormProps {
   buyBaseRoyaltyPercentage: number;
   sellTargetRoyaltyPercentage: number;
   buyTargetRoyaltyPercentage: number;
+  disclosures: IDisclosures;
 }
 
 const validationSchema = yup.object({
@@ -61,6 +63,7 @@ const validationSchema = yup.object({
   buyBaseRoyaltyPercentage: yup.number().required(),
   sellTargetRoyaltyPercentage: yup.number().required(),
   buyTargetRoyaltyPercentage: yup.number().required(),
+  disclosures: disclosuresSchema,
 });
 
 async function createFullyManaged(
@@ -168,6 +171,11 @@ async function createFullyManaged(
 export const FullyManagedForm: React.FC = () => {
   const formProps = useForm<IFullyManagedForm>({
     resolver: yupResolver(validationSchema),
+    defaultValues: { 
+      disclosures: {
+        acceptedFees: true
+      }
+    }
   });
   const {
     register,
@@ -230,7 +238,10 @@ export const FullyManagedForm: React.FC = () => {
             label="Curve Type"
             errors={errors}
           >
-            <RadioGroup value={curveType} onChange={(v) => setValue("curveType", v as CurveType)}>
+            <RadioGroup
+              value={curveType}
+              onChange={(v) => setValue("curveType", v as CurveType)}
+            >
               <Stack direction="row">
                 <Radio value="utility">Utility</Radio>
                 <Radio value="stable">Stable</Radio>
@@ -386,6 +397,8 @@ export const FullyManagedForm: React.FC = () => {
               </FormHelperText>
             </FormControl>
           </VStack>
+
+          <Disclosures fees={0} />
 
           {error && (
             <Alert status="error">

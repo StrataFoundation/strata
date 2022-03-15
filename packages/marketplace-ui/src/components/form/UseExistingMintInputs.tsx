@@ -17,9 +17,7 @@ export function UseExistingMintInputs() {
     register,
     watch,
     formState: { errors },
-    clearErrors,
     setValue,
-    setError,
   } = useFormContext<IUseExistingMintProps>();
   const router = useRouter();
   const mint = router.query["mint"];

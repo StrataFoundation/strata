@@ -12,7 +12,7 @@ import {
   Metadata,
   MetadataData,
 } from "@metaplex-foundation/mpl-token-metadata";
-import { chunks, SplTokenMetadata } from "@strata-foundation/spl-utils";
+import { chunks, IMetadataExtension, SplTokenMetadata } from "@strata-foundation/spl-utils";
 import { useEffect } from "react";
 
 async function getBounties(
@@ -34,13 +34,21 @@ async function enrich(
 ): Promise<EnrichedBountyItem[]> {
   if (shouldEnrich) {
     return Promise.all(
-      bountyItems.map(async (bounty) => ({
-        ...bounty,
-        tokenMetadata:
+      bountyItems.map(async (bounty) => {
+        const tokenMetadata =
           (await tokenMetadataSdk?.getMetadata(
             await Metadata.getPDA(bounty.targetMint)
-          )) || undefined,
-      }))
+          )) || undefined;
+        const data = await SplTokenMetadata.getArweaveMetadata(
+          tokenMetadata?.data.uri
+        );
+        return {
+          ...bounty,
+          tokenMetadata,
+          data,
+          attributes: SplTokenMetadata.attributesToRecord(data?.attributes),
+        };
+      })
     );
   }
 
@@ -49,7 +57,7 @@ async function enrich(
 
 const BATCH_SIZE = 20;
 const LIMIT = 20;
-type EnrichedBountyItem = GetBountyItem & { tokenMetadata?: MetadataData };
+type EnrichedBountyItem = GetBountyItem & { tokenMetadata?: MetadataData; data?: IMetadataExtension, attributes?: Record<string, string | number>};
 // Enrich batch size at a time with token metadata. This
 // keeps us from hitting metadata for every single bounty, only
 // the ones we may need. Batch fetches up to limit results returned
@@ -71,7 +79,7 @@ function useEnriched(
       if (bountyItems) {
         const batched = chunks(bountyItems, batchSize);
         for (const [index, batch] of batched.entries()) {
-          let nextSet = await enrich(!!search, batch, tokenMetadataSdk);
+          let nextSet = (await enrich(true, batch, tokenMetadataSdk)).filter(i => i.attributes?.is_strata_bounty);
           if (search) {
             nextSet = new Fuse(nextSet, {
               keys: ["tokenMetadata.data.name", "tokenMetadata.data.symbol"],

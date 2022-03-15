@@ -4,7 +4,7 @@ import { DataV2, Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { NATIVE_MINT } from "@solana/spl-token";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Keypair, PublicKey } from "@solana/web3.js";
-import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
+import { FIXED_CURVE_FEES, MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
 import { truthy, usePrimaryClaimedTokenRef, useProvider } from "@strata-foundation/react";
 import { getMintInfo, sendMultipleInstructions } from "@strata-foundation/spl-utils";
 import { useRouter } from 'next/router';
@@ -15,17 +15,21 @@ import { BsChevronDown } from "react-icons/bs";
 import * as yup from "yup";
 import { useMarketplaceSdk } from "../..//contexts/marketplaceSdkContext";
 import { route, routes } from "../../utils/routes";
+import { Disclosures, disclosuresSchema, IDisclosures } from "./Disclosures";
 import { FormControlWithError } from "./FormControlWithError";
 import { MintSelect } from "./MintSelect";
 import { IMetadataFormProps, TokenMetadataInputs } from "./TokenMetadataInputs";
 import { IUseExistingMintProps, UseExistingMintInputs } from "./UseExistingMintInputs";
 
-interface IMarketplaceFormProps extends IMetadataFormProps, IUseExistingMintProps {
+interface IMarketplaceFormProps
+  extends IMetadataFormProps,
+    IUseExistingMintProps {
   mint: string;
   quantity: number;
   price: number;
   curve: string;
   decimals?: number;
+  disclosures: IDisclosures;
 }
 
 const validationSchema = yup.object({
@@ -57,6 +61,7 @@ const validationSchema = yup.object({
   quantity: yup.number().required().min(1).integer(),
   price: yup.number().required().min(0),
   curve: yup.string(),
+  disclosures: disclosuresSchema
 });
 
 async function createMarket(marketplaceSdk: MarketplaceSdk, values: IMarketplaceFormProps): Promise<PublicKey> {
@@ -238,6 +243,9 @@ export const SaleForm: React.FC = () => {
               {...register("price")}
             />
           </FormControlWithError>
+          
+          <Disclosures fees={FIXED_CURVE_FEES} />
+
           <Flex alignItems="flex-start" direction="column" w="full">
             <Button
               textAlign="left"

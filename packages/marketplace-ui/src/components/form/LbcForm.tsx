@@ -4,7 +4,7 @@ import { DataV2, Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { NATIVE_MINT } from "@solana/spl-token";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Keypair, PublicKey } from "@solana/web3.js";
-import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
+import { FIXED_CURVE_FEES, MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
 import {
   truthy, usePrimaryClaimedTokenRef,
   useProvider,
@@ -23,8 +23,11 @@ import { MintSelect } from "./MintSelect";
 import { Recipient } from "./Recipient";
 import { IMetadataFormProps, TokenMetadataInputs } from "./TokenMetadataInputs";
 import { IUseExistingMintProps as IUseExistingMintProps, UseExistingMintInputs } from "./UseExistingMintInputs";
+import { Disclosures, disclosuresSchema, IDisclosures } from "./Disclosures";
 
-interface ILbpFormProps extends Partial<IMetadataFormProps>, IUseExistingMintProps {
+interface ILbpFormProps
+  extends Partial<IMetadataFormProps>,
+    IUseExistingMintProps {
   mint: string;
   symbol?: string;
   authority: string;
@@ -34,6 +37,7 @@ interface ILbpFormProps extends Partial<IMetadataFormProps>, IUseExistingMintPro
   interval: number;
   mintCap: number;
   goLiveDate: Date;
+  disclosures: IDisclosures;
 }
 
 const validationSchema = yup.object({
@@ -69,6 +73,7 @@ const validationSchema = yup.object({
     }),
   mintCap: yup.number().min(1).required(),
   goLiveDate: yup.date().required(),
+  disclosures: disclosuresSchema,
 });
 
 async function createLiquidityBootstrapper(
@@ -309,6 +314,8 @@ export const LbcForm: React.FC = () => {
           >
             <Input type="datetime-local" {...register("goLiveDate")} />
           </FormControlWithError>
+          
+          <Disclosures fees={FIXED_CURVE_FEES} />
 
           {error && <Alert status="error">{error.toString()}</Alert>}
 
