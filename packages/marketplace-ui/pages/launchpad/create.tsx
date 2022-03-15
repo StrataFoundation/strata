@@ -5,18 +5,12 @@ import { Stack, Text, useRadioGroup } from "@chakra-ui/react";
 import { LaunchpadLayout } from "@/components/launchpad";
 import { RadioCard } from "@/components/form/RadioCard";
 
-export enum TokenOptionsCreateOption {
+export enum CreateTokenOption {
   FullyManaged = "FullyManaged",
   SelfManaged = "SelfManaged",
 }
 
-export type TokenOptionsCreateProps = {
-  onSelect: (option: TokenOptionsCreateOption) => void;
-};
-
-export const TokenOptionsCreate: FC<TokenOptionsCreateProps> = ({
-  onSelect,
-}) => {
+export const CreateToken: FC = () => {
   const router = useRouter();
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
@@ -27,14 +21,14 @@ export const TokenOptionsCreate: FC<TokenOptionsCreateProps> = ({
     helpText: string;
   }[] = [
     {
-      value: TokenOptionsCreateOption.FullyManaged,
+      value: CreateTokenOption.FullyManaged,
       heading: "Fully Managed",
       illustration: "/fully-managed.svg",
       helpText:
         "Create you a token that you can let people buy right now. You don’t want to worry about liquidity providers, supply management, or pricing.",
     },
     {
-      value: TokenOptionsCreateOption.SelfManaged,
+      value: CreateTokenOption.SelfManaged,
       heading: "Self Managed",
       illustration: "/self-managed.svg",
       helpText:
@@ -50,7 +44,11 @@ export const TokenOptionsCreate: FC<TokenOptionsCreateProps> = ({
   const group = getRootProps();
 
   const handleOnNext = async () => {
-    alert(`handlOnNext with selectedOption : ${selectedOption}`);
+    if (selectedOption === CreateTokenOption.SelfManaged)
+      router.push("/launchpad/metadata");
+
+    if (selectedOption === CreateTokenOption.FullyManaged)
+      alert(`handlOnNext with selectedOption : ${selectedOption}`);
   };
 
   return (
@@ -86,4 +84,4 @@ export const TokenOptionsCreate: FC<TokenOptionsCreateProps> = ({
   );
 };
 
-export default TokenOptionsCreate;
+export default CreateToken;

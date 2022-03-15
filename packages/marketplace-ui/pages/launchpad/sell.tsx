@@ -5,12 +5,12 @@ import { Stack, Text, useRadioGroup } from "@chakra-ui/react";
 import { LaunchpadLayout } from "@/components/launchpad";
 import { RadioCard } from "@/components/form/RadioCard";
 
-export enum SellTokenOptionsOption {
+export enum SellTokenOption {
   PriceDiscovery = "PriceDiscovery",
   FixedPrice = "FixedPrice",
 }
 
-export const SellTokenOptions: FC = () => {
+export const SellToken: FC = () => {
   const router = useRouter();
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
@@ -21,14 +21,14 @@ export const SellTokenOptions: FC = () => {
     helpText: string;
   }[] = [
     {
-      value: SellTokenOptionsOption.PriceDiscovery,
+      value: SellTokenOption.PriceDiscovery,
       heading: "Price Discovery",
       illustration: "/price-discovery.svg",
       helpText:
         "You would like to set a price range and let demand dictate the price. This helps to avoid bots.",
     },
     {
-      value: SellTokenOptionsOption.FixedPrice,
+      value: SellTokenOption.FixedPrice,
       heading: "Fixed Price",
       illustration: "/fixed-price.svg",
       helpText: "You would like to sell this token for a predetermined price.",
@@ -79,4 +79,4 @@ export const SellTokenOptions: FC = () => {
   );
 };
 
-export default SellTokenOptions;
+export default SellToken;

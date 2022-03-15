@@ -24,9 +24,7 @@ export const LaunchpadLayout: FC<LaunchpadLayoutProps> = ({
 
   const handleOnBack = async () => {
     onBack && (await onBack());
-
-    const [curr, last, ...rest] = router.route.split("/").reverse();
-    router.push(`/${last}`);
+    router.back();
   };
 
   const handleOnNext = async () => {

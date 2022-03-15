@@ -59,10 +59,10 @@ export const LaunchPad: FC = ({ children }) => {
 
   const handleOnNext = async () => {
     if (selectedOption === LandingOption.CreateToken)
-      router.push("/launchpad/create-token-options");
+      router.push("/launchpad/create");
 
     if (selectedOption === LandingOption.SellToken)
-      router.push("/launchpad/sell-token-options");
+      router.push("/launchpad/sell");
 
     if (selectedOption === LandingOption.Fundraise) alert("Fundraise");
 
