@@ -1051,7 +1051,8 @@ export class MarketplaceSdk {
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         supplyMint,
-        source
+        source,
+        true
       );
       if (!(await this.tokenBondingSdk.accountExists(ataSource))) {
         throw new Error(
@@ -1154,7 +1155,8 @@ export class MarketplaceSdk {
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         supplyMint,
-        source
+        source,
+        true
       );
       if (!(await this.tokenBondingSdk.accountExists(ataSource))) {
         throw new Error(

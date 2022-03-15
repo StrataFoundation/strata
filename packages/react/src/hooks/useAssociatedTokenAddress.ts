@@ -18,7 +18,8 @@ const fetch = async (
     ASSOCIATED_TOKEN_PROGRAM_ID,
     TOKEN_PROGRAM_ID,
     mint,
-    wallet
+    wallet,
+    true
   );
 };
 

@@ -1391,7 +1391,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         state.wrappedSolMint,
-        source
+        source,
+        true
       );
       usedAta = true;
     }
@@ -1482,7 +1483,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         state.wrappedSolMint,
-        owner
+        owner,
+        true
       );
     }
 
@@ -1599,7 +1601,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         tokenBondingAcct.targetMint,
-        sourceAuthority
+        sourceAuthority,
+        true
       );
 
       if (!(await this.accountExists(destination))) {
@@ -1674,7 +1677,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           ASSOCIATED_TOKEN_PROGRAM_ID,
           TOKEN_PROGRAM_ID,
           tokenBondingAcct.baseMint,
-          sourceAuthority
+          sourceAuthority,
+          true
         );
 
         if (!(await this.accountExists(source))) {
@@ -1829,7 +1833,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         isBuy ? tokenBonding.targetMint : tokenBonding.baseMint,
-        sourceAuthority
+        sourceAuthority,
+        true
       );
 
       const getBalance = async (): Promise<BN> => {
@@ -2048,7 +2053,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         tokenBondingAcct.targetMint,
-        sourceAuthority
+        sourceAuthority,
+        true
       );
 
       if (!(await this.accountExists(source))) {
@@ -2066,7 +2072,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           ASSOCIATED_TOKEN_PROGRAM_ID,
           TOKEN_PROGRAM_ID,
           tokenBondingAcct.baseMint,
-          sourceAuthority
+          sourceAuthority,
+          true
         );
 
         if (!(await this.accountExists(destination))) {
@@ -2242,7 +2249,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           ASSOCIATED_TOKEN_PROGRAM_ID,
           TOKEN_PROGRAM_ID,
           tokenBondingAcct.baseMint,
-          this.wallet.publicKey
+          this.wallet.publicKey,
+          true
         );
       }
     }
@@ -2258,7 +2266,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         tokenBondingAcct.baseMint,
-        destination
+        destination,
+        true
       );
       if (!(await this.accountExists(ataDestination))) {
         instructions.push(
