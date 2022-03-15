@@ -13,12 +13,16 @@ import {
   InputGroup,
   InputLeftElement,
   Link,
-  Select, Spinner, Stack, Text, VStack
+  Select,
+  Spinner,
+  Stack,
+  Text,
+  VStack,
 } from "@chakra-ui/react";
 import {
   useErrorHandler,
   usePublicKey,
-  useQueryString
+  useQueryString,
 } from "@strata-foundation/react";
 import { useBounties } from "@/hooks/useBounties";
 import { NextPage } from "next";
@@ -36,14 +40,18 @@ export const Bounties: NextPage = () => {
   const [limit, setLimit] = useState(PAGE_SIZE);
   const fetchMore = () => setLimit((limit) => limit + PAGE_SIZE);
   const router = useRouter();
-  
+
   const baseMint = usePublicKey(mint);
-  const { result: bounties, error, loading } = useBounties({
+  const {
+    result: bounties,
+    error,
+    loading,
+  } = useBounties({
     baseMint,
     search,
     sortType: sort.includes("contribution") ? "CONTRIBUTION" : "GO_LIVE",
     sortDirection: sort.includes("asc") ? "ASC" : "DESC",
-    limit
+    limit,
   });
   const { handleErrors } = useErrorHandler();
   handleErrors(error);
@@ -136,7 +144,9 @@ export const Bounties: NextPage = () => {
               <BountyCard
                 onClick={() =>
                   router.push(
-                    route(routes.bounty, { mintKey: bounty.targetMint.toBase58() })
+                    route(routes.bounty, {
+                      mintKey: bounty.targetMint.toBase58(),
+                    })
                   )
                 }
                 key={bounty.tokenBondingKey.toBase58()}
