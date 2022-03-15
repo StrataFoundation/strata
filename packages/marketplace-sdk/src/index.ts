@@ -25,7 +25,7 @@ import bs58 from "bs58";
 import { Buffer } from "buffer";
 
 export const FEES_WALLET = new PublicKey(
-  "FLbfbzpX5vA8jpqFxNm5cnbrn8iRs2B8bU2VRJG4MNYf"
+  "989wTE33inEx5k3o8pxSSSU9HEmf9Sj4PSqF6NZbxHkp"
 );
 export const FIXED_CURVE_FEES = 2;
 export const LBC_CURVE_FEES = 3;
