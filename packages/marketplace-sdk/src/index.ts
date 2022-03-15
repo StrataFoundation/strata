@@ -18,12 +18,17 @@ import {
   Attribute,
   BigInstructionResult,
   createMintInstructions,
-  getMintInfo, getTokenAccount, InstructionResult, SplTokenMetadata
+  getMintInfo, getTokenAccount, InstructionResult, percent, SplTokenMetadata
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
 import bs58 from "bs58";
 import { Buffer } from "buffer";
 
+export const FEES_WALLET = new PublicKey(
+  "FLbfbzpX5vA8jpqFxNm5cnbrn8iRs2B8bU2VRJG4MNYf"
+);
+export const FIXED_CURVE_FEES = 2;
+export const LBC_CURVE_FEES = 3;
 
 type Truthy<T> = T extends false | "" | 0 | null | undefined ? never : T; // from lodash
 
@@ -37,7 +42,26 @@ export type GetBountyItem = {
   goLiveUnixTime: BN;
 };
 
-interface ICreateMarketItemArgs {
+interface IProtocolFees {
+  /**
+   * Default: false. Refuse to pay fees to the protocol maintainers.
+   *
+   * This is open source software, and I don't believe in forcing fees on people.
+   *
+   * These fees go towards maintaining Strata and keeping this public good alive.
+   *
+   * Fees seem too high for your project? Consider using the `protocolFee` argument and paying
+   * what you think is fair.
+   */
+  iAmAFreeloader?: boolean;
+
+  /**
+   * The fee sent to the protocol
+   */
+  protocolFee?: number;
+}
+
+interface ICreateMarketItemArgs extends IProtocolFees {
   payer?: PublicKey;
   /**
    * Optionally, use this keypair to create the target mint
@@ -106,7 +130,7 @@ interface ICreateBountyArgs {
 }
 
 interface ILbpCurveArgs {
-/** Max tokens to be sold */
+  /** Max tokens to be sold */
   maxSupply: number;
   /** Interval in seconds to sell them over */
   interval: number;
@@ -122,7 +146,9 @@ interface ILbpCurveArgs {
   timeDecay?: number;
 }
 
-interface ICreateLiquidityBootstrapperArgs extends ILbpCurveArgs {
+interface ICreateLiquidityBootstrapperArgs
+  extends ILbpCurveArgs,
+    IProtocolFees {
   payer?: PublicKey;
   /**
    * Optionally, use this keypair to create the target mint
@@ -151,7 +177,6 @@ interface ICreateLiquidityBootstrapperArgs extends ILbpCurveArgs {
    */
   baseMint: PublicKey;
 
-  
   /**
    * Optionally -- override bonding params
    */
@@ -592,9 +617,17 @@ export class MarketplaceSdk {
     bondingArgs,
     baseMint,
     targetMintKeypair = Keypair.generate(),
+    iAmAFreeloader,
+    protocolFee = FIXED_CURVE_FEES,
   }: ICreateMarketItemArgs): Promise<
     BigInstructionResult<{ tokenBonding: PublicKey }>
   > {
+    if (protocolFee == 0 && !iAmAFreeloader) {
+      throw new Error(
+        "Must use `iAmAFreeloader` flag when setting protocolFee"
+      );
+    }
+
     if (!price && !bondingArgs?.curve) {
       throw new Error("Must either pass price or bondingArgs.curve");
     }
@@ -620,6 +653,7 @@ export class MarketplaceSdk {
 
     let curve = bondingArgs?.curve;
     if (price) {
+      const feeModifier = iAmAFreeloader ? 1 : (1 / (1 + roundPercent(protocolFee)));
       const {
         instructions: curveInstructions,
         signers: curveSigners,
@@ -629,7 +663,7 @@ export class MarketplaceSdk {
           c: 0,
           pow: 0,
           frac: 1,
-          b: price,
+          b: price * feeModifier,
         }),
       });
       instructions.push(...curveInstructions);
@@ -647,11 +681,14 @@ export class MarketplaceSdk {
       generalAuthority: seller,
       curveAuthority: seller,
       targetMint,
-      mintCap: quantity ? new BN(quantity * Math.pow(10, bondingArgs?.targetMintDecimals || 0)) : undefined,
+      mintCap: quantity
+        ? new BN(quantity * Math.pow(10, bondingArgs?.targetMintDecimals || 0))
+        : undefined,
       ignoreExternalReserveChanges: true,
       ignoreExternalSupplyChanges: true,
       sellFrozen: true,
-      buyBaseRoyaltyPercentage: 0,
+      buyBaseRoyaltyPercentage: iAmAFreeloader ? 0 : protocolFee,
+      buyBaseRoyaltiesOwner: FEES_WALLET,
       sellBaseRoyaltyPercentage: 0,
       sellTargetRoyaltyPercentage: 0,
       buyTargetRoyaltyPercentage: 0,
@@ -850,20 +887,27 @@ export class MarketplaceSdk {
     maxSupply,
     bondingArgs,
     baseMint,
+    iAmAFreeloader,
+    protocolFee = LBC_CURVE_FEES,
   }: ICreateLiquidityBootstrapperArgs): Promise<
     BigInstructionResult<{ tokenBonding: PublicKey; targetMint: PublicKey }>
   > {
+    if (protocolFee == 0 && !iAmAFreeloader) {
+      throw new Error(
+        "Must use `iAmAFreeloader` flag when setting protocolFee"
+      );
+    }
     const instructions = [];
     const signers = [];
-
+    const feeModifier = iAmAFreeloader ? 1 : 1 / (1 + roundPercent(protocolFee));
     const {
       reserves: initialReservesPad,
       supply: initialSupplyPad,
       curveConfig,
     } = MarketplaceSdk.lbcCurve({
       interval,
-      startPrice,
-      minPrice,
+      startPrice: startPrice * feeModifier,
+      minPrice: minPrice * feeModifier,
       maxSupply,
     });
 
@@ -940,7 +984,6 @@ export class MarketplaceSdk {
       ignoreExternalReserveChanges: true,
       ignoreExternalSupplyChanges: true,
       targetMint,
-      buyBaseRoyaltyPercentage: 0,
       sellBaseRoyaltyPercentage: 0,
       sellTargetRoyaltyPercentage: 0,
       buyTargetRoyaltyPercentage: 0,
@@ -950,6 +993,8 @@ export class MarketplaceSdk {
         initialReservesPad,
       },
       mintCap: toBN(maxSupply, decimals),
+      buyBaseRoyaltyPercentage: iAmAFreeloader ? 0 : protocolFee,
+      buyBaseRoyaltiesOwner: FEES_WALLET,
       ...bondingArgs,
     });
 
@@ -1170,3 +1215,7 @@ export class MarketplaceSdk {
     );
   }
 }
+function roundPercent(protocolFee: number) {
+  return (percent(protocolFee) || 0) / 4294967295;
+}
+

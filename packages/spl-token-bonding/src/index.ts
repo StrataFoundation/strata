@@ -987,8 +987,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     );
 
     if (isNative) {
-      buyBaseRoyalties = buyBaseRoyalties == null ? null : buyBaseRoyalties || buyBaseRoyaltiesOwner;
-      sellBaseRoyalties = sellBaseRoyalties == null ? null : sellBaseRoyalties || sellBaseRoyaltiesOwner;
+      buyBaseRoyalties = buyBaseRoyalties === null ? null : (buyBaseRoyalties || buyBaseRoyaltiesOwner);
+      sellBaseRoyalties = sellBaseRoyalties === null ? null : (sellBaseRoyalties || sellBaseRoyaltiesOwner);
     }
 
     let createdAccts: Set<string> = new Set();

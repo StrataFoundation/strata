@@ -6,19 +6,19 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
 import { truthy, usePrimaryClaimedTokenRef, useProvider } from "@strata-foundation/react";
-import { useMarketplaceSdk } from "../..//contexts/marketplaceSdkContext";
+import { getMintInfo, sendMultipleInstructions } from "@strata-foundation/spl-utils";
 import { useRouter } from 'next/router';
 import React from "react";
 import { useAsyncCallback } from "react-async-hook";
 import { FormProvider, useForm } from "react-hook-form";
 import { BsChevronDown } from "react-icons/bs";
-import { route, routes } from "../../utils/routes";
 import * as yup from "yup";
+import { useMarketplaceSdk } from "../..//contexts/marketplaceSdkContext";
+import { route, routes } from "../../utils/routes";
 import { FormControlWithError } from "./FormControlWithError";
 import { MintSelect } from "./MintSelect";
 import { IMetadataFormProps, TokenMetadataInputs } from "./TokenMetadataInputs";
 import { IUseExistingMintProps, UseExistingMintInputs } from "./UseExistingMintInputs";
-import { getMintInfo, sendMultipleInstructions } from "@strata-foundation/spl-utils";
 
 interface IMarketplaceFormProps extends IMetadataFormProps, IUseExistingMintProps {
   mint: string;
@@ -34,10 +34,16 @@ const validationSchema = yup.object({
     is: true,
     then: yup.string().required(),
   }),
-  decimals: yup.string().when("useExistingMint", {
-    is: false,
-    then: yup.number().min(0).required(),
-  }),
+  decimals: yup
+    .number()
+    .nullable()
+    .transform((v) => {
+      return (v === "" || isNaN(v) ? null : v)
+    })
+    .when("useExistingMint", {
+      is: false,
+      then: yup.number().min(0).required(),
+    }),
   mint: yup.string().required(),
   image: yup.mixed(),
   name: yup.string().when("useExistingMint", {
@@ -140,7 +146,10 @@ async function createMarket(marketplaceSdk: MarketplaceSdk, values: IMarketplace
 
 export const SaleForm: React.FC = () => {
   const formProps = useForm<IMarketplaceFormProps>({
-    resolver: yupResolver(validationSchema)
+    resolver: yupResolver(validationSchema),
+    defaultValues: {
+      decimals: undefined,
+    },
   });
   const {
     register,

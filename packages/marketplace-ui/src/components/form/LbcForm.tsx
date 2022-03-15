@@ -57,7 +57,7 @@ const validationSchema = yup.object({
   startPrice: yup.number().min(0).required(),
   minPrice: yup.number().min(0).required(),
   interval: yup.number().min(0).required(),
-  decimals: yup.string().when("useExistingMint", {
+  decimals: yup.number().when("useExistingMint", {
     is: false,
     then: yup.number().min(0).required(),
   }),
@@ -143,6 +143,9 @@ async function createLiquidityBootstrapper(
 export const LbcForm: React.FC = () => {
   const formProps = useForm<ILbpFormProps>({
     resolver: yupResolver(validationSchema),
+    defaultValues: {
+      decimals: undefined,
+    },
   });
   const {
     register,
