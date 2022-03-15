@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { Stack, Text, useRadioGroup } from "@chakra-ui/react";
 import { LaunchpadLayout } from "@/components/launchpad";
 import { RadioCard } from "@/components/form/RadioCard";
+import { routes } from "@/utils/routes";
 
 export enum SellTokenOption {
   PriceDiscovery = "PriceDiscovery",
@@ -13,6 +14,7 @@ export enum SellTokenOption {
 export const SellToken: FC = () => {
   const router = useRouter();
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const mint = router.query["mint"];
 
   const options: {
     value: string;
@@ -43,7 +45,11 @@ export const SellToken: FC = () => {
   const group = getRootProps();
 
   const handleOnNext = async () => {
-    alert(`handlOnNext with selectedOption : ${selectedOption}`);
+    if (selectedOption === SellTokenOption.PriceDiscovery)
+      router.push(routes.newLbc.path + (mint ? "?mint=" + mint : ""));
+      
+    if (selectedOption === SellTokenOption.FixedPrice)
+      router.push(routes.newSale.path + (mint ? "?mint=" + mint : ""));
   };
 
   return (

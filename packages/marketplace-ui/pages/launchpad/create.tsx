@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { Stack, Text, useRadioGroup } from "@chakra-ui/react";
 import { LaunchpadLayout } from "@/components/launchpad";
 import { RadioCard } from "@/components/form/RadioCard";
+import { routes } from "@/utils/routes";
 
 export enum CreateTokenOption {
   FullyManaged = "FullyManaged",
@@ -25,7 +26,7 @@ export const CreateToken: FC = () => {
       heading: "Fully Managed",
       illustration: "/fully-managed.svg",
       helpText:
-        "Create you a token that you can let people buy right now. You don’t want to worry about liquidity providers, supply management, or pricing.",
+        "Create you a token that you can let people buy right now. You do not need to worry about liquidity providers, supply management, or pricing.",
     },
     {
       value: CreateTokenOption.SelfManaged,
@@ -44,11 +45,11 @@ export const CreateToken: FC = () => {
   const group = getRootProps();
 
   const handleOnNext = async () => {
-    if (selectedOption === CreateTokenOption.SelfManaged)
-      router.push("/launchpad/metadata");
-
     if (selectedOption === CreateTokenOption.FullyManaged)
-      alert(`handlOnNext with selectedOption : ${selectedOption}`);
+      router.push(routes.newFullyManaged.path);
+
+    if (selectedOption === CreateTokenOption.SelfManaged)
+      router.push(routes.newManual.path);
   };
 
   return (

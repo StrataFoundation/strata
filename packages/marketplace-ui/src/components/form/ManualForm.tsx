@@ -144,9 +144,7 @@ export const ManualForm: React.FC = () => {
   const onSubmit = async (values: IManualForm) => {
     const mintKey = await execute(tokenMetadataSdk!, values);
     router.push(
-      route(routes.swap, {
-        mintKey: mintKey.toBase58(),
-      })
+      routes.sell.path + "?mint=" + mintKey.toBase58()
     );
   };
 

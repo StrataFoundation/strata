@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Stack, Text, useRadioGroup } from "@chakra-ui/react";
 import { LaunchpadLayout } from "@/components/launchpad";
 import { RadioCard } from "@/components/form";
+import { routes } from "@/utils/routes";
 
 export enum LandingOption {
   CreateToken = "CreateToken",
@@ -59,19 +60,21 @@ export const LaunchPad: FC = ({ children }) => {
 
   const handleOnNext = async () => {
     if (selectedOption === LandingOption.CreateToken)
-      router.push("/launchpad/create");
+      router.push(routes.create.path);
 
     if (selectedOption === LandingOption.SellToken)
-      router.push("/launchpad/sell");
+      router.push(routes.sell.path);
 
-    if (selectedOption === LandingOption.Fundraise) alert("Fundraise");
+    if (selectedOption === LandingOption.Fundraise) 
+      router.push(routes.newBounty.path);
 
-    if (selectedOption === LandingOption.LBC) alert("LBC");
+    if (selectedOption === LandingOption.LBC)
+      alert("Not yet supported");
   };
 
   return (
     <LaunchpadLayout
-      heading="What would you like to launch?"
+      heading="What would you like to do?"
       subHeading="Please select one below:"
       nextDisabled={!selectedOption}
       onNext={handleOnNext}
