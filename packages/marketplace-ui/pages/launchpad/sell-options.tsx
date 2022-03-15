@@ -24,13 +24,15 @@ export const SellOptions: FC = () => {
       value: SellOptionsOption.Now,
       heading: "Sell Token Now",
       illustration: "/sell-token-now.svg",
-      helpText: "Help text here.",
+      helpText:
+        "We'll help you discover the best pricing mechanic for your tokens specific needs.",
     },
     {
       value: SellOptionsOption.Later,
       heading: "Sell Token Later",
       illustration: "/sell-token-later.svg",
-      helpText: "Help text here.",
+      helpText:
+        "Copy the mint address and all other info needed to launch later.",
     },
   ];
 
