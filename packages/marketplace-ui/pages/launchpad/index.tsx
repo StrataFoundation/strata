@@ -1,99 +1,103 @@
-import React, { FC, useState, useEffect } from "react";
-import { Container, Button, Center, Stack, Text } from "@chakra-ui/react";
+import React, { FC, useState } from "react";
+import { useRouter } from "next/router";
+import Image from "next/image";
+import { Stack, Text, useRadioGroup } from "@chakra-ui/react";
+import { LaunchpadLayout } from "@/components/launchpad";
+import { RadioCard } from "@/components/form";
 
-import {
-  Landing,
-  LandingOption,
-  TokenOptionsCreate,
-  TokenOptionsCreateOption,
-  TokenOptionsSell,
-  TokenOptionsSellOption,
-} from "@/components/launchpad";
+export enum LandingOption {
+  CreateToken = "CreateToken",
+  SellToken = "SellToken",
+  Fundraise = "Fundraise",
+  LBC = "LBC",
+}
 
 export const LaunchPad: FC = ({ children }) => {
-  const [isNextDisabled, setIsNextDisabled] = useState(true);
-  const [currentStep, setCurrentStep] = useState(1);
-  const [selectedOption, setSelectedOption] = useState<
-    LandingOption | TokenOptionsCreateOption | TokenOptionsSellOption | null
-  >(null);
+  const router = useRouter();
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
-  const handleOnBack = () => {
-    if (currentStep === 3 || currentStep === 2) {
-      setCurrentStep(1);
-    } else {
-      setCurrentStep(currentStep - 1);
-    }
+  const options: {
+    value: string;
+    heading: string;
+    illustration: string;
+    helpText: string;
+  }[] = [
+    {
+      value: LandingOption.CreateToken,
+      heading: "Create a Token",
+      illustration: "/create-a-token.svg",
+      helpText: "You don’t have a token yet, but would like to create one.",
+    },
+    {
+      value: LandingOption.SellToken,
+      heading: "Sell a Token",
+      illustration: "/sell-a-token.svg",
+      helpText: "You already have a token created that you would like to sell.",
+    },
+    {
+      value: LandingOption.Fundraise,
+      heading: "Fundraise",
+      illustration: "/fundraise.svg",
+      helpText:
+        "You want to collect funds for a cause, where contributors get a token representing their contributions.",
+    },
+    {
+      value: LandingOption.LBC,
+      heading: "Dynamic Pricing NFT Mint",
+      illustration: "/dynamic-pricing-mint.svg",
+      helpText:
+        "Sell NFTs from a Metaplex CandyMachine using Strata’s dynamic price discovery. This allows you to avoid bots without the need of a whitelist.",
+    },
+  ];
+
+  const { getRootProps, getRadioProps } = useRadioGroup({
+    name: "options",
+    onChange: setSelectedOption,
+  });
+
+  const group = getRootProps();
+
+  const handleOnNext = async () => {
+    if (selectedOption === LandingOption.CreateToken)
+      router.push("/launchpad/create-token-options");
+
+    if (selectedOption === LandingOption.SellToken)
+      router.push("/launchpad/sell-token-options");
+
+    if (selectedOption === LandingOption.Fundraise) alert("Fundraise");
+
+    if (selectedOption === LandingOption.LBC) alert("LBC");
   };
-
-  const handleOnNext = () => {
-    if (selectedOption === LandingOption.CreateToken) {
-      setCurrentStep(2);
-    } else if (selectedOption === LandingOption.SellToken) {
-      setCurrentStep(3);
-    } else {
-      setCurrentStep(currentStep + 1);
-    }
-    setSelectedOption(null);
-  };
-
-  useEffect(() => {
-    if (selectedOption) {
-      setIsNextDisabled(false);
-    } else {
-      setIsNextDisabled(true);
-    }
-  }, [selectedOption]);
 
   return (
-    <>
-      <Center padding="54px" backgroundColor="black.500">
-        <Stack spacing={6}>
-          <Text fontSize="xl" color="white" textAlign="center">
-            Welcome to
-            <Text
-              fontWeight="Bold"
-              background="linear-gradient(to right,#FFCD01, #E17E44);"
-              backgroundClip="text"
-            >
-              Strata Launchpad
-            </Text>
-          </Text>
-        </Stack>
-      </Center>
-      {currentStep === 1 && <Landing onSelect={setSelectedOption} />}
-      {currentStep === 2 && <TokenOptionsCreate onSelect={setSelectedOption} />}
-      {currentStep === 3 && <TokenOptionsSell onSelect={setSelectedOption} />}
-      <Container
-        maxW="container.lg"
-        display="flex"
-        justifyContent="space-between"
-        py={6}
-      >
-        {currentStep > 1 ? (
-          <Button
-            colorScheme="primary"
-            variant="outline"
-            w="full"
-            maxW="140px"
-            onClick={handleOnBack}
-          >
-            Back
-          </Button>
-        ) : (
-          <span />
-        )}
+    <LaunchpadLayout
+      heading="What would you like to launch?"
+      subHeading="Please select one below:"
+      nextDisabled={!selectedOption}
+      onNext={handleOnNext}
+    >
+      <Stack {...group} direction="row" justifyContent="center">
+        {options.map(({ value, heading, illustration, helpText }) => {
+          const radio = getRadioProps({ value });
 
-        <Button
-          colorScheme="primary"
-          disabled={isNextDisabled}
-          w="full"
-          maxW="140px"
-          onClick={handleOnNext}
-        >
-          Next
-        </Button>
-      </Container>
-    </>
+          return (
+            <RadioCard key={value} helpText={helpText} {...radio}>
+              <Stack>
+                <Image
+                  src={illustration}
+                  alt={`${value}-illustration`}
+                  height="100px"
+                  width="100%"
+                />
+                <Text fontWeight="bold" fontSize="md">
+                  {heading}
+                </Text>
+              </Stack>
+            </RadioCard>
+          );
+        })}
+      </Stack>
+    </LaunchpadLayout>
   );
 };
 export default LaunchPad;
