@@ -146,10 +146,7 @@ async function createMarket(marketplaceSdk: MarketplaceSdk, values: IMarketplace
 
 export const SaleForm: React.FC = () => {
   const formProps = useForm<IMarketplaceFormProps>({
-    resolver: yupResolver(validationSchema),
-    defaultValues: {
-      decimals: undefined,
-    },
+    resolver: yupResolver(validationSchema)
   });
   const {
     register,

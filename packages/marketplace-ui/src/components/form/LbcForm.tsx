@@ -57,10 +57,16 @@ const validationSchema = yup.object({
   startPrice: yup.number().min(0).required(),
   minPrice: yup.number().min(0).required(),
   interval: yup.number().min(0).required(),
-  decimals: yup.number().when("useExistingMint", {
-    is: false,
-    then: yup.number().min(0).required(),
-  }),
+  decimals: yup
+    .number()
+    .nullable()
+    .transform((v) => {
+      return v === "" || isNaN(v) ? null : v;
+    })
+    .when("useExistingMint", {
+      is: false,
+      then: yup.number().min(0).required(),
+    }),
   mintCap: yup.number().min(1).required(),
   goLiveDate: yup.date().required(),
 });
@@ -142,10 +148,7 @@ async function createLiquidityBootstrapper(
 
 export const LbcForm: React.FC = () => {
   const formProps = useForm<ILbpFormProps>({
-    resolver: yupResolver(validationSchema),
-    defaultValues: {
-      decimals: undefined,
-    },
+    resolver: yupResolver(validationSchema)
   });
   const {
     register,
