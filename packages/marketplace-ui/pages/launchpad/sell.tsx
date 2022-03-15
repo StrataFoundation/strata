@@ -1,7 +1,15 @@
 import React, { FC, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { Box, Flex, Stack, Text, useRadioGroup } from "@chakra-ui/react";
+import {
+  Box,
+  Flex,
+  Stack,
+  Text,
+  useRadioGroup,
+  useClipboard,
+  Fade,
+} from "@chakra-ui/react";
 import { LaunchpadLayout } from "@/components/launchpad";
 import { RadioCard } from "@/components/form/RadioCard";
 import { routes } from "@/utils/routes";
@@ -15,6 +23,7 @@ export const SellToken: FC = () => {
   const router = useRouter();
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const mint = router.query["mint"] as string | undefined;
+  const { hasCopied, onCopy } = useClipboard(mint || "");
 
   const options: {
     value: string;
@@ -63,7 +72,20 @@ export const SellToken: FC = () => {
       <>
         {mint && (
           <Flex w="full" justifyContent="center">
-            <Box bg="white" rounded="lg" py={4} px={2} w="100%" maxW="492px">
+            <Box
+              bg="white"
+              position="relative"
+              rounded="lg"
+              borderWidth="1px"
+              borderColor="white"
+              _hover={{ borderColor: "orange.500" }}
+              py={4}
+              px={2}
+              w="100%"
+              maxW="492px"
+              onClick={onCopy}
+              cursor="pointer"
+            >
               <Stack direction="row" spacing={6}>
                 <Image
                   src="/sell-token-now.svg"
@@ -79,9 +101,23 @@ export const SellToken: FC = () => {
                     If you would like to launch this token at a future date,
                     please take note of the mint address.
                   </Text>
+                  <Text color="gray.500" fontSize="xs" pt={2}>
+                    Check your wallet for the token. In wallets that don’t
+                    support the Metaplex metadata standard v2, it may show in
+                    collectibles.
+                  </Text>
                   <Stack spacing={0} pt={2}>
-                    <Text fontWeight="semiBold" fontSize="xs">
-                      Mint Address: <Text color="gray.500">{mint}</Text>
+                    <Text fontWeight="semibold" fontSize="xs">
+                      Mint Address:
+                      {hasCopied && (
+                        <>
+                          {" "}
+                          <Text as="span" color="orange.500">
+                            (Copied)
+                          </Text>{" "}
+                        </>
+                      )}
+                      <Text color="gray.500">{mint}</Text>
                     </Text>
                   </Stack>
                 </Stack>
