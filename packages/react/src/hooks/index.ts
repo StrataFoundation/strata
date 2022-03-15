@@ -42,3 +42,4 @@ export * from "./useGovernance";
 export * from "./useQueryString";
 export * from "./useUsdLocked";
 export * from "./useCapInfo";
+export * from "./useTokenBondingKey";

@@ -1,8 +1,10 @@
+import { DisburseFunds } from "@/components/DisburseFunds";
 import { LbcStatus } from "@/components/lbc";
 import { Branding } from "@/components/lbc/Branding";
 import { LbcInfo } from "@/components/lbc/LbcInfo";
-import { MintButton } from "@/components/lbc/MintButton";
 import { MetadataMeta } from "@/components/MetadataMeta";
+import { TokenOffering } from "@/components/TokenOffering";
+import { useIsBountyAdmin } from "@/hooks/useIsBountyAdmin";
 import { useLivePrice } from "@/hooks/useLivePrice";
 import { mintMetadataServerSideProps } from "@/utils/tokenMetadataServerProps";
 import {
@@ -13,16 +15,17 @@ import {
   Heading,
   Spinner,
   useColorModeValue,
-  VStack,
+  VStack
 } from "@chakra-ui/react";
+import { useWallet } from "@solana/wallet-adapter-react";
 import {
   usePublicKey,
-  useTokenBondingFromMint,
+  useTokenBondingFromMint
 } from "@strata-foundation/react";
 import {
   GetServerSideProps,
   InferGetServerSidePropsType,
-  NextPage,
+  NextPage
 } from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";
@@ -41,6 +44,11 @@ export const LbcDisplay: NextPage = ({
   const mintKey = usePublicKey(mintKeyRaw as string);
   const { info: tokenBonding, loading } = useTokenBondingFromMint(mintKey);
   const { price } = useLivePrice(tokenBonding?.publicKey);
+  const { publicKey } = useWallet();
+  const { isAdmin } = useIsBountyAdmin(
+    publicKey || undefined,
+    tokenBonding?.publicKey
+  );
 
   return (
     <Box
@@ -61,7 +69,7 @@ export const LbcDisplay: NextPage = ({
       <Container mt={"35px"} justify="stretch" maxW="460px">
         <VStack spacing={2} align="left">
           <Heading mb={2} fontSize="24px" fontWeight={600}>
-            Mint
+            Swap
           </Heading>
           <LbcStatus tokenBondingKey={tokenBonding?.publicKey} />
           <Box
@@ -73,6 +81,20 @@ export const LbcDisplay: NextPage = ({
             minH="300px"
             bg="black.300"
           >
+            {isAdmin && tokenBonding && (
+              <Box
+                p={4}
+                borderBottom="3px solid"
+                borderRadius="lg"
+                borderColor="gray.300"
+              >
+                <Heading size="md">Disburse Funds</Heading>
+                <DisburseFunds
+                  tokenBondingKey={tokenBonding?.publicKey}
+                  includeRetrievalCurve
+                />
+              </Box>
+            )}
             {loading && (
               <Center>
                 <Spinner />
@@ -83,11 +105,9 @@ export const LbcDisplay: NextPage = ({
                 <LbcInfo
                   price={price}
                   tokenBondingKey={tokenBonding.publicKey}
+                  useTokenOfferingCurve
                 />
-                <MintButton
-                  price={price}
-                  tokenBondingKey={tokenBonding.publicKey}
-                />
+                <TokenOffering mintKey={mintKey} />
                 <Branding />
               </VStack>
             )}

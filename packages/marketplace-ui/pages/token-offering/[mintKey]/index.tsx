@@ -58,7 +58,7 @@ export const SwapDisplay: NextPage = ({
           {isAdmin && tokenBonding && (
             <Box p={4} borderBottom="3px solid" borderRadius="lg" borderColor="gray.300">
               <Heading size="md">Disburse Funds</Heading>
-              <DisburseFunds tokenBondingKey={tokenBonding?.publicKey} />
+              <DisburseFunds tokenBondingKey={tokenBonding?.publicKey} includeRetrievalCurve />
             </Box>
           )}
           {typeof window != "undefined" && <TokenOffering mintKey={mintKey} />}

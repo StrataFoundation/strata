@@ -300,32 +300,40 @@ export interface ICreateTokenBondingArgs {
    * Account to store royalties in terms of `baseMint` tokens when the {@link SplTokenBonding.buy} command is issued
    *
    * If not provided, will create an Associated Token Account with `buyBaseRoyaltiesOwner`
-   */
-  buyBaseRoyalties?: PublicKey;
+
+   * Note that this can be explicitly set to null if there are no royalties
+  */
+  buyBaseRoyalties?: PublicKey | null;
   /** Only required when `buyBaseRoyalties` is undefined. The owner of the `buyBaseRoyalties` account. **Default:** `provider.wallet` */
   buyBaseRoyaltiesOwner?: PublicKey;
   /**
    * Account to store royalties in terms of `targetMint` tokens when the {@link SplTokenBonding.buy} command is issued
    *
    * If not provided, will create an Associated Token Account with `buyTargetRoyaltiesOwner`
+   *
+   * Note that this can be explicitly set to null if there are no royalties
    */
-  buyTargetRoyalties?: PublicKey;
+  buyTargetRoyalties?: PublicKey | null;
   /** Only required when `buyTargetRoyalties` is undefined. The owner of the `buyTargetRoyalties` account. **Default:** `provider.wallet` */
   buyTargetRoyaltiesOwner?: PublicKey;
   /**
    * Account to store royalties in terms of `baseMint` tokens when the {@link SplTokenBonding.sell} command is issued
    *
    * If not provided, will create an Associated Token Account with `sellBaseRoyaltiesOwner`
+   *
+   * Note that this can be explicitly set to null if there are no royalties
    */
-  sellBaseRoyalties?: PublicKey;
+  sellBaseRoyalties?: PublicKey | null;
   /** Only required when `sellBaseRoyalties` is undefined. The owner of the `sellBaseRoyalties` account. **Default:** `provider.wallet` */
   sellBaseRoyaltiesOwner?: PublicKey;
   /**
    * Account to store royalties in terms of `targetMint` tokens when the {@link SplTokenBonding.sell} command is issued
    *
    * If not provided, will create an Associated Token Account with `sellTargetRoyaltiesOwner`
+   *
+   *  Note that this can be explicitly set to null if there are no royalties
    */
-  sellTargetRoyalties?: PublicKey;
+  sellTargetRoyalties?: PublicKey | null;
   /** Only required when `sellTargetRoyalties` is undefined. The owner of the `sellTargetRoyalties` account. **Default:** `provider.wallet` */
   sellTargetRoyaltiesOwner?: PublicKey;
   /**
@@ -352,14 +360,14 @@ export interface ICreateTokenBondingArgs {
    * **Default:** null. You most likely don't need this permission, if it is being set you should do so explicitly.
    */
   curveAuthority?: PublicKey | null;
-  /** Number from 0 to 100 */
-  buyBaseRoyaltyPercentage: number;
-  /** Number from 0 to 100 */
-  buyTargetRoyaltyPercentage: number;
-  /** Number from 0 to 100 */
-  sellBaseRoyaltyPercentage: number;
-  /** Number from 0 to 100 */
-  sellTargetRoyaltyPercentage: number;
+  /** Number from 0 to 100. Default: 0 */
+  buyBaseRoyaltyPercentage?: number;
+  /** Number from 0 to 100. Default: 0 */
+  buyTargetRoyaltyPercentage?: number;
+  /** Number from 0 to 100. Default: 0 */
+  sellBaseRoyaltyPercentage?: number;
+  /** Number from 0 to 100. Default: 0 */
+  sellTargetRoyaltyPercentage?: number;
   /** Maximum `targetMint` tokens this bonding curve will mint before disabling {@link SplTokenBonding.buy}. **Default:** infinite */
   mintCap?: BN;
   /** Maximum `targetMint` tokens that can be purchased in a single call to {@link SplTokenBonding.buy}. Useful for limiting volume. **Default:** 0 */
@@ -870,10 +878,10 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     sellBaseRoyaltiesOwner = this.wallet.publicKey,
     sellTargetRoyalties,
     sellTargetRoyaltiesOwner = this.wallet.publicKey,
-    buyBaseRoyaltyPercentage,
-    buyTargetRoyaltyPercentage,
-    sellBaseRoyaltyPercentage,
-    sellTargetRoyaltyPercentage,
+    buyBaseRoyaltyPercentage = 0,
+    buyTargetRoyaltyPercentage = 0,
+    sellBaseRoyaltyPercentage = 0,
+    sellTargetRoyaltyPercentage = 0,
     mintCap,
     purchaseCap,
     goLiveDate = new Date(new Date().valueOf() - 10000), // 10 secs ago
@@ -979,12 +987,12 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     );
 
     if (isNative) {
-      buyBaseRoyalties = buyBaseRoyalties || buyBaseRoyaltiesOwner;
-      sellBaseRoyalties = sellBaseRoyalties || sellBaseRoyaltiesOwner;
+      buyBaseRoyalties = buyBaseRoyalties == null ? null : buyBaseRoyalties || buyBaseRoyaltiesOwner;
+      sellBaseRoyalties = sellBaseRoyalties == null ? null : sellBaseRoyalties || sellBaseRoyaltiesOwner;
     }
 
     let createdAccts: Set<string> = new Set();
-    if (!buyTargetRoyalties) {
+    if (typeof buyTargetRoyalties === "undefined") {
       buyTargetRoyalties = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
@@ -1013,7 +1021,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       }
     }
 
-    if (!sellTargetRoyalties) {
+    if (typeof sellTargetRoyalties === "undefined") {
       sellTargetRoyalties = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
@@ -1037,11 +1045,11 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
             payer
           )
         );
-        createdAccts.add(buyTargetRoyalties.toBase58());
+        createdAccts.add(buyTargetRoyalties!.toBase58());
       }
     }
 
-    if (!buyBaseRoyalties) {
+    if (typeof buyBaseRoyalties === "undefined") {
       buyBaseRoyalties = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
@@ -1070,7 +1078,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       }
     }
 
-    if (!sellBaseRoyalties) {
+    if (typeof sellBaseRoyalties === "undefined") {
       sellBaseRoyalties = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
@@ -1146,10 +1154,22 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
             baseMint,
             targetMint,
             baseStorage,
-            buyBaseRoyalties,
-            buyTargetRoyalties,
-            sellBaseRoyalties,
-            sellTargetRoyalties,
+            buyBaseRoyalties:
+              buyBaseRoyalties === null
+                ? this.wallet.publicKey // Default to this wallet, it just needs a system program acct
+                : buyBaseRoyalties,
+            buyTargetRoyalties:
+              buyTargetRoyalties === null
+                ? this.wallet.publicKey // Default to this wallet, it just needs a system program acct
+                : buyTargetRoyalties,
+            sellBaseRoyalties:
+              sellBaseRoyalties === null
+                ? this.wallet.publicKey // Default to this wallet, it just needs a system program acct
+                : sellBaseRoyalties,
+            sellTargetRoyalties:
+              sellTargetRoyalties === null
+                ? this.wallet.publicKey // Default to this wallet, it just needs a system program acct
+                : sellTargetRoyalties,
             tokenProgram: TOKEN_PROGRAM_ID,
             systemProgram: SystemProgram.programId,
             rent: SYSVAR_RENT_PUBKEY,
@@ -1164,10 +1184,10 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         baseMint,
         tokenBonding,
         targetMint,
-        buyBaseRoyalties,
-        buyTargetRoyalties,
-        sellBaseRoyalties,
-        sellTargetRoyalties,
+        buyBaseRoyalties: buyBaseRoyalties || this.wallet.publicKey,
+        buyTargetRoyalties: buyTargetRoyalties || this.wallet.publicKey,
+        sellBaseRoyalties: sellBaseRoyalties || this.wallet.publicKey,
+        sellTargetRoyalties: sellTargetRoyalties || this.wallet.publicKey,
         baseStorage,
       },
       instructions,

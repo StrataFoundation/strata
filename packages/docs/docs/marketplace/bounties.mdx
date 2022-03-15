@@ -95,12 +95,11 @@ To create a bounty with metadata on the frontend, you can use code like this. As
 
 ```js
 const targetMintKeypair = Keypair.generate();
-const uri = await marketplaceSdk.tokenMetadataSdk.createArweaveMetadata({
+const uri = await marketplaceSdk.tokenMetadataSdk.createNftStorageMetadata({
   name: "Test ",
   symbol: "test",
   description: "Bounty Description",
-  image: image?.name,
-  files: [image],
+  image: image,
   mint: targetMintKeypair.publicKey,
   attributes: MarketplaceSdk.bountyAttributes({
     mint,
