@@ -36,7 +36,7 @@ export const routes: Record<string, IRoute> = {
   swap: { path: "/swap/:mintKey", params: ["mintKey"], module: "marketplace" },
 };
 
-const MARKETPLACE_URI = process.env.NEXT_PUBLIC_MARKETPLACE_URI || "https://marketplace.strataprotocol.com";
+const MARKETPLACE_URI = process.env.NEXT_PUBLIC_MARKETPLACE_URI || "";
 const LAUNCHPAD_URI = process.env.NEXT_PUBLIC_LAUNCHPAD_URI || "";
 export function route(route: IRoute, params: Record<string, string | undefined>): string {
   const relativeRoute = route.params.reduce((acc, param) => {
