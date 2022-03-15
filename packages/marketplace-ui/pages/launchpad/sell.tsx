@@ -1,7 +1,7 @@
 import React, { FC, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { Stack, Text, useRadioGroup } from "@chakra-ui/react";
+import { Box, Flex, Stack, Text, useRadioGroup } from "@chakra-ui/react";
 import { LaunchpadLayout } from "@/components/launchpad";
 import { RadioCard } from "@/components/form/RadioCard";
 import { routes } from "@/utils/routes";
@@ -14,7 +14,7 @@ export enum SellTokenOption {
 export const SellToken: FC = () => {
   const router = useRouter();
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const mint = router.query["mint"];
+  const mint = router.query["mint"] as string | undefined;
 
   const options: {
     value: string;
@@ -47,7 +47,7 @@ export const SellToken: FC = () => {
   const handleOnNext = async () => {
     if (selectedOption === SellTokenOption.PriceDiscovery)
       router.push(routes.newLbc.path + (mint ? "?mint=" + mint : ""));
-      
+
     if (selectedOption === SellTokenOption.FixedPrice)
       router.push(routes.newSale.path + (mint ? "?mint=" + mint : ""));
   };
@@ -60,27 +60,57 @@ export const SellToken: FC = () => {
       nextDisabled={!selectedOption}
       onNext={handleOnNext}
     >
-      <Stack direction="row" {...group} justifyContent="center">
-        {options.map(({ value, heading, illustration, helpText }) => {
-          const radio = getRadioProps({ value });
-
-          return (
-            <RadioCard key={value} helpText={helpText} {...radio}>
-              <Stack>
+      <>
+        {mint && (
+          <Flex w="full" justifyContent="center">
+            <Box bg="white" rounded="lg" py={4} px={2} w="100%" maxW="492px">
+              <Stack direction="row" spacing={6}>
                 <Image
-                  src={illustration}
-                  alt={`${value}-illustration`}
-                  height="100px"
+                  src="/sell-token-now.svg"
+                  height="60px"
                   width="100%"
+                  alt="Token Created"
                 />
-                <Text fontWeight="bold" fontSize="md">
-                  {heading}
-                </Text>
+                <Stack flexGrow={1} spacing={0}>
+                  <Text fontWeight="bold" fontSize="sm">
+                    Token Succesfully Created!
+                  </Text>
+                  <Text color="gray.500" fontSize="xs">
+                    If you would like to launch this token at a future date,
+                    please take note of the mint address.
+                  </Text>
+                  <Stack spacing={0} pt={2}>
+                    <Text fontWeight="semiBold" fontSize="xs">
+                      Mint Address: <Text color="gray.500">{mint}</Text>
+                    </Text>
+                  </Stack>
+                </Stack>
               </Stack>
-            </RadioCard>
-          );
-        })}
-      </Stack>
+            </Box>
+          </Flex>
+        )}
+        <Stack direction="row" {...group} justifyContent="center">
+          {options.map(({ value, heading, illustration, helpText }) => {
+            const radio = getRadioProps({ value });
+
+            return (
+              <RadioCard key={value} helpText={helpText} {...radio}>
+                <Stack>
+                  <Image
+                    src={illustration}
+                    alt={`${value}-illustration`}
+                    height="100px"
+                    width="100%"
+                  />
+                  <Text fontWeight="bold" fontSize="md">
+                    {heading}
+                  </Text>
+                </Stack>
+              </RadioCard>
+            );
+          })}
+        </Stack>
+      </>
     </LaunchpadLayout>
   );
 };
