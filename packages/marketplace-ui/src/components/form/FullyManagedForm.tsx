@@ -7,7 +7,8 @@ import {
   Radio,
   RadioGroup,
   Stack,
-  Switch, VStack
+  Image, Text,
+  Switch, useRadioGroup, VStack
 } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
@@ -34,6 +35,7 @@ import { FormControlWithError } from "./FormControlWithError";
 import { MintSelect } from "./MintSelect";
 import { IMetadataFormProps, TokenMetadataInputs } from "./TokenMetadataInputs";
 import { Disclosures, disclosuresSchema, IDisclosures } from "./Disclosures";
+import { RadioCard } from "./RadioCard";
 
 type CurveType = "aggressive" | "stable" | "utility";
 interface IFullyManagedForm extends IMetadataFormProps {
@@ -218,6 +220,38 @@ export const FullyManagedForm: React.FC = () => {
     error: baseMetadataError,
     loading: baseMetadataLoading,
   } = useTokenMetadata(mintKey);
+
+  const { getRootProps, getRadioProps } = useRadioGroup({
+    name: "curveType",
+    onChange: option => setValue("curveType", option as CurveType),
+  });
+
+  const group = getRootProps();
+
+  const curveOptions = [
+    {
+      value: "aggressive",
+      heading: "Aggressive",
+      illustration: "/aggressive.svg",
+      helpText:
+        "A curve with high price sensitivity. The price raises quickly when people buy, and lowers quickly when they sell. This is best suited for speculative use cases.",
+    },
+    {
+      value: "stable",
+      heading: "Stable",
+      illustration: "/stable.svg",
+      helpText:
+        "A curve with medium price sensitivity. This curve changes price at a constant rate, achieving a balance between aggressive and utility curves.",
+    },
+    {
+      value: "utility",
+      heading: "Utility",
+      illustration: "/utility.svg",
+      helpText:
+        "A curve with a price sensitivity that starts high and lowers with purchases. This curve is best suited for utility use cases, as it rewars early adopters and scales the supply so that the token can be exchanged for goods/services.",
+    },
+  ];
+
   
   return (
     <FormProvider {...formProps}>
@@ -234,20 +268,32 @@ export const FullyManagedForm: React.FC = () => {
           </FormControlWithError>
           <FormControlWithError
             id="curveType"
-            help="This dictates the price sensitivity of this token. A steeper curve means faster price growth, and consequently faster price descent when users sell. For utility use cases, it is recommended you use a less steep curve so that exchange of the token does not largely affect the price."
-            label="Curve Type"
+            label="Price Sensitivity"
             errors={errors}
           >
-            <RadioGroup
-              value={curveType}
-              onChange={(v) => setValue("curveType", v as CurveType)}
-            >
-              <Stack direction="row">
-                <Radio value="utility">Utility</Radio>
-                <Radio value="stable">Stable</Radio>
-                <Radio value="aggressive">Aggressive</Radio>
-              </Stack>
-            </RadioGroup>
+            <Stack direction="row" {...group} justifyContent="center">
+              {curveOptions.map(
+                ({ value, heading, illustration, helpText }) => {
+                  const radio = getRadioProps({ value });
+
+                  return (
+                    <RadioCard key={value} helpText={helpText} {...radio}>
+                      <Stack>
+                        <Image
+                          src={illustration}
+                          alt={`${value}-illustration`}
+                          height="100px"
+                          width="100%"
+                        />
+                        <Text fontWeight="bold" fontSize="md">
+                          {heading}
+                        </Text>
+                      </Stack>
+                    </RadioCard>
+                  );
+                }
+              )}
+            </Stack>
           </FormControlWithError>
 
           <FormControlWithError
