@@ -1,16 +1,24 @@
+import { NFT_STORAGE_API_KEY } from "../../utils/globals";
 import { Alert, Box, Button, Collapse, Input, VStack } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2, Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { NATIVE_MINT } from "@solana/spl-token";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Keypair, PublicKey } from "@solana/web3.js";
-import { FIXED_CURVE_FEES, MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
 import {
-  truthy, usePrimaryClaimedTokenRef,
+  LBC_CURVE_FEES,
+  MarketplaceSdk,
+} from "@strata-foundation/marketplace-sdk";
+import {
+  truthy,
+  usePrimaryClaimedTokenRef,
   useProvider,
-  usePublicKey
+  usePublicKey,
 } from "@strata-foundation/react";
-import { getMintInfo, sendMultipleInstructions } from "@strata-foundation/spl-utils";
+import {
+  getMintInfo,
+  sendMultipleInstructions,
+} from "@strata-foundation/spl-utils";
 import { useRouter } from "next/router";
 import React from "react";
 import { useAsyncCallback } from "react-async-hook";
@@ -22,7 +30,10 @@ import { FormControlWithError } from "./FormControlWithError";
 import { MintSelect } from "./MintSelect";
 import { Recipient } from "./Recipient";
 import { IMetadataFormProps, TokenMetadataInputs } from "./TokenMetadataInputs";
-import { IUseExistingMintProps as IUseExistingMintProps, UseExistingMintInputs } from "./UseExistingMintInputs";
+import {
+  IUseExistingMintProps as IUseExistingMintProps,
+  UseExistingMintInputs,
+} from "./UseExistingMintInputs";
 import { Disclosures, disclosuresSchema, IDisclosures } from "./Disclosures";
 
 interface ILbpFormProps
@@ -78,7 +89,8 @@ const validationSchema = yup.object({
 
 async function createLiquidityBootstrapper(
   marketplaceSdk: MarketplaceSdk,
-  values: ILbpFormProps
+  values: ILbpFormProps,
+  nftStorageApiKey: string | undefined = NFT_STORAGE_API_KEY
 ): Promise<PublicKey> {
   const targetMintKeypair = Keypair.generate();
   const authority = new PublicKey(values.authority);
@@ -94,17 +106,20 @@ async function createLiquidityBootstrapper(
       throw new Error("Existing mint must have metaplex token metadata");
     }
 
-    values.decimals = (await getMintInfo(marketplaceSdk.provider, existingMint)).decimals;
+    values.decimals = (
+      await getMintInfo(marketplaceSdk.provider, existingMint)
+    ).decimals;
 
     metadata = new DataV2({ ...fetched.data, collection: null, uses: null });
   } else {
-    const uri = await marketplaceSdk.tokenMetadataSdk.createArweaveMetadata({
+    const uri = await marketplaceSdk.tokenMetadataSdk.uploadMetadata({
+      provider: values.provider,
       name: values.name!,
       symbol: values.symbol!,
       description: values.description,
-      image: values.image?.name,
-      files: [values.image].filter(truthy),
+      image: values.image,
       mint: targetMintKeypair.publicKey,
+      nftStorageApiKey,
     });
     metadata = new DataV2({
       // Max name len 32
@@ -118,8 +133,11 @@ async function createLiquidityBootstrapper(
     });
   }
 
-  
-  const { output: { targetMint }, instructions, signers } = await marketplaceSdk.createLiquidityBootstrapperInstructions({
+  const {
+    output: { targetMint },
+    instructions,
+    signers,
+  } = await marketplaceSdk.createLiquidityBootstrapperInstructions({
     targetMintKeypair,
     authority,
     metadata,
@@ -130,30 +148,37 @@ async function createLiquidityBootstrapper(
     maxSupply: Number(values.mintCap),
     bondingArgs: {
       targetMintDecimals: Number(values.decimals),
-      goLiveDate: values.goLiveDate
+      goLiveDate: values.goLiveDate,
     },
   });
 
   if (values.useExistingMint) {
-    const retrievalInstrs = await marketplaceSdk.createRetrievalCurveForSetSupplyInstructions({
-      reserveAuthority: authority,
-      supplyMint: new PublicKey(values.existingMint!),
-      supplyAmount: values.mintCap,
-      targetMint,
-    })
+    const retrievalInstrs =
+      await marketplaceSdk.createRetrievalCurveForSetSupplyInstructions({
+        reserveAuthority: authority,
+        supplyMint: new PublicKey(values.existingMint!),
+        supplyAmount: values.mintCap,
+        targetMint,
+      });
     instructions.push(retrievalInstrs.instructions);
     signers.push(retrievalInstrs.signers);
   }
 
-  await sendMultipleInstructions(marketplaceSdk.tokenBondingSdk.errors || new Map(), marketplaceSdk.provider, instructions, signers)
+  await sendMultipleInstructions(
+    marketplaceSdk.tokenBondingSdk.errors || new Map(),
+    marketplaceSdk.provider,
+    instructions,
+    signers
+  );
 
   return targetMint;
 }
 
-
-export const LbcForm: React.FC = () => {
+export const LbcForm: React.FC<{
+  nftStorageApiKey?: string;
+}> = ({ nftStorageApiKey = NFT_STORAGE_API_KEY }) => {
   const formProps = useForm<ILbpFormProps>({
-    resolver: yupResolver(validationSchema)
+    resolver: yupResolver(validationSchema),
   });
   const {
     register,
@@ -165,14 +190,16 @@ export const LbcForm: React.FC = () => {
   const { publicKey } = useWallet();
   const { info: tokenRef } = usePrimaryClaimedTokenRef(publicKey);
   const { awaitingApproval } = useProvider();
-  const { execute, loading, error } = useAsyncCallback(createLiquidityBootstrapper);
+  const { execute, loading, error } = useAsyncCallback(
+    createLiquidityBootstrapper
+  );
   const { marketplaceSdk } = useMarketplaceSdk();
   const router = useRouter();
   const { authority, mint, useExistingMint } = watch();
   const mintKey = usePublicKey(mint);
 
   const onSubmit = async (values: ILbpFormProps) => {
-    const mintKey = await execute(marketplaceSdk!, values);
+    const mintKey = await execute(marketplaceSdk!, values, nftStorageApiKey);
     router.push(route(routes.tokenLbc, { mintKey: mintKey.toBase58() }));
   };
 
@@ -314,8 +341,8 @@ export const LbcForm: React.FC = () => {
           >
             <Input type="datetime-local" {...register("goLiveDate")} />
           </FormControlWithError>
-          
-          <Disclosures fees={FIXED_CURVE_FEES} />
+
+          <Disclosures fees={LBC_CURVE_FEES} />
 
           {error && <Alert status="error">{error.toString()}</Alert>}
 

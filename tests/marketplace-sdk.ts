@@ -83,13 +83,14 @@ describe("marketplace-sdk", () => {
       slippage: 0.01,
     });
     // Price should shift slightly because k = 1 at this point
-    expect(targetAmount).to.eq(1.990098767);
+    expect(targetAmount).to.eq(1.990098768);
   });
 
   // This test was created because with msg! enabled, we were blowing compute.
   it("can sell the full supply with no issues", async () => {
     const { targetMint, tokenBonding } =
       await marketplaceSdk.createLiquidityBootstrapper({
+        iAmAFreeloader: true,
         authority: me,
         metadata: new DataV2({
           // Max name len 32

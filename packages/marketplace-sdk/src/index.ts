@@ -653,7 +653,7 @@ export class MarketplaceSdk {
 
     let curve = bondingArgs?.curve;
     if (price) {
-      const feeModifier = iAmAFreeloader ? 1 : (1 / (1 + roundPercent(protocolFee)));
+      const feeModifier = iAmAFreeloader ? 1 : (1 - roundPercent(protocolFee));
       const {
         instructions: curveInstructions,
         signers: curveSigners,
@@ -899,7 +899,7 @@ export class MarketplaceSdk {
     }
     const instructions = [];
     const signers = [];
-    const feeModifier = iAmAFreeloader ? 1 : 1 / (1 + roundPercent(protocolFee));
+    const feeModifier = iAmAFreeloader ? 1 : (1 - roundPercent(protocolFee));
     const {
       reserves: initialReservesPad,
       supply: initialSupplyPad,

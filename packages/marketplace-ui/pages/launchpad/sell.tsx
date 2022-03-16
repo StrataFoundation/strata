@@ -36,13 +36,13 @@ export const SellToken: FC = () => {
       heading: "Price Discovery",
       illustration: "/price-discovery.svg",
       helpText:
-        "You would like to set a price range and let demand dictate the price. This helps to avoid bots.",
+        "Set a price range and let demand dictate the price. This helps to avoid bots.",
     },
     {
       value: SellTokenOption.FixedPrice,
       heading: "Fixed Price",
       illustration: "/fixed-price.svg",
-      helpText: "You would like to sell this token for a predetermined price.",
+      helpText: "Sell this token for a predetermined price.",
     },
   ];
 

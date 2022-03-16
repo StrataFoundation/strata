@@ -25,9 +25,8 @@ export const Disclosures = ({ fees }: { fees: number }) => {
         isInvalid={!!errors.disclosures?.notASecurity}
         {...register("disclosures.notASecurity")}
       >
-        I represent that this token is not considered a security in the United
-        States of America, or that I will deploy a separate interface not
-        associated with Strata to purchase the tokens outside of the US.
+        I represent that I have undertake sufficient legal analysis to determine
+        that the token does not constitute a security under U.S. law.
       </Checkbox>
       {fees && (
         <Checkbox

@@ -1,14 +1,21 @@
+import { NFT_STORAGE_API_KEY } from "../../utils/globals";
 import {
-  Alert, Button, FormControl,
+  Alert,
+  Button,
+  FormControl,
   FormHelperText,
   FormLabel,
   Heading,
-  HStack, Input,
+  HStack,
+  Input,
   Radio,
   RadioGroup,
   Stack,
-  Image, Text,
-  Switch, useRadioGroup, VStack
+  Image,
+  Text,
+  Switch,
+  useRadioGroup,
+  VStack,
 } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
@@ -19,11 +26,16 @@ import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
 import {
   humanReadablePercentage,
   truthy,
-  useCollective, useProvider,
-  usePublicKey, useTokenMetadata
+  useCollective,
+  useProvider,
+  usePublicKey,
+  useTokenMetadata,
 } from "@strata-foundation/react";
 import { TimeDecayExponentialCurveConfig } from "@strata-foundation/spl-token-bonding";
-import { ITokenBondingSettings, SplTokenCollective } from "@strata-foundation/spl-token-collective";
+import {
+  ITokenBondingSettings,
+  SplTokenCollective,
+} from "@strata-foundation/spl-token-collective";
 import { useRouter } from "next/router";
 import React from "react";
 import { useAsync, useAsyncCallback } from "react-async-hook";
@@ -70,7 +82,8 @@ const validationSchema = yup.object({
 
 async function createFullyManaged(
   marketplaceSdk: MarketplaceSdk,
-  values: IFullyManagedForm
+  values: IFullyManagedForm,
+  nftStorageApiKey: string | undefined = NFT_STORAGE_API_KEY
 ): Promise<PublicKey> {
   const mint = new PublicKey(values.mint);
   const tokenCollectiveSdk = marketplaceSdk.tokenCollectiveSdk;
@@ -91,9 +104,9 @@ async function createFullyManaged(
       k0: values.isAntiBot ? 0 : k,
       k1: k,
       d: 0.5,
-      interval: 2 * 60 * 60 // 2 hours
-    })
-  })
+      interval: 2 * 60 * 60, // 2 hours
+    }),
+  });
   const bondingOpts = {
     baseMint: mint,
     buyBaseRoyaltyPercentage: values.buyBaseRoyaltyPercentage,
@@ -102,15 +115,16 @@ async function createFullyManaged(
     sellTargetRoyaltyPercentage: values.sellTargetRoyaltyPercentage,
     curve: curveOut.output.curve,
     targetMint: targetMintKeypair.publicKey,
-    targetMintDecimals: 9
-  }
-  const uri = await tokenCollectiveSdk.splTokenMetadata.createArweaveMetadata({
+    targetMintDecimals: 9,
+  };
+  const uri = await tokenCollectiveSdk.splTokenMetadata.uploadMetadata({
+    provider: values.provider,
     name: values.name,
     symbol: values.symbol,
     description: values.description,
-    image: values.image?.name,
-    files: [values.image].filter(truthy),
+    image: values.image,
     mint: targetMintKeypair.publicKey,
+    nftStorageApiKey
   });
   const metadata = new DataV2({
     // Max name len 32
@@ -131,17 +145,13 @@ async function createFullyManaged(
       targetMintKeypair,
       metadata,
     });
-    await tokenCollectiveSdk.executeBig(Promise.resolve({
-      output: null,
-      instructions: [
-        curveOut.instructions,
-        ...bondingOut.instructions,
-      ],
-      signers: [
-        curveOut.signers,
-        ...bondingOut.signers
-      ]
-    }));
+    await tokenCollectiveSdk.executeBig(
+      Promise.resolve({
+        output: null,
+        instructions: [curveOut.instructions, ...bondingOut.instructions],
+        signers: [curveOut.signers, ...bondingOut.signers],
+      })
+    );
   } else {
     const metaOut = await marketplaceSdk.createMetadataForBondingInstructions({
       targetMintKeypair,
@@ -153,31 +163,35 @@ async function createFullyManaged(
       bondingOpts
     );
     await tokenBondingSdk.executeBig(
-      Promise.resolve({ 
+      Promise.resolve({
         output: null,
         instructions: [
           [...curveOut.instructions, ...metaOut.instructions],
-          bondingOut.instructions
+          bondingOut.instructions,
         ],
         signers: [
           [...curveOut.signers, ...metaOut.signers],
-          bondingOut.signers
-        ]
+          bondingOut.signers,
+        ],
       })
-    )
+    );
   }
 
   return targetMintKeypair.publicKey;
 }
 
-export const FullyManagedForm: React.FC = () => {
+export const FullyManagedForm: React.FC<{
+  nftStorageApiKey?: string;
+}> = ({
+  nftStorageApiKey = NFT_STORAGE_API_KEY,
+}) => {
   const formProps = useForm<IFullyManagedForm>({
     resolver: yupResolver(validationSchema),
-    defaultValues: { 
+    defaultValues: {
       disclosures: {
-        acceptedFees: true
-      }
-    }
+        acceptedFees: true,
+      },
+    },
   });
   const {
     register,
@@ -197,7 +211,7 @@ export const FullyManagedForm: React.FC = () => {
   }
 
   const onSubmit = async (values: IFullyManagedForm) => {
-    const mintKey = await execute(marketplaceSdk!, values);
+    const mintKey = await execute(marketplaceSdk!, values, nftStorageApiKey);
     router.push(
       route(routes.swap, {
         mintKey: mintKey.toBase58(),
@@ -223,7 +237,7 @@ export const FullyManagedForm: React.FC = () => {
 
   const { getRootProps, getRadioProps } = useRadioGroup({
     name: "curveType",
-    onChange: option => setValue("curveType", option as CurveType),
+    onChange: (option) => setValue("curveType", option as CurveType),
   });
 
   const group = getRootProps();
@@ -252,7 +266,6 @@ export const FullyManagedForm: React.FC = () => {
     },
   ];
 
-  
   return (
     <FormProvider {...formProps}>
       <form onSubmit={handleSubmit(onSubmit)}>

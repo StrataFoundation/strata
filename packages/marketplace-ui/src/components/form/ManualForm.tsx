@@ -1,16 +1,20 @@
-import {
-  Alert,
-  Button, Input, Switch,
-  VStack
-} from "@chakra-ui/react";
+import { NFT_STORAGE_API_KEY } from "../../utils/globals";
+import { Alert, Button, Input, Switch, VStack } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
-import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
-import { Keypair, PublicKey, Signer } from "@solana/web3.js";
 import {
-  truthy, useProvider, useStrataSdks
-} from "@strata-foundation/react";
-import { createMintInstructions, sendInstructions, SplTokenMetadata } from "@strata-foundation/spl-utils";
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  Token,
+  TOKEN_PROGRAM_ID,
+  u64,
+} from "@solana/spl-token";
+import { Keypair, PublicKey, Signer } from "@solana/web3.js";
+import { truthy, useProvider, useStrataSdks } from "@strata-foundation/react";
+import {
+  createMintInstructions,
+  sendInstructions,
+  SplTokenMetadata,
+} from "@strata-foundation/spl-utils";
 import { useRouter } from "next/router";
 import React from "react";
 import { useAsyncCallback } from "react-async-hook";
@@ -40,7 +44,8 @@ const validationSchema = yup.object({
 
 async function createFullyManaged(
   tokenMetadataSdk: SplTokenMetadata,
-  values: IManualForm
+  values: IManualForm,
+  nftStorageApiKey: string | undefined = NFT_STORAGE_API_KEY
 ): Promise<PublicKey> {
   const targetMintKeypair = Keypair.generate();
   const targetMint = targetMintKeypair.publicKey;
@@ -53,13 +58,14 @@ async function createFullyManaged(
     values.keepFreezeAuthority ? me : undefined
   );
   const signers: Signer[] = [targetMintKeypair];
-  const uri = await tokenMetadataSdk.createArweaveMetadata({
+  const uri = await tokenMetadataSdk.uploadMetadata({
+    provider: values.provider,
     name: values.name,
     symbol: values.symbol,
     description: values.description,
-    image: values.image?.name,
-    files: [values.image].filter(truthy),
+    image: values.image,
     mint: targetMintKeypair.publicKey,
+    nftStorageApiKey,
   });
   const metadata = new DataV2({
     // Max name len 32
@@ -122,12 +128,20 @@ async function createFullyManaged(
     );
   }
 
-  await sendInstructions(new Map(), tokenMetadataSdk.provider, instructions, signers, me);
+  await sendInstructions(
+    new Map(),
+    tokenMetadataSdk.provider,
+    instructions,
+    signers,
+    me
+  );
 
   return targetMintKeypair.publicKey;
 }
 
-export const ManualForm: React.FC = () => {
+export const ManualForm: React.FC<{
+  nftStorageApiKey?: string;
+}> = ({ nftStorageApiKey = NFT_STORAGE_API_KEY }) => {
   const formProps = useForm<IManualForm>({
     resolver: yupResolver(validationSchema),
   });
@@ -143,9 +157,7 @@ export const ManualForm: React.FC = () => {
 
   const onSubmit = async (values: IManualForm) => {
     const mintKey = await execute(tokenMetadataSdk!, values);
-    router.push(
-      routes.sell.path + "?mint=" + mintKey.toBase58()
-    );
+    router.push(routes.sell.path + "?mint=" + mintKey.toBase58());
   };
 
   return (

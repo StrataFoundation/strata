@@ -22,6 +22,7 @@ import * as yup from "yup";
 import { FormControlWithError } from "./FormControlWithError";
 import { Recipient } from "./Recipient";
 import { IMetadataFormProps, TokenMetadataInputs } from "./TokenMetadataInputs";
+import { NFT_STORAGE_API_KEY } from "../../utils/globals";
 
 interface IEditBountyFormProps extends IMetadataFormProps {
   shortName: string;
@@ -44,20 +45,22 @@ async function editBounty(
   tokenMetadataSdk: SplTokenMetadata,
   tokenBondingSdk: SplTokenBonding,
   values: IEditBountyFormProps,
-  mintKey: PublicKey
+  mintKey: PublicKey,
+  nftStorageApiKey: string | undefined = NFT_STORAGE_API_KEY
 ): Promise<PublicKey> {
-  const uri = await tokenMetadataSdk.createArweaveMetadata({
+  const uri = await tokenMetadataSdk.uploadMetadata({
+    provider: values.provider,
     name: values.name,
     symbol: values.shortName,
     description: values.description,
-    image: values.image?.name,
-    files: [values.image].filter(truthy),
+    image: values.image,
     mint: mintKey,
     attributes: MarketplaceSdk.bountyAttributes({
       mint: mintKey,
       discussion: values.discussion,
       contact: values.contact,
     }),
+    nftStorageApiKey
   });
 
   const instructions = [];
@@ -81,8 +84,15 @@ async function editBounty(
   signers.push(...metaSigners);
 
   const tokenBondingKey = (await SplTokenBonding.tokenBondingKey(mintKey))[0];
-  const tokenBondingAcct = await tokenBondingSdk.getTokenBonding(tokenBondingKey);
-  if (values.authority && tokenBondingSdk.wallet.publicKey.equals(tokenBondingAcct!.reserveAuthority as PublicKey)) {
+  const tokenBondingAcct = await tokenBondingSdk.getTokenBonding(
+    tokenBondingKey
+  );
+  if (
+    values.authority &&
+    tokenBondingSdk.wallet.publicKey.equals(
+      tokenBondingAcct!.reserveAuthority as PublicKey
+    )
+  ) {
     const authority = new PublicKey(values.authority);
 
     const { instructions: bondInstrs, signers: bondSigners } =
@@ -105,12 +115,14 @@ export const EditBountyFormRaw = ({
   mintKey,
   values,
   onComplete,
-  hide = new Set()
+  hide = new Set(),
+  nftStorageApiKey = NFT_STORAGE_API_KEY,
 }: {
   mintKey: PublicKey;
   values: DefaultValues<IEditBountyFormProps>;
   onComplete?: () => void;
   hide?: Set<string>;
+  nftStorageApiKey?: string;
 }) => {
   const formProps = useForm<IEditBountyFormProps>({
     resolver: yupResolver(validationSchema),
@@ -131,7 +143,13 @@ export const EditBountyFormRaw = ({
   const authority = watch("authority");
 
   const onSubmit = async (values: IEditBountyFormProps) => {
-    await execute(tokenMetadataSdk!, tokenBondingSdk!, values, mintKey);
+    await execute(
+      tokenMetadataSdk!,
+      tokenBondingSdk!,
+      values,
+      mintKey,
+      nftStorageApiKey
+    );
     onComplete && onComplete();
   };
 
