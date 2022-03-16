@@ -194,7 +194,7 @@ pub fn mint_to_dest<'info>(
   ]];
 
   if target_royalties > 0 {
-    msg!("Minting {} to target royalties", target_royalties);
+    // msg!("Minting {} to target royalties", target_royalties);
     token::mint_to(
       CpiContext::new_with_signer(
         token_program.clone(),
@@ -209,7 +209,7 @@ pub fn mint_to_dest<'info>(
     )?;
   }
 
-  msg!("Minting {} to destination", total_amount - target_royalties);
+  // msg!("Minting {} to destination", total_amount - target_royalties);
   token::mint_to(
     CpiContext::new_with_signer(
       token_program.clone(),

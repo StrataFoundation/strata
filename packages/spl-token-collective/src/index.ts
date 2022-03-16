@@ -1315,13 +1315,13 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
         ? mintTokenRef
         : undefined,
       // @ts-ignore
-      buyBaseRoyalties: tokenBondingSettings?.buyBaseRoyalties?.address,
+      buyBaseRoyalties: tokenBondingSettings?.buyBaseRoyalties?.address || undefined,
       // @ts-ignore
-      sellBaseRoyalties: tokenBondingSettings?.sellBaseRoyalties?.address,
+      sellBaseRoyalties: tokenBondingSettings?.sellBaseRoyalties?.address || undefined,
       // @ts-ignore
-      buyTargetRoyalties: tokenBondingSettings?.buyTargetRoyalties?.address,
+      buyTargetRoyalties: tokenBondingSettings?.buyTargetRoyalties?.address || undefined,
       // @ts-ignore
-      sellTargetRoyalties: tokenBondingSettings?.sellTargetRoyalties?.address,
+      sellTargetRoyalties: tokenBondingSettings?.sellTargetRoyalties?.address || undefined,
       ...tokenBondingParams,
     });
     instructions2.push(...bondingInstructions);
