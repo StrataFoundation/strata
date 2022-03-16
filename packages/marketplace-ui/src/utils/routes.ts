@@ -34,9 +34,13 @@ export const routes: Record<string, IRoute> = {
   sell: { path: "/launchpad/sell", params: [] },
 };
 
-export function route(route: IRoute, params?: Record<string, string | undefined>): string {
+export function route(
+  route: IRoute,
+  params?: Record<string, string | undefined>
+): string {
   return route.params.reduce((acc, param) => {
-    if (params && params[param]) return acc.replaceAll(`:${param}`, params[param]!);
+    if (params && params[param])
+      return acc.replaceAll(`:${param}`, params[param]!);
     return acc;
   }, route.path);
 }

@@ -35,11 +35,6 @@ module.exports = {
         destination: "/launchpad",
         permanent: false,
       },
-      {
-        source: "/marketplace",
-        destination: "/marketplace/bounties",
-        permanent: false,
-      },
     ];
   },
 };

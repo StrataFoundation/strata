@@ -21,7 +21,7 @@ import { WalletModalButton } from "./WalletModalButton";
 
 const Links = [
   { link: "Launchpad", href: "/" },
-  { link: "Bounties", href: "/marketplace" },
+  { link: "Bounties", href: "/bounties" },
 ];
 
 const NavLink = ({ href, children }: { href: string; children: ReactNode }) => (
@@ -34,7 +34,7 @@ export const Header: React.FC = () => {
   const router = useRouter();
   const { disconnect, connected } = useWallet();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const isMarketplace = router.pathname.includes("marketplace");
+  const isMarketplace = !router.pathname.includes("launchpad");
   const isLaunchpad = router.pathname.includes("launchpad");
 
   return (
