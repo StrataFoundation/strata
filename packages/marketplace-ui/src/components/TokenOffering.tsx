@@ -11,7 +11,8 @@ import {
   useStrataSdks,
   useTokenAccount,
   useMint,
-  useTokenBondingKey
+  useTokenBondingKey,
+  roundToDecimals
 } from "@strata-foundation/react";
 import { useAsync, useAsyncCallback, UseAsyncReturn } from "react-async-hook";
 import { SplTokenBonding, toNumber } from "@strata-foundation/spl-token-bonding";
@@ -44,7 +45,7 @@ export const TokenOffering = ({ mintKey }: { mintKey: PublicKey | undefined }) =
     if (sellOnlyTokenBonding) {
       const { instructions: i2, signers: s2 } =
         await tokenBondingSdk!.sellInstructions({
-          targetAmount: +values.bottomAmount,
+          targetAmount: roundToDecimals(+values.bottomAmount, supplyMint.decimals),
           slippage: +values.slippage / 100,
           tokenBonding: sellOnlyTokenBondingKey!,
         });
