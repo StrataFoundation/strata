@@ -11,8 +11,6 @@ import {
   IconButton,
   useDisclosure,
 } from "@chakra-ui/react";
-/* import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletModalButton } from "@/components/WalletModalButton"; */
 import { HamburgerIcon, CloseIcon } from "@chakra-ui/icons";
 import { DOCS_URL, MARKETPLACE_URL, BLOG_URL } from "@/constants";
 
@@ -72,24 +70,6 @@ export const Header: React.FC = () => {
                   </NavLink>
                 ))}
               </HStack>
-            </HStack>
-            <HStack
-              align="center"
-              justify={["center", "space-between", "flex-end", "flex-end"]}
-              direction={["column", "row", "row", "row"]}
-              pt="0"
-            >
-              {/* {connected && (
-                <Button
-                  size="sm"
-                  _hover={{ backgroundColor: "black.500" }}
-                  variant="ghost"
-                  onClick={() => disconnect()}
-                >
-                  Disconnect
-                </Button>
-              )}
-              <WalletModalButton /> */}
             </HStack>
           </Container>
         </Center>
