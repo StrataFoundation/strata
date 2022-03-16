@@ -4,7 +4,7 @@ import {
   Icon, IconButton, Text, useColorModeValue, VStack
 } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
-import { Spinner, useErrorHandler, useTokenBonding } from "@strata-foundation/react";
+import { Spinner, useErrorHandler, useTokenBonding, useTokenBondingKey } from "@strata-foundation/react";
 import moment from "moment";
 import React, { useMemo } from "react";
 import { BiRefresh } from "react-icons/bi";
@@ -16,49 +16,87 @@ import {
 import { useSampledTransactions } from "../../hooks/useSampledTransactions";
 import { numberWithCommas } from "../../utils/numberWithCommas";
 
-export const BondingPlot = ({ tokenBondingKey }: { tokenBondingKey: PublicKey }) => {
-  const { transactions, error, loadingInitial, loadingMore, fetchMore } = useSampledTransactions({
-    address: tokenBondingKey,
-    numTransactions: 40
-  });
+export const BondingPlot = ({
+  tokenBondingKey,
+}: {
+  tokenBondingKey: PublicKey;
+}) => {
+  const { info: tokenBonding, loading: loadingBonding } =
+    useTokenBonding(tokenBondingKey);
+  const { result: sellOnlyTokenBondingKey, error: keyError1 } =
+    useTokenBondingKey(tokenBonding?.targetMint, 1);
+  if (keyError1) {
+    console.error(keyError1);
+  }
+  const { info: sellOnlyTokenBonding, loading: sellOnlyLoading } =
+    useTokenBonding(sellOnlyTokenBondingKey);
+    
+  const { transactions, error, loadingInitial, loadingMore, fetchMore } =
+    useSampledTransactions({
+      address: tokenBondingKey,
+      numTransactions: 40,
+    });
   const { handleErrors } = useErrorHandler();
   handleErrors(error);
-  const { info: tokenBonding, loading: loadingBonding } = useTokenBonding(tokenBondingKey);
+  
   const labelColor = useColorModeValue("black", "white");
 
   const data = useMemo(() => {
-    return tokenBonding ? transactions.map(transaction => {
-      const reserveIdx = transaction.transaction.message.accountKeys
-        .map((k) => k.toBase58())
-        .indexOf(tokenBonding.baseStorage.toBase58());
-      const preReserves = transaction.meta?.preTokenBalances?.find(
-        (b) =>
-          b.accountIndex == reserveIdx &&
-          b.mint == tokenBonding.baseMint.toBase58()
-      )?.uiTokenAmount.uiAmount;
-      const postReserves = transaction.meta?.postTokenBalances?.find(
-        (b) =>
-          b.accountIndex == reserveIdx && b.mint == tokenBonding.baseMint.toBase58()
-      )?.uiTokenAmount.uiAmount;
-      const reserveChange = (postReserves || 0) - (preReserves || 0);
+    return tokenBonding && !sellOnlyLoading
+      ? transactions
+          .map((transaction) => {
+            const reserveIdx = transaction.transaction.message.accountKeys
+              .map((k) => k.toBase58())
+              .indexOf(tokenBonding.baseStorage.toBase58());
+            const sellOnlyReserveIdx =
+              transaction.transaction.message.accountKeys
+                .map((k) => k.toBase58())
+                .indexOf(sellOnlyTokenBonding?.baseStorage.toBase58() || "");
+            const preReserves = transaction.meta?.preTokenBalances?.find(
+              (b) =>
+                b.accountIndex == reserveIdx &&
+                b.mint == tokenBonding.baseMint.toBase58()
+            )?.uiTokenAmount.uiAmount;
+            const postReserves = transaction.meta?.postTokenBalances?.find(
+              (b) =>
+                b.accountIndex == reserveIdx &&
+                b.mint == tokenBonding.baseMint.toBase58()
+            )?.uiTokenAmount.uiAmount;
+            const reserveChange = (postReserves || 0) - (preReserves || 0);
 
-      const preToken = transaction.meta?.preTokenBalances
-        ?.filter((b) => b.mint == tokenBonding.targetMint.toBase58())
-        ?.map((v) => v.uiTokenAmount.uiAmount)
-        ?.reduce((v1, v2) => (v1 || 0) + (v2 || 0), 0);
-      const postToken = transaction.meta?.postTokenBalances
-        ?.filter((b) => b.mint == tokenBonding.targetMint.toBase58())
-        ?.map((v) => v.uiTokenAmount.uiAmount)
-        ?.reduce((v1, v2) => (v1 || 0) + (v2 || 0), 0);
-      
-      const tokenChange = (postToken || 0) - (preToken || 0);
+            const preToken = transaction.meta?.preTokenBalances
+              ?.filter((b) => b.mint == tokenBonding.targetMint.toBase58())
+              ?.map((v) => v.uiTokenAmount.uiAmount)
+              ?.reduce((v1, v2) => (v1 || 0) + (v2 || 0), 0);
+            const postToken = transaction.meta?.postTokenBalances
+              ?.filter((b) => b.mint == tokenBonding.targetMint.toBase58())
+              ?.map((v) => v.uiTokenAmount.uiAmount)
+              ?.reduce((v1, v2) => (v1 || 0) + (v2 || 0), 0);
+            const tokenChange = (postToken || 0) - (preToken || 0);
 
-      return {
-        price: reserveChange/tokenChange,
-        time: (transaction.blockTime || 0) * 1000
-      };
-    }).filter(d => d.price) : []
-  }, [transactions, tokenBonding])
+            const preSellOnlyReserves =
+              transaction.meta?.preTokenBalances?.find(
+                (b) =>
+                  b.accountIndex == sellOnlyReserveIdx &&
+                  b.mint == sellOnlyTokenBonding?.baseMint.toBase58()
+              )?.uiTokenAmount.uiAmount;
+            const postSellOnlyReserves =
+              transaction.meta?.postTokenBalances?.find(
+                (b) =>
+                  b.accountIndex == sellOnlyReserveIdx &&
+                  b.mint == sellOnlyTokenBonding?.baseMint.toBase58()
+              )?.uiTokenAmount.uiAmount;
+            const sellOnlyChange =
+              (preSellOnlyReserves || 0) - (postSellOnlyReserves || 0);
+
+            return {
+              price: reserveChange / Math.max(tokenChange, sellOnlyChange),
+              time: (transaction.blockTime || 0) * 1000,
+            };
+          })
+          .filter((d) => d.price)
+      : [];
+  }, [transactions, tokenBonding, sellOnlyLoading, sellOnlyTokenBonding]);
   const icoColor = useColorModeValue("black", "white");
 
   if (loadingBonding || loadingInitial) {
@@ -72,7 +110,9 @@ export const BondingPlot = ({ tokenBondingKey }: { tokenBondingKey: PublicKey })
   return (
     <VStack spacing={4} w="full" align="left">
       <HStack spacing={0}>
-        <Text fontSize="14px" fontWeight="700">Price History</Text>
+        <Text fontSize="14px" fontWeight="700">
+          Price History
+        </Text>
 
         <IconButton
           aria-label="Fetch More"
@@ -118,4 +158,4 @@ export const BondingPlot = ({ tokenBondingKey }: { tokenBondingKey: PublicKey })
       </Box>
     </VStack>
   );
-}
+};

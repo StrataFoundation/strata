@@ -10,29 +10,18 @@ import {
   ISwapFormValues,
   useStrataSdks,
   useTokenAccount,
-  useMint
+  useMint,
+  useTokenBondingKey,
+  roundToDecimals
 } from "@strata-foundation/react";
 import { useAsync, useAsyncCallback, UseAsyncReturn } from "react-async-hook";
 import { SplTokenBonding, toNumber } from "@strata-foundation/spl-token-bonding";
 
-async function tokenBondingKey(mintKey: PublicKey | undefined, index: number) {
-  return mintKey
-    ? (await SplTokenBonding.tokenBondingKey(mintKey, index))[0]
-    : undefined
-}
-
-function useTokenBondingKey(
-  mintKey: PublicKey | undefined,
-  index: number
-): UseAsyncReturn<PublicKey | undefined> {
-  return useAsync(tokenBondingKey, [mintKey, index]);
-}
-
 const identity = () => {};
-export const TokenOffering = ({ mintKey, index = 1 }: { mintKey: PublicKey | undefined, index?: number }) => {
-  const { result: sellOnlyTokenBondingKey, error: keyError1 } = useTokenBondingKey(mintKey, index);
+export const TokenOffering = ({ mintKey }: { mintKey: PublicKey | undefined }) => {
+  const { result: sellOnlyTokenBondingKey, error: keyError1 } = useTokenBondingKey(mintKey, 1);
   const { tokenBondingSdk } = useStrataSdks();
-  const { info: sellOnlyTokenBonding } = useTokenBonding(
+  const { info: sellOnlyTokenBonding, loading: sellOnlyLoading } = useTokenBonding(
     sellOnlyTokenBondingKey
   );
   const { result: tokenBondingKey, error: keyError2 } = useTokenBondingKey(
@@ -44,17 +33,28 @@ export const TokenOffering = ({ mintKey, index = 1 }: { mintKey: PublicKey | und
   const supplyMint = useMint(sellOnlyTokenBonding?.baseMint);
 
   const { execute: onSubmit, loading: submitting, error: submitError } = useAsyncCallback(async function(values: ISwapFormValues) {
+    const instructions = [];
+    const signers = [];
     const { instructions: i1, signers: s1 } = await tokenBondingSdk!.buyInstructions({
       desiredTargetAmount: +values.bottomAmount,
       slippage: +values.slippage / 100,
       tokenBonding: tokenBondingKey!
     });
-    const { instructions: i2, signers: s2 } = await tokenBondingSdk!.sellInstructions({
-      targetAmount: +values.bottomAmount,
-      slippage: +values.slippage / 100,
-      tokenBonding: sellOnlyTokenBondingKey!,
-    });
-    await tokenBondingSdk!.sendInstructions([...i1, ...i2], [...s1, ...s2]);
+    instructions.push(...i1);
+    signers.push(...s1);
+    if (sellOnlyTokenBonding) {
+      const { instructions: i2, signers: s2 } =
+        await tokenBondingSdk!.sellInstructions({
+          targetAmount: roundToDecimals(+values.bottomAmount, supplyMint.decimals),
+          slippage: +values.slippage / 100,
+          tokenBonding: sellOnlyTokenBondingKey!,
+        });
+
+      instructions.push(...i2);
+      signers.push(...s2);
+    }
+    
+    await tokenBondingSdk!.sendInstructions(instructions, signers);
     toast.custom((t) => (
       <Notification
         show={t.visible}
@@ -83,11 +83,13 @@ export const TokenOffering = ({ mintKey, index = 1 }: { mintKey: PublicKey | und
 
   return (
     <SwapForm
-      isLoading={driverLoading}
+      isLoading={driverLoading || sellOnlyLoading}
       isSubmitting={submitting}
       {...swapProps}
       onSubmit={onSubmit}
-      numRemaining={supplyAcc && supplyMint && toNumber(supplyAcc.amount, supplyMint)}
+      numRemaining={
+        supplyAcc && supplyMint && toNumber(supplyAcc.amount, supplyMint)
+      }
     />
   );
 };

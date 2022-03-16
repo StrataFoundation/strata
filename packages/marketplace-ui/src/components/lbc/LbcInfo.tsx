@@ -56,18 +56,23 @@ const BigText = ({ children, ...other }: TextProps) => {
 
 export const LbcInfo = ({
   tokenBondingKey,
+  useTokenOfferingCurve = false,
   price: inputPrice,
 }: {
   tokenBondingKey: PublicKey;
+  useTokenOfferingCurve?: boolean;
   price?: number;
 }) => {
   const { isOpen, onToggle } = useDisclosure({
-    defaultIsOpen: true,
+    defaultIsOpen: false,
   });
   const { info: tokenBonding, loading: loadingBonding } =
     useTokenBonding(tokenBondingKey);
   const { price, loading: loadingPricing } = useLivePrice(tokenBondingKey);
-  const { numRemaining, mintCap } = useCapInfo(tokenBondingKey);
+  const { numRemaining, mintCap } = useCapInfo(
+    tokenBondingKey,
+    useTokenOfferingCurve
+  );
 
   const priceToUse = inputPrice || price;
 

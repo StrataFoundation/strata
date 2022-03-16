@@ -24,6 +24,7 @@
     "precommit": "git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' ."
   },
   "dependencies": {
+    "@chakra-ui/icons": "^1.1.7",
     "@chakra-ui/react": "^1.8.1",
     "@hookform/resolvers": "^2.8.8",
     "@metaplex-foundation/mpl-token-metadata": "^1.1.0",

@@ -32,7 +32,7 @@ module.exports = {
     return [
       {
         source: "/",
-        destination: "/bounties",
+        destination: "/launchpad",
         permanent: false,
       },
     ];

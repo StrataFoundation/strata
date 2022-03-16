@@ -24,20 +24,24 @@ async function getInstructions(
   marketplaceSdk: MarketplaceSdk | undefined,
   reserveAmount: number | undefined,
   tokenBondingKey: PublicKey,
-  address: PublicKey | undefined
+  address: PublicKey | undefined,
+  includeRetrievalCurve: boolean | undefined
 ): Promise<InstructionResult<null> | undefined> {
   if (marketplaceSdk && address && reserveAmount) {
-    return marketplaceSdk?.disburseBountyInstructions({
+    return marketplaceSdk?.disburseCurveInstructions({
       destination: address,
       tokenBonding: tokenBondingKey,
+      includeRetrievalCurve,
     });
   }
 }
 
 export const DisburseFunds = ({
   tokenBondingKey,
+  includeRetrievalCurve = false,
 }: {
   tokenBondingKey: PublicKey;
+  includeRetrievalCurve?: boolean;
 }) => {
   const [address, setAddress] = useState("");
   const { marketplaceSdk } = useMarketplaceSdk();
@@ -54,10 +58,10 @@ export const DisburseFunds = ({
     reserveAmount,
     tokenBondingKey,
     addressKey,
+    includeRetrievalCurve,
   ]);
 
   const { isAdmin } = useIsBountyAdmin(publicKey || undefined, tokenBondingKey);
-
 
   if (isAdmin && tokenBonding) {
     return (
@@ -88,9 +92,10 @@ export const DisburseFunds = ({
             w="full"
             action={async () => {
               if (marketplaceSdk) {
-                await marketplaceSdk.disburseBounty({
+                await marketplaceSdk.disburseCurve({
                   tokenBonding: tokenBondingKey,
                   destination: new PublicKey(address),
+                  includeRetrievalCurve,
                 });
               }
             }}

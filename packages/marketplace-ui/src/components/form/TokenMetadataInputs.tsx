@@ -21,7 +21,7 @@ export interface IMetadataFormProps {
   description: string;
 }
 
-export function TokenMetadataInputs() {
+export function TokenMetadataInputs({ entityName = "post" }: { entityName?: string}) {
   const { register, watch, formState: { errors }, clearErrors, setValue, setError } = useFormContext<IMetadataFormProps>()
   const { image } = watch();
 
@@ -66,7 +66,7 @@ export function TokenMetadataInputs() {
     <>
       <FormControlWithError
         id="name"
-        help="The name that will be displayed for this post"
+        help={`The name that will be displayed for this ${entityName}`}
         label="Name"
         errors={errors}
       >
@@ -86,9 +86,7 @@ export function TokenMetadataInputs() {
           {image && (
             <HStack spacing={2} align="center">
               <Image alt={image.name} w="32px" h="32px" src={imgUrl} />
-              <Text color="gray.500">
-                {image.name}
-              </Text>
+              <Text color="gray.500">{image.name}</Text>
               <Icon w="22px" h="22px" color="green.400" as={RiCheckFill} />
             </HStack>
           )}
@@ -104,12 +102,12 @@ export function TokenMetadataInputs() {
         />
         <FormHelperText color={errors.image?.message && "red.400"}>
           {errors.image?.message ||
-            `The image that will be displayed with this post`}
+            `The image that will be displayed with this ${entityName}`}
         </FormHelperText>
       </FormControl>
       <FormControlWithError
         id="Description"
-        help="The description that will be displayed for this post"
+        help={`The description that will be displayed for this ${entityName}`}
         label="Description"
         errors={errors}
       >

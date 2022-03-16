@@ -18,12 +18,17 @@ import {
   Attribute,
   BigInstructionResult,
   createMintInstructions,
-  getMintInfo, getTokenAccount, InstructionResult, SplTokenMetadata
+  getMintInfo, getTokenAccount, InstructionResult, percent, SplTokenMetadata
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
 import bs58 from "bs58";
 import { Buffer } from "buffer";
 
+export const FEES_WALLET = new PublicKey(
+  "989wTE33inEx5k3o8pxSSSU9HEmf9Sj4PSqF6NZbxHkp"
+);
+export const FIXED_CURVE_FEES = 2;
+export const LBC_CURVE_FEES = 3;
 
 type Truthy<T> = T extends false | "" | 0 | null | undefined ? never : T; // from lodash
 
@@ -37,7 +42,26 @@ export type GetBountyItem = {
   goLiveUnixTime: BN;
 };
 
-interface ICreateMarketItemArgs {
+interface IProtocolFees {
+  /**
+   * Default: false. Refuse to pay fees to the protocol maintainers.
+   *
+   * This is open source software, and I don't believe in forcing fees on people.
+   *
+   * These fees go towards maintaining Strata and keeping this public good alive.
+   *
+   * Fees seem too high for your project? Consider using the `protocolFee` argument and paying
+   * what you think is fair.
+   */
+  iAmAFreeloader?: boolean;
+
+  /**
+   * The fee sent to the protocol
+   */
+  protocolFee?: number;
+}
+
+interface ICreateMarketItemArgs extends IProtocolFees {
   payer?: PublicKey;
   /**
    * Optionally, use this keypair to create the target mint
@@ -106,7 +130,7 @@ interface ICreateBountyArgs {
 }
 
 interface ILbpCurveArgs {
-/** Max tokens to be sold */
+  /** Max tokens to be sold */
   maxSupply: number;
   /** Interval in seconds to sell them over */
   interval: number;
@@ -122,7 +146,9 @@ interface ILbpCurveArgs {
   timeDecay?: number;
 }
 
-interface ICreateLiquidityBootstrapperArgs extends ILbpCurveArgs {
+interface ICreateLiquidityBootstrapperArgs
+  extends ILbpCurveArgs,
+    IProtocolFees {
   payer?: PublicKey;
   /**
    * Optionally, use this keypair to create the target mint
@@ -151,7 +177,6 @@ interface ICreateLiquidityBootstrapperArgs extends ILbpCurveArgs {
    */
   baseMint: PublicKey;
 
-  
   /**
    * Optionally -- override bonding params
    */
@@ -177,7 +202,7 @@ interface ICreateMetadataForBondingArgs {
   decimals: number;
 }
 
-interface IDisburseBountyArgs {
+interface IDisburseCurveArgs {
   payer?: PublicKey;
   /**
    * The token bonding id of the bounty
@@ -187,9 +212,17 @@ interface IDisburseBountyArgs {
    * The destination to disburse funds tos
    */
   destination: PublicKey;
+
+  /** If this is an initial token offering, also close the second curve */
+  includeRetrievalCurve?: boolean;
 }
 
-interface ICreateTokenBondingForSetSupplyArgs extends ICreateTokenBondingArgs {
+interface ICreateTokenBondingForSetSupplyArgs
+  extends ICreateTokenBondingArgs,
+    Omit<ICreateRetrievalCurveForSetSupplyArgs, "targetMint"> {}
+
+interface ICreateRetrievalCurveForSetSupplyArgs {
+  payer?: PublicKey;
   /** The source for the set supply (**Default:** ata of provider wallet) */
   source?: PublicKey;
   /** The mint we're selling a set supply of */
@@ -198,6 +231,13 @@ interface ICreateTokenBondingForSetSupplyArgs extends ICreateTokenBondingArgs {
   supplyAmount: number;
   /** Optional override of the default fixed constant price curve */
   fixedCurve?: PublicKey;
+
+  /**
+   * Authority to swap or change the reserve account.
+   */
+  reserveAuthority?: PublicKey | null;
+
+  targetMint: PublicKey;
 }
 
 export class MarketplaceSdk {
@@ -274,8 +314,14 @@ export class MarketplaceSdk {
     return curve;
   }
 
+  async disburseBountyInstructions(
+    args: IDisburseCurveArgs
+  ): Promise<InstructionResult<null>> {
+    return this.disburseCurveInstructions(args);
+  }
+
   /**
-   * Disburses all of the funds from the bounty to the specified address
+   * Disburses all of the funds from the curve to the specified address
    * and closes the bonding curve
    *
    * If the bounty is owned by a previous unclaimed social token, handles the changeover of owners
@@ -283,10 +329,11 @@ export class MarketplaceSdk {
    * @param param0
    * @returns
    */
-  async disburseBountyInstructions({
+  async disburseCurveInstructions({
     tokenBonding,
     destination,
-  }: IDisburseBountyArgs): Promise<InstructionResult<null>> {
+    includeRetrievalCurve,
+  }: IDisburseCurveArgs): Promise<InstructionResult<null>> {
     const instructions = [];
     const signers = [];
     const tokenBondingAcct = (await this.tokenBondingSdk.getTokenBonding(
@@ -311,7 +358,7 @@ export class MarketplaceSdk {
     } catch (e: any) {
       // ignore
     }
-    
+
     const reserveAmount = await this.tokenBondingSdk.getTokenAccountBalance(
       tokenBondingAcct.baseStorage
     );
@@ -333,6 +380,18 @@ export class MarketplaceSdk {
     instructions.push(...i2);
     signers.push(...s2);
 
+    if (includeRetrievalCurve) {
+      const retrievalInstrs = await this.disburseCurveInstructions({
+        tokenBonding: (
+          await SplTokenBonding.tokenBondingKey(tokenBondingAcct.targetMint, 1)
+        )[0],
+        includeRetrievalCurve: false,
+        destination,
+      });
+      instructions.push(...retrievalInstrs.instructions);
+      signers.push(...retrievalInstrs.signers);
+    }
+
     return {
       output: null,
       instructions,
@@ -340,17 +399,24 @@ export class MarketplaceSdk {
     };
   }
 
+  async disburseBounty(
+    args: IDisburseCurveArgs,
+    finality?: Finality
+  ): Promise<null> {
+    return this.disburseCurve(args, finality);
+  }
+
   /**
-   * Executes `disburseBountyInstructions`
+   * Executes `disburseCurveInstructions`
    * @param args
    * @returns
    */
-  async disburseBounty(
-    args: IDisburseBountyArgs,
+  async disburseCurve(
+    args: IDisburseCurveArgs,
     finality?: Finality
   ): Promise<null> {
     return this.tokenBondingSdk.execute(
-      this.disburseBountyInstructions(args),
+      this.disburseCurveInstructions(args),
       args.payer,
       finality
     );
@@ -551,9 +617,17 @@ export class MarketplaceSdk {
     bondingArgs,
     baseMint,
     targetMintKeypair = Keypair.generate(),
+    iAmAFreeloader,
+    protocolFee = FIXED_CURVE_FEES,
   }: ICreateMarketItemArgs): Promise<
     BigInstructionResult<{ tokenBonding: PublicKey }>
   > {
+    if (protocolFee == 0 && !iAmAFreeloader) {
+      throw new Error(
+        "Must use `iAmAFreeloader` flag when setting protocolFee"
+      );
+    }
+
     if (!price && !bondingArgs?.curve) {
       throw new Error("Must either pass price or bondingArgs.curve");
     }
@@ -579,6 +653,7 @@ export class MarketplaceSdk {
 
     let curve = bondingArgs?.curve;
     if (price) {
+      const feeModifier = iAmAFreeloader ? 1 : (1 / (1 + roundPercent(protocolFee)));
       const {
         instructions: curveInstructions,
         signers: curveSigners,
@@ -588,7 +663,7 @@ export class MarketplaceSdk {
           c: 0,
           pow: 0,
           frac: 1,
-          b: price,
+          b: price * feeModifier,
         }),
       });
       instructions.push(...curveInstructions);
@@ -602,21 +677,25 @@ export class MarketplaceSdk {
       signers: tokenBondingSigners,
     } = await this.tokenBondingSdk.createTokenBondingInstructions({
       payer,
-      curve: curve!,
       reserveAuthority: seller,
       generalAuthority: seller,
       curveAuthority: seller,
       targetMint,
-      mintCap: quantity ? new BN(quantity) : undefined,
+      mintCap: quantity
+        ? new BN(quantity * Math.pow(10, bondingArgs?.targetMintDecimals || 0))
+        : undefined,
       ignoreExternalReserveChanges: true,
       ignoreExternalSupplyChanges: true,
       sellFrozen: true,
-      buyBaseRoyaltyPercentage: 0,
+      buyBaseRoyaltyPercentage: iAmAFreeloader ? 0 : protocolFee,
+      buyBaseRoyaltiesOwner: FEES_WALLET,
       sellBaseRoyaltyPercentage: 0,
       sellTargetRoyaltyPercentage: 0,
       buyTargetRoyaltyPercentage: 0,
       baseMint,
+      targetMintDecimals: 0,
       ...bondingArgs,
+      curve: curve!,
     });
 
     return {
@@ -808,20 +887,27 @@ export class MarketplaceSdk {
     maxSupply,
     bondingArgs,
     baseMint,
+    iAmAFreeloader,
+    protocolFee = LBC_CURVE_FEES,
   }: ICreateLiquidityBootstrapperArgs): Promise<
     BigInstructionResult<{ tokenBonding: PublicKey; targetMint: PublicKey }>
   > {
+    if (protocolFee == 0 && !iAmAFreeloader) {
+      throw new Error(
+        "Must use `iAmAFreeloader` flag when setting protocolFee"
+      );
+    }
     const instructions = [];
     const signers = [];
-
+    const feeModifier = iAmAFreeloader ? 1 : 1 / (1 + roundPercent(protocolFee));
     const {
       reserves: initialReservesPad,
       supply: initialSupplyPad,
       curveConfig,
     } = MarketplaceSdk.lbcCurve({
       interval,
-      startPrice,
-      minPrice,
+      startPrice: startPrice * feeModifier,
+      minPrice: minPrice * feeModifier,
       maxSupply,
     });
 
@@ -898,7 +984,6 @@ export class MarketplaceSdk {
       ignoreExternalReserveChanges: true,
       ignoreExternalSupplyChanges: true,
       targetMint,
-      buyBaseRoyaltyPercentage: 0,
       sellBaseRoyaltyPercentage: 0,
       sellTargetRoyaltyPercentage: 0,
       buyTargetRoyaltyPercentage: 0,
@@ -908,6 +993,8 @@ export class MarketplaceSdk {
         initialReservesPad,
       },
       mintCap: toBN(maxSupply, decimals),
+      buyBaseRoyaltyPercentage: iAmAFreeloader ? 0 : protocolFee,
+      buyBaseRoyaltiesOwner: FEES_WALLET,
       ...bondingArgs,
     });
 
@@ -938,7 +1025,110 @@ export class MarketplaceSdk {
   }
 
   /**
-   * Sell `targetAmount` supply of tokens of `supplyMint` by creating a system of two bonding curves:
+   * Sell `supplyAmount` supply of tokens of `supplyMint` by creating a system of two bonding curves:
+   *
+   *    Offer bonding curve - sells an intermediary token for the base token
+   *    Retrieval bonding curve - allows burning the intermediary token for the set supply
+   *
+   * This function gets the retrieval bonding curve
+   */
+  async createRetrievalCurveForSetSupplyInstructions({
+    supplyAmount,
+    supplyMint,
+    source = this.provider.wallet.publicKey,
+    fixedCurve = new PublicKey(MarketplaceSdk.FIXED_CURVE),
+    reserveAuthority = this.provider.wallet.publicKey,
+    targetMint,
+  }: ICreateRetrievalCurveForSetSupplyArgs): Promise<
+    InstructionResult<ICreateTokenBondingOutput>
+  > {
+    const supplyMintAcc = await getMintInfo(this.provider, supplyMint);
+    const sourceAcct = await this.provider.connection.getAccountInfo(source);
+
+    // Source is a wallet, need to get the ATA
+    if (!sourceAcct || sourceAcct.owner.equals(SystemProgram.programId)) {
+      const ataSource = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        supplyMint,
+        source,
+        true
+      );
+      if (!(await this.tokenBondingSdk.accountExists(ataSource))) {
+        throw new Error(
+          `Source of ${source?.toBase58()} does not hold any ${supplyMint.toBase58()} tokens`
+        );
+      }
+
+      source = ataSource;
+    }
+
+    const sourceAcctAta = await getTokenAccount(this.provider, source);
+
+    const instructions = [];
+    const signers = [];
+    const retrievalInstrs =
+      await this.tokenBondingSdk.createTokenBondingInstructions({
+        ignoreExternalReserveChanges: true,
+        ignoreExternalSupplyChanges: true,
+        advanced: {
+          initialSupplyPad: supplyAmount,
+          initialReservesPad: supplyAmount,
+        },
+        curve: fixedCurve,
+        baseMint: supplyMint,
+        targetMint,
+        targetMintDecimals: supplyMintAcc.decimals,
+        buyTargetRoyalties: null,
+        sellTargetRoyalties: null,
+        buyBaseRoyalties: null,
+        sellBaseRoyalties: null,
+        index: 1,
+        buyBaseRoyaltyPercentage: 0,
+        buyTargetRoyaltyPercentage: 0,
+        sellBaseRoyaltyPercentage: 0,
+        sellTargetRoyaltyPercentage: 0,
+        reserveAuthority,
+      });
+
+    instructions.push(
+      ...retrievalInstrs.instructions,
+      Token.createTransferInstruction(
+        TOKEN_PROGRAM_ID,
+        source,
+        retrievalInstrs.output.baseStorage,
+        sourceAcctAta.owner,
+        [],
+        new u64(supplyAmount * Math.pow(10, supplyMintAcc.decimals))
+      )
+    );
+    signers.push(...retrievalInstrs.signers);
+
+    return {
+      instructions: instructions,
+      signers: signers,
+      output: retrievalInstrs.output,
+    };
+  }
+
+  /**
+   * Executes `createRetrievalCurveForSetSupplyInstructions`
+   * @param args
+   * @returns
+   */
+  async createRetrievalCurveForSetSupply(
+    args: ICreateRetrievalCurveForSetSupplyArgs,
+    finality?: Finality
+  ): Promise<ICreateTokenBondingOutput> {
+    return this.tokenBondingSdk.execute(
+      this.createRetrievalCurveForSetSupplyInstructions(args),
+      args.payer,
+      finality
+    );
+  }
+
+  /**
+   * Sell `supplyAmount` supply of tokens of `supplyMint` by creating a system of two bonding curves:
    *
    *    Offer bonding curve - sells an intermediary token for the base token
    *    Retrieval bonding curve - allows burning the intermediary token for the set supply
@@ -965,7 +1155,8 @@ export class MarketplaceSdk {
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         supplyMint,
-        source
+        source,
+        true
       );
       if (!(await this.tokenBondingSdk.accountExists(ataSource))) {
         throw new Error(
@@ -978,7 +1169,6 @@ export class MarketplaceSdk {
 
     const sourceAcctAta = await getTokenAccount(this.provider, source);
 
-    
     const offeringInstrs =
       await this.tokenBondingSdk.createTokenBondingInstructions({
         ...args,
@@ -989,46 +1179,18 @@ export class MarketplaceSdk {
         ignoreExternalSupplyChanges: true, // Necessary because we're going to be burning supply on the other curve
       });
 
-    const instructions = [];
-    const signers = [];
     const retrievalInstrs =
-      await this.tokenBondingSdk.createTokenBondingInstructions({
-        ignoreExternalReserveChanges: true,
-        ignoreExternalSupplyChanges: true,
-        advanced: {
-          initialSupplyPad: supplyAmount,
-          initialReservesPad: supplyAmount,
-        },
-        curve: fixedCurve,
-        baseMint: supplyMint,
+      await this.createRetrievalCurveForSetSupplyInstructions({
         targetMint: offeringInstrs.output.targetMint,
-        targetMintDecimals: supplyMintAcc.decimals,
-        index: 1,
-        buyTargetRoyalties: offeringInstrs.output.buyTargetRoyalties,
-        sellTargetRoyalties: offeringInstrs.output.sellTargetRoyalties,
-        buyBaseRoyaltyPercentage: 0,
-        buyTargetRoyaltyPercentage: 0,
-        sellBaseRoyaltyPercentage: 0,
-        sellTargetRoyaltyPercentage: 0,
+        supplyMint,
+        supplyAmount,
         reserveAuthority,
+        fixedCurve,
       });
 
-    instructions.push(
-      ...retrievalInstrs.instructions,
-      Token.createTransferInstruction(
-        TOKEN_PROGRAM_ID,
-        source,
-        retrievalInstrs.output.baseStorage,
-        sourceAcctAta.owner,
-        [],
-        new u64(supplyAmount * Math.pow(10, supplyMintAcc.decimals))
-      )
-    );
-    signers.push(...retrievalInstrs.signers);
-
     return {
-      instructions: [offeringInstrs.instructions, instructions],
-      signers: [offeringInstrs.signers, signers],
+      instructions: [offeringInstrs.instructions, retrievalInstrs.instructions],
+      signers: [offeringInstrs.signers, retrievalInstrs.signers],
       output: {
         offer: offeringInstrs.output,
         retrieval: retrievalInstrs.output,
@@ -1055,3 +1217,7 @@ export class MarketplaceSdk {
     );
   }
 }
+function roundPercent(protocolFee: number) {
+  return (percent(protocolFee) || 0) / 4294967295;
+}
+
