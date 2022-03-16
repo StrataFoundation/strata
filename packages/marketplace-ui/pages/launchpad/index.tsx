@@ -21,6 +21,7 @@ export const LaunchPad: FC = ({ children }) => {
     value: string;
     heading: string;
     illustration: string;
+    disabled?: boolean;
     helpText: string;
   }[] = [
     {
@@ -46,6 +47,7 @@ export const LaunchPad: FC = ({ children }) => {
       value: LandingOption.LBC,
       heading: "Dynamic Pricing NFT Mint",
       illustration: "/dynamic-pricing-mint.svg",
+      disabled: true,
       helpText:
         "Sell NFTs from a Metaplex CandyMachine using Strata’s dynamic price discovery. This allows you to avoid bots without the need of a whitelist.",
     },
@@ -65,11 +67,8 @@ export const LaunchPad: FC = ({ children }) => {
     if (selectedOption === LandingOption.SellToken)
       router.push(routes.sell.path);
 
-    if (selectedOption === LandingOption.Fundraise) 
+    if (selectedOption === LandingOption.Fundraise)
       router.push(routes.newBounty.path);
-
-    if (selectedOption === LandingOption.LBC)
-      alert("Not yet supported");
   };
 
   return (
@@ -80,25 +79,32 @@ export const LaunchPad: FC = ({ children }) => {
       onNext={handleOnNext}
     >
       <Stack {...group} direction="row" justifyContent="center">
-        {options.map(({ value, heading, illustration, helpText }) => {
-          const radio = getRadioProps({ value });
+        {options.map(
+          ({ value, heading, illustration, helpText, disabled = false }) => {
+            const radio = getRadioProps({ value });
 
-          return (
-            <RadioCard key={value} helpText={helpText} {...radio}>
-              <Stack>
-                <Image
-                  src={illustration}
-                  alt={`${value}-illustration`}
-                  height="100px"
-                  width="100%"
-                />
-                <Text fontWeight="bold" fontSize="md">
-                  {heading}
-                </Text>
-              </Stack>
-            </RadioCard>
-          );
-        })}
+            return (
+              <RadioCard
+                key={value}
+                helpText={helpText}
+                {...radio}
+                disabled={disabled}
+              >
+                <Stack>
+                  <Image
+                    src={illustration}
+                    alt={`${value}-illustration`}
+                    height="100px"
+                    width="100%"
+                  />
+                  <Text fontWeight="bold" fontSize="md">
+                    {heading}
+                  </Text>
+                </Stack>
+              </RadioCard>
+            );
+          }
+        )}
       </Stack>
     </LaunchpadLayout>
   );

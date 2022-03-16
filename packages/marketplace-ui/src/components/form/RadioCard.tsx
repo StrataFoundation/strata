@@ -11,11 +11,13 @@ import {
 
 export type RadioCardProps = {
   helpText?: string;
+  disabled?: boolean;
 } & UseRadioProps;
 
 export const RadioCard: FC<RadioCardProps> = ({
   children,
   helpText,
+  disabled = false,
   ...props
 }) => {
   const { getInputProps, getCheckboxProps } = useRadio(props);
@@ -24,12 +26,25 @@ export const RadioCard: FC<RadioCardProps> = ({
   const checkbox = getCheckboxProps();
 
   return (
-    <Box w="full" maxW="242px" flexGrow={1} flexShrink={1} flexBasis={0}>
+    <Box
+      w="full"
+      maxW="242px"
+      flexGrow={1}
+      flexShrink={1}
+      flexBasis={0}
+      onClick={(e) => {
+        if (disabled) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }}
+    >
       <Box as="label" textAlign="center">
         <input {...input} />
         <Stack
           {...checkbox}
-          cursor="pointer"
+          cursor={disabled ? "inherit" : "pointer"}
+          opacity={disabled ? 0.4 : 1}
           borderWidth="1px"
           borderRadius="md"
           h="full"
@@ -38,9 +53,13 @@ export const RadioCard: FC<RadioCardProps> = ({
           px={4}
           py={4}
           mb={2}
-          _hover={{
-            borderColor: "orange.400",
-          }}
+          _hover={
+            disabled
+              ? {}
+              : {
+                  borderColor: "orange.400",
+                }
+          }
           _checked={{
             borderColor: "orange.400",
             color: "black",
@@ -54,7 +73,7 @@ export const RadioCard: FC<RadioCardProps> = ({
               h={4}
               rounded="full"
               bg={(input as any).checked ? "orange.500" : "gray.200"}
-              _hover={{ bg: "orange.500" }}
+              _hover={disabled ? {} : { bg: "orange.500" }}
               justifyContent="center"
               alignItems="center"
             >
