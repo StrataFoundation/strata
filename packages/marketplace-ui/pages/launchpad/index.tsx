@@ -1,7 +1,7 @@
 import React, { FC, useState } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
-import { Stack, Text, useRadioGroup } from "@chakra-ui/react";
+import { Box, Flex, Stack, Text, useRadioGroup } from "@chakra-ui/react";
 import { LaunchpadLayout } from "@/components/launchpad";
 import { RadioCard } from "@/components/form";
 import { routes } from "@/utils/routes";
@@ -106,6 +106,50 @@ export const LaunchPad: FC = ({ children }) => {
           }
         )}
       </Stack>
+      <Flex w="full" justifyContent="center">
+        <Box
+          bg="white"
+          position="relative"
+          rounded="lg"
+          borderWidth="1px"
+          borderColor="white"
+          _hover={{ borderColor: "orange.500" }}
+          py={4}
+          px={2}
+          w="100%"
+          maxW="492px"
+          cursor="pointer"
+          onClick={() =>
+            window.open(
+              "https://twitter.com/messages/compose?recipient_id=1455566541941006345"
+            )
+          }
+        >
+          <Stack direction="row" spacing={6}>
+            <Image
+              src="/sell-token-later.svg"
+              height="60px"
+              width="100%"
+              alt="Check Back Later"
+            />
+            <Stack flexGrow={1} spacing={0}>
+              <Text fontWeight="bold" fontSize="sm">
+                Dont see what you want to do?
+              </Text>
+              <Text color="gray.500" fontSize="xs">
+                Check back later as we will be adding more options to this page.
+              </Text>
+              <Text color="gray.500" fontSize="xs" pt={2}>
+                Or feel free to reach out to us via{" "}
+                <Text as="span" color="orange.500">
+                  Twitter
+                </Text>{" "}
+                and we can brainstorm somethiing with together!
+              </Text>
+            </Stack>
+          </Stack>
+        </Box>
+      </Flex>
     </LaunchpadLayout>
   );
 };
