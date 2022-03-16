@@ -1,24 +1,24 @@
 import {
-  Text,
   Button,
   FormControl,
   FormHelperText,
   FormLabel,
   HStack,
   Icon,
-  Image,
-  Textarea,
-  Input
+  Image, Input, Stack, Text, Textarea, useRadioGroup
 } from "@chakra-ui/react";
+import { StorageProvider } from "@strata-foundation/spl-utils";
 import React, { useEffect, useState } from "react";
-import { useFormContext, UseFormReturn } from "react-hook-form";
-import { FormControlWithError } from "./FormControlWithError";
+import { useFormContext } from "react-hook-form";
 import { RiCheckFill } from "react-icons/ri";
+import { FormControlWithError } from "./FormControlWithError";
+import { RadioCard } from "./RadioCard";
 
 export interface IMetadataFormProps {
   image: File;
   name: string;
   description: string;
+  provider: StorageProvider
 }
 
 export function TokenMetadataInputs({ entityName = "post" }: { entityName?: string}) {
@@ -28,6 +28,27 @@ export function TokenMetadataInputs({ entityName = "post" }: { entityName?: stri
   const [imgUrl, setImgUrl] = useState<string>();
   const hiddenFileInput = React.useRef<HTMLInputElement>(null);
 
+  const { getRootProps, getRadioProps } = useRadioGroup({
+    name: "provider",
+    onChange: (option) => setValue("provider", option as StorageProvider),
+  });
+  const group = getRootProps();
+  const storageOptions = [
+    {
+      value: StorageProvider.NftStorage,
+      heading: "NFT.Storage",
+      illustration: "/nft-storage.png",
+      helpText:
+        "Provides free storage for your token image, but it may take up to 48 hours to appear.",
+    },
+    {
+      value: StorageProvider.Arweave,
+      heading: "Arweave",
+      illustration: "/arweave.png",
+      helpText:
+        "Instant storage for your token image, but you will need to pay a small fee in Sol for the upload",
+    }
+  ];
   useEffect(() => {
     if (image) {
       const reader = new FileReader();
@@ -41,6 +62,12 @@ export function TokenMetadataInputs({ entityName = "post" }: { entityName?: stri
     }
   }, [image]);
 
+  // Default to nft.storage
+  useEffect(() => {
+    setValue("provider", StorageProvider.NftStorage)
+  }, [setValue]);
+
+  const provider = watch('provider');
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files![0];
@@ -105,6 +132,36 @@ export function TokenMetadataInputs({ entityName = "post" }: { entityName?: stri
             `The image that will be displayed with this ${entityName}`}
         </FormHelperText>
       </FormControl>
+      <FormControlWithError
+        id="provider"
+        label="Storage Provider"
+        errors={errors}
+      >
+        <Stack direction="row" {...group} justifyContent="center">
+          {storageOptions.map(({ value, heading, illustration, helpText }) => {
+            const radio = getRadioProps({ value });
+            return (
+              <RadioCard
+                {...radio}
+                isChecked={provider === value}
+                key={value}
+                helpText={helpText}
+              >
+                <Stack align="center">
+                  <Image
+                    src={illustration}
+                    alt={`${value}-illustration`}
+                    width="50px"
+                  />
+                  <Text fontWeight="bold" fontSize="md">
+                    {heading}
+                  </Text>
+                </Stack>
+              </RadioCard>
+            );
+          })}
+        </Stack>
+      </FormControlWithError>
       <FormControlWithError
         id="Description"
         help={`The description that will be displayed for this ${entityName}`}

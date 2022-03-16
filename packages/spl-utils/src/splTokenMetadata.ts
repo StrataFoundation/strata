@@ -6,6 +6,7 @@ import {
   getMintInfo,
   InstructionResult,
   sendInstructions,
+  truthy,
 } from ".";
 import {
   ARWEAVE_UPLOAD_URL,
@@ -19,7 +20,12 @@ import localStorageMemory from "localstorage-memory";
 import { NFTStorage } from "nft.storage";
 import { TokenInput } from "nft.storage/dist/src/token";
 
-export interface ICreateNftStorageUrlArgs {
+export enum StorageProvider {
+  Arweave = "arweave",
+  NftStorage = "nft.storage"
+}
+
+export interface IUploadMetadataArgs {
   payer?: PublicKey;
   name: string;
   symbol: string;
@@ -30,6 +36,9 @@ export interface ICreateNftStorageUrlArgs {
   animationUrl?: string;
   externalUrl?: string;
   extraMetadata?: any;
+  provider?: StorageProvider;
+  nftStorageApiKey?: string;
+  mint?: PublicKey;
 }
   
 export interface ICreateArweaveUrlArgs {
@@ -315,6 +324,34 @@ export class SplTokenMetadata {
       payer
     );
   }
+
+  async uploadMetadata(args: IUploadMetadataArgs): Promise<string> {
+    if (args.provider === "arweave") {
+      return this.createArweaveMetadata({
+        ...args,
+        image: args.image?.name,
+        files: [args.image].filter(truthy),
+        mint: args.mint!
+      });
+    }
+
+    return this.createNftStorageMetadata(args, args.nftStorageApiKey!)
+  }
+
+  async createNftStorageMetadata(
+    args: IUploadMetadataArgs,
+    apiKey: string,
+  ): Promise<string> {
+    // create a new NFTStorage client using our API key
+    const nftstorage = new NFTStorage({ token: apiKey });
+
+    // call client.store, passing in the image & metadata
+    // @ts-ignore
+    const result = await nftstorage.store(args);
+    const id = result.ipnft;
+    return `${id}.ipfs.nftstorage.link`;
+  };
+
   /**
    * Wrapper function that prepays for arweave metadata files in SOL, then uploads them to arweave and returns the url
    *

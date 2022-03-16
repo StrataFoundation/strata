@@ -1,25 +1,48 @@
-import { Alert, Box, Button, Collapse, Flex, Icon, Input, useDisclosure, VStack } from "@chakra-ui/react";
+import {
+  Alert,
+  Box,
+  Button,
+  Collapse,
+  Flex,
+  Icon,
+  Input,
+  useDisclosure,
+  VStack
+} from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2, Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { NATIVE_MINT } from "@solana/spl-token";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Keypair, PublicKey } from "@solana/web3.js";
-import { FIXED_CURVE_FEES, MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
-import { truthy, usePrimaryClaimedTokenRef, useProvider } from "@strata-foundation/react";
-import { getMintInfo, sendMultipleInstructions } from "@strata-foundation/spl-utils";
-import { useRouter } from 'next/router';
+import {
+  FIXED_CURVE_FEES,
+  MarketplaceSdk
+} from "@strata-foundation/marketplace-sdk";
+import {
+  usePrimaryClaimedTokenRef,
+  useProvider
+} from "@strata-foundation/react";
+import {
+  getMintInfo,
+  sendMultipleInstructions
+} from "@strata-foundation/spl-utils";
+import { useRouter } from "next/router";
 import React from "react";
 import { useAsyncCallback } from "react-async-hook";
 import { FormProvider, useForm } from "react-hook-form";
 import { BsChevronDown } from "react-icons/bs";
 import * as yup from "yup";
 import { useMarketplaceSdk } from "../..//contexts/marketplaceSdkContext";
+import { NFT_STORAGE_API_KEY } from "../../utils/globals";
 import { route, routes } from "../../utils/routes";
 import { Disclosures, disclosuresSchema, IDisclosures } from "./Disclosures";
 import { FormControlWithError } from "./FormControlWithError";
 import { MintSelect } from "./MintSelect";
 import { IMetadataFormProps, TokenMetadataInputs } from "./TokenMetadataInputs";
-import { IUseExistingMintProps, UseExistingMintInputs } from "./UseExistingMintInputs";
+import {
+  IUseExistingMintProps,
+  UseExistingMintInputs
+} from "./UseExistingMintInputs";
 
 interface IMarketplaceFormProps
   extends IMetadataFormProps,
@@ -42,7 +65,7 @@ const validationSchema = yup.object({
     .number()
     .nullable()
     .transform((v) => {
-      return (v === "" || isNaN(v) ? null : v)
+      return v === "" || isNaN(v) ? null : v;
     })
     .when("useExistingMint", {
       is: false,
@@ -61,14 +84,18 @@ const validationSchema = yup.object({
   quantity: yup.number().required().min(1).integer(),
   price: yup.number().required().min(0),
   curve: yup.string(),
-  disclosures: disclosuresSchema
+  disclosures: disclosuresSchema,
 });
 
-async function createMarket(marketplaceSdk: MarketplaceSdk, values: IMarketplaceFormProps): Promise<PublicKey> {
+async function createMarket(
+  marketplaceSdk: MarketplaceSdk,
+  values: IMarketplaceFormProps,
+  nftStorageApiKey: string | undefined = NFT_STORAGE_API_KEY
+): Promise<PublicKey> {
   const mint = new PublicKey(values.mint);
 
   const targetMintKeypair = Keypair.generate();
-    let metadata;
+  let metadata;
   if (values.useExistingMint) {
     const existingMint = new PublicKey(values.existingMint!);
     const fetched = await marketplaceSdk.tokenMetadataSdk.getMetadata(
@@ -84,12 +111,12 @@ async function createMarket(marketplaceSdk: MarketplaceSdk, values: IMarketplace
 
     metadata = new DataV2({ ...fetched.data, collection: null, uses: null });
   } else {
-    const uri = await marketplaceSdk.tokenMetadataSdk.createArweaveMetadata({
+    const uri = await marketplaceSdk.tokenMetadataSdk.uploadMetadata({
+      provider: values.provider,
       name: values.name!,
       symbol: "",
       description: values.description,
-      image: values.image?.name,
-      files: [values.image].filter(truthy),
+      image: values.image,
       mint: targetMintKeypair.publicKey,
       attributes: [
         {
@@ -98,6 +125,7 @@ async function createMarket(marketplaceSdk: MarketplaceSdk, values: IMarketplace
           value: "true",
         },
       ],
+      nftStorageApiKey,
     });
     metadata = new DataV2({
       // Max name len 32
@@ -121,8 +149,8 @@ async function createMarket(marketplaceSdk: MarketplaceSdk, values: IMarketplace
     baseMint: mint,
     bondingArgs: {
       curve: values.curve ? new PublicKey(values.curve) : undefined,
-      targetMintDecimals: values.decimals
-    }
+      targetMintDecimals: values.decimals,
+    },
   });
   instructions.push(...marketItemInstrs.instructions);
   signers.push(...marketItemInstrs.signers);
@@ -146,35 +174,38 @@ async function createMarket(marketplaceSdk: MarketplaceSdk, values: IMarketplace
     signers
   );
 
-  return targetMintKeypair.publicKey; 
+  return targetMintKeypair.publicKey;
 }
 
-export const SaleForm: React.FC = () => {
+export const SaleForm: React.FC<{
+  nftStorageApiKey?: string;
+}> = ({ nftStorageApiKey = NFT_STORAGE_API_KEY }) => {
   const formProps = useForm<IMarketplaceFormProps>({
-    resolver: yupResolver(validationSchema)
+    resolver: yupResolver(validationSchema),
   });
   const {
     register,
     handleSubmit,
     setValue,
     formState: { errors, isSubmitting },
-    watch
+    watch,
   } = formProps;
   const { publicKey } = useWallet();
-  const { info: tokenRef } = usePrimaryClaimedTokenRef(publicKey)
+  const { info: tokenRef } = usePrimaryClaimedTokenRef(publicKey);
   const { awaitingApproval } = useProvider();
   const { execute, loading, error } = useAsyncCallback(createMarket);
   const { marketplaceSdk } = useMarketplaceSdk();
   const router = useRouter();
   const { isOpen, onToggle } = useDisclosure();
 
-
   const onSubmit = async (values: IMarketplaceFormProps) => {
-    const mintKey = await execute(marketplaceSdk!, values)
-    router.push(route(values.decimals === 0 ? routes.sale : routes.tokenOffering, {
-      mintKey: mintKey.toBase58()
-    }))
-  }
+    const mintKey = await execute(marketplaceSdk!, values, nftStorageApiKey);
+    router.push(
+      route(values.decimals === 0 ? routes.sale : routes.tokenOffering, {
+        mintKey: mintKey.toBase58(),
+      })
+    );
+  };
 
   const useExistingMint = watch("useExistingMint");
 
@@ -243,7 +274,7 @@ export const SaleForm: React.FC = () => {
               {...register("price")}
             />
           </FormControlWithError>
-          
+
           <Disclosures fees={FIXED_CURVE_FEES} />
 
           <Flex alignItems="flex-start" direction="column" w="full">
@@ -288,4 +319,4 @@ export const SaleForm: React.FC = () => {
       </form>
     </FormProvider>
   );
-}
+};

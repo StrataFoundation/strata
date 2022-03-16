@@ -1,3 +1,4 @@
+import { NFT_STORAGE_API_KEY } from "../../utils/globals";
 import { Alert, Button, Input, VStack } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
@@ -46,24 +47,26 @@ const validationSchema = yup.object({
 
 async function createBounty(
   marketplaceSdk: MarketplaceSdk,
-  values: IBountyFormProps
+  values: IBountyFormProps,
+  nftStorageApiKey: string | undefined = NFT_STORAGE_API_KEY
 ): Promise<PublicKey> {
   const mint = new PublicKey(values.mint);
   const authority = new PublicKey(values.authority);
 
   const targetMintKeypair = Keypair.generate();
-  const uri = await marketplaceSdk.tokenMetadataSdk.createArweaveMetadata({
+  const uri = await marketplaceSdk.tokenMetadataSdk.uploadMetadata({
+    provider: values.provider,
     name: values.name,
     symbol: values.shortName,
     description: values.description,
-    image: values.image?.name,
-    files: [values.image].filter(truthy),
+    image: values.image,
     mint: targetMintKeypair.publicKey,
     attributes: MarketplaceSdk.bountyAttributes({
       mint,
       discussion: values.discussion,
-      contact: values.contact
+      contact: values.contact,
     }),
+    nftStorageApiKey,
   });
   const { targetMint } = await marketplaceSdk.createBounty({
     targetMintKeypair,
@@ -89,10 +92,12 @@ export const BountyForm = ({
   defaultValues = {},
   onComplete,
   hide = new Set(),
+  nftStorageApiKey = NFT_STORAGE_API_KEY,
 }: {
   defaultValues?: DefaultValues<IBountyFormProps>;
   onComplete?: (mintKey: PublicKey) => void;
   hide?: Set<string>;
+  nftStorageApiKey?: string;
 }) => {
   const formProps = useForm<IBountyFormProps>({
     resolver: yupResolver(validationSchema),
@@ -124,13 +129,13 @@ export const BountyForm = ({
       if (owner) {
         setValue("authority", owner.toBase58());
       } else {
-        setValue("authority", mintTokenRef.publicKey.toBase58())
+        setValue("authority", mintTokenRef.publicKey.toBase58());
       }
     }
   }, [mintTokenRef]);
 
   const onSubmit = async (values: IBountyFormProps) => {
-    const mintKey = await execute(marketplaceSdk!, values);
+    const mintKey = await execute(marketplaceSdk!, values, nftStorageApiKey);
     onComplete && onComplete(mintKey);
   };
 
