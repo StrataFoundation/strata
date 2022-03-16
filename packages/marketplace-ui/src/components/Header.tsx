@@ -68,7 +68,7 @@ export const Header: React.FC = () => {
                 </Link>
               )}
               {isMarketplace && (
-                <Link href="/marketplace">
+                <Link href="/bounties">
                   <Image alt="Strata Marketplace" src="/logo-marketplace.svg" />
                 </Link>
               )}

@@ -35,6 +35,11 @@ module.exports = {
         destination: "/launchpad",
         permanent: false,
       },
+      {
+        source: "/lbcs/new",
+        destination: "/launchpad/lbcs/new",
+        permanent: false,
+      },
     ];
   },
 };
