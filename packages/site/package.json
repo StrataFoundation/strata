@@ -1,7 +1,6 @@
 {
-  "name": "site",
+  "name": "@strata-foundation/site",
   "version": "3.3.4",
-  "private": true,
   "scripts": {
     "clean": "shx rm -rf .next",
     "dev": "NODE_OPTIONS='--inspect' next dev",
