@@ -11,7 +11,7 @@ import {
   useMintTokenRef,
   usePrimaryClaimedTokenRef,
   useProvider,
-  usePublicKey
+  usePublicKey,
 } from "@strata-foundation/react";
 import React, { useEffect } from "react";
 import { useAsyncCallback } from "react-async-hook";
@@ -21,10 +21,7 @@ import { useMarketplaceSdk } from "../../contexts/marketplaceSdkContext";
 import { FormControlWithError } from "./FormControlWithError";
 import { MintSelect } from "./MintSelect";
 import { Recipient } from "./Recipient";
-import {
-  IMetadataFormProps,
-  TokenMetadataInputs
-} from "./TokenMetadataInputs";
+import { IMetadataFormProps, TokenMetadataInputs } from "./TokenMetadataInputs";
 
 interface IBountyFormProps extends IMetadataFormProps {
   mint: string;
