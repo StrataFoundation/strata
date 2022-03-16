@@ -1,3 +1,4 @@
+import React from "react";
 import { Checkbox, VStack } from "@chakra-ui/react";
 import { useFormContext } from "react-hook-form";
 import * as yup from "yup";
@@ -28,12 +29,14 @@ export const Disclosures = ({ fees }: { fees: number }) => {
         States of America, or that I will deploy a separate interface not
         associated with Strata to purchase the tokens outside of the US.
       </Checkbox>
-      { fees && <Checkbox
-        isInvalid={!!errors.disclosures?.acceptedFees}
-        {...register("disclosures.acceptedFees")}
-      >
-        I understand that Strata will take a {fees}% fee on tokens sold.
-      </Checkbox> }
+      {fees && (
+        <Checkbox
+          isInvalid={!!errors.disclosures?.acceptedFees}
+          {...register("disclosures.acceptedFees")}
+        >
+          I understand that Strata will take a {fees}% fee on tokens sold.
+        </Checkbox>
+      )}
     </VStack>
   );
 };
