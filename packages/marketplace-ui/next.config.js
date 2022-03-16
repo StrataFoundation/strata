@@ -32,7 +32,12 @@ module.exports = {
     return [
       {
         source: "/",
-        destination: "/bounties",
+        destination: "/launchpad",
+        permanent: false,
+      },
+      {
+        source: "/marketplace",
+        destination: "/marketplace/bounties",
         permanent: false,
       },
     ];
