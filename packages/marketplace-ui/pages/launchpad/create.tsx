@@ -60,7 +60,12 @@ export const CreateToken: FC = () => {
       nextDisabled={!selectedOption}
       onNext={handleOnNext}
     >
-      <Stack direction="row" {...group} justifyContent="center">
+      <Stack
+        {...group}
+        direction={{ base: "column", md: "row" }}
+        justifyContent="center"
+        alignItems={{ base: "center", md: "normal" }}
+      >
         {options.map(({ value, heading, illustration, helpText }) => {
           const radio = getRadioProps({ value });
 

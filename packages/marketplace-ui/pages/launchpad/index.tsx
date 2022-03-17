@@ -1,7 +1,14 @@
 import React, { FC, useState } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
-import { Box, Flex, Stack, Text, useRadioGroup } from "@chakra-ui/react";
+import {
+  Box,
+  Container,
+  Flex,
+  Stack,
+  Text,
+  useRadioGroup,
+} from "@chakra-ui/react";
 import { LaunchpadLayout } from "@/components/launchpad";
 import { RadioCard } from "@/components/form";
 import { routes } from "@/utils/routes";
@@ -78,7 +85,12 @@ export const LaunchPad: FC = ({ children }) => {
       nextDisabled={!selectedOption}
       onNext={handleOnNext}
     >
-      <Stack {...group} direction="row" justifyContent="center">
+      <Stack
+        {...group}
+        direction={{ base: "column", md: "row" }}
+        justifyContent="center"
+        alignItems={{ base: "center", md: "normal" }}
+      >
         {options.map(
           ({ value, heading, illustration, helpText, disabled = false }) => {
             const radio = getRadioProps({ value });
