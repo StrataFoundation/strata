@@ -41,7 +41,7 @@ export const Lbc = () => (
             AVOIDING BOTS
           </Text>
           <Text fontSize="3xl" fontWeight="bold">
-            Liquidity Bootstrapper
+            Liquidity Bootstrapping
             <br />
             Curve{" "}
             <Text as="span" fontWeight="normal">
@@ -63,7 +63,7 @@ export const Lbc = () => (
               borderColor="orange.500"
               _hover={{ bg: "orange.500", textDecoration: "none" }}
               as={Link}
-              href={`${MARKETPLACE_URL}/lbcs/new`}
+              href={`${MARKETPLACE_URL}/launchpad/lbcs/new`}
             >
               Create LBC
             </Button>

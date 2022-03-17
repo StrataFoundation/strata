@@ -9,7 +9,8 @@ import {
   Button,
   Link,
 } from "@chakra-ui/react";
-import { DISCORD_INVITE_URL, DOCS_URL } from "@/constants";
+import { DISCORD_INVITE_URL, DOCS_URL, MARKETPLACE_URL } from "@/constants";
+import TextTransition, { presets } from "react-text-transition";
 
 const callouts = [
   {
@@ -30,7 +31,7 @@ const callouts = [
 ];
 
 export const Hero = () => {
-  const options = useMemo(() => ["Social", "Gaming", "Community"], []);
+  const options = useMemo(() => ["Social Token", "GameFi Token","DAO Token", "SubDAO Token", "Community Token"], []);
   const [currentOptionIndex, setCurrentOptionIndex] = useState(0);
 
   useEffect(() => {
@@ -38,7 +39,7 @@ export const Hero = () => {
       setCurrentOptionIndex(
         currentOptionIndex == options.length - 1 ? 0 : currentOptionIndex + 1
       );
-    }, 5000);
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, [currentOptionIndex, setCurrentOptionIndex, options]);
@@ -62,7 +63,7 @@ export const Hero = () => {
             w={{ base: "80%", md: "40%" }}
             align={["center", "center", "flex-start", "flex-start"]}
           >
-            <Text
+            <Box
               fontSize="4xl"
               fontWeight="light"
               lineHeight="normal"
@@ -73,15 +74,17 @@ export const Hero = () => {
               <br />
               launch and grow your
               <br />
-              <Text
-                as="span"
-                fontWeight="bold"
-                bg="linear-gradient(273.71deg, #E4873E 14.63%, #FBC00E 100.31%);"
-                bgClip="text"
-              >
-                <Text as="span">{options[currentOptionIndex]}</Text> token
-              </Text>
-            </Text>
+              <TextTransition
+              className="gradient"
+              inline
+                style={{
+                  color: "transparent",
+                  fontWeight: "bold",
+                }}
+                text={options[currentOptionIndex]}
+                springConfig={presets.default}
+              />
+            </Box>
             <Text
               fontSize="md"
               color="white"
@@ -89,7 +92,7 @@ export const Hero = () => {
               lineHeight={1.5}
               textAlign={["center", "center", "left", "left"]}
             >
-              Strata Protocol is an open-source standard to launch tokens around
+              Strata Protocol is an open-source protocol to launch tokens around
               a person, idea, or collective on Solana.
             </Text>
             <Stack direction="row" gap={2} w="full">
@@ -97,13 +100,13 @@ export const Hero = () => {
                 isFullWidth
                 colorScheme="orange"
                 as={Link}
-                href={DISCORD_INVITE_URL}
+                href={`${MARKETPLACE_URL}/launchpad`}
                 _hover={{
                   textDecoration: "none",
                 }}
                 isExternal
               >
-                Join the Discord
+                Launch a Token
               </Button>
               <Button
                 isFullWidth
@@ -115,7 +118,7 @@ export const Hero = () => {
                 as={Link}
                 href={DOCS_URL}
               >
-                Developers Docs
+                Developer Docs
               </Button>
             </Stack>
           </Stack>
