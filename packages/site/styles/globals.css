@@ -14,3 +14,9 @@ a {
 * {
   box-sizing: border-box;
 }
+
+.gradient .text-transition_inner div {
+  background-image: linear-gradient(to right, #f8b914, #E17E44);
+  background-clip: text;
+  color: transparent;
+}

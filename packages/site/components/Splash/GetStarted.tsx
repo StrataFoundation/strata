@@ -16,7 +16,7 @@ export const GetStarted = () => (
         </Text>
         <Text w={{ base: "90%", md: "50%" }} align="center">
           Get started with Strata today so you can launch your Collective and
-          build the social token ecosystem of your dreams.{" "}
+          build the token ecosystem of your dreams.{" "}
         </Text>
         <Stack direction="row" gap={2} w={{ base: "90%", md: "50%" }}>
           <Button
@@ -41,7 +41,7 @@ export const GetStarted = () => (
             as={Link}
             href={DOCS_URL}
           >
-            Developers Docs
+            Developer Docs
           </Button>
         </Stack>
       </Stack>

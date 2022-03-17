@@ -17,6 +17,7 @@ import { DOCS_URL, MARKETPLACE_URL, BLOG_URL } from "@/constants";
 const Links = [
   { link: "Docs", href: DOCS_URL },
   { link: "Blog", href: BLOG_URL },
+  { link: "Launchpad", href: `${MARKETPLACE_URL}/launchpad` },
   { link: "Bounties", href: `${MARKETPLACE_URL}/bounties` },
   /*   { link: "Investors", href: "/investors" }, */
 ];

@@ -4,7 +4,7 @@ import { NextPage } from "next";
 
 export const NewBounty: NextPage = () => {
   return (
-    <FormContainer title="New Liquidity Bootstrapper">
+    <FormContainer title="New LBC">
       <LbcForm />
     </FormContainer>
   );
