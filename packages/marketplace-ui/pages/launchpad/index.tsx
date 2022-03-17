@@ -1,7 +1,14 @@
 import React, { FC, useState } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
-import { Box, Flex, Stack, Text, useRadioGroup } from "@chakra-ui/react";
+import {
+  Box,
+  Flex,
+  Stack,
+  Text,
+  useRadioGroup,
+  useMediaQuery,
+} from "@chakra-ui/react";
 import { LaunchpadLayout } from "@/components/launchpad";
 import { RadioCard } from "@/components/form";
 import { routes } from "@/utils/routes";
@@ -16,6 +23,7 @@ export enum LandingOption {
 export const LaunchPad: FC = ({ children }) => {
   const router = useRouter();
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [isLargerThanBase] = useMediaQuery(`(min-width: 768px)`);
 
   const options: {
     value: string;
@@ -78,29 +86,60 @@ export const LaunchPad: FC = ({ children }) => {
       nextDisabled={!selectedOption}
       onNext={handleOnNext}
     >
-      <Stack {...group} direction="row" justifyContent="center">
+      <Stack
+        {...group}
+        direction={{ base: "column", md: "row" }}
+        justifyContent="center"
+        alignItems={{ base: "center", md: "normal" }}
+      >
         {options.map(
           ({ value, heading, illustration, helpText, disabled = false }) => {
             const radio = getRadioProps({ value });
 
             return (
-              <RadioCard
-                key={value}
-                helpText={helpText}
-                {...radio}
-                disabled={disabled}
-              >
-                <Stack>
-                  <Image
-                    src={illustration}
-                    alt={`${value}-illustration`}
-                    height="100px"
-                    width="100%"
-                  />
-                  <Text fontWeight="bold" fontSize="md">
-                    {heading}
-                  </Text>
-                </Stack>
+              <RadioCard key={value} {...radio} disabled={disabled}>
+                <Flex
+                  h="full"
+                  direction={{ base: "row", md: "column" }}
+                  textAlign={{ base: "left", md: "center" }}
+                >
+                  <Flex
+                    justifyContent="center"
+                    alginItem="center"
+                    flexShrink={0}
+                  >
+                    <Image
+                      src={illustration}
+                      alt={`${value}-illustration`}
+                      height="70px"
+                      width="100%"
+                    />
+                  </Flex>
+                  <Flex
+                    flexGrow={1}
+                    h="full"
+                    direction="column"
+                    alignItems={{ base: "start", md: "center" }}
+                    justifyContent={{ base: "center", md: "initial" }}
+                  >
+                    <Text
+                      fontWeight="bold"
+                      fontSize="md"
+                      pt={{ base: 0, md: 4 }}
+                    >
+                      {heading}
+                    </Text>
+                    <Flex
+                      w="full"
+                      flexGrow={{ base: 0, md: 1 }}
+                      alignItems={{ base: "start", md: "center" }}
+                    >
+                      <Text fontSize="xs" color="gray.500">
+                        {helpText}
+                      </Text>
+                    </Flex>
+                  </Flex>
+                </Flex>
               </RadioCard>
             );
           }
@@ -125,13 +164,15 @@ export const LaunchPad: FC = ({ children }) => {
             )
           }
         >
-          <Stack direction="row" spacing={6}>
-            <Image
-              src="/sell-token-later.svg"
-              height="60px"
-              width="100%"
-              alt="Check Back Later"
-            />
+          <Stack direction="row">
+            <Flex flexShring={0} justifyContent="center" alignItems="center">
+              <Image
+                src="/sell-token-later.svg"
+                height="50px"
+                width="100%"
+                alt="Check Back Later"
+              />
+            </Flex>
             <Stack flexGrow={1} spacing={0}>
               <Text fontWeight="bold" fontSize="sm">
                 Dont see what you want to do?

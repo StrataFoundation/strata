@@ -1,11 +1,17 @@
 import {
   Button,
+  Flex,
   FormControl,
   FormHelperText,
   FormLabel,
   HStack,
   Icon,
-  Image, Input, Stack, Text, Textarea, useRadioGroup
+  Image,
+  Input,
+  Stack,
+  Text,
+  Textarea,
+  useRadioGroup,
 } from "@chakra-ui/react";
 import { StorageProvider } from "@strata-foundation/spl-utils";
 import React, { useEffect, useState } from "react";
@@ -18,11 +24,22 @@ export interface IMetadataFormProps {
   image: File;
   name: string;
   description: string;
-  provider: StorageProvider
+  provider: StorageProvider;
 }
 
-export function TokenMetadataInputs({ entityName = "post" }: { entityName?: string}) {
-  const { register, watch, formState: { errors }, clearErrors, setValue, setError } = useFormContext<IMetadataFormProps>()
+export function TokenMetadataInputs({
+  entityName = "post",
+}: {
+  entityName?: string;
+}) {
+  const {
+    register,
+    watch,
+    formState: { errors },
+    clearErrors,
+    setValue,
+    setError,
+  } = useFormContext<IMetadataFormProps>();
   const { image } = watch();
 
   const [imgUrl, setImgUrl] = useState<string>();
@@ -47,7 +64,7 @@ export function TokenMetadataInputs({ entityName = "post" }: { entityName?: stri
       illustration: "/arweave.png",
       helpText:
         "Instant storage for your token image, but you will need to pay a small fee in Sol for the upload",
-    }
+    },
   ];
   useEffect(() => {
     if (image) {
@@ -64,10 +81,10 @@ export function TokenMetadataInputs({ entityName = "post" }: { entityName?: stri
 
   // Default to nft.storage
   useEffect(() => {
-    setValue("provider", StorageProvider.NftStorage)
+    setValue("provider", StorageProvider.NftStorage);
   }, [setValue]);
 
-  const provider = watch('provider');
+  const provider = watch("provider");
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files![0];
@@ -77,8 +94,9 @@ export function TokenMetadataInputs({ entityName = "post" }: { entityName?: stri
       // @ts-ignore
       setError("image", {
         type: "manual",
-        message: `The file ${file.name} is too small. It is ${Math.round(10 * sizeKB) / 10
-          }KB but should be at least 25KB.`,
+        message: `The file ${file.name} is too small. It is ${
+          Math.round(10 * sizeKB) / 10
+        }KB but should be at least 25KB.`,
       });
       return;
     }
@@ -141,12 +159,7 @@ export function TokenMetadataInputs({ entityName = "post" }: { entityName?: stri
           {storageOptions.map(({ value, heading, illustration, helpText }) => {
             const radio = getRadioProps({ value });
             return (
-              <RadioCard
-                {...radio}
-                isChecked={provider === value}
-                key={value}
-                helpText={helpText}
-              >
+              <RadioCard {...radio} isChecked={provider === value} key={value}>
                 <Stack align="center">
                   <Image
                     src={illustration}
@@ -157,6 +170,22 @@ export function TokenMetadataInputs({ entityName = "post" }: { entityName?: stri
                     {heading}
                   </Text>
                 </Stack>
+                <Flex
+                  flexGrow={1}
+                  justifyContent="center"
+                  alignItems="center"
+                  w="full"
+                  textAlign="center"
+                >
+                  <Text
+                    fontSize="xs"
+                    color="gray.500"
+                    px={2}
+                    textAlign="center"
+                  >
+                    {helpText}
+                  </Text>
+                </Flex>
               </RadioCard>
             );
           })}
