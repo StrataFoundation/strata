@@ -26,6 +26,7 @@
   "dependencies": {
     "@chakra-ui/icons": "^1.1.7",
     "@chakra-ui/react": "^1.8.1",
+    "@civic/solana-gateway-react": "^0.4.14-beta.1",
     "@hookform/resolvers": "^2.8.8",
     "@metaplex-foundation/mpl-token-metadata": "^1.1.0",
     "@sevenoutman/use-debounced-memo": "^1.0.0",
@@ -34,6 +35,7 @@
     "@solana/wallet-adapter-react": "^0.15.2",
     "@solana/wallet-adapter-react-ui": "^0.9.1",
     "@solana/wallet-adapter-wallets": "^0.14.3",
+    "@solana/web3.js": "^1.32.0",
     "@strata-foundation/marketplace-sdk": "^3.3.6",
     "@strata-foundation/react": "^3.3.6",
     "@types/auth0-js": "^9.14.5",
@@ -49,6 +51,7 @@
     "react-async-hook": "^4.0.0",
     "react-circular-progressbar": "^2.0.4",
     "react-countdown": "^2.3.2",
+    "react-device-detect": "^2.1.2",
     "react-dom": "^17.0.2",
     "react-hook-form": "^7.25.1",
     "react-hot-toast": "^2.2.0",

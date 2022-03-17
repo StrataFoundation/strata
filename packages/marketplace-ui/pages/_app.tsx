@@ -5,6 +5,7 @@ import "../src/components/bufferFill";
 import { Header } from "../src/components/Header";
 import { Footer } from '../src/components/Footer';
 import { Providers } from '../src/components/Providers';
+import { BrowserView, MobileView } from "react-device-detect";
 
 // Use require instead of import since order matters
 require('../styles/globals.css');
@@ -16,13 +17,24 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
     <Providers>
       <Header />
       <Component {...pageProps} />
-      <Toaster
-        position="bottom-center"
-        containerStyle={{
-          margin: "auto",
-          width: "420px",
-        }}
-      />
+      <BrowserView>
+        <Toaster
+          position="bottom-left"
+          containerStyle={{
+            width: "420px",
+          }}
+        />
+      </BrowserView>
+      <MobileView>
+        <Toaster
+          position="bottom-center"
+          containerStyle={{
+            margin: "0 auto",
+            width: "90%",
+            maxWidth: "420px",
+          }}
+        />
+      </MobileView>
       <Footer />
     </Providers>
   );

@@ -1,8 +1,13 @@
-import { NFT_STORAGE_API_KEY } from "../../utils/globals";
 import { Alert, Box, Button, Collapse, Input, VStack } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2, Metadata } from "@metaplex-foundation/mpl-token-metadata";
-import { NATIVE_MINT } from "@solana/spl-token";
+import { Program } from "@project-serum/anchor";
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  NATIVE_MINT,
+  Token,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import {
@@ -10,35 +15,37 @@ import {
   MarketplaceSdk,
 } from "@strata-foundation/marketplace-sdk";
 import {
-  truthy,
   usePrimaryClaimedTokenRef,
   useProvider,
-  usePublicKey,
 } from "@strata-foundation/react";
+import BN from "bn.js";
 import {
   getMintInfo,
   sendMultipleInstructions,
 } from "@strata-foundation/spl-utils";
 import { useRouter } from "next/router";
-import React from "react";
+import React, { useEffect } from "react";
 import { useAsyncCallback } from "react-async-hook";
 import { FormProvider, useForm } from "react-hook-form";
 import * as yup from "yup";
 import { useMarketplaceSdk } from "../../contexts/marketplaceSdkContext";
+import { NFT_STORAGE_API_KEY } from "../../utils/globals";
 import { route, routes } from "../../utils/routes";
+import { Disclosures, disclosuresSchema, IDisclosures } from "./Disclosures";
 import { FormControlWithError } from "./FormControlWithError";
 import { MintSelect } from "./MintSelect";
 import { Recipient } from "./Recipient";
 import { IMetadataFormProps, TokenMetadataInputs } from "./TokenMetadataInputs";
 import {
-  IUseExistingMintProps as IUseExistingMintProps,
+  IUseExistingMintProps,
   UseExistingMintInputs,
 } from "./UseExistingMintInputs";
-import { Disclosures, disclosuresSchema, IDisclosures } from "./Disclosures";
 
 interface ILbpFormProps
   extends Partial<IMetadataFormProps>,
     IUseExistingMintProps {
+  useCandyMachine: boolean;
+  candyMachineId: string;
   mint: string;
   symbol?: string;
   authority: string;
@@ -54,19 +61,24 @@ interface ILbpFormProps
 const validationSchema = yup.object({
   mint: yup.string().required(),
   useExistingMint: yup.boolean(),
+  useCandyMachine: yup.boolean(),
   existingMint: yup.string().when("useExistingMint", {
     is: true,
     then: yup.string().required(),
   }),
+  candyMachineId: yup.string().when("useCandyMachine", {
+    is: true,
+    then: yup.string().required(),
+  }),
   image: yup.mixed(),
-  name: yup.string().when("useExistingMint", {
-    is: false,
+  name: yup.string().when(["useExistingMint", "useCandyMachine"], {
+    is: (one: boolean, two: boolean) => !one && !two,
     then: yup.string().required().min(2),
   }),
   description: yup.string(),
   symbol: yup.string().when("useExistingMint", {
     is: false,
-    then: yup.string().required().min(2).max(10),
+    then: yup.string(),
   }),
   authority: yup.string().required(),
   startPrice: yup.number().min(0).required(),
@@ -78,8 +90,8 @@ const validationSchema = yup.object({
     .transform((v) => {
       return v === "" || isNaN(v) ? null : v;
     })
-    .when("useExistingMint", {
-      is: false,
+    .when(["useExistingMint", "useCandyMachine"], {
+      is: (one: boolean, two: boolean) => !one && !two,
       then: yup.number().min(0).required(),
     }),
   mintCap: yup.number().min(1).required(),
@@ -111,11 +123,22 @@ async function createLiquidityBootstrapper(
     ).decimals;
 
     metadata = new DataV2({ ...fetched.data, collection: null, uses: null });
+  } else if (values.useCandyMachine) {
+    metadata = new DataV2({
+      // Max name len 32
+      name: "Candymachine Mint Token",
+      symbol: "MINT",
+      uri: "",
+      sellerFeeBasisPoints: 0,
+      creators: null,
+      collection: null,
+      uses: null,
+    });
   } else {
     const uri = await marketplaceSdk.tokenMetadataSdk.uploadMetadata({
       provider: values.provider,
       name: values.name!,
-      symbol: values.symbol!,
+      symbol: values.symbol! || "",
       description: values.description,
       image: values.image,
       mint: targetMintKeypair.publicKey,
@@ -124,7 +147,7 @@ async function createLiquidityBootstrapper(
     metadata = new DataV2({
       // Max name len 32
       name: values.name!.substring(0, 32),
-      symbol: values.symbol!.substring(0, 10),
+      symbol: (values.symbol || "").substring(0, 10),
       uri,
       sellerFeeBasisPoints: 0,
       creators: null,
@@ -147,7 +170,7 @@ async function createLiquidityBootstrapper(
     interval: Number(values.interval),
     maxSupply: Number(values.mintCap),
     bondingArgs: {
-      targetMintDecimals: Number(values.decimals),
+      targetMintDecimals: Number(values.decimals || 0),
       goLiveDate: values.goLiveDate,
     },
   });
@@ -162,6 +185,63 @@ async function createLiquidityBootstrapper(
       });
     instructions.push(retrievalInstrs.instructions);
     signers.push(retrievalInstrs.signers);
+  }
+
+  // Update the candymachine to use this mint
+  if (values.useCandyMachine) {
+    const candyMachineId = new PublicKey(values.candyMachineId);
+    const incinerator = new PublicKey(
+      "1nc1nerator11111111111111111111111111111111"
+    );
+    const incineratorAta = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      targetMint,
+      incinerator,
+      true
+    );
+    const lastInstrs = instructions[instructions.length - 1];
+    lastInstrs.push(
+      Token.createAssociatedTokenAccountInstruction(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        targetMint,
+        incineratorAta,
+        incinerator,
+        marketplaceSdk.provider.wallet.publicKey
+      )
+    );
+    const candymachineIdl = await Program.fetchIdl(
+      new PublicKey("cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ"),
+      marketplaceSdk.provider
+    );
+    const candymachineProgram = new Program(
+      candymachineIdl!,
+      new PublicKey("cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ"),
+      marketplaceSdk.provider
+    );
+    const candymachine = await candymachineProgram.account.candyMachine.fetch(
+      candyMachineId
+    );
+    const ix = await candymachineProgram.instruction.updateCandyMachine(
+      {
+        ...candymachine.data,
+        price: new BN(1),
+      },
+      {
+        accounts: {
+          candyMachine: candyMachineId,
+          authority: marketplaceSdk.provider.wallet.publicKey,
+          wallet: incineratorAta,
+        },
+      }
+    );
+    ix.keys.push({
+      pubkey: targetMint,
+      isWritable: false,
+      isSigner: false,
+    });
+    lastInstrs.push(ix);
   }
 
   await sendMultipleInstructions(
@@ -188,6 +268,7 @@ export const LbcForm: React.FC<{
     formState: { errors, isSubmitting },
   } = formProps;
   const { publicKey } = useWallet();
+  console.log(errors);
   const { info: tokenRef } = usePrimaryClaimedTokenRef(publicKey);
   const { awaitingApproval } = useProvider();
   const { execute, loading, error } = useAsyncCallback(
@@ -195,12 +276,18 @@ export const LbcForm: React.FC<{
   );
   const { marketplaceSdk } = useMarketplaceSdk();
   const router = useRouter();
-  const { authority, mint, useExistingMint } = watch();
-  const mintKey = usePublicKey(mint);
+  const { authority, mint, useExistingMint, useCandyMachine } = watch();
+  useEffect(() => {
+    setValue("useCandyMachine", !!router.query["candymachine"]);
+  }, [router, setValue]);
 
   const onSubmit = async (values: ILbpFormProps) => {
     const mintKey = await execute(marketplaceSdk!, values, nftStorageApiKey);
-    router.push(route(routes.tokenLbc, { mintKey: mintKey.toBase58() }));
+    if (values.useCandyMachine) {
+      router.push(route(routes.mintLbc, { candyMachineId: values.candyMachineId }));
+    } else {
+      router.push(route(routes.tokenLbc, { mintKey: mintKey.toBase58() }));
+    }
   };
 
   const authorityRegister = register("authority");
@@ -209,9 +296,19 @@ export const LbcForm: React.FC<{
     <FormProvider {...formProps}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <VStack spacing={8}>
-          <UseExistingMintInputs />
+          { !useCandyMachine && <UseExistingMintInputs /> }
           <Box w="full">
-            <Collapse in={!useExistingMint} animateOpacity>
+            <Collapse in={useCandyMachine} animateOpacity>
+              <FormControlWithError
+                id="candyMachineId"
+                help="The id of the candymachine"
+                label="Candy Machine ID"
+                errors={errors}
+              >
+                <Input {...register("candyMachineId")} />
+              </FormControlWithError>
+            </Collapse>
+            <Collapse in={!useExistingMint && !useCandyMachine} animateOpacity>
               <VStack spacing={8}>
                 <TokenMetadataInputs entityName="token" />
                 <FormControlWithError
