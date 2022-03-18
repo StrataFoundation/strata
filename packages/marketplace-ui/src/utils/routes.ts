@@ -23,7 +23,7 @@ export const routes: Record<string, IRoute> = {
     params: ["mintKey"],
   },
   mintLbc: {
-    path: "/lbcs/token-offering/:mintKey",
+    path: "/lbcs/mint/:candyMachineId",
     params: ["candyMachineId"],
   },
   tokenOffering: {
