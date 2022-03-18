@@ -19,7 +19,7 @@ export const WalletModalButton: FC<ButtonProps> = ({
       if (onClick) onClick(event);
       if (!event.defaultPrevented) setVisible(!visible);
     },
-    [onClick, visible]
+    [onClick, visible, setVisible]
   );
 
   return (
@@ -31,7 +31,7 @@ export const WalletModalButton: FC<ButtonProps> = ({
       onClick={handleClick}
       {...props}
     >
-      { connected ? truncatePubkey(publicKey!) : children }
+      {connected ? truncatePubkey(publicKey!) : children}
     </Button>
   );
 };
