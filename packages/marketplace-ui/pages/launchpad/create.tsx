@@ -76,7 +76,7 @@ export const CreateToken: FC = () => {
                 direction={{ base: "row", md: "column" }}
                 textAlign={{ base: "left", md: "center" }}
               >
-                <Flex justifyContent="center" alginItem="center" flexShrink={0}>
+                <Flex justifyContent="center" alignItem="center" flexShrink={0}>
                   <Image
                     src={illustration}
                     alt={`${value}-illustration`}

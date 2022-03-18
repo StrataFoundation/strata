@@ -157,36 +157,57 @@ export function TokenMetadataInputs({
         label="Storage Provider"
         errors={errors}
       >
-        <Stack direction="row" {...group} justifyContent="center">
+        <Stack
+          {...group}
+          direction={{ base: "column", md: "row" }}
+          justifyContent="center"
+          alignItems={{ base: "center", md: "normal" }}
+        >
           {storageOptions.map(({ value, heading, illustration, helpText }) => {
             const radio = getRadioProps({ value });
             return (
               <RadioCard {...radio} isChecked={provider === value} key={value}>
-                <Stack align="center">
-                  <Image
-                    src={illustration}
-                    alt={`${value}-illustration`}
-                    width="50px"
-                  />
-                  <Text fontWeight="bold" fontSize="md">
-                    {heading}
-                  </Text>
-                </Stack>
                 <Flex
-                  flexGrow={1}
-                  justifyContent="center"
-                  alignItems="center"
-                  w="full"
-                  textAlign="center"
+                  h="full"
+                  direction={{ base: "row", md: "column" }}
+                  textAlign={{ base: "left", md: "center" }}
                 >
-                  <Text
-                    fontSize="xs"
-                    color="gray.500"
-                    px={2}
-                    textAlign="center"
+                  <Flex
+                    justifyContent="center"
+                    alignItem="center"
+                    flexShrink={0}
+                    mr={{ base: 4, md: 0 }}
                   >
-                    {helpText}
-                  </Text>
+                    <Image
+                      src={illustration}
+                      alt={`${value}-illustration`}
+                      height="50px"
+                    />
+                  </Flex>
+                  <Flex
+                    flexGrow={1}
+                    h="full"
+                    direction="column"
+                    alignItems={{ base: "start", md: "center" }}
+                    justifyContent={{ base: "center", md: "initial" }}
+                  >
+                    <Text
+                      fontWeight="bold"
+                      fontSize="md"
+                      pt={{ base: 0, md: 4 }}
+                    >
+                      {heading}
+                    </Text>
+                    <Flex
+                      w="full"
+                      flexGrow={{ base: 0, md: 1 }}
+                      alignItems={{ base: "start", md: "center" }}
+                    >
+                      <Text fontSize="xs" color="gray.500">
+                        {helpText}
+                      </Text>
+                    </Flex>
+                  </Flex>
                 </Flex>
               </RadioCard>
             );
