@@ -36,6 +36,11 @@ module.exports = {
         destination: `${process.env.NEXT_PUBLIC_BLOG_URL}/:path*`,
         permanent: false,
       },
+      {
+        source: "/riptide",
+        destination: `${process.env.NEXT_PUBLIC_APP_URL}/lbcs/mint/CY3g38FGE4SaJA2xfLaKhmrRj9vRR69UE75niv6gqPJa`,
+        permanent: false,
+      },
     ];
   },
 };
