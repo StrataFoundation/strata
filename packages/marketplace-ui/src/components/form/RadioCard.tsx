@@ -1,13 +1,5 @@
 import React, { FC } from "react";
-import {
-  Box,
-  Flex,
-  Stack,
-  Text,
-  Radio,
-  useRadio,
-  UseRadioProps,
-} from "@chakra-ui/react";
+import { Box, Flex, Stack, useRadio, UseRadioProps } from "@chakra-ui/react";
 
 export type RadioCardProps = {
   helpText?: string;
@@ -16,7 +8,6 @@ export type RadioCardProps = {
 
 export const RadioCard: FC<RadioCardProps> = ({
   children,
-  helpText,
   disabled = false,
   ...props
 }) => {
@@ -28,7 +19,7 @@ export const RadioCard: FC<RadioCardProps> = ({
   return (
     <Box
       w="full"
-      maxW="242px"
+      maxW={{ base: "auto", md: "242px" }}
       flexGrow={1}
       flexShrink={1}
       flexBasis={0}
@@ -50,6 +41,7 @@ export const RadioCard: FC<RadioCardProps> = ({
           h="full"
           bg="white"
           borderColor="white"
+          position="relative"
           px={4}
           py={4}
           mb={2}
@@ -67,7 +59,7 @@ export const RadioCard: FC<RadioCardProps> = ({
           flexDirection="column"
           justifyContent="space-between"
         >
-          <Flex justifyContent="right">
+          <Flex justifyContent="right" position="absolute" top={2} right={2}>
             <Flex
               w={4}
               h={4}
@@ -87,13 +79,6 @@ export const RadioCard: FC<RadioCardProps> = ({
             </Flex>
           </Flex>
           {children}
-          <Flex flexGrow={1} alignItems="center">
-            {helpText && (
-              <Text fontSize="xs" color="gray.500" px={2} textAlign="center">
-                {helpText}
-              </Text>
-            )}
-          </Flex>
         </Stack>
       </Box>
     </Box>

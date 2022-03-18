@@ -1,5 +1,6 @@
 import {
   Button,
+  Flex,
   FormControl,
   FormHelperText,
   FormLabel,
@@ -161,12 +162,7 @@ export function TokenMetadataInputs({
           {storageOptions.map(({ value, heading, illustration, helpText }) => {
             const radio = getRadioProps({ value });
             return (
-              <RadioCard
-                {...radio}
-                isChecked={provider === value}
-                key={value}
-                helpText={helpText}
-              >
+              <RadioCard {...radio} isChecked={provider === value} key={value}>
                 <Stack align="center">
                   <Image
                     src={illustration}
@@ -177,6 +173,22 @@ export function TokenMetadataInputs({
                     {heading}
                   </Text>
                 </Stack>
+                <Flex
+                  flexGrow={1}
+                  justifyContent="center"
+                  alignItems="center"
+                  w="full"
+                  textAlign="center"
+                >
+                  <Text
+                    fontSize="xs"
+                    color="gray.500"
+                    px={2}
+                    textAlign="center"
+                  >
+                    {helpText}
+                  </Text>
+                </Flex>
               </RadioCard>
             );
           })}

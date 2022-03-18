@@ -50,7 +50,12 @@ export const LaunchpadLayout: FC<LaunchpadLayoutProps> = ({
       <Box w="full" py={12} bgColor="gray.100">
         <Container maxW="container.lg">
           <Stack spacing={8} justifyContent="center">
-            <Stack alignItems="center" fontWeight="bold" lineHeight="normal">
+            <Stack
+              alignItems="center"
+              textAlign="center"
+              fontWeight="bold"
+              lineHeight="normal"
+            >
               <Text fontSize="2xl">{heading}</Text>
               <Text color="gray.400">{subHeading}</Text>
             </Stack>

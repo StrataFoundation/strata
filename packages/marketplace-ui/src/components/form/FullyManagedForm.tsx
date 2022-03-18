@@ -16,6 +16,7 @@ import {
   Switch,
   useRadioGroup,
   VStack,
+  Flex,
 } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
@@ -124,7 +125,7 @@ async function createFullyManaged(
     description: values.description,
     image: values.image,
     mint: targetMintKeypair.publicKey,
-    nftStorageApiKey
+    nftStorageApiKey,
   });
   const metadata = new DataV2({
     // Max name len 32
@@ -182,9 +183,7 @@ async function createFullyManaged(
 
 export const FullyManagedForm: React.FC<{
   nftStorageApiKey?: string;
-}> = ({
-  nftStorageApiKey = NFT_STORAGE_API_KEY,
-}) => {
+}> = ({ nftStorageApiKey = NFT_STORAGE_API_KEY }) => {
   const formProps = useForm<IFullyManagedForm>({
     resolver: yupResolver(validationSchema),
     defaultValues: {
@@ -290,7 +289,7 @@ export const FullyManagedForm: React.FC<{
                   const radio = getRadioProps({ value });
 
                   return (
-                    <RadioCard key={value} helpText={helpText} {...radio}>
+                    <RadioCard key={value} {...radio}>
                       <Stack>
                         <Image
                           src={illustration}
@@ -302,6 +301,22 @@ export const FullyManagedForm: React.FC<{
                           {heading}
                         </Text>
                       </Stack>
+                      <Flex
+                        flexGrow={1}
+                        justifyContent="center"
+                        alignItems="center"
+                        w="full"
+                        textAlign="center"
+                      >
+                        <Text
+                          fontSize="xs"
+                          color="gray.500"
+                          px={2}
+                          textAlign="center"
+                        >
+                          {helpText}
+                        </Text>
+                      </Flex>
                     </RadioCard>
                   );
                 }

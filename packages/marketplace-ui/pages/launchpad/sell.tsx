@@ -8,7 +8,6 @@ import {
   Text,
   useRadioGroup,
   useClipboard,
-  Fade,
 } from "@chakra-ui/react";
 import { LaunchpadLayout } from "@/components/launchpad";
 import { RadioCard } from "@/components/form/RadioCard";
@@ -125,23 +124,59 @@ export const SellToken: FC = () => {
             </Box>
           </Flex>
         )}
-        <Stack direction="row" {...group} justifyContent="center">
+        <Stack
+          {...group}
+          direction={{ base: "column", md: "row" }}
+          justifyContent="center"
+          alignItems={{ base: "center", md: "normal" }}
+        >
           {options.map(({ value, heading, illustration, helpText }) => {
             const radio = getRadioProps({ value });
 
             return (
               <RadioCard key={value} helpText={helpText} {...radio}>
-                <Stack>
-                  <Image
-                    src={illustration}
-                    alt={`${value}-illustration`}
-                    height="100px"
-                    width="100%"
-                  />
-                  <Text fontWeight="bold" fontSize="md">
-                    {heading}
-                  </Text>
-                </Stack>
+                <Flex
+                  h="full"
+                  direction={{ base: "row", md: "column" }}
+                  textAlign={{ base: "left", md: "center" }}
+                >
+                  <Flex
+                    justifyContent="center"
+                    alginItem="center"
+                    flexShrink={0}
+                  >
+                    <Image
+                      src={illustration}
+                      alt={`${value}-illustration`}
+                      height="70px"
+                      width="100%"
+                    />
+                  </Flex>
+                  <Flex
+                    flexGrow={1}
+                    h="full"
+                    direction="column"
+                    alignItems={{ base: "start", md: "center" }}
+                    justifyContent={{ base: "center", md: "initial" }}
+                  >
+                    <Text
+                      fontWeight="bold"
+                      fontSize="md"
+                      pt={{ base: 0, md: 4 }}
+                    >
+                      {heading}
+                    </Text>
+                    <Flex
+                      w="full"
+                      flexGrow={{ base: 0, md: 1 }}
+                      alignItems={{ base: "start", md: "center" }}
+                    >
+                      <Text fontSize="xs" color="gray.500">
+                        {helpText}
+                      </Text>
+                    </Flex>
+                  </Flex>
+                </Flex>
               </RadioCard>
             );
           })}
