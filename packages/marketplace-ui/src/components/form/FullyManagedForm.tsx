@@ -66,7 +66,7 @@ interface IFullyManagedForm extends IMetadataFormProps {
 
 const validationSchema = yup.object({
   mint: yup.string().required(),
-  image: yup.mixed(),
+  image: yup.mixed().required(),
   name: yup.string().required().min(2),
   description: yup.string().required().min(2),
   symbol: yup.string().required().min(2),

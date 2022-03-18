@@ -5,7 +5,12 @@ import {
   FormLabel,
   HStack,
   Icon,
-  Image, Input, Stack, Text, Textarea, useRadioGroup
+  Image,
+  Input,
+  Stack,
+  Text,
+  Textarea,
+  useRadioGroup,
 } from "@chakra-ui/react";
 import { StorageProvider } from "@strata-foundation/spl-utils";
 import React, { useEffect, useState } from "react";
@@ -13,16 +18,28 @@ import { useFormContext } from "react-hook-form";
 import { RiCheckFill } from "react-icons/ri";
 import { FormControlWithError } from "./FormControlWithError";
 import { RadioCard } from "./RadioCard";
+import DefaultTokenImage from "../../../public/default-token.png";
 
 export interface IMetadataFormProps {
   image: File;
   name: string;
   description: string;
-  provider: StorageProvider
+  provider: StorageProvider;
 }
 
-export function TokenMetadataInputs({ entityName = "post" }: { entityName?: string}) {
-  const { register, watch, formState: { errors }, clearErrors, setValue, setError } = useFormContext<IMetadataFormProps>()
+export function TokenMetadataInputs({
+  entityName = "post",
+}: {
+  entityName?: string;
+}) {
+  const {
+    register,
+    watch,
+    formState: { errors },
+    clearErrors,
+    setValue,
+    setError,
+  } = useFormContext<IMetadataFormProps>();
   const { image } = watch();
 
   const [imgUrl, setImgUrl] = useState<string>();
@@ -47,8 +64,9 @@ export function TokenMetadataInputs({ entityName = "post" }: { entityName?: stri
       illustration: "/arweave.png",
       helpText:
         "Instant storage for your token image, but you will need to pay a small fee in Sol for the upload",
-    }
+    },
   ];
+
   useEffect(() => {
     if (image) {
       const reader = new FileReader();
@@ -64,10 +82,10 @@ export function TokenMetadataInputs({ entityName = "post" }: { entityName?: stri
 
   // Default to nft.storage
   useEffect(() => {
-    setValue("provider", StorageProvider.NftStorage)
+    setValue("provider", StorageProvider.NftStorage);
   }, [setValue]);
 
-  const provider = watch('provider');
+  const provider = watch("provider");
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files![0];
@@ -77,8 +95,9 @@ export function TokenMetadataInputs({ entityName = "post" }: { entityName?: stri
       // @ts-ignore
       setError("image", {
         type: "manual",
-        message: `The file ${file.name} is too small. It is ${Math.round(10 * sizeKB) / 10
-          }KB but should be at least 25KB.`,
+        message: `The file ${file.name} is too small. It is ${
+          Math.round(10 * sizeKB) / 10
+        }KB but should be at least 25KB.`,
       });
       return;
     }
@@ -110,6 +129,7 @@ export function TokenMetadataInputs({ entityName = "post" }: { entityName?: stri
           >
             Choose
           </Button>
+
           {image && (
             <HStack spacing={2} align="center">
               <Image alt={image.name} w="32px" h="32px" src={imgUrl} />
