@@ -268,7 +268,6 @@ export const LbcForm: React.FC<{
     formState: { errors, isSubmitting },
   } = formProps;
   const { publicKey } = useWallet();
-  console.log(errors);
   const { info: tokenRef } = usePrimaryClaimedTokenRef(publicKey);
   const { awaitingApproval } = useProvider();
   const { execute, loading, error } = useAsyncCallback(

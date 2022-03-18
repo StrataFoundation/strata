@@ -13,7 +13,7 @@ import {
   SYSVAR_SLOT_HASHES_PUBKEY,
   TransactionInstruction,
 } from "@solana/web3.js";
-import { IMintArgs } from "@strata-foundation/marketplace-ui";
+import { IMintArgs } from "../MintButton";
 import { sendMultipleInstructions } from "@strata-foundation/spl-utils";
 
 import {
