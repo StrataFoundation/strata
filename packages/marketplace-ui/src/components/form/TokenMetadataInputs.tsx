@@ -66,6 +66,7 @@ export function TokenMetadataInputs({
         "Instant storage for your token image, but you will need to pay a small fee in Sol for the upload",
     },
   ];
+
   useEffect(() => {
     if (image) {
       const reader = new FileReader();
@@ -128,6 +129,7 @@ export function TokenMetadataInputs({
           >
             Choose
           </Button>
+
           {image && (
             <HStack spacing={2} align="center">
               <Image alt={image.name} w="32px" h="32px" src={imgUrl} />
