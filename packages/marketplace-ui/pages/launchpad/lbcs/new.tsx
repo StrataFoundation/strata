@@ -1,8 +1,8 @@
-import { LbcForm } from "@/components/form/LbcForm";
 import { FormContainer } from "@/components/FormContainer";
 import { NextPage } from "next";
+import { LbcForm } from "@/components/form/LbcForm";
 
-export const NewBounty: NextPage = () => {
+export const NewLBC: NextPage = () => {
   return (
     <FormContainer title="New LBC">
       <LbcForm />
@@ -10,4 +10,4 @@ export const NewBounty: NextPage = () => {
   );
 };
 
-export default NewBounty;
+export default NewLBC;

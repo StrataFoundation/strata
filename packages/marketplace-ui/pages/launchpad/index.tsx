@@ -55,7 +55,6 @@ export const LaunchPad: FC = ({ children }) => {
       value: LandingOption.LBC,
       heading: "Dynamic Pricing NFT Mint",
       illustration: "/dynamic-pricing-mint.svg",
-      disabled: true,
       helpText:
         "Sell NFTs from a Metaplex CandyMachine using Strata’s dynamic price discovery. This allows you to avoid bots without the need of a whitelist.",
     },
@@ -77,6 +76,9 @@ export const LaunchPad: FC = ({ children }) => {
 
     if (selectedOption === LandingOption.Fundraise)
       router.push(routes.newBounty.path);
+
+    if (selectedOption === LandingOption.LBC)
+      router.push(routes.newLbc.path + "?candymachine=true")
   };
 
   return (

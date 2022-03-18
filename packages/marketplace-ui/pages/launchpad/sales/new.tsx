@@ -2,7 +2,7 @@ import { SaleForm } from "@/components/form/SaleForm";
 import { FormContainer } from "@/components/FormContainer";
 import { NextPage } from "next";
 
-export const NewBounty: NextPage = () => {
+export const NewSale: NextPage = () => {
   return (
     <FormContainer title="New Sale">
       <SaleForm />
@@ -10,4 +10,4 @@ export const NewBounty: NextPage = () => {
   );
 };
 
-export default NewBounty;
+export default NewSale;
