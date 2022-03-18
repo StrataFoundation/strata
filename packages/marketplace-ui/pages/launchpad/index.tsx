@@ -78,7 +78,7 @@ export const LaunchPad: FC = ({ children }) => {
       router.push(routes.newBounty.path);
 
     if (selectedOption === LandingOption.LBC)
-      router.push(routes.newLbc.path + "?candymachine=true")
+      router.push(routes.newLbc.path + "?candymachine=true");
   };
 
   return (
@@ -107,7 +107,7 @@ export const LaunchPad: FC = ({ children }) => {
                 >
                   <Flex
                     justifyContent="center"
-                    alginItem="center"
+                    alignItme="center"
                     flexShrink={0}
                   >
                     <Image

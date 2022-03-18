@@ -90,18 +90,23 @@ export const Header: React.FC = () => {
               direction={["column", "row", "row", "row"]}
               pt="0"
             >
-              <TwitterLink />
-              {connected && (
-                <Button
-                  size="sm"
-                  _hover={{ backgroundColor: "black.500" }}
-                  variant="ghost"
-                  onClick={() => disconnect()}
-                >
-                  Disconnect
-                </Button>
-              )}
-              <WalletModalButton />
+              <Box display={{ base: "none", md: "block" }}>
+                <TwitterLink />
+                {connected && (
+                  <Button
+                    size="sm"
+                    _hover={{ backgroundColor: "black.500" }}
+                    variant="ghost"
+                    onClick={() => disconnect()}
+                  >
+                    Disconnect
+                  </Button>
+                )}
+                <WalletModalButton />
+              </Box>
+              <Box display={{ base: "block", md: "none" }}>
+                <WalletModalButton size="sm" />
+              </Box>
             </HStack>
           </Container>
         </Center>
