@@ -19,7 +19,6 @@ import { useFormContext } from "react-hook-form";
 import { RiCheckFill } from "react-icons/ri";
 import { FormControlWithError } from "./FormControlWithError";
 import { RadioCard } from "./RadioCard";
-import DefaultTokenImage from "../../../public/default-token.png";
 
 export interface IMetadataFormProps {
   image: File;
