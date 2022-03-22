@@ -1,4 +1,4 @@
-import { GA_TRACKING_ID } from "@/constants";
+import { GA_TRACKING_ID } from "../../constants";
 
 // https://developers.google.com/analytics/devguides/collection/gtagjs/pages
 export const pageview = (url: URL): void => {

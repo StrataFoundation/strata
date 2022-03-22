@@ -7,7 +7,7 @@ import { Header } from "../src/components/Header";
 import { Footer } from "../src/components/Footer";
 import { Providers } from "../src/components/Providers";
 import { BrowserView, MobileView } from "react-device-detect";
-import { IS_PRODUCTION } from "@/constants";
+import { IS_PRODUCTION } from "../constants";
 import * as gtag from "@/utils/gtag";
 
 // Use require instead of import since order matters
