@@ -7,7 +7,6 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
 import {
-  truthy,
   useMintTokenRef,
   usePrimaryClaimedTokenRef,
   useProvider,

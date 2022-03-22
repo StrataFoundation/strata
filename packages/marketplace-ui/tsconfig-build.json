@@ -3,6 +3,13 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "baseUrl": "src",
+    "paths": {
+      "@/components/*": ["components/*"],
+      "@/contexts/*": ["contexts/*"],
+      "@/constants": ["constants/index"],
+      "@/utils/*": ["utils/*"],
+      "@/hooks/*": ["hooks/*"]
+    },
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": false,
     "jsx": "react",
@@ -19,7 +26,7 @@
     "strict": true,
     "target": "es6",
     "typeRoots": ["node_modules/@types"],
-    "preserveSymlinks": true,
+    "preserveSymlinks": true
   },
   "include": ["src"],
   "exclude": ["./dist/**/*", "./node_modules"]
