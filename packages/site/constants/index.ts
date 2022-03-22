@@ -18,3 +18,8 @@ export const BLOG_URL =
 
 export const DISCORD_INVITE_URL =
   process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || "https://discord.gg/XQhCFg77WM";
+
+export const GA_TRACKING_ID =
+  process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS || "G-6XB3Q2M01L";
+
+export const IS_PRODUCTION = process.env.NODE_ENV === "production";
