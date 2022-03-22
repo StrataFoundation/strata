@@ -1,4 +1,4 @@
-import { NFT_STORAGE_API_KEY } from "../../../constants";
+import { NFT_STORAGE_API_KEY } from "@/constants";
 import { Alert, Button, Input, VStack } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
