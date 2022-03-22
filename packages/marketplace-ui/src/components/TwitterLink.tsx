@@ -15,7 +15,7 @@ import { useLinkTwitter } from "../hooks/useLinkTwitter";
 import React, { useEffect } from "react";
 import { useAsync } from "react-async-hook";
 import { FaTwitter } from "react-icons/fa";
-import { WUMBO_IDENTITY_SERVICE_URL } from "@/constants";
+import { WUMBO_IDENTITY_SERVICE_URL } from "../constants";
 
 const link = async (
   publicKey: PublicKey | null,

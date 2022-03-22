@@ -1,4 +1,4 @@
-import { NFT_STORAGE_API_KEY } from "@/constants";
+import { NFT_STORAGE_API_KEY } from "../../constants";
 import { Alert, Button, Input, Switch, VStack } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
@@ -9,7 +9,7 @@ import {
   u64,
 } from "@solana/spl-token";
 import { Keypair, PublicKey, Signer } from "@solana/web3.js";
-import { truthy, useProvider, useStrataSdks } from "@strata-foundation/react";
+import { useProvider, useStrataSdks } from "@strata-foundation/react";
 import {
   createMintInstructions,
   sendInstructions,

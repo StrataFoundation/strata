@@ -24,12 +24,11 @@ import { useRouter } from "next/router";
 import React from "react";
 import { useAsync, useAsyncCallback } from "react-async-hook";
 import { DefaultValues, FormProvider, useForm } from "react-hook-form";
-import { route, routes } from "../../utils/routes";
 import * as yup from "yup";
 import { FormControlWithError } from "./FormControlWithError";
 import { Recipient } from "./Recipient";
 import { IMetadataFormProps, TokenMetadataInputs } from "./TokenMetadataInputs";
-import { NFT_STORAGE_API_KEY } from "@/constants";
+import { NFT_STORAGE_API_KEY } from "../../constants";
 
 interface IEditBountyFormProps extends IMetadataFormProps {
   shortName: string;
