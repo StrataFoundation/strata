@@ -8,7 +8,7 @@ import { Footer } from "../src/components/Footer";
 import { Providers } from "../src/components/Providers";
 import { BrowserView, MobileView } from "react-device-detect";
 import { IS_PRODUCTION } from "../src/constants";
-import * as gtag from "@/utils/gtag";
+import * as gtag from "../src/utils/gtag";
 
 // Use require instead of import since order matters
 require("../styles/globals.css");
