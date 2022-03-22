@@ -3,6 +3,13 @@
   "exclude": ["node_modules"],
   "compilerOptions": {
     "baseUrl": ".",
+    "paths": {
+      "@/components/*": ["src/components/*"],
+      "@/contexts/*": ["src/contexts/*"],
+      "@/constants": ["src/constants/index"],
+      "@/utils/*": ["src/utils/*"],
+      "@/hooks/*": ["src/hooks/*"]
+    },
     "outDir": "./dist",
     "target": "es6",
     "lib": ["dom", "dom.iterable", "esnext"],
