@@ -30,7 +30,7 @@ export interface IUploadMetadataArgs {
   name: string;
   symbol: string;
   description?: string;
-  image?: File;
+  image: File;
   creators?: Creator[];
   attributes?: Attribute[];
   animationUrl?: string;
@@ -329,7 +329,7 @@ export class SplTokenMetadata {
     if (args.provider === "arweave") {
       return this.createArweaveMetadata({
         ...args,
-        image: args.image?.name,
+        image: args.image.name,
         files: [args.image].filter(truthy),
         mint: args.mint!
       });
