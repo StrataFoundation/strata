@@ -1,5 +1,5 @@
 import { WebAuth, AuthOptions } from "auth0-js";
-import { SITE_URL } from "../constants";
+import { SITE_URL } from "../../constants";
 
 export const auth0Options: AuthOptions = {
   domain: process.env.REACT_APP_AUTH0_DOMAIN || "wumbo.us.auth0.com",

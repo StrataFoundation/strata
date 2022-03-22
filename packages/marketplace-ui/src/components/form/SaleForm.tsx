@@ -33,7 +33,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { BsChevronDown } from "react-icons/bs";
 import * as yup from "yup";
 import { useMarketplaceSdk } from "../../contexts/marketplaceSdkContext";
-import { NFT_STORAGE_API_KEY } from "../../constants";
+import { NFT_STORAGE_API_KEY } from "../../../constants";
 import { route, routes } from "../../utils/routes";
 import { Disclosures, disclosuresSchema, IDisclosures } from "./Disclosures";
 import { FormControlWithError } from "./FormControlWithError";

@@ -12,9 +12,8 @@ import {
   TorusWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
 import React, { FC, useMemo } from "react";
-import { SOLANA_URL } from "../constants";
+import { SOLANA_URL } from "../../constants";
 
-// export const DEFAULT_ENDPOINT = "https://wumbo.genesysgo.net";
 export const DEFAULT_ENDPOINT = SOLANA_URL;
 
 export const Wallet = ({
