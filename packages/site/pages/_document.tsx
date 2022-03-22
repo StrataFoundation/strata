@@ -1,6 +1,4 @@
 import Document, { Html, Head, Main, NextScript } from "next/document";
-import { DefaultSeo } from "next-seo";
-import SEO from "../next-seo.config";
 import { GA_TRACKING_ID, IS_PRODUCTION } from "@/constants";
 
 export default class MyDocument extends Document {
@@ -8,7 +6,6 @@ export default class MyDocument extends Document {
     return (
       <Html>
         <Head>
-          <DefaultSeo {...SEO} />
           {/* enable analytics script only for production */}
           {IS_PRODUCTION && (
             <>

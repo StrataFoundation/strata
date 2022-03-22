@@ -1,11 +1,13 @@
 import "../styles/globals.css";
 import { FC, useEffect } from "react";
 import "@/utils/bufferFill";
+import { DefaultSeo } from "next-seo";
 import { AppProps } from "next/app";
 import { useRouter } from "next/router";
 import * as gtag from "@/utils/gtag";
 import { Toaster } from "react-hot-toast";
 
+import SEO from "../next-seo.config";
 import { Providers } from "@/components/Providers";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -27,6 +29,7 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
 
   return (
     <Providers>
+      <DefaultSeo {...SEO} />
       <Header />
       <Component {...pageProps} />
       <Toaster
