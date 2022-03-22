@@ -28,7 +28,7 @@ import * as yup from "yup";
 import { FormControlWithError } from "./FormControlWithError";
 import { Recipient } from "./Recipient";
 import { IMetadataFormProps, TokenMetadataInputs } from "./TokenMetadataInputs";
-import { NFT_STORAGE_API_KEY } from "@/constants";
+import { NFT_STORAGE_API_KEY } from "../../constants";
 
 interface IEditBountyFormProps extends IMetadataFormProps {
   shortName: string;

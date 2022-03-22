@@ -3,13 +3,6 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "baseUrl": "src",
-    "paths": {
-      "@/components/*": ["components/*"],
-      "@/contexts/*": ["contexts/*"],
-      "@/constants": ["constants/index"],
-      "@/utils/*": ["utils/*"],
-      "@/hooks/*": ["hooks/*"]
-    },
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": false,
     "jsx": "react",
