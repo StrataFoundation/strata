@@ -1,4 +1,4 @@
-import { NFT_STORAGE_API_KEY } from "../../utils/globals";
+import { NFT_STORAGE_API_KEY } from "../../constants";
 import {
   Alert,
   Button,

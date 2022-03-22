@@ -1,4 +1,4 @@
-import { NFT_STORAGE_API_KEY } from "../../utils/globals";
+import { NFT_STORAGE_API_KEY } from "../../constants";
 import { Alert, Button, Input, VStack } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
@@ -7,7 +7,6 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
 import {
-  truthy,
   useMintTokenRef,
   usePrimaryClaimedTokenRef,
   useProvider,

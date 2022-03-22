@@ -1,5 +1,10 @@
 import {
-  Alert, Button, Center, Input, Spinner, VStack
+  Alert,
+  Button,
+  Center,
+  Input,
+  Spinner,
+  VStack,
 } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2, Metadata } from "@metaplex-foundation/mpl-token-metadata";
@@ -7,9 +12,11 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
 import {
-  truthy, useProvider, useStrataSdks,
+  truthy,
+  useProvider,
+  useStrataSdks,
   useTokenBondingFromMint,
-  useTokenMetadata
+  useTokenMetadata,
 } from "@strata-foundation/react";
 import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import { SplTokenMetadata } from "@strata-foundation/spl-utils";
@@ -17,12 +24,11 @@ import { useRouter } from "next/router";
 import React from "react";
 import { useAsync, useAsyncCallback } from "react-async-hook";
 import { DefaultValues, FormProvider, useForm } from "react-hook-form";
-import { route, routes } from "../../utils/routes";
 import * as yup from "yup";
 import { FormControlWithError } from "./FormControlWithError";
 import { Recipient } from "./Recipient";
 import { IMetadataFormProps, TokenMetadataInputs } from "./TokenMetadataInputs";
-import { NFT_STORAGE_API_KEY } from "../../utils/globals";
+import { NFT_STORAGE_API_KEY } from "../../constants";
 
 interface IEditBountyFormProps extends IMetadataFormProps {
   shortName: string;
@@ -60,7 +66,7 @@ async function editBounty(
       discussion: values.discussion,
       contact: values.contact,
     }),
-    nftStorageApiKey
+    nftStorageApiKey,
   });
 
   const instructions = [];
@@ -250,7 +256,15 @@ const getFileFromUrl = async (
   return file;
 };
 
-export const EditBountyForm = ({ mintKey, onComplete, hide = new Set()}: { mintKey: PublicKey; onComplete?: () => void; hide?: Set<string> }) => {
+export const EditBountyForm = ({
+  mintKey,
+  onComplete,
+  hide = new Set(),
+}: {
+  mintKey: PublicKey;
+  onComplete?: () => void;
+  hide?: Set<string>;
+}) => {
   const { info: tokenBonding, loading: loadingBonding } =
     useTokenBondingFromMint(mintKey);
 

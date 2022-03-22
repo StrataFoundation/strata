@@ -1,35 +1,18 @@
 {
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx"
-  ],
-  "exclude": [
-    "node_modules"
-  ],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"],
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/components/*": [
-        "src/components/*"
-      ],
-      "@/contexts/*": [
-        "src/contexts/*"
-      ],
-      "@/utils/*": [
-        "src/utils/*"
-      ],
-      "@/hooks/*": [
-        "src/hooks/*"
-      ]
+      "@/components/*": ["src/components/*"],
+      "@/contexts/*": ["src/contexts/*"],
+      "@/constants": ["src/constants/index"],
+      "@/utils/*": ["src/utils/*"],
+      "@/hooks/*": ["src/hooks/*"]
     },
     "outDir": "./dist",
     "target": "es6",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,

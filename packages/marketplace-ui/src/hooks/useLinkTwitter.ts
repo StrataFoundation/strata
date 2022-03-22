@@ -1,4 +1,5 @@
 import { WebAuth, AuthOptions } from "auth0-js";
+import { SITE_URL } from "../constants";
 
 export const auth0Options: AuthOptions = {
   domain: process.env.REACT_APP_AUTH0_DOMAIN || "wumbo.us.auth0.com",
@@ -19,9 +20,6 @@ function makeId(length: number): string {
 }
 
 export const auth0 = new WebAuth(auth0Options);
-
-export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 export function useLinkTwitter(redirectUri: string = SITE_URL): {
   redirectUri: string;

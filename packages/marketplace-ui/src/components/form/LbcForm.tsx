@@ -29,7 +29,7 @@ import { useAsyncCallback } from "react-async-hook";
 import { FormProvider, useForm } from "react-hook-form";
 import * as yup from "yup";
 import { useMarketplaceSdk } from "../../contexts/marketplaceSdkContext";
-import { NFT_STORAGE_API_KEY } from "../../utils/globals";
+import { NFT_STORAGE_API_KEY } from "../../constants";
 import { route, routes } from "../../utils/routes";
 import { Disclosures, disclosuresSchema, IDisclosures } from "./Disclosures";
 import { FormControlWithError } from "./FormControlWithError";
@@ -283,7 +283,9 @@ export const LbcForm: React.FC<{
   const onSubmit = async (values: ILbpFormProps) => {
     const mintKey = await execute(marketplaceSdk!, values, nftStorageApiKey);
     if (values.useCandyMachine) {
-      router.push(route(routes.mintLbc, { candyMachineId: values.candyMachineId }));
+      router.push(
+        route(routes.mintLbc, { candyMachineId: values.candyMachineId })
+      );
     } else {
       router.push(route(routes.tokenLbc, { mintKey: mintKey.toBase58() }));
     }
@@ -295,7 +297,7 @@ export const LbcForm: React.FC<{
     <FormProvider {...formProps}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <VStack spacing={8}>
-          { !useCandyMachine && <UseExistingMintInputs /> }
+          {!useCandyMachine && <UseExistingMintInputs />}
           <Box w="full">
             <Collapse in={useCandyMachine} animateOpacity>
               <FormControlWithError
