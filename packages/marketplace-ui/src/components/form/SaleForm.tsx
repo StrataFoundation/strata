@@ -7,7 +7,7 @@ import {
   Icon,
   Input,
   useDisclosure,
-  VStack
+  VStack,
 } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2, Metadata } from "@metaplex-foundation/mpl-token-metadata";
@@ -16,15 +16,15 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import {
   FIXED_CURVE_FEES,
-  MarketplaceSdk
+  MarketplaceSdk,
 } from "@strata-foundation/marketplace-sdk";
 import {
   usePrimaryClaimedTokenRef,
-  useProvider
+  useProvider,
 } from "@strata-foundation/react";
 import {
   getMintInfo,
-  sendMultipleInstructions
+  sendMultipleInstructions,
 } from "@strata-foundation/spl-utils";
 import { useRouter } from "next/router";
 import React from "react";
@@ -32,16 +32,16 @@ import { useAsyncCallback } from "react-async-hook";
 import { FormProvider, useForm } from "react-hook-form";
 import { BsChevronDown } from "react-icons/bs";
 import * as yup from "yup";
-import { useMarketplaceSdk } from "../..//contexts/marketplaceSdkContext";
-import { NFT_STORAGE_API_KEY } from "../../utils/globals";
-import { route, routes } from "../../utils/routes";
+import { useMarketplaceSdk } from "@/contexts/marketplaceSdkContext";
+import { NFT_STORAGE_API_KEY } from "@/constants";
+import { route, routes } from "@/utils/routes";
 import { Disclosures, disclosuresSchema, IDisclosures } from "./Disclosures";
 import { FormControlWithError } from "./FormControlWithError";
 import { MintSelect } from "./MintSelect";
 import { IMetadataFormProps, TokenMetadataInputs } from "./TokenMetadataInputs";
 import {
   IUseExistingMintProps,
-  UseExistingMintInputs
+  UseExistingMintInputs,
 } from "./UseExistingMintInputs";
 
 interface IMarketplaceFormProps

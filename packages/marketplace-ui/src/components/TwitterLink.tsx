@@ -8,16 +8,14 @@ import {
   useQueryString,
   useReverseName,
   WUMBO_TWITTER_TLD,
-  WUMBO_TWITTER_VERIFIER
+  WUMBO_TWITTER_VERIFIER,
 } from "@strata-foundation/react";
 import { executeRemoteTxn } from "@strata-foundation/spl-utils";
 import { useLinkTwitter } from "../hooks/useLinkTwitter";
 import React, { useEffect } from "react";
 import { useAsync } from "react-async-hook";
 import { FaTwitter } from "react-icons/fa";
-
-const WUMBO_IDENTITY_SERVICE_URL =
-  process.env.NEXT_PUBLIC_WUMBO_IDENTITY_SERVICE_URL || "http://localhost:8082";
+import { WUMBO_IDENTITY_SERVICE_URL } from "@/constants";
 
 const link = async (
   publicKey: PublicKey | null,

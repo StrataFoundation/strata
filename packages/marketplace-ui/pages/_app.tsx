@@ -1,18 +1,34 @@
-import { AppProps } from 'next/app';
-import { FC } from 'react';
-import { Toaster } from 'react-hot-toast';
+import { AppProps } from "next/app";
+import { useRouter } from "next/router";
+import { FC, useEffect } from "react";
+import { Toaster } from "react-hot-toast";
 import "../src/components/bufferFill";
 import { Header } from "../src/components/Header";
-import { Footer } from '../src/components/Footer';
-import { Providers } from '../src/components/Providers';
+import { Footer } from "../src/components/Footer";
+import { Providers } from "../src/components/Providers";
 import { BrowserView, MobileView } from "react-device-detect";
+import { IS_PRODUCTION } from "@/constants";
+import * as gtag from "@/utils/gtag";
 
 // Use require instead of import since order matters
-require('../styles/globals.css');
+require("../styles/globals.css");
 require("react-circular-progressbar/dist/styles.css");
 require("@solana/wallet-adapter-react-ui/styles.css");
 
 const App: FC<AppProps> = ({ Component, pageProps }) => {
+  const router = useRouter();
+
+  useEffect(() => {
+    const handleRouteChange = (url: URL) => {
+      /* invoke analytics function only for production */
+      if (IS_PRODUCTION) gtag.pageview(url);
+    };
+    router.events.on("routeChangeComplete", handleRouteChange);
+    return () => {
+      router.events.off("routeChangeComplete", handleRouteChange);
+    };
+  }, [router.events]);
+
   return (
     <Providers>
       <Header />
