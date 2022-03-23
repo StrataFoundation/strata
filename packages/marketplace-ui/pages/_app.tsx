@@ -1,5 +1,6 @@
 import { AppProps } from "next/app";
 import { useRouter } from "next/router";
+import { DefaultSeo } from "next-seo";
 import { FC, useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import "../src/components/bufferFill";
@@ -9,6 +10,7 @@ import { Providers } from "../src/components/Providers";
 import { BrowserView, MobileView } from "react-device-detect";
 import { IS_PRODUCTION } from "../src/constants";
 import * as gtag from "../src/utils/gtag";
+import SEO from "../next-seo.config";
 
 // Use require instead of import since order matters
 require("../styles/globals.css");
@@ -31,6 +33,7 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
 
   return (
     <Providers>
+      <DefaultSeo {...SEO} />
       <Header />
       <Component {...pageProps} />
       <BrowserView>
