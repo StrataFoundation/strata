@@ -37,7 +37,7 @@ export const SwapDisplay: NextPage = ({
       paddingBottom="200px"
     >
       <MetadataMeta
-        name={name}
+        title={`Strata Swap | ${name}`}
         description={description}
         image={image}
         url={`${SITE_URL}/bounty/${mintKey}/`}
