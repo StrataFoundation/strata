@@ -1,11 +1,11 @@
 import { ColorModeScript } from "@chakra-ui/react";
-import NextDocument, { Html, Head, Main, NextScript } from "next/document";
+import Document, { Html, Head, Main, NextScript } from "next/document";
 import { GA_TRACKING_ID, IS_PRODUCTION } from "../src/constants";
 
-export default class Document extends NextDocument {
+export default class MyDocument extends Document {
   render() {
     return (
-      <Html lang="en">
+      <Html>
         <Head>
           {/* enable analytics script only for production */}
           {IS_PRODUCTION && (

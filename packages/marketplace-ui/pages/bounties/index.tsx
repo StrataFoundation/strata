@@ -26,11 +26,12 @@ import {
 } from "@strata-foundation/react";
 import { useBounties } from "@/hooks/useBounties";
 import { NextPage } from "next";
-import Head from "next/head";
+import { NextSeo } from "next-seo";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { AiOutlineSearch } from "react-icons/ai";
 import { BsChevronDown } from "react-icons/bs";
+import { SITE_URL } from "@/constants";
 
 const PAGE_SIZE = 20;
 export const Bounties: NextPage = () => {
@@ -63,19 +64,17 @@ export const Bounties: NextPage = () => {
       minHeight="100vh"
       paddingBottom="200px"
     >
-      <Head>
-        <title>Strata Bounties</title>
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta property="og:type" content="website" />
-        <meta
-          name="description"
-          content="Bounties allow users to pool resources to get work done"
-        />
-        <meta property="og:title" content="Strata Bounty Board" />
-        {/* <meta property="og:image" content={} /> */}
-        {/* <meta property="og:description" content={description} /> */}
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+      <NextSeo
+        title="Strata Bounties"
+        description="Bounties allow users to pool resources to get work done"
+        openGraph={{
+          url: `${SITE_URL}/bounties`,
+          title: "Strata Bounty Board",
+          description:
+            "Bounties allow users to pool resources to get work done",
+          site_name: "StrataLaunchpad",
+        }}
+      />
       <Center padding="54px" backgroundColor="black.500">
         <VStack spacing={6}>
           <Heading fontWeight={400} color="white" fontSize="24px">
