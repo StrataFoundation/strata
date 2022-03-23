@@ -36,7 +36,7 @@ export const MarketDisplay: NextPage = ({
       paddingBottom="200px"
     >
       <MetadataMeta
-        name={name}
+        name={`Strata Bounty | ${name}`}
         description={description}
         image={image}
         url={`${SITE_URL}/bounty/${mintKey}/`}
