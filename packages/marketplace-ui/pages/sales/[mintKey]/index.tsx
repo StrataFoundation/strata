@@ -33,7 +33,7 @@ export const MarketDisplay: NextPage = ({
       paddingBottom="200px"
     >
       <MetadataMeta
-        name={name}
+        title={`Strata Sales | ${name}`}
         description={description}
         image={image}
         cardType="summary_large_image"

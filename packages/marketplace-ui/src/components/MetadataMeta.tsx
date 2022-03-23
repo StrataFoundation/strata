@@ -3,13 +3,13 @@ import { NextSeo } from "next-seo";
 import { SITE_URL } from "../constants";
 
 export const MetadataMeta = ({
-  name,
+  title,
   description,
   image,
   cardType = "summary",
   url,
 }: {
-  name: string;
+  title: string;
   description: string;
   image: string;
   cardType?: string;
@@ -17,11 +17,11 @@ export const MetadataMeta = ({
 }) => {
   return (
     <NextSeo
-      title={name}
+      title={title}
       description={description}
       openGraph={{
         url: url,
-        title: name,
+        title: title,
         description: description,
         images: [{ url: image }],
         site_name: "StrataLaunchpad",
