@@ -3,18 +3,18 @@ import { SITE_URL } from "@/constants";
 const defaultSeo = {
   title: "Strata Protocol",
   description:
-    "Strata Protocol enables anyone to launch a token around a person, idea, or collective in minutes",
+    "Strata Protocol enables anyone to launch tokens on Solana around a person, project, idea, or collective in minutes",
   openGraph: {
     url: SITE_URL,
     title: "Strata Protocol",
     description:
-      "Launch a token around a person, idea, or collective in minutes",
+      "Strata Protocol enables anyone to launch tokens on Solana around a person, project, idea, or collective in minutes.",
     images: [
       {
         url: `${SITE_URL}/seoDefaultCardImage.jpg`,
         width: 800,
         height: 600,
-        alt: "Og Image Alt",
+        alt: "Solana Social Tokens",
         type: "image/jpeg",
       },
     ],
