@@ -8,7 +8,7 @@ const defaultSeo = {
     url: SITE_URL,
     title: "Strata Launchpad",
     description:
-      "Launch a token around a person, idea, or collective in minutes",
+      "Launch a token around a person, project, idea, or collective in minutes",
     images: [
       {
         url: `${SITE_URL}/seoDefaultCardImage.jpg`,
