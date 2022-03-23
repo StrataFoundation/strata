@@ -60,7 +60,7 @@ export const LbcDisplay: NextPage = ({
       paddingBottom="200px"
     >
       <MetadataMeta
-        title={`Starta LBC Token Offering | ${name}`}
+        title={`Strata LBC Token Offering | ${name}`}
         description={description}
         image={image}
         url={`${SITE_URL}/bounty/${mintKey}/`}
