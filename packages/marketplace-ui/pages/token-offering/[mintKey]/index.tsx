@@ -1,5 +1,5 @@
 import { MetadataMeta } from "@/components/MetadataMeta";
-import { Box, Center, Container, Divider, Heading, Spinner } from "@chakra-ui/react";
+import { Box, Container, Heading } from "@chakra-ui/react";
 import {
   Swap,
   usePublicKey,
@@ -10,7 +10,6 @@ import {
   InferGetServerSidePropsType,
   NextPage,
 } from "next";
-import Head from "next/head";
 import { useRouter } from "next/router";
 import React from "react";
 import { mintMetadataServerSideProps } from "@/utils/tokenMetadataServerProps";
@@ -18,6 +17,7 @@ import { TokenOffering } from "@/components/TokenOffering";
 import { DisburseFunds } from "@/components/DisburseFunds";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useIsBountyAdmin } from "@/hooks/useIsBountyAdmin";
+import { SITE_URL } from "@/constants";
 
 export const getServerSideProps: GetServerSideProps =
   mintMetadataServerSideProps;
@@ -32,7 +32,10 @@ export const SwapDisplay: NextPage = ({
   const mintKey = usePublicKey(mintKeyRaw as string);
   const { info: tokenBonding } = useTokenBondingFromMint(mintKey);
   const { publicKey } = useWallet();
-  const { isAdmin } = useIsBountyAdmin(publicKey || undefined, tokenBonding?.publicKey);
+  const { isAdmin } = useIsBountyAdmin(
+    publicKey || undefined,
+    tokenBonding?.publicKey
+  );
 
   return (
     <Box
@@ -42,13 +45,12 @@ export const SwapDisplay: NextPage = ({
       overflow="auto"
       paddingBottom="200px"
     >
-      <Head>
-        <meta
-          property="twitter:url"
-          content={`https://marketplace.strataprotocol.com/token-offering/${mintKey}/`}
-        />
-        <MetadataMeta name={name} description={description} image={image} />
-      </Head>
+      <MetadataMeta
+        name={name}
+        description={description}
+        image={image}
+        url={`${SITE_URL}/token-offering/${mintKey}/`}
+      />
       <Box padding="54px" backgroundColor="black.500" />
       <Container mt="-72px" justify="stretch" maxW="460px">
         <Heading mb={2} color="white" fontSize="24px" fontWeight={600}>
@@ -56,9 +58,17 @@ export const SwapDisplay: NextPage = ({
         </Heading>
         <Box zIndex={1} bg="white" shadow="xl" rounded="lg" minH="400px">
           {isAdmin && tokenBonding && (
-            <Box p={4} borderBottom="3px solid" borderRadius="lg" borderColor="gray.300">
+            <Box
+              p={4}
+              borderBottom="3px solid"
+              borderRadius="lg"
+              borderColor="gray.300"
+            >
               <Heading size="md">Disburse Funds</Heading>
-              <DisburseFunds tokenBondingKey={tokenBonding?.publicKey} includeRetrievalCurve />
+              <DisburseFunds
+                tokenBondingKey={tokenBonding?.publicKey}
+                includeRetrievalCurve
+              />
             </Box>
           )}
           {typeof window != "undefined" && <TokenOffering mintKey={mintKey} />}

@@ -1,17 +1,18 @@
 import { BountyDetail } from "@/components/bounties/BountyDetail";
 import { MetadataMeta } from "@/components/MetadataMeta";
-import { Box, Center, Container, Image } from "@chakra-ui/react";
+import { Box, Container, Image } from "@chakra-ui/react";
+import { NextSeo } from "next-seo";
 import { usePublicKey, useTokenMetadata } from "@strata-foundation/react";
 import {
   GetServerSideProps,
   InferGetServerSidePropsType,
   NextPage,
 } from "next";
-import Head from "next/head";
 import { useRouter } from "next/router";
 import React from "react";
 import { mintMetadataServerSideProps } from "@/utils/tokenMetadataServerProps";
 import { route, routes } from "@/utils/routes";
+import { SITE_URL } from "@/constants";
 
 export const getServerSideProps: GetServerSideProps =
   mintMetadataServerSideProps;
@@ -34,13 +35,12 @@ export const MarketDisplay: NextPage = ({
       minHeight="100vh"
       paddingBottom="200px"
     >
-      <Head>
-        <meta
-          property="twitter:url"
-          content={`https://marketplace.strataprotocol.com/bounty/${mintKey}/`}
-        />
-        <MetadataMeta name={name} description={description} image={image} />
-      </Head>
+      <MetadataMeta
+        name={name}
+        description={description}
+        image={image}
+        url={`${SITE_URL}/bounty/${mintKey}/`}
+      />
       <Box padding="54px" backgroundColor="black.500" />
       <Container justify="stretch" maxW="640px">
         <Image
@@ -59,11 +59,13 @@ export const MarketDisplay: NextPage = ({
         />
         <Box zIndex={1} bg="white" shadow="xl" rounded="lg" p={2}>
           <BountyDetail
-            onEdit={() => router.push(
-              route(routes.editBounty, {
-                mintKey: mintKey?.toBase58(),
-              })
-            )}
+            onEdit={() =>
+              router.push(
+                route(routes.editBounty, {
+                  mintKey: mintKey?.toBase58(),
+                })
+              )
+            }
             name={name}
             description={description}
             image={image}

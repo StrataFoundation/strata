@@ -4,6 +4,7 @@ import { Branding } from "@/components/lbc/Branding";
 import { LbcInfo } from "@/components/lbc/LbcInfo";
 import { MetadataMeta } from "@/components/MetadataMeta";
 import { TokenOffering } from "@/components/TokenOffering";
+import { SITE_URL } from "@/constants";
 import { useIsBountyAdmin } from "@/hooks/useIsBountyAdmin";
 import { useLivePrice } from "@/hooks/useLivePrice";
 import { mintMetadataServerSideProps } from "@/utils/tokenMetadataServerProps";
@@ -15,19 +16,18 @@ import {
   Heading,
   Spinner,
   useColorModeValue,
-  VStack
+  VStack,
 } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import {
   usePublicKey,
-  useTokenBondingFromMint
+  useTokenBondingFromMint,
 } from "@strata-foundation/react";
 import {
   GetServerSideProps,
   InferGetServerSidePropsType,
-  NextPage
+  NextPage,
 } from "next";
-import Head from "next/head";
 import { useRouter } from "next/router";
 import React from "react";
 
@@ -59,13 +59,12 @@ export const LbcDisplay: NextPage = ({
       overflow="auto"
       paddingBottom="200px"
     >
-      <Head>
-        <meta
-          property="twitter:url"
-          content={`https://marketplace.strataprotocol.com/bounty/${mintKey}/`}
-        />
-        <MetadataMeta name={name} description={description} image={image} />
-      </Head>
+      <MetadataMeta
+        name={name}
+        description={description}
+        image={image}
+        url={`${SITE_URL}/bounty/${mintKey}/`}
+      />
       <Container mt={"35px"} justify="stretch" maxW="460px">
         <VStack spacing={2} align="left">
           <Heading mb={2} fontSize="24px" fontWeight={600}>

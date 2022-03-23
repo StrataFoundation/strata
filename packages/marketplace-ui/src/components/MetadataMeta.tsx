@@ -1,24 +1,36 @@
 import React from "react";
+import { NextSeo } from "next-seo";
+import { SITE_URL } from "../constants";
 
-export const MetadataMeta = ({ name, description, image, cardType = "summary" }: { name: string; description: string; image: string; cardType?: string }) => {
+export const MetadataMeta = ({
+  name,
+  description,
+  image,
+  cardType = "summary",
+  url,
+}: {
+  name: string;
+  description: string;
+  image: string;
+  cardType?: string;
+  url: string;
+}) => {
   return (
-    <>
-      <title>{name}</title>
-      <meta property="og:type" content="website" />
-      <meta name="description" content={description} />
-      <meta property="og:title" content={name} />
-      <meta property="og:image" content={image} />
-      <meta property="og:description" content={description} />
-      <link rel="icon" href="/favicon.ico" />
-
-      <meta name="twitter:card" content={cardType} />
-      <meta
-        property="twitter:domain"
-        content="marketplace.strataprotocol.com"
-      />
-      <meta name="twitter:title" content={name} />
-      <meta name="twitter:description" content={description} />
-      <meta name="twitter:image" content={image} />
-    </>
+    <NextSeo
+      title={name}
+      description={description}
+      openGraph={{
+        url: url,
+        title: name,
+        description: description,
+        images: [{ url: image }],
+        site_name: "StrataLaunchpad",
+      }}
+      twitter={{
+        handle: "@StrataProtocol",
+        site: SITE_URL,
+        cardType: cardType,
+      }}
+    />
   );
-}
+};
