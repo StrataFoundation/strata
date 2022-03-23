@@ -9,7 +9,7 @@ import {
   Button,
   Link,
 } from "@chakra-ui/react";
-import { DISCORD_INVITE_URL, DOCS_URL, MARKETPLACE_URL } from "@/constants";
+import { DOCS_URL, MARKETPLACE_URL } from "@/constants";
 import TextTransition, { presets } from "react-text-transition";
 
 const callouts = [
@@ -17,21 +17,33 @@ const callouts = [
     image: "/easyToUse.png",
     heading: "Easy to Use",
     body: "Strata provides SDKs to launch Tokens in an instant. No Rust or Solana experience needed!",
+    alt: "launch token solana",
   },
   {
     image: "/freeAndOpen.png",
     heading: "Free and Open",
     body: "Strata is free to use and Open Source. Launch your token without someone else taking a cut!",
+    alt: "solana token launch",
   },
   {
     image: "/buildWithReact.png",
     heading: "Build Quickly with React",
     body: "Strata comes with hooks and helpers to make coding using React a breeze.",
+    alt: "solana react",
   },
 ];
 
 export const Hero = () => {
-  const options = useMemo(() => ["Social Token", "GameFi Token","DAO Token", "SubDAO Token", "Community Token"], []);
+  const options = useMemo(
+    () => [
+      "Social Token",
+      "GameFi Token",
+      "DAO Token",
+      "SubDAO Token",
+      "Community Token",
+    ],
+    []
+  );
   const [currentOptionIndex, setCurrentOptionIndex] = useState(0);
 
   useEffect(() => {
@@ -75,8 +87,8 @@ export const Hero = () => {
               launch and grow your
               <br />
               <TextTransition
-              className="gradient"
-              inline
+                className="gradient"
+                inline
                 style={{
                   color: "transparent",
                   fontWeight: "bold",
@@ -93,7 +105,7 @@ export const Hero = () => {
               textAlign={["center", "center", "left", "left"]}
             >
               Strata Protocol is an open-source protocol to launch tokens around
-              a person, idea, or collective on Solana.
+              a person, project, idea, or collective on Solana.
             </Text>
             <Stack direction="row" gap={2} w="full">
               <Button
@@ -123,7 +135,12 @@ export const Hero = () => {
             </Stack>
           </Stack>
           <Box>
-            <Image src="/hero.png" alt="herotop" height="488px" width="714px" />
+            <Image
+              src="/hero.png"
+              alt="solana social tokens"
+              height="488px"
+              width="714px"
+            />
           </Box>
         </Flex>
         <Stack
@@ -147,7 +164,7 @@ export const Hero = () => {
                   <Box>
                     <Image
                       src={callout.image}
-                      alt={`callout ${index}`}
+                      alt={callout.alt}
                       width="64px"
                       height="64px"
                     />
