@@ -150,7 +150,7 @@ export const SellToken: FC = () => {
                 >
                   <Flex
                     justifyContent="center"
-                    alignItem="center"
+                    alignItems="center"
                     flexShrink={0}
                   >
                     <Image
