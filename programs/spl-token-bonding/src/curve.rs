@@ -387,7 +387,7 @@ impl Curve for PiecewiseCurve {
 
         let price_opt = curve
           .curve
-          .price(time_offset, base_amount, target_supply, amount, sell);
+          .price(time_offset - curve.offset, base_amount, target_supply, amount, sell);
 
         price_opt.and_then(|p| {
           // Add shock absorbtion to make price continuous
@@ -417,7 +417,7 @@ impl Curve for PiecewiseCurve {
         let fees = transition_fees_or_zero(time_offset, reserve_change, curve, false);
 
         curve.curve.expected_target_amount(
-          time_offset,
+          time_offset - curve.offset,
           base_amount,
           target_supply,
           &reserve_change.checked_sub(&fees)?,
