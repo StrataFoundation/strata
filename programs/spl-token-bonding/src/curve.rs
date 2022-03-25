@@ -385,7 +385,9 @@ impl Curve for PiecewiseCurve {
       PiecewiseCurve::TimeV0 { curves } => {
         let curve = curves.iter().rev().find(|c| c.offset <= time_offset)?;
 
-        let price_opt = curve.curve.price(time_offset - curve.offset, base_amount, target_supply, amount, sell);
+        let price_opt = curve
+        .curve
+        .price(time_offset - curve.offset, base_amount, target_supply, amount, sell);
 
         price_opt.and_then(|p| {
           // Add shock absorbtion to make price continuous
