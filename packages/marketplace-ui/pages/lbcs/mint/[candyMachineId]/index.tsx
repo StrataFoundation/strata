@@ -8,6 +8,8 @@ import {
   useColorModeValue,
   VStack,
 } from "@chakra-ui/react";
+import { DisburseFunds } from "@/components/DisburseFunds";
+import { useIsBountyAdmin } from "@/hooks/useIsBountyAdmin";
 import { GatewayProvider } from "@civic/solana-gateway-react";
 import * as anchor from "@project-serum/anchor";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
@@ -46,6 +48,7 @@ export interface HomeProps {
 
 const Home = (props: HomeProps) => {
   const { connection } = useConnection();
+  const { publicKey } = useWallet();
   const [candyMachine, setCandyMachine] = useState<CandyMachineAccount>();
   const [isActive, setIsActive] = useState(false);
   const [endDate, setEndDate] = useState<Date>();
@@ -61,6 +64,11 @@ const Home = (props: HomeProps) => {
   } = useTokenBondingFromMint(mintKey);
   const { price } = useLivePrice(tokenBonding?.publicKey);
 
+
+  const { isAdmin } = useIsBountyAdmin(
+    publicKey || undefined,
+    tokenBonding?.publicKey
+  );
   const rpcUrl = DEFAULT_ENDPOINT;
   const wallet = useWallet();
 
@@ -246,29 +254,6 @@ const Home = (props: HomeProps) => {
     }
   };
 
-  const toggleMintButton = () => {
-    let active = !isActive || isPresale;
-
-    if (active) {
-      if (candyMachine!.state.isWhitelistOnly && !isWhitelistUser) {
-        active = false;
-      }
-      if (endDate && Date.now() >= endDate.getTime()) {
-        active = false;
-      }
-    }
-
-    if (
-      isPresale &&
-      candyMachine!.state.goLiveDate &&
-      candyMachine!.state.goLiveDate.toNumber() <= new Date().getTime() / 1000
-    ) {
-      setIsPresale((candyMachine!.state.isPresale = false));
-    }
-
-    setIsActive((candyMachine!.state.isActive = active));
-  };
-
   useEffect(() => {
     refreshCandyMachineState();
   }, [
@@ -302,6 +287,20 @@ const Home = (props: HomeProps) => {
             minH="300px"
             bg="black.300"
           >
+            {isAdmin && tokenBonding && (
+              <Box
+                p={4}
+                borderBottom="3px solid"
+                borderRadius="lg"
+                borderColor="gray.300"
+              >
+                <Heading size="md">Disburse Funds</Heading>
+                <DisburseFunds
+                  tokenBondingKey={tokenBonding?.publicKey}
+                  includeRetrievalCurve
+                />
+              </Box>
+            )}
             {wallet.connected && (
               <>
                 {loading && (

@@ -5,14 +5,6 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 # [3.4.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.3.6...v3.4.0) (2022-03-25)
 
-**Note:** Version bump only for package @strata-foundation/strata
-
-
-
-
-
-#[Unreleased]
-
 ### Changed
 
   * TimeDecayExponentialCurves inside of TimeCurve now use their starting offset to calculate the time decay,
