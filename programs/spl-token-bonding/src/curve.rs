@@ -390,7 +390,7 @@ impl Curve for PiecewiseCurve {
           base_amount, 
           target_supply, 
           amount, 
-          sell
+          sell,
         );
 
         price_opt.and_then(|p| {
