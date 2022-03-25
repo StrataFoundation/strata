@@ -1,6 +1,6 @@
 {
   "name": "@strata-foundation/site",
-  "version": "3.4.0",
+  "version": "3.4.1",
   "scripts": {
     "clean": "shx rm -rf .next",
     "dev": "NODE_OPTIONS='--inspect' next dev",
@@ -15,7 +15,7 @@
     "@chakra-ui/icons": "^1.1.7",
     "@chakra-ui/react": "^1.8.1",
     "@solana/spl-token": "0.1.8",
-    "@strata-foundation/react": "^3.4.0",
+    "@strata-foundation/react": "^3.4.1",
     "next": "12.0.7",
     "next-seo": "^5.1.0",
     "react": "17.0.2",
