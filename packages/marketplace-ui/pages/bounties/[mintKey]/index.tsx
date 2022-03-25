@@ -2,7 +2,7 @@ import { BountyDetail } from "@/components/bounties/BountyDetail";
 import { MetadataMeta } from "@/components/MetadataMeta";
 import { Box, Container, Image } from "@chakra-ui/react";
 import { NextSeo } from "next-seo";
-import { usePublicKey, useTokenMetadata } from "@strata-foundation/react";
+import { useFtxPayLink, usePublicKey, useTokenMetadata, useTwWrappedSolMint } from "@strata-foundation/react";
 import {
   GetServerSideProps,
   InferGetServerSidePropsType,
@@ -13,6 +13,8 @@ import React from "react";
 import { mintMetadataServerSideProps } from "@/utils/tokenMetadataServerProps";
 import { route, routes } from "@/utils/routes";
 import { SITE_URL } from "@/constants";
+import { PublicKey } from "@solana/web3.js";
+import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 
 export const getServerSideProps: GetServerSideProps =
   mintMetadataServerSideProps;
@@ -27,6 +29,9 @@ export const MarketDisplay: NextPage = ({
 
   const mintKey = usePublicKey(mintKeyRaw as string);
   const { image: targetImage } = useTokenMetadata(mintKey);
+
+  const wsol = useTwWrappedSolMint();
+  const ftxPayLink = useFtxPayLink();
 
   return (
     <Box
@@ -59,11 +64,18 @@ export const MarketDisplay: NextPage = ({
         />
         <Box zIndex={1} bg="white" shadow="xl" rounded="lg" p={2}>
           <BountyDetail
+            onBuyMore={(mint: PublicKey) => {
+                if (mint.equals(wsol!)) {
+                  window.open(ftxPayLink);
+                } else {
+                  router.push(route(routes.swap, { mintKey: mint.toBase58() }), undefined, { shallow: true })
+                }
+            }}
             onEdit={() =>
               router.push(
                 route(routes.editBounty, {
                   mintKey: mintKey?.toBase58(),
-                })
+                }), undefined, { shallow: true }
               )
             }
             name={name}

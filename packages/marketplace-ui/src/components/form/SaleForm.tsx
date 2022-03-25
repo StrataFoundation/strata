@@ -203,7 +203,9 @@ export const SaleForm: React.FC<{
     router.push(
       route(values.decimals === 0 ? routes.sale : routes.tokenOffering, {
         mintKey: mintKey.toBase58(),
-      })
+      }),
+      undefined,
+      { shallow: true }
     );
   };
 

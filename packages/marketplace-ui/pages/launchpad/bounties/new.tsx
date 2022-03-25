@@ -10,7 +10,11 @@ export const NewBounty: NextPage = () => {
     <FormContainer title="New Bounty">
       <BountyForm
         onComplete={(mintKey) => {
-          router.push(route(routes.bounty, { mintKey: mintKey.toBase58() }));
+          router.push(
+            route(routes.bounty, { mintKey: mintKey.toBase58() }),
+            undefined,
+            { shallow: true }
+          );
         }}
       />
     </FormContainer>

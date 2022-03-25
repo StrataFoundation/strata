@@ -30,19 +30,19 @@ export const BountyDetail = ({
   image,
   mintKey,
   onEdit,
+  onBuyMore
 }: {
   mintKey?: PublicKey;
   name?: string;
   description?: string;
   image?: string;
   onEdit?: () => void;
+  onBuyMore?: (baseMint: PublicKey) => void;
 }) => {
   const { info: tokenBonding, loading: bondingLoading } =
     useTokenBondingFromMint(mintKey);
   const { publicKey } = useWallet();
-  const { pricing } = useBondingPricing(
-    tokenBonding?.publicKey
-  );
+  const { pricing } = useBondingPricing(tokenBonding?.publicKey);
 
   const targetBalance = useOwnedAmount(tokenBonding?.targetMint);
   const reserveAmount = useReserveAmount(tokenBonding?.publicKey);
@@ -77,9 +77,7 @@ export const BountyDetail = ({
     [name, image, description]
   );
 
-  const { metadata: baseMetadata } = useTokenMetadata(
-    tokenBonding?.baseMint
-  );
+  const { metadata: baseMetadata } = useTokenMetadata(tokenBonding?.baseMint);
 
   if (
     (!loading && dataMissing) ||
@@ -119,8 +117,7 @@ export const BountyDetail = ({
           <AuthorityAndTokenInfo mintKey={mintKey} />
           {tokenBonding && (
             <Text fontSize="15px" color="gray.400">
-              Created{" "}
-              {moment(createdAt).fromNow()}
+              Created {moment(createdAt).fromNow()}
             </Text>
           )}
         </VStack>
@@ -188,7 +185,11 @@ export const BountyDetail = ({
             </SimpleGrid>
 
             <VStack align="flex-end" w="full">
-              <BountyContribute mintKey={mintKey} onContributeSuccess={refreshTopHolders} />
+              <BountyContribute
+                onBuyMore={onBuyMore}
+                mintKey={mintKey}
+                onContributeSuccess={refreshTopHolders}
+              />
             </VStack>
             <Divider color="gray.200" />
             <Heading mb={"-6px"} alignSelf="flex-start" size="sm">

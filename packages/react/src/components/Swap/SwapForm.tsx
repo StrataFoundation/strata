@@ -199,7 +199,7 @@ export const SwapForm = ({
   useEffect(() => {
     const interval = setInterval(updatePrice, 1000);
     return () => clearInterval(interval)
-  }, [bottomAmount, topAmount])
+  }, [pricing, bottomAmount, topAmount])
   
   const handleTopChange = (value: number | undefined = 0) => {
     if (tokenBonding && pricing && base && target && value && +value >= 0) {
@@ -219,6 +219,7 @@ export const SwapForm = ({
   };
 
   const handleBottomChange = (value: number | undefined = 0) => {
+
     if (tokenBonding && pricing && base && target && value && +value >= 0) {
       let amount = Math.abs(
         pricing.swapTargetAmount(+value, target.publicKey, base.publicKey)
@@ -620,7 +621,8 @@ export const SwapForm = ({
                     </Text>
                   </Text>
                 )}
-                {insufficientLiq && (
+                {/* Make sure this doesn't render at the same time as the above insufficient funds */}
+                {insufficientLiq && hasBaseAmount && (
                   <Text>Insufficient Liqidity for this trade.</Text>
                 )}
               </Center>

@@ -284,10 +284,16 @@ export const LbcForm: React.FC<{
     const mintKey = await execute(marketplaceSdk!, values, nftStorageApiKey);
     if (values.useCandyMachine) {
       router.push(
-        route(routes.mintLbc, { candyMachineId: values.candyMachineId })
+        route(routes.mintLbc, { candyMachineId: values.candyMachineId }),
+        undefined,
+        { shallow: true }
       );
     } else {
-      router.push(route(routes.tokenLbc, { mintKey: mintKey.toBase58() }));
+      router.push(
+        route(routes.tokenLbc, { mintKey: mintKey.toBase58() }),
+        undefined,
+        { shallow: true }
+      );
     }
   };
 

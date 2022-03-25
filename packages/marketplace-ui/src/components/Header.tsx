@@ -62,16 +62,9 @@ export const Header: React.FC = () => {
               onClick={isOpen ? onClose : onOpen}
             />
             <HStack spacing={8} alignItems={"center"}>
-              {isLaunchpad && (
-                <Link href="/">
-                  <Image alt="Strata Launchpad" src="/logo-launchpad.svg" />
-                </Link>
-              )}
-              {isMarketplace && (
-                <Link href="/bounties">
-                  <Image alt="Strata Marketplace" src="/logo-marketplace.svg" />
-                </Link>
-              )}
+              <Link href="/">
+                <Image alt="Strata Launchpad" src="/logo-launchpad.svg" />
+              </Link>
               <HStack
                 as={"nav"}
                 spacing={4}
