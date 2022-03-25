@@ -2,7 +2,6 @@ const path = require("path");
 
 /** @type {import('next').NextConfig} */
 module.exports = {
-  modern: true,
   experimental: {
     esmExternals: "loose",
   },
