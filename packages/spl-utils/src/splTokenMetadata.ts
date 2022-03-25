@@ -1,13 +1,20 @@
-import { CreateMetadataV2, Creator, DataV2, Edition, EditionData, MasterEdition, MasterEditionData, Metadata, MetadataData, MetadataKey, UpdateMetadataV2 } from "@metaplex-foundation/mpl-token-metadata";
+import {
+  CreateMetadataV2,
+  Creator,
+  DataV2,
+  Edition,
+  EditionData,
+  MasterEdition,
+  MasterEditionData,
+  Metadata,
+  MetadataData,
+  MetadataKey,
+  UpdateMetadataV2,
+} from "@metaplex-foundation/mpl-token-metadata";
 import { Provider } from "@project-serum/anchor";
 import { AccountInfo as TokenAccountInfo, MintInfo } from "@solana/spl-token";
 import { PublicKey, Signer, TransactionInstruction } from "@solana/web3.js";
-import {
-  getMintInfo,
-  InstructionResult,
-  sendInstructions,
-  truthy,
-} from ".";
+import { getMintInfo, InstructionResult, sendInstructions, truthy } from ".";
 import {
   ARWEAVE_UPLOAD_URL,
   getFilesWithMetadata,
@@ -17,12 +24,12 @@ import {
 } from "./arweave";
 // @ts-ignore
 import localStorageMemory from "localstorage-memory";
-import { NFTStorage } from "nft.storage";
-import { TokenInput } from "nft.storage/dist/src/token";
+// @ts-ignore
+import { NFTStorage } from "nft.storage/dist/bundle.esm.min.js";
 
 export enum StorageProvider {
   Arweave = "arweave",
-  NftStorage = "nft.storage"
+  NftStorage = "nft.storage",
 }
 
 export interface IUploadMetadataArgs {
@@ -40,7 +47,7 @@ export interface IUploadMetadataArgs {
   nftStorageApiKey?: string;
   mint?: PublicKey;
 }
-  
+
 export interface ICreateArweaveUrlArgs {
   payer?: PublicKey;
   name: string;
@@ -49,7 +56,7 @@ export interface ICreateArweaveUrlArgs {
   image?: string;
   creators?: Creator[];
   files?: File[];
-  existingFiles?: FileOrString[]
+  existingFiles?: FileOrString[];
   attributes?: Attribute[];
   animationUrl?: string;
   externalUrl?: string;
@@ -115,10 +122,10 @@ export interface IUpdateMetadataInstructionsArgs {
 }
 
 export enum MetadataCategory {
-  Audio = 'audio',
-  Video = 'video',
-  Image = 'image',
-  VR = 'vr',
+  Audio = "audio",
+  Video = "video",
+  Image = "image",
+  VR = "vr",
 }
 
 export interface ITokenWithMeta {
@@ -167,7 +174,7 @@ const imageFromJson = (newUri: string, extended: any) => {
   }
 };
 
-const localStorage = global.localStorage || localStorageMemory
+const localStorage = global.localStorage || localStorageMemory;
 
 export class SplTokenMetadata {
   provider: Provider;
@@ -331,16 +338,16 @@ export class SplTokenMetadata {
         ...args,
         image: args.image.name,
         files: [args.image].filter(truthy),
-        mint: args.mint!
+        mint: args.mint!,
       });
     }
 
-    return this.createNftStorageMetadata(args, args.nftStorageApiKey!)
+    return this.createNftStorageMetadata(args, args.nftStorageApiKey!);
   }
 
   async createNftStorageMetadata(
     args: IUploadMetadataArgs,
-    apiKey: string,
+    apiKey: string
   ): Promise<string> {
     // create a new NFTStorage client using our API key
     const nftstorage = new NFTStorage({ token: apiKey });
@@ -350,7 +357,7 @@ export class SplTokenMetadata {
     const result = await nftstorage.store(args);
     const id = result.ipnft;
     return `${id}.ipfs.nftstorage.link`;
-  };
+  }
 
   /**
    * Wrapper function that prepays for arweave metadata files in SOL, then uploads them to arweave and returns the url
