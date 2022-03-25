@@ -52,18 +52,18 @@ export function TokenMetadataInputs({
   const group = getRootProps();
   const storageOptions = [
     {
-      value: StorageProvider.NftStorage,
-      heading: "NFT.Storage",
-      illustration: "/nft-storage.png",
-      helpText:
-        "Provides free storage for your token image, but it may take up to 48 hours to appear.",
-    },
-    {
       value: StorageProvider.Arweave,
       heading: "Arweave",
       illustration: "/arweave.png",
       helpText:
-        "Instant storage for your token image, but you will need to pay a small fee in Sol for the upload",
+        "Instant storage for your image and description, but you will need to pay a small fee in Sol for the upload",
+    },
+    {
+      value: StorageProvider.NftStorage,
+      heading: "NFT.Storage",
+      illustration: "/nft-storage.png",
+      helpText:
+        "Provides free storage for your image and description, but it may take up to 48 hours to appear.",
     },
   ];
 
@@ -82,7 +82,7 @@ export function TokenMetadataInputs({
 
   // Default to nft.storage
   useEffect(() => {
-    setValue("provider", StorageProvider.NftStorage);
+    setValue("provider", StorageProvider.Arweave);
   }, [setValue]);
 
   const provider = watch("provider");

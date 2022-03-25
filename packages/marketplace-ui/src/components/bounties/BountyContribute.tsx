@@ -21,9 +21,11 @@ import { AsyncButton } from "..";
 export const BountyContribute = ({
   mintKey,
   onContributeSuccess,
+  onBuyMore,
 }: {
   mintKey: PublicKey | undefined;
   onContributeSuccess: () => void;
+  onBuyMore?: (baseMint: PublicKey) => void;
 }) => {
   const [qty, setQty] = useState("");
   const { connected } = useWallet();
@@ -67,6 +69,16 @@ export const BountyContribute = ({
 
   return (
     <VStack w="full" justify="stretch" spacing={2}>
+      {baseMetadata && onBuyMore && (
+        <Button
+          variant="link"
+          size="sm"
+          marginLeft="auto"
+          onClick={() => onBuyMore(tokenBonding!.baseMint)}
+        >
+          Buy More {baseMetadata.data.symbol}{" "}
+        </Button>
+      )}
       <InputGroup>
         <Input
           type="number"

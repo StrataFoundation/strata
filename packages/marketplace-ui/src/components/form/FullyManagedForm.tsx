@@ -214,7 +214,9 @@ export const FullyManagedForm: React.FC<{
     router.push(
       route(routes.swap, {
         mintKey: mintKey.toBase58(),
-      })
+      }),
+      undefined,
+      { shallow: true }
     );
   };
 

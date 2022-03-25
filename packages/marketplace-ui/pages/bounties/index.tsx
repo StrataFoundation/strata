@@ -143,9 +143,14 @@ export const Bounties: NextPage = () => {
               <BountyCard
                 onClick={() =>
                   router.push(
-                    route(routes.bounty, {
-                      mintKey: bounty.targetMint.toBase58(),
-                    })
+                    route(
+                      routes.bounty,
+                      {
+                        mintKey: bounty.targetMint.toBase58(),
+                      },
+                      undefined,
+                      { shallow: true }
+                    )
                   )
                 }
                 key={bounty.tokenBondingKey.toBase58()}

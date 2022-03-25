@@ -16,7 +16,11 @@ export const EditBounty: NextPage = () => {
         <EditBountyForm
           mintKey={mintKey}
           onComplete={() => {
-            router.push(route(routes.bounty, { mintKey: mintKey.toBase58() }));
+            router.push(
+              route(routes.bounty, { mintKey: mintKey.toBase58() }),
+              undefined,
+              { shallow: true }
+            );
           }}
         />
       )}
