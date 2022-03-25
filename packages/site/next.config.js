@@ -2,9 +2,6 @@ const path = require("path");
 
 /** @type {import('next').NextConfig} */
 module.exports = {
-  experimental: {
-    esmExternals: "loose",
-  },
   reactStrictMode: false,
   webpack5: true,
   webpack: (config) => {
