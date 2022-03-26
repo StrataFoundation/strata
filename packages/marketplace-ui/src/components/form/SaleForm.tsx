@@ -45,7 +45,7 @@ import {
 } from "./UseExistingMintInputs";
 
 interface IMarketplaceFormProps
-  extends IMetadataFormProps,
+  extends Omit<IMetadataFormProps, "name">,
     IUseExistingMintProps {
   mint: string;
   quantity: number;
@@ -53,6 +53,7 @@ interface IMarketplaceFormProps
   curve: string;
   decimals?: number;
   disclosures: IDisclosures;
+  goLiveDate: Date;
 }
 
 const validationSchema = yup.object({
@@ -85,6 +86,7 @@ const validationSchema = yup.object({
   price: yup.number().required().min(0),
   curve: yup.string(),
   disclosures: disclosuresSchema,
+  goLiveDate: yup.date().required(),
 });
 
 async function createMarket(
@@ -98,18 +100,20 @@ async function createMarket(
   let metadata;
   if (values.useExistingMint) {
     const existingMint = new PublicKey(values.existingMint!);
-    const fetched = await marketplaceSdk.tokenMetadataSdk.getMetadata(
-      await Metadata.getPDA(existingMint)
-    );
-    if (!fetched) {
-      throw new Error("Existing mint must have metaplex token metadata");
-    }
 
     values.decimals = (
       await getMintInfo(marketplaceSdk.provider, existingMint)
     ).decimals;
 
-    metadata = new DataV2({ ...fetched.data, collection: null, uses: null });
+    metadata = new DataV2({
+      name: values.name || "",
+      symbol: values.symbol || "",
+      uri: values.uri || "",
+      sellerFeeBasisPoints: 0,
+      creators: null,
+      collection: null,
+      uses: null,
+    });
   } else {
     const uri = await marketplaceSdk.tokenMetadataSdk.uploadMetadata({
       provider: values.provider,
@@ -150,6 +154,7 @@ async function createMarket(
     bondingArgs: {
       curve: values.curve ? new PublicKey(values.curve) : undefined,
       targetMintDecimals: values.decimals,
+      goLiveDate: values.goLiveDate,
     },
   });
   instructions.push(...marketItemInstrs.instructions);
@@ -246,7 +251,7 @@ export const SaleForm: React.FC<{
           </FormControlWithError>
           <FormControlWithError
             id="mint"
-            help={`The mint that should be used to purchase this, example ${NATIVE_MINT.toBase58()}`}
+            help={`The token that should be used to buy this token. If you want users to purchase your token using SOL, use ${NATIVE_MINT.toBase58()}`}
             label="Purchase Mint"
             errors={errors}
           >
@@ -265,7 +270,7 @@ export const SaleForm: React.FC<{
           </FormControlWithError>
           <FormControlWithError
             id="price"
-            help="The price of the item"
+            help="The price in terms of the Purchase Mint"
             label="Price"
             errors={errors}
           >
@@ -275,6 +280,15 @@ export const SaleForm: React.FC<{
               step={0.0000000001}
               {...register("price")}
             />
+          </FormControlWithError>
+
+          <FormControlWithError
+            id="goLiveDate"
+            help="The time this offering will go live, in your browser's local timezone"
+            label="Launch Date"
+            errors={errors}
+          >
+            <Input type="datetime-local" {...register("goLiveDate")} />
           </FormControlWithError>
 
           <Disclosures fees={FIXED_CURVE_FEES} />

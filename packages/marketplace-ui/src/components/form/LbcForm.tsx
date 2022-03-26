@@ -111,18 +111,20 @@ async function createLiquidityBootstrapper(
   let metadata;
   if (values.useExistingMint) {
     const existingMint = new PublicKey(values.existingMint!);
-    const fetched = await marketplaceSdk.tokenMetadataSdk.getMetadata(
-      await Metadata.getPDA(existingMint)
-    );
-    if (!fetched) {
-      throw new Error("Existing mint must have metaplex token metadata");
-    }
 
     values.decimals = (
       await getMintInfo(marketplaceSdk.provider, existingMint)
     ).decimals;
 
-    metadata = new DataV2({ ...fetched.data, collection: null, uses: null });
+    metadata = new DataV2({
+      name: values.name || "",
+      symbol: values.symbol || "",
+      uri: values.uri || "",
+      sellerFeeBasisPoints: 0,
+      creators: null,
+      collection: null,
+      uses: null,
+    });
   } else if (values.useCandyMachine) {
     metadata = new DataV2({
       // Max name len 32
@@ -345,7 +347,7 @@ export const LbcForm: React.FC<{
 
           <FormControlWithError
             id="mint"
-            help={`The mint that should be used to buy this token, example ${NATIVE_MINT.toBase58()} for SOL`}
+            help={`The token that should be used to buy this token. If you want users to purchase your token using SOL, use ${NATIVE_MINT.toBase58()}`}
             label="Purchase Mint"
             errors={errors}
           >
@@ -365,7 +367,7 @@ export const LbcForm: React.FC<{
 
           <FormControlWithError
             id="authority"
-            help="The wallet that receives the bootstrapped liquidity"
+            help="The wallet that can claim the bootstrapped liquidity"
             label="Beneficiary"
             errors={errors}
           >
@@ -386,7 +388,7 @@ export const LbcForm: React.FC<{
 
           <FormControlWithError
             id="startPrice"
-            help="The starting price for this token. You should set this a little above the expected price of the token. Prices will fall to the fair price. Note that if there's enough demand, they can also increae from this price"
+            help="The starting price for this token. You should set this a little above the expected price of the token. Prices will fall to the fair price. Note that if there's enough demand, they can also increase from this price."
             label="Staring Price"
             errors={errors}
           >
@@ -399,7 +401,7 @@ export const LbcForm: React.FC<{
           </FormControlWithError>
           <FormControlWithError
             id="minPrice"
-            help="The minimum possible price for this token, if nobody buys during the bootstrapping interval."
+            help="The minimum possible price for this token, if nobody buys during the bootstrapping interval. The wider the range between starting price and minimum price, the more rapidly the price will fall. It is reccommended to keep these numbers within 5x of each other."
             label="Minimum Price"
             errors={errors}
           >
