@@ -3,25 +3,26 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.4.2](https://github.com/StrataFoundation/strata/compare/v3.4.1...v3.4.2) (2022-03-26)
+
+**Note:** Version bump only for package @strata-foundation/strata
+
+Revert esm module import to fix CI/CD issues
+
 ## [3.4.1](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.4.0...v3.4.1) (2022-03-25)
 
 Rectifying CI/CD issues. 3.4.0 does not exist.
-
 
 # [3.4.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.3.6...v3.4.0) (2022-03-25)
 
 ### Changed
 
-  * TimeDecayExponentialCurves inside of TimeCurve now use their starting offset to calculate the time decay,
+- TimeDecayExponentialCurves inside of TimeCurve now use their starting offset to calculate the time decay,
   instead of the offset from the bonding go live.
 
 ## [3.3.6](https://github.com/StrataFoundation/strata/compare/v3.3.4...v3.3.6) (2022-03-16)
 
 **Note:** Version bump only for package @strata-foundation/strata
-
-
-
-
 
 ## [3.3.5](https://github.com/StrataFoundation/strata/compare/v3.3.4...v3.3.5) (2022-03-16)
 
@@ -30,8 +31,6 @@ Rectifying CI/CD issues. 3.4.0 does not exist.
 ### Fixed
 
 - Allow null royalties
-
-
 
 ## [3.3.4](https://github.com/StrataFoundation/strata/compare/v3.3.2...v3.3.4) (2022-03-16)
 
