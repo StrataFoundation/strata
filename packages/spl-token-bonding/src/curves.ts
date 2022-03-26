@@ -137,14 +137,14 @@ export class TimeCurve implements IPricingCurve {
             subCurve.curve.exponentialCurveV0 as ExponentialCurveV0,
             this.baseAmount,
             this.targetSupply,
-            this.goLiveUnixTime + subCurve.offset
+            this.goLiveUnixTime + subCurve.offset.toNumber()
           )
         : new TimeDecayExponentialCurve(
             subCurve.curve
               .timeDecayExponentialCurveV0 as TimeDecayExponentialCurveV0,
             this.baseAmount,
             this.targetSupply,
-            this.goLiveUnixTime + subCurve.offset
+            this.goLiveUnixTime + subCurve.offset.toNumber()
           ),
       offset: subCurve.offset.toNumber(),
       buyTransitionFees: subCurve.buyTransitionFees,

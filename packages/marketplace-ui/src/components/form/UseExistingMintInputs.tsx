@@ -9,9 +9,9 @@ import { MintSelect } from "./MintSelect";
 export interface IUseExistingMintProps {
   useExistingMint: boolean | undefined;
   existingMint: string | undefined;
-  name: string | undefined;
-  symbol: string | undefined;
-  uri: string | undefined;
+  name?: string;
+  symbol?: string;
+  uri?: string;
 }
 
 export function UseExistingMintInputs() {
