@@ -56,7 +56,7 @@ runs:
       uses: nick-invision/retry@v2
       with:
         timeout_minutes: 30
-        max_attempts: 3
+        max_attempts: 5
         shell: bash
         command: solana program write-buffer -k ./deploy-keypair.json ./target/verifiable/$PROGRAM.so -u $NETWORK > ./buffer.out
       env:
@@ -68,7 +68,7 @@ runs:
       if: steps.cache-buffer.outputs.cache-hit != 'true'
       with:
         timeout_minutes: 10
-        max_attempts: 3
+        max_attempts: 5
         shell: bash
         command:  ~/.cargo/bin/anchor idl write-buffer $PROGRAM_ID --filepath ./target/idl/$PROGRAM.json --provider.cluster $NETWORK --provider.wallet ./deploy-keypair.json > idl-buffer.out
       env:
@@ -84,18 +84,26 @@ runs:
     - run: echo "The buffer is ${{ steps.buffer-deploy-store.outputs.BUFFER }}"
       shell: bash
     - name: Transfer idl buffer to authority
-      shell: bash
+      uses: nick-invision/retry@v2
       if: steps.cache-buffer.outputs.cache-hit != 'true'
-      run: anchor idl set-authority $IDL_BUFFER --provider.cluster $NETWORK --program-id $PROGRAM_ID --new-authority $AUTHORITY --provider.wallet ./deploy-keypair.json
+      with:
+        timeout_minutes: 10
+        max_attempts: 5
+        shell: bash
+        command: anchor idl set-authority $IDL_BUFFER --provider.cluster $NETWORK --program-id $PROGRAM_ID --new-authority $AUTHORITY --provider.wallet ./deploy-keypair.json
       env:
         IDL_BUFFER: ${{ steps.buffer-deploy-store.outputs.IDL_BUFFER }}
         AUTHORITY: ${{ inputs.buffer-authority }}
         NETWORK: ${{ inputs.network }}
         PROGRAM_ID: ${{ inputs.program-id }}
     - name: Transfer buffer to authority
-      shell: bash
+      uses: nick-invision/retry@v2
       if: steps.cache-buffer.outputs.cache-hit != 'true'
-      run: solana program set-buffer-authority $BUFFER -k ./deploy-keypair.json --new-buffer-authority $AUTHORITY -u $NETWORK
+      with:
+        timeout_minutes: 10
+        max_attempts: 5
+        shell: bash
+        command: solana program set-buffer-authority $BUFFER -k ./deploy-keypair.json --new-buffer-authority $AUTHORITY -u $NETWORK
       env:
         BUFFER: ${{ steps.buffer-deploy-store.outputs.BUFFER }}
         AUTHORITY: ${{ inputs.buffer-authority }}
