@@ -24,8 +24,7 @@ import {
 } from "./arweave";
 // @ts-ignore
 import localStorageMemory from "localstorage-memory";
-// @ts-ignore
-import { NFTStorage } from "nft.storage/dist/bundle.esm.min.js";
+import { NFTStorage } from "nft.storage";
 
 export enum StorageProvider {
   Arweave = "arweave",
@@ -343,10 +342,10 @@ export class SplTokenMetadata {
     }
 
     if (!args.image) {
-      throw new Error("Image must be provided when using NFT.storage")
+      throw new Error("Image must be provided when using NFT.storage");
     }
 
-    return this.createNftStorageMetadata(args, args.nftStorageApiKey!)
+    return this.createNftStorageMetadata(args, args.nftStorageApiKey!);
   }
 
   async createNftStorageMetadata(

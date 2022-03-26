@@ -107,7 +107,7 @@ export const LaunchPad: FC = ({ children }) => {
                 >
                   <Flex
                     justifyContent="center"
-                    alignItme="center"
+                    alignItems="center"
                     flexShrink={0}
                   >
                     <Image
@@ -167,7 +167,7 @@ export const LaunchPad: FC = ({ children }) => {
           }
         >
           <Stack direction="row">
-            <Flex flexShring={0} justifyContent="center" alignItems="center">
+            <Flex flexShrink={0} justifyContent="center" alignItems="center">
               <Image
                 src="/sell-token-later.svg"
                 height="50px"
