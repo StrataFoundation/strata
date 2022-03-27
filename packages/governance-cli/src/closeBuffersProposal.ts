@@ -12,23 +12,19 @@ import {
   withAddSignatory,
   withCreateProposal,
   withInsertTransaction,
-  withSignOffProposal,
+  withSignOffProposal
 } from "@solana/spl-governance";
 import {
   Cluster,
   clusterApiUrl,
   Connection,
   Keypair,
-  PublicKey,
-  sendAndConfirmTransaction,
-  Transaction,
-  TransactionInstruction,
+  PublicKey, Transaction,
+  TransactionInstruction
 } from "@solana/web3.js";
-import "./borshFill";
 import { sendAndConfirmWithRetry } from "@strata-foundation/spl-utils";
-import { createIdlUpgradeInstruction } from "./createIdlUpgradeInstruction";
-import { createUpgradeInstruction } from "./createUpgradeInstruction";
 import bs58 from "bs58";
+import "./borshFill";
 import { createCloseInstruction } from "./createCloseInstruction";
 
 const GOVERNANCE_PROGRAM_ID = new PublicKey(
@@ -166,7 +162,7 @@ async function run() {
         });
       })
     ),
-    3
+    1 // TODO: When multiple commands supported change this
   );
 
   for (const [index, ixGroup] of ixs.entries()) {
