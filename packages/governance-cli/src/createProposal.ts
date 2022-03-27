@@ -1,6 +1,15 @@
 #! /usr/bin/env node
 import "./borshFill";
-import { Cluster, clusterApiUrl, Connection, Keypair, PublicKey, sendAndConfirmTransaction, Transaction, TransactionInstruction } from "@solana/web3.js";
+import {
+  Cluster,
+  clusterApiUrl,
+  Connection,
+  Keypair,
+  PublicKey,
+  sendAndConfirmTransaction,
+  Transaction,
+  TransactionInstruction,
+} from "@solana/web3.js";
 import { createUpgradeInstruction } from "./createUpgradeInstruction";
 import {
   getTokenOwnerRecordAddress,
@@ -16,56 +25,59 @@ import {
   withInsertTransaction,
   InstructionData,
   AccountMetaData,
-  getGovernanceProgramVersion
+  getGovernanceProgramVersion,
 } from "@solana/spl-governance";
 import { createIdlUpgradeInstruction } from "./createIdlUpgradeInstruction";
 
-const GOVERNANCE_PROGRAM_ID = new PublicKey("GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw");
+const GOVERNANCE_PROGRAM_ID = new PublicKey(
+  "GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw"
+);
 
 async function run() {
   const programId = new PublicKey(process.env.PROGRAM_ID!);
   const bufferKey = new PublicKey(process.env.BUFFER!);
-  const idlBufferKey = process.env.IDL_BUFFER && new PublicKey(process.env.IDL_BUFFER);
+  const idlBufferKey =
+    process.env.IDL_BUFFER && new PublicKey(process.env.IDL_BUFFER);
   const governanceKey = new PublicKey(process.env.GOVERNANCE_KEY!);
   const network = process.env.NETWORK!;
-  const signatory = process.env.SIGNATORY && new PublicKey(process.env.SIGNATORY);
+  const signatory =
+    process.env.SIGNATORY && new PublicKey(process.env.SIGNATORY);
   const wallet = Keypair.fromSecretKey(
     Buffer.from(
       JSON.parse(
-        require("fs").readFileSync(
-          process.env.WALLET!,
-          {
-            encoding: "utf-8",
-          }
-        )
+        require("fs").readFileSync(process.env.WALLET!, {
+          encoding: "utf-8",
+        })
       )
     )
   );
-  const connection = new Connection(network.startsWith("http") ? network : clusterApiUrl(network as Cluster));
+  const connection = new Connection(
+    network.startsWith("http") ? network : clusterApiUrl(network as Cluster)
+  );
 
   const tx = new Transaction();
   const instructions: TransactionInstruction[] = [];
   const info = await connection.getAccountInfo(governanceKey);
-  const gov = (GovernanceAccountParser(Governance)(
-    governanceKey,
-    info!,
-  )).account;
+  const gov = GovernanceAccountParser(Governance)(governanceKey, info!).account;
   const realmKey = gov.realm;
   const realmInfo = await connection.getAccountInfo(realmKey);
-  const realm = (GovernanceAccountParser(Realm)(
+  const realm = GovernanceAccountParser(Realm)(
     governanceKey,
-    realmInfo!,
-  )).account;
+    realmInfo!
+  ).account;
   PublicKey.prototype.toString = PublicKey.prototype.toBase58;
 
   const tokenOwner = await getTokenOwnerRecordAddress(
     GOVERNANCE_PROGRAM_ID,
     realmKey,
     realm.communityMint,
-    wallet.publicKey,
+    wallet.publicKey
   );
   console.log(tokenOwner.toBase58());
-  const version = await getGovernanceProgramVersion(connection, GOVERNANCE_PROGRAM_ID);
+  const version = await getGovernanceProgramVersion(
+    connection,
+    GOVERNANCE_PROGRAM_ID
+  );
 
   const proposal = await withCreateProposal(
     instructions,
@@ -94,15 +106,15 @@ async function run() {
     tokenOwner,
     wallet.publicKey,
     signatory ? signatory : wallet.publicKey,
-    wallet.publicKey,
+    wallet.publicKey
   );
 
   const upgradeIx = await createUpgradeInstruction(
-          programId,
-          bufferKey,
-          governanceKey,
-          wallet.publicKey
-        );
+    programId,
+    bufferKey,
+    governanceKey,
+    wallet.publicKey
+  );
 
   let upgradeIdlIx: TransactionInstruction | null = null;
   if (idlBufferKey) {
@@ -112,7 +124,6 @@ async function run() {
       governanceKey
     );
   }
-
   await withInsertTransaction(
     instructions,
     GOVERNANCE_PROGRAM_ID,
@@ -129,11 +140,11 @@ async function run() {
         programId: upgradeIx.programId,
         accounts: upgradeIx.keys.map((key) => new AccountMetaData(key)),
         data: upgradeIx.data,
-      })
+      }),
     ],
     wallet.publicKey
   );
-
+  // TODO: Do these both in one command when UI supports it
   if (upgradeIdlIx) {
     await withInsertTransaction(
       instructions,
@@ -167,20 +178,22 @@ async function run() {
       proposal,
       wallet.publicKey,
       signatoryRecord,
-      undefined,
+      undefined
     );
   }
 
   tx.add(...instructions);
   tx.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
-  tx.sign(wallet)
-  await sendAndConfirmTransaction(connection, tx, [wallet]);
+  tx.sign(wallet);
+  console.log(
+    await connection.sendRawTransaction(tx.serialize(), { skipPreflight: true })
+  );
+  // await sendAndConfirmTransaction(connection, tx, [wallet]);
   console.log(proposal.toBase58());
 }
 
-run().catch(e => {
+run().catch((e) => {
   console.error(e);
   console.error(e.stack);
   process.exit(1);
-})
-
+});
