@@ -17,6 +17,7 @@ import ReactJson from "react-json-view";
 import { useVariablesContext } from "../Root/variables";
 import styles from "./styles.module.css";
 import { clusterApiUrl } from "@solana/web3.js";
+import { useMarketplaceSdk } from "@strata-foundation/marketplace-ui";
 
 function wrapAndCollectVars(code: string, injectedVars): string {
   const wrapped = `(async function() {
@@ -84,6 +85,7 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
   const [error, setError] = useState<Error>();
   const { connected, publicKey } = useWallet();
   const sdks = useStrataSdks();
+  const { marketplaceSdk } = useMarketplaceSdk();
   const { connection } = useConnection();
   const { provider } = useProvider();
   const { endpoint, setEndpoint } = useEndpoint();
@@ -99,6 +101,7 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
       const injectedVars = {
         provider,
         ...sdks,
+        marketplaceSdk,
         publicKey,
         ...scope,
         ...globalVariables,
@@ -130,9 +133,11 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
     register(name, deps.filter(Boolean), exec);
   }, [publicKey, ...Object.values(sdks)]);
 
-  if (error) {
-    throw error;
-  }
+  useEffect(() => {
+    if (error) {
+      console.error(error);
+    }
+  },[error])
 
   const fullLoading =
     loading || !sdks.tokenBondingSdk || !sdks.tokenCollectiveSdk;
@@ -161,7 +166,9 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
         <div>Running previous commands...</div>
       )}
       {loading && runningThisCommand && <div>Loading...</div>}
-      {!fullLoading && (
+      {error ? (
+        <div>{error.toString()}</div>
+      ) : fullLoading ? undefined : (
         <ReactJson
           theme="bright:inverted"
           collapsed={1}

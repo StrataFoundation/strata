@@ -3,40 +3,148 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.4.3](https://github.com/StrataFoundation/strata/compare/v3.4.1...v3.4.3) (2022-03-26)
+
+**Note:** Version bump only for package @strata-foundation/strata
+
+Rectifying build issue with @types/gtag
+
+## [3.4.2](https://github.com/StrataFoundation/strata/compare/v3.4.1...v3.4.2) (2022-03-26)
+
+**Note:** Version bump only for package @strata-foundation/strata
+
+Revert esm module import to fix CI/CD issues
+
+## [3.4.1](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.4.0...v3.4.1) (2022-03-25)
+
+Rectifying CI/CD issues. 3.4.0 does not exist.
+
+# [3.4.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.3.6...v3.4.0) (2022-03-25)
+
+### Changed
+
+- TimeDecayExponentialCurves inside of TimeCurve now use their starting offset to calculate the time decay,
+  instead of the offset from the bonding go live.
+
+## [3.3.6](https://github.com/StrataFoundation/strata/compare/v3.3.4...v3.3.6) (2022-03-16)
+
+**Note:** Version bump only for package @strata-foundation/strata
+
+## [3.3.5](https://github.com/StrataFoundation/strata/compare/v3.3.4...v3.3.5) (2022-03-16)
+
+**Note:** Version bump only for package @strata-foundation/strata
+
+### Fixed
+
+- Allow null royalties
+
+## [3.3.4](https://github.com/StrataFoundation/strata/compare/v3.3.2...v3.3.4) (2022-03-16)
+
+**Note:** Version bump only for package @strata-foundation/strata
+
+### Fixed
+
+- Build issue in Disclosures of marketplace-ui
+
+## [3.3.3](https://github.com/StrataFoundation/strata/compare/v3.3.2...v3.3.3) (2022-03-16)
+
+**Note:** Version bump only for package @strata-foundation/strata
+
+### Added
+
+- Launchpad for ease of spinning up curves
+- protocolFee Add protocol level fees
+- iAmAFreeloader Refuse to pay fees to the protocol maintainers
+
+## [3.3.2]
+
+### Breaking
+
+- Moved `useCapInfo` to `react` package from `marketplace-ui`
+
+### Added
+
+- Disburse funds to token offering
+
+## [3.3.1](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.3.1-alpha.1...v3.3.1) (2022-03-09)
+
+### Added
+
+- Set a mint token ref as the authority on a bounty, and the owner of that social token can disburse the bounty
+- Add `disburseBounty` to marketplace sdk
+- Add ability to sell some initial supply of tokens using bonding curves without the need for bonding to take mint authority. Instead send the tokens to a second sell-only bonding curve. See `marketplaceSdk.createTokenBondingForSetSupply`
+- Prices for any top level token that has its mpl or token list metadata.name set to its coingecko id (case insensitive)
+
+### Changed
+
+- Refactor BountyDetails UI, breaking into components
+
+### Fixed
+
+- Swallowed errors on `useClaimedTokenRefKey` and a version conflict in borsh that causes errors
+
+# [3.3.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.2.6...v3.3.0) (2022-03-04)
+
+### Changed
+
+- Upgrade to anchor 0.22 and refactor
+
+### Added
+
+- LBC/Dynamic mint UI
+
+### Changed
+
+- Bounties ui elements are now more extensible
+
+## [3.2.4](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.2.4-alpha.5...v3.2.4) (2022-02-12)
+
+### Added
+
+- Bounties UI
+- Update reserve authority
+
+## [3.2.3](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.2.2...v3.2.3) (2022-02-09)
+
+**Note:** Version bump only for package @strata-foundation/strata
+
+### Fixed
+
+- useMetaplexTokenMetadata hook always showing as loading if no metadata found
+- Better tx errors
+
 ## [3.2.2](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.2.1...v3.2.2) (2022-02-08)
 
 ### Fixed
 
-  * Social tokens can be created now with no collective. A recent change to the bonding contract broke this.
-
+- Social tokens can be created now with no collective. A recent change to the bonding contract broke this.
 
 ## [3.2.1](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.2.0...v3.2.1) (2022-02-08)
 
 ### Changed
 
-  * Transactions executed via transactions.ts (this includes all sdks) now have candymachine retry logic. This should improve reliability
-    when the network is congested
+- Transactions executed via transactions.ts (this includes all sdks) now have candymachine retry logic. This should improve reliability
+  when the network is congested
 
 # [3.2.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.1.0...v3.2.0) (2022-02-03)
 
-  * Push all native sol operations into the program layer, and remove wrapping from the client
-  
+- Push all native sol operations into the program layer, and remove wrapping from the client
+
 ### Added
 
-  * Swap form allows bottom amount
-  * Docs playground
-
+- Swap form allows bottom amount
+- Docs playground
 
 # [3.1.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.0.0...v3.1.0) (2022-01-29)
 
 ### Breaking
 
-  * `fromCurve` and all curve.ts signatures changed to expect numbers instead of mint accounts
+- `fromCurve` and all curve.ts signatures changed to expect numbers instead of mint accounts
 
 ### Changed
 
-  * SellFrozen curves, i.e. marketplace curves now are not adaptive with respect to reserves. 
-  * Closing the bonding curve gives you back mint authority. This is better for liquidity bootstrapping
+- SellFrozen curves, i.e. marketplace curves now are not adaptive with respect to reserves.
+- Closing the bonding curve gives you back mint authority. This is better for liquidity bootstrapping
 
 # [3.0.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.2.0...v3.0.0) (2022-01-26)
 
@@ -44,19 +152,18 @@ This was a major version bump because of the upgrade to metaplex mpl-token-metad
 
 ### Removed
 
-  * Remove the entirety of metadata.ts. Switch to @metaplex-foundation/mpl-token-metadata
+- Remove the entirety of metadata.ts. Switch to @metaplex-foundation/mpl-token-metadata
 
 ### Changed
 
-  * Upgrade to metaplex metadata v2
+- Upgrade to metaplex metadata v2
 
 # [2.2.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.1.11...v2.2.0) (2022-01-25)
 
 ### Added
 
-  * Change Authority on Social Token
-  * Change Owner on Social Token
-
+- Change Authority on Social Token
+- Change Owner on Social Token
 
 ## [2.1.12]
 
@@ -66,9 +173,7 @@ Another attempt at fixing claim
 
 **Note:** Version bump only for package @strata-foundation/strata
 
-
 Fix v2 for claiming already minted token
-
 
 ## [2.1.9](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.1.8...v2.1.9) (2022-01-20)
 
@@ -76,43 +181,35 @@ Fix v2 for claiming already minted token
 
 Fix for claiming already minted token
 
-
 ## [2.1.8](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.1.7...v2.1.8) (2022-01-20)
 
 **Note:** Version bump only for package @strata-foundation/strata
 
 ### Added
 
-  * Ability to opt out claimed tokens
-
+- Ability to opt out claimed tokens
 
 ## [2.1.7](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.1.6...v2.1.7) (2022-01-20)
 
 **Note:** Version bump only for package @strata-foundation/strata
 
-
 ### Fixed
 
-  * Go live dates before now get set to now in token bonding
+- Go live dates before now get set to now in token bonding
 
 ### Removed
 
-  * Transaction lock on account fetch cache
-
+- Transaction lock on account fetch cache
 
 ## [2.1.6](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.1.5...v2.1.6) (2022-01-19)
 
 ### Fixed
 
-   * useSolPrice now uses connection from context
+- useSolPrice now uses connection from context
 
 ## [2.1.5](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.1.4...v2.1.5) (2022-01-19)
 
 **Note:** Version bump only for package @strata-foundation/strata
-
-
-
-
 
 ## [2.1.4](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.1.3...v2.1.4) (2022-01-19)
 
@@ -130,11 +227,11 @@ Downgrade @metaplex/arweave-cost since 2.x.x results in errors
 
 ### Fixed
 
-  * Account fetch cache synchronization after running a txn on a writable account
+- Account fetch cache synchronization after running a txn on a writable account
 
 ### Removed
 
-  * Deprecated useWalletTokensWithMeta as it fetches too much data and leads to laggy interfaces
+- Deprecated useWalletTokensWithMeta as it fetches too much data and leads to laggy interfaces
 
 # [2.1.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.0.6...v2.1.0) (2022-01-11)
 
@@ -142,21 +239,22 @@ This release contains logic to limit go live dates for officially going live on 
 
 ### Added
 
-  * Handle go live date in swap form
+- Handle go live date in swap form
 
 ### Added
 
-  * Handle go live date in swap form
+- Handle go live date in swap form
 
 ### Fixed
 
-  * Awaiting approval flag on provider would only go to false after finished txn
-  * Pricing didn't update when target mint supply changed
-## [2.0.6](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.0.5...v2.0.6) (2021-12-30)
-  * Fix account fetch cache to output parsed data when a parser is provided for something cached
-  * Add more options to bonding parameters to social token
-  * Account fetch cache bugfixes
+- Awaiting approval flag on provider would only go to false after finished txn
+- Pricing didn't update when target mint supply changed
 
+## [2.0.6](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.0.5...v2.0.6) (2021-12-30)
+
+- Fix account fetch cache to output parsed data when a parser is provided for something cached
+- Add more options to bonding parameters to social token
+- Account fetch cache bugfixes
 
 ## [2.0.5](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.0.4...v2.0.5) (2021-12-30)
 
@@ -164,22 +262,21 @@ This release contains logic to limit go live dates for officially going live on 
 
 ### Fixed
 
-  * CI/CD publish did not build first
-
+- CI/CD publish did not build first
 
 ## [2.0.4](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.0.3-test...v2.0.4) (2021-12-29)
 
 ### Added
 
-  * Ability to add transition fees to piecewise time curves, making for a less bottable fair launch.
+- Ability to add transition fees to piecewise time curves, making for a less bottable fair launch.
 
 ### Changed
 
- * Max pow or frac on exponential curves to 10. Any more than that risks blowing compute.
+- Max pow or frac on exponential curves to 10. Any more than that risks blowing compute.
 
 ### Fixed
 
- * `targetMintDecimals: 0` no longer throws an error.
+- `targetMintDecimals: 0` no longer throws an error.
 
 ## [2.0.3](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.0.2...v2.0.3) (2021-12-24)
 
@@ -187,19 +284,17 @@ This release contains logic to limit go live dates for officially going live on 
 
 Testing deploy for governance hookup
 
-
 ## [2.0.2](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.0.1...v2.0.2) (2021-12-24)
 
 **Note:** Version bump only for package @strata-foundation/strata
 
 Testing deploy for governance hookup
 
-
 # [2.0.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v1.3.2...v2.0.0) (2021-12-24)
 
-
 ### Changed
-  * Change bonding and collective to new program ids in preparation for mainnet launch
+
+- Change bonding and collective to new program ids in preparation for mainnet launch
 
 ## [1.3.4](https://github.com/StrataFoundation/strata/compare/v1.3.2...v1.3.4) (2021-12-22)
 
@@ -207,128 +302,141 @@ Testing deploy for governance hookup
 
 ### Fixed
 
- * usePriceInSol broken for wrappedSolMint
- * Use wrappedSolMint from token bonding state instead of global variable, as it is different for every environment. It's too late to fix this as there's already a wrapped sol in prod.
- * baseMint would not show up in swap interface after changing the base once because of a useMemo
+- usePriceInSol broken for wrappedSolMint
+- Use wrappedSolMint from token bonding state instead of global variable, as it is different for every environment. It's too late to fix this as there's already a wrapped sol in prod.
+- baseMint would not show up in swap interface after changing the base once because of a useMemo
 
 ## Added
 
- * unixTime to pricing so we can price the curve at a given point in time
-
+- unixTime to pricing so we can price the curve at a given point in time
 
 ## [1.3.3](https://github.com/StrataFoundation/strata/compare/v1.3.2...v1.3.3) (2021-12-22)
 
 **Note:** Version bump only for package @strata-foundation/strata
 
-* never released
+- never released
 
 ## [1.3.2](https://github.com/ChewingGlassFund/wumbo-programs/compare/v0.7.0...v1.3.2) (2021-12-15)
 
 ### Fixed
-  * Swap form would show loading when you had zero balance
+
+- Swap form would show loading when you had zero balance
 
 **Note:** Version bump only for package @strata-foundation/strata
 
 #[1.3.1]
 
 ### Fixed
-  * Updates to bonding curve were validated against unclaimed collective settings, always.
-  * No authority on primary token refs. **NOTE**: To update, rerun set_as_primary_v0
+
+- Updates to bonding curve were validated against unclaimed collective settings, always.
+- No authority on primary token refs. **NOTE**: To update, rerun set_as_primary_v0
 
 #[1.3.0]
+
 ### Changed
-  * getPricing -> getPricingCurve in favor of a new getPricing that can price bonding in terms of any token in the hierarchy.
-  * useBondingPricing now returns the above
-  * usePrice hooks changed to usePriceInUsd and usePriceInSol. These will recursively traverse a social token hierarchy to get its usd price
-  * Almost all hooks in tokenRef pertaining to twitter have been changed to be generic name references.
+
+- getPricing -> getPricingCurve in favor of a new getPricing that can price bonding in terms of any token in the hierarchy.
+- useBondingPricing now returns the above
+- usePrice hooks changed to usePriceInUsd and usePriceInSol. These will recursively traverse a social token hierarchy to get its usd price
+- Almost all hooks in tokenRef pertaining to twitter have been changed to be generic name references.
 
 ### Added
-  * Ability to opt out
-  * Ability to swap to any token on the bonding hierarchy.
+
+- Ability to opt out
+- Ability to swap to any token on the bonding hierarchy.
 
 [1.2.0-3]
 
 Testing builds. Do not use
 
 ## [1.1.1]
+
 ### Changed
+
 - `prepPayForFilesInstructions` => `prePayForFilesInstructions`
 
 ## [1.1.0]
+
 ### Added
 
-  - nullable params for hooks
+- nullable params for hooks
 
 ## [1.0.0]
+
 ### Added
 
-  - Token ref now has an authority set on it. This controls change to the bonding curve, separate from the owner. This allows a token ref to be associated with a wallet, but controlled by governance.
+- Token ref now has an authority set on it. This controls change to the bonding curve, separate from the owner. This allows a token ref to be associated with a wallet, but controlled by governance.
 
 ### Changed
 
-  - Social tokens (tokenRefs) may now have no collective
-  - Social tokens (tokenRefs) may now have no bonding curve (supporting binding yourself) to another type of token in future iterations
-  - Token refs PDAs are now based on the base mint of their bonding curve, instead of the collective
-  - **Switch from token-ref to owner-token-ref, and reverse-token-ref to mint-token-ref. This affects all pdas, and API naming semantics.** 
-  - Switch all authorities to concrete accounts. For example, token bonding's mint authority is now the token bonding itself. This makes for easier lookups, and makes the on chain data more descriptive.
-
+- Social tokens (tokenRefs) may now have no collective
+- Social tokens (tokenRefs) may now have no bonding curve (supporting binding yourself) to another type of token in future iterations
+- Token refs PDAs are now based on the base mint of their bonding curve, instead of the collective
+- **Switch from token-ref to owner-token-ref, and reverse-token-ref to mint-token-ref. This affects all pdas, and API naming semantics.**
+- Switch all authorities to concrete accounts. For example, token bonding's mint authority is now the token bonding itself. This makes for easier lookups, and makes the on chain data more descriptive.
 
 ## [0.7.0]
+
 ### Added
- - Ability to update TokenBonding directly from SplTokenCollective
+
+- Ability to update TokenBonding directly from SplTokenCollective
 
 ## [0.6.0]
 
 Minor version bumping it because the below changes included some interface changes, and should have been at least a minor bump
 
 ### Added
-  - React components, starting with `Swap` to `react` package
+
+- React components, starting with `Swap` to `react` package
 
 ## [0.5.5]
 
 ### Added
-  - Ability to update metadata
+
+- Ability to update metadata
 
 ### Removed
 
-  - Ability to upload to arweave directly from SplTokenCollective. This should be done separately, and passed via the `metadata.uri` field.
+- Ability to upload to arweave directly from SplTokenCollective. This should be done separately, and passed via the `metadata.uri` field.
 
 ## [0.5.4]
+
 ### Changed
 
-  - Pass `metadata.uri` instead of `metadataUri` to bypass arweave uploads
-  - Use the newest arweave upload url. Does not currently work in devnet so:
-  - Bypass arweave upload in all tutorials
-
+- Pass `metadata.uri` instead of `metadataUri` to bypass arweave uploads
+- Use the newest arweave upload url. Does not currently work in devnet so:
+- Bypass arweave upload in all tutorials
 
 ## [0.5.0]
+
 ### Added
-  - `AnchorSdk` abstract class to remove boilerplate rom sdks
+
+- `AnchorSdk` abstract class to remove boilerplate rom sdks
 
 ### Changed
 
-  - `createTokenBonding` now returns an object with multiple keys, instead of just the bonding instance
+- `createTokenBonding` now returns an object with multiple keys, instead of just the bonding instance
 
 ### Removed
 
-  - spl-token-account-split. Working on a proper fanout wallet.
-
+- spl-token-account-split. Working on a proper fanout wallet.
 
 ## [0.4.1]
 
 ### Added
-  - A new token ref at pda "token-ref", owner as the primary token ref
-  - SetAsPrimaryV0 endpoint and related sdk updates
-  - `curveAuthority` and `reserveAuthority` on token bonding instances that will in the future allow changes to the curve and changes to the reserves account, respectively.
-  - Ability to `updateCollective` to change both the config and authority.
+
+- A new token ref at pda "token-ref", owner as the primary token ref
+- SetAsPrimaryV0 endpoint and related sdk updates
+- `curveAuthority` and `reserveAuthority` on token bonding instances that will in the future allow changes to the curve and changes to the reserves account, respectively.
+- Ability to `updateCollective` to change both the config and authority.
 
 ### Changed
-  - Token collective now lives at TCo1sfSr2nCudbeJPykbif64rG9K1JNMGzrtzvPmp3y
+
+- Token collective now lives at TCo1sfSr2nCudbeJPykbif64rG9K1JNMGzrtzvPmp3y
 
 ### Removed
-  - ["token-ref", owner, Pubkey::default] as the primary token ref
 
-
+- ["token-ref", owner, Pubkey::default] as the primary token ref
 
 ## [0.3.9] - 2017-06-20
 

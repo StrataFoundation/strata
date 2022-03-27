@@ -1,4 +1,4 @@
-import { Provider } from "@project-serum/anchor";
+import { BN, Provider } from "@project-serum/anchor";
 import {
   AccountLayout,
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -7,9 +7,11 @@ import {
   u64,
 } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
+import { useCapInfo } from "./useCapInfo";
 import {
   BondingHierarchy,
   ISwapArgs,
+  toNumber,
 } from "@strata-foundation/spl-token-bonding";
 import React, { useEffect, useState } from "react";
 import { useAsync } from "react-async-hook";
@@ -29,7 +31,7 @@ import {
 
 export interface ISwapDriverArgs
   extends Pick<ISwapFormProps, "onConnectWallet" | "extraTransactionInfo"> {
-  tokenBondingKey: PublicKey;
+  tokenBondingKey: PublicKey | undefined;
   tradingMints: { base?: PublicKey; target?: PublicKey };
   onTradingMintsChange(mints: { base: PublicKey; target: PublicKey }): void;
   swap(args: ISwapArgs & { ticker: string }): void;
@@ -62,13 +64,15 @@ async function getMissingSpace(
             ASSOCIATED_TOKEN_PROGRAM_ID,
             TOKEN_PROGRAM_ID,
             hierarchy.tokenBonding.baseMint,
-            provider.wallet.publicKey
+            provider.wallet.publicKey,
+            true
           ),
           await Token.getAssociatedTokenAddress(
             ASSOCIATED_TOKEN_PROGRAM_ID,
             TOKEN_PROGRAM_ID,
             hierarchy.tokenBonding.targetMint,
-            provider.wallet.publicKey
+            provider.wallet.publicKey,
+            true
           ),
         ];
       })
@@ -183,14 +187,49 @@ export const useSwapDriver = ({
     publicKey: targetMint,
   };
 
+  const lowMint =
+    base &&
+    target &&
+    pricing?.hierarchy.lowest(base.publicKey, target.publicKey);
+  const targetMintSupply =
+    targetMintAcct && toNumber(targetMintAcct.supply, targetMintAcct);
+  const targetBonding = lowMint && pricing?.hierarchy.findTarget(lowMint);
+  const mintCap: number | undefined =
+    targetBonding &&
+    targetMintAcct &&
+    (targetBonding.mintCap as BN | undefined) &&
+    toNumber(targetBonding.mintCap as BN, targetMintAcct);
+
+  const isBuying = lowMint && lowMint.equals(target?.publicKey!);
+  const { numRemaining } = useCapInfo(tokenBondingKey);
+
   const handleSubmit = async (values: ISwapFormValues) => {
     if (values.topAmount) {
       try {
-        await swap({
+        // They explicitly set the amount they want. Accomodate this if we're not doing a multi
+        // level swap
+        const path = pricing?.hierarchy.path(baseMint!, targetMint!);
+        let shouldUseDesiredTargetAmount =
+          values.lastSet == "bottom" &&
+          path &&
+          path.length == 1 &&
+          path[0].tokenBonding.targetMint.equals(targetMint!);
+
+        let outputAmountSetting: any = {
           baseAmount: +values.topAmount,
+          expectedOutputAmount: +values.bottomAmount,
+        };
+        if (shouldUseDesiredTargetAmount) {
+          outputAmountSetting = {
+            desiredTargetAmount: +values.bottomAmount,
+            expectedBaseAmount: +values.topAmount,
+          };
+        }
+
+        await swap({
           baseMint: baseMint!,
           targetMint: targetMint!,
-          expectedOutputAmount: +values.bottomAmount,
+          ...outputAmountSetting,
           slippage: +values.slippage / 100,
           ticker: target!.ticker,
         });
@@ -202,6 +241,8 @@ export const useSwapDriver = ({
 
   return {
     extraTransactionInfo,
+    numRemaining,
+    mintCap,
     loading:
       targetMetaLoading ||
       baseMetaLoading ||

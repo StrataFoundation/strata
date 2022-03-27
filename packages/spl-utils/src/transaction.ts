@@ -97,6 +97,7 @@ export async function sendMultipleInstructions(
     .map((instructions, index) => {
       const signers = signerGroups[index];
       if (instructions.length > 0) {
+        console.log(provider.wallet.publicKey.toBase58(), payer?.toBase58());
         const tx = new Transaction({
           feePayer: payer || provider.wallet.publicKey,
           recentBlockhash,
@@ -165,6 +166,7 @@ export const awaitTransactionSignatureConfirmation = async (
       reject({ timeout: true });
     }, timeout);
     try {
+      console.log("COMMIMENT", commitment)
       subId = connection.onSignature(
         txid,
         (result: any, context: any) => {
@@ -203,12 +205,17 @@ export const awaitTransactionSignatureConfirmation = async (
               console.log("REST error for", txid, status);
               done = true;
               reject(status.err);
-            } else if (!status.confirmations) {
+            } else if (!status.confirmations && !status.confirmationStatus) {
               console.log("REST no confirmations for", txid, status);
             } else {
               console.log("REST confirmation for", txid, status);
-              done = true;
-              resolve(status);
+              if (
+                !status.confirmationStatus || status.confirmationStatus ==
+                commitment
+              ) {
+                done = true;
+                resolve(status);
+              }
             }
           }
         } catch (e) {
@@ -323,7 +330,7 @@ export async function sendAndConfirmWithRetry(
       throw err.err
     }
 
-    throw new Error('Transaction failed');
+    throw err;
   } finally {
     done = true;
   }

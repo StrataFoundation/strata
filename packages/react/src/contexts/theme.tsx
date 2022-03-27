@@ -2,13 +2,42 @@ import React, { FC } from "react";
 import {
   ThemeProvider as ChakraThemeProvider,
   extendTheme,
+  
 } from "@chakra-ui/react";
+
+const primary = {
+  50: "#fdefe7",
+  100: "#fbd6c2",
+  200: "#f8bb99",
+  300: "#f5a070",
+  400: "#f28b52",
+  500: "#f07733",
+  600: "#ee6f2e",
+  700: "#ec6427",
+  800: "#e95a20",
+  900: "#e54714",
+};
 
 export const theme: any = extendTheme({
   shadows: {
     outline: "none",
   },
-  components: { Button: { baseStyle: { _focus: { boxShadow: "none" } } } },
+  initialColorMode: "light",
+  useSystemColorMode: false,
+  components: {
+    Button: {
+      baseStyle: { _focus: { boxShadow: "none" } },
+    },
+    Input: {
+      variants: {
+        outline: {
+          field: {
+            borderColor: "#E5E7EB",
+          },
+        },
+      },
+    },
+  },
   colors: {
     gray: {
       50: "#F9FAFB",
@@ -46,6 +75,13 @@ export const theme: any = extendTheme({
       800: "#312E81",
       900: "#23215e",
     },
+    black: {
+      300: "#23273B",
+      500: "#0F1324",
+      700: "#363135",
+    },
+    orange: primary,
+    primary,
   },
 });
 

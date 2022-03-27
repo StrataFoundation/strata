@@ -4,7 +4,6 @@ use anchor_lang::prelude::*;
 pub struct ClaimSocialTokenV0Args {
   pub is_primary: bool, // Is this the primary social token for this wallet?
   pub authority: Option<Pubkey>,
-  pub owner_token_ref_bump_seed: u8,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
@@ -42,6 +41,12 @@ pub struct RoyaltySettingV0 {
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
+pub struct UpdateOwnerV0Args {
+  pub owner_token_ref_bump_seed: u8,
+  pub primary_token_ref_bump_seed: u8,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct TokenBondingSettingsV0 {
   pub curve: Option<Pubkey>,
   pub min_sell_base_royalty_percentage: Option<u32>,
@@ -64,13 +69,15 @@ pub struct TokenBondingSettingsV0 {
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
+pub struct SetAsPrimaryV0Args {
+  pub bump_seed: u8,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct InitializeSocialTokenV0Args {
   pub authority: Option<Pubkey>,
   pub name_parent: Option<Pubkey>,
   pub name_class: Option<Pubkey>,
-  pub collective_bump_seed: u8,
-  pub owner_token_ref_bump_seed: u8,
-  pub mint_token_ref_bump_seed: u8,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
@@ -86,11 +93,6 @@ pub struct UpdateTokenBondingV0ArgsWrapper {
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct SetAsPrimaryV0Args {
-  pub bump_seed: u8,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct ChangeOptStatusUnclaimedV0Args {
   pub hashed_name: Vec<u8>,
   pub is_opted_out: bool,
@@ -99,12 +101,6 @@ pub struct ChangeOptStatusUnclaimedV0Args {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct ChangeOptStatusClaimedV0Args {
   pub is_opted_out: bool,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct UpdateOwnerV0Args {
-  pub owner_token_ref_bump_seed: u8,
-  pub primary_token_ref_bump_seed: u8,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]

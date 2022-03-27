@@ -3,12 +3,19 @@ import { createInstruction, createNameRegistry, getHashedName, getNameAccountKey
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, NATIVE_MINT, Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
 import { Keypair, PublicKey, sendAndConfirmRawTransaction, SystemProgram, Transaction } from "@solana/web3.js";
 import { useBondingPricing, useStrataSdks, useTokenBonding, useTokenMetadata, useTokenRef } from '@strata-foundation/react';
-import { ExponentialCurveConfig, SplTokenBonding, TimeCurveConfig } from "@strata-foundation/spl-token-bonding";
+import { TimeDecayExponentialCurveConfig, ExponentialCurveConfig, SplTokenBonding, TimeCurveConfig } from "@strata-foundation/spl-token-bonding";
 import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
 import { createMetadata, Data, getAssociatedAccountBalance, getMintInfo, getTokenAccount, sendMultipleInstructions } from "@strata-foundation/spl-utils";
 import { BN } from "bn.js";
 import React from 'react';
 import { useVariables, useVariablesContext } from "../Root/variables";
+import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
+import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
+import {
+  BountyDetail,
+  BountyCard,
+  useBounties,
+} from "@strata-foundation/marketplace-ui";
 
 function BrowserOnlyAsyncButton(props) {
   return (
@@ -34,8 +41,14 @@ function Swap(props) {
 
 // Add react-live imports you need here
 const ReactLiveScope = {
+  BountyCard,
+  BountyDetail,
+  useBounties,
+  DataV2,
+  MarketplaceSdk,
   u64,
   TOKEN_PROGRAM_ID,
+  TimeDecayExponentialCurveConfig,
   ASSOCIATED_TOKEN_PROGRAM_ID,
   Token,
   createMetadata,

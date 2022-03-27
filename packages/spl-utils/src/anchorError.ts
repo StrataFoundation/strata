@@ -230,8 +230,7 @@ const LangErrorMessage = new Map([
 
 // An error from a user defined program.
 export class ProgramError {
-  constructor(readonly code: number, readonly msg: string, ...params: any[]) {
-  }
+  constructor(readonly code: number, readonly msg: string, ...params: any[]) {}
 
   public static parse(
     err: any,
@@ -239,6 +238,11 @@ export class ProgramError {
   ): ProgramError | null {
     let errorCode: number | null = null;
     if (err.InstructionError) {
+      if (
+        typeof err.InstructionError[0] == "number"
+      ) {
+        errorCode = err.InstructionError[0];
+      }
       if (err.InstructionError[1]?.Custom) {
         errorCode = err.InstructionError[1].Custom;
       }
@@ -259,9 +263,13 @@ export class ProgramError {
       }
     }
 
-    let errorMsg = idlErrors.get(errorCode) || LangErrorMessage.get(errorCode) || SystemErrorMessage.get(errorCode);
+    let errorMsg =
+      (err.InstructionErr && err.InstructionErr[1]) ||
+      idlErrors.get(errorCode) ||
+      LangErrorMessage.get(errorCode) ||
+      SystemErrorMessage.get(errorCode);
     if (errorMsg !== undefined) {
-      return new ProgramError(errorCode, errorMsg, errorCode + ': ' + errorMsg);
+      return new ProgramError(errorCode, errorMsg, errorCode + ": " + errorMsg);
     }
 
     // Unable to parse the error. Just return the untranslated error.

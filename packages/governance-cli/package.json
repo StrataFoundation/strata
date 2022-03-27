@@ -1,6 +1,6 @@
 {
   "name": "@strata-foundation/governance-cli",
-  "version": "3.2.1",
+  "version": "3.3.2",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
@@ -14,12 +14,12 @@
     "close-buffers": "tsc && node bin/closeBuffersProposal.js"
   },
   "dependencies": {
-    "@project-serum/anchor": "^0.20.1",
     "@strata-foundation/spl-utils": "^3.2.2",
+    "@project-serum/anchor": "^0.22.0",
     "@solana/spl-governance": "^0.0.27",
     "@solana/web3.js": "^1.32.0",
     "borsh": "^0.7.0",
     "shelljs": "^0.8.4"
   },
-  "gitHead": "b9f0568f49a2c0f68225b40286dc729560546b45"
+  "gitHead": "ff670e6a6211209648c56dd69e5f5dfbda631b42"
 }

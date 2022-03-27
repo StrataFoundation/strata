@@ -1,11 +1,13 @@
 #![allow(clippy::or_fun_call)]
 
+use std::collections::BTreeMap;
+
 use crate::token_metadata::update_metadata_account_v2;
 use {
   anchor_lang::prelude::*,
   anchor_spl::token::{transfer, Transfer},
   borsh::{BorshDeserialize, BorshSerialize},
-  spl_token_bonding::arg::UpdateTokenBondingV0Args,
+  spl_token_bonding::instructions::update_token_bonding_v0::UpdateTokenBondingV0Args,
 };
 
 pub mod account;
@@ -20,7 +22,7 @@ use spl_token_bonding::cpi::accounts::UpdateTokenBondingV0;
 use token_metadata::UpdateMetadataAccount;
 
 use crate::token_metadata::UpdateMetadataAccountArgs;
-use crate::{account::*, arg::*, error::*, state::*, util::*};
+use crate::{account::*, arg::*, error::ErrorCode, state::*, util::*};
 
 declare_id!("TCo1sfSr2nCudbeJPykbif64rG9K1JNMGzrtzvPmp3y");
 
@@ -28,21 +30,21 @@ pub fn initialize_social_token_v0(
   accounts: &mut InitializeSocialTokenV0,
   owner_token_ref: &mut Account<TokenRefV0>,
   mint_token_ref: &mut Account<TokenRefV0>,
-  args: &InitializeSocialTokenV0Args,
-) -> ProgramResult {
+  bumps: BTreeMap<String, u8>,
+) -> Result<()> {
   let c = get_collective(&accounts.collective);
   let collective = c.as_ref();
   if let Some(collective) = collective {
     if !collective.config.is_open {
       let authority = collective
         .authority
-        .ok_or::<ProgramError>(ErrorCode::InvalidAuthority.into())?;
+        .ok_or(error!(ErrorCode::InvalidAuthority))?;
       if accounts.authority.key() != authority || !accounts.authority.is_signer {
-        return Err(ErrorCode::InvalidAuthority.into());
+        return Err(error!(ErrorCode::InvalidAuthority));
       }
 
-      if accounts.token_bonding.base_mint.key() != collective.mint.key() {
-        return Err(ErrorCode::InvalidCollective.into());
+      if accounts.token_bonding.base_mint != collective.mint {
+        return Err(error!(ErrorCode::InvalidCollective));
       }
     }
   }
@@ -54,12 +56,12 @@ pub fn initialize_social_token_v0(
   };
   owner_token_ref.token_bonding = Some(accounts.token_bonding.key());
   owner_token_ref.mint = accounts.token_bonding.target_mint;
-  owner_token_ref.bump_seed = args.owner_token_ref_bump_seed;
+  owner_token_ref.bump_seed = *bumps.get("owner_token_ref").unwrap();
   owner_token_ref.token_metadata = accounts.token_metadata.key();
 
   mint_token_ref.collective = owner_token_ref.collective;
   mint_token_ref.token_bonding = Some(accounts.token_bonding.key());
-  mint_token_ref.bump_seed = args.mint_token_ref_bump_seed;
+  mint_token_ref.bump_seed = *bumps.get("mint_token_ref").unwrap();
   mint_token_ref.mint = accounts.token_bonding.target_mint;
 
   mint_token_ref.token_metadata = accounts.token_metadata.key();
@@ -83,19 +85,23 @@ pub fn get_collective(collective: &UncheckedAccount) -> Option<CollectiveV0> {
 pub mod spl_token_collective {
 
   use anchor_lang::AccountsClose;
+  use spl_token_bonding::{
+    cpi::{accounts::UpdateReserveAuthorityV0, update_reserve_authority_v0},
+    instructions::UpdateReserveAuthorityV0Args,
+  };
 
   use super::*;
 
   pub fn initialize_collective_v0(
     ctx: Context<InitializeCollectiveV0>,
     args: InitializeCollectiveV0Args,
-  ) -> ProgramResult {
+  ) -> Result<()> {
     let collective = &mut ctx.accounts.collective;
 
     collective.mint = ctx.accounts.mint.key();
     collective.config = args.config;
     collective.authority = args.authority;
-    collective.bump_seed = args.bump_seed;
+    collective.bump_seed = *ctx.bumps.get("collective").unwrap();
 
     Ok(())
   }
@@ -103,7 +109,7 @@ pub mod spl_token_collective {
   pub fn update_collective_v0(
     ctx: Context<UpdateCollectiveV0>,
     args: UpdateCollectiveV0Args,
-  ) -> ProgramResult {
+  ) -> Result<()> {
     let collective = &mut ctx.accounts.collective;
 
     collective.config = args.config;
@@ -112,10 +118,7 @@ pub mod spl_token_collective {
     Ok(())
   }
 
-  pub fn set_as_primary_v0(
-    ctx: Context<SetAsPrimaryV0>,
-    args: SetAsPrimaryV0Args,
-  ) -> ProgramResult {
+  pub fn set_as_primary_v0(ctx: Context<SetAsPrimaryV0>, args: SetAsPrimaryV0Args) -> Result<()> {
     let token_ref = &ctx.accounts.token_ref;
     let primary_token_ref = &mut ctx.accounts.primary_token_ref;
 
@@ -128,7 +131,10 @@ pub mod spl_token_collective {
     primary_token_ref.authority = token_ref.authority;
     primary_token_ref.is_claimed = token_ref.is_claimed;
     primary_token_ref.is_primary = true;
-    primary_token_ref.bump_seed = args.bump_seed;
+    primary_token_ref.bump_seed = *ctx
+      .bumps
+      .get("primaty_token_ref")
+      .unwrap_or(&args.bump_seed);
     primary_token_ref.target_royalties_owner_bump_seed = token_ref.target_royalties_owner_bump_seed;
 
     Ok(())
@@ -137,7 +143,7 @@ pub mod spl_token_collective {
   pub fn initialize_owned_social_token_v0(
     ctx: Context<InitializeOwnedSocialTokenV0>,
     args: InitializeSocialTokenV0Args,
-  ) -> ProgramResult {
+  ) -> Result<()> {
     let collective = get_collective(&ctx.accounts.initialize_args.collective);
     let initialize_args = &ctx.accounts.initialize_args;
     let token_bonding_settings = collective
@@ -161,7 +167,7 @@ pub mod spl_token_collective {
       &mut ctx.accounts.initialize_args,
       &mut ctx.accounts.owner_token_ref,
       &mut ctx.accounts.mint_token_ref,
-      &args,
+      ctx.bumps,
     )?;
     let owner_token_ref = &mut ctx.accounts.owner_token_ref;
     let mint_token_ref = &mut ctx.accounts.mint_token_ref;
@@ -179,7 +185,7 @@ pub mod spl_token_collective {
   pub fn initialize_unclaimed_social_token_v0(
     ctx: Context<InitializeUnclaimedSocialTokenV0>,
     args: InitializeSocialTokenV0Args,
-  ) -> ProgramResult {
+  ) -> Result<()> {
     let collective = get_collective(&ctx.accounts.initialize_args.collective);
     let initialize_args = &ctx.accounts.initialize_args;
     let config = collective.as_ref().map(|c| &c.config);
@@ -206,7 +212,7 @@ pub mod spl_token_collective {
 
     let timestamp = initialize_args.clock.unix_timestamp;
     if initialize_args.token_bonding.go_live_unix_time > timestamp {
-      return Err(ErrorCode::UnclaimedNotLive.into());
+      return Err(error!(ErrorCode::UnclaimedNotLive));
     }
 
     if let Some(token_metadata_settings) = token_metadata_settings_opt {
@@ -230,7 +236,7 @@ pub mod spl_token_collective {
           &str::replace(&initialize_args.token_metadata.data.name, "\u{0000}", ""),
         )?;
       if !valid {
-        return Err(ErrorCode::InvalidTokenMetadataSettings.into());
+        return Err(error!(ErrorCode::InvalidTokenMetadataSettings));
       }
     }
 
@@ -238,7 +244,7 @@ pub mod spl_token_collective {
       &mut ctx.accounts.initialize_args,
       &mut ctx.accounts.owner_token_ref,
       &mut ctx.accounts.mint_token_ref,
-      &args,
+      ctx.bumps,
     )?;
     let owner_token_ref = &mut ctx.accounts.owner_token_ref;
     let mint_token_ref = &mut ctx.accounts.mint_token_ref;
@@ -260,7 +266,7 @@ pub mod spl_token_collective {
   pub fn claim_social_token_v0(
     ctx: Context<ClaimSocialTokenV0>,
     args: ClaimSocialTokenV0Args,
-  ) -> ProgramResult {
+  ) -> Result<()> {
     let new_token_ref = &mut ctx.accounts.new_token_ref;
     let mint_token_ref = &mut ctx.accounts.mint_token_ref;
     let data = &ctx.accounts.token_metadata.data;
@@ -321,7 +327,7 @@ pub mod spl_token_collective {
 
     new_token_ref.collective = mint_token_ref.collective;
     new_token_ref.token_bonding = mint_token_ref.token_bonding;
-    new_token_ref.bump_seed = args.owner_token_ref_bump_seed;
+    new_token_ref.bump_seed = *ctx.bumps.get("new_token_ref").unwrap();
     new_token_ref.target_royalties_owner_bump_seed =
       mint_token_ref.target_royalties_owner_bump_seed;
     new_token_ref.token_metadata = mint_token_ref.token_metadata;
@@ -427,7 +433,7 @@ pub mod spl_token_collective {
   pub fn update_token_bonding_v0(
     ctx: Context<UpdateTokenBondingV0Wrapper>,
     args: UpdateTokenBondingV0ArgsWrapper,
-  ) -> ProgramResult {
+  ) -> Result<()> {
     let token_bonding = ctx.accounts.token_bonding.clone();
 
     let seeds: &[&[&[u8]]] = &[&[
@@ -486,7 +492,7 @@ pub mod spl_token_collective {
   pub fn change_opt_status_unclaimed_v0(
     ctx: Context<ChangeOptStatusUnclaimedV0>,
     args: ChangeOptStatusUnclaimedV0Args,
-  ) -> ProgramResult {
+  ) -> Result<()> {
     let name_class = &ctx.remaining_accounts[0];
     let name_parent = &ctx.remaining_accounts[1];
     let name_parent_owner = &ctx.remaining_accounts[2];
@@ -506,7 +512,7 @@ pub mod spl_token_collective {
 
     // Even if the name was never actually created, verify the name class and name parent are accurate
     if !valid_authority {
-      return Err(ErrorCode::InvalidNameAuthority.into());
+      return Err(error!(ErrorCode::InvalidNameAuthority));
     }
 
     ctx.accounts.owner_token_ref.is_opted_out = args.is_opted_out;
@@ -550,7 +556,7 @@ pub mod spl_token_collective {
   pub fn change_opt_status_claimed_v0(
     ctx: Context<ChangeOptStatusClaimedV0>,
     args: ChangeOptStatusClaimedV0Args,
-  ) -> ProgramResult {
+  ) -> Result<()> {
     ctx.accounts.owner_token_ref.is_opted_out = args.is_opted_out;
     ctx.accounts.mint_token_ref.is_opted_out = args.is_opted_out;
     if ctx.accounts.primary_token_ref.collective == ctx.accounts.mint_token_ref.collective {
@@ -592,7 +598,8 @@ pub mod spl_token_collective {
     Ok(())
   }
 
-  pub fn update_owner_v0(ctx: Context<UpdateOwnerV0>, args: UpdateOwnerV0Args) -> ProgramResult {
+  // Args kept for backward compatibility
+  pub fn update_owner_v0(ctx: Context<UpdateOwnerV0>, args: UpdateOwnerV0Args) -> Result<()> {
     let mint_token_ref = &mut ctx.accounts.mint_token_ref;
     // Change owner
     mint_token_ref.owner = Some(ctx.accounts.new_owner.key());
@@ -608,7 +615,10 @@ pub mod spl_token_collective {
         new_token_ref.set_inner(mint_token_ref.clone().into_inner());
         primary.close(ctx.accounts.payer.to_account_info())?;
         new_token_ref.is_primary = true;
-        new_token_ref.bump_seed = args.primary_token_ref_bump_seed;
+        new_token_ref.bump_seed = *ctx
+          .bumps
+          .get("new_primary_token_ref")
+          .unwrap_or(&args.primary_token_ref_bump_seed);
       }
     } else {
       // Wasn't a primary for the current wallet, and wasn't a primary for the new wallet
@@ -623,14 +633,17 @@ pub mod spl_token_collective {
     // Copy old token ref to new token ref
     let new_token_ref = &mut ctx.accounts.new_owner_token_ref;
     new_token_ref.set_inner(mint_token_ref.clone().into_inner());
-    new_token_ref.bump_seed = args.owner_token_ref_bump_seed;
+    new_token_ref.bump_seed = *ctx
+      .bumps
+      .get("new_owner_token_ref")
+      .unwrap_or(&args.owner_token_ref_bump_seed);
     Ok(())
   }
 
   pub fn update_authority_v0(
     ctx: Context<UpdateAuthorityV0>,
     args: UpdateAuthorityV0Args,
-  ) -> ProgramResult {
+  ) -> Result<()> {
     let primary = &mut ctx.accounts.primary_token_ref;
     if primary.authority.is_some()
       && primary.authority.unwrap() == ctx.accounts.authority.key()
@@ -641,6 +654,80 @@ pub mod spl_token_collective {
 
     ctx.accounts.mint_token_ref.authority = Some(args.new_authority);
     ctx.accounts.owner_token_ref.authority = Some(args.new_authority);
+    Ok(())
+  }
+
+  pub fn claim_bonding_authority_v0(ctx: Context<ClaimBondingAuthorityV0>) -> Result<()> {
+    let mint_token_ref = &ctx.accounts.mint_token_ref;
+    let token_bonding_update_accts = &ctx.accounts.token_bonding_update_accounts;
+    let token_bonding = &token_bonding_update_accts.token_bonding;
+
+    let seeds: &[&[&[u8]]] = &[&[
+      b"mint-token-ref",
+      mint_token_ref.mint.as_ref(),
+      &[mint_token_ref.bump_seed],
+    ]];
+
+    update_reserve_authority_v0(
+      CpiContext::new_with_signer(
+        ctx.accounts.token_bonding_program.clone(),
+        UpdateReserveAuthorityV0 {
+          token_bonding: token_bonding_update_accts.token_bonding.to_account_info(),
+          reserve_authority: mint_token_ref.to_account_info(),
+        },
+        seeds,
+      ),
+      UpdateReserveAuthorityV0Args {
+        new_reserve_authority: mint_token_ref.authority,
+      },
+    )?;
+
+    spl_token_bonding::cpi::update_token_bonding_v0(
+      CpiContext::new_with_signer(
+        ctx.accounts.token_bonding_program.clone(),
+        UpdateTokenBondingV0 {
+          token_bonding: token_bonding_update_accts
+            .token_bonding
+            .to_account_info()
+            .clone(),
+          base_mint: token_bonding_update_accts
+            .base_mint
+            .to_account_info()
+            .clone(),
+          target_mint: token_bonding_update_accts
+            .target_mint
+            .to_account_info()
+            .clone(),
+          general_authority: ctx.accounts.mint_token_ref.to_account_info().clone(),
+          buy_base_royalties: token_bonding_update_accts
+            .buy_base_royalties
+            .to_account_info()
+            .clone(),
+          buy_target_royalties: token_bonding_update_accts
+            .buy_target_royalties
+            .to_account_info()
+            .clone(),
+          sell_base_royalties: token_bonding_update_accts
+            .sell_base_royalties
+            .to_account_info()
+            .clone(),
+          sell_target_royalties: token_bonding_update_accts
+            .sell_target_royalties
+            .to_account_info()
+            .clone(),
+        },
+        seeds,
+      ),
+      UpdateTokenBondingV0Args {
+        general_authority: mint_token_ref.authority,
+        buy_base_royalty_percentage: token_bonding.buy_base_royalty_percentage,
+        buy_target_royalty_percentage: token_bonding.buy_target_royalty_percentage,
+        sell_base_royalty_percentage: token_bonding.sell_base_royalty_percentage,
+        sell_target_royalty_percentage: token_bonding.sell_target_royalty_percentage,
+        buy_frozen: token_bonding.buy_frozen,
+      },
+    )?;
+
     Ok(())
   }
 }

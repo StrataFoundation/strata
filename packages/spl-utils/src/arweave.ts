@@ -7,6 +7,7 @@ import {
   TransactionInstruction
 } from "@solana/web3.js";
 import crypto from "crypto";
+import { Attribute } from "./splTokenMetadata";
 
 export const AR_SOL_HOLDER_ID = new PublicKey(
   "6FKvsq4ydWFci6nGq9ckbjYMtnmaqAoatz5c9XWjiDuS"
@@ -121,6 +122,7 @@ export function getFilesWithMetadata(
     animationUrl: string | undefined;
     externalUrl: string;
     properties: any;
+    attributes: Attribute[] | undefined;
     creators: Creator[] | null;
     sellerFeeBasisPoints: number;
   }
@@ -133,6 +135,7 @@ export function getFilesWithMetadata(
     image: metadata.image,
     animation_url: metadata.animationUrl,
     external_url: metadata.externalUrl,
+    attributes: metadata.attributes,
     properties: {
       ...metadata.properties,
       creators: metadata.creators?.map((creator) => {

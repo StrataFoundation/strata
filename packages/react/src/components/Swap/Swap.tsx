@@ -45,7 +45,7 @@ export const Swap = ({ tokenBondingKey }: { tokenBondingKey: PublicKey }) => {
             onDismiss={() => toast.dismiss(t.id)}
           />
         ));
-      }),
+      }).catch(console.error),
     onConnectWallet: identity,
     tokenBondingKey: tokenBondingKey,
   });

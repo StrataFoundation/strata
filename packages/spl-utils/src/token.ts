@@ -6,7 +6,8 @@ export async function getAssociatedAccountBalance(connection: Connection, accoun
     ASSOCIATED_TOKEN_PROGRAM_ID,
     TOKEN_PROGRAM_ID,
     mint,
-    account
+    account,
+    true
   );
 
   return (await connection.getTokenAccountBalance(ata)).value;

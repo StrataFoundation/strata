@@ -1,4 +1,9 @@
-import { Metadata, Creator, DataV2, MetadataProgram } from "@metaplex-foundation/mpl-token-metadata";
+import {
+  Metadata,
+  Creator,
+  DataV2,
+  MetadataProgram,
+} from "@metaplex-foundation/mpl-token-metadata";
 import * as anchor from "@project-serum/anchor";
 import { IdlTypes, Program, Provider } from "@project-serum/anchor";
 import { getHashedName, NameRegistryState } from "@solana/spl-name-service";
@@ -8,37 +13,41 @@ import {
   MintLayout,
   NATIVE_MINT,
   Token,
-  TOKEN_PROGRAM_ID
+  TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import {
   AccountInfo,
+  Commitment,
+  Finality,
   PublicKey,
   Signer,
   SystemProgram,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
-  TransactionInstruction
+  TransactionInstruction,
 } from "@solana/web3.js";
 import {
   ICreateTokenBondingArgs,
   ITokenBonding,
   IUpdateTokenBondingArgs,
-  SplTokenBonding
+  SplTokenBonding,
 } from "@strata-foundation/spl-token-bonding";
 import {
   AnchorSdk,
-  BigInstructionResult, createMintInstructions, extendBorsh,
+  BigInstructionResult,
+  createMintInstructions,
+  extendBorsh,
   InstructionResult,
   ITokenWithMeta,
   percent,
   SplTokenMetadata,
-  TypedAccountParser
+  TypedAccountParser,
 } from "@strata-foundation/spl-utils";
 import { deserializeUnchecked } from "borsh";
 import {
   CollectiveV0,
   SplTokenCollectiveIDL,
-  TokenRefV0
+  TokenRefV0,
 } from "./generated/spl-token-collective";
 
 export * from "./generated/spl-token-collective";
@@ -86,7 +95,7 @@ export interface ICreateCollectiveArgs {
 }
 
 // Taken from token bonding initialize
-/** See [InitializeTokenBondingArgs](/docs/api/spl-token-bonding/interfaces/ICreateTokenBondingArgs) */
+/** See [InitializeTokenBondingArgs](https://docs.strataprotocol.com/api/spl-token-bonding/interfaces/ICreateTokenBondingArgs) */
 export interface ITokenBondingParams
   extends Omit<ICreateTokenBondingArgs, "curve" | "baseMint"> {
   /** The curve to create this social token on. **Default:** Curve from the collective's config */
@@ -319,6 +328,10 @@ export interface IUpdateTokenBondingViaCollectiveArgs
   tokenRef: PublicKey;
 }
 
+export interface IClaimBondingAuthorityArgs {
+  tokenBonding: PublicKey;
+}
+
 type CollectiveConfigV0 = IdlTypes<SplTokenCollectiveIDL>["CollectiveConfigV0"];
 type TokenBondingSettingsV0 =
   IdlTypes<SplTokenCollectiveIDL>["TokenBondingSettingsV0"];
@@ -466,6 +479,8 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       splCollectiveProgramId,
       provider
     );
+
+    // @ts-ignore
     const splCollective = new anchor.Program(
       SplCollectiveIDLJson!,
       splCollectiveProgramId,
@@ -576,7 +591,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
               creators: null,
               sellerFeeBasisPoints: 0,
               collection: null,
-              uses: null
+              uses: null,
             }),
           });
         instructions.push(...metadataInstructions);
@@ -692,9 +707,14 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
    * @returns
    */
   createCollective(
-    args: ICreateCollectiveArgs
+    args: ICreateCollectiveArgs,
+    commitment: Finality = "confirmed"
   ): Promise<{ collective: PublicKey; tokenBonding?: PublicKey }> {
-    return this.executeBig(this.createCollectiveInstructions(args), args.payer);
+    return this.executeBig(
+      this.createCollectiveInstructions(args),
+      args.payer,
+      commitment
+    );
   }
 
   /**
@@ -808,20 +828,18 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     const [mintTokenRef] = await SplTokenCollective.mintTokenRefKey(
       tokenBondingAcct.targetMint
     );
-    const [newTokenRef, ownerTokenRefBumpSeed] =
-      await PublicKey.findProgramAddress(
-        SplTokenCollective.ownerTokenRefSeeds({
-          mint: tokenBondingAcct.baseMint,
-          owner,
-        }),
-        this.programId
-      );
+    const [newTokenRef] = await PublicKey.findProgramAddress(
+      SplTokenCollective.ownerTokenRefSeeds({
+        mint: tokenBondingAcct.baseMint,
+        owner,
+      }),
+      this.programId
+    );
 
     const instructions1 = [];
     instructions1.push(
       await this.instruction.claimSocialTokenV0(
         {
-          ownerTokenRefBumpSeed,
           isPrimary,
           authority,
         },
@@ -860,21 +878,25 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       const tokenMetadataRaw = await this.provider.connection.getAccountInfo(
         tokenRefAcct.tokenMetadata
       );
-      const tokenMetadata = new Metadata(tokenRefAcct.tokenMetadata, tokenMetadataRaw!).data;
-      const { instructions: updateInstructions } = await this.splTokenMetadata.updateMetadataInstructions({
-        data: new DataV2({
-          name: tokenName || tokenMetadata.data.name,
-          symbol: symbol || tokenMetadata.data.symbol,
-          uri: tokenMetadata.data.uri,
-          sellerFeeBasisPoints: 0,
-          creators: null,
-          collection: null,
-          uses: null
-        }),
-        newAuthority: owner,
-        updateAuthority: owner,
-        metadata: tokenRefAcct.tokenMetadata
-      })
+      const tokenMetadata = new Metadata(
+        tokenRefAcct.tokenMetadata,
+        tokenMetadataRaw!
+      ).data;
+      const { instructions: updateInstructions } =
+        await this.splTokenMetadata.updateMetadataInstructions({
+          data: new DataV2({
+            name: tokenName || tokenMetadata.data.name,
+            symbol: symbol || tokenMetadata.data.symbol,
+            uri: tokenMetadata.data.uri,
+            sellerFeeBasisPoints: 0,
+            creators: null,
+            collection: null,
+            uses: null,
+          }),
+          newAuthority: owner,
+          updateAuthority: owner,
+          metadata: tokenRefAcct.tokenMetadata,
+        });
       instructions1.push(...updateInstructions);
     }
 
@@ -980,7 +1002,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       owner = (await this.getTokenRef(tokenRef)).owner;
     }
 
-    const [primaryTokenRef, primaryTokenRefBumpSeed] =
+    const [primaryTokenRef, bumpSeed] =
       await SplTokenCollective.ownerTokenRefKey({
         isPrimary: true,
         owner,
@@ -991,7 +1013,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       instructions: [
         await this.instruction.setAsPrimaryV0(
           {
-            bumpSeed: primaryTokenRefBumpSeed,
+            bumpSeed,
           },
           {
             accounts: {
@@ -1120,10 +1142,12 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
 
     let collectiveBumpSeed: number = 0;
     if (!collective) {
-      ([collective, collectiveBumpSeed] = (await SplTokenCollective.collectiveKey(mint!)));
+      [collective, collectiveBumpSeed] = await SplTokenCollective.collectiveKey(
+        mint!
+      );
     }
 
-    const collectiveAcct = (await this.getCollective(collective));
+    const collectiveAcct = await this.getCollective(collective);
     if (collectiveAcct) {
       collectiveBumpSeed = collectiveAcct.bumpSeed;
     }
@@ -1132,7 +1156,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       | undefined;
     if (!mint) {
       if (!collectiveAcct) {
-        throw new Error("Must either provide a collective or a mint")
+        throw new Error("Must either provide a collective or a mint");
       }
       mint = collectiveAcct.mint;
     }
@@ -1237,8 +1261,9 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       : config?.unclaimedTokenBondingSettings;
     const signers2: Signer[] = [];
     const curveToUse = (curve ||
-      // @ts-ignore
-      (!owner && collectiveAcct?.config?.unclaimedTokenBondingSettings?.curve) ||
+      (!owner &&
+        // @ts-ignore
+        collectiveAcct?.config?.unclaimedTokenBondingSettings?.curve) ||
       // @ts-ignore
       (owner && collectiveAcct?.config?.claimedTokenBondingSettings?.curve) ||
       // @ts-ignore
@@ -1258,7 +1283,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
         buyTargetRoyalties,
         sellBaseRoyalties,
         sellTargetRoyalties,
-        baseMint
+        baseMint,
       },
     } = await this.splTokenBondingProgram.createTokenBondingInstructions({
       payer,
@@ -1290,13 +1315,13 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
         ? mintTokenRef
         : undefined,
       // @ts-ignore
-      buyBaseRoyalties: tokenBondingSettings?.buyBaseRoyalties?.address,
+      buyBaseRoyalties: tokenBondingSettings?.buyBaseRoyalties?.address || undefined,
       // @ts-ignore
-      sellBaseRoyalties: tokenBondingSettings?.sellBaseRoyalties?.address,
+      sellBaseRoyalties: tokenBondingSettings?.sellBaseRoyalties?.address || undefined,
       // @ts-ignore
-      buyTargetRoyalties: tokenBondingSettings?.buyTargetRoyalties?.address,
+      buyTargetRoyalties: tokenBondingSettings?.buyTargetRoyalties?.address || undefined,
       // @ts-ignore
-      sellTargetRoyalties: tokenBondingSettings?.sellTargetRoyalties?.address,
+      sellTargetRoyalties: tokenBondingSettings?.sellTargetRoyalties?.address || undefined,
       ...tokenBondingParams,
     });
     instructions2.push(...bondingInstructions);
@@ -1390,7 +1415,10 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
    * @param args
    * @returns
    */
-  async createSocialToken(args: ICreateSocialTokenArgs): Promise<{
+  async createSocialToken(
+    args: ICreateSocialTokenArgs,
+    commitment: Finality = "confirmed"
+  ): Promise<{
     ownerTokenRef: PublicKey;
     mintTokenRef: PublicKey;
     tokenBonding: PublicKey | null;
@@ -1398,7 +1426,8 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
   }> {
     return this.executeBig(
       this.createSocialTokenInstructions(args),
-      args.payer
+      args.payer,
+      commitment
     );
   }
 
@@ -1437,6 +1466,65 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
           account: info,
         };
       })
+    );
+  }
+
+  /**
+   * Claims the reserve and general authority from any bonding curve
+   * that has this token ref as the authority. Useful for setting bonding curves
+   * that can later be claimed by the social token holder.
+   *
+   * @param param0
+   * @returns
+   */
+  async claimBondingAuthorityInstructions({
+    tokenBonding,
+  }: IClaimBondingAuthorityArgs): Promise<InstructionResult<null>> {
+    const tokenBondingAcct = (await this.splTokenBondingProgram.getTokenBonding(
+      tokenBonding
+    ))!;
+
+    const [mintTokenRef] = await SplTokenCollective.mintTokenRefKey(
+      tokenBondingAcct.baseMint
+    );
+
+    return {
+      output: null,
+      signers: [],
+      instructions: [
+        await this.instruction.claimBondingAuthorityV0({
+          accounts: {
+            mintTokenRef,
+            tokenBondingUpdateAccounts: {
+              tokenBonding: tokenBonding,
+              baseMint: tokenBondingAcct.baseMint,
+              targetMint: tokenBondingAcct.targetMint,
+              buyBaseRoyalties: tokenBondingAcct.buyBaseRoyalties,
+              sellBaseRoyalties: tokenBondingAcct.sellBaseRoyalties,
+              buyTargetRoyalties: tokenBondingAcct.buyTargetRoyalties,
+              sellTargetRoyalties: tokenBondingAcct.sellTargetRoyalties,
+            },
+            tokenBondingProgram: this.splTokenBondingProgram.programId,
+          },
+        }),
+      ],
+    };
+  }
+
+  /**
+   * Runs {@link `claimBondingAuthorityInstructions`}
+   *
+   * @param args
+   * @retruns
+   */
+  async claimBondingAuthority(
+    args: IClaimBondingAuthorityArgs,
+    commitment: Commitment = "confirmed"
+  ): Promise<void> {
+    await this.execute(
+      this.claimBondingAuthorityInstructions(args),
+      this.wallet.publicKey,
+      commitment
     );
   }
 
@@ -1571,9 +1659,14 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
    * @retruns
    */
   async updateTokenBonding(
-    args: IUpdateTokenBondingViaCollectiveArgs
+    args: IUpdateTokenBondingViaCollectiveArgs,
+    commitment: Commitment = "confirmed"
   ): Promise<void> {
-    await this.execute(this.updateTokenBondingInstructions(args));
+    await this.execute(
+      this.updateTokenBondingInstructions(args),
+      this.wallet.publicKey,
+      commitment
+    );
   }
 
   async getOptionalNameRecord(
@@ -1663,23 +1756,26 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     if (tokenRefAcct.isClaimed) {
       const [primaryTokenRef] = await SplTokenCollective.ownerTokenRefKey({
         owner: tokenRefAcct.owner as PublicKey,
-        isPrimary: true
+        isPrimary: true,
       });
 
       instructions.push(
-        await this.instruction.changeOptStatusClaimedV0({
-          isOptedOut: true
-        }, {
-          accounts: {
-            primaryTokenRef,
-            ownerTokenRef,
-            mintTokenRef,
-            owner: tokenRefAcct.owner!,
-            tokenBondingUpdateAccounts,
-            tokenBondingProgram: this.splTokenBondingProgram.programId,
+        await this.instruction.changeOptStatusClaimedV0(
+          {
+            isOptedOut: true,
+          },
+          {
+            accounts: {
+              primaryTokenRef,
+              ownerTokenRef,
+              mintTokenRef,
+              owner: tokenRefAcct.owner!,
+              tokenBondingUpdateAccounts,
+              tokenBondingProgram: this.splTokenBondingProgram.programId,
+            },
           }
-        })
-      )
+        )
+      );
     } else {
       instructions.push(
         await this.instruction.changeOptStatusUnclaimedV0(
@@ -1730,26 +1826,29 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
    * @param args
    * @retruns
    */
-  async optOut(args: IOptOutArgs): Promise<void> {
-    await this.execute(this.optOutInstructions(args), args.payer);
+  async optOut(
+    args: IOptOutArgs,
+    commitment: Commitment = "confirmed"
+  ): Promise<void> {
+    await this.execute(this.optOutInstructions(args), args.payer, commitment);
   }
 
   /**
-  * Update the owner wallet of a social token
-  *
-  * @param args
-  * @returns
-  */
+   * Update the owner wallet of a social token
+   *
+   * @param args
+   * @returns
+   */
   async updateOwnerInstructions({
     payer = this.wallet.publicKey,
     tokenRef,
-    newOwner
-  }: IUpdateOwnerArgs): Promise<InstructionResult<{ ownerTokenRef: PublicKey }>> {
+    newOwner,
+  }: IUpdateOwnerArgs): Promise<
+    InstructionResult<{ ownerTokenRef: PublicKey }>
+  > {
     const tokenRefAcct = (await this.getTokenRef(tokenRef))!;
     if (!tokenRefAcct.tokenBonding) {
-      throw new Error(
-        "Cannot update a token ref that has no token bonding"
-      );
+      throw new Error("Cannot update a token ref that has no token bonding");
     }
     if (!tokenRefAcct.isClaimed) {
       throw new Error("Cannot update owner on an unclaimed token ref");
@@ -1767,42 +1866,47 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       owner: tokenRefAcct.owner! as PublicKey,
       mint: tokenBondingAcct?.baseMint,
     });
-    const [newOwnerTokenRef, ownerTokenRefBumpSeed] = await SplTokenCollective.ownerTokenRefKey({
-      owner: newOwner,
-      mint: tokenBondingAcct?.baseMint,
-    });
+    const [newOwnerTokenRef, ownerTokenRefBumpSeed] =
+      await SplTokenCollective.ownerTokenRefKey({
+        owner: newOwner,
+        mint: tokenBondingAcct?.baseMint,
+      });
     const [oldPrimaryTokenRef] = await SplTokenCollective.ownerTokenRefKey({
       owner: tokenRefAcct.owner! as PublicKey,
-      isPrimary: true
+      isPrimary: true,
     });
-    const [newPrimaryTokenRef, primaryTokenRefBumpSeed] = await SplTokenCollective.ownerTokenRefKey({
-      owner: newOwner,
-      isPrimary: true
-    });
+    const [newPrimaryTokenRef, primaryTokenRefBumpSeed] =
+      await SplTokenCollective.ownerTokenRefKey({
+        owner: newOwner,
+        isPrimary: true,
+      });
     return {
       output: {
-        ownerTokenRef: newOwnerTokenRef
+        ownerTokenRef: newOwnerTokenRef,
       },
       signers: [],
       instructions: [
-        await this.instruction.updateOwnerV0({
-          ownerTokenRefBumpSeed,
-          primaryTokenRefBumpSeed
-        }, {
-          accounts: {
-            newOwner,
-            payer,
-            baseMint: tokenBondingAcct.baseMint,
-            oldOwnerTokenRef,
-            oldPrimaryTokenRef,
-            newPrimaryTokenRef,
-            newOwnerTokenRef,
-            mintTokenRef,
-            owner: tokenRefAcct.owner! as PublicKey,
-            systemProgram: SystemProgram.programId,
-            rent: SYSVAR_RENT_PUBKEY
+        await this.instruction.updateOwnerV0(
+          {
+            ownerTokenRefBumpSeed,
+            primaryTokenRefBumpSeed,
+          },
+          {
+            accounts: {
+              newOwner,
+              payer,
+              baseMint: tokenBondingAcct.baseMint,
+              oldOwnerTokenRef,
+              oldPrimaryTokenRef,
+              newPrimaryTokenRef,
+              newOwnerTokenRef,
+              mintTokenRef,
+              owner: tokenRefAcct.owner! as PublicKey,
+              systemProgram: SystemProgram.programId,
+              rent: SYSVAR_RENT_PUBKEY,
+            },
           }
-        })
+        ),
       ],
     };
   }
@@ -1813,33 +1917,38 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
    * @param args
    * @retruns
    */
-  updateOwner(args: IUpdateOwnerArgs): Promise<{ ownerTokenRef: PublicKey }> {
-    return this.execute(this.updateOwnerInstructions(args), args.payer);
+  updateOwner(
+    args: IUpdateOwnerArgs,
+    commitment: Commitment = "confirmed"
+  ): Promise<{ ownerTokenRef: PublicKey }> {
+    return this.execute(
+      this.updateOwnerInstructions(args),
+      args.payer,
+      commitment
+    );
   }
 
   /**
-  * Update the authority of a social token
-  *
-  * @param args
-  * @returns
-  */
+   * Update the authority of a social token
+   *
+   * @param args
+   * @returns
+   */
   async updateAuthorityInstructions({
     payer = this.wallet.publicKey,
     tokenRef,
     newAuthority,
-    owner
+    owner,
   }: IUpdateAuthorityArgs): Promise<InstructionResult<null>> {
     const tokenRefAcct = (await this.getTokenRef(tokenRef))!;
     if (!tokenRefAcct.tokenBonding) {
-      throw new Error(
-        "Cannot update a token ref that has no token bonding"
-      );
+      throw new Error("Cannot update a token ref that has no token bonding");
     }
     if (!tokenRefAcct.isClaimed) {
       throw new Error("Cannot update authority on an unclaimed token ref");
     }
 
-    owner = owner || tokenRefAcct.owner! as PublicKey;
+    owner = owner || (tokenRefAcct.owner! as PublicKey);
 
     const tokenBondingAcct = (await this.splTokenBondingProgram.getTokenBonding(
       tokenRefAcct.tokenBonding
@@ -1856,25 +1965,28 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
 
     const [primaryTokenRef] = await SplTokenCollective.ownerTokenRefKey({
       owner,
-      isPrimary: true
+      isPrimary: true,
     });
 
     return {
       output: null,
       signers: [],
       instructions: [
-        await this.instruction.updateAuthorityV0({
-          newAuthority,
-        }, {
-          accounts: {
-            payer,
-            primaryTokenRef,
-            baseMint: tokenBondingAcct.baseMint,
-            ownerTokenRef,
-            mintTokenRef,
-            authority: tokenRefAcct.authority! as PublicKey
+        await this.instruction.updateAuthorityV0(
+          {
+            newAuthority,
+          },
+          {
+            accounts: {
+              payer,
+              primaryTokenRef,
+              baseMint: tokenBondingAcct.baseMint,
+              ownerTokenRef,
+              mintTokenRef,
+              authority: tokenRefAcct.authority! as PublicKey,
+            },
           }
-        })
+        ),
       ],
     };
   }

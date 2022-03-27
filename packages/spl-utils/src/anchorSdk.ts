@@ -82,7 +82,7 @@ export abstract class AnchorSdk<IDL extends Idl> {
         this.provider,
         instructions,
         signers,
-        payer,
+        payer || this.wallet.publicKey,
         finality
       );
     }

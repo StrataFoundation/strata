@@ -1,12 +1,20 @@
-import { CreateMetadataV2, Creator, DataV2, Edition, EditionData, MasterEdition, MasterEditionData, Metadata, MetadataData, MetadataKey, UpdateMetadataV2 } from "@metaplex-foundation/mpl-token-metadata";
+import {
+  CreateMetadataV2,
+  Creator,
+  DataV2,
+  Edition,
+  EditionData,
+  MasterEdition,
+  MasterEditionData,
+  Metadata,
+  MetadataData,
+  MetadataKey,
+  UpdateMetadataV2,
+} from "@metaplex-foundation/mpl-token-metadata";
 import { Provider } from "@project-serum/anchor";
 import { AccountInfo as TokenAccountInfo, MintInfo } from "@solana/spl-token";
 import { PublicKey, Signer, TransactionInstruction } from "@solana/web3.js";
-import {
-  getMintInfo,
-  InstructionResult,
-  sendInstructions,
-} from ".";
+import { getMintInfo, InstructionResult, sendInstructions, truthy } from ".";
 import {
   ARWEAVE_UPLOAD_URL,
   getFilesWithMetadata,
@@ -16,6 +24,28 @@ import {
 } from "./arweave";
 // @ts-ignore
 import localStorageMemory from "localstorage-memory";
+import { NFTStorage } from "nft.storage";
+
+export enum StorageProvider {
+  Arweave = "arweave",
+  NftStorage = "nft.storage",
+}
+
+export interface IUploadMetadataArgs {
+  payer?: PublicKey;
+  name: string;
+  symbol: string;
+  description?: string;
+  image?: File;
+  creators?: Creator[];
+  attributes?: Attribute[];
+  animationUrl?: string;
+  externalUrl?: string;
+  extraMetadata?: any;
+  provider?: StorageProvider;
+  nftStorageApiKey?: string;
+  mint?: PublicKey;
+}
 
 export interface ICreateArweaveUrlArgs {
   payer?: PublicKey;
@@ -25,7 +55,7 @@ export interface ICreateArweaveUrlArgs {
   image?: string;
   creators?: Creator[];
   files?: File[];
-  existingFiles?: FileOrString[]
+  existingFiles?: FileOrString[];
   attributes?: Attribute[];
   animationUrl?: string;
   externalUrl?: string;
@@ -91,13 +121,14 @@ export interface IUpdateMetadataInstructionsArgs {
 }
 
 export enum MetadataCategory {
-  Audio = 'audio',
-  Video = 'video',
-  Image = 'image',
-  VR = 'vr',
+  Audio = "audio",
+  Video = "video",
+  Image = "image",
+  VR = "vr",
 }
 
 export interface ITokenWithMeta {
+  displayName?: string;
   metadataKey?: PublicKey;
   metadata?: MetadataData;
   mint?: MintInfo;
@@ -142,7 +173,7 @@ const imageFromJson = (newUri: string, extended: any) => {
   }
 };
 
-const localStorage = global.localStorage || localStorageMemory
+const localStorage = global.localStorage || localStorageMemory;
 
 export class SplTokenMetadata {
   provider: Provider;
@@ -155,6 +186,19 @@ export class SplTokenMetadata {
 
   constructor(opts: { provider: Provider }) {
     this.provider = opts.provider;
+  }
+
+  static attributesToRecord(
+    attributes: Attribute[] | undefined
+  ): Record<string, string | number> | undefined {
+    if (!attributes) {
+      return undefined;
+    }
+
+    return attributes?.reduce((acc, att) => {
+      if (att.trait_type) acc[att.trait_type] = att.value;
+      return acc;
+    }, {} as Record<string, string | number>);
   }
 
   static async getArweaveMetadata(
@@ -233,7 +277,10 @@ export class SplTokenMetadata {
         );
       masterEdition =
         masterEditionInfoAcct &&
-        new MasterEdition(new PublicKey(editionOrMasterEdition.data.parent), masterEditionInfoAcct)
+        new MasterEdition(
+          new PublicKey(editionOrMasterEdition.data.parent),
+          masterEditionInfoAcct
+        );
     } else {
       masterEdition = editionOrMasterEdition;
     }
@@ -248,14 +295,18 @@ export class SplTokenMetadata {
     const metadataAcc = await this.provider.connection.getAccountInfo(
       metadataKey
     );
-    const metadata = metadataAcc && new Metadata(metadataKey, metadataAcc).data
+    const metadata = metadataAcc && new Metadata(metadataKey, metadataAcc).data;
     const data = await SplTokenMetadata.getArweaveMetadata(metadata?.data.uri);
     const image = await SplTokenMetadata.getImage(metadata?.data.uri);
     const description = data?.description;
     const mint =
       metadata &&
       (await getMintInfo(this.provider, new PublicKey(metadata.mint)));
+
+    const displayName =
+      metadata?.data.name.length == 32 ? data?.name : metadata?.data.name;
     return {
+      displayName,
       metadata: metadata || undefined,
       metadataKey,
       image,
@@ -280,24 +331,68 @@ export class SplTokenMetadata {
     );
   }
 
+  async uploadMetadata(args: IUploadMetadataArgs): Promise<string> {
+    if (args.provider === "arweave") {
+      return this.createArweaveMetadata({
+        ...args,
+        image: args.image?.name,
+        files: [args.image].filter(truthy),
+        mint: args.mint!,
+      });
+    }
+
+    if (!args.image) {
+      throw new Error("Image must be provided when using NFT.storage");
+    }
+
+    return this.createNftStorageMetadata(args, args.nftStorageApiKey!);
+  }
+
+  async createNftStorageMetadata(
+    args: IUploadMetadataArgs,
+    apiKey: string
+  ): Promise<string> {
+    // create a new NFTStorage client using our API key
+    const nftstorage = new NFTStorage({ token: apiKey });
+
+    // call client.store, passing in the image & metadata
+    // @ts-ignore
+    const result = await nftstorage.store(args);
+    const id = result.ipnft;
+    return `${id}.ipfs.nftstorage.link`;
+  }
+
   /**
    * Wrapper function that prepays for arweave metadata files in SOL, then uploads them to arweave and returns the url
    *
    * @param args
-   * @returns 
+   * @returns
    */
-  async createArweaveMetadata(args: ICreateArweaveUrlArgs & {
-    env?: ArweaveEnv;
-    uploadUrl?: string;
-    mint: PublicKey;
-  }): Promise<string> {
+  async createArweaveMetadata(
+    args: ICreateArweaveUrlArgs & {
+      env?: ArweaveEnv;
+      uploadUrl?: string;
+      mint: PublicKey;
+    }
+  ): Promise<string> {
     const { txid, files } = await this.presignCreateArweaveUrl(args);
+    let env = args.env;
+    if (!env) {
+      // @ts-ignore
+      const url: string = this.provider.connection._rpcEndpoint;
+      if (url.includes("devnet")) {
+        env = "devnet";
+      } else {
+        env = "mainnet-beta";
+      }
+    }
+
     const uri = await this.getArweaveUrl({
       txid,
       mint: args.mint,
       files,
-      env: args.env || "mainnet-beta",
-      uploadUrl: args.uploadUrl || ARWEAVE_UPLOAD_URL
+      env,
+      uploadUrl: args.uploadUrl || ARWEAVE_UPLOAD_URL,
     });
 
     return uri;
@@ -315,7 +410,7 @@ export class SplTokenMetadata {
     attributes,
     externalUrl,
     animationUrl,
-    extraMetadata
+    extraMetadata,
   }: ICreateArweaveUrlArgs): Promise<InstructionResult<{ files: File[] }>> {
     const metadata = {
       name,
@@ -331,14 +426,14 @@ export class SplTokenMetadata {
       },
       creators: creators ? creators : null,
       sellerFeeBasisPoints: 0,
-      ...(extraMetadata || {})
+      ...(extraMetadata || {}),
     };
 
     const realFiles = await getFilesWithMetadata(files, metadata);
 
     const prepayTxnInstructions = await prePayForFilesInstructions(
       payer,
-      realFiles,
+      realFiles
     );
 
     return {
@@ -403,22 +498,18 @@ export class SplTokenMetadata {
     InstructionResult<{ metadata: PublicKey }>
   > {
     const metadata = await Metadata.getPDA(mint);
-    console.log({
-      metadata,
-      mint,
-      metadataData: data,
-      mintAuthority,
-      updateAuthority: authority
-    })
-    const instructions: TransactionInstruction[] = new CreateMetadataV2({
-      feePayer: payer
-    }, {
-      metadata,
-      mint,
-      metadataData: new DataV2({ ...data }),
-      mintAuthority,
-      updateAuthority: authority
-    }).instructions
+    const instructions: TransactionInstruction[] = new CreateMetadataV2(
+      {
+        feePayer: payer,
+      },
+      {
+        metadata,
+        mint,
+        metadataData: new DataV2({ ...data }),
+        mintAuthority,
+        updateAuthority: authority,
+      }
+    ).instructions;
 
     return {
       instructions,
@@ -451,23 +542,32 @@ export class SplTokenMetadata {
     data,
     newAuthority,
     metadata,
-    updateAuthority
+    updateAuthority,
   }: IUpdateMetadataInstructionsArgs): Promise<
     InstructionResult<{ metadata: PublicKey }>
   > {
     const metadataAcct = (await this.getMetadata(metadata))!;
-    const instructions = new UpdateMetadataV2({}, {
-      metadata,
-      metadataData: data ? new DataV2({ ...data }) : new DataV2({
-        ...metadataAcct.data,
-        collection: metadataAcct?.collection,
-        uses: metadataAcct?.uses
-      }),
-      updateAuthority: updateAuthority || new PublicKey(metadataAcct!.updateAuthority),
-      newUpdateAuthority: typeof newAuthority == "undefined" ? new PublicKey(metadataAcct.updateAuthority) : (newAuthority || undefined),
-      primarySaleHappened: null,
-      isMutable: null
-    }).instructions
+    const instructions = new UpdateMetadataV2(
+      {},
+      {
+        metadata,
+        metadataData: data
+          ? new DataV2({ ...data })
+          : new DataV2({
+              ...metadataAcct.data,
+              collection: metadataAcct?.collection,
+              uses: metadataAcct?.uses,
+            }),
+        updateAuthority:
+          updateAuthority || new PublicKey(metadataAcct!.updateAuthority),
+        newUpdateAuthority:
+          typeof newAuthority == "undefined"
+            ? new PublicKey(metadataAcct.updateAuthority)
+            : newAuthority || undefined,
+        primarySaleHappened: null,
+        isMutable: null,
+      }
+    ).instructions;
 
     return {
       instructions,

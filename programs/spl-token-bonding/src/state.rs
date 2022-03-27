@@ -1,7 +1,5 @@
 use anchor_lang::prelude::*;
 
-use crate::arg::PiecewiseCurve;
-
 #[account]
 #[derive(Default)]
 pub struct ProgramStateV0 {
@@ -16,6 +14,82 @@ pub struct ProgramStateV0 {
 #[derive(Default)]
 pub struct CurveV0 {
   pub definition: PiecewiseCurve,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub enum PrimitiveCurve {
+  // All u128s are fixed precision decimal with 12 decimal places. So 1 would be 1_000_000_000_000. 1.5 is 1_500_000_000_000
+
+  // c(x^(pow/frac)) + b.
+  // Constant product = pow = 1, frac = 1, b = 0
+  // Fixed price = pow = 0, frac = 1, c = 0, b = price
+  ExponentialCurveV0 {
+    c: u128, // Constant multiplied by the curve formula. Used to set initial price, but gets cancelled out as more is injected into the reserves
+    b: u128, // Constant added to the curve formula. Used to set initial price, but gets cancelled out as more is injected into the reserves
+    pow: u8,
+    frac: u8,
+  },
+  // c(x^(k_0 - ((k_0 - k_1) ((t_0 - t) / i)^d)
+  // t_0 = go live date
+  // t = current time
+  // i = interval
+  // (t_0 - t) / i <= 1
+  TimeDecayExponentialCurveV0 {
+    c: u128,
+    k1: u128,
+    k0: u128,
+    interval: u32,
+    d: u128,
+  },
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub enum PiecewiseCurve {
+  TimeV0 { curves: Vec<TimeCurveV0> },
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub struct TimeCurveV0 {
+  pub offset: i64,
+  pub curve: PrimitiveCurve,
+  pub buy_transition_fees: Option<TransitionFeeV0>,
+  pub sell_transition_fees: Option<TransitionFeeV0>,
+}
+
+// A fee that slowly decreases over the course of interval. This is used to prevent botting when curves change
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub struct TransitionFeeV0 {
+  pub percentage: u32,
+  pub interval: u32,
+}
+
+impl Default for PrimitiveCurve {
+  fn default() -> Self {
+    PrimitiveCurve::ExponentialCurveV0 {
+      c: 1,
+      b: 0,
+      pow: 1,  // 1
+      frac: 1, // 1
+    }
+  }
+}
+
+impl Default for PiecewiseCurve {
+  fn default() -> Self {
+    PiecewiseCurve::TimeV0 {
+      curves: vec![TimeCurveV0 {
+        offset: 0,
+        curve: PrimitiveCurve::ExponentialCurveV0 {
+          c: 1,
+          b: 0,
+          pow: 1,  // 1
+          frac: 1, // 1
+        },
+        buy_transition_fees: None,
+        sell_transition_fees: None,
+      }],
+    }
+  }
 }
 
 #[account]
