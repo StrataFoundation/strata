@@ -94,9 +94,14 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
   async function exec(globalVariables: any) {
     setRunningThisCommand(true);
     try {
-      const walletAcct = publicKey && await connection.getAccountInfo(publicKey);
+      const walletAcct =
+        publicKey && (await connection.getAccountInfo(publicKey));
       if (!walletAcct || walletAcct.lamports < 500000000) {
-        publicKey && await connection.requestAirdrop(publicKey, 1000000000);
+        try {
+          publicKey && (await connection.requestAirdrop(publicKey, 1000000000));
+        } catch (e: any) {
+          // ignore. If we can't airdrop it's probably mainnet
+        }
       }
       const injectedVars = {
         provider,
@@ -137,7 +142,7 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
     if (error) {
       console.error(error);
     }
-  },[error])
+  }, [error]);
 
   const fullLoading =
     loading || !sdks.tokenBondingSdk || !sdks.tokenCollectiveSdk;

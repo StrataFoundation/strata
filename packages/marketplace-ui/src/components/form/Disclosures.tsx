@@ -25,7 +25,7 @@ export const Disclosures = ({ fees }: { fees: number }) => {
         isInvalid={!!errors.disclosures?.notASecurity}
         {...register("disclosures.notASecurity")}
       >
-        I represent that I have undertake sufficient legal analysis to determine
+        I represent that I have undertaken sufficient legal analysis to determine
         that the token does not constitute a security under U.S. law.
       </Checkbox>
       {fees && (

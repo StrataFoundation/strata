@@ -53,11 +53,13 @@ runs:
         DEPLOY_KEYPAIR: ${{ inputs.keypair }}
     - run: npm install -g @strata-foundation/governance-cli@3.2.3-alpha.0+9f07d26
       shell: bash
-
     - name: Create proposal
-      shell: bash
+      uses: nick-invision/retry@v2
       if: steps.cache-proposal.outputs.cache-hit != 'true'
-      run: create-proposal > proposal.out
+      with:
+        timeout_minutes: 10
+        max_attempts: 5
+        command: create-proposal > proposal.out
       env:
         PROGRAM_ID: ${{ inputs.program-id }}
         BUFFER: ${{ inputs.buffer }}
