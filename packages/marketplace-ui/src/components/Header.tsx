@@ -5,6 +5,7 @@ import {
   Button,
   Center,
   Container,
+  Flex,
   HStack,
   IconButton,
   Image,
@@ -18,11 +19,8 @@ import { HamburgerIcon, CloseIcon } from "@chakra-ui/icons";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { TwitterLink } from "./TwitterLink";
 import { WalletModalButton } from "./WalletModalButton";
+import { route, routes } from "../utils/routes";
 
-const Links = [
-  { link: "Launchpad", href: "/" },
-  { link: "Bounties", href: "/bounties" },
-];
 
 const NavLink = ({ href, children }: { href: string; children: ReactNode }) => (
   <Link px={2} py={1} href={href} fontSize="sm">
@@ -31,11 +29,12 @@ const NavLink = ({ href, children }: { href: string; children: ReactNode }) => (
 );
 
 export const Header: React.FC = () => {
-  const router = useRouter();
+  const Links = [
+    { link: "Launchpad", href: route(routes.launchpad) },
+    { link: "Bounties", href: route(routes.bounties) },
+  ];
   const { disconnect, connected } = useWallet();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const isMarketplace = !router.pathname.includes("launchpad");
-  const isLaunchpad = router.pathname.includes("launchpad");
 
   return (
     <>
@@ -83,7 +82,7 @@ export const Header: React.FC = () => {
               direction={["column", "row", "row", "row"]}
               pt="0"
             >
-              <Box display={{ base: "none", md: "block" }}>
+              <Flex justify="center" align="center" display={{ base: "none", md: "flex" }}>
                 <TwitterLink />
                 {connected && (
                   <Button
@@ -96,10 +95,10 @@ export const Header: React.FC = () => {
                   </Button>
                 )}
                 <WalletModalButton />
-              </Box>
-              <Box display={{ base: "block", md: "none" }}>
+              </Flex>
+              <Flex justify="center" display={{ base: "flex", md: "none" }}>
                 <WalletModalButton size="sm" />
-              </Box>
+              </Flex>
             </HStack>
           </Container>
         </Center>

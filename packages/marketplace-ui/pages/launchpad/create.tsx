@@ -4,7 +4,7 @@ import { useRouter } from "next/router";
 import { Flex, Stack, Text, useRadioGroup } from "@chakra-ui/react";
 import { LaunchpadLayout } from "@/components/launchpad";
 import { RadioCard } from "@/components/form/RadioCard";
-import { routes } from "@/utils/routes";
+import { route, routes } from "@/utils/routes";
 
 export enum CreateTokenOption {
   FullyManaged = "FullyManaged",
@@ -46,10 +46,10 @@ export const CreateToken: FC = () => {
 
   const handleOnNext = async () => {
     if (selectedOption === CreateTokenOption.FullyManaged)
-      router.push(routes.newFullyManaged.path);
+      router.push(route(routes.newFullyManaged));
 
     if (selectedOption === CreateTokenOption.SelfManaged)
-      router.push(routes.newManual.path);
+      router.push(route(routes.newManual));
   };
 
   return (

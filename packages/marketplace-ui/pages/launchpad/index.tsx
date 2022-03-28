@@ -11,7 +11,7 @@ import {
 } from "@chakra-ui/react";
 import { LaunchpadLayout } from "@/components/launchpad";
 import { RadioCard } from "@/components/form";
-import { routes } from "@/utils/routes";
+import { route, routes } from "@/utils/routes";
 
 export enum LandingOption {
   CreateToken = "CreateToken",
@@ -69,16 +69,16 @@ export const LaunchPad: FC = ({ children }) => {
 
   const handleOnNext = async () => {
     if (selectedOption === LandingOption.CreateToken)
-      router.push(routes.create.path);
+      router.push(route(routes.create));
 
     if (selectedOption === LandingOption.SellToken)
-      router.push(routes.sell.path);
+      router.push(route(routes.sell));
 
     if (selectedOption === LandingOption.Fundraise)
-      router.push(routes.newBounty.path);
+      router.push(route(routes.newBounty));
 
     if (selectedOption === LandingOption.LBC)
-      router.push(routes.newLbc.path + "?candymachine=true");
+      router.push(route(routes.newLbc, { candymachine: "true" }));
   };
 
   return (
