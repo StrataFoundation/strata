@@ -19,7 +19,7 @@ import { HamburgerIcon, CloseIcon } from "@chakra-ui/icons";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { TwitterLink } from "./TwitterLink";
 import { WalletModalButton } from "./WalletModalButton";
-import { route, routes } from "@/utils/routes";
+import { route, routes } from "../utils/routes";
 
 
 const NavLink = ({ href, children }: { href: string; children: ReactNode }) => (
