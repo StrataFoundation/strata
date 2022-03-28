@@ -19,11 +19,8 @@ import { HamburgerIcon, CloseIcon } from "@chakra-ui/icons";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { TwitterLink } from "./TwitterLink";
 import { WalletModalButton } from "./WalletModalButton";
+import { route, routes } from "@/utils/routes";
 
-const Links = [
-  { link: "Launchpad", href: "/" },
-  { link: "Bounties", href: "/bounties" },
-];
 
 const NavLink = ({ href, children }: { href: string; children: ReactNode }) => (
   <Link px={2} py={1} href={href} fontSize="sm">
@@ -32,11 +29,12 @@ const NavLink = ({ href, children }: { href: string; children: ReactNode }) => (
 );
 
 export const Header: React.FC = () => {
-  const router = useRouter();
+  const Links = [
+    { link: "Launchpad", href: route(routes.launchpad) },
+    { link: "Bounties", href: route(routes.bounties) },
+  ];
   const { disconnect, connected } = useWallet();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const isMarketplace = !router.pathname.includes("launchpad");
-  const isLaunchpad = router.pathname.includes("launchpad");
 
   return (
     <>

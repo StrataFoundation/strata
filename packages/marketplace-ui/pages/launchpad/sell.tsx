@@ -11,7 +11,7 @@ import {
 } from "@chakra-ui/react";
 import { LaunchpadLayout } from "@/components/launchpad";
 import { RadioCard } from "@/components/form/RadioCard";
-import { routes } from "@/utils/routes";
+import { route, routes } from "@/utils/routes";
 
 export enum SellTokenOption {
   PriceDiscovery = "PriceDiscovery",
@@ -55,14 +55,14 @@ export const SellToken: FC = () => {
   const handleOnNext = async () => {
     if (selectedOption === SellTokenOption.PriceDiscovery)
       router.push(
-        routes.newLbc.path + (mint ? "?mint=" + mint : ""),
+        route(routes.newLbc, { mint }),
         undefined,
         { shallow: true }
       );
 
     if (selectedOption === SellTokenOption.FixedPrice)
       router.push(
-        routes.newSale.path + (mint ? "?mint=" + mint : ""),
+        route(routes.newSale, { mint }),
         undefined,
         { shallow: true }
       );

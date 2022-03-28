@@ -5,11 +5,14 @@ import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
 import { DEFAULT_ENDPOINT } from "../components/Wallet";
 import { SplTokenMetadata } from "@strata-foundation/spl-utils";
 import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
+import { getClusterAndEndpoint } from "../hooks";
 
 export const mintMetadataServerSideProps: GetServerSideProps = async (
   context
 ) => {
-  const connection = new Connection(DEFAULT_ENDPOINT);
+  const { endpoint } = getClusterAndEndpoint((context.query.cluster || DEFAULT_ENDPOINT) as string);
+
+  const connection = new Connection(endpoint);
   const provider = new Provider(
     connection,
     new NodeWallet(Keypair.generate()),

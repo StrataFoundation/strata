@@ -12,7 +12,6 @@ import { MarketplaceSdkProvider } from "../contexts/marketplaceSdkContext";
 import React from "react";
 import toast from "react-hot-toast";
 import { DEFAULT_ENDPOINT, Wallet } from "./Wallet";
-import { EndpointProvider } from "../contexts";
 
 export const Providers = ({
   children,
@@ -56,21 +55,19 @@ export const Providers = ({
 
   return (
     <ThemeProvider>
-      <EndpointProvider initialEndpoint={DEFAULT_ENDPOINT}>
-        <ErrorHandlerProvider onError={onError}>
-          <Wallet cluster={cluster}>
-            <WalletModalProvider>
-              <StrataSdksProvider>
-                <AccountProvider commitment="confirmed">
-                  <TokenListProvider>
-                    <MarketplaceSdkProvider>{children}</MarketplaceSdkProvider>
-                  </TokenListProvider>
-                </AccountProvider>
-              </StrataSdksProvider>
-            </WalletModalProvider>
-          </Wallet>
-        </ErrorHandlerProvider>
-      </EndpointProvider>
+      <ErrorHandlerProvider onError={onError}>
+        <Wallet cluster={cluster}>
+          <WalletModalProvider>
+            <StrataSdksProvider>
+              <AccountProvider commitment="confirmed">
+                <TokenListProvider>
+                  <MarketplaceSdkProvider>{children}</MarketplaceSdkProvider>
+                </TokenListProvider>
+              </AccountProvider>
+            </StrataSdksProvider>
+          </WalletModalProvider>
+        </Wallet>
+      </ErrorHandlerProvider>
     </ThemeProvider>
   );
 };

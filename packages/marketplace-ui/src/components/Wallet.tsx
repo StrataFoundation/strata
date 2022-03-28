@@ -13,7 +13,7 @@ import {
 } from "@solana/wallet-adapter-wallets";
 import React, { useMemo } from "react";
 import { SOLANA_URL } from "../constants";
-import { useEndpoint } from "../contexts";
+import { useEndpoint } from "../hooks";
 
 export const DEFAULT_ENDPOINT = SOLANA_URL;
 

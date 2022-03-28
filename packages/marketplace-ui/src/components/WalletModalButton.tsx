@@ -16,7 +16,7 @@ import { clusterApiUrl } from "@solana/web3.js";
 import { truncatePubkey } from "@strata-foundation/react";
 import React, { FC, MouseEvent, useCallback } from "react";
 import { BsChevronDown, BsFillPersonFill } from "react-icons/bs";
-import { useEndpoint } from "../contexts/endpoint";
+import { useEndpoint } from "../hooks/useEndpoint";
 
 export const WalletModalButton: FC<ButtonProps> = ({
   children = "Select Wallet",
@@ -34,7 +34,7 @@ export const WalletModalButton: FC<ButtonProps> = ({
     [onClick, visible, setVisible]
   );
 
-  const { endpoint, setEndpoint } = useEndpoint();
+  const { cluster, setClusterOrEndpoint } = useEndpoint();
 
   return (
     <ButtonGroup
@@ -69,11 +69,11 @@ export const WalletModalButton: FC<ButtonProps> = ({
           <MenuOptionGroup
             title="Network"
             type="radio"
-            onChange={(e) => setEndpoint(e as string)}
-            value={endpoint}
+            onChange={(e) => setClusterOrEndpoint(e as string)}
+            value={cluster}
           >
             <MenuItemOption
-              value={"https://strataprotocol.genesysgo.net"}
+              value={WalletAdapterNetwork.Mainnet}
               _focus={{ backgroundColor: "primary.300" }}
               _hover={{ backgroundColor: "primary.500" }}
             >
@@ -82,14 +82,14 @@ export const WalletModalButton: FC<ButtonProps> = ({
             <MenuItemOption
               _focus={{ backgroundColor: "primary.300" }}
               _hover={{ backgroundColor: "primary.500" }}
-              value={clusterApiUrl(WalletAdapterNetwork.Devnet)}
+              value={WalletAdapterNetwork.Devnet}
             >
               Devnet
             </MenuItemOption>
             <MenuItemOption
               _focus={{ backgroundColor: "primary.300" }}
               _hover={{ backgroundColor: "primary.500" }}
-              value="http://localhost:8899"
+              value={"localnet"}
             >
               Localnet
             </MenuItemOption>
