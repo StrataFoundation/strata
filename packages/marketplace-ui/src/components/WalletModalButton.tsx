@@ -1,33 +1,22 @@
-import React, { FC, MouseEvent, useCallback } from "react";
 import {
   Button,
   ButtonGroup,
-  ButtonProps,
-  DarkMode,
-  Icon,
+  ButtonProps, Icon,
   IconButton,
   Menu,
   MenuButton,
   MenuItemOption,
   MenuList,
-  MenuOptionGroup,
-  Popover,
-  PopoverBody,
-  PopoverContent,
-  PopoverHeader,
-  PopoverTrigger,
-  Select,
-  Text,
+  MenuOptionGroup
 } from "@chakra-ui/react";
-import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { BsFillPersonFill } from "react-icons/bs";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { publicKey } from "@project-serum/anchor/dist/cjs/utils";
-import { truncatePubkey } from "@strata-foundation/react";
-import { BsChevronDown } from "react-icons/bs";
-import { clusterApiUrl } from "@solana/web3.js";
-import { useEndpoint } from "../contexts/endpoint";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { clusterApiUrl } from "@solana/web3.js";
+import { truncatePubkey } from "@strata-foundation/react";
+import React, { FC, MouseEvent, useCallback } from "react";
+import { BsChevronDown, BsFillPersonFill } from "react-icons/bs";
+import { useEndpoint } from "../contexts/endpoint";
 
 export const WalletModalButton: FC<ButtonProps> = ({
   children = "Select Wallet",
