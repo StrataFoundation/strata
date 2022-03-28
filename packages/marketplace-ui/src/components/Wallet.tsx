@@ -1,6 +1,6 @@
 import {
   ConnectionProvider,
-  WalletProvider,
+  WalletProvider
 } from "@solana/wallet-adapter-react";
 import {
   LedgerWalletAdapter,
@@ -9,10 +9,11 @@ import {
   SolflareWalletAdapter,
   SolletExtensionWalletAdapter,
   SolletWalletAdapter,
-  TorusWalletAdapter,
+  TorusWalletAdapter
 } from "@solana/wallet-adapter-wallets";
-import React, { FC, useMemo } from "react";
+import React, { useMemo } from "react";
 import { SOLANA_URL } from "../constants";
+import { useEndpoint } from "../contexts";
 
 export const DEFAULT_ENDPOINT = SOLANA_URL;
 
@@ -23,6 +24,8 @@ export const Wallet = ({
   children: React.ReactNode;
   cluster?: string;
 }) => {
+  const { endpoint } = useEndpoint();
+
   // @solana/wallet-adapter-wallets includes all the adapters but supports tree shaking and lazy loading --
   // Only the wallets you configure here will be compiled into your application, and only the dependencies
   // of wallets that your users connect to will be loaded
@@ -40,7 +43,7 @@ export const Wallet = ({
   );
 
   return (
-    <ConnectionProvider endpoint={cluster || DEFAULT_ENDPOINT}>
+    <ConnectionProvider endpoint={cluster || endpoint}>
       <WalletProvider wallets={wallets} autoConnect>
         {children}
       </WalletProvider>

@@ -5,6 +5,7 @@ import {
   Button,
   Center,
   Container,
+  Flex,
   HStack,
   IconButton,
   Image,
@@ -83,7 +84,7 @@ export const Header: React.FC = () => {
               direction={["column", "row", "row", "row"]}
               pt="0"
             >
-              <Box display={{ base: "none", md: "block" }}>
+              <Flex justify="center" align="center" display={{ base: "none", md: "flex" }}>
                 <TwitterLink />
                 {connected && (
                   <Button
@@ -96,10 +97,10 @@ export const Header: React.FC = () => {
                   </Button>
                 )}
                 <WalletModalButton />
-              </Box>
-              <Box display={{ base: "block", md: "none" }}>
+              </Flex>
+              <Flex justify="center" display={{ base: "flex", md: "none" }}>
                 <WalletModalButton size="sm" />
-              </Box>
+              </Flex>
             </HStack>
           </Container>
         </Center>
