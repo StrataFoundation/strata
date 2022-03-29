@@ -51,8 +51,7 @@ async function editBounty(
   tokenMetadataSdk: SplTokenMetadata,
   tokenBondingSdk: SplTokenBonding,
   values: IEditBountyFormProps,
-  mintKey: PublicKey,
-  nftStorageApiKey: string | undefined = NFT_STORAGE_API_KEY
+  mintKey: PublicKey
 ): Promise<PublicKey> {
   const uri = await tokenMetadataSdk.uploadMetadata({
     provider: values.provider,
@@ -66,7 +65,6 @@ async function editBounty(
       discussion: values.discussion,
       contact: values.contact,
     }),
-    nftStorageApiKey,
   });
 
   const instructions = [];
@@ -122,13 +120,11 @@ export const EditBountyFormRaw = ({
   values,
   onComplete,
   hide = new Set(),
-  nftStorageApiKey = NFT_STORAGE_API_KEY,
 }: {
   mintKey: PublicKey;
   values: DefaultValues<IEditBountyFormProps>;
   onComplete?: () => void;
   hide?: Set<string>;
-  nftStorageApiKey?: string;
 }) => {
   const formProps = useForm<IEditBountyFormProps>({
     resolver: yupResolver(validationSchema),
@@ -149,13 +145,7 @@ export const EditBountyFormRaw = ({
   const authority = watch("authority");
 
   const onSubmit = async (values: IEditBountyFormProps) => {
-    await execute(
-      tokenMetadataSdk!,
-      tokenBondingSdk!,
-      values,
-      mintKey,
-      nftStorageApiKey
-    );
+    await execute(tokenMetadataSdk!, tokenBondingSdk!, values, mintKey);
     onComplete && onComplete();
   };
 

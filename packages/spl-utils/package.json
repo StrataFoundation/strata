@@ -32,7 +32,6 @@
     "@solana/web3.js": "^1.32.0",
     "bs58": "^4.0.1",
     "localstorage-memory": "^1.0.3",
-    "nft.storage": "^6.0.2",
     "superstruct": "0.14.2",
     "tweetnacl": "^1.0.3"
   },

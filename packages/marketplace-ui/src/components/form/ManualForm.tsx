@@ -44,8 +44,7 @@ const validationSchema = yup.object({
 
 async function createFullyManaged(
   tokenMetadataSdk: SplTokenMetadata,
-  values: IManualForm,
-  nftStorageApiKey: string | undefined = NFT_STORAGE_API_KEY
+  values: IManualForm
 ): Promise<PublicKey> {
   const targetMintKeypair = Keypair.generate();
   const targetMint = targetMintKeypair.publicKey;
@@ -65,7 +64,6 @@ async function createFullyManaged(
     description: values.description,
     image: values.image,
     mint: targetMintKeypair.publicKey,
-    nftStorageApiKey,
   });
   const metadata = new DataV2({
     // Max name len 32
@@ -139,9 +137,7 @@ async function createFullyManaged(
   return targetMintKeypair.publicKey;
 }
 
-export const ManualForm: React.FC<{
-  nftStorageApiKey?: string;
-}> = ({ nftStorageApiKey = NFT_STORAGE_API_KEY }) => {
+export const ManualForm: React.FC = () => {
   const formProps = useForm<IManualForm>({
     resolver: yupResolver(validationSchema),
   });
