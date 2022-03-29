@@ -24,11 +24,9 @@ import {
 } from "./arweave";
 // @ts-ignore
 import localStorageMemory from "localstorage-memory";
-import { NFTStorage } from "nft.storage";
 
 export enum StorageProvider {
   Arweave = "arweave",
-  NftStorage = "nft.storage",
 }
 
 export interface IUploadMetadataArgs {
@@ -332,34 +330,12 @@ export class SplTokenMetadata {
   }
 
   async uploadMetadata(args: IUploadMetadataArgs): Promise<string> {
-    if (args.provider === "arweave") {
-      return this.createArweaveMetadata({
-        ...args,
-        image: args.image?.name,
-        files: [args.image].filter(truthy),
-        mint: args.mint!,
-      });
-    }
-
-    if (!args.image) {
-      throw new Error("Image must be provided when using NFT.storage");
-    }
-
-    return this.createNftStorageMetadata(args, args.nftStorageApiKey!);
-  }
-
-  async createNftStorageMetadata(
-    args: IUploadMetadataArgs,
-    apiKey: string
-  ): Promise<string> {
-    // create a new NFTStorage client using our API key
-    const nftstorage = new NFTStorage({ token: apiKey });
-
-    // call client.store, passing in the image & metadata
-    // @ts-ignore
-    const result = await nftstorage.store(args);
-    const id = result.ipnft;
-    return `${id}.ipfs.nftstorage.link`;
+    return this.createArweaveMetadata({
+      ...args,
+      image: args.image?.name,
+      files: [args.image].filter(truthy),
+      mint: args.mint!,
+    });
   }
 
   /**
