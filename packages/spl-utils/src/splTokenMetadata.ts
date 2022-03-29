@@ -41,7 +41,6 @@ export interface IUploadMetadataArgs {
   externalUrl?: string;
   extraMetadata?: any;
   provider?: StorageProvider;
-  nftStorageApiKey?: string;
   mint?: PublicKey;
 }
 

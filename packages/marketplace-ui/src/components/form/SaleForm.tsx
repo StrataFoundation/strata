@@ -91,8 +91,7 @@ const validationSchema = yup.object({
 
 async function createMarket(
   marketplaceSdk: MarketplaceSdk,
-  values: IMarketplaceFormProps,
-  nftStorageApiKey: string | undefined = NFT_STORAGE_API_KEY
+  values: IMarketplaceFormProps
 ): Promise<PublicKey> {
   const mint = new PublicKey(values.mint);
 
@@ -129,7 +128,6 @@ async function createMarket(
           value: "true",
         },
       ],
-      nftStorageApiKey,
     });
     metadata = new DataV2({
       // Max name len 32
@@ -182,9 +180,7 @@ async function createMarket(
   return targetMintKeypair.publicKey;
 }
 
-export const SaleForm: React.FC<{
-  nftStorageApiKey?: string;
-}> = ({ nftStorageApiKey = NFT_STORAGE_API_KEY }) => {
+export const SaleForm: React.FC = () => {
   const formProps = useForm<IMarketplaceFormProps>({
     resolver: yupResolver(validationSchema),
   });
@@ -204,7 +200,7 @@ export const SaleForm: React.FC<{
   const { isOpen, onToggle } = useDisclosure();
 
   const onSubmit = async (values: IMarketplaceFormProps) => {
-    const mintKey = await execute(marketplaceSdk!, values, nftStorageApiKey);
+    const mintKey = await execute(marketplaceSdk!, values);
     router.push(
       route(values.decimals === 0 ? routes.sale : routes.tokenOffering, {
         mintKey: mintKey.toBase58(),

@@ -83,8 +83,7 @@ const validationSchema = yup.object({
 
 async function createFullyManaged(
   marketplaceSdk: MarketplaceSdk,
-  values: IFullyManagedForm,
-  nftStorageApiKey: string | undefined = NFT_STORAGE_API_KEY
+  values: IFullyManagedForm
 ): Promise<PublicKey> {
   const mint = new PublicKey(values.mint);
   const tokenCollectiveSdk = marketplaceSdk.tokenCollectiveSdk;
@@ -125,7 +124,6 @@ async function createFullyManaged(
     description: values.description,
     image: values.image,
     mint: targetMintKeypair.publicKey,
-    nftStorageApiKey,
   });
   const metadata = new DataV2({
     // Max name len 32
@@ -181,9 +179,7 @@ async function createFullyManaged(
   return targetMintKeypair.publicKey;
 }
 
-export const FullyManagedForm: React.FC<{
-  nftStorageApiKey?: string;
-}> = ({ nftStorageApiKey = NFT_STORAGE_API_KEY }) => {
+export const FullyManagedForm: React.FC = () => {
   const formProps = useForm<IFullyManagedForm>({
     resolver: yupResolver(validationSchema),
     defaultValues: {
@@ -210,7 +206,7 @@ export const FullyManagedForm: React.FC<{
   }
 
   const onSubmit = async (values: IFullyManagedForm) => {
-    const mintKey = await execute(marketplaceSdk!, values, nftStorageApiKey);
+    const mintKey = await execute(marketplaceSdk!, values);
     router.push(
       route(routes.swap, {
         mintKey: mintKey.toBase58(),

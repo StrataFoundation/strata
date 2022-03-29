@@ -101,8 +101,7 @@ const validationSchema = yup.object({
 
 async function createLiquidityBootstrapper(
   marketplaceSdk: MarketplaceSdk,
-  values: ILbpFormProps,
-  nftStorageApiKey: string | undefined = NFT_STORAGE_API_KEY
+  values: ILbpFormProps
 ): Promise<PublicKey> {
   const targetMintKeypair = Keypair.generate();
   const authority = new PublicKey(values.authority);
@@ -144,7 +143,6 @@ async function createLiquidityBootstrapper(
       description: values.description,
       image: values.image,
       mint: targetMintKeypair.publicKey,
-      nftStorageApiKey,
     });
     metadata = new DataV2({
       // Max name len 32
@@ -256,9 +254,7 @@ async function createLiquidityBootstrapper(
   return targetMint;
 }
 
-export const LbcForm: React.FC<{
-  nftStorageApiKey?: string;
-}> = ({ nftStorageApiKey = NFT_STORAGE_API_KEY }) => {
+export const LbcForm: React.FC = () => {
   const formProps = useForm<ILbpFormProps>({
     resolver: yupResolver(validationSchema),
   });
@@ -283,7 +279,7 @@ export const LbcForm: React.FC<{
   }, [router, setValue]);
 
   const onSubmit = async (values: ILbpFormProps) => {
-    const mintKey = await execute(marketplaceSdk!, values, nftStorageApiKey);
+    const mintKey = await execute(marketplaceSdk!, values);
     if (values.useCandyMachine) {
       router.push(
         route(routes.mintLbc, { candyMachineId: values.candyMachineId }),
