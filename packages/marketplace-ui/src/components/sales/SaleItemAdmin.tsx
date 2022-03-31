@@ -29,6 +29,7 @@ export const SaleItemAdmin = ({
   return (
     <HStack spacing={2} borderBottom={1} borderBottomColor={"gray.300"}>
       <AsyncButton
+        w="full"
         variant="outline"
         colorScheme="primary"
         isDisabled={!tokenBondingSdk || !amount}
@@ -45,6 +46,7 @@ export const SaleItemAdmin = ({
           `${amount?.toFixed(2)} ${metadata?.data.symbol}`}
       </AsyncButton>
       <AsyncButton
+        w="full"
         colorScheme="red"
         isDisabled={!tokenBondingSdk || amount != 0}
         title={
