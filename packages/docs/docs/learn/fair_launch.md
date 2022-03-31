@@ -4,7 +4,7 @@ sidebar_position: 5
 
 # Fair Launch
 
-Strata has created an innovative way to combat the potentially destructive effects of automated trading bots on a newly launched bonding curve. The Strata Fair Launch disincentivizes bot trading by enforcing a tax on selling tokens anytime the bonding curve steepens, resulting in an increase in price. The goal of Strata Fair Launch is to protect the rewards of being an early adopter. A bonding curve makes it profitable to get in early, particularly one shaped like this:
+Strata has created an innovative way to combat the potentially destructive effects of automated trading bots on a newly launched bonding curve. The goal of Strata Fair Launch is to protect the rewards of being an early adopter. A bonding curve makes it profitable to get in early, particularly one shaped like this:
 
 ![Visualization](./visualization.png)
 
@@ -16,29 +16,23 @@ So how do we disincentivise bots?
 
 The goal is to disencentivize bots while still retaining the property that getting into the bonding curve early is ideal. We do this with a gradually steepening bonding curve.
 
-A property of bonding curves is that the area under the price vs supply curve is always equal to the amount of money in the reserves. To get a better understanding of how bonding curves work, read [Bonding Curves](./bonding_curves) and [Advanced Bonding Curves](./advanced_bonding_curves)
+A property of bonding curves is that the area under the price vs supply curve is always equal to the amount of tokens in the reserves. To get a better understanding of how bonding curves work, read [Bonding Curves](./bonding_curves) and [Advanced Bonding Curves](./advanced_bonding_curves)
 
-At launch, the bonding curve looks like this. Let's draw a line to say that there are 5 tokens purchased at launch day:
+At launch, the bonding curve looks like this. Let's draw a line to say that there are 5 tokens purchased at launch:
 
 ![Launch Day](./launch.png)
 
-Over the course of one day, the curve steepens:
+By keeping the price constant for 30 minutes, we can ensure that spamming transactions has no advantage. After this period, we can gradually steepen the curve. This results in upward price pressure, but there is a prisoner's dillemma on when to sell.
 
-![Launch Day](./day_2.png)
+Once a second, the curve steepens:
+
+![1 Hour](./1_hour.png)
 
 Notice that the area under the curve at 5 tokens is the same. The token just increased in price according to the curve, but there are still the same amount of `Reserve` tokens.
 
-In the first day, the bots had no advantage in getting their transactions through sooner, as they received the same price as everyone else. On the second day, all day one participants gain an edge on future market entrants.
-
 Over time, the curve steepens to its final shape:
 
-![Final Curve Shape](./final.png)
-
-## Gradual Change
-
-In the example above, the curve steepens in 3 increments, piecewise. This is another opportunity for bots. Their strategy is to buy while the curve is flat, then submit 10,000 transactions to sell as soon as the curve steepens. To prevent this, we ensure that the price to sell tokens is continuously increasing on the scale of seconds. Rather than increasing all at once. This leaves no clear strategy for bots, as selling first yields lower returns.
-
-We do accompanying each curve steepening by a period of increased sell fees. If the piecewise change causes a 10% increase in price, it will be accompanied by a 10% fee on sell that decreases linearly once per second until the next price change. These fees are directed back into the bonding curve reserves, improving the value for all holders.
+![Final Curve Shape](./2_hours.png)
 
 ## Changing Bonding Curves
 
