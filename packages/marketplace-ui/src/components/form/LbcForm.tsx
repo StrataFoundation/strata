@@ -1,4 +1,12 @@
-import { Alert, Box, Button, Collapse, Input, VStack } from "@chakra-ui/react";
+import {
+  Alert,
+  Box,
+  Button,
+  Collapse,
+  Flex,
+  Input,
+  VStack,
+} from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2, Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { Program } from "@project-serum/anchor";
@@ -40,6 +48,7 @@ import {
   IUseExistingMintProps,
   UseExistingMintInputs,
 } from "./UseExistingMintInputs";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 
 interface ILbpFormProps
   extends Partial<IMetadataFormProps>,
@@ -266,7 +275,8 @@ export const LbcForm: React.FC = () => {
     setValue,
     formState: { errors, isSubmitting },
   } = formProps;
-  const { publicKey } = useWallet();
+  const { publicKey, connected } = useWallet();
+  const { visible, setVisible } = useWalletModal();
   const { info: tokenRef } = usePrimaryClaimedTokenRef(publicKey);
   const { awaitingApproval } = useProvider();
   const { execute, loading, error } = useAsyncCallback(
@@ -299,167 +309,188 @@ export const LbcForm: React.FC = () => {
   const authorityRegister = register("authority");
 
   return (
-    <FormProvider {...formProps}>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <VStack spacing={8}>
-          {!useCandyMachine && <UseExistingMintInputs />}
-          <Box w="full">
-            <Collapse in={useCandyMachine} animateOpacity>
-              <FormControlWithError
-                id="candyMachineId"
-                help="The id of the candymachine"
-                label="Candy Machine ID"
-                errors={errors}
-              >
-                <Input {...register("candyMachineId")} />
-              </FormControlWithError>
-            </Collapse>
-            <Collapse in={!useExistingMint && !useCandyMachine} animateOpacity>
-              <VStack spacing={8}>
-                <TokenMetadataInputs entityName="token" />
+    <Flex position="relative">
+      {!connected && (
+        <Flex
+          position="absolute"
+          w="full"
+          h="full"
+          zIndex="1"
+          flexDirection="column"
+        >
+          <Flex justifyContent="right">
+            <Button colorScheme="orange" onClick={() => setVisible(!visible)}>
+              Connect Wallet
+            </Button>
+          </Flex>
+          <Flex w="full" h="full" bg="white" opacity="0.6" />
+        </Flex>
+      )}
+      <FormProvider {...formProps}>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <VStack spacing={8} mt={!connected ? 12 : 0}>
+            {!useCandyMachine && <UseExistingMintInputs />}
+            <Box w="full">
+              <Collapse in={useCandyMachine} animateOpacity>
                 <FormControlWithError
-                  id="decimals"
-                  help="The number of decimals on this mint"
-                  label="Mint Decimals"
+                  id="candyMachineId"
+                  help="The id of the candymachine"
+                  label="Candy Machine ID"
                   errors={errors}
                 >
-                  <Input
-                    type="number"
-                    min={0}
-                    step={0.000000000001}
-                    {...register("decimals")}
-                  />
+                  <Input {...register("candyMachineId")} />
                 </FormControlWithError>
-                <FormControlWithError
-                  id="symbol"
-                  help="A less than 10 character symbol for the token being sold"
-                  label="Symbol"
-                  errors={errors}
+              </Collapse>
+              <Collapse
+                in={!useExistingMint && !useCandyMachine}
+                animateOpacity
+              >
+                <VStack spacing={8}>
+                  <TokenMetadataInputs entityName="token" />
+                  <FormControlWithError
+                    id="decimals"
+                    help="The number of decimals on this mint"
+                    label="Mint Decimals"
+                    errors={errors}
+                  >
+                    <Input
+                      type="number"
+                      min={0}
+                      step={0.000000000001}
+                      {...register("decimals")}
+                    />
+                  </FormControlWithError>
+                  <FormControlWithError
+                    id="symbol"
+                    help="A less than 10 character symbol for the token being sold"
+                    label="Symbol"
+                    errors={errors}
+                  >
+                    <Input {...register("symbol")} />
+                  </FormControlWithError>
+                </VStack>
+              </Collapse>
+            </Box>
+
+            <FormControlWithError
+              id="mint"
+              help={`The token that should be used to buy this token. If you want users to purchase your token using SOL, use ${NATIVE_MINT.toBase58()}`}
+              label="Purchase Mint"
+              errors={errors}
+            >
+              {tokenRef && (
+                <Button
+                  variant="link"
+                  onClick={() => setValue("mint", tokenRef.mint.toBase58())}
                 >
-                  <Input {...register("symbol")} />
-                </FormControlWithError>
-              </VStack>
-            </Collapse>
-          </Box>
+                  Use my Social Token
+                </Button>
+              )}
+              <MintSelect
+                value={watch("mint")}
+                onChange={(s) => setValue("mint", s)}
+              />
+            </FormControlWithError>
 
-          <FormControlWithError
-            id="mint"
-            help={`The token that should be used to buy this token. If you want users to purchase your token using SOL, use ${NATIVE_MINT.toBase58()}`}
-            label="Purchase Mint"
-            errors={errors}
-          >
-            {tokenRef && (
-              <Button
-                variant="link"
-                onClick={() => setValue("mint", tokenRef.mint.toBase58())}
-              >
-                Use my Social Token
-              </Button>
-            )}
-            <MintSelect
-              value={watch("mint")}
-              onChange={(s) => setValue("mint", s)}
-            />
-          </FormControlWithError>
+            <FormControlWithError
+              id="authority"
+              help="The wallet that can claim the bootstrapped liquidity"
+              label="Beneficiary"
+              errors={errors}
+            >
+              {publicKey && (
+                <Button
+                  variant="link"
+                  onClick={() => setValue("authority", publicKey.toBase58())}
+                >
+                  Set to My Wallet
+                </Button>
+              )}
+              <Recipient
+                name={authorityRegister.name}
+                value={authority}
+                onChange={authorityRegister.onChange}
+              />
+            </FormControlWithError>
 
-          <FormControlWithError
-            id="authority"
-            help="The wallet that can claim the bootstrapped liquidity"
-            label="Beneficiary"
-            errors={errors}
-          >
-            {publicKey && (
-              <Button
-                variant="link"
-                onClick={() => setValue("authority", publicKey.toBase58())}
-              >
-                Set to My Wallet
-              </Button>
-            )}
-            <Recipient
-              name={authorityRegister.name}
-              value={authority}
-              onChange={authorityRegister.onChange}
-            />
-          </FormControlWithError>
+            <FormControlWithError
+              id="startPrice"
+              help="The starting price for this token. You should set this a little above the expected price of the token. Prices will fall to the fair price. Note that if there's enough demand, they can also increase from this price."
+              label="Staring Price"
+              errors={errors}
+            >
+              <Input
+                type="number"
+                min={0}
+                step={0.000000000001}
+                {...register("startPrice")}
+              />
+            </FormControlWithError>
+            <FormControlWithError
+              id="minPrice"
+              help="The minimum possible price for this token, if nobody buys during the bootstrapping interval. The wider the range between starting price and minimum price, the more rapidly the price will fall. It is reccommended to keep these numbers within 5x of each other."
+              label="Minimum Price"
+              errors={errors}
+            >
+              <Input
+                type="number"
+                min={0}
+                step={0.000000000001}
+                {...register("minPrice")}
+              />
+            </FormControlWithError>
+            <FormControlWithError
+              id="interval"
+              help="The time in seconds that it will take to go from startPrice to minPrice"
+              label="Interval"
+              errors={errors}
+            >
+              <Input
+                type="number"
+                min={0}
+                step={0.000000000001}
+                {...register("interval")}
+              />
+            </FormControlWithError>
+            <FormControlWithError
+              id="mintCap"
+              help="The number of tokens to mint. Note that, depending on the above parameters this liqudity bootstrapping may not sell out"
+              label="Number of Tokens"
+              errors={errors}
+            >
+              <Input
+                type="number"
+                min={0}
+                step={0.000000000001}
+                {...register("mintCap")}
+              />
+            </FormControlWithError>
 
-          <FormControlWithError
-            id="startPrice"
-            help="The starting price for this token. You should set this a little above the expected price of the token. Prices will fall to the fair price. Note that if there's enough demand, they can also increase from this price."
-            label="Staring Price"
-            errors={errors}
-          >
-            <Input
-              type="number"
-              min={0}
-              step={0.000000000001}
-              {...register("startPrice")}
-            />
-          </FormControlWithError>
-          <FormControlWithError
-            id="minPrice"
-            help="The minimum possible price for this token, if nobody buys during the bootstrapping interval. The wider the range between starting price and minimum price, the more rapidly the price will fall. It is reccommended to keep these numbers within 5x of each other."
-            label="Minimum Price"
-            errors={errors}
-          >
-            <Input
-              type="number"
-              min={0}
-              step={0.000000000001}
-              {...register("minPrice")}
-            />
-          </FormControlWithError>
-          <FormControlWithError
-            id="interval"
-            help="The time in seconds that it will take to go from startPrice to minPrice"
-            label="Interval"
-            errors={errors}
-          >
-            <Input
-              type="number"
-              min={0}
-              step={0.000000000001}
-              {...register("interval")}
-            />
-          </FormControlWithError>
-          <FormControlWithError
-            id="mintCap"
-            help="The number of tokens to mint. Note that, depending on the above parameters this liqudity bootstrapping may not sell out"
-            label="Number of Tokens"
-            errors={errors}
-          >
-            <Input
-              type="number"
-              min={0}
-              step={0.000000000001}
-              {...register("mintCap")}
-            />
-          </FormControlWithError>
+            <FormControlWithError
+              id="goLiveDate"
+              help="The time this LBC will go live, in your browser's local timezone"
+              label="Launch Date"
+              errors={errors}
+            >
+              <Input type="datetime-local" {...register("goLiveDate")} />
+            </FormControlWithError>
 
-          <FormControlWithError
-            id="goLiveDate"
-            help="The time this LBC will go live, in your browser's local timezone"
-            label="Launch Date"
-            errors={errors}
-          >
-            <Input type="datetime-local" {...register("goLiveDate")} />
-          </FormControlWithError>
+            <Disclosures fees={LBC_CURVE_FEES} />
 
-          <Disclosures fees={LBC_CURVE_FEES} />
+            {error && <Alert status="error">{error.toString()}</Alert>}
 
-          {error && <Alert status="error">{error.toString()}</Alert>}
-
-          <Button
-            type="submit"
-            alignSelf="flex-end"
-            colorScheme="primary"
-            isLoading={isSubmitting || loading}
-            loadingText={awaitingApproval ? "Awaiting Approval" : "Loading"}
-          >
-            Create LBC
-          </Button>
-        </VStack>
-      </form>
-    </FormProvider>
+            <Button
+              type="submit"
+              alignSelf="flex-end"
+              colorScheme="primary"
+              isLoading={isSubmitting || loading}
+              loadingText={awaitingApproval ? "Awaiting Approval" : "Loading"}
+            >
+              Create LBC
+            </Button>
+          </VStack>
+        </form>
+      </FormProvider>
+    </Flex>
   );
 };
