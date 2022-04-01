@@ -194,8 +194,8 @@ export const ManualForm: React.FC = () => {
             </FormControlWithError>
             <FormControlWithError
               id="decimals"
-              help="The number of of decimal places this mint will have. For example, SOL has 9 decimal places of precision"
-              label="Decimals"
+              help="The number of of decimal places this mint will have. For example, SOL has 9 decimal places of precision."
+              label="Mint Decimals"
               errors={errors}
             >
               <Input

@@ -245,7 +245,7 @@ export const SaleForm: React.FC = () => {
                   <TokenMetadataInputs entityName="token" />
                   <FormControlWithError
                     id="decimals"
-                    help="The number of decimals on this mint"
+                    help="The number of of decimal places this mint will have. For example, SOL has 9 decimal places of precision."
                     label="Mint Decimals"
                     errors={errors}
                   >

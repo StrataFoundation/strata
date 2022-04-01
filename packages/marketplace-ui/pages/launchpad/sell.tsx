@@ -54,18 +54,12 @@ export const SellToken: FC = () => {
 
   const handleOnNext = async () => {
     if (selectedOption === SellTokenOption.PriceDiscovery)
-      router.push(
-        route(routes.newLbc, { mint }),
-        undefined,
-        { shallow: true }
-      );
+      router.push(route(routes.newLbc, { mint }), undefined, { shallow: true });
 
     if (selectedOption === SellTokenOption.FixedPrice)
-      router.push(
-        route(routes.newSale, { mint }),
-        undefined,
-        { shallow: true }
-      );
+      router.push(route(routes.newSale, { mint }), undefined, {
+        shallow: true,
+      });
   };
 
   return (
