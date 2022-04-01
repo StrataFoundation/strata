@@ -12,40 +12,57 @@ import {
   useTokenAccount,
   useMint,
   useTokenBondingKey,
-  roundToDecimals
+  roundToDecimals,
 } from "@strata-foundation/react";
 import { useAsync, useAsyncCallback, UseAsyncReturn } from "react-async-hook";
-import { SplTokenBonding, toNumber } from "@strata-foundation/spl-token-bonding";
+import {
+  SplTokenBonding,
+  toNumber,
+} from "@strata-foundation/spl-token-bonding";
 
 const identity = () => {};
-export const TokenOffering = ({ mintKey }: { mintKey: PublicKey | undefined }) => {
-  const { result: sellOnlyTokenBondingKey, error: keyError1 } = useTokenBondingKey(mintKey, 1);
+export const TokenOffering = ({
+  mintKey,
+}: {
+  mintKey: PublicKey | undefined;
+}) => {
+  const { result: sellOnlyTokenBondingKey, error: keyError1 } =
+    useTokenBondingKey(mintKey, 1);
   const { tokenBondingSdk } = useStrataSdks();
-  const { info: sellOnlyTokenBonding, loading: sellOnlyLoading } = useTokenBonding(
-    sellOnlyTokenBondingKey
-  );
+  const { info: sellOnlyTokenBonding, loading: sellOnlyLoading } =
+    useTokenBonding(sellOnlyTokenBondingKey);
   const { result: tokenBondingKey, error: keyError2 } = useTokenBondingKey(
     sellOnlyTokenBonding?.targetMint,
     0
   );
   const { info: tokenBonding } = useTokenBonding(tokenBondingKey);
-  const { info: supplyAcc } = useTokenAccount(sellOnlyTokenBonding?.baseStorage);
+  const { info: supplyAcc } = useTokenAccount(
+    sellOnlyTokenBonding?.baseStorage
+  );
   const supplyMint = useMint(sellOnlyTokenBonding?.baseMint);
 
-  const { execute: onSubmit, loading: submitting, error: submitError } = useAsyncCallback(async function(values: ISwapFormValues) {
+  const {
+    execute: onSubmit,
+    loading: submitting,
+    error: submitError,
+  } = useAsyncCallback(async function (values: ISwapFormValues) {
     const instructions = [];
     const signers = [];
-    const { instructions: i1, signers: s1 } = await tokenBondingSdk!.buyInstructions({
-      desiredTargetAmount: +values.bottomAmount,
-      slippage: +values.slippage / 100,
-      tokenBonding: tokenBondingKey!
-    });
+    const { instructions: i1, signers: s1 } =
+      await tokenBondingSdk!.buyInstructions({
+        desiredTargetAmount: +values.bottomAmount,
+        slippage: +values.slippage / 100,
+        tokenBonding: tokenBondingKey!,
+      });
     instructions.push(...i1);
     signers.push(...s1);
     if (sellOnlyTokenBonding) {
       const { instructions: i2, signers: s2 } =
         await tokenBondingSdk!.sellInstructions({
-          targetAmount: roundToDecimals(+values.bottomAmount, supplyMint.decimals),
+          targetAmount: roundToDecimals(
+            +values.bottomAmount,
+            supplyMint.decimals
+          ),
           slippage: +values.slippage / 100,
           tokenBonding: sellOnlyTokenBondingKey!,
         });
@@ -53,19 +70,21 @@ export const TokenOffering = ({ mintKey }: { mintKey: PublicKey | undefined }) =
       instructions.push(...i2);
       signers.push(...s2);
     }
-    
+
     await tokenBondingSdk!.sendInstructions(instructions, signers);
     toast.custom((t) => (
       <Notification
         show={t.visible}
         type="success"
         heading="Transaction Successful"
-        message={`Succesfully purchased ${Number(values.bottomAmount).toFixed(9)}!`}
+        message={`Succesfully purchased ${Number(values.bottomAmount).toFixed(
+          9
+        )}!`}
         onDismiss={() => toast.dismiss(t.id)}
       />
     ));
   });
-  
+
   const { handleErrors } = useErrorHandler();
   handleErrors(keyError1, keyError2, submitError);
 
@@ -75,11 +94,14 @@ export const TokenOffering = ({ mintKey }: { mintKey: PublicKey | undefined }) =
       target: tokenBonding?.targetMint,
     },
     onTradingMintsChange: () => {},
-    swap: (args) =>
-      {},
+    swap: (args) => {},
     onConnectWallet: identity,
     tokenBondingKey: tokenBondingKey,
   });
+
+  console.log("driverLoading", driverLoading);
+  console.log(tokenBonding);
+  console.log("sellOnlyLoading", sellOnlyLoading);
 
   return (
     <SwapForm
