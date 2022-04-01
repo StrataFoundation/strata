@@ -144,8 +144,12 @@ export const BountyForm = ({
           zIndex="1"
           flexDirection="column"
         >
-          <Flex justifyContent="right">
-            <Button colorScheme="orange" onClick={() => setVisible(!visible)}>
+          <Flex justifyContent="center">
+            <Button
+              colorScheme="orange"
+              variant="outline"
+              onClick={() => setVisible(!visible)}
+            >
               Connect Wallet
             </Button>
           </Flex>
