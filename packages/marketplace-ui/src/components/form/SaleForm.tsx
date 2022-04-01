@@ -183,6 +183,9 @@ async function createMarket(
 export const SaleForm: React.FC = () => {
   const formProps = useForm<IMarketplaceFormProps>({
     resolver: yupResolver(validationSchema),
+    defaultValues: {
+      useExistingMint: true,
+    },
   });
   const {
     register,

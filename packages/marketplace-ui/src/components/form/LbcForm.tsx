@@ -257,6 +257,7 @@ async function createLiquidityBootstrapper(
 export const LbcForm: React.FC = () => {
   const formProps = useForm<ILbpFormProps>({
     resolver: yupResolver(validationSchema),
+    defaultValues: { useExistingMint: true },
   });
   const {
     register,
