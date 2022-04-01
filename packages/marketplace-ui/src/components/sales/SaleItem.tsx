@@ -156,7 +156,7 @@ export const SaleItem = ({
                 <Badge
                   alignSelf="start"
                   textTransform="none"
-                  fontSize="sm"
+                  size="sm"
                   fontWeight="semibold"
                   lineHeight="1rem"
                   borderRadius="base"
@@ -165,7 +165,7 @@ export const SaleItem = ({
                   bg="primary.500"
                   color="white"
                 >
-                  {passedMintCap ? "SOLD OUT" : "ON SALE"}
+                  {passedMintCap ? "Sold Out" : "For Sale"}
                 </Badge>
               </Stack>
               <Heading size="lg" fontWeight="medium">
@@ -178,7 +178,12 @@ export const SaleItem = ({
                 justify="space-between"
               >
                 <HStack spacing="1">
-                  <Text as="span" fontWeight="medium" color="gray.700">
+                  <Text
+                    as="span"
+                    fontSize="lg"
+                    fontWeight="semibold"
+                    color="gray.700"
+                  >
                     {baseMetadata?.data.symbol}{" "}
                     {pricingLoading ? <Spinner size="xs" /> : price?.toFixed(2)}
                   </Text>
