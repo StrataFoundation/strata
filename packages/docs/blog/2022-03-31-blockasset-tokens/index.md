@@ -16,7 +16,7 @@ Let's take a closer look at these Athlete Tokens, how they work, and how you can
 ## What is an Athlete Token?
 
 An athlete token is a subset of social tokens. Owning a social token is like joining a fan club. 
-It gives you access to exclusive content, and can be exchanged for priceless experiences. For example, these athlete tokens will give access to training sessions, VIP sporting event tickets, signed merchandise and more. 
+It gives you access to exclusive content, and can be exchanged for priceless experiences. For example, these athlete tokens will give access to training sessions, VIP sporting event tickets, signed merchandise and more.  While an athlete token could increase in value, they are not an investment or security.  Instead, the primary use of an athlete token is to be consumed.   
 
 The value of an athlete token is related to the power of the community behind them.
 
@@ -24,7 +24,7 @@ The value of an athlete token is related to the power of the community behind th
 
 ## How does it work?
 
-Blockasset is using Strata Protocol to do permissionless launches of their athlete tokens so they are immediately tradable. No need for market makers or liquidity providers. Strata seamlessly handles the supply and liquidity.
+Blockasset is using Strata Protocol to do permissionless launches of their athlete tokens so they are immediately tradable. No need for market makers or LPs. Strata seamlessly handles the supply and liquidity.
 
 While this sounds complex, from a fan perspective it's as easy as clicking "buy".
 
@@ -58,3 +58,5 @@ will accumulate athlete tokens which they can exchange for experiences.
 When an athlete token launches, **the price will be fixed for 30 minutes**. After 30 minutes, the athlete token will gradually transform from fixed price to a square root curve. This results in upward price pressure with increased price sensitivity.
 
 If you would like to learn more about this process, you can read on [here](https://docs.strataprotocol.com/learn/fair_launch)
+
+
