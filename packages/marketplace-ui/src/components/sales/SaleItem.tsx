@@ -90,7 +90,7 @@ export const SaleItem = ({
     tokenBonding?.publicKey
   );
   const { tokenBondingSdk } = useStrataSdks();
-  const [qty, setQty] = useState("0");
+  const [qty, setQty] = useState(1);
   const { execute, loading, error } = useAsyncCallback(buy);
   const { awaitingApproval } = useProvider();
   const qtyNumber = Number(qty);
@@ -238,7 +238,7 @@ export const SaleItem = ({
                   max={
                     remainingAmount > 0 ? Math.round(remainingAmount / 2) : 0
                   }
-                  onChange={(num) => setQty(`${num}`)}
+                  onChange={(num) => setQty(num)}
                 />
               </Box>
             </HStack>
