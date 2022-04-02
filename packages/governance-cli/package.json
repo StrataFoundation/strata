@@ -14,11 +14,13 @@
     "close-buffers": "tsc && node bin/closeBuffersProposal.js"
   },
   "dependencies": {
+    "@strata-foundation/web3-token-auth": "^3.4.5",
     "@project-serum/anchor": "^0.22.0",
     "@solana/spl-governance": "^0.0.27",
     "@solana/web3.js": "^1.32.0",
     "@strata-foundation/spl-utils": "^3.4.5",
     "borsh": "^0.7.0",
+    "js-base64": "^3.7.2",
     "shelljs": "^0.8.4"
   },
   "gitHead": "ff670e6a6211209648c56dd69e5f5dfbda631b42"

@@ -1,0 +1,41 @@
+{
+  "name": "@strata-foundation/web3-token-auth",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "version": "3.4.5",
+  "description": "React components and helpers to auth to GenesysGo RPC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/StrataFoundation/strata"
+  },
+  "main": "dist/lib/index.js",
+  "types": "dist/lib/index.d.ts",
+  "exports": {
+    ".": "./dist/lib/index.js"
+  },
+  "files": [
+    "dist/lib/**/*"
+  ],
+  "scripts": {
+    "build": "yarn run copy-files && tsc --project tsconfig.json",
+    "copy-files": "copyfiles -u 1 src/**/*.js dist/lib",
+    "watch": "yarn run copy-files && tsc --watch --project tsconfig.json",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "bootstrap": "tsc && node dist/lib/bootstrap",
+    "precommit": "git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' .",
+    "prepare": "yarn run build"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.32.0",
+    "localstorage-memory": "^1.0.3"
+  },
+  "devDependencies": {
+    "git-format-staged": "^2.1.3",
+    "style-loader": "^2.0.0",
+    "ts-loader": "^9.2.3",
+    "typescript": "^4.3.4"
+  },
+  "gitHead": "ff670e6a6211209648c56dd69e5f5dfbda631b42"
+}

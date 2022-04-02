@@ -32,7 +32,15 @@ inputs:
   description:
     description: 'The description on the proposal'
     required: true
-
+  issuer:
+    description: 'The auth issuer'
+    required: false
+  client-id:
+    description: 'The auth client id'
+    required: false
+  client-secret:
+    description: 'The auth client secret'
+    required: false
 runs:
   using: "composite"
   steps:
@@ -70,6 +78,9 @@ runs:
         NAME: ${{ inputs.name }}
         DESCRIPTION: ${{ inputs.description }}
         SIGNATORY: ${{ inputs.signatory }}
+        ISSUER: ${{ inputs.issuer }}
+        CLIENT_ID: ${{ inputs.client-id }}
+        CLIENT_SECRET: ${{ inputs.client-secret }}
     - run: rm ./deploy-keypair.json
       shell: bash
       if: always()

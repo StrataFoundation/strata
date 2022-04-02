@@ -26,6 +26,15 @@ inputs:
   description:
     description: 'The description on the proposal'
     required: true
+  issuer:
+    description: 'The auth issuer'
+    required: false
+  client-id:
+    description: 'The auth client id'
+    required: false
+  client-secret:
+    description: 'The auth client secret'
+    required: false
 
 runs:
   using: "composite"
@@ -62,3 +71,7 @@ runs:
         signatory: ${{ inputs.signatory }}
         name: ${{ inputs.name }}
         description: ${{ inputs.description }}
+        issuer: ${{ inputs.issuer }}
+        client-id: ${{ inputs.client-id }}
+        client-secret: ${{ inputs.client-secret }}
+
