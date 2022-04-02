@@ -70,7 +70,7 @@ export function tokenAuthFetchMiddleware({
         ...(options || {}),
         headers: {
           ...(options || {}).headers,
-          Authorization: "Bearer " + tokenStorage.getToken(),
+          "Authorization": "Bearer " + tokenStorage.getToken(),
         },
       });
     })();

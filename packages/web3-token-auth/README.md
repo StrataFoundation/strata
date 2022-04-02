@@ -98,7 +98,7 @@ export const getToken = async (url: string) => {
 
 ### NodeJS Code
 
-```
+```ts
 import { Connection } from "@solana/web3.js";
 import { tokenAuthFetchMiddleware } from "@strata-foundation/web3-token-auth";
 import request from "request-promise";
