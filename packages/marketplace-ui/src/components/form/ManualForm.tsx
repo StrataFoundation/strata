@@ -1,5 +1,5 @@
 import { NFT_STORAGE_API_KEY } from "../../constants";
-import { Alert, Button, Input, Switch, VStack } from "@chakra-ui/react";
+import { Alert, Button, Flex, Input, Switch, VStack } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
 import {
@@ -23,6 +23,8 @@ import * as yup from "yup";
 import { route, routes } from "../../utils/routes";
 import { FormControlWithError } from "./FormControlWithError";
 import { IMetadataFormProps, TokenMetadataInputs } from "./TokenMetadataInputs";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 
 interface IManualForm extends IMetadataFormProps {
   symbol: string;
@@ -146,6 +148,8 @@ export const ManualForm: React.FC = () => {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = formProps;
+  const { connected } = useWallet();
+  const { visible, setVisible } = useWalletModal();
   const { awaitingApproval } = useProvider();
   const { execute, loading, error } = useAsyncCallback(createFullyManaged);
   const { tokenMetadataSdk } = useStrataSdks();
@@ -159,79 +163,101 @@ export const ManualForm: React.FC = () => {
   };
 
   return (
-    <FormProvider {...formProps}>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <VStack spacing={8}>
-          <TokenMetadataInputs entityName="token" />
-          <FormControlWithError
-            id="symbol"
-            help="The symbol for this token, ex: SOL"
-            label="Symbol"
-            errors={errors}
-          >
-            <Input {...register("symbol")} />
-          </FormControlWithError>
-          <FormControlWithError
-            id="decimals"
-            help="The number of of decimal places this mint will have. For example, SOL has 9 decimal places of precision"
-            label="Decimals"
-            errors={errors}
-          >
-            <Input
-              type="number"
-              min={0}
-              max={12}
-              step={1}
-              {...register("decimals")}
-            />
-          </FormControlWithError>
-          <FormControlWithError
-            id="supply"
-            help="The number of tokens to mint. After creation these will be available in your wallet"
-            label="Supply"
-            errors={errors}
-          >
-            <Input
-              type="number"
-              min={0}
-              step={0.0000000001}
-              {...register("supply")}
-            />
-          </FormControlWithError>
-          <FormControlWithError
-            id="keepMintAuthority"
-            help={`Would you like the ability to mint more than the specified supply of tokens?`}
-            label="Keep Mint Authority?"
-            errors={errors}
-          >
-            <Switch {...register("keepMintAuthority")} />
-          </FormControlWithError>
-          <FormControlWithError
-            id="keepFreezeAuthority"
-            help={`Would you like the ability to freeze token accounts using this token, so that they may no longer be used.`}
-            label="Keep Freeze Authority?"
-            errors={errors}
-          >
-            <Switch {...register("keepFreezeAuthority")} />
-          </FormControlWithError>
+    <Flex position="relative">
+      {!connected && (
+        <Flex
+          position="absolute"
+          w="full"
+          h="full"
+          zIndex="1"
+          flexDirection="column"
+        >
+          <Flex justifyContent="center">
+            <Button
+              colorScheme="orange"
+              variant="outline"
+              onClick={() => setVisible(!visible)}
+            >
+              Connect Wallet
+            </Button>
+          </Flex>
+          <Flex w="full" h="full" bg="white" opacity="0.6" />
+        </Flex>
+      )}
+      <FormProvider {...formProps}>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <VStack spacing={8} mt={!connected ? 12 : 0}>
+            <TokenMetadataInputs entityName="token" />
+            <FormControlWithError
+              id="symbol"
+              help="The symbol for this token, ex: SOL"
+              label="Symbol"
+              errors={errors}
+            >
+              <Input {...register("symbol")} />
+            </FormControlWithError>
+            <FormControlWithError
+              id="decimals"
+              help="The number of of decimal places this mint will have. For example, SOL has 9 decimal places of precision. We recommend 0 if your tokens dont need to be less than 1"
+              label="Mint Decimals"
+              errors={errors}
+            >
+              <Input
+                type="number"
+                min={0}
+                max={12}
+                step={1}
+                {...register("decimals")}
+              />
+            </FormControlWithError>
+            <FormControlWithError
+              id="supply"
+              help="The number of tokens to mint. After creation these will be available in your wallet"
+              label="Supply"
+              errors={errors}
+            >
+              <Input
+                type="number"
+                min={0}
+                step={0.0000000001}
+                {...register("supply")}
+              />
+            </FormControlWithError>
+            <FormControlWithError
+              id="keepMintAuthority"
+              help={`Would you like the ability to mint more than the specified supply of tokens?`}
+              label="Keep Mint Authority?"
+              errors={errors}
+            >
+              <Switch {...register("keepMintAuthority")} />
+            </FormControlWithError>
+            <FormControlWithError
+              id="keepFreezeAuthority"
+              help={`Would you like the ability to freeze token accounts using this token, so that they may no longer be used.`}
+              label="Keep Freeze Authority?"
+              errors={errors}
+            >
+              <Switch {...register("keepFreezeAuthority")} />
+            </FormControlWithError>
 
-          {error && (
-            <Alert status="error">
-              <Alert status="error">{error.toString()}</Alert>
-            </Alert>
-          )}
+            {error && (
+              <Alert status="error">
+                <Alert status="error">{error.toString()}</Alert>
+              </Alert>
+            )}
 
-          <Button
-            type="submit"
-            alignSelf="flex-end"
-            colorScheme="primary"
-            isLoading={isSubmitting || loading}
-            loadingText={awaitingApproval ? "Awaiting Approval" : "Loading"}
-          >
-            Create Token
-          </Button>
-        </VStack>
-      </form>
-    </FormProvider>
+            <Button
+              type="submit"
+              alignSelf="flex-end"
+              colorScheme="primary"
+              isLoading={isSubmitting || loading}
+              loadingText={awaitingApproval ? "Awaiting Approval" : "Loading"}
+            >
+              Create Token
+            </Button>
+          </VStack>
+        </form>
+      </FormProvider>
+    </Flex>
   );
 };

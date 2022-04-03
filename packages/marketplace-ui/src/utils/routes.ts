@@ -38,7 +38,9 @@ export const routes: Record<string, IRoute> = {
   sell: { path: "/launchpad/sell", params: [] },
 };
 
-function rmUndefined(obj: Record<string, string | undefined>): Record<string, string> {
+function rmUndefined(
+  obj: Record<string, string | undefined>
+): Record<string, string> {
   return Object.keys(obj).reduce((acc, key) => {
     if (typeof obj[key] !== "undefined") acc[key] = obj[key]!;
     return acc;
@@ -58,7 +60,6 @@ export function route(
     return acc;
   }, route.path);
 
-
   const search = typeof window != "undefined" && window.location.search;
   const currQuery = new URLSearchParams(search || "");
   const cluster = currQuery.get("cluster");
@@ -66,5 +67,5 @@ export function route(
     params.cluster = cluster;
   }
   const nextQuery = new URLSearchParams(rmUndefined(params)).toString();
-  return subbed + (nextQuery ? `?${nextQuery}` : "")
+  return subbed + (nextQuery ? `?${nextQuery}` : "");
 }

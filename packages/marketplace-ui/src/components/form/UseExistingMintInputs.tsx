@@ -1,5 +1,8 @@
 import { Box, Collapse, Switch, Text } from "@chakra-ui/react";
-import { useMetaplexTokenMetadata, usePublicKey } from "@strata-foundation/react";
+import {
+  useMetaplexTokenMetadata,
+  usePublicKey,
+} from "@strata-foundation/react";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
@@ -24,13 +27,15 @@ export function UseExistingMintInputs() {
   const router = useRouter();
   const mint = router.query["mint"];
   const { useExistingMint, existingMint, name, symbol } = watch();
-  useEffect(() => {
-    setValue("existingMint", mint as string);
-    setValue("useExistingMint", !!mint);
-  }, [mint, router, setValue])
-
   const existingMintPkey = usePublicKey(existingMint);
   const { metadata } = useMetaplexTokenMetadata(existingMintPkey);
+
+  useEffect(() => {
+    if (mint) {
+      setValue("existingMint", mint as string);
+      setValue("useExistingMint", !!mint);
+    }
+  }, [mint, router, setValue]);
 
   useEffect(() => {
     setValue("name", metadata?.data.name);
@@ -56,7 +61,11 @@ export function UseExistingMintInputs() {
             label="Mint"
             errors={errors}
           >
-            { name && <Text color="gray.400" size="sm">{ name } ({ symbol })</Text> }
+            {name && (
+              <Text color="gray.400" size="sm">
+                {name} ({symbol})
+              </Text>
+            )}
             <MintSelect
               value={watch("existingMint") || ""}
               onChange={(s) => setValue("existingMint", s)}

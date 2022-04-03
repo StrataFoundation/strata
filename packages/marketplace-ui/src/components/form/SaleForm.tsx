@@ -43,6 +43,7 @@ import {
   IUseExistingMintProps,
   UseExistingMintInputs,
 } from "./UseExistingMintInputs";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 
 interface IMarketplaceFormProps
   extends Omit<IMetadataFormProps, "name">,
@@ -183,6 +184,9 @@ async function createMarket(
 export const SaleForm: React.FC = () => {
   const formProps = useForm<IMarketplaceFormProps>({
     resolver: yupResolver(validationSchema),
+    defaultValues: {
+      useExistingMint: true,
+    },
   });
   const {
     register,
@@ -191,7 +195,8 @@ export const SaleForm: React.FC = () => {
     formState: { errors, isSubmitting },
     watch,
   } = formProps;
-  const { publicKey } = useWallet();
+  const { publicKey, connected } = useWallet();
+  const { visible, setVisible } = useWalletModal();
   const { info: tokenRef } = usePrimaryClaimedTokenRef(publicKey);
   const { awaitingApproval } = useProvider();
   const { execute, loading, error } = useAsyncCallback(createMarket);
@@ -213,122 +218,144 @@ export const SaleForm: React.FC = () => {
   const useExistingMint = watch("useExistingMint");
 
   return (
-    <FormProvider {...formProps}>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <VStack spacing={8}>
-          <UseExistingMintInputs />
-          <Box w="full">
-            <Collapse in={!useExistingMint} animateOpacity>
-              <VStack spacing={8}>
-                <TokenMetadataInputs entityName="token" />
-                <FormControlWithError
-                  id="decimals"
-                  help="The number of decimals on this mint"
-                  label="Mint Decimals"
-                  errors={errors}
-                >
-                  <Input
-                    type="number"
-                    min={0}
-                    step={0.000000000001}
-                    {...register("decimals")}
-                  />
-                </FormControlWithError>
-              </VStack>
-            </Collapse>
-          </Box>
-          <FormControlWithError
-            id="quantity"
-            help="The quantity to stop selling at"
-            label="Quantity"
-            errors={errors}
-          >
-            <Input type="number" min={1} step={1} {...register("quantity")} />
-          </FormControlWithError>
-          <FormControlWithError
-            id="mint"
-            help={`The token that should be used to buy this token. If you want users to purchase your token using SOL, use ${NATIVE_MINT.toBase58()}`}
-            label="Purchase Mint"
-            errors={errors}
-          >
-            {tokenRef && (
-              <Button
-                variant="link"
-                onClick={() => setValue("mint", tokenRef.mint.toBase58())}
-              >
-                Use my Social Token
-              </Button>
-            )}
-            <MintSelect
-              value={watch("mint")}
-              onChange={(s) => setValue("mint", s)}
-            />{" "}
-          </FormControlWithError>
-          <FormControlWithError
-            id="price"
-            help="The price in terms of the Purchase Mint"
-            label="Price"
-            errors={errors}
-          >
-            <Input
-              type="number"
-              min={0}
-              step={0.0000000001}
-              {...register("price")}
-            />
-          </FormControlWithError>
-
-          <FormControlWithError
-            id="goLiveDate"
-            help="The time this offering will go live, in your browser's local timezone"
-            label="Launch Date"
-            errors={errors}
-          >
-            <Input type="datetime-local" {...register("goLiveDate")} />
-          </FormControlWithError>
-
-          <Disclosures fees={FIXED_CURVE_FEES} />
-
-          <Flex alignItems="flex-start" direction="column" w="full">
+    <Flex position="relative">
+      {!connected && (
+        <Flex
+          position="absolute"
+          w="full"
+          h="full"
+          zIndex="1"
+          flexDirection="column"
+        >
+          <Flex justifyContent="center">
             <Button
-              textAlign="left"
-              rightIcon={<Icon as={BsChevronDown} />}
-              variant="link"
-              onClick={onToggle}
+              colorScheme="orange"
+              variant="outline"
+              onClick={() => setVisible(!visible)}
             >
-              Advanced Settings
+              Connect Wallet
             </Button>
+          </Flex>
+          <Flex w="full" h="full" bg="white" opacity="0.6" />
+        </Flex>
+      )}
+      <FormProvider {...formProps}>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <VStack spacing={8} mt={!connected ? 12 : 0}>
+            <UseExistingMintInputs />
             <Box w="full">
-              <Collapse in={isOpen} animateOpacity>
-                <FormControlWithError
-                  id="curve"
-                  help="The pricing curve to use for this item"
-                  label="Curve"
-                  errors={errors}
-                >
-                  <Input {...register("curve")} />
-                </FormControlWithError>
+              <Collapse in={!useExistingMint} animateOpacity>
+                <VStack spacing={8}>
+                  <TokenMetadataInputs entityName="token" />
+                  <FormControlWithError
+                    id="decimals"
+                    help="The number of of decimal places this mint will have. For example, SOL has 9 decimal places of precision. We recommend 0 if your tokens dont need to be less than 1"
+                    label="Mint Decimals"
+                    errors={errors}
+                  >
+                    <Input
+                      type="number"
+                      min={0}
+                      step={0.000000000001}
+                      {...register("decimals")}
+                    />
+                  </FormControlWithError>
+                </VStack>
               </Collapse>
             </Box>
-          </Flex>
+            <FormControlWithError
+              id="quantity"
+              help="The quantity to stop selling at"
+              label="Quantity"
+              errors={errors}
+            >
+              <Input type="number" min={1} step={1} {...register("quantity")} />
+            </FormControlWithError>
+            <FormControlWithError
+              id="mint"
+              help={`The token that should be used to buy this token. If you want users to purchase your token using SOL, use ${NATIVE_MINT.toBase58()}`}
+              label="Purchase Mint"
+              errors={errors}
+            >
+              {tokenRef && (
+                <Button
+                  variant="link"
+                  onClick={() => setValue("mint", tokenRef.mint.toBase58())}
+                >
+                  Use my Social Token
+                </Button>
+              )}
+              <MintSelect
+                value={watch("mint")}
+                onChange={(s) => setValue("mint", s)}
+              />{" "}
+            </FormControlWithError>
+            <FormControlWithError
+              id="price"
+              help="The price in terms of the Purchase Mint"
+              label="Price"
+              errors={errors}
+            >
+              <Input
+                type="number"
+                min={0}
+                step={0.0000000001}
+                {...register("price")}
+              />
+            </FormControlWithError>
 
-          {error && (
-            <Alert status="error">
-              <Alert status="error">{error.toString()}</Alert>
-            </Alert>
-          )}
+            <FormControlWithError
+              id="goLiveDate"
+              help="The time this offering will go live, in your browser's local timezone"
+              label="Launch Date"
+              errors={errors}
+            >
+              <Input type="datetime-local" {...register("goLiveDate")} />
+            </FormControlWithError>
 
-          <Button
-            type="submit"
-            alignSelf="flex-end"
-            colorScheme="primary"
-            isLoading={isSubmitting || loading}
-            loadingText={awaitingApproval ? "Awaiting Approval" : "Loading"}
-          >
-            Create Sale
-          </Button>
-        </VStack>
-      </form>
-    </FormProvider>
+            <Disclosures fees={FIXED_CURVE_FEES} />
+
+            <Flex alignItems="flex-start" direction="column" w="full">
+              <Button
+                textAlign="left"
+                rightIcon={<Icon as={BsChevronDown} />}
+                variant="link"
+                onClick={onToggle}
+              >
+                Advanced Settings
+              </Button>
+              <Box w="full">
+                <Collapse in={isOpen} animateOpacity>
+                  <FormControlWithError
+                    id="curve"
+                    help="The pricing curve to use for this item"
+                    label="Curve"
+                    errors={errors}
+                  >
+                    <Input {...register("curve")} />
+                  </FormControlWithError>
+                </Collapse>
+              </Box>
+            </Flex>
+
+            {error && (
+              <Alert status="error">
+                <Alert status="error">{error.toString()}</Alert>
+              </Alert>
+            )}
+
+            <Button
+              type="submit"
+              alignSelf="flex-end"
+              colorScheme="primary"
+              isLoading={isSubmitting || loading}
+              loadingText={awaitingApproval ? "Awaiting Approval" : "Loading"}
+            >
+              Create Sale
+            </Button>
+          </VStack>
+        </form>
+      </FormProvider>
+    </Flex>
   );
 };

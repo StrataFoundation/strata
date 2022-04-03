@@ -1,8 +1,9 @@
-import { Alert, Button, Input, VStack } from "@chakra-ui/react";
+import { Alert, Button, Flex, Input, VStack } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
 import { NATIVE_MINT } from "@solana/spl-token";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
 import {
@@ -101,7 +102,8 @@ export const BountyForm = ({
     setValue,
     formState: { errors, isSubmitting },
   } = formProps;
-  const { publicKey } = useWallet();
+  const { publicKey, connected } = useWallet();
+  const { visible, setVisible } = useWalletModal();
   const { info: tokenRef } = usePrimaryClaimedTokenRef(publicKey);
   const { awaitingApproval } = useProvider();
   const { execute, loading, error } = useAsyncCallback(createBounty);
@@ -133,99 +135,121 @@ export const BountyForm = ({
   const authorityRegister = register("authority");
 
   return (
-    <FormProvider {...formProps}>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <VStack spacing={8}>
-          <TokenMetadataInputs />
-          <FormControlWithError
-            id="shortName"
-            help="A less than 10 character name for this bounty. This will be the bounty token's symbol."
-            label="Short Name"
-            errors={errors}
-          >
-            <Input {...register("shortName")} />
-          </FormControlWithError>
-
-          {!hide.has("mint") && (
+    <Flex position="relative">
+      {!connected && (
+        <Flex
+          position="absolute"
+          w="full"
+          h="full"
+          zIndex="1"
+          flexDirection="column"
+        >
+          <Flex justifyContent="center">
+            <Button
+              colorScheme="orange"
+              variant="outline"
+              onClick={() => setVisible(!visible)}
+            >
+              Connect Wallet
+            </Button>
+          </Flex>
+          <Flex w="full" h="full" bg="white" opacity="0.6" />
+        </Flex>
+      )}
+      <FormProvider {...formProps}>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <VStack spacing={8} mt={!connected ? 12 : 0}>
+            <TokenMetadataInputs />
             <FormControlWithError
-              id="mint"
-              help={`The mint that should be used on this bounty, example ${NATIVE_MINT.toBase58()} for SOL`}
-              label="Mint"
+              id="shortName"
+              help="A less than 10 character name for this bounty. This will be the bounty token's symbol."
+              label="Short Name"
               errors={errors}
             >
-              {tokenRef && (
-                <Button
-                  variant="link"
-                  onClick={() => setValue("mint", tokenRef.mint.toBase58())}
-                >
-                  Use my Social Token
-                </Button>
-              )}
-              <MintSelect
-                value={watch("mint")}
-                onChange={(s) => setValue("mint", s)}
-              />
+              <Input {...register("shortName")} />
             </FormControlWithError>
-          )}
 
-          {!hide.has("authority") && (
-            <FormControlWithError
-              id="authority"
-              help="The wallet that signs to disburse the funds of this bounty when it is completed. 
+            {!hide.has("mint") && (
+              <FormControlWithError
+                id="mint"
+                help={`The mint that should be used on this bounty, example ${NATIVE_MINT.toBase58()} for SOL`}
+                label="Mint"
+                errors={errors}
+              >
+                {tokenRef && (
+                  <Button
+                    variant="link"
+                    onClick={() => setValue("mint", tokenRef.mint.toBase58())}
+                  >
+                    Use my Social Token
+                  </Button>
+                )}
+                <MintSelect
+                  value={watch("mint")}
+                  onChange={(s) => setValue("mint", s)}
+                />
+              </FormControlWithError>
+            )}
+
+            {!hide.has("authority") && (
+              <FormControlWithError
+                id="authority"
+                help="The wallet that signs to disburse the funds of this bounty when it is completed. 
             For social tokens, this defaults to the wallet associated with the social token. This
             can also be an SPL Governance address or a multisig."
-              label="Approver"
-              errors={errors}
-            >
-              {publicKey && (
-                <Button
-                  variant="link"
-                  onClick={() => setValue("authority", publicKey.toBase58())}
-                >
-                  Set to My Wallet
-                </Button>
-              )}
-              <Recipient
-                name={authorityRegister.name}
-                value={authority}
-                onChange={authorityRegister.onChange}
-              />
-            </FormControlWithError>
-          )}
-          {!hide.has("contact") && (
-            <FormControlWithError
-              id="contact"
-              help="Who to contact regarding the bounty. This can be an email address, twitter handle, etc."
-              label="Contact Information"
-              errors={errors}
-            >
-              <Input {...register("contact")} />
-            </FormControlWithError>
-          )}
-          {!hide.has("discussion") && (
-            <FormControlWithError
-              id="discussion"
-              help="A link to where this bounty is actively being discussed. This can be a github issue, forum link, etc. Use this to coordinate the bounty."
-              label="Discussion"
-              errors={errors}
-            >
-              <Input {...register("discussion")} />
-            </FormControlWithError>
-          )}
+                label="Approver"
+                errors={errors}
+              >
+                {publicKey && (
+                  <Button
+                    variant="link"
+                    onClick={() => setValue("authority", publicKey.toBase58())}
+                  >
+                    Set to My Wallet
+                  </Button>
+                )}
+                <Recipient
+                  name={authorityRegister.name}
+                  value={authority}
+                  onChange={authorityRegister.onChange}
+                />
+              </FormControlWithError>
+            )}
+            {!hide.has("contact") && (
+              <FormControlWithError
+                id="contact"
+                help="Who to contact regarding the bounty. This can be an email address, twitter handle, etc."
+                label="Contact Information"
+                errors={errors}
+              >
+                <Input {...register("contact")} />
+              </FormControlWithError>
+            )}
+            {!hide.has("discussion") && (
+              <FormControlWithError
+                id="discussion"
+                help="A link to where this bounty is actively being discussed. This can be a github issue, forum link, etc. Use this to coordinate the bounty."
+                label="Discussion"
+                errors={errors}
+              >
+                <Input {...register("discussion")} />
+              </FormControlWithError>
+            )}
 
-          {error && <Alert status="error">{error.toString()}</Alert>}
+            {error && <Alert status="error">{error.toString()}</Alert>}
 
-          <Button
-            type="submit"
-            alignSelf="flex-end"
-            colorScheme="primary"
-            isLoading={isSubmitting || loading}
-            loadingText={awaitingApproval ? "Awaiting Approval" : "Loading"}
-          >
-            Send Bounty
-          </Button>
-        </VStack>
-      </form>
-    </FormProvider>
+            <Button
+              type="submit"
+              alignSelf="flex-end"
+              colorScheme="primary"
+              isLoading={isSubmitting || loading}
+              loadingText={awaitingApproval ? "Awaiting Approval" : "Loading"}
+            >
+              Send Bounty
+            </Button>
+          </VStack>
+        </form>
+      </FormProvider>
+    </Flex>
   );
 };

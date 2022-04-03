@@ -34,13 +34,13 @@ export const LaunchPad: FC = ({ children }) => {
   }[] = [
     {
       value: LandingOption.CreateToken,
-      heading: "Create a Token",
+      heading: "Create New Token",
       illustration: "/create-a-token.svg",
       helpText: "You don’t have a token yet, but would like to create one.",
     },
     {
       value: LandingOption.SellToken,
-      heading: "Sell a Token",
+      heading: "Sell Existing Token",
       illustration: "/sell-a-token.svg",
       helpText: "You already have a token created that you would like to sell.",
     },

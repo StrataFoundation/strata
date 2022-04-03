@@ -1,13 +1,14 @@
 import {
   Button,
   ButtonGroup,
-  ButtonProps, Icon,
+  ButtonProps,
+  Icon,
   IconButton,
   Menu,
   MenuButton,
   MenuItemOption,
   MenuList,
-  MenuOptionGroup
+  MenuOptionGroup,
 } from "@chakra-ui/react";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useWallet } from "@solana/wallet-adapter-react";

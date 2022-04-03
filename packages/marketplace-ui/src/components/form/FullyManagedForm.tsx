@@ -8,8 +8,6 @@ import {
   Heading,
   HStack,
   Input,
-  Radio,
-  RadioGroup,
   Stack,
   Image,
   Text,
@@ -26,7 +24,6 @@ import { Keypair, PublicKey } from "@solana/web3.js";
 import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
 import {
   humanReadablePercentage,
-  truthy,
   useCollective,
   useProvider,
   usePublicKey,
@@ -49,6 +46,7 @@ import { MintSelect } from "./MintSelect";
 import { IMetadataFormProps, TokenMetadataInputs } from "./TokenMetadataInputs";
 import { Disclosures, disclosuresSchema, IDisclosures } from "./Disclosures";
 import { RadioCard } from "./RadioCard";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 
 type CurveType = "aggressive" | "stable" | "utility";
 interface IFullyManagedForm extends IMetadataFormProps {
@@ -195,7 +193,8 @@ export const FullyManagedForm: React.FC = () => {
     formState: { errors, isSubmitting },
     watch,
   } = formProps;
-  const { publicKey } = useWallet();
+  const { connected, publicKey } = useWallet();
+  const { visible, setVisible } = useWalletModal();
   const { awaitingApproval } = useProvider();
   const { execute, loading, error } = useAsyncCallback(createFullyManaged);
   const { marketplaceSdk } = useMarketplaceSdk();
@@ -264,251 +263,276 @@ export const FullyManagedForm: React.FC = () => {
   ];
 
   return (
-    <FormProvider {...formProps}>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <VStack spacing={8}>
-          <TokenMetadataInputs entityName="token" />
-          <FormControlWithError
-            id="symbol"
-            help="The symbol for this token, ex: SOL"
-            label="Symbol"
-            errors={errors}
-          >
-            <Input {...register("symbol")} />
-          </FormControlWithError>
-          <FormControlWithError
-            id="curveType"
-            label="Price Sensitivity"
-            errors={errors}
-          >
-            <Stack
-              {...group}
-              direction={{ base: "column", md: "row" }}
-              justifyContent="center"
-              alignItems={{ base: "center", md: "normal" }}
+    <Flex position="relative">
+      {!connected && (
+        <Flex
+          position="absolute"
+          w="full"
+          h="full"
+          zIndex="1"
+          flexDirection="column"
+        >
+          <Flex justifyContent="center">
+            <Button
+              colorScheme="orange"
+              variant="outline"
+              onClick={() => setVisible(!visible)}
             >
-              {curveOptions.map(
-                ({ value, heading, illustration, helpText }) => {
-                  const radio = getRadioProps({ value });
+              Connect Wallet
+            </Button>
+          </Flex>
+          <Flex w="full" h="full" bg="white" opacity="0.6" />
+        </Flex>
+      )}
+      <FormProvider {...formProps}>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <VStack spacing={8} mt={!connected ? 12 : 0}>
+            <TokenMetadataInputs entityName="token" />
+            <FormControlWithError
+              id="symbol"
+              help="The symbol for this token, ex: SOL"
+              label="Symbol"
+              errors={errors}
+            >
+              <Input {...register("symbol")} />
+            </FormControlWithError>
+            <FormControlWithError
+              id="curveType"
+              label="Price Sensitivity"
+              errors={errors}
+            >
+              <Stack
+                {...group}
+                direction={{ base: "column", md: "row" }}
+                justifyContent="center"
+                alignItems={{ base: "center", md: "normal" }}
+              >
+                {curveOptions.map(
+                  ({ value, heading, illustration, helpText }) => {
+                    const radio = getRadioProps({ value });
 
-                  return (
-                    <RadioCard key={value} {...radio}>
-                      <Flex
-                        h="full"
-                        direction={{ base: "row", md: "column" }}
-                        textAlign={{ base: "left", md: "center" }}
-                      >
+                    return (
+                      <RadioCard key={value} {...radio}>
                         <Flex
-                          justifyContent="center"
-                          alignItem="center"
-                          flexShrink={0}
-                        >
-                          <Image
-                            src={illustration}
-                            alt={`${value}-illustration`}
-                            height="70px"
-                            width="100%"
-                          />
-                        </Flex>
-                        <Flex
-                          flexGrow={1}
                           h="full"
-                          direction="column"
-                          alignItems={{ base: "start", md: "center" }}
-                          justifyContent={{ base: "center", md: "initial" }}
+                          direction={{ base: "row", md: "column" }}
+                          textAlign={{ base: "left", md: "center" }}
                         >
-                          <Text
-                            fontWeight="bold"
-                            fontSize="md"
-                            pt={{ base: 0, md: 4 }}
-                          >
-                            {heading}
-                          </Text>
                           <Flex
-                            w="full"
-                            flexGrow={{ base: 0, md: 1 }}
-                            alignItems={{ base: "start", md: "center" }}
+                            justifyContent="center"
+                            alignItems="center"
+                            flexShrink={0}
                           >
-                            <Text fontSize="xs" color="gray.500">
-                              {helpText}
+                            <Image
+                              src={illustration}
+                              alt={`${value}-illustration`}
+                              height="70px"
+                              width="100%"
+                            />
+                          </Flex>
+                          <Flex
+                            flexGrow={1}
+                            h="full"
+                            direction="column"
+                            alignItems={{ base: "start", md: "center" }}
+                            justifyContent={{ base: "center", md: "initial" }}
+                          >
+                            <Text
+                              fontWeight="bold"
+                              fontSize="md"
+                              pt={{ base: 0, md: 4 }}
+                            >
+                              {heading}
                             </Text>
+                            <Flex
+                              w="full"
+                              flexGrow={{ base: 0, md: 1 }}
+                              alignItems={{ base: "start", md: "center" }}
+                            >
+                              <Text fontSize="xs" color="gray.500">
+                                {helpText}
+                              </Text>
+                            </Flex>
                           </Flex>
                         </Flex>
-                      </Flex>
-                    </RadioCard>
-                  );
-                }
-              )}
-            </Stack>
-          </FormControlWithError>
+                      </RadioCard>
+                    );
+                  }
+                )}
+              </Stack>
+            </FormControlWithError>
 
-          <FormControlWithError
-            id="isSocial"
-            help={`If this is a social token, it will be associated with your wallet. This means applications like Wum.bo will be able to discover this token by looking up your wallet, which may be associated with your twitter handle, .sol domain, or any other web3 applications. A social token can be part of a network of other social tokens: a collective.`}
-            label="Social Token?"
-            errors={errors}
-          >
-            <Switch {...register("isSocial")} />
-          </FormControlWithError>
-          <FormControlWithError
-            id="mint"
-            help={`The mint that should be used to purchase this token, example ${NATIVE_MINT.toBase58()} for SOL`}
-            label="Mint"
-            errors={errors}
-          >
-            <MintSelect
-              value={watch("mint")}
-              onChange={(s) => setValue("mint", s)}
-            />{" "}
-          </FormControlWithError>
+            <FormControlWithError
+              id="isSocial"
+              help={`If this is a social token, it will be associated with your wallet. This means applications like Wum.bo will be able to discover this token by looking up your wallet, which may be associated with your twitter handle, .sol domain, or any other web3 applications. A social token can be part of a network of other social tokens: a collective.`}
+              label="Social Token?"
+              errors={errors}
+            >
+              <Switch {...register("isSocial")} />
+            </FormControlWithError>
+            <FormControlWithError
+              id="mint"
+              help={`The mint that should be used to purchase this token, example ${NATIVE_MINT.toBase58()} for SOL`}
+              label="Mint"
+              errors={errors}
+            >
+              <MintSelect
+                value={watch("mint")}
+                onChange={(s) => setValue("mint", s)}
+              />{" "}
+            </FormControlWithError>
 
-          <FormControlWithError
-            id="startingPrice"
-            help="The starting price of the token. The price will increase as more tokens are purchased"
-            label="Starting Price"
-            errors={errors}
-          >
-            <Input
-              type="number"
-              min={0}
-              step={0.0000000001}
-              {...register("startingPrice")}
-            />
-          </FormControlWithError>
-          <FormControlWithError
-            id="isAntiBot"
-            help={`Enable anti botting measures. This will keep bots from profiting by frontrunning your token while the price is low. Your tokens true pricing will take 2 hours to come into effect`}
-            label="Enable Anti Bot Measures?"
-            errors={errors}
-          >
-            <Switch {...register("isAntiBot")} />
-          </FormControlWithError>
+            <FormControlWithError
+              id="startingPrice"
+              help="The starting price of the token. The price will increase as more tokens are purchased"
+              label="Starting Price"
+              errors={errors}
+            >
+              <Input
+                type="number"
+                min={0}
+                step={0.0000000001}
+                {...register("startingPrice")}
+              />
+            </FormControlWithError>
+            <FormControlWithError
+              id="isAntiBot"
+              help={`Enable anti botting measures. This will keep bots from profiting by frontrunning your token while the price is low. Your tokens true pricing will take 2 hours to come into effect`}
+              label="Enable Anti Bot Measures?"
+              errors={errors}
+            >
+              <Switch {...register("isAntiBot")} />
+            </FormControlWithError>
 
-          <VStack align="left" w="full">
-            <Heading fontSize="xl" mb={4}>
-              Royalties
-            </Heading>
-            <HStack>
-              <FormControl
-                id="buyTargetRoyaltyPercentage"
-                borderColor="gray.200"
-              >
-                <FormLabel>{symbol || "Managed Token"} (Buy)</FormLabel>
-                <Input
-                  isRequired
-                  type="number"
-                  min={percentOr(
-                    tokenBondingSettings?.minBuyTargetRoyaltyPercentage,
-                    0
-                  )}
-                  max={percentOr(
-                    tokenBondingSettings?.maxBuyTargetRoyaltyPercentage,
-                    100
-                  )}
-                  placeholder="5"
-                  defaultValue={5}
-                  step={0.00001}
-                  {...register("buyTargetRoyaltyPercentage")}
-                />
+            <VStack align="left" w="full">
+              <Heading fontSize="xl" mb={4}>
+                Royalties
+              </Heading>
+              <HStack>
+                <FormControl
+                  id="buyTargetRoyaltyPercentage"
+                  borderColor="gray.200"
+                >
+                  <FormLabel>{symbol || "Managed Token"} (Buy)</FormLabel>
+                  <Input
+                    isRequired
+                    type="number"
+                    min={percentOr(
+                      tokenBondingSettings?.minBuyTargetRoyaltyPercentage,
+                      0
+                    )}
+                    max={percentOr(
+                      tokenBondingSettings?.maxBuyTargetRoyaltyPercentage,
+                      100
+                    )}
+                    placeholder="5"
+                    defaultValue={5}
+                    step={0.00001}
+                    {...register("buyTargetRoyaltyPercentage")}
+                  />
+                </FormControl>
+                <FormControl
+                  id="sellTargetRoyaltyPercentage"
+                  borderColor="gray.200"
+                >
+                  <FormLabel>{symbol || "Managed Token"} (Sell)</FormLabel>
+                  <Input
+                    isRequired
+                    type="number"
+                    min={percentOr(
+                      tokenBondingSettings?.minSellTargetRoyaltyPercentage,
+                      0
+                    )}
+                    max={percentOr(
+                      tokenBondingSettings?.maxSellTargetRoyaltyPercentage,
+                      100
+                    )}
+                    placeholder="0"
+                    defaultValue={0}
+                    step={0.00001}
+                    {...register("sellTargetRoyaltyPercentage")}
+                  />
+                </FormControl>
+              </HStack>
+              <HStack>
+                <FormControl
+                  id="buyBaseRoyaltyPercentage"
+                  borderColor="gray.200"
+                >
+                  <FormLabel>
+                    {baseMetadata?.data.symbol || "Base Token"} (Buy)
+                  </FormLabel>
+                  <Input
+                    isRequired
+                    type="number"
+                    min={percentOr(
+                      tokenBondingSettings?.minBuyBaseRoyaltyPercentage,
+                      0
+                    )}
+                    max={percentOr(
+                      tokenBondingSettings?.maxBuyBaseRoyaltyPercentage,
+                      100
+                    )}
+                    placeholder="0"
+                    defaultValue={0}
+                    step={0.00001}
+                    {...register("buyBaseRoyaltyPercentage")}
+                  />
+                </FormControl>
+                <FormControl
+                  id="sellBaseRoyaltyPercentage"
+                  borderColor="gray.200"
+                >
+                  <FormLabel>
+                    {baseMetadata?.data.symbol || "Base Token"} (Sell)
+                  </FormLabel>
+                  <Input
+                    isRequired
+                    type="number"
+                    min={percentOr(
+                      tokenBondingSettings?.minSellBaseRoyaltyPercentage,
+                      0
+                    )}
+                    max={percentOr(
+                      tokenBondingSettings?.maxSellBaseRoyaltyPercentage,
+                      100
+                    )}
+                    placeholder="0"
+                    defaultValue={0}
+                    step={0.00001}
+                    {...register("sellBaseRoyaltyPercentage")}
+                  />
+                </FormControl>
+              </HStack>
+              <FormControl>
+                <FormHelperText>
+                  A Percentage of coin buys/sales that will be sent to your
+                  wallet. We recommend to keep this less than a combined 10% for
+                  buys/sales.
+                </FormHelperText>
               </FormControl>
-              <FormControl
-                id="sellTargetRoyaltyPercentage"
-                borderColor="gray.200"
-              >
-                <FormLabel>{symbol || "Managed Token"} (Sell)</FormLabel>
-                <Input
-                  isRequired
-                  type="number"
-                  min={percentOr(
-                    tokenBondingSettings?.minSellTargetRoyaltyPercentage,
-                    0
-                  )}
-                  max={percentOr(
-                    tokenBondingSettings?.maxSellTargetRoyaltyPercentage,
-                    100
-                  )}
-                  placeholder="0"
-                  defaultValue={0}
-                  step={0.00001}
-                  {...register("sellTargetRoyaltyPercentage")}
-                />
-              </FormControl>
-            </HStack>
-            <HStack>
-              <FormControl id="buyBaseRoyaltyPercentage" borderColor="gray.200">
-                <FormLabel>
-                  {baseMetadata?.data.symbol || "Base Token"} (Buy)
-                </FormLabel>
-                <Input
-                  isRequired
-                  type="number"
-                  min={percentOr(
-                    tokenBondingSettings?.minBuyBaseRoyaltyPercentage,
-                    0
-                  )}
-                  max={percentOr(
-                    tokenBondingSettings?.maxBuyBaseRoyaltyPercentage,
-                    100
-                  )}
-                  placeholder="0"
-                  defaultValue={0}
-                  step={0.00001}
-                  {...register("buyBaseRoyaltyPercentage")}
-                />
-              </FormControl>
-              <FormControl
-                id="sellBaseRoyaltyPercentage"
-                borderColor="gray.200"
-              >
-                <FormLabel>
-                  {baseMetadata?.data.symbol || "Base Token"} (Sell)
-                </FormLabel>
-                <Input
-                  isRequired
-                  type="number"
-                  min={percentOr(
-                    tokenBondingSettings?.minSellBaseRoyaltyPercentage,
-                    0
-                  )}
-                  max={percentOr(
-                    tokenBondingSettings?.maxSellBaseRoyaltyPercentage,
-                    100
-                  )}
-                  placeholder="0"
-                  defaultValue={0}
-                  step={0.00001}
-                  {...register("sellBaseRoyaltyPercentage")}
-                />
-              </FormControl>
-            </HStack>
-            <FormControl>
-              <FormHelperText>
-                A Percentage of coin buys/sales that will be sent to your
-                wallet. We recommend to keep this less than a combined 10% for
-                buys/sales.
-              </FormHelperText>
-            </FormControl>
+            </VStack>
+
+            <Disclosures fees={0} />
+
+            {error && (
+              <Alert status="error">
+                <Alert status="error">{error.toString()}</Alert>
+              </Alert>
+            )}
+
+            <Button
+              type="submit"
+              alignSelf="flex-end"
+              colorScheme="primary"
+              isLoading={isSubmitting || loading}
+              loadingText={awaitingApproval ? "Awaiting Approval" : "Loading"}
+            >
+              Create Token
+            </Button>
           </VStack>
-
-          <Disclosures fees={0} />
-
-          {error && (
-            <Alert status="error">
-              <Alert status="error">{error.toString()}</Alert>
-            </Alert>
-          )}
-
-          <Button
-            type="submit"
-            alignSelf="flex-end"
-            colorScheme="primary"
-            isLoading={isSubmitting || loading}
-            loadingText={awaitingApproval ? "Awaiting Approval" : "Loading"}
-          >
-            Create Token
-          </Button>
-        </VStack>
-      </form>
-    </FormProvider>
+        </form>
+      </FormProvider>
+    </Flex>
   );
 };
