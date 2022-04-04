@@ -1,6 +1,6 @@
 {
   "name": "@strata-foundation/site",
-  "version": "3.4.5",
+  "version": "3.4.6",
   "scripts": {
     "clean": "shx rm -rf .next",
     "dev": "NODE_OPTIONS='--inspect' next dev",
