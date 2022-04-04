@@ -24,9 +24,6 @@ jobs:
           governance: HDkW3MrrvqT9FPvuFBAVnSag1BLDx767MD2VXKfpCoCe
           name: Deploy Token Bonding ${{ github.event.release.tag_name }}
           description: ${{ github.event.release.url }}
-          issuer: https://auth.genesysgo.net/auth/realms/RPCs/protocol/openid-connect
-          client-id: ${{ secrets.CLIENT_ID }}
-          client-secret: ${{ secrets.CLIENT_SECRET }}
       - uses: ./.github/actions/anchor-publish/
         with:
           program: spl_token_bonding
@@ -47,9 +44,6 @@ jobs:
           governance: 6yc2jb7LCjYXD3hbRKjYkpx13j4VXYcCBzYsZbmntdVk
           name: Deploy Token Collective ${{ github.event.release.tag_name }}
           description: ${{ github.event.release.url }}
-          issuer: https://auth.genesysgo.net/auth/realms/RPCs/protocol/openid-connect
-          client-id: ${{ secrets.CLIENT_ID }}
-          client-secret: ${{ secrets.CLIENT_SECRET }}
       - uses: ./.github/actions/anchor-publish/
         with:
           program: spl_token_collective
