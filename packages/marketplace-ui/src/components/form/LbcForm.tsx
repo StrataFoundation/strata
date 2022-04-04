@@ -184,7 +184,7 @@ async function createLiquidityBootstrapper(
     },
   });
 
-  if (values.useExistingMint) {
+  if (values.useExistingMint && !values.useCandyMachine) {
     const retrievalInstrs =
       await marketplaceSdk.createRetrievalCurveForSetSupplyInstructions({
         reserveAuthority: authority,
