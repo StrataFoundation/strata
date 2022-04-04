@@ -1,5 +1,4 @@
 import React from "react";
-import Image from "next/image";
 import {
   Box,
   Flex,
@@ -9,6 +8,7 @@ import {
   HStack,
   Divider,
   Container,
+  Image,
 } from "@chakra-ui/react";
 
 export const Investors: React.FC = () => (
@@ -46,45 +46,39 @@ export const Investors: React.FC = () => (
             </Text>
             <Divider />
           </Stack>
-          <HStack
-            gap={{
-              base: 4,
-              md: 20,
-            }}
-            wrap="wrap"
-            justifyContent="center"
-          >
-            <Image
-              src="/investorMulticoin.png"
-              alt="multicoin capital"
-              width="200px"
-              height="94px"
-            />
-            <Image
-              src="/investorSolana.png"
-              alt="solana"
-              width="200px"
-              height="100px"
-            />
-            <Image
-              src="/investorAsymmetric.png"
-              alt="Asymmetric"
-              width="200px"
-              height="94px"
-            />
-            <Image
-              src="/investorAlameda.png"
-              alt="alameda reserch"
-              width="200px"
-              height="94px"
-            />
-            <Image
-              src="/investorStartingLine.png"
-              alt="Starting Line"
-              width="200px"
-              height="94px"
-            />
-          </HStack>
+          <VStack justifyContent="center" spacing={4}>
+            <Flex w="full" justifyContent="center">
+              <Image
+                w="600px"
+                src="/investorMulticoin.png"
+                alt="multicoin capital"
+              />
+            </Flex>
+            <HStack
+              wrap="wrap"
+              justifyContent="center"
+              spacing={{ base: 0, md: 8 }}
+            >
+              <Image w="400px" src="/investorSolana.png" alt="solana" />
+              <Image
+                w="300px"
+                src="/investorStartingLine.png"
+                alt="starting line"
+              />
+            </HStack>
+            <HStack wrap="wrap" justify="center" spacing={{ base: 0, md: 12 }}>
+              <Image
+                w="300px"
+                src="/investorAlameda.png"
+                alt="alameda research"
+              />
+              <Image
+                w="300px"
+                src="/investorAsymmetric.png"
+                alt="asymmetric capital partners"
+              />
+            </HStack>
+          </VStack>
         </VStack>
       </Flex>
     </Container>
