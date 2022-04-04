@@ -15,7 +15,7 @@ import {
 } from "@solana/web3.js";
 import { tokenAuthFetchMiddleware } from "@strata-foundation/web3-token-auth";
 import { Base64 } from "js-base64";
-import request from "request-promise";
+import axios from "axios";
 import "./borshFill";
 import { createIdlUpgradeInstruction } from "./createIdlUpgradeInstruction";
 import { createUpgradeInstruction } from "./createUpgradeInstruction";
@@ -29,17 +29,17 @@ async function getToken(): Promise<string> {
     const token = Base64.encode(
       `${process.env.CLIENT_ID}:${process.env.CLIENT_SECRET}`
     );
-    const { access_token } = await request({
-      uri: `${process.env.ISSUER}/token`,
-      json: true,
-      method: "POST",
-      headers: {
-        authorization: `Basic ${token}`,
-      },
-      form: {
-        grant_type: "client_credentials",
-      },
-    });
+    var bodyFormData = new FormData();
+    bodyFormData.append("grant_type", "client_credentials");
+    const { access_token } = (await axios.post(
+      `${process.env.ISSUER}/token`,
+      bodyFormData,
+      {
+        headers: {
+          authorization: `Basic ${token}`,
+        },
+      }
+    )).data;
     return access_token;
   }
 
