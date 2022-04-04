@@ -420,7 +420,7 @@ export const LbcForm: React.FC = () => {
             <FormControlWithError
               id="startPrice"
               help="The starting price for this token. You should set this a little above the expected price of the token. Prices will fall to the fair price. Note that if there's enough demand, they can also increase from this price."
-              label="Staring Price"
+              label="Starting Price"
               errors={errors}
             >
               <Input
