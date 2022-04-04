@@ -38,7 +38,7 @@ CLIENT_SECRET=
 ```ts
 import { Base64 } from "js-base64";
 import type { NextApiRequest, NextApiResponse } from "next";
-import request from "request-promise";
+import axios from "axios";
 
 type Data = {
   access_token: string;
@@ -52,18 +52,18 @@ export default async function handler(
     `${process.env.CLIENT_ID}:${process.env.CLIENT_SECRET}`
   );
   try {
-    const { token_type, access_token } = await request({
-      uri: `${process.env.ISSUER}/token`,
-      json: true,
-      method: "POST",
-      headers: {
-        authorization: `Basic ${token}`,
-      },
-      form: {
-        grant_type: "client_credentials",
-      },
-    });
-    console.log({ token_type, access_token });
+    const { token_type, access_token } = (
+      await axios.post(
+        `${process.env.ISSUER}/token`,
+        "grant_type=client_credentials",
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Authorization: `Basic ${token}`,
+          },
+        }
+      )
+    ).data;
     res.status(200).json({ access_token });
   } catch (e) {
     console.log(e);

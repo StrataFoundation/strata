@@ -13,15 +13,18 @@ export default async function handler(
   const token = Base64.encode(
     `${process.env.CLIENT_ID}:${process.env.CLIENT_SECRET}`
   );
-  var bodyFormData = new FormData();
-  bodyFormData.append("grant_type", "client_credentials");
   try {
     const { access_token } = (
-      await axios.post(`${process.env.ISSUER}/token`, bodyFormData, {
-        headers: {
-          authorization: `Basic ${token}`,
-        },
-      })
+      await axios.post(
+        `${process.env.ISSUER}/token`,
+        "grant_type=client_credentials",
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Authorization: `Basic ${token}`,
+          },
+        }
+      )
     ).data;
     res.status(200).json({ access_token });
   } catch (e) {

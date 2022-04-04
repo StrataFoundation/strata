@@ -1,17 +1,26 @@
 #! /usr/bin/env node
 import {
   AccountMetaData,
-  getGovernanceProgramVersion, getTokenOwnerRecordAddress,
-  Governance, GovernanceAccountParser, InstructionData, Realm,
-  VoteType, withAddSignatory, withCreateProposal, withInsertTransaction, withSignOffProposal
+  getGovernanceProgramVersion,
+  getTokenOwnerRecordAddress,
+  Governance,
+  GovernanceAccountParser,
+  InstructionData,
+  Realm,
+  VoteType,
+  withAddSignatory,
+  withCreateProposal,
+  withInsertTransaction,
+  withSignOffProposal,
 } from "@solana/spl-governance";
 import {
   Cluster,
   clusterApiUrl,
   Connection,
   Keypair,
-  PublicKey, Transaction,
-  TransactionInstruction
+  PublicKey,
+  Transaction,
+  TransactionInstruction,
 } from "@solana/web3.js";
 import { tokenAuthFetchMiddleware } from "@strata-foundation/web3-token-auth";
 import { Base64 } from "js-base64";
@@ -29,21 +38,22 @@ async function getToken(): Promise<string> {
     const token = Base64.encode(
       `${process.env.CLIENT_ID}:${process.env.CLIENT_SECRET}`
     );
-    var bodyFormData = new FormData();
-    bodyFormData.append("grant_type", "client_credentials");
-    const { access_token } = (await axios.post(
-      `${process.env.ISSUER}/token`,
-      bodyFormData,
-      {
-        headers: {
-          authorization: `Basic ${token}`,
-        },
-      }
-    )).data;
+    const { access_token } = (
+      await axios.post(
+        `${process.env.ISSUER}/token`,
+        "grant_type=client_credentials",
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Authorization: `Basic ${token}`,
+          },
+        }
+      )
+    ).data;
     return access_token;
   }
 
-  return ""
+  return "";
 }
 
 async function run() {
