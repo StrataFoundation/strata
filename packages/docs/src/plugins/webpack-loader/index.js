@@ -1,10 +1,11 @@
 const webpack = require("webpack");
-const path = require("path")
+const path = require("path");
+const Dotenv = require("dotenv-webpack");
 
-module.exports = function(context, options) {
+module.exports = function (context, options) {
   return {
     name: "custom-webpack-plugin",
-    
+
     configureWebpack(config, isServer, utils) {
       return {
         devtool: "source-map",
@@ -43,11 +44,12 @@ module.exports = function(context, options) {
           ],
         },
         plugins: [
+          new Dotenv(),
           new webpack.ProvidePlugin({
             process: "process/browser",
           }),
         ],
       };
-    }
+    },
   };
 };

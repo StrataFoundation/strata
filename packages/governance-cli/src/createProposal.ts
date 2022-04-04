@@ -1,37 +1,60 @@
 #! /usr/bin/env node
-import "./borshFill";
+import {
+  AccountMetaData,
+  getGovernanceProgramVersion,
+  getTokenOwnerRecordAddress,
+  Governance,
+  GovernanceAccountParser,
+  InstructionData,
+  Realm,
+  VoteType,
+  withAddSignatory,
+  withCreateProposal,
+  withInsertTransaction,
+  withSignOffProposal,
+} from "@solana/spl-governance";
 import {
   Cluster,
   clusterApiUrl,
   Connection,
   Keypair,
   PublicKey,
-  sendAndConfirmTransaction,
   Transaction,
   TransactionInstruction,
 } from "@solana/web3.js";
-import { createUpgradeInstruction } from "./createUpgradeInstruction";
-import {
-  getTokenOwnerRecordAddress,
-  Governance,
-  Realm,
-  VoteType,
-  getInstructionDataFromBase64,
-  GovernanceAccountParser,
-  serializeInstructionToBase64,
-  withCreateProposal,
-  withAddSignatory,
-  withSignOffProposal,
-  withInsertTransaction,
-  InstructionData,
-  AccountMetaData,
-  getGovernanceProgramVersion,
-} from "@solana/spl-governance";
+import { tokenAuthFetchMiddleware } from "@strata-foundation/web3-token-auth";
+import { Base64 } from "js-base64";
+import axios from "axios";
+import "./borshFill";
 import { createIdlUpgradeInstruction } from "./createIdlUpgradeInstruction";
+import { createUpgradeInstruction } from "./createUpgradeInstruction";
 
 const GOVERNANCE_PROGRAM_ID = new PublicKey(
   "GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw"
 );
+
+async function getToken(): Promise<string> {
+  if (process.env.ISSUER) {
+    const token = Base64.encode(
+      `${process.env.CLIENT_ID}:${process.env.CLIENT_SECRET}`
+    );
+    const { access_token } = (
+      await axios.post(
+        `${process.env.ISSUER}/token`,
+        "grant_type=client_credentials",
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Authorization: `Basic ${token}`,
+          },
+        }
+      )
+    ).data;
+    return access_token;
+  }
+
+  return "";
+}
 
 async function run() {
   const programId = new PublicKey(process.env.PROGRAM_ID!);
@@ -52,7 +75,12 @@ async function run() {
     )
   );
   const connection = new Connection(
-    network.startsWith("http") ? network : clusterApiUrl(network as Cluster)
+    network.startsWith("http") ? network : clusterApiUrl(network as Cluster),
+    {
+      fetchMiddleware: tokenAuthFetchMiddleware({
+        getToken,
+      }),
+    }
   );
 
   const tx = new Transaction();

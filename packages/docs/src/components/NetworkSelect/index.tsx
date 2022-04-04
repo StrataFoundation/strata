@@ -15,7 +15,7 @@ export const NetworkSelect = () => {
         <option value={clusterApiUrl(WalletAdapterNetwork.Devnet)}>
           Devnet
         </option>
-        <option value={"https://wumbo.genesysgo.net"}>Mainnet</option>
+        <option value={"https://strataprotocol.genesysgo.net"}>Mainnet</option>
         <option value="http://localhost:8899">Localnet</option>
       </Select>
     </VStack>
