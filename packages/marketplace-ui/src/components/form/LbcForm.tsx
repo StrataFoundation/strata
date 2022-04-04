@@ -71,8 +71,8 @@ const validationSchema = yup.object({
   mint: yup.string().required(),
   useExistingMint: yup.boolean(),
   useCandyMachine: yup.boolean(),
-  existingMint: yup.string().when("useExistingMint", {
-    is: true,
+  existingMint: yup.string().when(["useExistingMint", "useCandyMachine"], {
+    is: (useExistingMint: boolean, useCandyMachine: boolean) => useExistingMint && !useCandyMachine,
     then: yup.string().required(),
   }),
   candyMachineId: yup.string().when("useCandyMachine", {
@@ -117,7 +117,7 @@ async function createLiquidityBootstrapper(
   const mint = new PublicKey(values.mint);
 
   let metadata;
-  if (values.useExistingMint) {
+  if (values.useExistingMint && !values.useCandyMachine) {
     const existingMint = new PublicKey(values.existingMint!);
 
     values.decimals = (
@@ -288,6 +288,7 @@ export const LbcForm: React.FC = () => {
   useEffect(() => {
     setValue("useCandyMachine", !!router.query["candymachine"]);
   }, [router, setValue]);
+
 
   const onSubmit = async (values: ILbpFormProps) => {
     const mintKey = await execute(marketplaceSdk!, values);
