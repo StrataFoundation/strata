@@ -128,6 +128,7 @@ const config = {
         logo: {
           alt: "Strata Logo",
           src: "img/logo.png",
+          href: "https://strataprotocol.com"
         },
         items: [
           // {

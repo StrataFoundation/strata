@@ -6,9 +6,14 @@ noah:
 
 bry:
   name: Bryan Zettler
-  title: Strata Cofounder
+  title: Strata Co-Founder
   url: https://twitter.com/BryZettler
   image_url: https://github.com/bryzettler.png
+
+frank:
+  name: Frank De Czito
+  title: Global Marketing
+  image_url: https://wum.bo/frank.png
 
 mark:
   name: Mark Roszak
