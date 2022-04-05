@@ -84,22 +84,12 @@ pub mod spl_token_bonding {
     instructions::update_token_bonding_v0::handler(ctx, args)
   }
 
-  // DEPRECATED, USE BUY V1
-  pub fn buy_v0(ctx: Context<BuyV0>, args: BuyV0Args) -> Result<()> {
-    instructions::buy::buy_v0::handler(ctx, args)
-  }
-
   pub fn buy_v1(ctx: Context<BuyV1>, args: BuyV0Args) -> Result<()> {
     instructions::buy::buy_v1::handler(ctx, args)
   }
 
   pub fn buy_native_v0(ctx: Context<BuyNativeV0>, args: BuyV0Args) -> Result<()> {
     instructions::buy::buy_native_v0::handler(ctx, args)
-  }
-
-  // DEPRECATED, USE SELL V0
-  pub fn sell_v0(ctx: Context<SellV0>, args: SellV0Args) -> Result<()> {
-    instructions::sell::sell_v0::handler(ctx, args)
   }
 
   pub fn sell_v1(ctx: Context<SellV1>, args: SellV0Args) -> Result<()> {
