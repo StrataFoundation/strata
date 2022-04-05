@@ -266,7 +266,7 @@ export const SwapForm = ({
     await onSubmit({ ...values, lastSet });
   };
 
-  if (isLoading || !base || !target || (connected && !pricing)) {
+  if (isLoading || !base || !target) {
     return <Spinner />;
   }
 

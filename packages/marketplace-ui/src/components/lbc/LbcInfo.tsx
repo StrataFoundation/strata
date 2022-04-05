@@ -163,7 +163,9 @@ export const LbcInfo = ({
             {loadingBonding ? (
               <Spinner />
             ) : (
-              <BigText>{numRemaining || "0"}</BigText>
+              <BigText>
+                {numRemaining ? numberWithCommas(numRemaining, 4) : "0"}
+              </BigText>
             )}
             <LightMode>
               <Progress
