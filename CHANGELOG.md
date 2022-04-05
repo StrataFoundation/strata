@@ -3,7 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-## [3.4.6](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.4.5...v3.4.6) (2022-04-04)
+## [3.4.7](https://github.com/StrataFoundation/strata/compare/v3.4.6...v3.4.7) (2022-04-05)
+
+### Changed
+
+ * Fix swap form and other re-rendering issues in react package due to new public keys being constructed on websocket changes.
+
+
+## [3.4.6](https://github.com/StrataFoundation/strata/compare/v3.4.5...v3.4.6) (2022-04-04)
 
 Add `web3-token-auth` package to auth against genesysgo endpoints
 
@@ -13,7 +20,7 @@ Add `web3-token-auth` package to auth against genesysgo endpoints
 
 Drop support of nftstorage until we upgrade packages to webpack5
 
-## [3.4.4](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.4.3...v3.4.4) (2022-03-27)
+## [3.4.4](https://github.com/StrataFoundation/strata/compare/v3.4.3...v3.4.4) (2022-03-27)
 
 Rectifying CI/CD issues. 3.4.3 does not exist.
 
@@ -25,11 +32,11 @@ Rectifying build issue with @types/gtag
 
 Revert esm module import to fix CI/CD issues
 
-## [3.4.1](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.4.0...v3.4.1) (2022-03-25)
+## [3.4.1](https://github.com/StrataFoundation/strata/compare/v3.4.0...v3.4.1) (2022-03-25)
 
 Rectifying CI/CD issues. 3.4.0 does not exist.
 
-# [3.4.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.3.6...v3.4.0) (2022-03-25)
+# [3.4.0](https://github.com/StrataFoundation/strata/compare/v3.3.6...v3.4.0) (2022-03-25)
 
 ### Changed
 
@@ -76,7 +83,7 @@ Rectifying CI/CD issues. 3.4.0 does not exist.
 
 - Disburse funds to token offering
 
-## [3.3.1](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.3.1-alpha.1...v3.3.1) (2022-03-09)
+## [3.3.1](https://github.com/StrataFoundation/strata/compare/v3.3.1-alpha.1...v3.3.1) (2022-03-09)
 
 ### Added
 
@@ -93,7 +100,7 @@ Rectifying CI/CD issues. 3.4.0 does not exist.
 
 - Swallowed errors on `useClaimedTokenRefKey` and a version conflict in borsh that causes errors
 
-# [3.3.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.2.6...v3.3.0) (2022-03-04)
+# [3.3.0](https://github.com/StrataFoundation/strata/compare/v3.2.6...v3.3.0) (2022-03-04)
 
 ### Changed
 
@@ -107,14 +114,14 @@ Rectifying CI/CD issues. 3.4.0 does not exist.
 
 - Bounties ui elements are now more extensible
 
-## [3.2.4](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.2.4-alpha.5...v3.2.4) (2022-02-12)
+## [3.2.4](https://github.com/StrataFoundation/strata/compare/v3.2.4-alpha.5...v3.2.4) (2022-02-12)
 
 ### Added
 
 - Bounties UI
 - Update reserve authority
 
-## [3.2.3](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.2.2...v3.2.3) (2022-02-09)
+## [3.2.3](https://github.com/StrataFoundation/strata/compare/v3.2.2...v3.2.3) (2022-02-09)
 
 **Note:** Version bump only for package @strata-foundation/strata
 
@@ -123,20 +130,20 @@ Rectifying CI/CD issues. 3.4.0 does not exist.
 - useMetaplexTokenMetadata hook always showing as loading if no metadata found
 - Better tx errors
 
-## [3.2.2](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.2.1...v3.2.2) (2022-02-08)
+## [3.2.2](https://github.com/StrataFoundation/strata/compare/v3.2.1...v3.2.2) (2022-02-08)
 
 ### Fixed
 
 - Social tokens can be created now with no collective. A recent change to the bonding contract broke this.
 
-## [3.2.1](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.2.0...v3.2.1) (2022-02-08)
+## [3.2.1](https://github.com/StrataFoundation/strata/compare/v3.2.0...v3.2.1) (2022-02-08)
 
 ### Changed
 
 - Transactions executed via transactions.ts (this includes all sdks) now have candymachine retry logic. This should improve reliability
   when the network is congested
 
-# [3.2.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.1.0...v3.2.0) (2022-02-03)
+# [3.2.0](https://github.com/StrataFoundation/strata/compare/v3.1.0...v3.2.0) (2022-02-03)
 
 - Push all native sol operations into the program layer, and remove wrapping from the client
 
@@ -145,7 +152,7 @@ Rectifying CI/CD issues. 3.4.0 does not exist.
 - Swap form allows bottom amount
 - Docs playground
 
-# [3.1.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v3.0.0...v3.1.0) (2022-01-29)
+# [3.1.0](https://github.com/StrataFoundation/strata/compare/v3.0.0...v3.1.0) (2022-01-29)
 
 ### Breaking
 
@@ -156,7 +163,7 @@ Rectifying CI/CD issues. 3.4.0 does not exist.
 - SellFrozen curves, i.e. marketplace curves now are not adaptive with respect to reserves.
 - Closing the bonding curve gives you back mint authority. This is better for liquidity bootstrapping
 
-# [3.0.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.2.0...v3.0.0) (2022-01-26)
+# [3.0.0](https://github.com/StrataFoundation/strata/compare/v2.2.0...v3.0.0) (2022-01-26)
 
 This was a major version bump because of the upgrade to metaplex mpl-token-metadata and metadata v2. This removed several methods from spl-utils that were token-metadata related.
 
@@ -168,7 +175,7 @@ This was a major version bump because of the upgrade to metaplex mpl-token-metad
 
 - Upgrade to metaplex metadata v2
 
-# [2.2.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.1.11...v2.2.0) (2022-01-25)
+# [2.2.0](https://github.com/StrataFoundation/strata/compare/v2.1.11...v2.2.0) (2022-01-25)
 
 ### Added
 
@@ -179,19 +186,19 @@ This was a major version bump because of the upgrade to metaplex mpl-token-metad
 
 Another attempt at fixing claim
 
-## [2.1.10](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.1.8...v2.1.10) (2022-01-20)
+## [2.1.10](https://github.com/StrataFoundation/strata/compare/v2.1.8...v2.1.10) (2022-01-20)
 
 **Note:** Version bump only for package @strata-foundation/strata
 
 Fix v2 for claiming already minted token
 
-## [2.1.9](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.1.8...v2.1.9) (2022-01-20)
+## [2.1.9](https://github.com/StrataFoundation/strata/compare/v2.1.8...v2.1.9) (2022-01-20)
 
 **Note:** Version bump only for package @strata-foundation/strata
 
 Fix for claiming already minted token
 
-## [2.1.8](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.1.7...v2.1.8) (2022-01-20)
+## [2.1.8](https://github.com/StrataFoundation/strata/compare/v2.1.7...v2.1.8) (2022-01-20)
 
 **Note:** Version bump only for package @strata-foundation/strata
 
@@ -199,7 +206,7 @@ Fix for claiming already minted token
 
 - Ability to opt out claimed tokens
 
-## [2.1.7](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.1.6...v2.1.7) (2022-01-20)
+## [2.1.7](https://github.com/StrataFoundation/strata/compare/v2.1.6...v2.1.7) (2022-01-20)
 
 **Note:** Version bump only for package @strata-foundation/strata
 
@@ -211,29 +218,29 @@ Fix for claiming already minted token
 
 - Transaction lock on account fetch cache
 
-## [2.1.6](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.1.5...v2.1.6) (2022-01-19)
+## [2.1.6](https://github.com/StrataFoundation/strata/compare/v2.1.5...v2.1.6) (2022-01-19)
 
 ### Fixed
 
 - useSolPrice now uses connection from context
 
-## [2.1.5](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.1.4...v2.1.5) (2022-01-19)
+## [2.1.5](https://github.com/StrataFoundation/strata/compare/v2.1.4...v2.1.5) (2022-01-19)
 
 **Note:** Version bump only for package @strata-foundation/strata
 
-## [2.1.4](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.1.3...v2.1.4) (2022-01-19)
+## [2.1.4](https://github.com/StrataFoundation/strata/compare/v2.1.3...v2.1.4) (2022-01-19)
 
 Temporary endpoint to upgrade social token royalties that were pointed incorrectly
 
-## [2.1.3](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.1.2...v2.1.3) (2022-01-18)
+## [2.1.3](https://github.com/StrataFoundation/strata/compare/v2.1.2...v2.1.3) (2022-01-18)
 
 Temporary endpoint to upgrade social token curves
 
-## [2.1.2](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.1.1...v2.1.2) (2022-01-17)
+## [2.1.2](https://github.com/StrataFoundation/strata/compare/v2.1.1...v2.1.2) (2022-01-17)
 
 Downgrade @metaplex/arweave-cost since 2.x.x results in errors
 
-## [2.1.1](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.1.0...v2.1.1) (2022-01-12)
+## [2.1.1](https://github.com/StrataFoundation/strata/compare/v2.1.0...v2.1.1) (2022-01-12)
 
 ### Fixed
 
@@ -243,7 +250,7 @@ Downgrade @metaplex/arweave-cost since 2.x.x results in errors
 
 - Deprecated useWalletTokensWithMeta as it fetches too much data and leads to laggy interfaces
 
-# [2.1.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.0.6...v2.1.0) (2022-01-11)
+# [2.1.0](https://github.com/StrataFoundation/strata/compare/v2.0.6...v2.1.0) (2022-01-11)
 
 This release contains logic to limit go live dates for officially going live on mainnet, starting with OPEN collective.
 
@@ -260,13 +267,13 @@ This release contains logic to limit go live dates for officially going live on 
 - Awaiting approval flag on provider would only go to false after finished txn
 - Pricing didn't update when target mint supply changed
 
-## [2.0.6](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.0.5...v2.0.6) (2021-12-30)
+## [2.0.6](https://github.com/StrataFoundation/strata/compare/v2.0.5...v2.0.6) (2021-12-30)
 
 - Fix account fetch cache to output parsed data when a parser is provided for something cached
 - Add more options to bonding parameters to social token
 - Account fetch cache bugfixes
 
-## [2.0.5](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.0.4...v2.0.5) (2021-12-30)
+## [2.0.5](https://github.com/StrataFoundation/strata/compare/v2.0.4...v2.0.5) (2021-12-30)
 
 **Note:** Version bump only for package @strata-foundation/strata
 
@@ -274,7 +281,7 @@ This release contains logic to limit go live dates for officially going live on 
 
 - CI/CD publish did not build first
 
-## [2.0.4](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.0.3-test...v2.0.4) (2021-12-29)
+## [2.0.4](https://github.com/StrataFoundation/strata/compare/v2.0.3-test...v2.0.4) (2021-12-29)
 
 ### Added
 
@@ -288,19 +295,19 @@ This release contains logic to limit go live dates for officially going live on 
 
 - `targetMintDecimals: 0` no longer throws an error.
 
-## [2.0.3](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.0.2...v2.0.3) (2021-12-24)
+## [2.0.3](https://github.com/StrataFoundation/strata/compare/v2.0.2...v2.0.3) (2021-12-24)
 
 **Note:** Version bump only for package @strata-foundation/strata
 
 Testing deploy for governance hookup
 
-## [2.0.2](https://github.com/ChewingGlassFund/wumbo-programs/compare/v2.0.1...v2.0.2) (2021-12-24)
+## [2.0.2](https://github.com/StrataFoundation/strata/compare/v2.0.1...v2.0.2) (2021-12-24)
 
 **Note:** Version bump only for package @strata-foundation/strata
 
 Testing deploy for governance hookup
 
-# [2.0.0](https://github.com/ChewingGlassFund/wumbo-programs/compare/v1.3.2...v2.0.0) (2021-12-24)
+# [2.0.0](https://github.com/StrataFoundation/strata/compare/v1.3.2...v2.0.0) (2021-12-24)
 
 ### Changed
 
@@ -326,7 +333,7 @@ Testing deploy for governance hookup
 
 - never released
 
-## [1.3.2](https://github.com/ChewingGlassFund/wumbo-programs/compare/v0.7.0...v1.3.2) (2021-12-15)
+## [1.3.2](https://github.com/StrataFoundation/strata/compare/v0.7.0...v1.3.2) (2021-12-15)
 
 ### Fixed
 
