@@ -22,6 +22,14 @@ const config = {
       "@docusaurus/preset-classic",
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
+        googleAnalytics: {
+          trackingID: process.env.GOOGLE_ANALYTICS,
+          anonymizeIP: true,
+        },
+        gtag: {
+          trackingID: process.env.GOOGLE_ANALYTICS,
+          anonymizeIP: true,
+        },
         docs: {
           remarkPlugins: [math, plantuml],
           rehypePlugins: [katex],
@@ -128,7 +136,7 @@ const config = {
         logo: {
           alt: "Strata Logo",
           src: "img/logo.png",
-          href: "https://strataprotocol.com"
+          href: "https://strataprotocol.com",
         },
         items: [
           // {
