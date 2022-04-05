@@ -50,8 +50,8 @@ export function useAccount<T>(
       return {
         pubkey,
         account: data,
-        info: undefined
-      }
+        info: undefined,
+      };
     }
   };
 
@@ -86,20 +86,25 @@ export function useAccount<T>(
         }
         disposeWatch = dispose;
         if (acc) {
-          try {
-            setState({
-              loading: false,
-              info: (parser && parser(acc.pubkey, acc!.account)) as any,
-              account: acc.account,
-            });
-          } catch (e: any) {
-            console.error("Error while parsing", e);
-            setState({
-              loading: false,
-              info: undefined,
-              account: acc.account
-            })
-          }
+          setState(({ info }) => {
+            try {
+              return {
+                loading: false,
+                info: mergePublicKeys(
+                  info,
+                  (parser && parser(acc.pubkey, acc!.account)) as any
+                ),
+                account: acc.account,
+              };
+            } catch (e: any) {
+              console.error("Error while parsing", e);
+              return {
+                loading: false,
+                info: undefined,
+                account: acc.account,
+              }
+            }
+          });
         } else {
           setState({ loading: false });
         }
@@ -112,24 +117,29 @@ export function useAccount<T>(
     const disposeEmitter = cache.emitter.onCache((e) => {
       const event = e;
       if (event.id === id) {
-        cache.search(id, parser ? parsedAccountBaseParser : undefined).then((acc) => {
-          if (acc && acc.account != state.account) {
-            try {
-              setState({
-                loading: false,
-                info: (parser && parser(acc.pubkey, acc!.account)) as any,
-                account: acc!.account,
-              });
-            } catch (e: any) {
-              console.error("Error while parsing", e);
-              setState({
-                loading: false,
-                info: undefined,
-                account: acc.account,
-              });
+        cache
+          .search(id, parser ? parsedAccountBaseParser : undefined)
+          .then((acc) => {
+            if (acc && acc.account != state.account) {
+              try {
+                setState({
+                  loading: false,
+                  info: mergePublicKeys(
+                    state.info,
+                    parser && parser(acc.pubkey, acc!.account) as any
+                  ),
+                  account: acc!.account,
+                });
+              } catch (e: any) {
+                console.error("Error while parsing", e);
+                setState({
+                  loading: false,
+                  info: undefined,
+                  account: acc.account,
+                });
+              }
             }
-          }
-        });
+          });
       }
     });
     return () => {
@@ -139,4 +149,30 @@ export function useAccount<T>(
   }, [cache, id, !parser]); // only trigger on change to parser if it wasn't defined before.
 
   return state;
+}
+
+/**
+ * Updates to a solana account will contain new PublicKeys that are
+ * actually the same, just a new JS object. This will cause a lot of useMemo
+ * to fail.
+ */
+function mergePublicKeys(arg0: any | undefined, arg1: any | undefined): any {
+  if (!arg1 || !arg0) {
+    return arg1;
+  }
+
+  return Object.entries(arg1).reduce((acc, [key, value]) => {
+    if (
+      arg1[key] &&
+      arg1[key].equals &&
+      arg0[key] &&
+      arg1[key].equals(arg0[key])
+    ) {
+      acc[key] = arg0[key];
+    } else {
+      acc[key] = value;
+    }
+
+    return acc;
+  }, {} as Record<string, any>);
 }

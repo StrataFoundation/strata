@@ -123,7 +123,6 @@ export const useSwapDriver = ({
     loading: targetMetaLoading,
     error: targetMetaError,
   } = useTokenMetadata(targetMint);
-
   const {
     loading: curveLoading,
     pricing,
@@ -247,7 +246,6 @@ export const useSwapDriver = ({
       targetMetaLoading ||
       baseMetaLoading ||
       tokenBondingLoading ||
-      curveLoading ||
       !tokenBonding ||
       !baseMeta,
     onConnectWallet,

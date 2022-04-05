@@ -1,5 +1,5 @@
 import { PublicKey } from "@solana/web3.js";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import {
   SwapForm,
@@ -35,6 +35,7 @@ export const TokenOffering = ({
     sellOnlyTokenBonding?.targetMint,
     0
   );
+
   const { info: tokenBonding } = useTokenBonding(tokenBondingKey);
   const { info: supplyAcc } = useTokenAccount(
     sellOnlyTokenBonding?.baseStorage
@@ -88,20 +89,19 @@ export const TokenOffering = ({
   const { handleErrors } = useErrorHandler();
   handleErrors(keyError1, keyError2, submitError);
 
-  const { loading: driverLoading, ...swapProps } = useSwapDriver({
-    tradingMints: {
+  const tradingMints = useMemo(() => {
+    return {
       base: tokenBonding?.baseMint,
       target: tokenBonding?.targetMint,
-    },
+    };
+  }, [tokenBonding?.baseMint, tokenBonding?.targetMint]);
+  const { loading: driverLoading, ...swapProps } = useSwapDriver({
+    tradingMints,
     onTradingMintsChange: () => {},
     swap: (args) => {},
     onConnectWallet: identity,
     tokenBondingKey: tokenBondingKey,
   });
-
-  console.log("driverLoading", driverLoading);
-  console.log(tokenBonding);
-  console.log("sellOnlyLoading", sellOnlyLoading);
 
   return (
     <SwapForm
