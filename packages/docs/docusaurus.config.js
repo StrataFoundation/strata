@@ -22,14 +22,6 @@ const config = {
       "@docusaurus/preset-classic",
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
-        googleAnalytics: {
-          trackingID: process.env.GOOGLE_ANALYTICS,
-          anonymizeIP: true,
-        },
-        gtag: {
-          trackingID: process.env.GOOGLE_ANALYTICS,
-          anonymizeIP: true,
-        },
         docs: {
           remarkPlugins: [math, plantuml],
           rehypePlugins: [katex],
@@ -124,6 +116,14 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
+      googleAnalytics: {
+        trackingID: process.env.GOOGLE_ANALYTICS,
+        anonymizeIP: true,
+      },
+      gtag: {
+        trackingID: process.env.GOOGLE_ANALYTICS,
+        anonymizeIP: true,
+      },
       liveCodeBlock: {
         /**
          * The position of the live playground, above or under the editor
