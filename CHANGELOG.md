@@ -7,7 +7,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Remove
 
-  * Deprecated buy_v0 and buy_v1 endpoints
+  * Deprecated buy_v0 and sell_v0 endpoints
 
 ### Fixed
 
