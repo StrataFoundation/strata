@@ -39,4 +39,7 @@ pub enum ErrorCode {
 
   #[msg("Invalid go live date for prelaunch")]
   InvalidGoLive,
+
+  #[msg("Account discriminator mismatch")]
+  AccountDiscriminatorMismatch
 }

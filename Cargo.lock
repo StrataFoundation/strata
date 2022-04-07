@@ -1388,6 +1388,7 @@ version = "3.2.5"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
+ "arrayref",
  "borsh",
  "mpl-token-metadata",
  "proptest",
