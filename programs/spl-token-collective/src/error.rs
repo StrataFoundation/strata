@@ -41,5 +41,5 @@ pub enum ErrorCode {
   InvalidGoLive,
 
   #[msg("Account discriminator mismatch")]
-  AccountDiscriminatorMismatch
+  AccountDiscriminatorMismatch,
 }

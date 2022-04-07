@@ -3,13 +3,13 @@
 use std::collections::BTreeMap;
 
 use crate::token_metadata::update_metadata_account_v2;
+use arrayref::array_ref;
 use {
   anchor_lang::prelude::*,
   anchor_spl::token::{transfer, Transfer},
   borsh::{BorshDeserialize, BorshSerialize},
   spl_token_bonding::instructions::update_token_bonding_v0::UpdateTokenBondingV0Args,
 };
-use arrayref::array_ref;
 
 pub mod account;
 pub mod arg;
@@ -127,7 +127,7 @@ pub mod spl_token_collective {
     let data: &[u8] = &acct.try_borrow_data()?;
     let disc_bytes = array_ref![data, 0, 8];
     if disc_bytes != &TokenRefV0::discriminator() && disc_bytes.iter().any(|a| a != &0) {
-        return Err(error!(ErrorCode::AccountDiscriminatorMismatch));
+      return Err(error!(ErrorCode::AccountDiscriminatorMismatch));
     }
 
     primary_token_ref.collective = token_ref.collective;
@@ -612,12 +612,12 @@ pub mod spl_token_collective {
     // Change owner
     mint_token_ref.owner = Some(ctx.accounts.new_owner.key());
 
-    let new_primary_token_ref = ctx.accounts.new_primary_token_ref;
+    let new_primary_token_ref = &ctx.accounts.new_primary_token_ref;
     let acct = new_primary_token_ref.to_account_info();
     let data: &[u8] = &acct.try_borrow_data()?;
     let disc_bytes = array_ref![data, 0, 8];
     if disc_bytes != &TokenRefV0::discriminator() && disc_bytes.iter().any(|a| a != &0) {
-        return Err(error!(ErrorCode::AccountDiscriminatorMismatch));
+      return Err(error!(ErrorCode::AccountDiscriminatorMismatch));
     }
 
     let primary = &mut ctx.accounts.old_primary_token_ref;
