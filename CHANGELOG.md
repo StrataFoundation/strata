@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.5.0](https://github.com/StrataFoundation/strata/compare/v3.4.7...v3.5.0) (2022-04-07)
+
+### Remove
+
+  * Deprecated buy_v0 and buy_v1 endpoints
+
+### Fixed
+
+  * useAccount public key merging only happens on pure objects
+
 ## [3.4.7](https://github.com/StrataFoundation/strata/compare/v3.4.6...v3.4.7) (2022-04-05)
 
 ### Changed
