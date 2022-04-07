@@ -29,7 +29,7 @@ import {
   usePublicKey,
   useTokenMetadata,
 } from "@strata-foundation/react";
-import { TimeDecayExponentialCurveConfig } from "@strata-foundation/spl-token-bonding";
+import { ICurveConfig, TimeCurveConfig, TimeDecayExponentialCurveConfig } from "@strata-foundation/spl-token-bonding";
 import {
   ITokenBondingSettings,
   SplTokenCollective,
@@ -91,19 +91,47 @@ async function createFullyManaged(
   switch (values.curveType) {
     case "utility":
       k = 0.5;
+      break;
     case "stable":
       k = 1;
+      break;
     case "aggressive":
       k = 2;
+      break;
+  }
+
+  let config: ICurveConfig = new TimeDecayExponentialCurveConfig({
+    c: values.startingPrice,
+    k0: k,
+    k1: k,
+    d: 1,
+    interval: 2 * 60 * 60, // 2 hours
+  });
+  if (values.isAntiBot) {
+    config = new TimeCurveConfig()
+      .addCurve(
+        0,
+        new TimeDecayExponentialCurveConfig({
+          c: values.startingPrice,
+          k0: 0,
+          k1: 0,
+          d: 1,
+          interval: 0,
+        })
+      )
+      .addCurve(
+        30 * 60, // 30 minutes
+        new TimeDecayExponentialCurveConfig({
+          c: values.startingPrice,
+          k0: 0,
+          k1: k,
+          d: 0.5,
+          interval: 1.5 * 60 * 60, // 1.5 hours
+        })
+      );
   }
   const curveOut = await tokenBondingSdk.initializeCurveInstructions({
-    config: new TimeDecayExponentialCurveConfig({
-      c: values.startingPrice,
-      k0: values.isAntiBot ? 0 : k,
-      k1: k,
-      d: 0.5,
-      interval: 2 * 60 * 60, // 2 hours
-    }),
+    config,
   });
   const bondingOpts = {
     baseMint: mint,
