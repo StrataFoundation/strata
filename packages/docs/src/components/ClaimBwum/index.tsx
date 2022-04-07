@@ -29,7 +29,7 @@ const MainnetGuard = ({ children = null as any }) => {
         <h3>Net bWUM Exchange</h3>
         <button
           onClick={() => {
-            setEndpoint(clusterApiUrl(WalletAdapterNetwork.Mainnet));
+            setEndpoint("https://strataprotocol.genesysgo.net");
           }}
           className="white button button--primary"
         >

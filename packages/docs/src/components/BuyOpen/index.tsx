@@ -20,7 +20,7 @@ const MainnetGuard = ({ children = null as any }) => {
       <div className={styles.container}>
         <button
           onClick={() => {
-            setEndpoint(clusterApiUrl(WalletAdapterNetwork.Mainnet));
+            setEndpoint("https://strataprotocol.genesysgo.net");
           }}
           className="white button button--primary"
         >
