@@ -151,13 +151,21 @@ export function useAccount<T>(
   return state;
 }
 
+function isPureObject(input: any) {
+  return (
+    null !== input &&
+    typeof input === "object" &&
+    Object.getPrototypeOf(input).isPrototypeOf(Object)
+  );
+}
+
 /**
  * Updates to a solana account will contain new PublicKeys that are
  * actually the same, just a new JS object. This will cause a lot of useMemo
  * to fail.
  */
 function mergePublicKeys(arg0: any | undefined, arg1: any | undefined): any {
-  if (!arg1 || !arg0) {
+  if (!isPureObject(arg1) || !arg1 || !arg0) {
     return arg1;
   }
 

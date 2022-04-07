@@ -3,6 +3,7 @@
 use std::collections::BTreeMap;
 
 use crate::token_metadata::update_metadata_account_v2;
+use arrayref::array_ref;
 use {
   anchor_lang::prelude::*,
   anchor_spl::token::{transfer, Transfer},
@@ -84,7 +85,7 @@ pub fn get_collective(collective: &UncheckedAccount) -> Option<CollectiveV0> {
 #[program]
 pub mod spl_token_collective {
 
-  use anchor_lang::AccountsClose;
+  use anchor_lang::{AccountsClose, Discriminator};
   use spl_token_bonding::{
     cpi::{accounts::UpdateReserveAuthorityV0, update_reserve_authority_v0},
     instructions::UpdateReserveAuthorityV0Args,
@@ -121,6 +122,13 @@ pub mod spl_token_collective {
   pub fn set_as_primary_v0(ctx: Context<SetAsPrimaryV0>, args: SetAsPrimaryV0Args) -> Result<()> {
     let token_ref = &ctx.accounts.token_ref;
     let primary_token_ref = &mut ctx.accounts.primary_token_ref;
+
+    let acct = primary_token_ref.to_account_info();
+    let data: &[u8] = &acct.try_borrow_data()?;
+    let disc_bytes = array_ref![data, 0, 8];
+    if disc_bytes != &TokenRefV0::discriminator() && disc_bytes.iter().any(|a| a != &0) {
+      return Err(error!(ErrorCode::AccountDiscriminatorMismatch));
+    }
 
     primary_token_ref.collective = token_ref.collective;
     primary_token_ref.token_metadata = token_ref.token_metadata;
@@ -603,6 +611,14 @@ pub mod spl_token_collective {
     let mint_token_ref = &mut ctx.accounts.mint_token_ref;
     // Change owner
     mint_token_ref.owner = Some(ctx.accounts.new_owner.key());
+
+    let new_primary_token_ref = &ctx.accounts.new_primary_token_ref;
+    let acct = new_primary_token_ref.to_account_info();
+    let data: &[u8] = &acct.try_borrow_data()?;
+    let disc_bytes = array_ref![data, 0, 8];
+    if disc_bytes != &TokenRefV0::discriminator() && disc_bytes.iter().any(|a| a != &0) {
+      return Err(error!(ErrorCode::AccountDiscriminatorMismatch));
+    }
 
     let primary = &mut ctx.accounts.old_primary_token_ref;
     // Only update if this is for the same social token as the mint token ref
