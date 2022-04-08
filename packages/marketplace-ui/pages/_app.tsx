@@ -35,6 +35,7 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
     <Providers>
       <DefaultSeo {...SEO} />
       <Header />
+      {/* @ts-ignore */}
       <Component {...pageProps} />
       <BrowserView>
         <Toaster
