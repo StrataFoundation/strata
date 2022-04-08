@@ -11,13 +11,13 @@ import axios from "axios";
 import { tokenAuthFetchMiddleware } from "@strata-foundation/web3-token-auth";
 
 async function getToken(): Promise<string> {
-  if (process.env.ISSUER) {
+  if (process.env.NEXT_PUBLIC_ISSUER) {
     const token = Base64.encode(
-      `${process.env.CLIENT_ID}:${process.env.CLIENT_SECRET}`
+      `${process.env.NEXT_PUBLIC_CLIENT_ID}:${process.env.NEXT_PUBLIC_CLIENT_SECRET}`
     );
     const { access_token } = (
       await axios.post(
-        `${process.env.ISSUER}/token`,
+        `${process.env.NEXT_PUBLIC_ISSUER}/token`,
         "grant_type=client_credentials",
         {
           headers: {
