@@ -52,6 +52,7 @@ export const Wallet: FC = ({ children }) => {
     <ConnectionProvider
       endpoint={endpoint}
       config={{
+        commitment: "confirmed",
         fetchMiddleware: tokenAuthFetchMiddleware({
           getToken: getToken(endpoint),
         }),

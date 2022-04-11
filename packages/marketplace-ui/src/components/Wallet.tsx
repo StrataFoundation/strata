@@ -53,6 +53,7 @@ export const Wallet = ({
     <ConnectionProvider
       endpoint={cluster || endpoint}
       config={{
+        commitment: "confirmed",
         fetchMiddleware: tokenAuthFetchMiddleware({
           getToken,
         }),
