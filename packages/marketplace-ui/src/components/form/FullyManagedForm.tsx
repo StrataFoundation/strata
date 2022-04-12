@@ -49,7 +49,7 @@ import { FormControlWithError } from "./FormControlWithError";
 import { MintSelect } from "./MintSelect";
 import { IMetadataFormProps, TokenMetadataInputs } from "./TokenMetadataInputs";
 import { Disclosures, disclosuresSchema, IDisclosures } from "./Disclosures";
-import { RadioCard } from "./RadioCard";
+import { RadioCardWithAffordance } from "./RadioCard";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 
 type CurveType = "aggressive" | "stable" | "utility";
@@ -344,7 +344,7 @@ export const FullyManagedForm: React.FC = () => {
                     const radio = getRadioProps({ value });
 
                     return (
-                      <RadioCard key={value} {...radio}>
+                      <RadioCardWithAffordance key={value} {...radio}>
                         <Flex
                           h="full"
                           direction={{ base: "row", md: "column" }}
@@ -387,7 +387,7 @@ export const FullyManagedForm: React.FC = () => {
                             </Flex>
                           </Flex>
                         </Flex>
-                      </RadioCard>
+                      </RadioCardWithAffordance>
                     );
                   }
                 )}

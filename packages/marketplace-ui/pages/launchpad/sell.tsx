@@ -10,7 +10,7 @@ import {
   useClipboard,
 } from "@chakra-ui/react";
 import { LaunchpadLayout } from "@/components/launchpad";
-import { RadioCard } from "@/components/form/RadioCard";
+import { RadioCardWithAffordance } from "@/components/form/RadioCard";
 import { route, routes } from "@/utils/routes";
 
 export enum SellTokenOption {
@@ -136,7 +136,11 @@ export const SellToken: FC = () => {
             const radio = getRadioProps({ value });
 
             return (
-              <RadioCard key={value} helpText={helpText} {...radio}>
+              <RadioCardWithAffordance
+                key={value}
+                helpText={helpText}
+                {...radio}
+              >
                 <Flex
                   h="full"
                   direction={{ base: "row", md: "column" }}
@@ -179,7 +183,7 @@ export const SellToken: FC = () => {
                     </Flex>
                   </Flex>
                 </Flex>
-              </RadioCard>
+              </RadioCardWithAffordance>
             );
           })}
         </Stack>

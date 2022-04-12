@@ -3,7 +3,7 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import { Flex, Stack, Text, useRadioGroup } from "@chakra-ui/react";
 import { LaunchpadLayout } from "@/components/launchpad";
-import { RadioCard } from "@/components/form/RadioCard";
+import { RadioCardWithAffordance } from "@/components/form/RadioCard";
 import { route, routes } from "@/utils/routes";
 
 export enum CreateTokenOption {
@@ -70,7 +70,7 @@ export const CreateToken: FC = () => {
           const radio = getRadioProps({ value });
 
           return (
-            <RadioCard key={value} helpText={helpText} {...radio}>
+            <RadioCardWithAffordance key={value} helpText={helpText} {...radio}>
               <Flex
                 h="full"
                 direction={{ base: "row", md: "column" }}
@@ -105,7 +105,7 @@ export const CreateToken: FC = () => {
                   </Flex>
                 </Flex>
               </Flex>
-            </RadioCard>
+            </RadioCardWithAffordance>
           );
         })}
       </Stack>

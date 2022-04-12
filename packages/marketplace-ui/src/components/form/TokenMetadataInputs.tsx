@@ -18,7 +18,7 @@ import React, { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { RiCheckFill } from "react-icons/ri";
 import { FormControlWithError } from "./FormControlWithError";
-import { RadioCard } from "./RadioCard";
+import { RadioCardWithAffordance } from "./RadioCard";
 
 export interface IMetadataFormProps {
   image: File;
@@ -159,7 +159,7 @@ export function TokenMetadataInputs({
           {storageOptions.map(({ value, heading, illustration, helpText }) => {
             const radio = getRadioProps({ value });
             return (
-              <RadioCard {...radio} isChecked={provider === value} key={value}>
+              <RadioCardWithAffordance {...radio} isChecked={provider === value} key={value}>
                 <Flex
                   h="full"
                   direction={{ base: "row", md: "column" }}
@@ -202,7 +202,7 @@ export function TokenMetadataInputs({
                     </Flex>
                   </Flex>
                 </Flex>
-              </RadioCard>
+              </RadioCardWithAffordance>
             );
           })}
         </Stack>

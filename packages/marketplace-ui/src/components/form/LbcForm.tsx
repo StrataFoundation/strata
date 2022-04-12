@@ -8,7 +8,7 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { DataV2, Metadata } from "@metaplex-foundation/mpl-token-metadata";
+import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
 import { Program } from "@project-serum/anchor";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -37,7 +37,6 @@ import { useAsyncCallback } from "react-async-hook";
 import { FormProvider, useForm } from "react-hook-form";
 import * as yup from "yup";
 import { useMarketplaceSdk } from "../../contexts/marketplaceSdkContext";
-import { NFT_STORAGE_API_KEY } from "../../constants";
 import { route, routes } from "../../utils/routes";
 import { Disclosures, disclosuresSchema, IDisclosures } from "./Disclosures";
 import { FormControlWithError } from "./FormControlWithError";
@@ -50,6 +49,7 @@ import {
 } from "./UseExistingMintInputs";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { TokenMintDecimalsInputs } from "./TokenMintDecimalsInputs";
+import { TokenIntervalInputs } from "./TokenIntervalnputs";
 
 interface ILbpFormProps
   extends Partial<IMetadataFormProps>,
@@ -433,19 +433,7 @@ export const LbcForm: React.FC = () => {
                 {...register("minPrice")}
               />
             </FormControlWithError>
-            <FormControlWithError
-              id="interval"
-              help="The time in seconds that it will take to go from startPrice to minPrice"
-              label="Interval"
-              errors={errors}
-            >
-              <Input
-                type="number"
-                min={0}
-                step={0.000000000001}
-                {...register("interval")}
-              />
-            </FormControlWithError>
+            <TokenIntervalInputs />
             <FormControlWithError
               id="mintCap"
               help="The number of tokens to mint. Note that, depending on the above parameters this liqudity bootstrapping may not sell out"
