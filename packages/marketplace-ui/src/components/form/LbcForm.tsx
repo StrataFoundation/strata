@@ -49,6 +49,7 @@ import {
   UseExistingMintInputs,
 } from "./UseExistingMintInputs";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { TokenMintDecimalsInputs } from "./TokenMintDecimalsInputs";
 
 interface ILbpFormProps
   extends Partial<IMetadataFormProps>,
@@ -72,7 +73,8 @@ const validationSchema = yup.object({
   useExistingMint: yup.boolean(),
   useCandyMachine: yup.boolean(),
   existingMint: yup.string().when(["useExistingMint", "useCandyMachine"], {
-    is: (useExistingMint: boolean, useCandyMachine: boolean) => useExistingMint && !useCandyMachine,
+    is: (useExistingMint: boolean, useCandyMachine: boolean) =>
+      useExistingMint && !useCandyMachine,
     then: yup.string().required(),
   }),
   candyMachineId: yup.string().when("useCandyMachine", {
@@ -289,7 +291,6 @@ export const LbcForm: React.FC = () => {
     setValue("useCandyMachine", !!router.query["candymachine"]);
   }, [router, setValue]);
 
-
   const onSubmit = async (values: ILbpFormProps) => {
     const mintKey = await execute(marketplaceSdk!, values);
     if (values.useCandyMachine) {
@@ -352,19 +353,7 @@ export const LbcForm: React.FC = () => {
               >
                 <VStack spacing={8}>
                   <TokenMetadataInputs entityName="token" />
-                  <FormControlWithError
-                    id="decimals"
-                    help="The number of of decimal places this mint will have. For example, SOL has 9 decimal places of precision. We recommend 0 if your tokens dont need to be less than 1"
-                    label="Mint Decimals"
-                    errors={errors}
-                  >
-                    <Input
-                      type="number"
-                      min={0}
-                      step={0.000000000001}
-                      {...register("decimals")}
-                    />
-                  </FormControlWithError>
+                  <TokenMintDecimalsInputs />
                   <FormControlWithError
                     id="symbol"
                     help="A less than 10 character symbol for the token being sold"

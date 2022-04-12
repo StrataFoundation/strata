@@ -23,13 +23,16 @@ import * as yup from "yup";
 import { route, routes } from "../../utils/routes";
 import { FormControlWithError } from "./FormControlWithError";
 import { IMetadataFormProps, TokenMetadataInputs } from "./TokenMetadataInputs";
+import {
+  ITokenMintDecimalsFormProps,
+  TokenMintDecimalsInputs,
+} from "./TokenMintDecimalsInputs";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 
-interface IManualForm extends IMetadataFormProps {
+interface IManualForm extends IMetadataFormProps, ITokenMintDecimalsFormProps {
   symbol: string;
   supply: number;
-  decimals: number;
   keepMintAuthority: boolean;
   keepFreezeAuthority: boolean;
 }
@@ -42,6 +45,7 @@ const validationSchema = yup.object({
   supply: yup.number().required().min(0),
   keepMintAuthority: yup.boolean(),
   keepFreezeAuthority: yup.boolean(),
+  decimals: yup.number().required(),
 });
 
 async function createFullyManaged(
@@ -196,20 +200,7 @@ export const ManualForm: React.FC = () => {
             >
               <Input {...register("symbol")} />
             </FormControlWithError>
-            <FormControlWithError
-              id="decimals"
-              help="The number of of decimal places this mint will have. For example, SOL has 9 decimal places of precision. We recommend 0 if your tokens dont need to be less than 1"
-              label="Mint Decimals"
-              errors={errors}
-            >
-              <Input
-                type="number"
-                min={0}
-                max={12}
-                step={1}
-                {...register("decimals")}
-              />
-            </FormControlWithError>
+            <TokenMintDecimalsInputs />
             <FormControlWithError
               id="supply"
               help="The number of tokens to mint. After creation these will be available in your wallet"
@@ -239,13 +230,11 @@ export const ManualForm: React.FC = () => {
             >
               <Switch {...register("keepFreezeAuthority")} />
             </FormControlWithError>
-
             {error && (
               <Alert status="error">
                 <Alert status="error">{error.toString()}</Alert>
               </Alert>
             )}
-
             <Button
               type="submit"
               alignSelf="flex-end"
