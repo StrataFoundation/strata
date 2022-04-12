@@ -29,7 +29,11 @@ import {
   usePublicKey,
   useTokenMetadata,
 } from "@strata-foundation/react";
-import { ICurveConfig, TimeCurveConfig, TimeDecayExponentialCurveConfig } from "@strata-foundation/spl-token-bonding";
+import {
+  ICurveConfig,
+  TimeCurveConfig,
+  TimeDecayExponentialCurveConfig,
+} from "@strata-foundation/spl-token-bonding";
 import {
   ITokenBondingSettings,
   SplTokenCollective,
@@ -286,7 +290,7 @@ export const FullyManagedForm: React.FC = () => {
       heading: "Utility",
       illustration: "/utility.svg",
       helpText:
-        "A curve with a price sensitivity that starts high and lowers with purchases. This curve is best suited for utility use cases, as it rewars early adopters and scales the supply so that the token can be exchanged for goods/services.",
+        "A curve with a price sensitivity that starts high and lowers with purchases. This curve is best suited for utility use cases, as it rewards early adopters and scales the supply so that the token can be exchanged for goods/services.",
     },
   ];
 
