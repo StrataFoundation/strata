@@ -20,7 +20,7 @@ require("@solana/wallet-adapter-react-ui/styles.css");
 
 export const getToken = (endpoint: string) => async () => {
   if (endpoint.includes("genesysgo")) {
-    const req = await fetch(process.env.GET_TOKEN_ENDPOINT!);
+    const req = await fetch(process.env.NEXT_PUBLIC_GET_TOKEN_ENDPOINT!);
     const { access_token }: { access_token: string } = await req.json();
     return access_token;
   }
