@@ -275,6 +275,8 @@ export const LbcForm: React.FC = () => {
     handleSubmit,
     watch,
     setValue,
+    setError,
+    clearErrors,
     formState: { errors, isSubmitting },
   } = formProps;
   const { publicKey, connected } = useWallet();
@@ -286,10 +288,38 @@ export const LbcForm: React.FC = () => {
   );
   const { marketplaceSdk } = useMarketplaceSdk();
   const router = useRouter();
-  const { authority, mint, useExistingMint, useCandyMachine } = watch();
+  const {
+    authority,
+    mint,
+    useExistingMint,
+    useCandyMachine,
+    startPrice,
+    minPrice,
+  } = watch();
+
   useEffect(() => {
     setValue("useCandyMachine", !!router.query["candymachine"]);
   }, [router, setValue]);
+
+  useEffect(() => {
+    if (startPrice && minPrice) {
+      if (minPrice < startPrice / 5) {
+        setError("startPrice", {
+          type: "custom",
+          message:
+            "The diffrence between Starting Price and Minimum Price is greater than the reccommended 5x of each other.",
+        });
+        setError("minPrice", {
+          type: "custom",
+          message:
+            "The diffrence between Minimum Price and Starting Price is greater than the reccommended 5x of each other.",
+        });
+      } else {
+        clearErrors("minPrice");
+        clearErrors("startPrice");
+      }
+    }
+  }, [startPrice, minPrice, setError, clearErrors]);
 
   const onSubmit = async (values: ILbpFormProps) => {
     const mintKey = await execute(marketplaceSdk!, values);
