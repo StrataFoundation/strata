@@ -18,9 +18,9 @@ import { tokenAuthFetchMiddleware } from "@strata-foundation/web3-token-auth";
 // Default styles that can be overridden by your app
 require("@solana/wallet-adapter-react-ui/styles.css");
 
-export const getToken = (endpoint: string) => async () => {
+export const getToken = (getTokenEndpoint: string, endpoint: string) => async () => {
   if (endpoint.includes("genesysgo")) {
-    const req = await fetch(process.env.NEXT_PUBLIC_GET_TOKEN_ENDPOINT!);
+    const req = await fetch(getTokenEndpoint);
     const { access_token }: { access_token: string } = await req.json();
     return access_token;
   }
@@ -53,7 +53,8 @@ export const Wallet: FC = ({ children }) => {
       endpoint={endpoint}
       config={{
         fetchMiddleware: tokenAuthFetchMiddleware({
-          getToken: getToken(endpoint),
+          // @ts-ignore
+          getToken: getToken(process.env.GET_TOKEN_ENDPOINT, endpoint),
         }),
       }}
     >
