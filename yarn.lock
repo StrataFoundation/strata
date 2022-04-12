@@ -6604,6 +6604,11 @@
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.176.tgz#641150fc1cda36fbfa329de603bbb175d7ee20c0"
   integrity sha512-xZmuPTa3rlZoIbtDUyJKZQimJV3bxCmzMIO2c9Pz9afyDro6kr7R79GwcB6mRhuoPmV2p1Vb66WOJH7F886WKQ==
 
+"@types/lru-cache@^7.6.1":
+  version "7.6.1"
+  resolved "https://registry.yarnpkg.com/@types/lru-cache/-/lru-cache-7.6.1.tgz#99809260ef1e870b8ef2ab3a625784a33cec5ba9"
+  integrity sha512-69x+Dhrm2aShFkTqUuPgUXbKYwvq4FH/DVeeQH7MBfTjbKjPX51NGLERxVV1vf33N71dzLvXCko4OLqRvsq53Q==
+
 "@types/mdast@^3.0.0":
   version "3.0.10"
   resolved "https://registry.npmjs.org/@types/mdast/-/mdast-3.0.10.tgz"
@@ -6784,6 +6789,15 @@
   version "17.0.44"
   resolved "https://registry.yarnpkg.com/@types/react/-/react-17.0.44.tgz#c3714bd34dd551ab20b8015d9d0dbec812a51ec7"
   integrity sha512-Ye0nlw09GeMp2Suh8qoOv0odfgCoowfM/9MG6WeRD60Gq9wS90bdkdRtYbRkNhXOpG4H+YXGvj4wOWhAC0LJ1g==
+  dependencies:
+    "@types/prop-types" "*"
+    "@types/scheduler" "*"
+    csstype "^3.0.2"
+
+"@types/react@^18.0.2":
+  version "18.0.2"
+  resolved "https://registry.yarnpkg.com/@types/react/-/react-18.0.2.tgz#bc6a0572d434642ebe8b4ac0f121d18e2f2d8f7f"
+  integrity sha512-2poV9ReTwwV5ZNxkKyk7t6Vp/odeTfYI3vRjtDYWfUdEstx9mp26jzELfMBwV6gXg1irhHUnmZJH/dJW7xafcA==
   dependencies:
     "@types/prop-types" "*"
     "@types/scheduler" "*"
@@ -15509,6 +15523,11 @@ lru-cache@^6.0.0:
   integrity sha512-Jo6dJ04CmSjuznwJSS3pUeWmd/H0ffTlkXXgwZi+eq1UCmqQwCh+eLsYOYCwY991i2Fah4h1BEMCx4qThGbsiA==
   dependencies:
     yallist "^4.0.0"
+
+lru-cache@^7.8.1:
+  version "7.8.1"
+  resolved "https://registry.yarnpkg.com/lru-cache/-/lru-cache-7.8.1.tgz#68ee3f4807a57d2ba185b7fd90827d5c21ce82bb"
+  integrity sha512-E1v547OCgJvbvevfjgK9sNKIVXO96NnsTsFPBlg4ZxjhsJSODoH9lk8Bm0OxvHNm6Vm5Yqkl/1fErDxhYL8Skg==
 
 lunr@^2.3.9:
   version "2.3.9"
