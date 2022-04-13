@@ -37,7 +37,7 @@ export const TokenMintDecimalsInputs = ({
         id="decimals"
         label="Mint Decimals"
         errors={errors}
-        help="The number of decimal places this mint will have. For example, SOL has 9 decimal places of precision. Zero is best used for 1:1 items like raffle tickets, collectibles, or something redeemable."
+        help="The number of decimal places this mint will have. For example, SOL has 9 decimal places of precision. 0 is best used for 1:1 items like raffle tickets, collectibles, or something redeemable."
       >
         <Stack {...group} direction="row" flexWrap="wrap" spacing={0}>
           {decimalOptions.map(({ value, heading }) => {
