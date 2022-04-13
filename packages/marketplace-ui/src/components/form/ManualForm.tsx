@@ -114,14 +114,7 @@ async function createFullyManaged(
       ata,
       me,
       [],
-      new u64(
-        (values.supply * Math.pow(10, values.decimals)).toLocaleString(
-          "fullwide",
-          {
-            useGrouping: false,
-          }
-        )
-      )
+      new u64(values.supply).mul(new u64(10).pow(new u64(values.decimals)))
     )
   );
 
@@ -150,6 +143,7 @@ async function createFullyManaged(
 }
 
 export const ManualForm: React.FC = () => {
+  debugger;
   const formProps = useForm<IManualForm>({
     resolver: yupResolver(validationSchema),
   });
