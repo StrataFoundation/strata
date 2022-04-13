@@ -191,7 +191,7 @@ export const LaunchPad: FC = ({ children }) => {
                 <Text as="span" color="orange.500">
                   Twitter
                 </Text>{" "}
-                and we can brainstorm somethiing with together!
+                and we can brainstorm something with you together!
               </Text>
             </Stack>
           </Stack>
