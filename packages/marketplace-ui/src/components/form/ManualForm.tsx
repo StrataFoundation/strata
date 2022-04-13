@@ -143,7 +143,6 @@ async function createFullyManaged(
 }
 
 export const ManualForm: React.FC = () => {
-  debugger;
   const formProps = useForm<IManualForm>({
     resolver: yupResolver(validationSchema),
   });
