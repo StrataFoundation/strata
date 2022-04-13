@@ -10,7 +10,7 @@ import {
   useMediaQuery,
 } from "@chakra-ui/react";
 import { LaunchpadLayout } from "@/components/launchpad";
-import { RadioCard } from "@/components/form";
+import { RadioCardWithAffordance } from "@/components/form";
 import { route, routes } from "@/utils/routes";
 
 export enum LandingOption {
@@ -99,7 +99,11 @@ export const LaunchPad: FC = ({ children }) => {
             const radio = getRadioProps({ value });
 
             return (
-              <RadioCard key={value} {...radio} disabled={disabled}>
+              <RadioCardWithAffordance
+                key={value}
+                {...radio}
+                disabled={disabled}
+              >
                 <Flex
                   h="full"
                   direction={{ base: "row", md: "column" }}
@@ -142,7 +146,7 @@ export const LaunchPad: FC = ({ children }) => {
                     </Flex>
                   </Flex>
                 </Flex>
-              </RadioCard>
+              </RadioCardWithAffordance>
             );
           }
         )}

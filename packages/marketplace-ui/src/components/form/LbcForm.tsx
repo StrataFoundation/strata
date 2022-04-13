@@ -8,7 +8,7 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { DataV2, Metadata } from "@metaplex-foundation/mpl-token-metadata";
+import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
 import { Program } from "@project-serum/anchor";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -37,7 +37,6 @@ import { useAsyncCallback } from "react-async-hook";
 import { FormProvider, useForm } from "react-hook-form";
 import * as yup from "yup";
 import { useMarketplaceSdk } from "../../contexts/marketplaceSdkContext";
-import { NFT_STORAGE_API_KEY } from "../../constants";
 import { route, routes } from "../../utils/routes";
 import { Disclosures, disclosuresSchema, IDisclosures } from "./Disclosures";
 import { FormControlWithError } from "./FormControlWithError";
@@ -49,6 +48,8 @@ import {
   UseExistingMintInputs,
 } from "./UseExistingMintInputs";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { TokenMintDecimalsInputs } from "./TokenMintDecimalsInputs";
+import { TokenIntervalInputs } from "./TokenIntervalnputs";
 
 interface ILbpFormProps
   extends Partial<IMetadataFormProps>,
@@ -72,7 +73,8 @@ const validationSchema = yup.object({
   useExistingMint: yup.boolean(),
   useCandyMachine: yup.boolean(),
   existingMint: yup.string().when(["useExistingMint", "useCandyMachine"], {
-    is: (useExistingMint: boolean, useCandyMachine: boolean) => useExistingMint && !useCandyMachine,
+    is: (useExistingMint: boolean, useCandyMachine: boolean) =>
+      useExistingMint && !useCandyMachine,
     then: yup.string().required(),
   }),
   candyMachineId: yup.string().when("useCandyMachine", {
@@ -273,6 +275,8 @@ export const LbcForm: React.FC = () => {
     handleSubmit,
     watch,
     setValue,
+    setError,
+    clearErrors,
     formState: { errors, isSubmitting },
   } = formProps;
   const { publicKey, connected } = useWallet();
@@ -284,11 +288,38 @@ export const LbcForm: React.FC = () => {
   );
   const { marketplaceSdk } = useMarketplaceSdk();
   const router = useRouter();
-  const { authority, mint, useExistingMint, useCandyMachine } = watch();
+  const {
+    authority,
+    mint,
+    useExistingMint,
+    useCandyMachine,
+    startPrice,
+    minPrice,
+  } = watch();
+
   useEffect(() => {
     setValue("useCandyMachine", !!router.query["candymachine"]);
   }, [router, setValue]);
 
+  useEffect(() => {
+    if (startPrice && minPrice) {
+      if (minPrice < startPrice / 5) {
+        setError("startPrice", {
+          type: "custom",
+          message:
+            "The diffrence between Starting Price and Minimum Price is greater than the reccommended 5x of each other.",
+        });
+        setError("minPrice", {
+          type: "custom",
+          message:
+            "The diffrence between Minimum Price and Starting Price is greater than the reccommended 5x of each other.",
+        });
+      } else {
+        clearErrors("minPrice");
+        clearErrors("startPrice");
+      }
+    }
+  }, [startPrice, minPrice, setError, clearErrors]);
 
   const onSubmit = async (values: ILbpFormProps) => {
     const mintKey = await execute(marketplaceSdk!, values);
@@ -352,19 +383,7 @@ export const LbcForm: React.FC = () => {
               >
                 <VStack spacing={8}>
                   <TokenMetadataInputs entityName="token" />
-                  <FormControlWithError
-                    id="decimals"
-                    help="The number of of decimal places this mint will have. For example, SOL has 9 decimal places of precision. We recommend 0 if your tokens dont need to be less than 1"
-                    label="Mint Decimals"
-                    errors={errors}
-                  >
-                    <Input
-                      type="number"
-                      min={0}
-                      step={0.000000000001}
-                      {...register("decimals")}
-                    />
-                  </FormControlWithError>
+                  <TokenMintDecimalsInputs />
                   <FormControlWithError
                     id="symbol"
                     help="A less than 10 character symbol for the token being sold"
@@ -444,19 +463,7 @@ export const LbcForm: React.FC = () => {
                 {...register("minPrice")}
               />
             </FormControlWithError>
-            <FormControlWithError
-              id="interval"
-              help="The time in seconds that it will take to go from startPrice to minPrice"
-              label="Interval"
-              errors={errors}
-            >
-              <Input
-                type="number"
-                min={0}
-                step={0.000000000001}
-                {...register("interval")}
-              />
-            </FormControlWithError>
+            <TokenIntervalInputs />
             <FormControlWithError
               id="mintCap"
               help="The number of tokens to mint. Note that, depending on the above parameters this liqudity bootstrapping may not sell out"

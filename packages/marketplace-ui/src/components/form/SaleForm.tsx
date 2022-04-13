@@ -8,6 +8,8 @@ import {
   Input,
   useDisclosure,
   VStack,
+  useRadio,
+  useRadioGroup,
 } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2, Metadata } from "@metaplex-foundation/mpl-token-metadata";
@@ -44,6 +46,7 @@ import {
   UseExistingMintInputs,
 } from "./UseExistingMintInputs";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { TokenMintDecimalsInputs } from "./TokenMintDecimalsInputs";
 
 interface IMarketplaceFormProps
   extends Omit<IMetadataFormProps, "name">,
@@ -247,19 +250,7 @@ export const SaleForm: React.FC = () => {
               <Collapse in={!useExistingMint} animateOpacity>
                 <VStack spacing={8}>
                   <TokenMetadataInputs entityName="token" />
-                  <FormControlWithError
-                    id="decimals"
-                    help="The number of of decimal places this mint will have. For example, SOL has 9 decimal places of precision. We recommend 0 if your tokens dont need to be less than 1"
-                    label="Mint Decimals"
-                    errors={errors}
-                  >
-                    <Input
-                      type="number"
-                      min={0}
-                      step={0.000000000001}
-                      {...register("decimals")}
-                    />
-                  </FormControlWithError>
+                  <TokenMintDecimalsInputs />
                 </VStack>
               </Collapse>
             </Box>

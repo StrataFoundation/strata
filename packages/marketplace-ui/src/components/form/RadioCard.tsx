@@ -18,6 +18,48 @@ export const RadioCard: FC<RadioCardProps> = ({
 
   return (
     <Box
+      onClick={(e) => {
+        if (disabled) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }}
+    >
+      <Box as="label">
+        <input {...input} />
+        <Box
+          {...checkbox}
+          mt={{ base: 2, md: 0 }}
+          mr={2}
+          cursor="pointer"
+          borderWidth="1px"
+          borderRadius="md"
+          bg="gray.200"
+          _checked={{
+            bg: "orange.600",
+            color: "white",
+            borderColor: "orange.600",
+          }}
+        >
+          {children}
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
+export const RadioCardWithAffordance: FC<RadioCardProps> = ({
+  children,
+  disabled = false,
+  ...props
+}) => {
+  const { getInputProps, getCheckboxProps } = useRadio(props);
+
+  const input = getInputProps();
+  const checkbox = getCheckboxProps();
+
+  return (
+    <Box
       w="full"
       maxW={{ base: "auto", md: "242px" }}
       flexGrow={1}
