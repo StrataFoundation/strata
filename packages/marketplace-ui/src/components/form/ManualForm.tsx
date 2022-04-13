@@ -1,4 +1,3 @@
-import { NFT_STORAGE_API_KEY } from "../../constants";
 import { Alert, Button, Flex, Input, Switch, VStack } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
@@ -115,7 +114,14 @@ async function createFullyManaged(
       ata,
       me,
       [],
-      new u64(values.supply * Math.pow(10, values.decimals))
+      new u64(
+        (values.supply * Math.pow(10, values.decimals)).toLocaleString(
+          "fullwide",
+          {
+            useGrouping: false,
+          }
+        )
+      )
     )
   );
 

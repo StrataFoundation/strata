@@ -17,11 +17,15 @@ export const TokenMintDecimalsInputs = ({
     watch,
     formState: { errors },
     setValue,
+    clearErrors,
   } = useFormContext<ITokenMintDecimalsFormProps>();
 
   const { getRootProps, getRadioProps } = useRadioGroup({
     name: "decimals",
-    onChange: (value) => setValue("decimals", +value),
+    onChange: (value) => {
+      setValue("decimals", +value);
+      clearErrors("decimals");
+    },
   });
 
   const decimals = watch("decimals");
