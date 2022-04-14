@@ -19,7 +19,7 @@ const sections = [
       {
         title: "Tutorial",
         isExternal: false,
-        href: `${DOCS_URL}/getting_started`,
+        href: `${DOCS_URL}`,
       },
     ],
   },
