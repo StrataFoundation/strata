@@ -117,10 +117,14 @@ const config = {
       "@docusaurus/plugin-client-redirects",
       {
         redirects: [
-          {
-            to: "/how-to-create-a-solana-token-on-strata",
-            from: "/create-a-token",
-          },
+          ...(process.env.BLOG_ONLY
+            ? [
+                {
+                  to: "/how-to-create-a-solana-token-on-strata",
+                  from: "/create-a-token",
+                },
+              ]
+            : []),
         ],
       },
     ],
