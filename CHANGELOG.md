@@ -3,22 +3,29 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.5.1](https://github.com/StrataFoundation/strata/compare/v3.5.0...v3.5.1) (2022-04-15)
+
+**Note:** Version bump only for package @strata-foundation/strata
+
+### Changed
+
+- curve.ts uses .toString for frontend logic of large decimal numbers now (Number can only safely store up to 53 bits)
+
 # [3.5.0](https://github.com/StrataFoundation/strata/compare/v3.4.7...v3.5.0) (2022-04-07)
 
 ### Remove
 
-  * Deprecated buy_v0 and sell_v0 endpoints
+- Deprecated buy_v0 and sell_v0 endpoints
 
 ### Fixed
 
-  * useAccount public key merging only happens on pure objects
+- useAccount public key merging only happens on pure objects
 
 ## [3.4.7](https://github.com/StrataFoundation/strata/compare/v3.4.6...v3.4.7) (2022-04-05)
 
 ### Changed
 
- * Fix swap form and other re-rendering issues in react package due to new public keys being constructed on websocket changes.
-
+- Fix swap form and other re-rendering issues in react package due to new public keys being constructed on websocket changes.
 
 ## [3.4.6](https://github.com/StrataFoundation/strata/compare/v3.4.5...v3.4.6) (2022-04-04)
 
