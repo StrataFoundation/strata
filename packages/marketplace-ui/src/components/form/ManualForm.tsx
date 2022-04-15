@@ -123,7 +123,7 @@ async function createFullyManaged(
       ata,
       me,
       [],
-      new u64(values.supply).mul(new u64(10).pow(new u64(values.decimals)))
+      new u64(`${values.supply * Math.pow(10, values.decimals)}`)
     )
   );
 

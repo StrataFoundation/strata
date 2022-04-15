@@ -58,13 +58,19 @@ export function toNumber(numberOrBn: BN | number, mint: MintInfo): number {
   }
 }
 
-export function toBN(numberOrBn: BN | number, mintOrDecimals: MintInfo | number): BN {
-  const decimals: number = typeof mintOrDecimals === 'number' ? mintOrDecimals : (mintOrDecimals as MintInfo).decimals;
+export function toBN(
+  numberOrBn: BN | number,
+  mintOrDecimals: MintInfo | number
+): BN {
+  const decimals: number =
+    typeof mintOrDecimals === "number"
+      ? mintOrDecimals
+      : (mintOrDecimals as MintInfo).decimals;
 
   if (BN.isBN(numberOrBn)) {
     return numberOrBn;
   } else {
-    return new BN(Math.ceil(Number(numberOrBn) * Math.pow(10, decimals)));
+    return new BN(`${Math.ceil(Number(numberOrBn) * Math.pow(10, decimals))}`);
   }
 }
 
