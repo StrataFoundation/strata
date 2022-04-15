@@ -1,8 +1,12 @@
-import {
-  DataV2
-} from "@metaplex-foundation/mpl-token-metadata";
+import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
 import { BorshAccountsCoder, Provider } from "@project-serum/anchor";
-import { ASSOCIATED_TOKEN_PROGRAM_ID, NATIVE_MINT, Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  NATIVE_MINT,
+  Token,
+  TOKEN_PROGRAM_ID,
+  u64,
+} from "@solana/spl-token";
 import { Finality, Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
 import {
   ExponentialCurveConfig,
@@ -10,15 +14,20 @@ import {
   ICreateTokenBondingOutput,
   ICurveConfig,
   ITokenBonding,
-  SplTokenBonding, TimeDecayExponentialCurveConfig,
-  toBN
+  SplTokenBonding,
+  TimeDecayExponentialCurveConfig,
+  toBN,
 } from "@strata-foundation/spl-token-bonding";
 import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
 import {
   Attribute,
   BigInstructionResult,
   createMintInstructions,
-  getMintInfo, getTokenAccount, InstructionResult, percent, SplTokenMetadata
+  getMintInfo,
+  getTokenAccount,
+  InstructionResult,
+  percent,
+  SplTokenMetadata,
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
 import bs58 from "bs58";
@@ -653,7 +662,7 @@ export class MarketplaceSdk {
 
     let curve = bondingArgs?.curve;
     if (price) {
-      const feeModifier = iAmAFreeloader ? 1 : (1 - roundPercent(protocolFee));
+      const feeModifier = iAmAFreeloader ? 1 : 1 - roundPercent(protocolFee);
       const {
         instructions: curveInstructions,
         signers: curveSigners,
@@ -682,7 +691,13 @@ export class MarketplaceSdk {
       curveAuthority: seller,
       targetMint,
       mintCap: quantity
-        ? new BN(quantity * Math.pow(10, bondingArgs?.targetMintDecimals || 0))
+        ? new BN(
+            (
+              quantity * Math.pow(10, bondingArgs?.targetMintDecimals || 0)
+            ).toLocaleString("fullwide", {
+              useGrouping: false,
+            })
+          )
         : undefined,
       ignoreExternalReserveChanges: true,
       ignoreExternalSupplyChanges: true,
@@ -899,7 +914,7 @@ export class MarketplaceSdk {
     }
     const instructions = [];
     const signers = [];
-    const feeModifier = iAmAFreeloader ? 1 : (1 - roundPercent(protocolFee));
+    const feeModifier = iAmAFreeloader ? 1 : 1 - roundPercent(protocolFee);
     const {
       reserves: initialReservesPad,
       supply: initialSupplyPad,
@@ -1227,4 +1242,3 @@ export class MarketplaceSdk {
 function roundPercent(protocolFee: number) {
   return (percent(protocolFee) || 0) / 4294967295;
 }
-
