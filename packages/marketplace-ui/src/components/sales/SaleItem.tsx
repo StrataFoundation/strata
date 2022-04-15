@@ -190,58 +190,66 @@ export const SaleItem = ({
                   </Text>
                 </HStack>
               </Stack>
-              <Text color="gray.600">{description}</Text>
+              <Text color="gray.600" whiteSpace="pre-line">
+                {description}
+              </Text>
             </Stack>
             <HStack
               spacing={{ base: "4", md: "8" }}
               align="flex-end"
               justify="space-evenly"
             >
-              { mintCapNumber && <Box flex="1">
-                <FormControl>
-                  <FormLabel fontSize="sm" fontWeight="medium">
-                    <HStack spacing="2">
-                      <Text>Available</Text>
-                      {mintCapNumber && remainingAmount < mintCapNumber / 4 && (
-                        <HStack spacing="1">
-                          <Icon as={FiClock} />
-                          <Text fontSize="xs" fontWeight="medium">
-                            Low stock
-                          </Text>
-                        </HStack>
-                      )}
-                    </HStack>
-                  </FormLabel>
-                  <Flex
-                    borderRadius="base"
-                    px="2"
-                    py="0.705rem"
-                    borderWidth="1px"
-                    justifyContent="space-between"
-                  >
-                    <Center minW="8">
-                      <Text as="span" fontWeight="semibold" userSelect="none">
-                        {bondingLoading ? (
-                          <Spinner size="xs" />
-                        ) : (
-                          <span>
-                            {remainingAmount} / {mintCapNumber || 0}
-                          </span>
+              {mintCapNumber && (
+                <Box flex="1">
+                  <FormControl>
+                    <FormLabel fontSize="sm" fontWeight="medium">
+                      <HStack spacing="2">
+                        <Text>Available</Text>
+                        {mintCapNumber && remainingAmount < mintCapNumber / 4 && (
+                          <HStack spacing="1">
+                            <Icon as={FiClock} />
+                            <Text fontSize="xs" fontWeight="medium">
+                              Low stock
+                            </Text>
+                          </HStack>
                         )}
-                      </Text>
-                    </Center>
-                  </Flex>
-                </FormControl>
-              </Box> }
+                      </HStack>
+                    </FormLabel>
+                    <Flex
+                      borderRadius="base"
+                      px="2"
+                      py="0.705rem"
+                      borderWidth="1px"
+                      justifyContent="space-between"
+                    >
+                      <Center minW="8">
+                        <Text as="span" fontWeight="semibold" userSelect="none">
+                          {bondingLoading ? (
+                            <Spinner size="xs" />
+                          ) : (
+                            <span>
+                              {remainingAmount} / {mintCapNumber || 0}
+                            </span>
+                          )}
+                        </Text>
+                      </Center>
+                    </Flex>
+                  </FormControl>
+                </Box>
+              )}
               <Box flex="1">
                 <QuantityPicker
                   defaultValue={1}
                   max={
-                    remainingAmount > 0 ? Math.round(remainingAmount / 2) : mintCapNumber ? 0 : Infinity
+                    remainingAmount > 0
+                      ? Math.round(remainingAmount / 2)
+                      : mintCapNumber
+                      ? 0
+                      : Infinity
                   }
                   onChange={(num) => setQty(num)}
                 />
-              </Box> 
+              </Box>
             </HStack>
             <Stack spacing="3">
               {error && (

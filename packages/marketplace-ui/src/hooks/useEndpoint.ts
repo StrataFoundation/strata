@@ -22,7 +22,7 @@ export function getClusterAndEndpoint(clusterOrEndpoint: string): {
 } {
   if (clusterOrEndpoint) {
     if (clusterOrEndpoint.startsWith("http")) {
-      if (clusterOrEndpoint.includes("devnet")) {
+      if (clusterOrEndpoint.includes("dev")) {
         return { cluster: "devnet", endpoint: clusterOrEndpoint };
       } else {
         return { cluster: "mainnet-beta", endpoint: clusterOrEndpoint };
@@ -33,11 +33,21 @@ export function getClusterAndEndpoint(clusterOrEndpoint: string): {
           cluster: "localnet",
           endpoint: clusterApiUrl(clusterOrEndpoint as WalletAdapterNetwork),
         };
+      } else if (clusterOrEndpoint === "devnet") {
+        return {
+          cluster: "devnet",
+          endpoint: "https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/",
+        };
+      } else if (clusterOrEndpoint === "mainnet-beta") {
+        return {
+          cluster: "mainnet-beta",
+          endpoint: "https://strataprotocol.genesysgo.net",
+        };
       }
 
       return {
         cluster: clusterOrEndpoint,
-        endpoint: clusterApiUrl(clusterOrEndpoint as WalletAdapterNetwork),
+        endpoint: "http://localhost:8899",
       };
     }
   }

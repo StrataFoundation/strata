@@ -37,6 +37,7 @@ export const WalletModalButton: FC<ButtonProps> = ({
 
   const { cluster, setClusterOrEndpoint } = useEndpoint();
 
+  console.log(cluster)
   return (
     <ButtonGroup
       marginTop="auto"
@@ -83,7 +84,7 @@ export const WalletModalButton: FC<ButtonProps> = ({
             <MenuItemOption
               _focus={{ backgroundColor: "primary.300" }}
               _hover={{ backgroundColor: "primary.500" }}
-              value={"https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/"}
+              value={WalletAdapterNetwork.Devnet}
             >
               Devnet
             </MenuItemOption>
