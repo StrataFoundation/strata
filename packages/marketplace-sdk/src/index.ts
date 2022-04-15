@@ -1099,7 +1099,14 @@ export class MarketplaceSdk {
         retrievalInstrs.output.baseStorage,
         sourceAcctAta.owner,
         [],
-        new u64(supplyAmount * Math.pow(10, supplyMintAcc.decimals))
+        new u64(
+          (supplyAmount * Math.pow(10, supplyMintAcc.decimals)).toLocaleString(
+            "fullwide",
+            {
+              useGrouping: false,
+            }
+          )
+        )
       )
     );
     signers.push(...retrievalInstrs.signers);
