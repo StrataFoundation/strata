@@ -70,7 +70,12 @@ export function toBN(
   if (BN.isBN(numberOrBn)) {
     return numberOrBn;
   } else {
-    return new BN(`${Math.ceil(Number(numberOrBn) * Math.pow(10, decimals))}`);
+    return new BN(
+      Math.ceil(Number(numberOrBn) * Math.pow(10, decimals)).toLocaleString(
+        "fullwide",
+        { useGrouping: false }
+      )
+    );
   }
 }
 

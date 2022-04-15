@@ -123,7 +123,12 @@ async function createFullyManaged(
       ata,
       me,
       [],
-      new u64(`${values.supply * Math.pow(10, values.decimals)}`)
+      new u64(
+        (values.supply * Math.pow(10, values.decimals)).toLocaleString(
+          "fullwide",
+          { useGrouping: false }
+        )
+      )
     )
   );
 
