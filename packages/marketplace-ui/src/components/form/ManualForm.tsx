@@ -1,4 +1,13 @@
-import { Alert, Button, Flex, Input, Switch, VStack } from "@chakra-ui/react";
+import {
+  Alert,
+  Button,
+  Flex,
+  Input,
+  Switch,
+  VStack,
+  NumberInput,
+  NumberInputField,
+} from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
 import {
@@ -206,12 +215,9 @@ export const ManualForm: React.FC = () => {
               label="Supply"
               errors={errors}
             >
-              <Input
-                type="number"
-                min={0}
-                step={0.0000000001}
-                {...register("supply")}
-              />
+              <NumberInput precision={0} step={1} min={1}>
+                <NumberInputField {...register("supply")} />
+              </NumberInput>
             </FormControlWithError>
             <FormControlWithError
               id="keepMintAuthority"
