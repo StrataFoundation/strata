@@ -83,7 +83,7 @@ export const WalletModalButton: FC<ButtonProps> = ({
             <MenuItemOption
               _focus={{ backgroundColor: "primary.300" }}
               _hover={{ backgroundColor: "primary.500" }}
-              value={WalletAdapterNetwork.Devnet}
+              value={"https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/"}
             >
               Devnet
             </MenuItemOption>
