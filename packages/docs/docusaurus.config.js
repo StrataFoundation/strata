@@ -10,7 +10,11 @@ const plantuml = require("@akebifiky/remark-simple-plantuml");
 const config = {
   title: "Strata Protocol",
   tagline: "Launch a token around a person, idea, or collective in minutes",
-  url: "https://strataprotocol.com",
+  url: process.env.DOCS_ONLY
+    ? "https://docs.strataprotocol.com"
+    : process.env.BLOG_ONLY
+    ? "https://blog.strataprotocol.com"
+    : "https://strataprotocol.com",
   baseUrl: "/",
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
@@ -22,27 +26,33 @@ const config = {
       "@docusaurus/preset-classic",
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
-        docs: {
-          remarkPlugins: [math, plantuml],
-          rehypePlugins: [katex],
-          sidebarPath: require.resolve("./sidebars.js"),
-          // Please change this to your repo.
-          editUrl:
-            "https://github.com/StrataFoundation/strata/edit/master/packages/docs",
-          ...(process.env.DOCS_ONLY ? { routeBasePath: "/" } : {}),
+        sitemap: {
+          changefreq: "weekly",
+          priority: 0.5,
         },
+        docs: process.env.BLOG_ONLY
+          ? false
+          : {
+              remarkPlugins: [math, plantuml],
+              rehypePlugins: [katex],
+              sidebarPath: require.resolve("./sidebars.js"),
+              // Please change this to your repo.
+              editUrl:
+                "https://github.com/StrataFoundation/strata/edit/master/packages/docs",
+              routeBasePath: process.env.DOCS_ONLY ? "/" : "docs",
+            },
         blog: process.env.DOCS_ONLY
           ? false
           : {
-              blogSidebarTitle: "Posts",
-              blogSidebarCount: "ALL",
               remarkPlugins: [math, plantuml],
               rehypePlugins: [katex],
+              blogSidebarTitle: "All our posts",
+              blogSidebarCount: "ALL",
               showReadingTime: true,
               // Please change this to your repo.
               editUrl:
                 "https://github.com/StrataFoundation/strata/edit/master/packages/docs/blog",
-              ...(process.env.BLOG_ONLY ? { routeBasePath: "/" } : {}),
+              routeBasePath: process.env.BLOG_ONLY ? "/" : "blog",
             },
         theme: {
           customCss: require.resolve("./src/css/custom.css"),
@@ -103,6 +113,21 @@ const config = {
         out: "api/marketplace-ui",
       },
     ],
+    [
+      "@docusaurus/plugin-client-redirects",
+      {
+        redirects: [
+          ...(process.env.BLOG_ONLY
+            ? [
+                {
+                  to: "/how-to-create-a-solana-token-on-strata",
+                  from: "/create-a-token",
+                },
+              ]
+            : []),
+        ],
+      },
+    ],
   ],
   stylesheets: [
     {
@@ -116,14 +141,18 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
-      googleAnalytics: {
-        trackingID: process.env.GOOGLE_ANALYTICS,
-        anonymizeIP: true,
-      },
-      gtag: {
-        trackingID: process.env.GOOGLE_ANALYTICS,
-        anonymizeIP: true,
-      },
+      ...(process.env.GOOGLE_ANALYTICS
+        ? {
+            googleAnalytics: {
+              trackingID: process.env.GOOGLE_ANALYTICS,
+              anonymizeIP: true,
+            },
+            gtag: {
+              trackingID: process.env.GOOGLE_ANALYTICS,
+              anonymizeIP: true,
+            },
+          }
+        : {}),
       liveCodeBlock: {
         /**
          * The position of the live playground, above or under the editor
