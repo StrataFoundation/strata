@@ -101,8 +101,8 @@ export const SaleItem = ({
   const total = pricing?.buyTargetAmount(Number(qty) || 1);
   const notEnoughFunds = (balance || 0) < (total || 0);
   const passedMintCap =
-    mintCapNumber && (targetSupplyNumber || 0) >= (mintCapNumber);
-  const remainingAmount = mintCapNumber ? mintCapNumber - (targetSupplyNumber || 0) : Infinity;
+    mintCapNumber && ((targetSupplyNumber || 0) >= (mintCapNumber || 0));
+  const remainingAmount = (mintCapNumber || 0) - (targetSupplyNumber || 0);
 
   const isAdmin =
     publicKey &&
@@ -197,7 +197,7 @@ export const SaleItem = ({
               align="flex-end"
               justify="space-evenly"
             >
-              <Box flex="1">
+              { mintCapNumber && <Box flex="1">
                 <FormControl>
                   <FormLabel fontSize="sm" fontWeight="medium">
                     <HStack spacing="2">
@@ -225,23 +225,23 @@ export const SaleItem = ({
                           <Spinner size="xs" />
                         ) : (
                           <span>
-                            {remainingAmount} / {mintCapNumber ? mintCapNumber : Infinity}
+                            {remainingAmount} / {mintCapNumber || 0}
                           </span>
                         )}
                       </Text>
                     </Center>
                   </Flex>
                 </FormControl>
-              </Box>
+              </Box> }
               <Box flex="1">
                 <QuantityPicker
                   defaultValue={1}
                   max={
-                    remainingAmount > 0 ? Math.round(remainingAmount / 2) : 0
+                    remainingAmount > 0 ? Math.round(remainingAmount / 2) : mintCapNumber ? 0 : Infinity
                   }
                   onChange={(num) => setQty(num)}
                 />
-              </Box>
+              </Box> 
             </HStack>
             <Stack spacing="3">
               {error && (
