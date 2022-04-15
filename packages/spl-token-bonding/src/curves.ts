@@ -28,7 +28,7 @@ export function fromCurve(
   curve: any,
   baseAmount: number,
   targetSupply: number,
-  goLiveUnixTime: number,
+  goLiveUnixTime: number
 ): IPricingCurve {
   switch (Object.keys(curve.definition)[0]) {
     case "timeV0":
@@ -36,8 +36,8 @@ export function fromCurve(
         curve,
         baseAmount,
         targetSupply,
-        goLiveUnixTime
-      })
+        goLiveUnixTime,
+      });
   }
 
   throw new Error("Curve not found");
@@ -67,7 +67,7 @@ export interface IPricingCurve {
 }
 
 type TimeCurveArgs = {
-  curve: any,
+  curve: any;
   baseAmount: number;
   targetSupply: number;
   goLiveUnixTime: number;
@@ -111,7 +111,7 @@ export class TimeCurve implements IPricingCurve {
     curve,
     baseAmount,
     targetSupply,
-    goLiveUnixTime
+    goLiveUnixTime,
   }: TimeCurveArgs) {
     this.curve = curve;
     this.baseAmount = baseAmount;
@@ -406,12 +406,12 @@ export class ExponentialCurve extends BaseExponentialCurve {
     goLiveUnixTime: number = now()
   ) {
     super(
-      curve.c.toNumber() / 1000000000000,
+      +curve.c.toString() / 1000000000000,
       baseAmount,
       targetSupply,
       goLiveUnixTime
     );
-    this.b = curve.b.toNumber() / 1000000000000;
+    this.b = +curve.b.toString() / 1000000000000;
     this._k = curve.pow / curve.frac;
     this.pow = curve.pow;
     this.frac = curve.frac;
@@ -443,14 +443,14 @@ export class TimeDecayExponentialCurve extends BaseExponentialCurve {
     goLiveUnixTime: number
   ) {
     super(
-      curve.c.toNumber() / 1000000000000,
+      +curve.c.toString() / 1000000000000,
       baseAmount,
       targetSupply,
       goLiveUnixTime
     );
-    this.k1 = curve.k1.toNumber() / 1000000000000;
-    this.k0 = curve.k0.toNumber() / 1000000000000;
-    this.d = curve.d.toNumber() / 1000000000000;
+    this.k1 = +curve.k1.toString() / 1000000000000;
+    this.k0 = +curve.k0.toString() / 1000000000000;
+    this.d = +curve.d.toString() / 1000000000000;
     this.interval = curve.interval;
 
     this.baseAmount = baseAmount;
