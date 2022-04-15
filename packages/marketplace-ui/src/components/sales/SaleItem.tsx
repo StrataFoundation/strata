@@ -100,8 +100,9 @@ export const SaleItem = ({
   const price = pricing?.buyTargetAmount(1);
   const total = pricing?.buyTargetAmount(Number(qty) || 1);
   const notEnoughFunds = (balance || 0) < (total || 0);
-  const passedMintCap = (targetSupplyNumber || 0) >= (mintCapNumber || 0);
-  const remainingAmount = (mintCapNumber || 0) - (targetSupplyNumber || 0);
+  const passedMintCap =
+    mintCapNumber && (targetSupplyNumber || 0) >= (mintCapNumber);
+  const remainingAmount = mintCapNumber ? mintCapNumber - (targetSupplyNumber || 0) : Infinity;
 
   const isAdmin =
     publicKey &&
@@ -224,7 +225,7 @@ export const SaleItem = ({
                           <Spinner size="xs" />
                         ) : (
                           <span>
-                            {remainingAmount} / {mintCapNumber || 0}
+                            {remainingAmount} / {mintCapNumber ? mintCapNumber : Infinity}
                           </span>
                         )}
                       </Text>
