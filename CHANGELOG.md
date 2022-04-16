@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.5.2](https://github.com/StrataFoundation/strata/compare/v3.5.2-alpha.0...v3.5.2) (2022-04-16)
+
+  - Bugfix for when `baseAmount` is not passed to `tokenBondingSdk.swap`.
+
 ## [3.5.1](https://github.com/StrataFoundation/strata/compare/v3.5.0...v3.5.1) (2022-04-15)
 
 **Note:** Version bump only for package @strata-foundation/strata

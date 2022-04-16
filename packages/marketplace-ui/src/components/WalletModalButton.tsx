@@ -37,7 +37,6 @@ export const WalletModalButton: FC<ButtonProps> = ({
 
   const { cluster, setClusterOrEndpoint } = useEndpoint();
 
-  console.log(cluster)
   return (
     <ButtonGroup
       marginTop="auto"

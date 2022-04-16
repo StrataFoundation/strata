@@ -474,7 +474,7 @@ export interface ISwapArgs {
   /** The wallet funding the purchase. **Default:** Provider wallet */
   sourceAuthority?: PublicKey;
   /** The amount of baseMint to purchase with */
-  baseAmount: BN | number;
+  baseAmount?: BN | number;
   expectedOutputAmount?:
     | BN
     | number /** Expected output amount before slippage */;
@@ -492,7 +492,8 @@ export interface ISwapArgs {
   extraInstructions?: (args: {
     tokenBonding: ITokenBonding;
     isBuy: boolean;
-    amount: BN;
+    amount: BN | undefined;
+    desiredTargetAmount?: BN | number;
   }) => Promise<InstructionResult<null>>;
 }
 
@@ -1818,7 +1819,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     const isBuy = hierarchy.tokenBonding.targetMint.equals(targetMint);
     const arrHierarchy = hierarchy?.toArray() || [];
     const baseMintInfo = await getMintInfo(this.provider, baseMint);
-    let currAmount = toBN(baseAmount, baseMintInfo);
+    let currAmount = baseAmount ? toBN(baseAmount, baseMintInfo) : undefined;
 
     const hierarchyToTraverse = isBuy ? arrHierarchy.reverse() : arrHierarchy;
     const processedMints = [];
@@ -1886,7 +1887,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         ({ instructions, signers } = await this.sellInstructions({
           payer,
           sourceAuthority,
-          targetAmount: currAmount,
+          targetAmount: currAmount!,
           tokenBonding: tokenBonding.publicKey,
           expectedOutputAmount: isLastHop ? expectedOutputAmount : undefined,
           slippage,
@@ -1898,6 +1899,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         await extraInstructions({
           tokenBonding,
           amount: currAmount,
+          desiredTargetAmount,
           isBuy,
         });
 
@@ -1968,7 +1970,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
 
     const targetMintInfo = await getMintInfo(this.provider, targetMint);
     return {
-      targetAmount: toNumber(currAmount, targetMintInfo),
+      targetAmount: toNumber(currAmount!, targetMintInfo),
     };
   }
 
