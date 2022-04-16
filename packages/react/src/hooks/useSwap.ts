@@ -10,7 +10,7 @@ export type SwapArgs = {
   extraInstructions?: (args: {
     tokenBonding: ITokenBonding;
     isBuy: boolean;
-    amount: BN;
+    amount: BN | undefined;
   }) => Promise<InstructionResult<null>>;
 };
 
