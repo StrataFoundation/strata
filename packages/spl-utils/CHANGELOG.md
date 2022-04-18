@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.5.4](https://github.com/StrataFoundation/strata/compare/v3.5.2...v3.5.4) (2022-04-18)
+
+**Note:** Version bump only for package @strata-foundation/spl-utils
+
+
+
+
+
+## [3.5.3](https://github.com/StrataFoundation/strata/compare/v3.5.2...v3.5.3) (2022-04-18)
+
+**Note:** Version bump only for package @strata-foundation/spl-utils
+
+
+
+
+
 ## [3.4.5](https://github.com/StrataFoundation/strata/compare/v3.4.1...v3.4.5) (2022-03-29)
 
 **Note:** Version bump only for package @strata-foundation/spl-utils
