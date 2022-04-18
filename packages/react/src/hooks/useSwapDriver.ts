@@ -45,7 +45,7 @@ function getMints(hierarchy: BondingHierarchy | undefined): PublicKey[] {
   return [hierarchy.tokenBonding.baseMint, ...getMints(hierarchy.parent)];
 }
 
-async function getMissingSpace(
+export async function getMissingSpace(
   provider: Provider | undefined,
   hierarchy: BondingHierarchy | undefined,
   baseMint: PublicKey | undefined,
@@ -190,8 +190,6 @@ export const useSwapDriver = ({
     base &&
     target &&
     pricing?.hierarchy.lowest(base.publicKey, target.publicKey);
-  const targetMintSupply =
-    targetMintAcct && toNumber(targetMintAcct.supply, targetMintAcct);
   const targetBonding = lowMint && pricing?.hierarchy.findTarget(lowMint);
   const mintCap: number | undefined =
     targetBonding &&
@@ -199,7 +197,6 @@ export const useSwapDriver = ({
     (targetBonding.mintCap as BN | undefined) &&
     toNumber(targetBonding.mintCap as BN, targetMintAcct);
 
-  const isBuying = lowMint && lowMint.equals(target?.publicKey!);
   const { numRemaining } = useCapInfo(tokenBondingKey);
 
   const handleSubmit = async (values: ISwapFormValues) => {

@@ -113,9 +113,6 @@ export class AccountFetchCache {
       options?: SendOptions
     ) {
       const result = await oldSendTransaction(transaction, signers, options);
-      const writeableAccounts = getWriteableAccounts(
-        transaction.instructions
-      ).map((a) => a.toBase58());
       
       this.confirmTransaction(result, "finalized")
         .then(() => {
@@ -305,7 +302,7 @@ export class AccountFetchCache {
     const existingQuery = this.pendingCalls.get(address) as Promise<
       ParsedAccountBase<T>
     >;
-    if (existingQuery) {
+    if (!forceRequery && existingQuery) {
       return existingQuery;
     }
     const query = this.addToBatch(id).then((data) => {

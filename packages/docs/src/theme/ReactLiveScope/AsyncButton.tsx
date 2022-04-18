@@ -11,7 +11,7 @@ import { useProvider, useStrataSdks } from "@strata-foundation/react";
 import BN from "bn.js";
 import clsx from "clsx";
 import { parse } from "esprima";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { FaPlay } from "react-icons/fa";
 import ReactJson from "react-json-view";
 import { useVariablesContext } from "../Root/variables";
@@ -66,6 +66,7 @@ function recursiveTransformBN(
     } else if (value && (value as any)._bn) {
       acc[key] = new PublicKey(new BN((value as any)._bn, "hex")).toBase58();
     } else if (typeof value === "object" && value !== null) {
+      seen.set(args, null);
       acc[key] = recursiveTransformBN(value, seen);
     } else {
       acc[key] = value;
@@ -91,37 +92,41 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
   const { endpoint, setEndpoint } = useEndpoint();
 
   var vars = {}; // Outer variable, not stored.
-  async function exec(globalVariables: any) {
-    setRunningThisCommand(true);
-    try {
-      const walletAcct =
-        publicKey && (await connection.getAccountInfo(publicKey));
-      if (!walletAcct || walletAcct.lamports < 500000000) {
-        try {
-          publicKey && (await connection.requestAirdrop(publicKey, 1000000000));
-        } catch (e: any) {
-          // ignore. If we can't airdrop it's probably mainnet
+  const exec = useMemo(() => {
+    async function execInner(globalVariables: any) {
+      setRunningThisCommand(true);
+      try {
+        const walletAcct =
+          publicKey && (await connection.getAccountInfo(publicKey));
+        if (!walletAcct || walletAcct.lamports < 500000000) {
+          try {
+            publicKey &&
+              (await connection.requestAirdrop(publicKey, 1000000000));
+          } catch (e: any) {
+            // ignore. If we can't airdrop it's probably mainnet
+          }
         }
+        const injectedVars = {
+          provider,
+          ...sdks,
+          marketplaceSdk,
+          publicKey,
+          ...scope,
+          ...globalVariables,
+        };
+        await eval(wrapAndCollectVars(code, injectedVars));
+        setVariables(vars);
+        return {
+          ...globalVariables,
+          ...vars,
+        };
+      } finally {
+        setRunningThisCommand(false);
       }
-      const injectedVars = {
-        provider,
-        ...sdks,
-        marketplaceSdk,
-        publicKey,
-        ...scope,
-        ...globalVariables,
-      };
-      await eval(wrapAndCollectVars(code, injectedVars));
-      setVariables(vars);
-      return {
-        ...globalVariables,
-        ...vars,
-      };
-    } finally {
-      setRunningThisCommand(false);
     }
-  }
-
+    return execInner
+  }, [marketplaceSdk, provider, publicKey, sdks.tokenCollectiveSdk, sdks.tokenMetadataSdk, sdks.tokenBondingSdk]);
+ 
   async function wrappedExecWithDeps() {
     setError(undefined);
     setLoading(true);
@@ -136,7 +141,7 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
 
   useEffect(() => {
     register(name, deps.filter(Boolean), exec);
-  }, [publicKey, ...Object.values(sdks)]);
+  }, [publicKey, ...Object.values(sdks), marketplaceSdk]);
 
   useEffect(() => {
     if (error) {

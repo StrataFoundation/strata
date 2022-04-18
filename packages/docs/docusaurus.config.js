@@ -124,7 +124,16 @@ const config = {
                   from: "/create-a-token",
                 },
               ]
-            : []),
+            : [
+              {
+                from : "/marketplace/lbc",
+                to: "/launchpad/lbc"
+              },
+              {
+                from: "/marketplace/bounties",
+                to: "/launchpad/bounties"
+              }
+            ]),
         ],
       },
     ],

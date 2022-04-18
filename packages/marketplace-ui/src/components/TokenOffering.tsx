@@ -23,8 +23,10 @@ import {
 const identity = () => {};
 export const TokenOffering = ({
   mintKey,
+  showAttribution = true
 }: {
   mintKey: PublicKey | undefined;
+  showAttribution?: boolean;
 }) => {
   const { result: sellOnlyTokenBondingKey, error: keyError1 } =
     useTokenBondingKey(mintKey, 1);
@@ -105,6 +107,7 @@ export const TokenOffering = ({
 
   return (
     <SwapForm
+      showAttribution={showAttribution}
       isLoading={driverLoading || sellOnlyLoading}
       isSubmitting={submitting}
       {...swapProps}

@@ -249,6 +249,17 @@ interface ICreateRetrievalCurveForSetSupplyArgs {
   targetMint: PublicKey;
 }
 
+interface ICreateManualTokenArgs {
+  payer?: PublicKey;
+  /**
+   * Optional vanity keypair
+   */
+  mintKeypair?: Keypair;
+  decimals: number;
+  amount: number;
+  metadata: DataV2;
+}
+
 export class MarketplaceSdk {
   static FIXED_CURVE = "fixmyQQ8cCVFh8Pp5LwZg4N3rXkym7sUXmGehxHqTAS";
 
@@ -304,6 +315,67 @@ export class MarketplaceSdk {
     readonly tokenCollectiveSdk: SplTokenCollective,
     readonly tokenMetadataSdk: SplTokenMetadata
   ) {}
+
+  async createManualTokenInstructions({
+    mintKeypair = Keypair.generate(),
+    decimals,
+    metadata,
+    amount,
+    payer = this.provider.wallet.publicKey,
+  }: ICreateManualTokenArgs): Promise<InstructionResult<{ mint: PublicKey }>> {
+    const publicKey = this.provider.wallet.publicKey;;
+    var mint = mintKeypair.publicKey;
+    var instructions = [];
+    var ata = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      mint,
+      publicKey
+    );
+    instructions.push(
+      ...(await createMintInstructions(this.provider, publicKey, mint, 0, publicKey))
+    );
+    var metadataInstructions =
+      await this.tokenMetadataSdk.createMetadataInstructions({
+        mint,
+        authority: publicKey,
+        data: metadata
+      });
+    instructions.push(...metadataInstructions.instructions);
+    instructions.push(
+      Token.createAssociatedTokenAccountInstruction(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        mint,
+        ata,
+        publicKey,
+        publicKey
+      )
+    );
+    instructions.push(
+      Token.createMintToInstruction(
+        TOKEN_PROGRAM_ID,
+        mint,
+        ata,
+        publicKey,
+        [],
+        1000
+      )
+    );
+    return {
+      instructions,
+      signers: [mintKeypair],
+      output: { mint }
+    }
+  }
+
+  async createManualToken(
+    args: ICreateManualTokenArgs
+  ): Promise<{ mint: PublicKey }> {
+    const { instructions, signers, output } = await this.createManualTokenInstructions(args);
+    await this.tokenMetadataSdk.sendInstructions(instructions, signers, args.payer);
+    return output;;
+  }
 
   async createFixedCurve({
     keypair,
@@ -629,7 +701,7 @@ export class MarketplaceSdk {
     iAmAFreeloader,
     protocolFee = FIXED_CURVE_FEES,
   }: ICreateMarketItemArgs): Promise<
-    BigInstructionResult<{ tokenBonding: PublicKey }>
+    BigInstructionResult<{ tokenBonding: PublicKey, targetMint: PublicKey }>
   > {
     if (protocolFee == 0 && !iAmAFreeloader) {
       throw new Error(
@@ -716,6 +788,7 @@ export class MarketplaceSdk {
     return {
       output: {
         tokenBonding,
+        targetMint,
       },
       instructions: [instructions, tokenBondingInstructions],
       signers: [signers, tokenBondingSigners],
@@ -730,7 +803,7 @@ export class MarketplaceSdk {
   async createMarketItem(
     args: ICreateMarketItemArgs,
     finality?: Finality
-  ): Promise<{ tokenBonding: PublicKey }> {
+  ): Promise<{ tokenBonding: PublicKey; targetMint: PublicKey}> {
     return this.tokenBondingSdk.executeBig(
       this.createMarketItemInstructions(args),
       args.payer,
