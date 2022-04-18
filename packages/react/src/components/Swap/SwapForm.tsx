@@ -656,8 +656,11 @@ export const SwapForm = ({
               Trade
             </Button>
           </Box>
-          <Center fontSize="14px" color="gray.400">
-            Powered by <Link href="https://strataprotocol.com">Strata</Link>
+          <Center>
+            <HStack spacing={1} fontSize="14px">
+              <Text color="gray.400">Powered by</Text>
+              <Link href="https://strataprotocol.com">Strata</Link>
+            </HStack>
           </Center>
         </VStack>
       </form>
