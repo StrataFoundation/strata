@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.5.4](https://github.com/StrataFoundation/strata/compare/v3.5.2...v3.5.4) (2022-04-18)
+
+**Note:** Version bump only for package @strata-foundation/governance-cli
+
+
+
+
+
+## [3.5.3](https://github.com/StrataFoundation/strata/compare/v3.5.2...v3.5.3) (2022-04-18)
+
+**Note:** Version bump only for package @strata-foundation/governance-cli
+
+
+
+
+
 ## [3.5.1](https://github.com/StrataFoundation/strata/compare/v3.5.0...v3.5.1) (2022-04-15)
 
 **Note:** Version bump only for package @strata-foundation/governance-cli
