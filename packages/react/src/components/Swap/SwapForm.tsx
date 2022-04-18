@@ -19,6 +19,7 @@ import {
   ScaleFade,
   Text,
   Tooltip,
+  useColorModeValue,
   VStack,
 } from "@chakra-ui/react";
 import { Spinner } from "../Spinner";
@@ -87,6 +88,7 @@ export interface ISwapFormProps {
   mintCap?: number;
   numRemaining?: number;
   feeAmount?: number;
+  showAttribution?: boolean;
   extraTransactionInfo?: Omit<TransactionInfoArgs, "formRef">[];
 }
 
@@ -131,7 +133,8 @@ export const SwapForm = ({
   baseOptions,
   targetOptions,
   mintCap,
-  numRemaining
+  numRemaining,
+  showAttribution = true,
 }: ISwapFormProps) => {
   const formRef = useRef() as React.MutableRefObject<HTMLInputElement>;
   const { connected } = useWallet();
@@ -174,7 +177,7 @@ export const SwapForm = ({
   const targetBonding = lowMint && pricing?.hierarchy.findTarget(lowMint);
   const passedMintCap =
     typeof numRemaining !== "undefined" && numRemaining < bottomAmount;
-  
+
   const targetMintAcc = useMint(target?.publicKey);
   const baseMintAcc = useMint(base?.publicKey);
 
@@ -203,7 +206,7 @@ export const SwapForm = ({
     const interval = setInterval(updatePrice, 1000);
     return () => clearInterval(interval);
   }, [pricing, bottomAmount, topAmount, targetMintAcc, baseMintAcc]);
-  
+
   const handleTopChange = (value: number | undefined = 0) => {
     if (tokenBonding && pricing && base && target && value && +value >= 0) {
       setLastSet("top");
@@ -214,9 +217,19 @@ export const SwapForm = ({
         setInsufficientLiq(false);
         setValue(
           "bottomAmount",
-          +value == 0 ? 0 : roundToDecimals(amount, targetMintAcc ? targetMintAcc.decimals : 9)
+          +value == 0
+            ? 0
+            : roundToDecimals(
+                amount,
+                targetMintAcc ? targetMintAcc.decimals : 9
+              )
         );
-        setRate(`${roundToDecimals(amount / value, targetMintAcc ? targetMintAcc.decimals : 9)}`);
+        setRate(
+          `${roundToDecimals(
+            amount / value,
+            targetMintAcc ? targetMintAcc.decimals : 9
+          )}`
+        );
         setFee(`${feeAmount}`);
       }
     } else {
@@ -225,7 +238,6 @@ export const SwapForm = ({
   };
 
   const handleBottomChange = (value: number | undefined = 0) => {
-
     if (tokenBonding && pricing && base && target && value && +value >= 0) {
       let amount = Math.abs(
         pricing.swapTargetAmount(+value, target.publicKey, base.publicKey)
@@ -236,14 +248,26 @@ export const SwapForm = ({
         setInsufficientLiq(true);
       } else {
         setInsufficientLiq(false);
-        setValue("topAmount", +value == 0 ? 0 : roundToDecimals(amount, baseMintAcc ? baseMintAcc.decimals : 9));
-        setRate(`${roundToDecimals(value / amount, baseMintAcc ? baseMintAcc.decimals : 9)}`);
+        setValue(
+          "topAmount",
+          +value == 0
+            ? 0
+            : roundToDecimals(amount, baseMintAcc ? baseMintAcc.decimals : 9)
+        );
+        setRate(
+          `${roundToDecimals(
+            value / amount,
+            baseMintAcc ? baseMintAcc.decimals : 9
+          )}`
+        );
         setFee(`${feeAmount}`);
       }
     } else {
       manualResetForm();
     }
   };
+
+  const attColor = useColorModeValue("gray.400", "gray.200");
 
   const handleUseMax = () => {
     const amount = (ownedBase || 0) >= spendCap ? spendCap : ownedBase || 0;
@@ -656,12 +680,14 @@ export const SwapForm = ({
               Trade
             </Button>
           </Box>
-          <Center>
-            <HStack spacing={1} fontSize="14px">
-              <Text color="gray.400">Powered by</Text>
-              <Link href="https://strataprotocol.com">Strata</Link>
-            </HStack>
-          </Center>
+          {showAttribution && (
+            <Center>
+              <HStack spacing={1} fontSize="14px">
+                <Text color={attColor}>Powered by</Text>
+                <Link href="https://strataprotocol.com">Strata</Link>
+              </HStack>
+            </Center>
+          )}
         </VStack>
       </form>
     </Box>

@@ -106,7 +106,7 @@ export const LbcDisplay: NextPage = ({
                   tokenBondingKey={tokenBonding.publicKey}
                   useTokenOfferingCurve
                 />
-                <TokenOffering mintKey={mintKey} />
+                <TokenOffering mintKey={mintKey} showAttribution={false} />
                 <Branding />
               </VStack>
             )}
