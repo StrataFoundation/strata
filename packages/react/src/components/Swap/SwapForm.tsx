@@ -174,6 +174,9 @@ export const SwapForm = ({
   const targetBonding = lowMint && pricing?.hierarchy.findTarget(lowMint);
   const passedMintCap =
     typeof numRemaining !== "undefined" && numRemaining < bottomAmount;
+  
+  const targetMintAcc = useMint(target?.publicKey);
+  const baseMintAcc = useMint(base?.publicKey);
 
   const notLive =
     targetBonding &&
@@ -198,8 +201,8 @@ export const SwapForm = ({
 
   useEffect(() => {
     const interval = setInterval(updatePrice, 1000);
-    return () => clearInterval(interval)
-  }, [pricing, bottomAmount, topAmount])
+    return () => clearInterval(interval);
+  }, [pricing, bottomAmount, topAmount, targetMintAcc, baseMintAcc]);
   
   const handleTopChange = (value: number | undefined = 0) => {
     if (tokenBonding && pricing && base && target && value && +value >= 0) {
@@ -209,8 +212,11 @@ export const SwapForm = ({
         setInsufficientLiq(true);
       } else {
         setInsufficientLiq(false);
-        setValue("bottomAmount", +value == 0 ? 0 : roundToDecimals(amount, 9));
-        setRate(`${roundToDecimals(amount / value, 9)}`);
+        setValue(
+          "bottomAmount",
+          +value == 0 ? 0 : roundToDecimals(amount, targetMintAcc ? targetMintAcc.decimals : 9)
+        );
+        setRate(`${roundToDecimals(amount / value, targetMintAcc ? targetMintAcc.decimals : 9)}`);
         setFee(`${feeAmount}`);
       }
     } else {
@@ -230,8 +236,8 @@ export const SwapForm = ({
         setInsufficientLiq(true);
       } else {
         setInsufficientLiq(false);
-        setValue("topAmount", +value == 0 ? 0 : roundToDecimals(amount, 9));
-        setRate(`${roundToDecimals(value / amount, 9)}`);
+        setValue("topAmount", +value == 0 ? 0 : roundToDecimals(amount, baseMintAcc ? baseMintAcc.decimals : 9));
+        setRate(`${roundToDecimals(value / amount, baseMintAcc ? baseMintAcc.decimals : 9)}`);
         setFee(`${feeAmount}`);
       }
     } else {
@@ -295,7 +301,9 @@ export const SwapForm = ({
                 type="number"
                 fontSize="2xl"
                 fontWeight="semibold"
-                step={0.0000000001}
+                step={
+                  1 * Math.pow(10, baseMintAcc ? -baseMintAcc.decimals : -9)
+                }
                 min={0}
                 _placeholder={{ color: "gray.200" }}
                 {...register("topAmount", {
@@ -413,7 +421,9 @@ export const SwapForm = ({
                 type="number"
                 fontSize="2xl"
                 fontWeight="semibold"
-                step={0.0000000001}
+                step={
+                  1 * Math.pow(10, targetMintAcc ? -targetMintAcc.decimals : -9)
+                }
                 min={0}
                 _placeholder={{ color: "gray.200" }}
                 {...register("bottomAmount", {
@@ -646,6 +656,9 @@ export const SwapForm = ({
               Trade
             </Button>
           </Box>
+          <Center fontSize="14px" color="gray.400">
+            Powered by <Link href="https://strataprotocol.com">Strata</Link>
+          </Center>
         </VStack>
       </form>
     </Box>

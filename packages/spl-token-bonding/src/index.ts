@@ -495,6 +495,11 @@ export interface ISwapArgs {
     amount: BN | undefined;
     desiredTargetAmount?: BN | number;
   }) => Promise<InstructionResult<null>>;
+
+  /**
+   * Number of times to retry the checks for a change in balance. Default: 5
+   */
+  balanceCheckTries?: number;
 }
 
 export interface ISellArgs {
@@ -1785,6 +1790,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     desiredTargetAmount,
     expectedOutputAmount,
     slippage,
+    balanceCheckTries = 5,
     extraInstructions = () =>
       Promise.resolve({
         instructions: [],
@@ -1932,7 +1938,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       processedMints.push(currMint);
 
       async function newBalance(tries: number = 0): Promise<BN> {
-        if (tries >= 4) {
+        if (tries > balanceCheckTries) {
           return new BN(0);
         }
         let postBalance = await getBalance();

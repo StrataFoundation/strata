@@ -56,6 +56,7 @@ export const Wallet: FC = ({ children }) => {
           // @ts-ignore
           getToken: getToken(process.env.GET_TOKEN_ENDPOINT, endpoint),
         }),
+        commitment: "confirmed"
       }}
     >
       <WalletProvider wallets={wallets} autoConnect>

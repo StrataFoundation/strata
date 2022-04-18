@@ -89,6 +89,7 @@ export const getToken = async (url: string) => {
         fetchMiddleware: tokenAuthFetchMiddleware({
           getToken,
         }),
+        commitment: "confirmed"
       }}
     >
      ...

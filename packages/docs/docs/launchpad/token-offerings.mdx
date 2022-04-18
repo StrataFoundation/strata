@@ -1,0 +1,221 @@
+---
+sidebar_position: 3
+---
+
+# Token Offerings
+
+A bonding curve accepts tokens in exchange for minting new tokens.
+
+What then, if you either (a) do not want to give up mint authority or (b) want 
+to sell some tokens that have already been minted? This is where token offerings come into play
+
+In a token offering, a system of two bonding curves is created
+
+  * A bonding curve that accepts the base mint (i.e. sol) and mints an intermediary token
+  * A bonding curve that allows you to burn the intermediary token in exchange for the target token
+
+All intermediary tokens are created with the same token metadata, which allows Strata sdk to
+recognize that it should search for a burn bonding curve.
+
+
+## Create a Token Offering
+
+Creating a token offering comes in two steps. First, we create a sale using a normal bonding curve. 
+Then, we create the second bonding curve for retrieval. The second set of instructions will transfer the
+tokens being sold into the secondary bonding curve.
+
+First, create a token which we plan to offer:
+
+```jsx async name=sell_token
+var { mint } = await marketplaceSdk.createManualToken({
+  metadata: new DataV2({
+    // Max name len 32
+    name: "Token we are Selling",
+    symbol: "weSELL",
+    uri: "",
+    sellerFeeBasisPoints: 0,
+    creators: null,
+    collection: null,
+    uses: null,
+  }),
+  decimals: 0,
+  amount: 1000,
+})
+```
+
+Now, let's sell 100 of those tokens for 0.01 SOL.
+
+```jsx async name=create deps=sell_token
+var marketItemInstrs = await marketplaceSdk.createMarketItemInstructions({
+  metadata: new DataV2({
+    // Max name len 32
+    name: "Intermediary Token",
+    symbol: "inter",
+    uri: "",
+    sellerFeeBasisPoints: 0,
+    creators: null,
+    collection: null,
+    uses: null,
+  }),
+  quantity: 10,
+  price: 0.01,
+  baseMint: NATIVE_MINT,
+  bondingArgs: {
+    targetMintDecimals: 0,
+  },
+});
+var retrievalInstrs =
+    await marketplaceSdk.createRetrievalCurveForSetSupplyInstructions({
+      reserveAuthority: publicKey,
+      supplyMint: mint,
+      supplyAmount: 100,
+      targetMint: marketItemInstrs.output.targetMint,
+    });
+await sendMultipleInstructions(
+  marketplaceSdk.tokenBondingSdk.errors || new Map(),
+  provider,
+  [...marketItemInstrs.instructions, retrievalInstrs.instructions],
+  [...marketItemInstrs.signers, retrievalInstrs.signers]
+);
+
+var retrievalBonding = retrievalInstrs.output.tokenBonding;
+```
+
+## Many to One Swap
+
+While only one bonding curve can own a given mint authority, there can be many bonding
+curves that allow burning of an intermediary token to get to a target token.
+
+This means that you can create systems that accept multiple tokens to purchase a single token. Note that these
+systems are buy only -- you cannot go in the reverse direction.
+
+Let's create three tokens:
+
+  * Offering Token: This is the token we are offering
+  * Token A
+  * Token B
+
+We will allow purchase of Offering Token with both Token A and Token B.
+Note that, while this is a lot of code, you can also do this on the launchpad at app.strataprotocol.com 
+by creating two separate fixed price token sales using Sell a Token.
+
+```jsx async name=three_tokens
+var offering = await marketplaceSdk.createManualToken({
+  metadata: new DataV2({
+    // Max name len 32
+    name: "Offering Token",
+    symbol: "OFF",
+    uri: "",
+    sellerFeeBasisPoints: 0,
+    creators: null,
+    collection: null,
+    uses: null,
+  }),
+  decimals: 0,
+  amount: 1000,
+});
+var a = await marketplaceSdk.createManualToken({
+  metadata: new DataV2({
+    name: "Token A",
+    symbol: "A",
+    uri: "",
+    sellerFeeBasisPoints: 0,
+    creators: null,
+    collection: null,
+    uses: null,
+  }),
+  decimals: 0,
+  amount: 1000,
+});
+var b = await marketplaceSdk.createManualToken({
+  metadata: new DataV2({
+    name: "Token B",
+    symbol: "B",
+    uri: "",
+    sellerFeeBasisPoints: 0,
+    creators: null,
+    collection: null,
+    uses: null,
+  }),
+  decimals: 0,
+  amount: 1000,
+});
+```
+
+Now, let's create a system where we can buy offering using both a and b:
+
+```jsx async name=three_tokens_sale deps=three_tokens
+var intermediaryMetadata = new DataV2({
+  // Max name len 32
+  name: "Intermediary Token",
+  symbol: "INTER",
+  uri: "",
+  sellerFeeBasisPoints: 0,
+  creators: null,
+  collection: null,
+  uses: null,
+});
+var marketItemInstrs1 = await marketplaceSdk.createMarketItemInstructions({
+  metadata: intermediaryMetadata,
+  quantity: 10,
+  price: 1,
+  baseMint: a.mint,
+  bondingArgs: {
+    targetMintDecimals: 0,
+  },
+});
+var retrievalInstrs1 =
+    await marketplaceSdk.createRetrievalCurveForSetSupplyInstructions({
+      reserveAuthority: publicKey,
+      supplyMint: offering.mint,
+      supplyAmount: 10,
+      targetMint: marketItemInstrs1.output.targetMint,
+    });
+var marketItemInstrs2 = await marketplaceSdk.createMarketItemInstructions({
+  metadata: intermediaryMetadata,
+  quantity: 10,
+  price: 2,
+  baseMint: b.mint,
+  bondingArgs: {
+    targetMintDecimals: 0,
+  },
+});
+var retrievalInstrs2 =
+    await marketplaceSdk.createRetrievalCurveForSetSupplyInstructions({
+      reserveAuthority: publicKey,
+      supplyMint: offering.mint,
+      supplyAmount: 10,
+      targetMint: marketItemInstrs2.output.targetMint,
+    });
+await sendMultipleInstructions(
+  marketplaceSdk.tokenBondingSdk.errors || new Map(),
+  provider,
+  [...marketItemInstrs1.instructions, retrievalInstrs1.instructions, ...marketItemInstrs2.instructions, retrievalInstrs2.instructions],
+  [...marketItemInstrs1.signers, retrievalInstrs1.signers, ...marketItemInstrs2.signers, retrievalInstrs2.signers]
+);
+```
+
+```jsx async deps=three_tokens_sale
+var basesAndBonding = [{
+  baseMint: a.mint,
+  tokenBonding: marketItemInstrs1.output.tokenBonding,
+},{
+  baseMint: b.mint,
+  tokenBonding: marketItemInstrs2.output.tokenBonding,
+}];
+var targetMint = offering.mint;
+```
+```jsx live
+function ManyToOne() {
+  var { basesAndBonding, targetMint } = useVariables();
+
+  if (basesAndBonding && targetMint) {
+    return <ManyToOneSwap
+      inputs={basesAndBonding}
+      targetMint={targetMint}
+    />
+  }
+
+  return <div>Please run the code block above</div>
+}
+```
