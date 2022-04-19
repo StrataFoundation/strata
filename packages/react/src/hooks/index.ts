@@ -44,6 +44,5 @@ export * from "./useUsdLocked";
 export * from "./useCapInfo";
 export * from "./useTokenBondingKey";
 export * from "./useBondedTokenPrice";
-export * from "./useBondedTokenPrice";
 export * from "./useJupiterPrice";
 export * from "./useManyToOneSwapDriver";
