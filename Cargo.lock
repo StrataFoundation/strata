@@ -1401,6 +1401,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "spl-token-conjoiner"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "proptest",
+ "spl-token",
+ "uint",
+]
+
+[[package]]
 name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
