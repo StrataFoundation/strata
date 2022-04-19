@@ -12,7 +12,7 @@ export const NetworkSelect = () => {
     <VStack mb={8} align="start">
       <Heading size="md">Network</Heading>
       <Select value={endpoint} onChange={(e) => setEndpoint(e.target.value)}>
-        <option value={clusterApiUrl(WalletAdapterNetwork.Devnet)}>
+        <option value={"https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/"}>
           Devnet
         </option>
         <option value={"https://strataprotocol.genesysgo.net"}>Mainnet</option>

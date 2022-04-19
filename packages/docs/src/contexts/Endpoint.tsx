@@ -24,7 +24,7 @@ const EndpointContext = createContext<IEndpointContextState>(
 
 const EndpointProvider: FC<IEndpointProviderProps> = ({
   children,
-  initialEndpoint = clusterApiUrl(WalletAdapterNetwork.Devnet),
+  initialEndpoint = "https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899",
 }) => {
   const [endpoint, setEndpoint] = useState<string>(initialEndpoint);
 

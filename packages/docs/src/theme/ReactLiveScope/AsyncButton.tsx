@@ -6,7 +6,7 @@ import {
   WalletModalProvider,
   WalletMultiButton,
 } from "@solana/wallet-adapter-react-ui";
-import { PublicKey } from "@solana/web3.js";
+import { Connection, PublicKey } from "@solana/web3.js";
 import { useProvider, useStrataSdks } from "@strata-foundation/react";
 import BN from "bn.js";
 import clsx from "clsx";
@@ -87,7 +87,6 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
   const { connected, publicKey } = useWallet();
   const sdks = useStrataSdks();
   const { marketplaceSdk } = useMarketplaceSdk();
-  const { connection } = useConnection();
   const { provider } = useProvider();
   const { endpoint, setEndpoint } = useEndpoint();
 
@@ -95,6 +94,7 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
   const exec = useMemo(() => {
     async function execInner(globalVariables: any) {
       setRunningThisCommand(true);
+      const connection = new Connection(clusterApiUrl(WalletAdapterNetwork.Devnet))
       try {
         const walletAcct =
           publicKey && (await connection.getAccountInfo(publicKey));
@@ -157,7 +157,7 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
       <div className={styles.container}>
         <button
           onClick={() => {
-            setEndpoint(clusterApiUrl(WalletAdapterNetwork.Devnet));
+            setEndpoint("https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899");
           }}
           className="white button button--primary"
         >
