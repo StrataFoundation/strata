@@ -31,6 +31,8 @@ import {
   useTokenBonding,
   useTokenMetadata,
   useTokenRef,
+  useBondedTokenPrice,
+  useErrorHandler,
 } from "@strata-foundation/react";
 import {
   TimeDecayExponentialCurveConfig,
@@ -96,6 +98,8 @@ function ManyToOneSwap(props) {
 
 // Add react-live imports you need here
 const ReactLiveScope = {
+  useErrorHandler,
+  useBondedTokenPrice,
   MintLayout,
   createMintInstructions,
   ManyToOneSwap,

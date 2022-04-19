@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [UNRELEASED]
+
+### Added
+
+  * `useBondedTokenPrice` to get the price of a bonded token in terms of a `priceToken`. For example, to price a bonded token in usdc (where possible)
+  * `useJupiterPrice` use pricing information from jup.ag
+
+### Changed
+
+  * Primary pricing goes through jup.ag instead of coingecko.
+
 ## [3.5.4](https://github.com/StrataFoundation/strata/compare/v3.5.2...v3.5.4) (2022-04-18)
 
 ### Added

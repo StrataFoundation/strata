@@ -10,7 +10,10 @@ The Strata SDK comes with a suite of useful ReactJS hooks.
 
 You'll want to set up [solana-wallet-adapter](https://github.com/solana-labs/wallet-adapter), the Strata SDK Provider, and the Strata AccountProvider (an intelligent caching layer on Solana's rpc).
 
-You can also use our [create-react-app Strata Starter Repo](https://github.com/StrataFoundation/react-strata-starter)
+You can also use our [create-react-app Strata Starter Repo](https://github.com/StrataFoundation/react-strata-nextjs-starter)
+
+First, setup Solana wallet adapters:
+
 
 ```jsx
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
@@ -19,21 +22,16 @@ import {
   WalletProvider
 } from "@solana/wallet-adapter-react";
 import {
-  WalletModalProvider, WalletMultiButton
-} from '@solana/wallet-adapter-react-ui';
-import {
   LedgerWalletAdapter,
   PhantomWalletAdapter,
   SlopeWalletAdapter,
   SolflareWalletAdapter,
   SolletExtensionWalletAdapter,
   SolletWalletAdapter,
-  TorusWalletAdapter,
+  TorusWalletAdapter
 } from "@solana/wallet-adapter-wallets";
-import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
 import { clusterApiUrl } from "@solana/web3.js";
-import { ThemeProvider, AccountProvider, StrataSdksProvider, useBondingPricing, useStrataSdks, useTokenBonding, useTokenMetadata, useTokenRef, ErrorHandlerProvider } from "@strata-foundation/react";
-import React, { useMemo } from "react";
+import React, { FC, useMemo } from "react";
 
 // Default styles that can be overridden by your app
 require("@solana/wallet-adapter-react-ui/styles.css");
@@ -58,7 +56,7 @@ export const Wallet: FC = ({ children }) => {
       new SolletExtensionWalletAdapter({ network }),
     ],
     [network]
-  );  
+  );
 
   return (
     <ConnectionProvider endpoint={endpoint}>
@@ -68,19 +66,18 @@ export const Wallet: FC = ({ children }) => {
     </ConnectionProvider>
   );
 };
+```
 
-export default ({ children }) => (
-  <ThemeProvider>
-    <ErrorHandlerProvider>
-      <Wallet>
-        <StrataSdksProvider>
-          <AccountProvider>
-            {children}
-          </AccountProvider>
-        </StrataSdksProvider>
-      </Wallet>
-    </ErrorHandlerProvider>
-  </ThemeProvider>
+Then, setup Strata:
+
+```jsx
+import { StrataProviders } from "@strata-foundation/react";
+import { Wallet } from "./Wallet";
+
+export const App: FC = ({ children }) => (
+  <Wallet>
+    <StrataProviders>{children}</StrataProviders>
+  </Wallet>
 );
 ```
 
@@ -126,17 +123,24 @@ Now display it in React! We can use an advanced, pre-canned trade form:
 Or, we can render it ourselves using hooks:
 
 ```js
- import { useTokenMetadata, useTokenRef, useBondingPricing } from "@strata-foundation/react";
+ import { useBondedTokenPrice, useTokenMetadata, useTokenRef, useBondingPricing, useErrorHandler } from "@strata-foundation/react";
+ import { NATIVE_MINT } from "@solana/spl-token";
 ```
 ```jsx live
-
  function TokenDisplay() {
-   const { ownerTokenRef: ownerTokenRefKey, tokenBonding: tokenBondingKey  } = useVariables(); // Getting tokenBonding from above
-   const { info: ownerTokenRef, loading } = useTokenRef(ownerTokenRefKey);
-   const { info: tokenBonding, loading: loadingTokenBonding } = useTokenBonding(tokenBondingKey);
-   const { image, metadata, loading: metaLoading } = useTokenMetadata(ownerTokenRef && ownerTokenRef.mint);
-   const { curve, loading: loadingPricing } = useBondingPricing(tokenBondingKey);
-   if (loading || metaLoading || loadingPricing || loadingTokenBonding) {
+   const { tokenBonding: tokenBondingKey  } = useVariables(); // Getting tokenBonding from above
+
+   const { pricing, tokenBonding, loading: loadingPricing, error } = useBondingPricing(tokenBondingKey);
+   const { image, metadata, loading: metaLoading } = useTokenMetadata(tokenBonding && tokenBonding.targetMint);
+   const { metadata: baseMetadata, loading: baseMetaLoading } = useTokenMetadata(tokenBonding && tokenBonding.baseMint);
+   const baseSymbol = baseMetadata && baseMetadata.data.symbol
+   const solPrice = useBondedTokenPrice(tokenBonding && tokenBonding.targetMint, NATIVE_MINT)
+
+   // Use strata error handler to show toast notifications
+   const { handleErrors } = useErrorHandler();
+   handleErrors(error)
+
+   if (metaLoading || loadingPricing || baseMetaLoading) {
      return <div>Loading...</div>
    }
 
@@ -146,15 +150,15 @@ Or, we can render it ourselves using hooks:
       <div><b>{metadata.data.name}</b></div>
       <div>{metadata.data.symbol}</div>
     </div> }
-    { curve && <div>
+    { pricing && <div>
       <div>
-        Current Price: { curve.current() }
+        Current Price: { pricing.current() } { baseSymbol }, or {solPrice} SOL
       </div>
       <div>
-        Value Locked: { curve.locked() }
+        Value Locked: { pricing.locked() } { baseSymbol }
       </div>
       <div>
-        Price to buy 10: { curve.buyTargetAmount(10, tokenBonding.buyBaseRoyaltyPercentage, tokenBonding.buyTargetRoyaltyPercentage) }
+        Price to buy 10: { pricing.buyTargetAmount(10) } {baseSymbol}
       </div>
     </div> }
    </div>
