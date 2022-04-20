@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 
 #[accounts]
 #[derive(Default)]
-pub struct TokenConjoinerV0 {
+pub struct FungibleEntanglerV0 {
   pub base_mint: Pubkey,
   pub target_mint: Pubkey,
   pub base_storage: Pubkey,

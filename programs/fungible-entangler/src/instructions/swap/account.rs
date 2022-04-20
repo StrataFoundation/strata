@@ -10,7 +10,7 @@ pub struct SwapV0<'info> {
     has_one = base_storage,
     has_one = target_storage,
   )]
-  pub token_conjoiner: Box<Account<'info, TokenConjoinerV0>>,
+  pub entangler: Box<Account<'info, FungibleEntanglerV0>>,
   pub base_mint: Box<Account<'info, Mint>>,
   pub target_mint: Box<Account<'info, Mint>>,
   #[account(mut)]

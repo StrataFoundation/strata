@@ -12,14 +12,13 @@ use instructions::*;
 declare_id!(TConj11111111111111111111111111111111111111);
 
 #[program]
-pub mod spl_token_conjoiner {
+pub mod fungible_entanlger {
     use super::*;
-    // fungible_entangler
-    pub fn initialize_token_conjoiner_v0(
-        ctx: Context<InitializeTokenConjoinerV0>,
-        args: InitializeTokenConjoinerV0Args,
+    pub fn initialize_fungible_entangler_v0(
+        ctx: Context<InitializeFungibleEntanglerV0>,
+        args: InitializeFungibleEntanglerV0Args,
     ) -> Result<()> {
-      instructions::initialize_token_conjoiner_v0::handler(ctx, args)
+      instructions::initialize_fungible_entangler_v0::handler(ctx, args)
     }
 
     pub fn swap_base_v0(

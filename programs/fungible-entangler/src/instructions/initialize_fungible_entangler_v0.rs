@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct InitializeTokenConjoinerV0Args {
+pub struct InitializeFungibleEntanglerV0Args {
   pub go_live_unix_time: i64,
   pub freeze_swap_base_unix_time: Option<i64>,
   pub freeze_swap_target_unix_time: Option<i64>,
@@ -11,18 +11,18 @@ pub struct InitializeTokenConjoinerV0Args {
 }
 
 #[derive(Accounts)]
-#[instruction(args: InitializeTokenConjoinerV0Args)]
-pub struct InitializeTokenConjoinerV0<'info> {
+#[instruction(args: InitializeFungibleEntanglerV0Args)]
+pub struct InitializeFungibleEntanglerV0<'info> {
   #[account(mut)] 
   pub payer: Signer<'info>,
   #[account(
     init, 
-    seeds = [b"token-conjoiner", base_mint.key().as_ref(), &args.index.to_le_bytes()],
+    seeds = [b"fungible-entangler", base_mint.key().as_ref(), &args.index.to_le_bytes()],
     bump,
     payer = payer,
     space = 512
   )]
-  pub token_conjoiner: Box<Account<'info, TokenConjoinerV0>>,
+  pub entangler: Box<Account<'info, FungibleEntanglerV0>>,
   // mints cant be same
   #[account(
     constraint = base_mint.is_initialized
@@ -33,7 +33,7 @@ pub struct InitializeTokenConjoinerV0<'info> {
   )]
   pub target_mint: Box<Account<'info, Mint>>,  
   // seeds
-  // make conjoiner auth on both storage accounts  
+  // make entangler auth on both storage accounts  
   #[account(
     init
   )]
@@ -50,20 +50,20 @@ pub struct InitializeTokenConjoinerV0<'info> {
 }
 
 pub fn handler(
-  ctx: Context<InitializeTokenConjoinerV0>,
-  args: InitializeTokenConjoinerV0Args,
+  ctx: Context<InitializeFungibleEntanglerV0>,
+  args: InitializeFungibleEntanglerV0Args,
 ) -> Result<()> {
-  let conjoiner = &mut ctx.accounts.token_conjoiner;
+  let entangler = &mut ctx.accounts.entangler;
 
-  conjoiner.created_at_unix_time = ctx.accounts.clock.unix_timestamp;
-  conjoiner.freeze_swap_base_unix_time = args.freeze_swap_base_unix_time;
-  conjoiner.freeze_swap_target_unix_time = args.freeze_swap_target_unix_time;
-  conjoiner.base_mint = ctx.accounts.base_mint.key();
-  conjoiner.target_mint = ctx.accounts.target_mint.key();
-  conjoiner.base_storage = ctx.accounts.base_storage.key();
-  conjoiner.target_storage = ctx.accounts.target_storage.key();
-  conjoiner.bump_seed = *ctx.bumps.get("token_conjoiner").unwrap();
-  conjoiner.index = args.index;
+  entangler.created_at_unix_time = ctx.accounts.clock.unix_timestamp;
+  entangler.freeze_swap_base_unix_time = args.freeze_swap_base_unix_time;
+  entangler.freeze_swap_target_unix_time = args.freeze_swap_target_unix_time;
+  entangler.base_mint = ctx.accounts.base_mint.key();
+  entangler.target_mint = ctx.accounts.target_mint.key();
+  entangler.base_storage = ctx.accounts.base_storage.key();
+  entangler.target_storage = ctx.accounts.target_storage.key();
+  entangler.bump_seed = *ctx.bumps.get("fungible_entangler").unwrap();
+  entangler.index = args.index;
 
   Ok(()) 
 }

@@ -1,5 +1,5 @@
 [package]
-name = "spl-token-conjoiner"
+name = "fungible-entangler"
 version = "0.1.0"
 description = "Created with Anchor"
 edition = "2018"
@@ -7,7 +7,7 @@ license = "AGPL-3.0-or-later"
 
 [lib]
 create-type = ["cdylib", "lib"]
-name = "spl_token_conjoiner"
+name = "fungible_entangler"
 
 [features]
 no-entrypoint = []
