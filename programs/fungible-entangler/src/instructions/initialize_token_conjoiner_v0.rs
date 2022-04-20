@@ -7,10 +7,7 @@ pub struct InitializeTokenConjoinerV0Args {
   pub go_live_unix_time: i64,
   pub freeze_swap_base_unix_time: Option<i64>,
   pub freeze_swap_target_unix_time: Option<i64>,
-  pub buy_frozen: bool,
-  pub sell_frozen: bool,
   pub index: u16,
-  pub bump_seed: u8,
 }
 
 #[derive(Accounts)]
@@ -22,12 +19,11 @@ pub struct InitializeTokenConjoinerV0<'info> {
     init, 
     seeds = [b"token-conjoiner", base_mint.key().as_ref(), &args.index.to_le_bytes()],
     bump,
-    // revisit constraints
-    // constraint = 
     payer = payer,
     space = 512
   )]
   pub token_conjoiner: Box<Account<'info, TokenConjoinerV0>>,
+  // mints cant be same
   #[account(
     constraint = base_mint.is_initialized
   )]
@@ -36,18 +32,14 @@ pub struct InitializeTokenConjoinerV0<'info> {
     constraint = target_mint.is_initialized
   )]
   pub target_mint: Box<Account<'info, Mint>>,  
+  // seeds
+  // make conjoiner auth on both storage accounts  
   #[account(
-    constraint = base_storage.mint == base_mint.key(),
-    constraint = base_storage.delegate.is_none(),
-    constraint = base_storage.close_authority.is_none(),
-    constraint = base_storage.owner == token_conjoiner.key()
+    init
   )]
   pub base_storage: Box<Account<'info, TokenAccount>>,
   #[account(
-    constraint = target_storage.mint == target_mint.key(),
-    constraint = target_storage.delegate.is_none(),
-    constraint = target_storage.close_authority.is_none(),
-    constraint = target_storage.owner == token_conjoiner.key()
+    init
   )]
   pub target_storage: Box<Account<'info, TokenAccount>>,
   
@@ -70,8 +62,6 @@ pub fn handler(
   conjoiner.target_mint = ctx.accounts.target_mint.key();
   conjoiner.base_storage = ctx.accounts.base_storage.key();
   conjoiner.target_storage = ctx.accounts.target_storage.key();
-  conjoiner.buy_frozen = args.buy_frozen;
-  conjoiner.sell_frozen = args.sell_frozen;
   conjoiner.bump_seed = *ctx.bumps.get("token_conjoiner").unwrap();
   conjoiner.index = args.index;
 

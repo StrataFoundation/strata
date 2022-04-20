@@ -1,6 +1,6 @@
 use super::{
   account::*,
-  arg::SwapArgs  
+  arg::SwapArgs
 };
 use crate::state::*;
 use anchor_lang::prelude::*;

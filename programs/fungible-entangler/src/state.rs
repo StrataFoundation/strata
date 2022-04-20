@@ -11,8 +11,6 @@ pub struct TokenConjoinerV0 {
   pub freeze_swap_base_unix_time: Option<i64>,
   pub freeze_swap_target_unix_time: Option<i64>,
   pub created_at_unix_time: i64,
-  pub swap_base_frozen: bool,
-  pub swap_target_frozen: bool,
 
   // Needed to derive the PDA of this instance
   pub index: u16,

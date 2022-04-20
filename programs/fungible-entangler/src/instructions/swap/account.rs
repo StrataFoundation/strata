@@ -5,7 +5,6 @@ use anchor_spl::token::{Token, TokenAccount};
 #[derive(Accounts)]
 pub struct SwapV0<'info> {
   #[account(
-    mut,
     has_one = base_mint,
     has_one = target_mint,
     has_one = base_storage,
@@ -13,7 +12,6 @@ pub struct SwapV0<'info> {
   )]
   pub token_conjoiner: Box<Account<'info, TokenConjoinerV0>>,
   pub base_mint: Box<Account<'info, Mint>>,
-  #[account(mut)]
   pub target_mint: Box<Account<'info, Mint>>,
   #[account(mut)]
   pub base_storage: Box<Account<'info, TokenAccount>>,

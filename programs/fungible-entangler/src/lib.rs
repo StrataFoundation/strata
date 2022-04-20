@@ -14,7 +14,7 @@ declare_id!(TConj11111111111111111111111111111111111111);
 #[program]
 pub mod spl_token_conjoiner {
     use super::*;
-
+    // fungible_entangler
     pub fn initialize_token_conjoiner_v0(
         ctx: Context<InitializeTokenConjoinerV0>,
         args: InitializeTokenConjoinerV0Args,
