@@ -3,6 +3,7 @@ use anchor_lang::prelude::*;
 #[accounts]
 #[derive(Default)]
 pub struct FungibleEntanglerV0 {
+  pub authority: Pubkey,
   pub base_mint: Pubkey,
   pub target_mint: Pubkey,
   pub base_storage: Pubkey,
@@ -18,3 +19,5 @@ pub struct FungibleEntanglerV0 {
   pub base_storage_bump_seed: u8,
   pub target_storage_bump_seed: u8,
 }
+
+pub struct FungibleEntanglerChildV0 {}
