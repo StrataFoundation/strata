@@ -176,7 +176,7 @@ Solana tends to be more complex from a planning and architecture standpoint. You
 With Ethereum, as long as you have a reasonable interface you can get away with ugly state.
 
 
-## Strata - Compasability First
+## Strata - Composability First
 
 The future of Solana is chains of primitives working together. We can model tokens, and systems of tokens, using various primitives like [Bonding Curves](https://docs.strataprotocol.com/learn/bonding_curves), [Fanout Wallets](https://hydra-docs.glasseaters.xyz), [CandyMachines](https://docs.metaplex.com/candy-machine-v2/introduction), [Governance](https://realms.today/realms),and [Multisigs](https://squads.app/)
 
