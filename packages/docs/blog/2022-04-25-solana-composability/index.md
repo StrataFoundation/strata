@@ -4,7 +4,7 @@ title: Solana Composability vs Ethereum Composability
 description: A deep dive into composability on Solana and Ethereum, and the design patterns that result. 
 tags: [guides]
 authors: [noah]
-image: ./logo.png
+image: ./hero.png
 keywords:
   [Solana, Composability, Ethereum, Eth]
 ---
@@ -13,7 +13,7 @@ keywords:
 
 A major tenant of blockchain architecture is composability. By sharing state, dApps can create rich interactions that are not isolated to a single walled garden. A token can have uses throughout the ecosystem, not just in a single application.
 
-Solana and Ethereum take two completely different approaches to this problem. In this post, we'll explore the models on both, and the consequences of the different design patterns.
+Solana and Ethereum take vastly different approaches to this problem. In this post, we'll explore the composability patterns on both and the consequences of these design choices.
 
 
 :::info Background
@@ -37,16 +37,16 @@ interface IERC20 {
 }
 ```
 
-Here's an overview of Ethereums account structure. 
+Here's an overview of Ethereum's account structure:
 
 ![Ethereum Accounts Overview](./eth-accounts.png)
 
-A smart contract (in this case, a single token), resides at a particular address. Both the data and execution logic for that token (all of the holders, for example) are stored at that address.
+A smart contract (in this case, a single token), resides at a particular address. Both the data and execution logic for that token are stored at that address. For example, the data to find all holders is available at that particular address.
 
 In ethereum, you can compose contracts by storing them in your contract's state:
 
 ```
-contract InsecurePublicWallet {
+contract FooContract {
 	IERC20 myTokenContract;
 }
 ```
@@ -57,15 +57,13 @@ Similar to OOP, Ethereum is a system of smart contracts adopting interfaces so t
 
 Solana Composability looks a lot more like Functional Programming (FP). The execution logic for a smart contract (on Solana, called a program) exists separately from the state.
 
-With Solana, data is still stored in accounts, but all of the data for a given program is distributed across multiple accounts. Every account in Solana is owned by a Program. If this were a SQL database,
+With Solana, data is still stored in accounts, but all of the data for a given program is distributed across multiple accounts. Every account in Solana is owned by a Program. If this were a SQL database, you could get all of the state for a given program by running:
 
 ```
 SELECT * from solana.accounts WHERE owner = <program_id>
 ```
 
-Would give you all of the state for a given program.
-
-Where is a Solana program stored? The compiled code is stored on accounts that the Solana runtime knows how to execute. You can think of a program call as a function execution. 
+Where is a Solana program stored? The compiled code is also stored on accounts. The Solana runtime knows how to execute the binary for these special accounts. You can think of a program call as a function execution over some state.
 
 Since we looked at ERC-20, let's look at spl-token. First, let's take a look at a Token Account:
 ```
@@ -104,13 +102,15 @@ Transfer {
 There's some major differences to note here:
 
    * Solana has **one** token program for all of the spl-tokens in existance. Eth has a program for each token.
-   * Solana state is stored separately from execution logic
+   * Solana state is stored separately from execution logic.
 
 Composability works via composing functions. I can write a function that takes in an `Account` from the spl-token program, and then calls `Transfer`.
 
 ### Solana Composability - Inheritance
 
-Solana Program calls depend on the arity and ordering of account arguments. Making matters more complicated, *every account used by an instruction must be passed to the instruction*. If my implementation of a function requires more or different accounts than yours, they are *incompatible*. This makes inheritance difficult to impossible.
+Solana Program calls depend on the arity and ordering of account arguments. Making matters more complicated, *every account used by an instruction must be passed to the instruction*. 
+
+The upshot: If my implementation of a function requires more or different accounts than yours, they are *incompatible*. This makes inheritance difficult to impossible.
 
 :::info Lookup Tables
 A new feature to Solana, lookup tables, may help alleviate this limitation.
@@ -123,23 +123,22 @@ With Solana, the State _is_ the interface. Composition can be broken down into s
    * Directly call Program B
    * Write State that is expected by Program B
 
-The latter has massive implications for composability. Instead of needing to agree on an _action_ based interface, Solana programs can agree on state. Tokens are the most common form of state.
+The latter has massive implications for composability. Instead of needing to agree on an _action_ based interface, Solana programs can agree on intermediary state. Tokens are the most common form of state.
 
    * Program A gives the user token A
    * Program B lets the user exchange token B for NFT c
 
-In Ethereum, program B would need a reference to the token program of A. In Solana, Program B can be blissfully unaware of Program A.
-
+In Solana, Program B is blissfully unaware of Program A. In Ethereum, program B would need a reference to the token program of A.
 
 ## Composability Example - Solana vs Ethereum
 
-Let's say you want to mint an NFT such that the price increases for every NFT purchased. The De-Facto way to mint a collection on Solana is the [CandyMachine](https://docs.metaplex.com/candy-machine-v1/introduction).
+Let's say you want to mint an NFT such that the price increases for every NFT purchased. The De-Facto way to mint a collection on Solana is the [CandyMachine](https://docs.metaplex.com/candy-machine-v2/introduction).
 
 The problem: The CandyMachine takes a fixed price in either Sol or any spl token. 
 
-On Ethereum, you may extend the interface of the CandyMachine contract and add your pricing logic. On Solana, you can instead string two programs together!
+On Ethereum, you may extend the interface of the CandyMachine contract and add your pricing logic. On Solana, you could do similar -- fork the candymachine and upload your own program. We're devs, and code duplication is bad! Instead, we can string two programs together!
 
-To achieve this, we can tie a Strata Bonding Curve to a Metaplex Candymachine. A Strata Bonding Curve allows you to create a pricing system such that every new token minted is more expensive than the one before it.
+To achieve this, we can tie a [Strata Bonding Curve](https://docs.strataprotocol.com/learn/bonding_curves) to a [Metaplex Candymachine](https://docs.metaplex.com/candy-machine-v2/introduction). A Strata Bonding Curve allows you to create a pricing system such that every new token minted is more expensive than the one before it.
 
 The integration is straightforward:
 
@@ -158,7 +157,12 @@ Neither composition strategy is inherently better. As you will find with FP vs O
 
 ### Tradeoffs - Speed
 
-Solana's programming model lends itself to massive amounts of parallelization. Because every piece of state is identified as read-only or writable, the Solana Sealevel runtime is able to run many transactions in parallel and know that they will not interfere with each other.
+Solana's programming model lends itself to massive amounts of parallelization. Because every piece of state is identified as read-only or writable, the Solana Sealevel runtime is able to run many transactions in parallel knowing that they will not interfere with each other.
+
+### Tradeoffs - Open Source
+
+Solana contracts, being precompiled rust, are not open source by default. This is a hinderance for composability, as
+it is much harder to compose with something when you cannot see the code. There is a strong culture of open source within Solana pushing for contracts to be open.
 
 ### Tradeoffs - Program Proliferaion vs State Proliferation
 
@@ -175,32 +179,25 @@ With Ethereum, as long as you have a reasonable interface you can get away with 
 
 ## Future Work
 
-The future of Solana is chains of primitives working together. We can model tokens, and systems of tokens, using various primitives like [Bonding Curves](https://docs.strataprotocol.com/learn/bonding_curves), [Fanout Wallets](https://hydra-docs.glasseaters.xyz), Fireball (crafting with tokens), CandyMachines, and swaps.
+The future of Solana is chains of primitives working together. We can model tokens, and systems of tokens, using various primitives like [Bonding Curves](https://docs.strataprotocol.com/learn/bonding_curves), [Fanout Wallets](https://hydra-docs.glasseaters.xyz), Fireball (crafting with tokens), [CandyMachines](https://docs.metaplex.com/candy-machine-v2/introduction), and swaps.
 
 For example, using these primitives we can create a simple GameFi setup with the following rules:
 
    * A user has a weapon NFT
-   * The weapon NFT has ammunition
+   * The weapon NFT needs ammunition, an SFT
    * Ammunition, when combined with the NFT, creates damage
    * Damage can be used on an enemy
    * An enemy, when defeated, drops loot
 
-```plantuml
-@startuml
+![System of Composable Tokens](./token-system.png)
 
-@enduml
-```
+With systems like this, the question shifts from "how do we develop an individual smart contract" to "how can we compose and orchestrate existing primitives."
 
+This strategy leaves multiple openings for composition. For example, the ammunition and weapon NFTs can be reused in multple games.
 
+## Interested in Learning More?
 
-
-
-On Ethereum, 
-
-(1/?) Eth composability vs Solana composability, a thread on design patterns and consequences:
-
-In Eth, composability is done similar to interface extension. You extend an interface, like ERC-20, and implement the functions. In this way, all tokens look (but may not act) the same
-
-(2/?) On Solana, this extension pattern does not exist. Even if you were to try, Solana makes you pass in every account in order. My ERC-20 impl may need different accounts than your ERC-20. So how do we achieve composition? On Solana, there is a single spl-token program.
-
-(3/?) All tokens behave the exact same way. You compose by accepting tokens into other smart contracts wrapping the token. This looks similar to functional programming, where you create functions that accept state from other functions. Eth looks more like classical OO programming
+  * Join our [discord](https://discord.gg/XQhCFg77WM)
+  * Our source code is [here](https://github.com/StrataFoundation/strata)
+  * Follow us on [twitter](https://twitter.com/StrataProtocol)
+  * We’re Hiring! Apply [here](https://forms.monday.com/forms/9016285334ffbfb43663341a0da9c2ce?r=use1)
