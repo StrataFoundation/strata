@@ -173,7 +173,24 @@ Solana tends to be more complex from a planning and architecture standpoint. You
 With Ethereum, as long as you have a reasonable interface you can get away with ugly state.
 
 
-## Conclusions
+## Future Work
+
+The future of Solana is chains of primitives working together. We can model tokens, and systems of tokens, using various primitives like [Bonding Curves](https://docs.strataprotocol.com/learn/bonding_curves), [Fanout Wallets](https://hydra-docs.glasseaters.xyz), Fireball (crafting with tokens), CandyMachines, and swaps.
+
+For example, using these primitives we can create a simple GameFi setup with the following rules:
+
+   * A user has a weapon NFT
+   * The weapon NFT has ammunition
+   * Ammunition, when combined with the NFT, creates damage
+   * Damage can be used on an enemy
+   * An enemy, when defeated, drops loot
+
+```plantuml
+@startuml
+
+@enduml
+```
+
 
 
 
