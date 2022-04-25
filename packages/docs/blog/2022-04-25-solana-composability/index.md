@@ -176,23 +176,15 @@ Solana tends to be more complex from a planning and architecture standpoint. You
 With Ethereum, as long as you have a reasonable interface you can get away with ugly state.
 
 
-## Future Work
+## Strata - Compasability First
 
-The future of Solana is chains of primitives working together. We can model tokens, and systems of tokens, using various primitives like [Bonding Curves](https://docs.strataprotocol.com/learn/bonding_curves), [Fanout Wallets](https://hydra-docs.glasseaters.xyz), Fireball (crafting with tokens), [CandyMachines](https://docs.metaplex.com/candy-machine-v2/introduction), and swaps.
+The future of Solana is chains of primitives working together. We can model tokens, and systems of tokens, using various primitives like [Bonding Curves](https://docs.strataprotocol.com/learn/bonding_curves), [Fanout Wallets](https://hydra-docs.glasseaters.xyz), [CandyMachines](https://docs.metaplex.com/candy-machine-v2/introduction), [Governance](https://realms.today/realms),and [Multisigs](https://squads.app/)
 
-For example, using these primitives we can create a simple GameFi setup with the following rules:
+For example, using these primitives [Grape](https://grapes.network/) has been able to set up a multifaceted DAO with SubDAOs
 
-   * A user has a weapon NFT
-   * The weapon NFT needs ammunition, an SFT
-   * Ammunition, when combined with the NFT, creates damage
-   * Damage can be used on an enemy
-   * An enemy, when defeated, drops loot
-
-![System of Composable Tokens](./token-system.png)
+![System of Composable Tokens - Grape](./token-system.png)
 
 With systems like this, the question shifts from "how do we develop an individual smart contract" to "how can we compose and orchestrate existing primitives."
-
-This strategy leaves multiple openings for composition. For example, the ammunition and weapon NFTs can be reused in multple games.
 
 ## Interested in Learning More?
 
