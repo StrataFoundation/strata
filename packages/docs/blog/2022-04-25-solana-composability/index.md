@@ -51,7 +51,7 @@ contract FooContract {
 }
 ```
 
-Similar to OOP, Ethereum is a system of smart contracts adopting interfaces so that they can interoperate together. "If it quacks like a duck, then treat is like a duck"
+Similar to OOP, Ethereum is a system of smart contracts adopting interfaces so that they can interoperate together. "If it quacks like a duck, then treat it like a duck"
 
 ## Solana Composability
 
