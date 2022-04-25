@@ -126,7 +126,7 @@ With Solana, the State _is_ the interface. Composition can be broken down into s
 The latter has massive implications for composability. Instead of needing to agree on an _action_ based interface, Solana programs can agree on intermediary state. Tokens are the most common form of state.
 
    * Program A gives the user token A
-   * Program B lets the user exchange token B for NFT c
+   * Program B lets the user exchange token A for NFT C
 
 In Solana, Program B is blissfully unaware of Program A. In Ethereum, program B would need a reference to the token program of A.
 
