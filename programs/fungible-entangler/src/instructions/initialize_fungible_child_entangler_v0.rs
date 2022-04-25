@@ -14,7 +14,6 @@ pub struct InitializeFungibleChildEntanglerV0Args {
 pub struct InitalizeFungibleChildEntangler<'info> {
   pub payer: Signer<'info>,
   #[account(
-    constraint = entangler.is_initialized,
     constraint = entangler.mint.key() !== child_mint.key()
   )]
   pub entangler: Box<Account<'info, FungibleEntanglerV0>>,
