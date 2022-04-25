@@ -15,22 +15,29 @@ declare_id!(TConj11111111111111111111111111111111111111);
 pub mod fungible_entanlger {
     use super::*;
     pub fn initialize_fungible_entangler_v0(
-        ctx: Context<InitializeFungibleEntanglerV0>,
-        args: InitializeFungibleEntanglerV0Args,
+      ctx: Context<InitializeFungibleEntanglerV0>,
+      args: InitializeFungibleEntanglerV0Args,
     ) -> Result<()> {
       instructions::initialize_fungible_entangler_v0::handler(ctx, args)
     }
 
+    pub fn initialize_fungible_child_entangler_v0(
+      ctx: Context<InitializeFungibleChildEntanglerV0>,
+      args: InitializeFungibleChildEntanglerV0Args,
+    ) -> Result<()> {
+      instructions::initialize_fungible_child_entangler_v0::handler(ctx,args)
+    }
+
     pub fn swap_base_v0(
-        ctx: Context<SwapBaseV0>,
-        args: SwapV0Args
+      ctx: Context<SwapBaseV0>,
+      args: SwapV0Args
     ) -> Result<()> {
       instructions::swap_base_v0::handler(ctx, args)
     }
 
     pub fn swap_target_v0(
-        ctx: Context<SwapTargetV0>,
-        args: SwapV0Args
+      ctx: Context<SwapTargetV0>,
+      args: SwapV0Args
     ) -> Result<()> {
       instructions::swap_target_v0::handler(ctx, args)
     }
