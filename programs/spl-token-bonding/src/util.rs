@@ -1,9 +1,17 @@
 use crate::error::ErrorCode;
 use crate::precise_number::{InnerUint, PreciseNumber};
 use anchor_lang::solana_program::system_program;
+use anchor_lang::solana_program::pubkey;
 use anchor_lang::{prelude::*, solana_program};
 use anchor_spl::token::{Mint, TokenAccount};
 use std::convert::*;
+
+const HYDRA: Pubkey = pubkey::Pubkey::new_from_array([
+    10, 126, 203,  31, 202, 195,  95,  27,
+  175, 237,  98,  15, 124,  12, 118, 169,
+    56, 198, 194, 208,   7,  76, 111,  47,
+  128,  57,  55, 192,  81, 109,  36, 203
+]);
 
 pub trait OrArithError<T> {
   fn or_arith_error(self) -> Result<T>;
@@ -119,8 +127,10 @@ pub fn verify_empty_or_mint<'info>(
   maybe_token_account: &UncheckedAccount<'info>,
   mint: &Pubkey,
 ) -> Result<()> {
-  if *maybe_token_account.owner == system_program::ID {
-    Ok(())
+
+  
+  if *maybe_token_account.owner == system_program::ID || *maybe_token_account.owner == HYDRA {
+      Ok(())
   } else {
     let acc: Account<'info, TokenAccount> = Account::try_from(maybe_token_account)?;
     if acc.mint == *mint {
