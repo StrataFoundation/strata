@@ -164,7 +164,7 @@ Solana's programming model lends itself to massive amounts of parallelization. B
 Solana contracts, being precompiled rust, are not open source by default. This is a hinderance for composability, as
 it is much harder to compose with something when you cannot see the code. There is a strong culture of open source within Solana pushing for contracts to be open.
 
-### Tradeoffs - Program Proliferaion vs State Proliferation
+### Tradeoffs - Program Proliferation vs State Proliferation
 
 Ethereum's model leads to _a lot_ more programs and a lot more bespoke code running on chain. This makes it way easier to override behavior (for example, taking fees on token transfers).
 
