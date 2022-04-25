@@ -161,8 +161,7 @@ Solana's programming model lends itself to massive amounts of parallelization. B
 
 ### Tradeoffs - Open Source
 
-Solana contracts, being precompiled rust, are not open source by default. This is a hinderance for composability, as
-it is much harder to compose with something when you cannot see the code. There is a strong culture of open source within Solana pushing for contracts to be open.
+Neither Eth nor Solana has contracts that are open source by default. However, Solana has a good amount of closed source contracts that hinder composability. It is much harder to compose with something when you can't see the code. That being said, there is a strong culture of open source within Solana that is actively pushing for contracts to be open. Strata is, and will always be, open source.
 
 ### Tradeoffs - Program Proliferation vs State Proliferation
 
