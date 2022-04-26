@@ -51,7 +51,7 @@ export async function getMissingSpace(
   baseMint: PublicKey | undefined,
   targetMint: PublicKey | undefined
 ): Promise<number> {
-  if (!provider || !provider.wallet || !baseMint || !targetMint || !hierarchy) {
+  if (!provider || !provider.wallet || !provider.wallet.publicKey || !baseMint || !targetMint || !hierarchy) {
     return 0;
   }
 

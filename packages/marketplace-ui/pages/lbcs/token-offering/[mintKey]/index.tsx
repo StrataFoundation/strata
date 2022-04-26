@@ -124,9 +124,7 @@ export const LbcDisplay: NextPage = ({
                       />
                       <TokenOffering
                         mintKey={mintKey}
-                        showAttribution={false}
                       />
-                      <Branding />
                     </VStack>
                   )}
                 </Box>
