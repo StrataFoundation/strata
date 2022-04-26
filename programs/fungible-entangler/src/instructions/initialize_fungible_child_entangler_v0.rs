@@ -20,7 +20,7 @@ pub struct InitalizeFungibleChildEntangler<'info> {
   #[account(
     init, 
     payer = payer,
-    space = 512,
+    space = 8 + 154,
     seeds = [b"entangler", entangler.key().as_ref(), child_mint.key().as_ref()],
     bump,
     has_one = entangler
@@ -29,11 +29,10 @@ pub struct InitalizeFungibleChildEntangler<'info> {
   #[account(
     init,
     payer = payer,
-    space = 512,
     seeds = [b"storage", entangler.key().as_ref()]
     bump,
     token::mint = child_mint,
-    token::authority = entangler,
+    token::authority = child_entangler,
   )]
   pub child_storage: Box<Account<'info, TokenAccount>>,      
   #[account(
@@ -54,7 +53,7 @@ pub fn handler(
 ) -> Result<()> {
   let child_entangler = &mut ctx.accounts.child_entangler;
 
-  child_entangler.authority = ctx.accounts.authority;
+  child_entangler.authority = args.authority;
   child_entangler.parent_entangler = ctx.accounts.entangler.key();
   child_entangler.mint = ctx.accounts.child_mint.key();
   child_entangler.storage = ctx.accounts.child_storage.key();
@@ -67,4 +66,6 @@ pub fn handler(
   child_entangler.created_at_unix_time = ctx.accounts.clock.unix_timestamp;
   child_entangler.bump_seed = *ctx.bumps.get("child_entangler").unwrap();
   child_entangler.storage_bump_seed = *ctx.bumps.get("child_storage").unwrap();
+
+  Ok(())
 }

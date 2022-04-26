@@ -1,5 +1,7 @@
-import { BorshAccountsCoder, Provider } from "@project-serum/anchor";
+import * as anchor from "@project-serum/anchor";
+import { IdlTypes, Program, Provider } from "@project-serum/anchor";
 import {
+  AccountLayout,
   ASSOCIATED_TOKEN_PROGRAM_ID,
   NATIVE_MINT,
   Token,
@@ -8,33 +10,55 @@ import {
 } from "@solana/spl-token";
 import {
   Commitment,
-  Finality,
   Keypair,
   PublicKey,
+  Signer,
   SystemProgram,
+  SYSVAR_CLOCK_PUBKEY,
+  SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
 } from "@solana/web3.js";
 import {
-  Attribute,
-  BigInstructionResult,
+  AnchorSdk,
   createMintInstructions,
   getMintInfo,
   getTokenAccount,
   InstructionResult,
   percent,
   SplTokenMetadata,
+  TypedAccountParser,
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
-import bs58 from "bs58";
-import { Buffer } from "buffer";
 
 type Truthy<T> = T extends false | "" | 0 | null | undefined ? never : T; // from lodash
 
 const truthy = <T>(value: T): value is Truthy<T> => !!value;
 
+export interface ICreateFungibleEntanglerOutput {
+  entangler: PublicKey;
+  storage: PublicKey;
+  mint: PublicKey;
+  childEntangler: PublicKey;
+  childStorage: PublicKey;
+  childMint: PublicKey;
+}
+
 interface ICreateFungibleEntanglerArgs {
   /** The payer to create this fungible entangler, defaults to provider.wallet */
   payer?: PublicKey;
+  /**  The mint we will be creating an entangler for */
+  mint: PublicKey;
+  /** The amount of that mint we will be entangling */
+  amount: number;
+  /**
+   * General authority to change things like freeze swap.
+   * **Default:** Wallet public key. Pass null to explicitly not set this authority.
+   */
+  authority?: PublicKey | null;
+  /** The date this entangler will go live. Before this date, {@link FungibleEntangler.swap} is disabled. **Default:** 1 second ago */
+  goLiveDate?: Date;
+  /** The date this entangler will shut down. After this date, {@link FungibleEntangler.swap} is disabled. **Default:** null */
+  freezeSwapDate?: Date;
 }
 
 interface ICreateFungibleChildEntanglerArgs {
@@ -47,21 +71,37 @@ interface ISwapArgs {
   payer?: PublicKey;
 }
 
-export class FungibleEntanglerSdk {
-  static async init(provider: Provider): Promise<FungibleEntanglerSdk> {
-    return new this(provider);
+export class FungibleEntangler extends AnchorSdk<any> {
+  static ID = new PublicKey("asdf");
+
+  static async init(
+    provider: Provider,
+    fungibleEntanglerProgramId: PublicKey = FungibleEntangler.ID
+  ): Promise<FungibleEntangler> {
+    const FungibleEntanglerIDLJson = await anchor.Program.fetchIdl(
+      fungibleEntanglerProgramId,
+      provider
+    );
+
+    const fungibleEntangler = new anchor.Program<FungibleEntanglerIDL>(
+      FungibleEntanglerIDLJson as FungibleEntanglerIDL,
+      provider
+    ) as anchor.Program<FungibleEntanglerIDL>;
+
+    return new this(provider, fungibleEntangler);
   }
 
-  constructor(readonly provider: Provider) {}
+  constructor(provider: Provider, program: Program<any>) {
+    super({ provider, program });
+  }
 
   async createFungibleEntanglerInstructions({}: ICreateFungibleEntanglerArgs): Promise<
-    InstructionResult<{}>
+    InstructionResult<ICreateFungibleEntanglerOutput>
   > {
     const publicKey = this.provider.wallet.publicKey;
     const instructions: TransactionInstruction[] = [];
 
     // TODO: Implement
-
     return { instructions, signers: [], output: {} };
   }
 
