@@ -35,7 +35,7 @@ export const TransactionHistory = ({
   );
   const { transactions, fetchMore, loadingInitial, fetchNew, loadingMore } = useTransactions(
     {
-      numTransactions: 20,
+      numTransactions: 5,
       address,
     }
   );
@@ -124,7 +124,7 @@ export const TransactionHistory = ({
           <IconButton
             aria-label="Fetch New Transactions"
             title="Fetch New Transactions"
-            onClick={() => fetchMore(20)}
+            onClick={() => fetchNew(20)}
             isLoading={loadingMore}
             color={icoColor}
             variant="link"

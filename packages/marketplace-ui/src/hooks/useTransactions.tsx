@@ -44,7 +44,7 @@ async function hydrateTransactions(connection: Connection | undefined, signature
     return [];
   }
 
-  const sorted = signatures.sort((a, b) => (a.blockTime || 0) - (b.blockTime || 0));
+  const sorted = signatures.sort((a, b) => (b.blockTime || 0) - (a.blockTime || 0));
   return (await Promise.all(sorted.map(async s => {
     const ret = await connection.getTransaction(s.signature);
     // @ts-ignore
@@ -103,18 +103,11 @@ export const useTransactions = ({
     setLoadingMore(true);
     try {
       const lastTx = transactions[transactions.length - 1];
-      const lastBlockTime = lastTx && lastTx.blockTime;
-      let lastDate = until;
-      if (lastBlockTime) {
-        const date = new Date(0);
-        date.setUTCSeconds(lastBlockTime);
-        lastDate = date;
-      }
       const signatures = await getSignatures(
         connection,
         address,
-        lastDate,
-        undefined,
+        until,
+        lastTx && lastTx.transaction.signatures[0],
         num
       );
       const newTxns = await hydrateTransactions(connection, signatures);

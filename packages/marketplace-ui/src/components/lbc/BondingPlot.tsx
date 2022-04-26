@@ -142,6 +142,7 @@ export const BondingPlot = ({
               axisLine={false}
             />
             <Line
+              isAnimationActive={false}
               dot={false}
               type="monotone"
               dataKey="price"
