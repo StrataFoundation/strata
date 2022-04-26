@@ -134,7 +134,7 @@ In Solana, Program B is blissfully unaware of Program A. In Ethereum, program B 
 
 Let's say you want to mint an NFT such that the price increases for every NFT purchased. The De-Facto way to mint a collection on Solana is the [CandyMachine](https://docs.metaplex.com/candy-machine-v2/introduction).
 
-The problem: The CandyMachine takes a fixed price in either Sol or any spl token. 
+The problem: The CandyMachine takes a fixed price in either Sol or any spl token.
 
 On Ethereum, you may extend the interface of the CandyMachine contract and add your pricing logic. On Solana, you could do similar -- fork the candymachine and upload your own program. We're devs, and code duplication is bad! Instead, we can string two programs together!
 
@@ -157,7 +157,11 @@ Neither composition strategy is inherently better. As you will find with FP vs O
 
 ### Tradeoffs - Speed
 
-Solana's programming model lends itself to massive amounts of parallelization. Because every piece of state is identified as read-only or writable, the Solana Sealevel runtime is able to run many transactions in parallel knowing that they will not interfere with each other.
+Solana's programming model lends itself to massive amounts of parallelization. Because every piece of state is identified as read-only or writable, the Solana Sealevel runtime is able to run many transactions in parallel knowing that they will not interfere with each other. This is a core tenant of Solana, and why it has a much higher TPS than Eth.
+
+### Tradeoffs - UI Compatability
+
+Ethereum's interface model makes it easy for one UI to integrate with multiple smart contracts implementing the same interface. This makes forking considerably easier on Eth than it is on Solana. Example: On Ethereum, if you fork Uniswap and match the interface, you will have out-of-the-box support in multiple user interfaces. On Solana, you would only have support if you did not add any accounts to the function signatures. Solana user interfaces tend to be heavily coupled to particular smart contracts. 
 
 ### Tradeoffs - Open Source
 
@@ -165,9 +169,9 @@ Neither Eth nor Solana has contracts that are open source by default. However, S
 
 ### Tradeoffs - Program Proliferation vs State Proliferation
 
-Ethereum's model leads to _a lot_ more programs and a lot more bespoke code running on chain. This makes it way easier to override behavior (for example, taking fees on token transfers).
+Ethereum's model leads to _a lot_ more programs and a lot more bespoke code running on chain. This makes it way easier to override behavior (for example, taking fees on token transfers). On Ethereum, forking is easy and encouraged.
 
-Solana's model leads to _a lot_ more state, and programs that act as state changing primitives. This makes it preferable to create chains of logic where generalized contracts interact with other generalized contracts.
+Solana's model leads to _a lot_ more state, and programs that act as state changing primitives. This makes it preferable to create chains of logic where generalized contracts interact with other generalized contracts. On Solana, forking adds complexity for any UI-only dApps. This causes a push for well-thought-out battle-tested contracts, like the Metaplex Token Metadata Standard.
 
 ### Tradeoffs - Complexity
 
