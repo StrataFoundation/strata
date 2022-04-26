@@ -15,7 +15,7 @@ import { DEFAULT_ENDPOINT, Wallet } from "./Wallet";
 import { ApolloProvider, InMemoryCache, ApolloClient } from "@apollo/client";
 
 const client = new ApolloClient({
-  uri: "http://graph.holaplex.com/v1",
+  uri: "https://graph.holaplex.com/v1",
   cache: new InMemoryCache({
     resultCaching: false,
   }),
