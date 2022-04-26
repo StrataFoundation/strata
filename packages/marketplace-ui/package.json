@@ -24,6 +24,7 @@
     "precommit": "git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' ."
   },
   "dependencies": {
+    "@apollo/client": "^3.5.10",
     "@chakra-ui/icons": "^1.1.7",
     "@chakra-ui/react": "^1.8.1",
     "@civic/solana-gateway-react": "^0.4.14-beta.1",
@@ -47,6 +48,7 @@
     "axios": "^0.26.1",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
+    "graphql": "^16.4.0",
     "js-base64": "^3.7.2",
     "moment": "^2.29.1",
     "next": "12.0.7",
