@@ -183,6 +183,7 @@ async function createLiquidityBootstrapper(
     bondingArgs: {
       targetMintDecimals: Number(values.decimals || 0),
       goLiveDate: values.goLiveDate,
+      sellFrozen: values.useExistingMint
     },
   });
 

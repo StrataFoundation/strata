@@ -61,7 +61,7 @@ export const BondingPlot = ({
   } = useQuery<{ enrichedBondingChanges: { reserveChange: string, supplyChange: string, insertTs: number }[] }>(GET_BONDING_CHANGES, {
     variables: {
       address: tokenBondingKey,
-      startUnixTime: 0,
+      startUnixTime: stopTime - (60 * 60 * 24), // 24 hours
       stopUnixTime: stopTime,
       offset: 0,
       limit: 1000

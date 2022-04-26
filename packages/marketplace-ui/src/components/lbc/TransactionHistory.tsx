@@ -9,9 +9,6 @@ import { numberWithCommas } from "../../utils/numberWithCommas";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { BiRefresh } from "react-icons/bi";
 
-const truncateSig = (pkeyStr: string): string => {
-  return `${pkeyStr.substr(0, 4)}...${pkeyStr.substr(pkeyStr.length - 4)}`;
-};
 export const TransactionHistory = ({
   tokenBondingKey,
 }: {
