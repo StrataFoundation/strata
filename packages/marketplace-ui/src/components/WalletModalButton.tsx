@@ -57,7 +57,7 @@ export const WalletModalButton: FC<ButtonProps> = ({
       >
         {connected ? truncatePubkey(publicKey!) : children}
       </Button>
-      <Menu>
+      <Menu isLazy>
         <MenuButton
           as={IconButton}
           color="white"
