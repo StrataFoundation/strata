@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-#[accounts]
+#[account]
 #[derive(Default)]
 pub struct FungibleEntanglerV0 {
   pub authority: Pubkey,
@@ -14,6 +14,8 @@ pub struct FungibleEntanglerV0 {
   pub storage_bump_seed: u8,
 }
 
+#[account]
+#[derive(Default)]
 pub struct FungibleChildEntanglerV0 {
   pub authority: Pubkey,
   pub parent_entangler: Pubkey,

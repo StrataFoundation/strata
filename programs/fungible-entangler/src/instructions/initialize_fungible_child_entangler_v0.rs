@@ -4,17 +4,17 @@ use anchor_spl::token::{Mint, Token, TokenAccount};
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct InitializeFungibleChildEntanglerV0Args {
-  pub authority: Pubykey,
+  pub authority: Pubkey,
   pub go_live_unix_time: i64,
   pub freeze_swap_unix_time: Option<i64>,
 }
 
 #[derive(Accounts)]
-#[instruction(args: InitializeFungibleChildEntanglerV0Args)] 
-pub struct InitalizeFungibleChildEntangler<'info> {
+#[instruction(args: InitializeFungibleChildEntanglerV0Args)]
+pub struct InitializeFungibleChildEntanglerV0Args<'info> {
   pub payer: Signer<'info>,
   #[account(
-    constraint = entangler.mint.key() !== child_mint.key()
+    constraint = entangler.mint.key() != child_mint.key()
   )]
   pub entangler: Box<Account<'info, FungibleEntanglerV0>>,
   #[account(
@@ -23,13 +23,13 @@ pub struct InitalizeFungibleChildEntangler<'info> {
     space = 8 + 154,
     seeds = [b"entangler", entangler.key().as_ref(), child_mint.key().as_ref()],
     bump,
-    has_one = entangler
+    has_one = entangler,
   )]
   pub child_entangler: Box<Account<'info, FungibleChildEntanglerV0>>,
   #[account(
     init,
     payer = payer,
-    seeds = [b"storage", entangler.key().as_ref()]
+    seeds = [b"storage", entangler.key().as_ref()],
     bump,
     token::mint = child_mint,
     token::authority = child_entangler,
@@ -37,7 +37,7 @@ pub struct InitalizeFungibleChildEntangler<'info> {
   pub child_storage: Box<Account<'info, TokenAccount>>,      
   #[account(
     constraint = child_mint.is_initialized,
-    constraint = child_mint.key() !== entangler.mint.key()
+    constraint = child_mint.key() != entangler.mint.key()
   )]
   pub child_mint: Box<Account<'info, Mint>>,
 
@@ -57,12 +57,12 @@ pub fn handler(
   child_entangler.parent_entangler = ctx.accounts.entangler.key();
   child_entangler.mint = ctx.accounts.child_mint.key();
   child_entangler.storage = ctx.accounts.child_storage.key();
-  child_entangler.go_live_unix_time = if args.child_go_live_unix_time < ctx.accounts.clock.unix_timestamp {
+  child_entangler.go_live_unix_time = if args.go_live_unix_time < ctx.accounts.clock.unix_timestamp {
     ctx.accounts.clock.unix_timestamp
   } else {
-    args.child_go_live_unix_time
+    args.go_live_unix_time
   };
-  child_entangler.freeze_swap_unix_time = args.freeze_child_unix_time;
+  child_entangler.freeze_swap_unix_time = args.freeze_swap_unix_time;
   child_entangler.created_at_unix_time = ctx.accounts.clock.unix_timestamp;
   child_entangler.bump_seed = *ctx.bumps.get("child_entangler").unwrap();
   child_entangler.storage_bump_seed = *ctx.bumps.get("child_storage").unwrap();

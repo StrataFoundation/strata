@@ -19,14 +19,14 @@ pub struct InitializeFungibleEntanglerV0<'info> {
     init,
     payer = payer,
     space = 8 + 122,
-    seeds = [b"entangler", &args.entangler_seed],
-    bump
+    seeds = [b"entangler", mint.key().as_ref(), &args.entangler_seed],
+    bump,
   )]
   pub entangler: Box<Account<'info, FungibleEntanglerV0>>,
   #[account(
     init,
     payer = payer,
-    seeds = [b"storage", entangler.key().as_ref()]
+    seeds = [b"storage", entangler.key().as_ref()],
     bump,
     token::mint = target_mint,
     token::authority = entangler,
@@ -47,7 +47,7 @@ pub fn handler(
 ) -> Result<()> {
   let entangler = &mut ctx.accounts.entangler;
 
-  entangler.authority = ctx.accounts.authority;
+  entangler.authority = args.authority;
   entangler.mint = ctx.accounts.mint.key();
   entangler.storage = ctx.accounts.storage.key();
   entangler.go_live_unix_time = if args.go_live_unix_time < ctx.accounts.clock.unix_timestamp {

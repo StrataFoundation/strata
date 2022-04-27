@@ -1,14 +1,12 @@
 use crate::state::*;
-use anchor_lang::prelud::*;
+use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
 
 #[derive(Accounts)]
 pub struct SwapV0<'info> {
   #[account(
-    has_one = base_mint,
-    has_one = target_mint,
-    has_one = base_storage,
-    has_one = target_storage,
+    has_one = mint,
+    has_one = storage,
   )]
   pub entangler: Box<Account<'info, FungibleEntanglerV0>>,
   pub base_mint: Box<Account<'info, Mint>>,
