@@ -118,7 +118,7 @@ A new feature to Solana, lookup tables, may help alleviate this limitation.
 
 ### Solana Composability - State as an Interface
 
-With Solana, the State _is_ the interface. Composition can be broken down into systems of state and actions on that state. What does this mean? If Progam A wants to interact with Program B, it can either
+With Solana, the State _is_ the interface. Composition can be broken down into systems of state and actions on that state. What does this mean? If Program A wants to interact with Program B, it can either
 
    * Directly call Program B
    * Write State that is expected by Program B
@@ -134,7 +134,7 @@ In Solana, Program B is blissfully unaware of Program A. In Ethereum, program B 
 
 Let's say you want to mint an NFT such that the price increases for every NFT purchased. The De-Facto way to mint a collection on Solana is the [CandyMachine](https://docs.metaplex.com/candy-machine-v2/introduction).
 
-The problem: The CandyMachine takes a fixed price in either Sol or any spl token.
+The problem: The CandyMachine takes a fixed price in either SOL or any SPL token.
 
 On Ethereum, you may extend the interface of the CandyMachine contract and add your pricing logic. On Solana, you could do similar -- fork the candymachine and upload your own program. We're devs, and code duplication is bad! Instead, we can string two programs together!
 
@@ -146,7 +146,7 @@ The integration is straightforward:
   * Step 2. Create a CandyMachine whose price is `1 Token A`
 
 At minting time, the minting UI:
-   * Uses Sol to purchase a Mint Token, `Token A`
+   * Uses SOL to purchase a Mint Token, `Token A`
    * Uses `Token A` to mint an NFT from the CandyMachine.
 
 The intermediary state between Strata and Metaplex is `Token A`. Importantly, neither the Strata nor Metaplex contracts know about each other.
@@ -157,15 +157,15 @@ Neither composition strategy is inherently better. As you will find with FP vs O
 
 ### Tradeoffs - Speed
 
-Solana's programming model lends itself to massive amounts of parallelization. Because every piece of state is identified as read-only or writable, the Solana Sealevel runtime is able to run many transactions in parallel knowing that they will not interfere with each other. This is a core tenant of Solana, and why it has a much higher TPS than Eth.
+Solana's programming model lends itself to massive amounts of parallelization. Because every piece of state is identified as read-only or writable, the Solana Sealevel runtime is able to run many transactions in parallel knowing that they will not interfere with each other. This is a core tenant of Solana, and why it has a much higher TPS than Ethereum.
 
 ### Tradeoffs - UI Compatability
 
-Ethereum's interface model makes it easy for one UI to integrate with multiple smart contracts implementing the same interface. This makes forking considerably easier on Eth than it is on Solana. Example: On Ethereum, if you fork Uniswap and match the interface, you will have out-of-the-box support in multiple user interfaces. On Solana, you would only have support if you did not add any accounts to the function signatures. Solana user interfaces tend to be heavily coupled to particular smart contracts. 
+Ethereum's interface model makes it easy for one UI to integrate with multiple smart contracts implementing the same interface. This makes forking considerably easier on Ethereum than it is on Solana. Example: On Ethereum, if you fork Uniswap and match the interface, you will have out-of-the-box support in multiple user interfaces. On Solana, you would only have support if you did not add any accounts to the function signatures. Solana user interfaces tend to be heavily coupled to particular smart contracts. 
 
 ### Tradeoffs - Open Source
 
-Neither Eth nor Solana has contracts that are open source by default. However, Solana has a good amount of closed source contracts that hinder composability. It is much harder to compose with something when you can't see the code. That being said, there is a strong culture of open source within Solana that is actively pushing for contracts to be open. Strata is, and will always be, open source.
+Neither Ethereum nor Solana has contracts that are open source by default. However, Solana has a good amount of closed source contracts that hinder composability. It is much harder to compose with something when you can't see the code. That being said, there is a strong culture of open source within Solana that is actively pushing for contracts to be open. Strata is, and will always be, open source.
 
 ### Tradeoffs - Program Proliferation vs State Proliferation
 
@@ -182,17 +182,17 @@ With Ethereum, as long as you have a reasonable interface you can get away with 
 
 ## Strata - Composability First
 
-The future of Solana is chains of primitives working together. We can model tokens, and systems of tokens, using various primitives like [Bonding Curves](https://docs.strataprotocol.com/learn/bonding_curves), [Fanout Wallets](https://hydra-docs.glasseaters.xyz), [CandyMachines](https://docs.metaplex.com/candy-machine-v2/introduction), [Governance](https://realms.today/realms),and [Multisigs](https://squads.app/)
+The future of Solana is chains of primitives working together. We can model tokens, and systems of tokens, using various primitives like [Bonding Curves](https://docs.strataprotocol.com/learn/bonding_curves), [Fanout Wallets](https://hydra-docs.glasseaters.xyz), [CandyMachines](https://docs.metaplex.com/candy-machine-v2/introduction), [Governance](https://realms.today/realms), and [Multisigs](https://squads.app/).
 
-For example, using these primitives [Grape](https://grapes.network/) has been able to set up a multifaceted DAO with SubDAOs
+For example, using these primitives [Grape](https://grapes.network/) has been able to set up a multifaceted DAO with SubDAOs:
 
 ![System of Composable Tokens - Grape](./token-system.png)
 
-With systems like this, the question shifts from "how do we develop an individual smart contract" to "how can we compose and orchestrate existing primitives."
+With systems like this, the question shifts from "How do we develop an individual smart contract?" to "How can we compose and orchestrate existing primitives?".
 
 ## Interested in Learning More?
 
-  * Join our [discord](https://discord.gg/XQhCFg77WM)
+  * Join our [Discord](https://discord.gg/XQhCFg77WM)
   * Our source code is [here](https://github.com/StrataFoundation/strata)
-  * Follow us on [twitter](https://twitter.com/StrataProtocol)
+  * Follow us on [Twitter](https://twitter.com/StrataProtocol)
   * We’re Hiring! Apply [here](https://forms.monday.com/forms/9016285334ffbfb43663341a0da9c2ce?r=use1)
