@@ -107,7 +107,7 @@ export const MintButton = ({
           colorScheme="primary"
           isDisabled={
             (numRemaining == 0 && !targetBalance) ||
-            insufficientBalance ||
+            ((targetBalance || 0) === 0 && insufficientBalance) ||
             notLive ||
             isDisabled
           }
