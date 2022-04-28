@@ -5,6 +5,11 @@ import {
   DarkMode,
   Heading,
   Spinner,
+  Tab,
+  TabList,
+  TabPanel,
+  TabPanels,
+  Tabs,
   useColorModeValue,
   VStack,
 } from "@chakra-ui/react";
@@ -15,12 +20,14 @@ import * as anchor from "@project-serum/anchor";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import {
+  BondingPlot,
   Branding,
   DEFAULT_ENDPOINT,
   IMintArgs,
   LbcInfo,
   LbcStatus,
   MintButton,
+  TransactionHistory,
   useLivePrice,
   WalletModalButton,
 } from "../../../../src";
@@ -263,6 +270,10 @@ const Home = (props: HomeProps) => {
     refreshCandyMachineState,
   ]);
 
+  const selectedProps = {
+    borderBottom: "3px solid #F07733",
+  };
+
   return (
     <Box
       color={useColorModeValue("black", "white")}
@@ -273,36 +284,123 @@ const Home = (props: HomeProps) => {
       paddingBottom="200px"
     >
       <Container mt={"35px"} justifyItems="stretch" maxW="460px">
-        <VStack spacing={2} align="left">
-          <Heading mb={2} fontSize="24px" fontWeight={600}>
-            Mint
-          </Heading>
-          <LbcStatus tokenBondingKey={tokenBonding?.publicKey} />
-          <Box
-            zIndex={1}
-            shadow="xl"
-            rounded="lg"
-            p="16px"
-            pb="29px"
-            minH="300px"
-            bg="black.300"
-          >
-            {isAdmin && tokenBonding && (
+        <Tabs varaint="unstyled">
+          <TabList borderBottom="none">
+            <Tab _selected={selectedProps} fontWeight={600}>
+              Mint
+            </Tab>
+            <Tab _selected={selectedProps} fontWeight={600}>
+              Transactions
+            </Tab>
+          </TabList>
+          <TabPanels>
+            <TabPanel p={0} pt={4}>
+              <LbcStatus tokenBondingKey={tokenBonding?.publicKey} />
               <Box
-                p={4}
-                borderBottom="3px solid"
-                borderRadius="lg"
-                borderColor="gray.300"
+                zIndex={1}
+                shadow="xl"
+                rounded="lg"
+                p="16px"
+                pb="29px"
+                minH="300px"
+                bg="black.300"
               >
-                <Heading size="md">Disburse Funds</Heading>
-                <DisburseFunds
-                  tokenBondingKey={tokenBonding?.publicKey}
-                  includeRetrievalCurve
-                />
+                {isAdmin && tokenBonding && (
+                  <Box
+                    p={4}
+                    borderBottom="3px solid"
+                    borderRadius="lg"
+                    borderColor="gray.300"
+                  >
+                    <Heading size="md">Disburse Funds</Heading>
+                    <DisburseFunds
+                      tokenBondingKey={tokenBonding?.publicKey}
+                      includeRetrievalCurve
+                    />
+                  </Box>
+                )}
+                {wallet.connected && (
+                  <>
+                    {loading && (
+                      <Center>
+                        <Spinner />
+                      </Center>
+                    )}
+                    {!loading && tokenBonding && (
+                      <VStack align="stretch" spacing={8}>
+                        <LbcInfo
+                          price={price}
+                          tokenBondingKey={tokenBonding.publicKey}
+                        />
+
+                        {candyMachine?.state.isActive &&
+                        candyMachine?.state.gatekeeper &&
+                        wallet.publicKey &&
+                        wallet.signTransaction ? (
+                          <GatewayProvider
+                            wallet={{
+                              publicKey:
+                                wallet.publicKey ||
+                                new PublicKey(CANDY_MACHINE_PROGRAM),
+                              //@ts-ignore
+                              signTransaction: wallet.signTransaction,
+                            }}
+                            gatekeeperNetwork={
+                              candyMachine?.state?.gatekeeper?.gatekeeperNetwork
+                            }
+                            clusterUrl={rpcUrl}
+                            options={{ autoShowModal: false }}
+                          >
+                            <MintButton
+                              price={price}
+                              onMint={onMint}
+                              tokenBondingKey={tokenBonding.publicKey}
+                              isDisabled={
+                                !isActive && (!isPresale || !isWhitelistUser)
+                              }
+                              disabledText={`Mint launches ${getCountdownDate(
+                                candyMachine
+                              )?.toLocaleTimeString()}`}
+                            />
+                          </GatewayProvider>
+                        ) : (
+                          <MintButton
+                            price={price}
+                            onMint={onMint}
+                            tokenBondingKey={tokenBonding.publicKey}
+                            isDisabled={
+                              !isActive && (!isPresale || !isWhitelistUser)
+                            }
+                            disabledText={
+                              candyMachine &&
+                              `Mint launches ${getCountdownDate(
+                                candyMachine
+                              )?.toLocaleTimeString()}`
+                            }
+                          />
+                        )}
+                        <Branding />
+                      </VStack>
+                    )}
+                  </>
+                )}
+                {!wallet.connected && (
+                  <Center>
+                    <WalletModalButton>Connect Wallet</WalletModalButton>
+                  </Center>
+                )}
               </Box>
-            )}
-            {wallet.connected && (
-              <>
+            </TabPanel>
+            <TabPanel p={0} pt={4}>
+              <Box
+                zIndex={1}
+                shadow="xl"
+                rounded="lg"
+                p="16px"
+                pb="29px"
+                minH="300px"
+                bg="black.300"
+              >
                 {loading && (
                   <Center>
                     <Spinner />
@@ -310,69 +408,16 @@ const Home = (props: HomeProps) => {
                 )}
                 {!loading && tokenBonding && (
                   <VStack align="stretch" spacing={8}>
-                    <LbcInfo
-                      price={price}
+                    <BondingPlot tokenBondingKey={tokenBonding.publicKey} />
+                    <TransactionHistory
                       tokenBondingKey={tokenBonding.publicKey}
                     />
-
-                    {candyMachine?.state.isActive &&
-                    candyMachine?.state.gatekeeper &&
-                    wallet.publicKey &&
-                    wallet.signTransaction ? (
-                      <GatewayProvider
-                        wallet={{
-                          publicKey:
-                            wallet.publicKey ||
-                            new PublicKey(CANDY_MACHINE_PROGRAM),
-                          //@ts-ignore
-                          signTransaction: wallet.signTransaction,
-                        }}
-                        gatekeeperNetwork={
-                          candyMachine?.state?.gatekeeper?.gatekeeperNetwork
-                        }
-                        clusterUrl={rpcUrl}
-                        options={{ autoShowModal: false }}
-                      >
-                        <MintButton
-                          price={price}
-                          onMint={onMint}
-                          tokenBondingKey={tokenBonding.publicKey}
-                          isDisabled={
-                            !isActive && (!isPresale || !isWhitelistUser)
-                          }
-                          disabledText={`Mint launches ${getCountdownDate(
-                            candyMachine
-                          )?.toLocaleTimeString()}`}
-                        />
-                      </GatewayProvider>
-                    ) : (
-                      <MintButton
-                        price={price}
-                        onMint={onMint}
-                        tokenBondingKey={tokenBonding.publicKey}
-                        isDisabled={
-                          !isActive && (!isPresale || !isWhitelistUser)
-                        }
-                        disabledText={
-                          candyMachine &&
-                          `Mint launches ${getCountdownDate(
-                            candyMachine
-                          )?.toLocaleTimeString()}`
-                        }
-                      />
-                    )}
-                    <Branding />
                   </VStack>
                 )}
-              </>
-            )}
-            {!wallet.connected && (
-              <Center>
-                <WalletModalButton>Connect Wallet</WalletModalButton>
-              </Center>
-            )}
-          </Box>
-        </VStack>
+              </Box>
+            </TabPanel>
+          </TabPanels>
+        </Tabs>
       </Container>
     </Box>
   );
