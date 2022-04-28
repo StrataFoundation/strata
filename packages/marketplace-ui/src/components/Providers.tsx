@@ -12,6 +12,14 @@ import { MarketplaceSdkProvider } from "../contexts/marketplaceSdkContext";
 import React from "react";
 import toast from "react-hot-toast";
 import { DEFAULT_ENDPOINT, Wallet } from "./Wallet";
+import { ApolloProvider, InMemoryCache, ApolloClient } from "@apollo/client";
+
+const client = new ApolloClient({
+  uri: "https://graph.holaplex.com/v1",
+  cache: new InMemoryCache({
+    resultCaching: false,
+  }),
+});
 
 export const Providers = ({
   children,
@@ -55,19 +63,21 @@ export const Providers = ({
 
   return (
     <ThemeProvider>
-      <ErrorHandlerProvider onError={onError}>
-        <Wallet cluster={cluster}>
-          <WalletModalProvider>
-            <StrataSdksProvider>
-              <AccountProvider commitment="confirmed">
-                <TokenListProvider>
-                  <MarketplaceSdkProvider>{children}</MarketplaceSdkProvider>
-                </TokenListProvider>
-              </AccountProvider>
-            </StrataSdksProvider>
-          </WalletModalProvider>
-        </Wallet>
-      </ErrorHandlerProvider>
+      <ApolloProvider client={client}>
+        <ErrorHandlerProvider onError={onError}>
+          <Wallet cluster={cluster}>
+            <WalletModalProvider>
+              <StrataSdksProvider>
+                <AccountProvider commitment="confirmed">
+                  <TokenListProvider>
+                    <MarketplaceSdkProvider>{children}</MarketplaceSdkProvider>
+                  </TokenListProvider>
+                </AccountProvider>
+              </StrataSdksProvider>
+            </WalletModalProvider>
+          </Wallet>
+        </ErrorHandlerProvider>
+      </ApolloProvider>
     </ThemeProvider>
   );
 };

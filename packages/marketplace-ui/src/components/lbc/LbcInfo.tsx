@@ -16,14 +16,13 @@ import {
   useColorModeValue,
   useDisclosure,
   useInterval,
-  VStack,
+  VStack
 } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
 import {
-  useCurve,
+  useCapInfo, useCurve,
   useTokenBonding,
-  useTokenMetadata,
-  useCapInfo,
+  useTokenMetadata
 } from "@strata-foundation/react";
 import moment from "moment";
 import React, { useState } from "react";
@@ -31,7 +30,6 @@ import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
 import { BsChevronDown, BsChevronUp } from "react-icons/bs";
 import { useLivePrice } from "../..//hooks/useLivePrice";
 import { numberWithCommas } from "../../utils/numberWithCommas";
-import { BondingPlot } from "./BondingPlot";
 
 const BlackBox = ({ children, ...other }: BoxProps) => {
   return (
@@ -185,7 +183,6 @@ export const LbcInfo = ({
       </Stack>
       <Collapse in={isOpen} animateOpacity>
         <VStack align="left" spacing={4} padding={4}>
-          {isOpen && <BondingPlot tokenBondingKey={tokenBondingKey} />}
           <VStack spacing={1} align="left">
             <Text fontSize="14px" fontWeight="700">
               How does Dynamic Pricing work?
