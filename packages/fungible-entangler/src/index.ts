@@ -35,12 +35,12 @@ type Truthy<T> = T extends false | "" | 0 | null | undefined ? never : T; // fro
 const truthy = <T>(value: T): value is Truthy<T> => !!value;
 
 export interface ICreateFungibleEntanglerOutput {
-  entangler: PublicKey;
-  storage: PublicKey;
-  mint: PublicKey;
-  childEntangler: PublicKey;
-  childStorage: PublicKey;
-  childMint: PublicKey;
+  // entangler: PublicKey;
+  // storage: PublicKey;
+  // mint: PublicKey;
+  // childEntangler: PublicKey;
+  // childStorage: PublicKey;
+  // childMint: PublicKey;
 }
 
 interface ICreateFungibleEntanglerArgs {
@@ -72,24 +72,24 @@ interface ISwapArgs {
 }
 
 export class FungibleEntangler extends AnchorSdk<any> {
-  static ID = new PublicKey("asdf");
+  static ID = new PublicKey("Ae6wbxtjpoKGCuSdHGQXRudmdpSfGpu6KHtjDcWEDjP8");
 
-  static async init(
-    provider: Provider,
-    fungibleEntanglerProgramId: PublicKey = FungibleEntangler.ID
-  ): Promise<FungibleEntangler> {
-    const FungibleEntanglerIDLJson = await anchor.Program.fetchIdl(
-      fungibleEntanglerProgramId,
-      provider
-    );
+  // static async init(
+  //   provider: Provider,
+  //   fungibleEntanglerProgramId: PublicKey = FungibleEntangler.ID
+  // ): Promise<FungibleEntangler> {
+  //   const FungibleEntanglerIDLJson = await anchor.Program.fetchIdl(
+  //     fungibleEntanglerProgramId,
+  //     provider
+  //   );
 
-    const fungibleEntangler = new anchor.Program<FungibleEntanglerIDL>(
-      FungibleEntanglerIDLJson as FungibleEntanglerIDL,
-      provider
-    ) as anchor.Program<FungibleEntanglerIDL>;
+  //   const fungibleEntangler = new anchor.Program<FungibleEntanglerIDL>(
+  //     FungibleEntanglerIDLJson as FungibleEntanglerIDL,
+  //     provider
+  //   ) as anchor.Program<FungibleEntanglerIDL>;
 
-    return new this(provider, fungibleEntangler);
-  }
+  //   return new this(provider, fungibleEntangler);
+  // }
 
   constructor(provider: Provider, program: Program<any>) {
     super({ provider, program });

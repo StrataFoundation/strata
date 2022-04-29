@@ -9,7 +9,7 @@ pub mod util;
 
 use instructions::*;
 
-declare_id!(TConj11111111111111111111111111111111111111);
+declare_id!("Ae6wbxtjpoKGCuSdHGQXRudmdpSfGpu6KHtjDcWEDjP8");
 
 #[program]
 pub mod fungible_entanlger {

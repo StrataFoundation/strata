@@ -1,5 +1,5 @@
 {
-  "name": "@strata-foundation/fungible-entangler-sdk",
+  "name": "@strata-foundation/fungible-entangler",
   "version": "1.0.0",
   "description": "Interface to the strata fungible entangler",
   "publishConfig": {

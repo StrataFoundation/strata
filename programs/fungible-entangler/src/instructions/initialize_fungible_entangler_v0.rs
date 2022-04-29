@@ -1,4 +1,4 @@
-use crate::{error::ErrorCode, state::*};
+use crate::{state::*};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 
@@ -28,7 +28,7 @@ pub struct InitializeFungibleEntanglerV0<'info> {
     payer = payer,
     seeds = [b"storage", entangler.key().as_ref()],
     bump,
-    token::mint = target_mint,
+    token::mint = mint,
     token::authority = entangler,
   )]
   pub storage: Box<Account<'info, TokenAccount>>,
