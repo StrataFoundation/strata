@@ -10,7 +10,7 @@ const program = new Command();
 program
   .version("0.1.0")
   .argument("<mintPublicKey>", "PublicKey of mint")
-  .description("select a random wallet from people who hold a sol mint token")
+  .description("Get holders of a certain mint")
   .action(async (mintPublicKey, solanaUrl) => {
     let holders = {};
     const mint = new PublicKey(mintPublicKey);
@@ -47,14 +47,11 @@ program
           // @ts-ignore
           holders[a.account.data.parsed.info.owner] = {
             amount: +a.account.data.parsed.info.tokenAmount.uiAmount,
-            mints: [mint.toString()],
           };
         } else {
           // @ts-ignore
           holders[a.account.data.parsed.info.owner].amount +=
             +a.account.data.parsed.info.tokenAmount.uiAmount;
-          // @ts-ignore
-          holders[a.account.data.parsed.info.owner].mints.push(mint.toString());
         }
       }
     });
