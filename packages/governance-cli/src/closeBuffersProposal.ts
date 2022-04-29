@@ -12,15 +12,16 @@ import {
   withAddSignatory,
   withCreateProposal,
   withInsertTransaction,
-  withSignOffProposal
+  withSignOffProposal,
 } from "@solana/spl-governance";
 import {
   Cluster,
   clusterApiUrl,
   Connection,
   Keypair,
-  PublicKey, Transaction,
-  TransactionInstruction
+  PublicKey,
+  Transaction,
+  TransactionInstruction,
 } from "@solana/web3.js";
 import { sendAndConfirmWithRetry } from "@strata-foundation/spl-utils";
 import bs58 from "bs58";
@@ -142,9 +143,14 @@ async function run() {
   tx.add(...instructions);
   tx.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
   tx.sign(wallet);
-  await sendAndConfirmWithRetry(connection, tx.serialize(), {
-    skipPreflight: true 
-  }, "confirmed");
+  await sendAndConfirmWithRetry(
+    connection,
+    tx.serialize(),
+    {
+      skipPreflight: true,
+    },
+    "confirmed"
+  );
 
   const ixs = chunks(
     await Promise.all(
