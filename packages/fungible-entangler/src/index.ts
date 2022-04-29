@@ -29,6 +29,13 @@ import {
   TypedAccountParser,
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
+import {
+  FungibleEntanglerIDL,
+  FungibleEntanglerV0,
+  FungibleChildEntanglerV0,
+} from "./generated/fungible-entangler";
+
+export * from "./generated/fungible-entangler";
 
 type Truthy<T> = T extends false | "" | 0 | null | undefined ? never : T; // from lodash
 
@@ -74,22 +81,23 @@ interface ISwapArgs {
 export class FungibleEntangler extends AnchorSdk<any> {
   static ID = new PublicKey("Ae6wbxtjpoKGCuSdHGQXRudmdpSfGpu6KHtjDcWEDjP8");
 
-  // static async init(
-  //   provider: Provider,
-  //   fungibleEntanglerProgramId: PublicKey = FungibleEntangler.ID
-  // ): Promise<FungibleEntangler> {
-  //   const FungibleEntanglerIDLJson = await anchor.Program.fetchIdl(
-  //     fungibleEntanglerProgramId,
-  //     provider
-  //   );
+  static async init(
+    provider: Provider,
+    fungibleEntanglerProgramId: PublicKey = FungibleEntangler.ID
+  ): Promise<FungibleEntangler> {
+    const FungibleEntanglerIDLJson = await anchor.Program.fetchIdl(
+      fungibleEntanglerProgramId,
+      provider
+    );
 
-  //   const fungibleEntangler = new anchor.Program<FungibleEntanglerIDL>(
-  //     FungibleEntanglerIDLJson as FungibleEntanglerIDL,
-  //     provider
-  //   ) as anchor.Program<FungibleEntanglerIDL>;
+    const fungibleEntangler = new anchor.Program<FungibleEntanglerIDL>(
+      FungibleEntanglerIDLJson as FungibleEntanglerIDL,
+      fungibleEntanglerProgramId,
+      provider
+    ) as anchor.Program<FungibleEntanglerIDL>;
 
-  //   return new this(provider, fungibleEntangler);
-  // }
+    return new this(provider, fungibleEntangler);
+  }
 
   constructor(provider: Provider, program: Program<any>) {
     super({ provider, program });
@@ -110,12 +118,11 @@ export class FungibleEntangler extends AnchorSdk<any> {
     commitment: Commitment = "confirmed"
   ): Promise<{}> {
     // TODO: Implement;
-    return Promise.resolve({});
-    // return this.execute(
-    //   this.createFungibleEntanglerInstructions(args),
-    //   args.payer,
-    //   commitment
-    // );
+    return this.execute(
+      this.createFungibleEntanglerInstructions(args),
+      args.payer,
+      commitment
+    );
   }
 
   async createFungibleChildEntanglerInstructions({}: ICreateFungibleChildEntanglerArgs): Promise<

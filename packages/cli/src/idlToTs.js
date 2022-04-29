@@ -71,10 +71,6 @@ ${allEnumsToTs(idlJson)}
 ${allAccountsToTs(idlName, idlJson)}
           `;
 
-          console.log(
-            `writting ${rootDir}/packages/${name}/src/generated/${name}.ts`
-          );
-
           writeFile(
             `${rootDir}/packages/${name}/src/generated/${name}.ts`,
             fileContents
