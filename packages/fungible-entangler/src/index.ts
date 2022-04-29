@@ -123,7 +123,6 @@ export class FungibleEntangler extends AnchorSdk<any> {
   > {
     const publicKey = this.provider.wallet.publicKey;
     const instructions: TransactionInstruction[] = [];
-
     // TODO: implement
 
     return { instructions, signers: [], output: {} };

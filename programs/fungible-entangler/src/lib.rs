@@ -12,7 +12,7 @@ use instructions::*;
 declare_id!("Ae6wbxtjpoKGCuSdHGQXRudmdpSfGpu6KHtjDcWEDjP8");
 
 #[program]
-pub mod fungible_entanlger {
+pub mod fungible_entangler {
     use super::*;
     pub fn initialize_fungible_entangler_v0(
       ctx: Context<InitializeFungibleEntanglerV0>,
