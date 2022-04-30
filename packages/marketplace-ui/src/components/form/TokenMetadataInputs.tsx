@@ -167,7 +167,7 @@ export function TokenMetadataInputs({
                 >
                   <Flex
                     justifyContent="center"
-                    alignItem="center"
+                    alignItems="center"
                     flexShrink={0}
                     mr={{ base: 4, md: 0 }}
                   >

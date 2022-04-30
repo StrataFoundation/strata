@@ -16,10 +16,7 @@ const cors = initMiddleware(
   Cors({
     // Only allow requests with GET
     methods: ["GET"],
-    origin: [
-      new RegExp(`\.${domain}`),
-      new RegExp(domain),
-    ],
+    origin: [new RegExp(`\.${domain}`), new RegExp(domain)],
   })
 );
 
@@ -31,27 +28,31 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>
 ) {
-  await cors(req, res);
+  if (process.env.NEXT_PUBLIC_ISSUER) {
+    await cors(req, res);
 
-  const token = Base64.encode(
-    `${process.env.NEXT_PUBLIC_CLIENT_ID}:${process.env.NEXT_PUBLIC_CLIENT_SECRET}`
-  );
-  try {
-    const { access_token } = (
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_ISSUER}/token`,
-        "grant_type=client_credentials",
-        {
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            Authorization: `Basic ${token}`,
-          },
-        }
-      )
-    ).data;
-    res.status(200).json({ access_token });
-  } catch (e) {
-    console.log(e);
-    res.status(500);
+    const token = Base64.encode(
+      `${process.env.NEXT_PUBLIC_CLIENT_ID}:${process.env.NEXT_PUBLIC_CLIENT_SECRET}`
+    );
+    try {
+      const { access_token } = (
+        await axios.post(
+          `${process.env.NEXT_PUBLIC_ISSUER}/token`,
+          "grant_type=client_credentials",
+          {
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+              Authorization: `Basic ${token}`,
+            },
+          }
+        )
+      ).data;
+      res.status(200).json({ access_token });
+    } catch (e) {
+      console.log(e);
+      res.status(500);
+    }
+  } else {
+    res.status(200);
   }
 }
