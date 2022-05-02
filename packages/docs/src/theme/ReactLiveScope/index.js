@@ -33,6 +33,7 @@ import {
   useTokenRef,
   useBondedTokenPrice,
   useErrorHandler,
+  sendInstructions
 } from "@strata-foundation/react";
 import {
   TimeDecayExponentialCurveConfig,
@@ -152,6 +153,7 @@ const ReactLiveScope = {
   getAssociatedAccountBalance,
   ExponentialCurveConfig,
   TimeCurveConfig,
+  sendInstructions,
   ...React,
 };
 

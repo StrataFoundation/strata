@@ -5,7 +5,11 @@ slug: /
 
 # Getting Started
 
-The Strata Protocol lets you effortlessly create Social Tokens and communities of Social Tokens (Collectives) on Solana!
+The Strata Protocol lets you effortlessly create tokens and networks of Tokens (Collectives) on Solana!
+
+Looking to launch a token? Check out our launchpad at [app.strataprotocol.com](https://app.strataprotocol.com). The documentation behind the launchpad can be found under the "Launchpad" section of these docs.
+
+Looking to learn more about tokens, systems of tokens, and bonding curves? Read on.
 
 ## Initializing the SDK
 
