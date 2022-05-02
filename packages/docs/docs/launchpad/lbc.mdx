@@ -21,9 +21,9 @@ but reaches a balance at the fair price where continued demand matches the fall 
 Strata LBCs require minimal configuration. All you need to specify is
 
   * **mint** - What mint would you like to use to collect funds? This is the token users will use to purchase the token you are selling.
-  * **startPrice** - What price should the LBC start at?
-  * **minPrice** - What is the minimum price the LBC should allow?
-  * **interval** - How long should this LBC last for? Generally these take course over 1-3 days.
+  * **startPrice** - What price should the mint start at? You should set this to just above the price you expect to sell your NFT. Note that the price can float above this number if there is enough demand.
+  * **minPrice** - What is the minimum price you would accept? Setting this too high can lead to not selling out. The `startPrice` should not be more than 5x the `minPrice` or the price will drop precipitously at the beginning of the mint.
+  * **interval** - How long should this LBC last for?
 
 
 Let's create a simple LBC curve to sell `5000` tokens, starting at a price of `5` SOL, with a min price of `1` SOL:
