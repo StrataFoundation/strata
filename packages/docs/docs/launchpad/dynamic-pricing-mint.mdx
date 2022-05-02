@@ -111,22 +111,21 @@ const graveyardAta = await Token.getAssociatedTokenAddress(
   graveyard,
   true
 );
-await sendInstructions(
-  new Map(),
-  provider,
-  [
-    Token.createAssociatedTokenAccountInstruction(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
-      targetMint,
-      graveyardAta,
-      graveyard,
-      publicKey
-    )    
-  ],
-  signers,
-  me
-);
+var tx = new Transaction({
+  feePayer: publicKey,
+  recentBlockhash: (await connection.getRecentBlockHash()).blockhash
+})
+tx.add(
+  Token.createAssociatedTokenAccountInstruction(
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    TOKEN_PROGRAM_ID,
+    targetMint,
+    graveyardAta,
+    graveyard,
+    publicKey
+  )
+)
+await provider.send(tx)
 ```
 
 Now, you can update your candymachine with the following, when you are ready to do a dynamic mint:
