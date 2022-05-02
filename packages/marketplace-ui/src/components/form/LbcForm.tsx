@@ -203,7 +203,7 @@ async function createLiquidityBootstrapper(
   if (values.useCandyMachine) {
     const candyMachineId = new PublicKey(values.candyMachineId);
     const incinerator = new PublicKey(
-      "1nc1nerator11111111111111111111111111111111"
+      "gravk12G8FF5eaXaXSe4VEC8BhkxQ7ig5AHdeVdPmDF"
     );
     const incineratorAta = await Token.getAssociatedTokenAddress(
       ASSOCIATED_TOKEN_PROGRAM_ID,
