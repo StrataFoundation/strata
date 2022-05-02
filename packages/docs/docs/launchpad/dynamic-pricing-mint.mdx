@@ -15,6 +15,10 @@ For a deep dive on this price discovery mechanism, read more [here](./lbc).
 With a Strata Dynamic Pricing Mint, the price starts high, and falls until there is demand for the token. From there, it continues to be pulled downward,
 but reaches a balance at the fair price where continued demand matches the fall in price.
 
+![A Dynamic Mint Price Plot](./dynamic-mint-history.jpeg)
+
+Above you can see a real-life dynamic pricing mint, and how the price changed over time.
+
 ## Dynamic Pricing Mint - Deployment
 
 The easiest way to deploy a dynamic pricing mint is via our [launchpad](https://app.strataprotocol.com). Click the dynamic pricing mint option,
@@ -24,10 +28,11 @@ You can always visit a dynamic pricing candymachine at `https://app.strataprotoc
 
 ### Configuration Parameters
 
+  * **Start Date** - The start date should be **at** or **after** the candymachine start date. Otherwise, the UI could cause users to be penalized as bots
+  * **Supply** - The number of NFTs to sell with dynamic pricing. This should be **at** or **below** the total amount in the candymachine. Selecting a number above the CM supply could lead to users who purchased an NFT but did not get one
   * **Start Price** - What price should the mint start at? You should set this to just above the price you expect to sell your NFT. Note that the price can float above this number if there is enough demand.
   * **Minimum Price** - What is the minimum price you would accept? Setting this too high can lead to not selling out. The `startPrice` should not be more than 5x the `minPrice` or the price will drop precipitously at the beginning of the mint.
   * **Interval** - How long should this LBC last for? For mints, it is recommended to use 1-3 hours. Note that minting will remain open after the interval is over, but the price will no longer fall.
-  * **Starting Date** - When should the price drop start?
 
 Don't have an existing candymachine? Read the [metaplex docs](https://docs.metaplex.com/candy-machine-v2/creating-candy-machine) on how to launch one.
 
