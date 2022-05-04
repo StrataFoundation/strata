@@ -40,6 +40,20 @@ type Truthy<T> = T extends false | "" | 0 | null | undefined ? never : T; // fro
 
 const truthy = <T>(value: T): value is Truthy<T> => !!value;
 
+/**
+ * Unified fungible entangler interface wrapping the raw FungibleEntanglerV0
+ */
+export interface IFungibleEntangler extends FungibleEntanglerV0 {
+  publicKey: PublicKey;
+}
+
+/**
+ * Unified fungible child entangler interface wrapping the raw FungibleChildEntanglerV0*
+ */
+export interface IFungibleChildEntangler extends FungibleChildEntanglerV0 {
+  publicKey: PublicKey;
+}
+
 interface ICreateParentFungibleEntanglerArgs {
   payer?: PublicKey;
   /** The source for the set supply (**Default:** ata of provider wallet) */
@@ -159,7 +173,6 @@ export class FungibleEntangler extends AnchorSdk<any> {
     InstructionResult<ICreateParentFungibleEntanglerOutput>
   > {
     const provider = this.provider;
-    const publicKey = provider.wallet.publicKey;
     const instructions: TransactionInstruction[] = [];
     const signers: Keypair[] = [];
 

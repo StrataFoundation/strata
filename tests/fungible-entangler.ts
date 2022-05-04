@@ -12,6 +12,9 @@ import { createMint } from "@strata-foundation/spl-utils";
 import {
   FungibleEntangler,
   FungibleEntanglerV0,
+  IFungibleEntangler,
+  FungibleChildEntanglerV0,
+  IFungibleChildEntangler,
 } from "../packages/fungible-entangler/src";
 import { waitForUnixTime } from "./utils/clock";
 import { TokenUtils } from "./utils/token";
@@ -27,8 +30,23 @@ describe("fungible-entangler", () => {
   const tokenUtils = new TokenUtils(provider);
   const fungibleEntanglerProgram = new FungibleEntangler(provider, program);
   const me = fungibleEntanglerProgram.wallet.publicKey;
+  const newWallet = Keypair.generate();
 
   describe("initialization", () => {
+    let parentMint: PublicKey;
+    let childMint: PublicKey;
+    let entangler: PublicKey;
+    let entanglerAcct: IFungibleEntangler;
+    let childEntangler: PublicKey;
+    let childEntanglerAcct: IFungibleChildEntangler;
+    const INITIAL_BALANCE = 1000;
+    const DECIMALS = 2;
+
+    beforeEach(async () => {
+      parentMint = await createMint(provider, me, DECIMALS);
+      await tokenUtils.createAtaAndMint(provider, parentMint, INITIAL_BALANCE);
+    });
+
     it("allows creation of a parent entangler", async () => {
       // TODO: implement
       expect(false).to.eq(true);
@@ -52,6 +70,13 @@ describe("fungible-entangler", () => {
     });
 
     it("swaps from the child to the parent", () => {
+      // TODO: implement
+      expect(false).to.eq(true);
+    });
+  });
+
+  describe("top off", () => {
+    it("allows topping off of parent", () => {
       // TODO: implement
       expect(false).to.eq(true);
     });
