@@ -3,7 +3,6 @@ import { IdlTypes, Program, Provider } from "@project-serum/anchor";
 import {
   AccountLayout,
   ASSOCIATED_TOKEN_PROGRAM_ID,
-  NATIVE_MINT,
   Token,
   TOKEN_PROGRAM_ID,
   u64,
@@ -41,21 +40,15 @@ type Truthy<T> = T extends false | "" | 0 | null | undefined ? never : T; // fro
 
 const truthy = <T>(value: T): value is Truthy<T> => !!value;
 
-export interface ICreateFungibleEntanglerOutput {
-  // entangler: PublicKey;
-  // storage: PublicKey;
-  // mint: PublicKey;
-  // childEntangler: PublicKey;
-  // childStorage: PublicKey;
-  // childMint: PublicKey;
-}
-
-interface ICreateFungibleEntanglerArgs {
-  /** The payer to create this fungible entangler, defaults to provider.wallet */
+interface ICreateParentFungibleEntanglerArgs {
   payer?: PublicKey;
+  /** The source for the set supply (**Default:** ata of provider wallet) */
+  source?: PublicKey;
   /**  The mint we will be creating an entangler for */
   mint: PublicKey;
-  /** The amount of that mint we will be entangling */
+  /** dynamicSeed used for created PDA of entangler */
+  dynamicSeed: Buffer;
+  /** The amount of the mint we will be entangling */
   amount: number;
   /**
    * General authority to change things like freeze swap.
@@ -68,13 +61,35 @@ interface ICreateFungibleEntanglerArgs {
   freezeSwapDate?: Date;
 }
 
+export interface ICreateParentFungibleEntanglerOutput {
+  entangler: PublicKey;
+  storage: PublicKey;
+  mint: PublicKey;
+}
+
 interface ICreateFungibleChildEntanglerArgs {
-  /** The payer to create this fungible child entangler, defaults to provider.wallet */
   payer?: PublicKey;
+  /** The parent entangler this child will be associated to */
+  parentEntangler: PublicKey;
+  /** The mint we will be creating an entangler for */
+  mint: PublicKey;
+  /**
+   * General authority to change things like freeze swap.
+   * **Default:** Wallet public key. Pass null to explicitly not set this authority.
+   */
+  authority?: PublicKey | null;
+  /** The date this entangler will go live. Before this date, {@link FungibleEntangler.swap} is disabled. **Default:** 1 second ago */
+  goLiveDate?: Date;
+  /** The date this entangler will shut down. After this date, {@link FungibleEntangler.swap} is disabled. **Default:** null */
+}
+
+export interface ICreateParentFungibleEntanglerOutput {
+  entangler: PublicKey;
+  storage: PublicKey;
+  mint: PublicKey;
 }
 
 interface ISwapArgs {
-  /** The payer to run this transaction, defaults to provider.wallet */
   payer?: PublicKey;
 }
 
@@ -99,27 +114,163 @@ export class FungibleEntangler extends AnchorSdk<any> {
     return new this(provider, fungibleEntangler);
   }
 
-  constructor(provider: Provider, program: Program<any>) {
+  constructor(provider: Provider, program: Program<FungibleEntanglerIDL>) {
     super({ provider, program });
   }
 
-  async createFungibleEntanglerInstructions({}: ICreateFungibleEntanglerArgs): Promise<
-    InstructionResult<ICreateFungibleEntanglerOutput>
-  > {
-    const publicKey = this.provider.wallet.publicKey;
-    const instructions: TransactionInstruction[] = [];
+  /**
+   * General utility function to check if an account exists
+   * @param account
+   * @returns
+   */
+  async accountExists(account: anchor.web3.PublicKey): Promise<boolean> {
+    return Boolean(await this.provider.connection.getAccountInfo(account));
+  }
 
-    // TODO: Implement
-    return { instructions, signers: [], output: {} };
+  /**
+   * Get the PDA key of a Entangler given the mint and dynamicSeed
+   *
+   *
+   * @param mint
+   * @param dynamicSeed
+   * @returns
+   */
+  static async fungibleEntanglerKey(
+    mint: PublicKey,
+    dynamicSeed: Buffer,
+    programId: PublicKey = FungibleEntangler.ID
+  ): Promise<[PublicKey, number]> {
+    return PublicKey.findProgramAddress(
+      [Buffer.from("entangler", "utf-8"), mint!.toBuffer(), dynamicSeed],
+      programId
+    );
+  }
+
+  async createParentFungibleEntanglerInstructions({
+    authority = this.wallet.publicKey,
+    payer = this.wallet.publicKey,
+    source = this.wallet.publicKey,
+    mint,
+    dynamicSeed,
+    amount,
+    goLiveDate = new Date(new Date().valueOf() - 10000), // 10 secs ago
+    freezeSwapDate,
+  }: ICreateParentFungibleEntanglerArgs): Promise<
+    InstructionResult<ICreateParentFungibleEntanglerOutput>
+  > {
+    const provider = this.provider;
+    const publicKey = provider.wallet.publicKey;
+    const instructions: TransactionInstruction[] = [];
+    const signers: Keypair[] = [];
+
+    const mintAcct = await getMintInfo(this.provider, mint);
+    const sourceAcct = await this.provider.connection.getAccountInfo(source);
+
+    // Source is a wallet, need to get the ATA
+    if (!sourceAcct || sourceAcct.owner.equals(SystemProgram.programId)) {
+      const ataSource = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        mint,
+        payer,
+        true
+      );
+
+      if (!(await this.accountExists(ataSource))) {
+        throw new Error(
+          `Owner of ${payer?.toBase58()} does not hold any ${mint.toBase58()} tokens`
+        );
+      }
+
+      source = ataSource;
+    }
+
+    const sourceAcctAta = await getTokenAccount(this.provider, source);
+
+    const [entangler, bumpSeed] = await FungibleEntangler.fungibleEntanglerKey(
+      mint,
+      dynamicSeed
+    );
+
+    const storageKeypair = anchor.web3.Keypair.generate();
+    signers.push(storageKeypair);
+    const storage = storageKeypair.publicKey;
+
+    instructions.push(
+      SystemProgram.createAccount({
+        fromPubkey: payer,
+        newAccountPubkey: storage!,
+        space: AccountLayout.span,
+        programId: TOKEN_PROGRAM_ID,
+        lamports: await provider.connection.getMinimumBalanceForRentExemption(
+          AccountLayout.span
+        ),
+      }),
+      Token.createInitAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        mint,
+        storage,
+        entangler
+      ),
+      Token.createTransferInstruction(
+        TOKEN_PROGRAM_ID,
+        source,
+        storage,
+        sourceAcctAta.owner,
+        [],
+        new u64(
+          (amount * Math.pow(10, mintAcct.decimals)).toLocaleString(
+            "fullwide",
+            {
+              useGrouping: false,
+            }
+          )
+        )
+      )
+    );
+
+    instructions.push(
+      await this.instruction.initializeFungbileEntanglerV0(
+        {
+          authority,
+          entanglerSeed: dynamicSeed,
+          goLiveUnixTime: new BN(Math.floor(goLiveDate.valueOf() / 1000)),
+          freezeSwapUnixTime: freezeSwapDate
+            ? new BN(Math.floor(freezeSwapDate.valueOf() / 1000))
+            : null,
+        },
+        {
+          accounts: {
+            payer,
+            entangler,
+            storage,
+            mint,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+            rent: SYSVAR_RENT_PUBKEY,
+            clock: SYSVAR_CLOCK_PUBKEY,
+          },
+        }
+      )
+    );
+
+    return {
+      instructions,
+      signers,
+      output: {
+        entangler,
+        storage,
+        mint,
+      },
+    };
   }
 
   async createFungibleEntangler(
-    args: ICreateFungibleEntanglerArgs,
+    args: ICreateParentFungibleEntanglerArgs,
     commitment: Commitment = "confirmed"
   ): Promise<{}> {
-    // TODO: Implement;
     return this.execute(
-      this.createFungibleEntanglerInstructions(args),
+      this.createParentFungibleEntanglerInstructions(args),
       args.payer,
       commitment
     );

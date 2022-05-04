@@ -4,7 +4,7 @@ use anchor_spl::token::{Mint, Token, TokenAccount};
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct InitializeFungibleChildEntanglerV0Args {
-  pub authority: Pubkey,
+  pub authority: Option<Pubkey>,
   pub go_live_unix_time: i64,
   pub freeze_swap_unix_time: Option<i64>,
 }
