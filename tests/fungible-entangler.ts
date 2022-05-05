@@ -41,15 +41,27 @@ describe("fungible-entangler", () => {
     let childEntanglerAcct: IFungibleChildEntangler;
     const INITIAL_BALANCE = 1000;
     const DECIMALS = 2;
+    const dynamicSeed = Keypair.generate().publicKey;
 
     beforeEach(async () => {
       parentMint = await createMint(provider, me, DECIMALS);
       await tokenUtils.createAtaAndMint(provider, parentMint, INITIAL_BALANCE);
+
+      const { entangler: entanglerOut } =
+        await fungibleEntanglerProgram.createFungibleParentEntangler({
+          authority: me,
+          mint: parentMint,
+          amount: 1000,
+          dynamicSeed: dynamicSeed.toBuffer(),
+        });
+
+      entangler = entanglerOut;
+      entanglerAcct = (await fungibleEntanglerProgram.getEntangler(entangler))!;
     });
 
-    it("allows creation of a parent entangler", async () => {
-      // TODO: implement
-      expect(false).to.eq(true);
+    it("succesfully creates the parent entangler", async () => {
+      await tokenUtils.expectBalance(entanglerAcct.storage, 100);
+      await tokenUtils.expectAtaBalance(me, entanglerAcct.mint, 0);
     });
 
     it("allows creation of a child entangler", async () => {

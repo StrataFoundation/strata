@@ -54,7 +54,7 @@ export interface IFungibleChildEntangler extends FungibleChildEntanglerV0 {
   publicKey: PublicKey;
 }
 
-interface ICreateParentFungibleEntanglerArgs {
+interface ICreateFungibleParentEntanglerArgs {
   payer?: PublicKey;
   /** The source for the set supply (**Default:** ata of provider wallet) */
   source?: PublicKey;
@@ -75,7 +75,7 @@ interface ICreateParentFungibleEntanglerArgs {
   freezeSwapDate?: Date;
 }
 
-export interface ICreateParentFungibleEntanglerOutput {
+export interface ICreateFungibleParentEntanglerOutput {
   entangler: PublicKey;
   storage: PublicKey;
   mint: PublicKey;
@@ -97,7 +97,7 @@ interface ICreateFungibleChildEntanglerArgs {
   /** The date this entangler will shut down. After this date, {@link FungibleEntangler.swap} is disabled. **Default:** null */
 }
 
-export interface ICreateParentFungibleEntanglerOutput {
+export interface ICreateFungibleChildEntanglerOutput {
   entangler: PublicKey;
   storage: PublicKey;
   mint: PublicKey;
@@ -160,7 +160,26 @@ export class FungibleEntangler extends AnchorSdk<any> {
     );
   }
 
-  async createParentFungibleEntanglerInstructions({
+  entanglerDecoder: TypedAccountParser<IFungibleEntangler> = (
+    pubkey,
+    account
+  ) => {
+    const coded = this.program.coder.accounts.decode<IFungibleEntangler>(
+      "FungibleEntanglerV0",
+      account.data
+    );
+
+    return {
+      ...coded,
+      publicKey: pubkey,
+    };
+  };
+
+  getEntangler(entanglerKey: PublicKey): Promise<IFungibleEntangler | null> {
+    return this.getAccount(entanglerKey, this.entanglerDecoder);
+  }
+
+  async createFungibleParentEntanglerInstructions({
     authority = this.wallet.publicKey,
     payer = this.wallet.publicKey,
     source = this.wallet.publicKey,
@@ -169,8 +188,8 @@ export class FungibleEntangler extends AnchorSdk<any> {
     amount,
     goLiveDate = new Date(new Date().valueOf() - 10000), // 10 secs ago
     freezeSwapDate,
-  }: ICreateParentFungibleEntanglerArgs): Promise<
-    InstructionResult<ICreateParentFungibleEntanglerOutput>
+  }: ICreateFungibleParentEntanglerArgs): Promise<
+    InstructionResult<ICreateFungibleParentEntanglerOutput>
   > {
     const provider = this.provider;
     const instructions: TransactionInstruction[] = [];
@@ -243,7 +262,7 @@ export class FungibleEntangler extends AnchorSdk<any> {
     );
 
     instructions.push(
-      await this.instruction.initializeFungbileEntanglerV0(
+      await this.instruction.initializeFungibleEntanglerV0(
         {
           authority,
           entanglerSeed: dynamicSeed,
@@ -278,12 +297,12 @@ export class FungibleEntangler extends AnchorSdk<any> {
     };
   }
 
-  async createFungibleEntangler(
-    args: ICreateParentFungibleEntanglerArgs,
+  async createFungibleParentEntangler(
+    args: ICreateFungibleParentEntanglerArgs,
     commitment: Commitment = "confirmed"
-  ): Promise<{}> {
+  ): Promise<ICreateFungibleParentEntanglerOutput> {
     return this.execute(
-      this.createParentFungibleEntanglerInstructions(args),
+      this.createFungibleParentEntanglerInstructions(args),
       args.payer,
       commitment
     );
