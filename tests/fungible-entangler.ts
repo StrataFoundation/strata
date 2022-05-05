@@ -30,28 +30,23 @@ describe("fungible-entangler", () => {
   const tokenUtils = new TokenUtils(provider);
   const fungibleEntanglerProgram = new FungibleEntangler(provider, program);
   const me = fungibleEntanglerProgram.wallet.publicKey;
-  const newWallet = Keypair.generate();
 
   describe("initialization", () => {
     let parentMint: PublicKey;
-    let childMint: PublicKey;
     let entangler: PublicKey;
     let entanglerAcct: IFungibleEntangler;
-    let childEntangler: PublicKey;
-    let childEntanglerAcct: IFungibleChildEntangler;
     const INITIAL_BALANCE = 1000;
-    const DECIMALS = 2;
     const dynamicSeed = Keypair.generate().publicKey;
 
     beforeEach(async () => {
-      parentMint = await createMint(provider, me, DECIMALS);
+      parentMint = await createMint(provider, me, 0);
       await tokenUtils.createAtaAndMint(provider, parentMint, INITIAL_BALANCE);
 
       const { entangler: entanglerOut } =
         await fungibleEntanglerProgram.createFungibleParentEntangler({
           authority: me,
           mint: parentMint,
-          amount: 1000,
+          amount: INITIAL_BALANCE,
           dynamicSeed: dynamicSeed.toBuffer(),
         });
 
@@ -60,7 +55,7 @@ describe("fungible-entangler", () => {
     });
 
     it("succesfully creates the parent entangler", async () => {
-      await tokenUtils.expectBalance(entanglerAcct.storage, 100);
+      await tokenUtils.expectBalance(entanglerAcct.storage, INITIAL_BALANCE);
       await tokenUtils.expectAtaBalance(me, entanglerAcct.mint, 0);
     });
 

@@ -180,9 +180,9 @@ export class FungibleEntangler extends AnchorSdk<any> {
   }
 
   async createFungibleParentEntanglerInstructions({
-    authority = this.wallet.publicKey,
-    payer = this.wallet.publicKey,
-    source = this.wallet.publicKey,
+    authority = this.provider.wallet.publicKey,
+    payer = this.provider.wallet.publicKey,
+    source = this.provider.wallet.publicKey,
     mint,
     dynamicSeed,
     amount,
@@ -227,6 +227,9 @@ export class FungibleEntangler extends AnchorSdk<any> {
     const storageKeypair = anchor.web3.Keypair.generate();
     signers.push(storageKeypair);
     const storage = storageKeypair.publicKey;
+
+    console.log(amount);
+    console.log(sourceAcctAta.amount.toNumber());
 
     instructions.push(
       SystemProgram.createAccount({
