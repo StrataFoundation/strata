@@ -846,7 +846,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     programId: PublicKey = SplTokenBonding.ID
   ): Promise<[PublicKey, number]> {
     const pad = Buffer.alloc(2);
-    new BN(index, 16, "le").toBuffer().copy(pad);
+    new BN(index, 16, "le").toArrayLike(Buffer).copy(pad);
     return PublicKey.findProgramAddress(
       [Buffer.from("token-bonding", "utf-8"), targetMint!.toBuffer(), pad],
       programId
