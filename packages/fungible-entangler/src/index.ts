@@ -261,10 +261,7 @@ export class FungibleEntangler extends AnchorSdk<any> {
             }
           )
         )
-      )
-    );
-
-    instructions.push(
+      ),
       await this.instruction.initializeFungibleEntanglerV0(
         {
           authority,
