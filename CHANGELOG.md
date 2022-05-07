@@ -3,50 +3,47 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-## [3.5.6](https://github.com/StrataFoundation/strata/compare/v3.5.5...v3.5.6) (2022-05-06)
+## [3.5.7](https://github.com/StrataFoundation/strata/compare/v3.5.5...v3.5.7) (2022-05-07)
 
+### Changed
+
+- **transactions:** remove subscription if available ([#230](https://github.com/StrataFoundation/strata/issues/230)) ([e99f05c](https://github.com/StrataFoundation/strata/commit/e99f05c02dd1f0176c8303608ea4859c68774cf4))
+
+## [3.5.6](https://github.com/StrataFoundation/strata/compare/v3.5.5...v3.5.6) (2022-05-06)
 
 ### Bug Fixes
 
-* **token-bonding:** use toArrayLike for compatibility ([#228](https://github.com/StrataFoundation/strata/issues/228)) ([b0e8cfa](https://github.com/StrataFoundation/strata/commit/b0e8cfa3d82e72c75534dae36e428a9b13b80664))
-
-
-
-
+- **token-bonding:** use toArrayLike for compatibility ([#228](https://github.com/StrataFoundation/strata/issues/228)) ([b0e8cfa](https://github.com/StrataFoundation/strata/commit/b0e8cfa3d82e72c75534dae36e428a9b13b80664))
 
 ## [3.5.5](https://github.com/StrataFoundation/strata/compare/v3.5.4...v3.5.5) (2022-04-19)
 
 ### Added
 
-  * `useBondedTokenPrice` to get the price of a bonded token in terms of a `priceToken`. For example, to price a bonded token in usdc (where possible)
-  * `useJupiterPrice` use pricing information from jup.ag
+- `useBondedTokenPrice` to get the price of a bonded token in terms of a `priceToken`. For example, to price a bonded token in usdc (where possible)
+- `useJupiterPrice` use pricing information from jup.ag
 
 ### Changed
 
-  * Primary pricing goes through jup.ag instead of coingecko.
+- Primary pricing goes through jup.ag instead of coingecko.
 
 ## [3.5.4](https://github.com/StrataFoundation/strata/compare/v3.5.2...v3.5.4) (2022-04-18)
 
 ### Added
 
-  * `ManyToOneSwap` so that you can use many tokens to purchase one token.
-  * Strata attribution on SwapForm
+- `ManyToOneSwap` so that you can use many tokens to purchase one token.
+- Strata attribution on SwapForm
 
 ### Fixed
 
-  * Race condition on accountFetchCache could lead to unfetched missing accounts
+- Race condition on accountFetchCache could lead to unfetched missing accounts
 
 ## [3.5.3](https://github.com/StrataFoundation/strata/compare/v3.5.2...v3.5.3) (2022-04-18)
 
 **Note:** Version bump only for package @strata-foundation/strata
 
-
-
-
-
 ## [3.5.2](https://github.com/StrataFoundation/strata/compare/v3.5.2-alpha.0...v3.5.2) (2022-04-16)
 
-  - Bugfix for when `baseAmount` is not passed to `tokenBondingSdk.swap`.
+- Bugfix for when `baseAmount` is not passed to `tokenBondingSdk.swap`.
 
 ## [3.5.1](https://github.com/StrataFoundation/strata/compare/v3.5.0...v3.5.1) (2022-04-15)
 

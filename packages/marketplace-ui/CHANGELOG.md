@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.5.7](https://github.com/StrataFoundation/strata/compare/v3.5.5...v3.5.7) (2022-05-07)
+
+
+### Bug Fixes
+
+* **transactions:** remove subscription if available ([#230](https://github.com/StrataFoundation/strata/issues/230)) ([e99f05c](https://github.com/StrataFoundation/strata/commit/e99f05c02dd1f0176c8303608ea4859c68774cf4))
+
+
+
+
+
 ## [3.5.6](https://github.com/StrataFoundation/strata/compare/v3.5.5...v3.5.6) (2022-05-06)
 
 **Note:** Version bump only for package @strata-foundation/marketplace-ui
