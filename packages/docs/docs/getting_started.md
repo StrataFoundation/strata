@@ -169,5 +169,5 @@ Interested in using Strata with React? Checkout our [React Examples](./react).
 To gain a deeper understanding of the API through examples, check out the Learn pages on
 
 - [Bonding Curves](./learn/bonding_curves)
-- [Collectives](./learn/bonding_curves)
-- [Social Tokens](./learn/bonding_curves)
+- [Collectives](./learn/collectives)
+- [Social Tokens](./learn/social_tokens)
