@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.5.7](https://github.com/StrataFoundation/strata/compare/v3.5.5...v3.5.7) (2022-05-07)
+
+
+### Bug Fixes
+
+* **token-bonding:** use toArrayLike for compatibility ([#228](https://github.com/StrataFoundation/strata/issues/228)) ([b0e8cfa](https://github.com/StrataFoundation/strata/commit/b0e8cfa3d82e72c75534dae36e428a9b13b80664))
+
+
+
+
+
 ## [3.5.6](https://github.com/StrataFoundation/strata/compare/v3.5.5...v3.5.6) (2022-05-06)
 
 
