@@ -10,16 +10,19 @@ The Strata SDK comes with a suite of useful ReactJS hooks.
 
 You'll want to set up [solana-wallet-adapter](https://github.com/solana-labs/wallet-adapter), the Strata SDK Provider, and the Strata AccountProvider (an intelligent caching layer on Solana's rpc).
 
-You can also use our [create-react-app Strata Starter Repo](https://github.com/StrataFoundation/react-strata-nextjs-starter)
+You can also use one of our starter repos!
+
+[Next.js Strata Starter](https://github.com/StrataFoundation/react-strata-nextjs-starter)
+
+[Create React App Strata Starter](https://github.com/StrataFoundation/react-strata-starter)
 
 First, setup Solana wallet adapters:
-
 
 ```jsx
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import {
   ConnectionProvider,
-  WalletProvider
+  WalletProvider,
 } from "@solana/wallet-adapter-react";
 import {
   LedgerWalletAdapter,
@@ -28,7 +31,7 @@ import {
   SolflareWalletAdapter,
   SolletExtensionWalletAdapter,
   SolletWalletAdapter,
-  TorusWalletAdapter
+  TorusWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
 import { clusterApiUrl } from "@solana/web3.js";
 import React, { FC, useMemo } from "react";
@@ -81,88 +84,118 @@ export const App: FC = ({ children }) => (
 );
 ```
 
-# Displaying a Social Token 
+# Displaying a Social Token
 
 Let's create a simple social token for testing, then display it:
 
 ```jsx async name=create_social
-var { ownerTokenRef, tokenBonding } = await tokenCollectiveSdk.createSocialToken({
-  ignoreIfExists: true, // If a Social Token already exists for this wallet, ignore.
-metadata: {
-    name: "Learning Strata Token",
-    symbol: "luvSTRAT",
-    uri: "https://strataprotocol.com/luvSTRAT.json",
-  },
-  tokenBondingParams: {
-    buyBaseRoyaltyPercentage: 0,
-    buyTargetRoyaltyPercentage: 10,
-    sellBaseRoyaltyPercentage: 0,
-    sellTargetRoyaltyPercentage: 0
-  }
-});
+var { ownerTokenRef, tokenBonding } =
+  await tokenCollectiveSdk.createSocialToken({
+    ignoreIfExists: true, // If a Social Token already exists for this wallet, ignore.
+    metadata: {
+      name: "Learning Strata Token",
+      symbol: "luvSTRAT",
+      uri: "https://strataprotocol.com/luvSTRAT.json",
+    },
+    tokenBondingParams: {
+      buyBaseRoyaltyPercentage: 0,
+      buyTargetRoyaltyPercentage: 10,
+      sellBaseRoyaltyPercentage: 0,
+      sellTargetRoyaltyPercentage: 0,
+    },
+  });
 ```
 
 Now display it in React! We can use an advanced, pre-canned trade form:
 
 ```js
- import { Swap } from "@strata-foundation/react";
+import { Swap } from "@strata-foundation/react";
 ```
 
 ```jsx live
- function TokenDisplay() {
-   const { tokenBonding } = useVariables(); // Getting token bonding from above code;
-   
-   if (tokenBonding) {
-      return <Swap tokenBondingKey={tokenBonding} />
-   }
+function TokenDisplay() {
+  const { tokenBonding } = useVariables(); // Getting token bonding from above code;
 
-   return <div>Please run the code block above</div>
- }
+  if (tokenBonding) {
+    return <Swap tokenBondingKey={tokenBonding} />;
+  }
+
+  return <div>Please run the code block above</div>;
+}
 ```
 
 Or, we can render it ourselves using hooks:
 
 ```js
- import { useBondedTokenPrice, useTokenMetadata, useTokenRef, useBondingPricing, useErrorHandler } from "@strata-foundation/react";
- import { NATIVE_MINT } from "@solana/spl-token";
+import {
+  useBondedTokenPrice,
+  useTokenMetadata,
+  useTokenRef,
+  useBondingPricing,
+  useErrorHandler,
+} from "@strata-foundation/react";
+import { NATIVE_MINT } from "@solana/spl-token";
 ```
+
 ```jsx live
- function TokenDisplay() {
-   const { tokenBonding: tokenBondingKey  } = useVariables(); // Getting tokenBonding from above
+function TokenDisplay() {
+  const { tokenBonding: tokenBondingKey } = useVariables(); // Getting tokenBonding from above
 
-   const { pricing, tokenBonding, loading: loadingPricing, error } = useBondingPricing(tokenBondingKey);
-   const { image, metadata, loading: metaLoading } = useTokenMetadata(tokenBonding && tokenBonding.targetMint);
-   const { metadata: baseMetadata, loading: baseMetaLoading } = useTokenMetadata(tokenBonding && tokenBonding.baseMint);
-   const baseSymbol = baseMetadata && baseMetadata.data.symbol
-   const solPrice = useBondedTokenPrice(tokenBonding && tokenBonding.targetMint, NATIVE_MINT)
+  const {
+    pricing,
+    tokenBonding,
+    loading: loadingPricing,
+    error,
+  } = useBondingPricing(tokenBondingKey);
+  const {
+    image,
+    metadata,
+    loading: metaLoading,
+  } = useTokenMetadata(tokenBonding && tokenBonding.targetMint);
+  const { metadata: baseMetadata, loading: baseMetaLoading } = useTokenMetadata(
+    tokenBonding && tokenBonding.baseMint
+  );
+  const baseSymbol = baseMetadata && baseMetadata.data.symbol;
+  const solPrice = useBondedTokenPrice(
+    tokenBonding && tokenBonding.targetMint,
+    NATIVE_MINT
+  );
 
-   // Use strata error handler to show toast notifications
-   const { handleErrors } = useErrorHandler();
-   handleErrors(error)
+  // Use strata error handler to show toast notifications
+  const { handleErrors } = useErrorHandler();
+  handleErrors(error);
 
-   if (metaLoading || loadingPricing || baseMetaLoading) {
-     return <div>Loading...</div>
-   }
+  if (metaLoading || loadingPricing || baseMetaLoading) {
+    return <div>Loading...</div>;
+  }
 
-   return <div>
-    <img src={image} />
-    { metadata && <div>
-      <div><b>{metadata.data.name}</b></div>
-      <div>{metadata.data.symbol}</div>
-    </div> }
-    { pricing && <div>
-      <div>
-        Current Price: { pricing.current() } { baseSymbol }, or {solPrice} SOL
-      </div>
-      <div>
-        Value Locked: { pricing.locked() } { baseSymbol }
-      </div>
-      <div>
-        Price to buy 10: { pricing.buyTargetAmount(10) } {baseSymbol}
-      </div>
-    </div> }
-   </div>
- }
+  return (
+    <div>
+      <img src={image} />
+      {metadata && (
+        <div>
+          <div>
+            <b>{metadata.data.name}</b>
+          </div>
+          <div>{metadata.data.symbol}</div>
+        </div>
+      )}
+      {pricing && (
+        <div>
+          <div>
+            Current Price: {pricing.current()} {baseSymbol}, or {solPrice} SOL
+          </div>
+          <div>
+            Value Locked: {pricing.locked()} {baseSymbol}
+          </div>
+          <div>
+            Price to buy 10: {pricing.buyTargetAmount(10)} {baseSymbol}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 ```
 
 We can use the token metadata sdk to update the token symbol, name, and image:
@@ -179,7 +212,7 @@ await tokenMetadataSdk.updateMetadata({
     sellerFeeBasisPoint: 0,
     creators: null,
     uses: null,
-    collection: null
-  })
-})
+    collection: null,
+  }),
+});
 ```
