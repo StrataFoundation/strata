@@ -11,7 +11,9 @@ The Strata SDK comes with a suite of useful ReactJS hooks.
 You'll want to set up [solana-wallet-adapter](https://github.com/solana-labs/wallet-adapter), the Strata SDK Provider, and the Strata AccountProvider (an intelligent caching layer on Solana's rpc).
 
 You can also use one of our starter repos!
+
 [Next.js Strata Starter](https://github.com/StrataFoundation/react-strata-nextjs-starter)
+
 [Create React App Strata Starter](https://github.com/StrataFoundation/react-strata-starter)
 
 First, setup Solana wallet adapters:
