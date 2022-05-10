@@ -15,7 +15,9 @@ export interface ICandyMachineState {
   refreshCandyMachineState: () => Promise<void>;
 }
 
-export function useCandyMachineInfo(candyMachineId: PublicKey | undefined): UseCandyMachineState {
+export function useCandyMachineInfo(
+  candyMachineId: PublicKey | undefined
+): ICandyMachineState {
   const [candyMachine, setCandyMachine] = useState<CandyMachineAccount>();
   const [isActive, setIsActive] = useState(false);
   const [endDate, setEndDate] = useState<Date>();

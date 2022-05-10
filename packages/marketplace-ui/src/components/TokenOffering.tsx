@@ -24,11 +24,11 @@ const identity = () => {};
 export const TokenOffering = ({
   mintKey,
   showAttribution = true,
-  onConnectWallet
+  onConnectWallet = () => {}
 }: {
   mintKey: PublicKey | undefined;
   showAttribution?: boolean;
-  onConnectWallet: () => void;
+  onConnectWallet?: () => void;
 }) => {
   const { result: sellOnlyTokenBondingKey, error: keyError1 } =
     useTokenBondingKey(mintKey, 1);
