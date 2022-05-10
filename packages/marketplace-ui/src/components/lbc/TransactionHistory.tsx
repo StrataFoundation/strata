@@ -1,6 +1,28 @@
 import React from "react";
 import { PublicKey } from "@solana/web3.js";
-import { VStack, HStack, Text, Checkbox, useDisclosure, TableContainer, Table, Thead, Tr, Th, Spinner, Td, Center, Box, TableColumnHeaderProps, Switch, Button, IconButton, useColorModeValue, Icon } from "@chakra-ui/react";
+import {
+  VStack,
+  HStack,
+  Text,
+  Tbody,
+  Checkbox,
+  useDisclosure,
+  TableContainer,
+  Table,
+  Thead,
+  Tr,
+  Th,
+  Spinner,
+  Td,
+  Center,
+  Box,
+  TableColumnHeaderProps,
+  Switch,
+  Button,
+  IconButton,
+  useColorModeValue,
+  Icon,
+} from "@chakra-ui/react";
 import { useTransactions } from "../../hooks/useTransactions";
 import { useMint, useTokenBonding, useTokenBondingKey } from "@strata-foundation/react";
 import { useMemo } from "react";
@@ -138,27 +160,28 @@ export const TransactionHistory = ({
               <Th {...thProps}>Time</Th>
             </Tr>
           </Thead>
-
-          {data.map(({ price, volume, time, signature }) => {
-            return (
-              <Tr
-                onClick={() =>
-                  window.open(
-                    `https://explorer.solana.com/tx/${signature}`,
-                    "_blank"
-                  )
-                }
-                _hover={{ background: "#303947", cursor: "pointer" }}
-                key={signature}
-              >
-                <Td>{numberWithCommas(volume, targetMint?.decimals)}</Td>
-                <Td>{numberWithCommas(price, baseMint?.decimals)}</Td>
-                <Td title={moment(time).format("llll")}>
-                  {moment(time).fromNow()}
-                </Td>
-              </Tr>
-            );
-          })}
+          <Tbody>
+            {data.map(({ price, volume, time, signature }) => {
+              return (
+                <Tr
+                  onClick={() =>
+                    window.open(
+                      `https://explorer.solana.com/tx/${signature}`,
+                      "_blank"
+                    )
+                  }
+                  _hover={{ background: "#303947", cursor: "pointer" }}
+                  key={signature}
+                >
+                  <Td>{numberWithCommas(volume, targetMint?.decimals)}</Td>
+                  <Td>{numberWithCommas(price, baseMint?.decimals)}</Td>
+                  <Td title={moment(time).format("llll")}>
+                    {moment(time).fromNow()}
+                  </Td>
+                </Tr>
+              );
+            })}
+          </Tbody>
         </Table>
       </TableContainer>
       {loadingInitial && (

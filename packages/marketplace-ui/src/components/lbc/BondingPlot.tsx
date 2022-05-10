@@ -96,9 +96,12 @@ export const BondingPlot = ({
 
   const longestLabelLength = useMemo(
     () =>
-      data
-        .map((d) => numberWithCommas(d.price, 9))
-        .reduce((acc, cur) => (cur.length > acc ? cur.length : acc), 0),
+      Math.max(
+        data
+          .map((d) => numberWithCommas(d.price, 9))
+          .reduce((acc, cur) => (cur.length > acc ? cur.length : acc), 0),
+        1
+      ),
     [data, baseMint]
   );
 

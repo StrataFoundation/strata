@@ -44,7 +44,11 @@ export function fromCurve(
 }
 
 export interface IPricingCurve {
-  current(unixTime?: number): number;
+  current(
+    unixTime?: number,
+    baseRoyaltiesPercent?: number,
+    targetRoyaltiesPercent?: number
+  ): number;
   locked(): number;
   sellTargetAmount(
     targetAmountNum: number,
@@ -152,11 +156,15 @@ export class TimeCurve implements IPricingCurve {
     };
   }
 
-  current(unixTime: number = now()): number {
+  current(
+    unixTime: number = now(),
+    baseRoyaltiesPercent: number = 0,
+    targetRoyaltiesPercent: number = 0
+  ): number {
     const { subCurve, buyTransitionFees, offset } = this.currentCurve(unixTime);
 
     return (
-      subCurve.current(unixTime) *
+      subCurve.current(unixTime, baseRoyaltiesPercent, targetRoyaltiesPercent) *
       (1 - transitionFeesToPercent(unixTime - offset, buyTransitionFees))
     );
   }
@@ -255,8 +263,12 @@ export abstract class BaseExponentialCurve implements IPricingCurve {
     this.goLiveUnixTime = goLiveUnixTime;
   }
 
-  current(): number {
-    return this.changeInTargetAmount(1, 0, 0);
+  current(
+    unixTime?: number,
+    baseRoyaltiesPercent: number = 0,
+    targetRoyaltiesPercent: number = 0
+  ): number {
+    return this.changeInTargetAmount(1, baseRoyaltiesPercent, targetRoyaltiesPercent, unixTime);
   }
 
   locked(): number {

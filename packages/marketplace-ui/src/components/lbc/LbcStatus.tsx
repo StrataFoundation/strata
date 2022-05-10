@@ -6,17 +6,23 @@ import { Center, Text, useInterval } from "@chakra-ui/react";
 
 export const LbcStatus = ({
   tokenBondingKey,
+  goLiveDate: inputGoLiveDate,
 }: {
   tokenBondingKey?: PublicKey;
+  goLiveDate?: Date // Defaults to bonding go live
 }) => {
   const { info: tokenBonding } = useTokenBonding(tokenBondingKey);
   const goLiveDate = useMemo(() => {
+    if (inputGoLiveDate) {
+      return inputGoLiveDate;
+    }
+
     if (tokenBonding) {
       const date = new Date(0);
       date.setUTCSeconds(tokenBonding.goLiveUnixTime.toNumber());
       return date;
     }
-  }, [tokenBonding]);
+  }, [tokenBonding, inputGoLiveDate]);
   const [isLive, setIsLive] = useState(true);
   useInterval(() => {
     setIsLive(goLiveDate ? goLiveDate < new Date() : true);

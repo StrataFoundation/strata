@@ -24,11 +24,10 @@ async function buy({
   tokenBonding,
   maxPrice,
 }: IMintArgs): Promise<void> {
-  if (isNaN(maxPrice)) {
-    throw new Error("Invalid slippage");
-  }
-
-  if (tokenBondingSdk) {
+  if (tokenBondingSdk && tokenBonding) {
+    if (isNaN(maxPrice)) {
+      throw new Error("Invalid slippage");
+    }
     await tokenBondingSdk.buy({
       tokenBonding,
       desiredTargetAmount: 1,
@@ -49,7 +48,7 @@ async function buy({
 
 export interface IMintArgs {
   tokenBondingSdk: SplTokenBonding | undefined;
-  tokenBonding: PublicKey;
+  tokenBonding: PublicKey | undefined;
   maxPrice: number;
 }
 
@@ -60,7 +59,7 @@ export const MintButton = ({
   disabledText,
   onMint = buy,
 }: {
-  tokenBondingKey: PublicKey;
+  tokenBondingKey?: PublicKey;
   price?: number;
   isDisabled?: boolean;
   disabledText?: string;

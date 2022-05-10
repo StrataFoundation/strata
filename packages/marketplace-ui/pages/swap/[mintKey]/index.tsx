@@ -47,7 +47,7 @@ export const SwapDisplay: NextPage = ({
         <Heading mb={2} color="white" fontSize="24px" fontWeight={600}>
           Swap
         </Heading>
-        <Box zIndex={1} bg="white" shadow="xl" rounded="lg" minH="400px">
+        <Box padding={4} zIndex={1} bg="white" shadow="xl" rounded="lg" minH="400px">
           {loading && (
             <Center>
               <Spinner />

@@ -5,3 +5,4 @@ export * from "./useLivePrice";
 export * from "./useIsBountyAdmin";
 export * from "./useBountyInfo";
 export * from "./useEndpoint";
+export * from "./useCandyMachineInfo";

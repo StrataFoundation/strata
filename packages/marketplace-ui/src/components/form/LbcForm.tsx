@@ -139,7 +139,7 @@ async function createLiquidityBootstrapper(
     metadata = new DataV2({
       // Max name len 32
       name: "Candymachine Mint Token",
-      symbol: "MINT",
+      symbol: "NFTs",
       uri: "",
       sellerFeeBasisPoints: 0,
       creators: null,

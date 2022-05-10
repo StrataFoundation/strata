@@ -24,6 +24,7 @@ import {
   TabPanel,
 } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import {
   usePublicKey,
   useTokenBondingFromMint,
@@ -34,7 +35,7 @@ import {
   NextPage,
 } from "next";
 import { useRouter } from "next/router";
-import React from "react";
+import React, { useCallback } from "react";
 
 export const getServerSideProps: GetServerSideProps =
   mintMetadataServerSideProps;
@@ -57,14 +58,23 @@ export const LbcDisplay: NextPage = ({
 
   const selectedProps = {
     borderBottom: "3px solid #F07733",
+    fontWeight: "semibold"
   };
+
+  const { visible, setVisible } = useWalletModal();
+
+  const onConnectWallet = useCallback(
+    () => setVisible(!visible),
+    [visible, setVisible]
+  );
+    
   return (
     <Box
       color={useColorModeValue("black", "white")}
       w="full"
       backgroundColor="black.500"
-      height="100vh"
       overflow="auto"
+      minH="100vh"
       paddingBottom="200px"
     >
       <MetadataMeta
@@ -74,13 +84,13 @@ export const LbcDisplay: NextPage = ({
         url={`${SITE_URL}/bounty/${mintKey}/`}
       />
       <VStack spacing={2} align="left">
-        <Container mt={"35px"} justify="stretch" maxW="460px">
-          <Tabs varaint="unstyled">
+        <Container mt={"35px"} justify="stretch" maxW="600px">
+          <Tabs varaint="unstyled" isLazy>
             <TabList borderBottom="none">
-              <Tab _selected={selectedProps} fontWeight={600}>
+              <Tab _selected={selectedProps} fontWeight={"normal"}>
                 Swap
               </Tab>
-              <Tab _selected={selectedProps} fontWeight={600}>
+              <Tab _selected={selectedProps} fontWeight={"normal"}>
                 Transactions
               </Tab>
             </TabList>
@@ -123,6 +133,7 @@ export const LbcDisplay: NextPage = ({
                         useTokenOfferingCurve
                       />
                       <TokenOffering
+                        onConnectWallet={onConnectWallet}
                         mintKey={mintKey}
                       />
                     </VStack>

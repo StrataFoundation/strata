@@ -263,12 +263,34 @@ export const useSwapDriver = ({
     spendCap,
     feeAmount,
     baseOptions: React.useMemo(
-      () => allMints.filter((mint) => baseMint && !mint.equals(baseMint)),
+      () =>
+        allMints.filter(
+          (mint) =>
+            baseMint &&
+            !mint.equals(baseMint) &&
+            pricing &&
+            targetMint &&
+            pricing.hierarchy.path(mint, targetMint).length > 0
+        ),
       [baseMint, allMints]
     ),
     targetOptions: React.useMemo(
-      () => allMints.filter((mint) => targetMint && !mint.equals(targetMint)),
+      () =>
+        allMints.filter(
+          (mint) =>
+            targetMint &&
+            pricing &&
+            baseMint &&
+            !mint.equals(targetMint) &&
+            pricing.hierarchy.path(baseMint, mint).length > 0
+        ),
       [targetMint, allMints]
+    ),
+    swapBaseWithTargetEnabled: Boolean(
+      baseMint &&
+        targetMint &&
+        pricing &&
+        pricing.hierarchy.path(targetMint, baseMint).length > 0
     ),
   };
 };

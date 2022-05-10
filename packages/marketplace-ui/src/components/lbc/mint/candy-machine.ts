@@ -32,7 +32,13 @@ const TOKEN_METADATA_PROGRAM_ID = new anchor.web3.PublicKey(
   "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
 );
 
-interface CandyMachineState {
+export interface CandyMachineAccount {
+  id: anchor.web3.PublicKey;
+  program: anchor.Program;
+  state: CandyMachineState;
+}
+
+export interface CandyMachineState {
   itemsAvailable: number;
   itemsRedeemed: number;
   itemsRemaining: number;
@@ -63,12 +69,6 @@ interface CandyMachineState {
     uri: string;
     hash: Uint8Array;
   };
-}
-
-export interface CandyMachineAccount {
-  id: anchor.web3.PublicKey;
-  program: anchor.Program;
-  state: CandyMachineState;
 }
 
 export const awaitTransactionSignatureConfirmation = async (
@@ -256,10 +256,6 @@ export const mintOneToken = async (
     throw new Error("No bonding sdk");
   }
 
-  if (isNaN(maxPrice)) {
-    throw new Error("Invalid slippage");
-  }
-
   const mint = anchor.web3.Keypair.generate();
 
   const userTokenAccountAddress = (
@@ -275,22 +271,25 @@ export const mintOneToken = async (
   const instructions = [];
   const signers: Signer[] = [mint];
   const cleanupInstructions = [];
-  const ataBalance = (
+  const ataBalance = candyMachine.state.tokenMint ? (
     await tokenBondingSdk.getTokenAccountBalance(userPayingAccountAddress)
-  ).toNumber();
+  ).toNumber() : null;
 
   let bondingInstructions: TransactionInstruction[] = [];
   let bondingSigners: Signer[] = [];
-  if (ataBalance < 1) {
+  if (ataBalance !== null && ataBalance! < 1 && tokenBonding) {
     console.log("Buying bonding curve...", ataBalance);
-    const { instructions, signers } = await tokenBondingSdk.buyInstructions({
+    if (isNaN(maxPrice)) {
+      throw new Error("Invalid slippage");
+    }
+    const { instructions: bondInstrs, signers: bondSigners } = await tokenBondingSdk.buyInstructions({
       tokenBonding,
       desiredTargetAmount: 1,
       expectedBaseAmount: maxPrice,
       slippage: 0,
     });
-    bondingInstructions.push(...instructions);
-    bondingSigners.push(...signers);
+    bondingInstructions.push(...bondInstrs);
+    bondingSigners.push(...bondSigners);
   }
 
   instructions.push(
