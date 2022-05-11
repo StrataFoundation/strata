@@ -23,53 +23,11 @@ import {
   getNetworkToken,
   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
 } from "./utils";
-
-export const CANDY_MACHINE_PROGRAM = new anchor.web3.PublicKey(
-  "cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ"
-);
+import { CANDY_MACHINE_PROGRAM, ICandyMachine } from "../../../hooks";
 
 const TOKEN_METADATA_PROGRAM_ID = new anchor.web3.PublicKey(
   "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
 );
-
-export interface CandyMachineAccount {
-  id: anchor.web3.PublicKey;
-  program: anchor.Program;
-  state: CandyMachineState;
-}
-
-export interface CandyMachineState {
-  itemsAvailable: number;
-  itemsRedeemed: number;
-  itemsRemaining: number;
-  treasury: anchor.web3.PublicKey;
-  tokenMint: anchor.web3.PublicKey;
-  isSoldOut: boolean;
-  isActive: boolean;
-  isPresale: boolean;
-  isWhitelistOnly: boolean;
-  goLiveDate: anchor.BN;
-  price: anchor.BN;
-  gatekeeper: null | {
-    expireOnUse: boolean;
-    gatekeeperNetwork: anchor.web3.PublicKey;
-  };
-  endSettings: null | {
-    number: anchor.BN;
-    endSettingType: any;
-  };
-  whitelistMintSettings: null | {
-    mode: any;
-    mint: anchor.web3.PublicKey;
-    presale: boolean;
-    discountPrice: null | anchor.BN;
-  };
-  hiddenSettings: null | {
-    name: string;
-    uri: string;
-    hash: Uint8Array;
-  };
-}
 
 export const awaitTransactionSignatureConfirmation = async (
   txid: anchor.web3.TransactionSignature,
@@ -166,47 +124,6 @@ const createAssociatedTokenAccountInstruction = (
   });
 };
 
-export const getCandyMachineState = async (
-  anchorWallet: anchor.Wallet,
-  candyMachineId: anchor.web3.PublicKey,
-  connection: anchor.web3.Connection
-): Promise<CandyMachineAccount> => {
-  const provider = new anchor.Provider(connection, anchorWallet, {
-    preflightCommitment: "processed",
-  });
-
-  const idl = await anchor.Program.fetchIdl(CANDY_MACHINE_PROGRAM, provider);
-
-  const program = new anchor.Program(idl!, CANDY_MACHINE_PROGRAM, provider);
-
-  const state: any = await program.account.candyMachine.fetch(candyMachineId);
-  const itemsAvailable = state.data.itemsAvailable.toNumber();
-  const itemsRedeemed = state.itemsRedeemed.toNumber();
-  const itemsRemaining = itemsAvailable - itemsRedeemed;
-
-  return {
-    id: candyMachineId,
-    program,
-    state: {
-      itemsAvailable,
-      itemsRedeemed,
-      itemsRemaining,
-      isSoldOut: itemsRemaining === 0,
-      isActive: false,
-      isPresale: false,
-      isWhitelistOnly: false,
-      goLiveDate: state.data.goLiveDate,
-      treasury: state.wallet,
-      tokenMint: state.tokenMint,
-      gatekeeper: state.data.gatekeeper,
-      endSettings: state.data.endSettings,
-      whitelistMintSettings: state.data.whitelistMintSettings,
-      hiddenSettings: state.data.hiddenSettings,
-      price: state.data.price,
-    },
-  };
-};
-
 const getMasterEdition = async (
   mint: anchor.web3.PublicKey
 ): Promise<anchor.web3.PublicKey> => {
@@ -248,7 +165,7 @@ export const getCandyMachineCreator = async (
 };
 
 export const mintOneToken = async (
-  candyMachine: CandyMachineAccount,
+  candyMachine: ICandyMachine,
   payer: anchor.web3.PublicKey,
   { tokenBondingSdk, tokenBonding, maxPrice }: IMintArgs
 ): Promise<PublicKey> => {
@@ -262,16 +179,16 @@ export const mintOneToken = async (
     await getAtaForMint(mint.publicKey, payer)
   )[0];
 
-  const userPayingAccountAddress = candyMachine.state.tokenMint
-    ? (await getAtaForMint(candyMachine.state.tokenMint, payer))[0]
+  const userPayingAccountAddress = candyMachine.tokenMint
+    ? (await getAtaForMint(candyMachine.tokenMint, payer))[0]
     : payer;
 
-  const candyMachineAddress = candyMachine.id;
+  const candyMachineAddress = candyMachine.publicKey;
   const remainingAccounts = [];
   const instructions = [];
   const signers: Signer[] = [mint];
   const cleanupInstructions = [];
-  const ataBalance = candyMachine.state.tokenMint ? (
+  const ataBalance = candyMachine.tokenMint ? (
     await tokenBondingSdk.getTokenAccountBalance(userPayingAccountAddress)
   ).toNumber() : null;
 
@@ -326,18 +243,18 @@ export const mintOneToken = async (
     )
   );
 
-  if (candyMachine.state.gatekeeper) {
+  if (candyMachine.gatekeeper) {
     remainingAccounts.push({
       pubkey: (
         await getNetworkToken(
           payer,
-          candyMachine.state.gatekeeper.gatekeeperNetwork
+          candyMachine.gatekeeper.gatekeeperNetwork
         )
       )[0],
       isWritable: true,
       isSigner: false,
     });
-    if (candyMachine.state.gatekeeper.expireOnUse) {
+    if (candyMachine.gatekeeper.expireOnUse) {
       remainingAccounts.push({
         pubkey: CIVIC,
         isWritable: false,
@@ -346,7 +263,7 @@ export const mintOneToken = async (
       remainingAccounts.push({
         pubkey: (
           await getNetworkExpire(
-            candyMachine.state.gatekeeper.gatekeeperNetwork
+            candyMachine.gatekeeper.gatekeeperNetwork
           )
         )[0],
         isWritable: false,
@@ -354,9 +271,9 @@ export const mintOneToken = async (
       });
     }
   }
-  if (candyMachine.state.whitelistMintSettings) {
+  if (candyMachine.whitelistMintSettings) {
     const mint = new anchor.web3.PublicKey(
-      candyMachine.state.whitelistMintSettings.mint
+      candyMachine.whitelistMintSettings.mint
     );
 
     const whitelistToken = (await getAtaForMint(mint, payer))[0];
@@ -366,7 +283,7 @@ export const mintOneToken = async (
       isSigner: false,
     });
 
-    if (candyMachine.state.whitelistMintSettings.mode.burnEveryTime) {
+    if (candyMachine.whitelistMintSettings.mode.burnEveryTime) {
       const whitelistBurnAuthority = anchor.web3.Keypair.generate();
 
       remainingAccounts.push({
@@ -407,7 +324,7 @@ export const mintOneToken = async (
     }
   }
 
-  if (candyMachine.state.tokenMint) {
+  if (candyMachine.tokenMint) {
     const transferAuthority = anchor.web3.Keypair.generate();
 
     signers.push(transferAuthority);
@@ -429,7 +346,7 @@ export const mintOneToken = async (
         transferAuthority.publicKey,
         payer,
         [],
-        candyMachine.state.price.toNumber()
+        candyMachine.price.toNumber()
       )
     );
     cleanupInstructions.push(
@@ -454,7 +371,7 @@ export const mintOneToken = async (
         candyMachine: candyMachineAddress,
         candyMachineCreator,
         payer: payer,
-        wallet: candyMachine.state.treasury,
+        wallet: candyMachine.treasury,
         mint: mint.publicKey,
         metadata: metadataAddress,
         masterEdition,

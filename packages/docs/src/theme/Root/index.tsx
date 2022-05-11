@@ -1,7 +1,6 @@
 import "./bufferFill";
 import { Wallet } from "../../contexts/Wallet";
 import { MarketplaceSdkProvider } from "@strata-foundation/marketplace-ui";
-import { EndpointProvider } from "../../contexts/Endpoint";
 import {
   AccountProvider,
   StrataSdksProvider,
@@ -9,6 +8,7 @@ import {
   ErrorHandlerProvider,
   ThemeProvider,
 } from "@strata-foundation/react";
+import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import React from "react";
 import { VariablesProvider } from "./variables";
 import toast, { Toaster } from "react-hot-toast";
@@ -54,10 +54,10 @@ export default ({ children }) => {
 
   return (
     <>
-      <EndpointProvider>
-        <ThemeProvider>
-          <ErrorHandlerProvider onError={onError}>
-            <Wallet>
+      <ThemeProvider>
+        <ErrorHandlerProvider onError={onError}>
+          <Wallet>
+            <WalletModalProvider>
               <StrataSdksProvider>
                 <MarketplaceSdkProvider>
                   <AccountProvider commitment="confirmed">
@@ -74,10 +74,10 @@ export default ({ children }) => {
                   </AccountProvider>
                 </MarketplaceSdkProvider>
               </StrataSdksProvider>
-            </Wallet>
-          </ErrorHandlerProvider>
-        </ThemeProvider>
-      </EndpointProvider>
+            </WalletModalProvider>
+          </Wallet>
+        </ErrorHandlerProvider>
+      </ThemeProvider>
     </>
   );
 };

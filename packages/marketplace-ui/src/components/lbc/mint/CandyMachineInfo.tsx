@@ -9,10 +9,10 @@ import { BigText, BlackBox } from "../LbcInfo";
 
 export const CandyMachineInfo = ({ candyMachine, itemsRemaining, isWhitelistUser, discountPrice }: ICandyMachineState) => {
   const { metadata, loading: loadingMeta } = useTokenMetadata(
-    candyMachine?.state.tokenMint
+    candyMachine?.tokenMint
   );
   const ticker = loadingMeta ? "" : metadata?.data.symbol || "SOL";
-  const targetMint = useMint(candyMachine?.state.tokenMint || NATIVE_MINT);
+  const targetMint = useMint(candyMachine?.tokenMint || NATIVE_MINT);
 
   return (
     <HStack spacing={2} justify="stretch">
@@ -30,8 +30,8 @@ export const CandyMachineInfo = ({ candyMachine, itemsRemaining, isWhitelistUser
                 } ${ticker}`
               : candyMachine
               ? `${
-                  targetMint && candyMachine?.state.price
-                    ? toNumber(candyMachine.state.price, targetMint)
+                  targetMint && candyMachine?.price
+                    ? toNumber(candyMachine.price, targetMint)
                     : ""
                 } ${ticker}`
               : ""}

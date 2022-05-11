@@ -224,6 +224,9 @@ interface IDisburseCurveArgs {
 
   /** If this is an initial token offering, also close the second curve */
   includeRetrievalCurve?: boolean;
+
+  /** Should this only transfer reserves, or transfer and close? */
+  closeBonding?: Boolean
 }
 
 interface ICreateTokenBondingForSetSupplyArgs
@@ -323,7 +326,7 @@ export class MarketplaceSdk {
     amount,
     payer = this.provider.wallet.publicKey,
   }: ICreateManualTokenArgs): Promise<InstructionResult<{ mint: PublicKey }>> {
-    const publicKey = this.provider.wallet.publicKey;;
+    const publicKey = this.provider.wallet.publicKey;
     var mint = mintKeypair.publicKey;
     var instructions = [];
     var ata = await Token.getAssociatedTokenAddress(
@@ -333,13 +336,19 @@ export class MarketplaceSdk {
       publicKey
     );
     instructions.push(
-      ...(await createMintInstructions(this.provider, publicKey, mint, 0, publicKey))
+      ...(await createMintInstructions(
+        this.provider,
+        publicKey,
+        mint,
+        0,
+        publicKey
+      ))
     );
     var metadataInstructions =
       await this.tokenMetadataSdk.createMetadataInstructions({
         mint,
         authority: publicKey,
-        data: metadata
+        data: metadata,
       });
     instructions.push(...metadataInstructions.instructions);
     instructions.push(
@@ -365,16 +374,21 @@ export class MarketplaceSdk {
     return {
       instructions,
       signers: [mintKeypair],
-      output: { mint }
-    }
+      output: { mint },
+    };
   }
 
   async createManualToken(
     args: ICreateManualTokenArgs
   ): Promise<{ mint: PublicKey }> {
-    const { instructions, signers, output } = await this.createManualTokenInstructions(args);
-    await this.tokenMetadataSdk.sendInstructions(instructions, signers, args.payer);
-    return output;;
+    const { instructions, signers, output } =
+      await this.createManualTokenInstructions(args);
+    await this.tokenMetadataSdk.sendInstructions(
+      instructions,
+      signers,
+      args.payer
+    );
+    return output;
   }
 
   async createFixedCurve({
@@ -414,6 +428,7 @@ export class MarketplaceSdk {
     tokenBonding,
     destination,
     includeRetrievalCurve,
+    closeBonding = true,
   }: IDisburseCurveArgs): Promise<InstructionResult<null>> {
     const instructions = [];
     const signers = [];
@@ -452,14 +467,16 @@ export class MarketplaceSdk {
       });
     instructions.push(...i1);
     signers.push(...s1);
-    const { instructions: i2, signers: s2 } =
-      await this.tokenBondingSdk.closeInstructions({
-        tokenBonding,
-        generalAuthority: authority || undefined,
-      });
 
-    instructions.push(...i2);
-    signers.push(...s2);
+    if (closeBonding) {
+      const { instructions: i2, signers: s2 } =
+        await this.tokenBondingSdk.closeInstructions({
+          tokenBonding,
+          generalAuthority: authority || undefined,
+        });
+      instructions.push(...i2);
+      signers.push(...s2);
+    }
 
     if (includeRetrievalCurve) {
       const retrievalInstrs = await this.disburseCurveInstructions({
@@ -701,7 +718,7 @@ export class MarketplaceSdk {
     iAmAFreeloader,
     protocolFee = FIXED_CURVE_FEES,
   }: ICreateMarketItemArgs): Promise<
-    BigInstructionResult<{ tokenBonding: PublicKey, targetMint: PublicKey }>
+    BigInstructionResult<{ tokenBonding: PublicKey; targetMint: PublicKey }>
   > {
     if (protocolFee == 0 && !iAmAFreeloader) {
       throw new Error(
@@ -803,7 +820,7 @@ export class MarketplaceSdk {
   async createMarketItem(
     args: ICreateMarketItemArgs,
     finality?: Finality
-  ): Promise<{ tokenBonding: PublicKey; targetMint: PublicKey}> {
+  ): Promise<{ tokenBonding: PublicKey; targetMint: PublicKey }> {
     return this.tokenBondingSdk.executeBig(
       this.createMarketItemInstructions(args),
       args.payer,

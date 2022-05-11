@@ -213,29 +213,6 @@ export const LbcInfo = ({
           </BlackBox>
         </Stack>
       </VStack>
-
-      <Collapse in={isOpen} animateOpacity>
-        <VStack align="left" spacing={4} padding={4}>
-          <VStack spacing={1} align="left">
-            <Text fontSize="14px" fontWeight="700">
-              How does Dynamic Pricing work?
-            </Text>
-            <Text fontSize="12px">
-              Dynamic Pricing is similiar to a Dutch Auction. The price starts
-              high, lowers gradually, and only increases when people buy. This
-              price discovery mechanism is powered by a Strata Liquidity
-              Bootstrapping Curve (LBC).{" "}
-              <Link
-                color="primary.500"
-                href="https://docs.strataprotocol.com/marketplace/lbc"
-              >
-                Learn More
-              </Link>
-            </Text>
-          </VStack>
-          <Text fontSize="14px">End Date: {moment(endDate).format("LLL")}</Text>
-        </VStack>
-      </Collapse>
     </VStack>
   );
 };

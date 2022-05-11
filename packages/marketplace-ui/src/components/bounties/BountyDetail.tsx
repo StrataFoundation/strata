@@ -202,7 +202,7 @@ export const BountyDetail = ({
                 <Heading alignSelf="flex-start" size="sm">
                   Disburse Funds
                 </Heading>
-                <DisburseFunds tokenBondingKey={tokenBonding?.publicKey} />
+                <DisburseFunds tokenBondingKey={tokenBonding?.publicKey} closeBonding />
               </VStack>
             )}
           </>

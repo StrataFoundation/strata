@@ -6,3 +6,4 @@ export * from "./useIsBountyAdmin";
 export * from "./useBountyInfo";
 export * from "./useEndpoint";
 export * from "./useCandyMachineInfo";
+export * from "./useCandyMachine";

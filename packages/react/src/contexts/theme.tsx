@@ -1,7 +1,7 @@
 import React, { FC } from "react";
 import {
   extendTheme,
-  ChakraProvider,
+  ThemeProvider as ChakraThemeProvider,
   theme as chakraTheme,
 } from "@chakra-ui/react";
 import { runIfFn, mergeWith } from "@chakra-ui/utils";
@@ -112,6 +112,5 @@ export const theme: any = extendTheme({
 });
 
 export const ThemeProvider: FC = ({ children }) => (
-  // @ts-ignore
   <ChakraThemeProvider theme={theme}>{children}</ChakraThemeProvider>
 );

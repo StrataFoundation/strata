@@ -12,7 +12,7 @@ import {
   SolletWalletAdapter,
   TorusWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
-import { useEndpoint } from "./Endpoint";
+import { useEndpoint } from "@strata-foundation/marketplace-ui";
 import { tokenAuthFetchMiddleware } from "@strata-foundation/web3-token-auth";
 
 // Default styles that can be overridden by your app

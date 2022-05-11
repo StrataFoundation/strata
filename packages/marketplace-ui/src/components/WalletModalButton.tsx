@@ -9,6 +9,7 @@ import {
   MenuItemOption,
   MenuList,
   MenuOptionGroup,
+  useColorModeValue,
 } from "@chakra-ui/react";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -41,14 +42,14 @@ export const WalletModalButton: FC<ButtonProps> = ({
     <ButtonGroup
       marginTop="auto"
       colorScheme="primary"
-      color="white"
+      color={useColorModeValue("black", "white")}
       variant="outline"
       spacing="6"
       isAttached
       size={props.size}
     >
       <Button
-        color="white"
+        color={useColorModeValue("black", "white")}
         borderColor="primary.500"
         {...props}
         leftIcon={<Icon w="16px" h="16px" as={BsFillPersonFill} />}
@@ -60,7 +61,7 @@ export const WalletModalButton: FC<ButtonProps> = ({
       <Menu isLazy>
         <MenuButton
           as={IconButton}
-          color="white"
+          color={useColorModeValue("black", "white")}
           borderColor="primary.500"
           borderLeft="none"
           aria-label="Network"

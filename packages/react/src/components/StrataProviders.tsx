@@ -1,14 +1,21 @@
 import {
-  AccountProvider, ErrorHandlerProvider, StrataSdksProvider, ThemeProvider
+  AccountProvider,
+  ErrorHandlerProvider,
+  StrataSdksProvider,
+  ThemeProvider,
 } from "../contexts";
 import React, { FC } from "react";
 
-export const StrataProviders: FC = ({ children }) => (
+const defaultOnError = (error: Error) => console.log(error);
+export const StrataProviders: FC<{ onError?: (error: Error) => void }> = ({
+  children,
+  onError = defaultOnError,
+}) => (
   <ThemeProvider>
-    <ErrorHandlerProvider>
-        <StrataSdksProvider>
-          <AccountProvider commitment="confirmed">{children}</AccountProvider>
-        </StrataSdksProvider>
+    <ErrorHandlerProvider onError={onError}>
+      <StrataSdksProvider>
+        <AccountProvider commitment="confirmed">{children}</AccountProvider>
+      </StrataSdksProvider>
     </ErrorHandlerProvider>
   </ThemeProvider>
 );

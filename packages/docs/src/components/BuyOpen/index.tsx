@@ -1,6 +1,6 @@
 import React from "react";
 import BrowserOnly from "@docusaurus/BrowserOnly";
-import { useEndpoint } from "@site/src/contexts/Endpoint";
+import { useEndpoint } from "@strata-foundation/marketplace-ui";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useWallet } from "@solana/wallet-adapter-react";
 import {
@@ -13,14 +13,14 @@ import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
 import styles from "./styles.module.css";
 
 const MainnetGuard = ({ children = null as any }) => {
-  const { endpoint, setEndpoint } = useEndpoint();
+  const { endpoint, setClusterOrEndpoint } = useEndpoint();
 
   if (endpoint.includes("devnet")) {
     return (
       <div className={styles.container}>
         <button
           onClick={() => {
-            setEndpoint("https://strataprotocol.genesysgo.net");
+            setClusterOrEndpoint(WalletAdapterNetwork.Mainnet);
           }}
           className="white button button--primary"
         >

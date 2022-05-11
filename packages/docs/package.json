@@ -65,6 +65,7 @@
     "react-hot-toast": "^2.1.1",
     "react-icons": "^4.3.1",
     "react-json-view": "^1.21.3",
+    "react-shadow": "^19.0.3",
     "recharts": "^2.1.9",
     "rehype-katex": "4",
     "remark-math": "3",
