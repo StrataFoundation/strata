@@ -2,8 +2,19 @@ use crate::{state::*};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 
+pub const PARENT_ENTANGLER_SIZE: usize = 8 + // key
+32 + // authority
+32 + // mint
+32 + // storage
+8 + // go live
+8 + // freeze swap
+8 + // created
+1 + // bump
+1 + // storage bump
+200; // padding
+
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct InitializeFungibleEntanglerV0Args {
+pub struct InitializeFungibleParentEntanglerV0Args {
   pub authority: Option<Pubkey>,
   pub entangler_seed: Vec<u8>,
   pub go_live_unix_time: i64,
@@ -11,29 +22,29 @@ pub struct InitializeFungibleEntanglerV0Args {
 }
 
 #[derive(Accounts)]
-#[instruction(args: InitializeFungibleEntanglerV0Args)]
-pub struct InitializeFungibleEntanglerV0<'info> {
+#[instruction(args: InitializeFungibleParentEntanglerV0Args)]
+pub struct InitializeFungibleParentEntanglerV0<'info> {
   #[account(mut)]
   pub payer: Signer<'info>,
   #[account(
     init,
     payer = payer,
-    space = 8 + 122,
-    seeds = [b"entangler", mint.key().as_ref(), &args.entangler_seed],
+    space = ENTANGLER_SIZE,
+    seeds = [b"entangler", parent_mint.key().as_ref(), &args.entangler_seed],
     bump,
   )]
-  pub entangler: Box<Account<'info, FungibleEntanglerV0>>,
+  pub entangler: Box<Account<'info, FungibleParentEntanglerV0>>,
   #[account(
     init,
     payer = payer,
     seeds = [b"storage", entangler.key().as_ref()],
     bump,
-    token::mint = mint,
+    token::mint = parent_mint,
     token::authority = entangler,
   )]
-  pub storage: Box<Account<'info, TokenAccount>>,
-  #[account( constraint = mint.is_initialized)]
-  pub mint: Box<Account<'info, Mint>>,
+  pub parent_storage: Box<Account<'info, TokenAccount>>,
+  #[account( constraint = parent_mint.is_initialized)]
+  pub parent_mint: Box<Account<'info, Mint>>,
     
   pub token_program: Program<'info, Token>,
   pub system_program: Program<'info, System>,
@@ -42,14 +53,14 @@ pub struct InitializeFungibleEntanglerV0<'info> {
 }
 
 pub fn handler(
-  ctx: Context<InitializeFungibleEntanglerV0>,
-  args: InitializeFungibleEntanglerV0Args,
+  ctx: Context<InitializeFungibleParentEntanglerV0>,
+  args: InitializeFungibleParentEntanglerV0Args,
 ) -> Result<()> {
   let entangler = &mut ctx.accounts.entangler;
 
   entangler.authority = args.authority;
-  entangler.mint = ctx.accounts.mint.key();
-  entangler.storage = ctx.accounts.storage.key();
+  entangler.parent_mint = ctx.accounts.parent_mint.key();
+  entangler.parent_storage = ctx.accounts.parent_storage.key();
   entangler.go_live_unix_time = if args.go_live_unix_time < ctx.accounts.clock.unix_timestamp {
     ctx.accounts.clock.unix_timestamp
   } else {

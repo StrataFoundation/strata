@@ -14,11 +14,11 @@ declare_id!("Ae6wbxtjpoKGCuSdHGQXRudmdpSfGpu6KHtjDcWEDjP8");
 #[program]
 pub mod fungible_entangler {
     use super::*;
-    pub fn initialize_fungible_entangler_v0(
-      ctx: Context<InitializeFungibleEntanglerV0>,
-      args: InitializeFungibleEntanglerV0Args,
+    pub fn initialize_fungible_parent_entangler_v0(
+      ctx: Context<InitializeFungibleParentEntanglerV0>,
+      args: InitializeFungibleParentEntanglerV0Args,
     ) -> Result<()> {
-      instructions::initialize_fungible_entangler_v0::handler(ctx, args)
+      instructions::initialize_fungible_parent_entangler_v0::handler(ctx, args)
     }
 
     pub fn initialize_fungible_child_entangler_v0(
@@ -28,17 +28,17 @@ pub mod fungible_entangler {
       instructions::initialize_fungible_child_entangler_v0::handler(ctx,args)
     }
 
-    pub fn swap_base_v0(
+    pub fn swap_parent_v0(
       ctx: Context<SwapBaseV0>,
       args: SwapV0Args
     ) -> Result<()> {
-      instructions::swap_base_v0::handler(ctx, args)
+      instructions::swap_parent_v0::handler(ctx, args)
     }
 
-    pub fn swap_target_v0(
+    pub fn swap_child_v0(
       ctx: Context<SwapTargetV0>,
       args: SwapV0Args
     ) -> Result<()> {
-      instructions::swap_target_v0::handler(ctx, args)
+      instructions::swap_child_v0::handler(ctx, args)
     }
 }
