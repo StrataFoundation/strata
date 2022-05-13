@@ -44,14 +44,18 @@ require a whitelist token.
 
 import { ConvertCMIfNeeded } from "@site/src/components/ConvertCMIfNeeded";
 
-<ConvertCMIfNeeded />
+<BrowserOnly>
+  { () => <ConvertCMIfNeeded /> }
+</BrowserOnly>
 
 
 You can look at the current configuration here:
 
 import { CandyMachineConfig } from "@site/src/components/CandyMachineConfig"
 
-<CandyMachineConfig />
+<BrowserOnly>
+  { () => <CandyMachineConfig /> }
+</BrowserOnly>
 
 
 ## Collect Funds
