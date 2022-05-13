@@ -190,7 +190,7 @@ export class AccountFetchCache {
       console.log(`Batching account fetch of ${currentBatch.size}`);
       const { keys, array } = await getMultipleAccounts(
         this.connection,
-        [...currentBatch],
+        Array.from(currentBatch),
         this.commitment
       );
       keys.forEach((key, index) => {

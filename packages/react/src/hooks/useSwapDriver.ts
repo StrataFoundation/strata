@@ -78,7 +78,7 @@ export async function getMissingSpace(
       })
     )
   ).flat();
-  const distinctAccounts = [...new Set(accounts.map((a) => a.toBase58()))];
+  const distinctAccounts = Array.from(new Set(accounts.map((a) => a.toBase58())));
   const totalSpace = (
     await Promise.all(
       distinctAccounts.map(async (acct) => {

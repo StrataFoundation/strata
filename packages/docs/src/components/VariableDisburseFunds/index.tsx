@@ -21,7 +21,6 @@ export function VariableDisburseFunds({ closeBonding }: { closeBonding: boolean 
         tokenBondingKey={variables.tokenBondingKey}
         closeBonding={closeBonding}
       />
-      ;
     </ReactShadow.div>
   );
 }
