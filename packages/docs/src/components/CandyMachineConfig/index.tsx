@@ -1,9 +1,20 @@
 import React, { useEffect } from "react";
 import { useCandyMachine } from "@strata-foundation/marketplace-ui";
-import ReactJson from "react-json-view";
 import { Spinner } from "@chakra-ui/react";
 import { useVariables, useVariablesContext, VariablesProvider } from "../../theme/Root/variables";
 import { recursiveTransformBN } from "../../theme/ReactLiveScope/AsyncButton";
+import BrowserOnly from "@docusaurus/BrowserOnly";
+
+function BrowserOnlyReactJson(props) {
+  return (
+    <BrowserOnly fallback={<div>...</div>}>
+      {() => {
+        const Component = require("react-json-view").default;
+        return <Component {...props} />;
+      }}
+    </BrowserOnly>
+  );
+}
 
 export function CandyMachineConfig() {
   const { setVariables } = useVariablesContext();
@@ -22,7 +33,7 @@ export function CandyMachineConfig() {
   }
 
   return (
-    <ReactJson
+    <BrowserOnlyReactJson
       theme="bright:inverted"
       collapsed={1}
       displayDataTypes={false}

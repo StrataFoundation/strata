@@ -12,11 +12,22 @@ import clsx from "clsx";
 import { parse } from "esprima";
 import React, { useEffect, useMemo, useState } from "react";
 import { FaPlay } from "react-icons/fa";
-import ReactJson from "react-json-view";
 import { useVariablesContext } from "../Root/variables";
 import styles from "./styles.module.css";
 import { clusterApiUrl } from "@solana/web3.js";
 import { useEndpoint, useMarketplaceSdk } from "@strata-foundation/marketplace-ui";
+
+
+function BrowserOnlyReactJson(props) {
+  return (
+    <BrowserOnly fallback={<div>...</div>}>
+      {() => {
+        const Component = require("react-json-view").default;
+        return <Component {...props} />;
+      }}
+    </BrowserOnly>
+  );
+}
 
 function wrapAndCollectVars(code: string, injectedVars): string {
   const wrapped = `(async function() {
@@ -178,7 +189,7 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
       {error ? (
         <div>{error.toString()}</div>
       ) : fullLoading ? undefined : (
-        <ReactJson
+        <BrowserOnlyReactJson
           theme="bright:inverted"
           collapsed={1}
           displayDataTypes={false}

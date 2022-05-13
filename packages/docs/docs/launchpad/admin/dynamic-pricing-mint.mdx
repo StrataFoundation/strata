@@ -12,7 +12,6 @@ Your mint is live! You can visit it at the following url:
 <UrlDisplay subs={["candyMachineId", "cluster"]} value="https://app.strataprotocol.com/lbcs/mint/:candyMachineId?cluster=:cluster" />
 :::
 
-import BrowserOnly from "@docusaurus/BrowserOnly";
 import { QueryStringSetter } from "@site/src/components/QueryStringSetter";
 import { UrlDisplay } from "@site/src/components/UrlDisplay";
 import { PublicKey } from "@solana/web3.js";
@@ -44,18 +43,14 @@ require a whitelist token.
 
 import { ConvertCMIfNeeded } from "@site/src/components/ConvertCMIfNeeded";
 
-<BrowserOnly>
-  { () => <ConvertCMIfNeeded /> }
-</BrowserOnly>
+<ConvertCMIfNeeded />
 
 
 You can look at the current configuration here:
 
 import { CandyMachineConfig } from "@site/src/components/CandyMachineConfig"
 
-<BrowserOnly>
-  { () => <CandyMachineConfig /> }
-</BrowserOnly>
+<CandyMachineConfig />
 
 
 ## Collect Funds
@@ -64,14 +59,11 @@ When the mint is over, if you are the beneficiary (admin) of the mint you should
 
 import { VariableDisburseFunds } from "@site/src/components/VariableDisburseFunds";
 
-<BrowserOnly>
-  { () => <VariableDisburseFunds />}
-</BrowserOnly>
+<VariableDisburseFunds />
+
 If you would like to disburse funds _and_ recover rent from the bonding curve (this will render the UI unusable):
 
-<BrowserOnly>
-  { () => <VariableDisburseFunds closeBonding /> }
-</BrowserOnly>
+<VariableDisburseFunds closeBonding />
 
 ## Embed to your site
 
