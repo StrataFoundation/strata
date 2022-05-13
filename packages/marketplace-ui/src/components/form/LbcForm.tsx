@@ -52,6 +52,7 @@ import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { TokenMintDecimalsInputs } from "./TokenMintDecimalsInputs";
 import { TokenIntervalInputs } from "./TokenIntervalnputs";
 import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
+import { useEndpoint } from "../../hooks/useEndpoint";
 
 interface ILbpFormProps
   extends Partial<IMetadataFormProps>,
