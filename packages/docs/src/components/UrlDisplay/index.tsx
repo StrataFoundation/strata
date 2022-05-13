@@ -6,7 +6,7 @@ export const UrlDisplay = ({ subs, value }: { value: string, subs: string[] }) =
   const variables = useVariables();
 
   const subbed = subs.reduce((currValue, name) => {
-    return currValue.replaceAll(":" + name, variables[name])
+    return currValue.replace(new RegExp(":" + name, 'g'), variables[name])
   }, value)
 
   return <CodeBlock>
