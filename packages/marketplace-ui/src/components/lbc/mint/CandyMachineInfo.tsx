@@ -31,7 +31,7 @@ export const CandyMachineInfo = ({ candyMachine, itemsRemaining, isWhitelistUser
               : candyMachine
               ? `${
                   targetMint && candyMachine?.price
-                    ? toNumber(candyMachine.price, targetMint)
+                    ? toNumber(discountPrice || candyMachine.price, targetMint)
                     : ""
                 } ${ticker}`
               : ""}
