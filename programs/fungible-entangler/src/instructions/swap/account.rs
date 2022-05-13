@@ -4,8 +4,8 @@ use anchor_spl::token::{Mint, Token, TokenAccount};
 
 #[derive(Accounts)]
 pub struct SwapCommonV0<'info> {
-  #[account(mut, 
-    has_one = parent_mint, 
+  #[account(mut,
+    has_one = parent_mint,
     has_one = parent_storage
   )]
   pub parent_entangler: Box<Account<'info, FungibleParentEntanglerV0>>,
@@ -26,9 +26,9 @@ pub struct SwapCommonV0<'info> {
   #[account(mut)]
   pub source: Box<Account<'info, TokenAccount>>,
   pub source_authority: Signer<'info>,
-  #[account(mut)]
+  #[account(mut, constraint = destination.mint == child_entangler.mint)]
   pub destination: Box<Account<'info, TokenAccount>>,  
 
   pub token_program: Program<'info, Token>,
-  pub clock: Sysvar<'info, Clock>,  
+  pub clock: Sysvar<'info, Clock>,
 }
