@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.6.0](https://github.com/StrataFoundation/strata/compare/v3.5.7...v3.6.0) (2022-05-13)
+
+### Added
+
+  * Documentation/admin page for Dynamic Pricing Mint
+
+### Changed
+
+  * Improvements to UI/UX of Swap Form, including dark mode support
+  * Swap form recognizes when there are no tokens
+
+
+## Breaking
+
+  * Padding was removed on SwapForm so it can be more easily embedded
+
+
 ## [3.5.7](https://github.com/StrataFoundation/strata/compare/v3.5.5...v3.5.7) (2022-05-07)
 
 ### Changed
