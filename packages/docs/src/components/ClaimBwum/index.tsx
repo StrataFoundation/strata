@@ -15,14 +15,14 @@ import {
 } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import React from "react";
-import { useEndpoint } from "../../contexts/Endpoint";
+import { useEndpoint } from "@strata-foundation/marketplace-ui";
 import styles from "./styles.module.css";
+import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 
 const TOKEN_BONDING = "B8kzSwXLfmZMeLzekExz2e8vefoU1UqgGnZ8NZRYkeou";
 
 const MainnetGuard = ({ children = null as any }) => {
-  const { endpoint, setEndpoint } = useEndpoint();
-  console.log(endpoint);
+  const { endpoint, setClusterOrEndpoint } = useEndpoint();
 
   if (endpoint.includes("devnet")) {
     return (
@@ -30,7 +30,7 @@ const MainnetGuard = ({ children = null as any }) => {
         <h3>Net bWUM Exchange</h3>
         <button
           onClick={() => {
-            setEndpoint("https://strataprotocol.genesysgo.net");
+            setClusterOrEndpoint(WalletAdapterNetwork.Mainnet);
           }}
           className="white button button--primary"
         >

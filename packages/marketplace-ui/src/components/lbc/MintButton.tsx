@@ -1,15 +1,30 @@
 import {
-  Button, Collapse,
-  Flex, HStack, Icon, Input, InputGroup, InputRightElement,
-  LightMode, Text, Tooltip, useColorModeValue, useDisclosure, VStack
+  Button,
+  Collapse,
+  Flex,
+  HStack,
+  Icon,
+  Input,
+  InputGroup,
+  InputRightElement,
+  LightMode,
+  Text,
+  Tooltip,
+  useColorModeValue,
+  useDisclosure,
+  VStack,
 } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import {
-  Notification, useBondingPricing, useCapInfo, useErrorHandler,
+  Notification,
+  useBondingPricing,
+  useCapInfo,
+  useErrorHandler,
   useProvider,
   useStrataSdks,
-  useTokenBonding, useUserOwnedAmount
+  useTokenBonding,
+  useUserOwnedAmount,
 } from "@strata-foundation/react";
 import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import React, { useState } from "react";
@@ -24,11 +39,10 @@ async function buy({
   tokenBonding,
   maxPrice,
 }: IMintArgs): Promise<void> {
-  if (isNaN(maxPrice)) {
-    throw new Error("Invalid slippage");
-  }
-
-  if (tokenBondingSdk) {
+  if (tokenBondingSdk && tokenBonding) {
+    if (isNaN(maxPrice)) {
+      throw new Error("Invalid slippage");
+    }
     await tokenBondingSdk.buy({
       tokenBonding,
       desiredTargetAmount: 1,
@@ -49,7 +63,7 @@ async function buy({
 
 export interface IMintArgs {
   tokenBondingSdk: SplTokenBonding | undefined;
-  tokenBonding: PublicKey;
+  tokenBonding: PublicKey | undefined;
   maxPrice: number;
 }
 
@@ -60,13 +74,12 @@ export const MintButton = ({
   disabledText,
   onMint = buy,
 }: {
-  tokenBondingKey: PublicKey;
+  tokenBondingKey?: PublicKey;
   price?: number;
   isDisabled?: boolean;
   disabledText?: string;
   onMint?: (args: IMintArgs) => Promise<void>;
 }) => {
-  const { isOpen, onToggle } = useDisclosure();
   const { connected, publicKey } = useWallet();
   const { awaitingApproval } = useProvider();
   const [slippage, setSlippage] = useState("5");
@@ -84,7 +97,7 @@ export const MintButton = ({
     useTokenBonding(tokenBondingKey);
   const { price } = useLivePrice(tokenBonding?.publicKey);
   const priceToUse = inputPrice || price;
-  const targetBalance = useUserOwnedAmount(publicKey, tokenBonding?.targetMint)
+  const targetBalance = useUserOwnedAmount(publicKey, tokenBonding?.targetMint);
 
   const ownedAmount = useUserOwnedAmount(publicKey, tokenBonding?.baseMint);
   const insufficientBalance = (priceToUse || 0) > (ownedAmount || 0);
@@ -94,6 +107,62 @@ export const MintButton = ({
 
   return (
     <VStack spacing={8} align="stretch">
+      <VStack
+        spacing={1}
+        padding={4}
+        align="stretch"
+        borderColor="gray.400"
+        borderWidth="1px"
+        rounded="lg"
+        fontSize="sm"
+      >
+        <Flex justify="space-between" alignItems="center">
+          <HStack>
+            <Text>Slippage</Text>
+            <Tooltip
+              placement="top"
+              label="Your transaction will fail if the price changes unfavorably more than this percentage."
+            >
+              <Flex>
+                <Icon
+                  w={5}
+                  h={5}
+                  as={RiInformationLine}
+                  _hover={{ color: "primary.500", cursor: "pointer" }}
+                />
+              </Flex>
+            </Tooltip>
+          </HStack>
+          <InputGroup size="sm" w="60px">
+            <Input
+              id="slippage"
+              borderColor="gray.400"
+              _hover={{ borderColor: "gray.500" }}
+              textAlign="right"
+              rounded="lg"
+              placeholder="0"
+              type="number"
+              fontWeight="semibold"
+              step={1}
+              min={1}
+              max={90}
+              paddingRight={5}
+              paddingLeft={1}
+              value={slippage}
+              onChange={(e) => setSlippage(e.target.value)}
+            />
+            <InputRightElement
+              zIndex={0}
+              w={4}
+              justifyContent="end"
+              paddingRight={1.5}
+              rounded="lg"
+            >
+              <Text margin={0}>%</Text>
+            </InputRightElement>
+          </InputGroup>
+        </Flex>
+      </VStack>
       <LightMode>
         <Button
           onClick={() =>
@@ -139,81 +208,6 @@ export const MintButton = ({
             : "Connect Wallet"}
         </Button>
       </LightMode>
-
-      <Button
-        color={useColorModeValue("black", "white")}
-        variant="link"
-        onClick={onToggle}
-        fontSize="14px"
-        rightIcon={
-          <Icon
-            mb="-3px"
-            color="gray.300"
-            as={isOpen ? BsChevronUp : BsChevronDown}
-          />
-        }
-      >
-        Advanced Settings
-      </Button>
-      <Collapse in={isOpen} animateOpacity>
-        <VStack
-          spacing={1}
-          padding={4}
-          align="stretch"
-          color="gray.400"
-          borderColor="gray.400"
-          borderWidth="1px"
-          rounded="lg"
-          fontSize="sm"
-        >
-          <Flex justify="space-between" alignItems="center">
-            <HStack>
-              <Text>Slippage</Text>
-              <Tooltip
-                placement="top"
-                label="Your transaction will fail if the price changes unfavorably more than this percentage."
-              >
-                <Flex>
-                  <Icon
-                    w={5}
-                    h={5}
-                    as={RiInformationLine}
-                    _hover={{ color: "primary.500", cursor: "pointer" }}
-                  />
-                </Flex>
-              </Tooltip>
-            </HStack>
-            <InputGroup size="sm" w="60px">
-              <Input
-                id="slippage"
-                borderColor="gray.400"
-                _hover={{ borderColor: "gray.500" }}
-                textAlign="right"
-                rounded="lg"
-                placeholder="0"
-                type="number"
-                fontWeight="semibold"
-                step={1}
-                min={1}
-                max={90}
-                paddingRight={5}
-                paddingLeft={1}
-                value={slippage}
-                onChange={(e) => setSlippage(e.target.value)}
-              />
-              <InputRightElement
-                zIndex={0}
-                w={4}
-                justifyContent="end"
-                paddingRight={1.5}
-                rounded="lg"
-              >
-                <Text margin={0}>%</Text>
-              </InputRightElement>
-            </InputGroup>
-          </Flex>
-        </VStack>
-      </Collapse>
     </VStack>
   );
 };

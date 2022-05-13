@@ -8,11 +8,10 @@ import {
   PhantomWalletAdapter,
   SlopeWalletAdapter,
   SolflareWalletAdapter,
-  SolletExtensionWalletAdapter,
-  SolletWalletAdapter,
+  GlowWalletAdapter,
   TorusWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
-import { useEndpoint } from "./Endpoint";
+import { useEndpoint } from "@strata-foundation/marketplace-ui";
 import { tokenAuthFetchMiddleware } from "@strata-foundation/web3-token-auth";
 
 // Default styles that can be overridden by your app
@@ -30,7 +29,7 @@ export const getToken = (getTokenEndpoint: string, endpoint: string) => async ()
 
 export const Wallet: FC = ({ children }) => {
   // You can also provide a custom RPC endpoint
-  const { endpoint } = useEndpoint();
+  const { endpoint, cluster } = useEndpoint();
 
   // @solana/wallet-adapter-wallets includes all the adapters but supports tree shaking and lazy loading --
   // Only the wallets you configure here will be compiled into your application, and only the dependencies
@@ -38,14 +37,14 @@ export const Wallet: FC = ({ children }) => {
   const wallets = useMemo(
     () => [
       new PhantomWalletAdapter(),
+      // @ts-ignore
+      new SolflareWalletAdapter({ network: cluster }),
+      new GlowWalletAdapter(),
       new SlopeWalletAdapter(),
-      new SolflareWalletAdapter(),
       new TorusWalletAdapter(),
       new LedgerWalletAdapter(),
-      new SolletWalletAdapter({}),
-      new SolletExtensionWalletAdapter({}),
     ],
-    []
+    [cluster]
   );
 
   return (

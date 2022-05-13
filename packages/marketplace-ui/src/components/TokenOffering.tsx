@@ -23,10 +23,12 @@ import {
 const identity = () => {};
 export const TokenOffering = ({
   mintKey,
-  showAttribution = true
+  showAttribution = true,
+  onConnectWallet = () => {}
 }: {
   mintKey: PublicKey | undefined;
   showAttribution?: boolean;
+  onConnectWallet?: () => void;
 }) => {
   const { result: sellOnlyTokenBondingKey, error: keyError1 } =
     useTokenBondingKey(mintKey, 1);
@@ -101,7 +103,7 @@ export const TokenOffering = ({
     tradingMints,
     onTradingMintsChange: () => {},
     swap: (args) => {},
-    onConnectWallet: identity,
+    onConnectWallet: onConnectWallet,
     tokenBondingKey: tokenBondingKey,
   });
 

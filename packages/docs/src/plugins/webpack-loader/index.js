@@ -27,6 +27,9 @@ module.exports = function (context, options) {
             "@solana/wallet-adapter-react": path.resolve(
               "../../node_modules/@solana/wallet-adapter-react"
             ),
+            "@solana/wallet-adapter-react-ui": path.resolve(
+              "../../node_modules/@solana/wallet-adapter-react-ui"
+            ),
             "@toruslabs/solana-embed": path.resolve(
               "../../node_modules/@toruslabs/solana-embed"
             ),

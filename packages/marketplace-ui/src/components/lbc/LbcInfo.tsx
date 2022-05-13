@@ -4,6 +4,7 @@ import {
   Button,
   Center,
   Collapse,
+  HStack,
   Icon,
   LightMode,
   Link,
@@ -30,23 +31,25 @@ import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
 import { BsChevronDown, BsChevronUp } from "react-icons/bs";
 import { useLivePrice } from "../..//hooks/useLivePrice";
 import { numberWithCommas } from "../../utils/numberWithCommas";
+import { RiInformationFill } from "react-icons/ri";
+import ReactCountdown from "react-countdown";
 
-const BlackBox = ({ children, ...other }: BoxProps) => {
+export const BlackBox = ({ children, ...other }: BoxProps) => {
   return (
-    <Center
-      p="26px"
+    <Box
+      p={4}
       rounded="lg"
       backgroundColor={useColorModeValue("gray.200", "black.500")}
       {...other}
     >
       {children}
-    </Center>
+    </Box>
   );
 };
 
-const BigText = ({ children, ...other }: TextProps) => {
+export const BigText = ({ children, ...other }: TextProps) => {
   return (
-    <Text fontWeight={700} fontSize="24px" {...other}>
+    <Text fontWeight="semibold" fontSize="xl" {...other}>
       {children}
     </Text>
   );
@@ -94,115 +97,122 @@ export const LbcInfo = ({
   );
 
   const { metadata } = useTokenMetadata(tokenBonding?.baseMint);
+  const { metadata: targetMeta } = useTokenMetadata(tokenBonding?.targetMint);
+
+  const renderer = ({
+    days,
+    hours,
+    minutes,
+    seconds,
+    completed,
+  }: {
+    days: number;
+    hours: number;
+    minutes: number;
+    seconds: number;
+    completed: boolean;
+  }) => {
+    if (completed) {
+      return <BigText>Finished</BigText>;
+    }
+    return (
+      <BigText>
+        {days ? `${days} Days, ` : ""}
+        {`${hours}`.padStart(2, "0")}:{`${minutes}`.padStart(2, "0")}:
+        {`${seconds}`.padStart(2, "0")}
+      </BigText>
+    );
+  };
 
   return (
-    <VStack spacing={4} align="stretch">
-      <Stack direction={["column", "row"]}>
-        <VStack flexGrow={2}>
-          <BlackBox w="full" position="relative">
-            {loadingPricing || typeof priceToUse == "undefined" ? (
-              <Spinner size="lg" />
-            ) : (
-              <BigText>
-                {isNaN(priceToUse)
-                  ? "Not Started"
-                  : `${numberWithCommas(priceToUse, 4)} ${
-                      metadata?.data.symbol
-                    }`}
-              </BigText>
-            )}
-            <Tooltip
-              label={`${moment
-                .duration(maxTime - (elapsedTime || 0), "seconds")
-                .humanize()} Remaining`}
-            >
-              <Box
-                position="absolute"
-                top="14px"
-                right="14px"
-                w="14px"
-                h="14px"
+    <VStack spacing={4} align="stretch" justify="stretch">
+      <VStack align="stretch" justify="stretch">
+        <BlackBox w="full">
+          <VStack align="left" spacing={0}>
+            <HStack spacing={1} position="relative">
+              <Text fontSize="sm">Time Remaining</Text>
+              <Tooltip
+                hasArrow
+                label={
+                  "Time during which the price will decrease. After this time, the price will only increase with purchases."
+                }
               >
-                <CircularProgressbar
-                  counterClockwise
-                  value={
-                    elapsedTime && maxTime
-                      ? ((maxTime - elapsedTime) / maxTime) * 100
-                      : 0
-                  }
-                  strokeWidth={50}
-                  styles={buildStyles({
-                    strokeLinecap: "butt",
-                    trailColor: "transparent",
-                    pathColor: "rgba(255, 255, 255, 0.36)",
-                  })}
-                />
-              </Box>
-            </Tooltip>
-          </BlackBox>
-          <Button
-            color={useColorModeValue("black", "white")}
-            variant="link"
-            fontWeight={700}
-            onClick={onToggle}
-            rightIcon={
-              <Icon
-                mb="-3px"
-                color="gray.300"
-                as={isOpen ? BsChevronUp : BsChevronDown}
-              />
-            }
-          >
-            Price
-          </Button>
-        </VStack>
-        <VStack flexGrow={1}>
+                <Box w="14px" h="14px">
+                  <CircularProgressbar
+                    counterClockwise
+                    value={
+                      elapsedTime && maxTime
+                        ? ((maxTime - elapsedTime) / maxTime) * 100
+                        : 0
+                    }
+                    strokeWidth={50}
+                    styles={buildStyles({
+                      strokeLinecap: "butt",
+                      trailColor: "transparent",
+                      pathColor: "rgba(255, 255, 255, 0.36)",
+                    })}
+                  />
+                </Box>
+              </Tooltip>
+            </HStack>
+            <ReactCountdown date={endDate} renderer={renderer} />
+          </VStack>
+        </BlackBox>
+        <Stack direction={["column", "row"]} justify="stretch">
           <BlackBox w="full" position="relative">
-            {loadingBonding ? (
-              <Spinner />
-            ) : (
-              <BigText>
-                {numRemaining ? numberWithCommas(numRemaining, 4) : "0"}
-              </BigText>
-            )}
-            <LightMode>
+            <VStack align="left" spacing={0}>
+              <HStack spacing={2}>
+                <Text fontSize="sm">Price</Text>
+                <Tooltip
+                  hasArrow
+                  label="Dynamic Pricing is similiar to a Dutch Auction. The price starts
+              high, lowers gradually, and only increases when people buy. This
+              price discovery mechanism is powered by a Strata Liquidity
+              Bootstrapping Curve (LBC)"
+                >
+                  <Center>
+                    <Icon w={4} h={4} as={RiInformationFill} />
+                  </Center>
+                </Tooltip>
+              </HStack>
+              {loadingPricing || typeof priceToUse == "undefined" ? (
+                <Spinner size="lg" />
+              ) : (
+                <BigText>
+                  {isNaN(priceToUse)
+                    ? "Not Started"
+                    : `${numberWithCommas(priceToUse, 4)} ${
+                        metadata?.data.symbol
+                      }`}
+                </BigText>
+              )}
+            </VStack>
+          </BlackBox>
+          <BlackBox w="full" position="relative">
+            <VStack spacing={0} align="left">
+              <Text fontSize="sm">Remaining</Text>
+              {loadingBonding ? (
+                <Spinner />
+              ) : (
+                <BigText>
+                  {numRemaining ? numberWithCommas(numRemaining, 4) : "0"}{" "}
+                  {targetMeta?.data.symbol}
+                </BigText>
+              )}
               <Progress
-                w="95%"
+                w="88%"
                 size="xs"
                 h="2px"
                 position="absolute"
-                bottom="-1px"
+                bottom="8px"
                 colorScheme="primary"
                 background="rgba(196, 196, 196, 0.4)"
                 value={((numRemaining || 0) / (mintCap || 0)) * 100}
               />
-            </LightMode>
+            </VStack>
           </BlackBox>
-          <Text fontWeight={700}>Remaining</Text>
-        </VStack>
-      </Stack>
-      <Collapse in={isOpen} animateOpacity>
-        <VStack align="left" spacing={4} padding={4}>
-          <VStack spacing={1} align="left">
-            <Text fontSize="14px" fontWeight="700">
-              How does Dynamic Pricing work?
-            </Text>
-            <Text fontSize="12px">
-              Dynamic Pricing is similiar to a Dutch Auction. The price starts
-              high, lowers gradually, and only increases when people buy. This
-              price discovery mechanism is powered by a Strata Liquidity
-              Bootstrapping Curve (LBC).{" "}
-              <Link
-                color="primary.500"
-                href="https://docs.strataprotocol.com/marketplace/lbc"
-              >
-                Learn More
-              </Link>
-            </Text>
-          </VStack>
-          <Text fontSize="14px">End Date: {moment(endDate).format("LLL")}</Text>
-        </VStack>
-      </Collapse>
+        </Stack>
+      </VStack>
     </VStack>
   );
 };

@@ -1,5 +1,4 @@
 import BrowserOnly from "@docusaurus/BrowserOnly";
-import { useEndpoint } from "../../contexts/Endpoint";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import {
@@ -13,11 +12,22 @@ import clsx from "clsx";
 import { parse } from "esprima";
 import React, { useEffect, useMemo, useState } from "react";
 import { FaPlay } from "react-icons/fa";
-import ReactJson from "react-json-view";
 import { useVariablesContext } from "../Root/variables";
 import styles from "./styles.module.css";
 import { clusterApiUrl } from "@solana/web3.js";
-import { useMarketplaceSdk } from "@strata-foundation/marketplace-ui";
+import { useEndpoint, useMarketplaceSdk } from "@strata-foundation/marketplace-ui";
+
+
+function BrowserOnlyReactJson(props) {
+  return (
+    <BrowserOnly fallback={<div>...</div>}>
+      {() => {
+        const Component = require("react-json-view").default;
+        return <Component {...props} />;
+      }}
+    </BrowserOnly>
+  );
+}
 
 function wrapAndCollectVars(code: string, injectedVars): string {
   const wrapped = `(async function() {
@@ -49,7 +59,7 @@ function wrapAndCollectVars(code: string, injectedVars): string {
 }
 
 // Turn all BN into base 10 numbers as strings
-function recursiveTransformBN(
+export function recursiveTransformBN(
   args: any,
   seen: Map<any, any> = new Map()
 ): Record<string, any> {
@@ -88,7 +98,7 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
   const sdks = useStrataSdks();
   const { marketplaceSdk } = useMarketplaceSdk();
   const { provider } = useProvider();
-  const { endpoint, setEndpoint } = useEndpoint();
+  const { endpoint, setClusterOrEndpoint } = useEndpoint();
 
   var vars = {}; // Outer variable, not stored.
   const exec = useMemo(() => {
@@ -157,7 +167,7 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
       <div className={styles.container}>
         <button
           onClick={() => {
-            setEndpoint("https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899");
+            setClusterOrEndpoint(WalletAdapterNetwork.Devnet);
           }}
           className="white button button--primary"
         >
@@ -179,7 +189,7 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
       {error ? (
         <div>{error.toString()}</div>
       ) : fullLoading ? undefined : (
-        <ReactJson
+        <BrowserOnlyReactJson
           theme="bright:inverted"
           collapsed={1}
           displayDataTypes={false}

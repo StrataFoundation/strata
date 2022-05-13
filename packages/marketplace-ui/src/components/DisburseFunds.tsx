@@ -25,13 +25,15 @@ async function getInstructions(
   reserveAmount: number | undefined,
   tokenBondingKey: PublicKey,
   address: PublicKey | undefined,
-  includeRetrievalCurve: boolean | undefined
+  includeRetrievalCurve: boolean | undefined,
+  closeBonding: boolean | undefined
 ): Promise<InstructionResult<null> | undefined> {
   if (marketplaceSdk && address && reserveAmount) {
     return marketplaceSdk?.disburseCurveInstructions({
       destination: address,
       tokenBonding: tokenBondingKey,
       includeRetrievalCurve,
+      closeBonding,
     });
   }
 }
@@ -39,9 +41,11 @@ async function getInstructions(
 export const DisburseFunds = ({
   tokenBondingKey,
   includeRetrievalCurve = false,
+  closeBonding = false
 }: {
   tokenBondingKey: PublicKey;
   includeRetrievalCurve?: boolean;
+  closeBonding?: boolean;
 }) => {
   const [address, setAddress] = useState("");
   const { marketplaceSdk } = useMarketplaceSdk();
@@ -59,6 +63,7 @@ export const DisburseFunds = ({
     tokenBondingKey,
     addressKey,
     includeRetrievalCurve,
+    closeBonding
   ]);
 
   const { isAdmin } = useIsBountyAdmin(publicKey || undefined, tokenBondingKey);
@@ -88,7 +93,7 @@ export const DisburseFunds = ({
             mt={4}
             isLoading={bondingLoading || governanceLoading}
             variant="outline"
-            colorScheme="primary"
+            colorScheme={closeBonding ? "red": "primary"}
             w="full"
             action={async () => {
               if (marketplaceSdk) {
@@ -100,7 +105,7 @@ export const DisburseFunds = ({
               }
             }}
           >
-            Disburse
+            { closeBonding ? "Disburse and Close" : "Disburse" }
           </AsyncButton>
         )}
         <VStack spacing={2} align="flex-start">
