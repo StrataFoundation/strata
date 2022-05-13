@@ -1,4 +1,5 @@
-import React, { useContext, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
+import { useEndpoint } from "@strata-foundation/marketplace-ui";
 
 type CodeExec = (vars: any) => Promise<void>;
 interface IVariablesContext {
@@ -47,6 +48,14 @@ export const VariablesProvider: React.FC = ({ children }) => {
       },
     [dependencies, setVariables, variables]
   );
+
+  const { cluster } = useEndpoint();
+  useEffect(() => {
+    setVariables(vars => ({
+      ...vars,
+      cluster
+    }))
+  }, [cluster])
 
   return (
     <VariablesContext.Provider

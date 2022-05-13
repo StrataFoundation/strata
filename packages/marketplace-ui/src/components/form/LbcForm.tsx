@@ -5,6 +5,7 @@ import {
   Collapse,
   Flex,
   Input,
+  Switch,
   VStack,
 } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -50,11 +51,13 @@ import {
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { TokenMintDecimalsInputs } from "./TokenMintDecimalsInputs";
 import { TokenIntervalInputs } from "./TokenIntervalnputs";
+import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 
 interface ILbpFormProps
   extends Partial<IMetadataFormProps>,
     IUseExistingMintProps {
   useCandyMachine: boolean;
+  convertCandyMachine: boolean;
   candyMachineId: string;
   mint: string;
   symbol?: string;
@@ -72,6 +75,7 @@ const validationSchema = yup.object({
   mint: yup.string().required(),
   useExistingMint: yup.boolean(),
   useCandyMachine: yup.boolean(),
+  convertCandyMachine: yup.boolean(),
   existingMint: yup.string().when(["useExistingMint", "useCandyMachine"], {
     is: (useExistingMint: boolean, useCandyMachine: boolean) =>
       useExistingMint && !useCandyMachine,
@@ -200,7 +204,7 @@ async function createLiquidityBootstrapper(
   }
 
   // Update the candymachine to use this mint
-  if (values.useCandyMachine) {
+  if (values.useCandyMachine && values.convertCandyMachine) {
     const candyMachineId = new PublicKey(values.candyMachineId);
     const incinerator = new PublicKey(
       "gravk12G8FF5eaXaXSe4VEC8BhkxQ7ig5AHdeVdPmDF"
@@ -287,11 +291,12 @@ export const LbcForm: React.FC = () => {
   const { execute, loading, error } = useAsyncCallback(
     createLiquidityBootstrapper
   );
+  const { cluster } = useEndpoint();
   const { marketplaceSdk } = useMarketplaceSdk();
   const router = useRouter();
   const {
     authority,
-    mint,
+    convertCandyMachine,
     useExistingMint,
     useCandyMachine,
     startPrice,
@@ -300,6 +305,7 @@ export const LbcForm: React.FC = () => {
 
   useEffect(() => {
     setValue("useCandyMachine", !!router.query["candymachine"]);
+    setValue("convertCandyMachine", !!router.query["candymachine"]);
   }, [router, setValue]);
 
   useEffect(() => {
@@ -326,7 +332,13 @@ export const LbcForm: React.FC = () => {
     const mintKey = await execute(marketplaceSdk!, values);
     if (values.useCandyMachine) {
       router.push(
-        route(routes.mintLbc, { candyMachineId: values.candyMachineId }),
+        route(routes.mintLbcAdmin, {
+          candyMachineId: values.candyMachineId,
+          tokenBondingKey: (
+            await SplTokenBonding.tokenBondingKey(mintKey)
+          )[0].toBase58(),
+          cluster,
+        }),
         undefined,
         { shallow: true }
       );
@@ -367,6 +379,7 @@ export const LbcForm: React.FC = () => {
         <form onSubmit={handleSubmit(onSubmit)}>
           <VStack spacing={8} mt={!connected ? 12 : 0}>
             {!useCandyMachine && <UseExistingMintInputs />}
+
             <Box w="full">
               <Collapse in={useCandyMachine} animateOpacity>
                 <FormControlWithError
@@ -467,7 +480,10 @@ export const LbcForm: React.FC = () => {
             <TokenIntervalInputs />
             <FormControlWithError
               id="mintCap"
-              help="The number of tokens to mint. Note that, depending on the above parameters this liqudity bootstrapping may not sell out"
+              help={useCandyMachine ?
+                "The number of items that will be sold in the dynamic pricing mint. This should not exceed the number of items remaining in the candymachine at the time dynamic pricing begins. Note that, depending on the above parameters this may not mint out" :
+                "The number of tokens to mint. Note that, depending on the above parameters this liqudity bootstrapping may not sell out"
+              }
               label="Number of Tokens"
               errors={errors}
             >
@@ -489,6 +505,17 @@ export const LbcForm: React.FC = () => {
             </FormControlWithError>
 
             <Disclosures fees={LBC_CURVE_FEES} />
+
+            {useCandyMachine && (
+              <FormControlWithError
+                id="convertCandyMachine"
+                help="Convert this Candy Machine to use dynamic pricing? If you are running a whitelist mint, you can do this at a later date on the following page."
+                label="Convert CandyMachine to Dynamic Pricing?"
+                errors={errors}
+              >
+                <Switch isChecked={convertCandyMachine} {...register("convertCandyMachine")} />
+              </FormControlWithError>
+            )}
 
             {error && <Alert status="error">{error.toString()}</Alert>}
 

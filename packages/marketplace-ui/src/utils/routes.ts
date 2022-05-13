@@ -3,6 +3,8 @@ export interface IRoute {
   params: string[];
 }
 
+export const DOCS_URL = process.env.NEXT_PUBLIC_DOCS_URL;
+
 export const routes: Record<string, IRoute> = {
   bounties: { path: "/bounties", params: [] },
   newBounty: { path: "/launchpad/bounties/new", params: [] },
@@ -25,6 +27,18 @@ export const routes: Record<string, IRoute> = {
   mintLbc: {
     path: "/lbcs/mint/:candyMachineId",
     params: ["candyMachineId"],
+  },
+  tokenLbcAdmin: {
+    path:
+      process.env.NEXT_PUBLIC_DOCS_URL +
+      "/launchpad/admin/lbc?tokenBondingKey=:tokenBondingKey",
+    params: ["tokenBondingKey"],
+  },
+  mintLbcAdmin: {
+    path:
+      process.env.NEXT_PUBLIC_DOCS_URL +
+      "/launchpad/admin/dynamic-pricing-mint",
+    params: [],
   },
   tokenOffering: {
     path: "/token-offering/:mintKey",
@@ -63,7 +77,7 @@ export function route(
   const search = typeof window != "undefined" && window.location.search;
   const currQuery = new URLSearchParams(search || "");
   const cluster = currQuery.get("cluster");
-  if (cluster) {
+  if (cluster && !params.cluster) {
     params.cluster = cluster;
   }
   const nextQuery = new URLSearchParams(rmUndefined(params)).toString();

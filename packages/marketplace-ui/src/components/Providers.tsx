@@ -1,4 +1,3 @@
-import { CSSReset } from "@chakra-ui/react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import {
   Notification,
@@ -52,8 +51,7 @@ export const Providers = ({
   return (
     <Wallet cluster={cluster}>
       <WalletModalProvider>
-        <StrataProviders onError={onError}>
-          <CSSReset />
+        <StrataProviders onError={onError} resetCSS>
           <MarketplaceProviders>{children}</MarketplaceProviders>
         </StrataProviders>
       </WalletModalProvider>

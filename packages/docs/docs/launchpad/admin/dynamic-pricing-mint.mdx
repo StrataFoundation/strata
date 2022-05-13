@@ -9,7 +9,7 @@ keywords: [Solana, Dynamic Pricing, LBP, LBC, Manage]
 
 Your mint is live! You can visit it at the following url:
 
-<UrlDisplay subs={["candyMachineId"]} value="https://app.strataprotocol.com/lbcs/mint/:candyMachineId" />
+<UrlDisplay subs={["candyMachineId", "cluster"]} value="https://app.strataprotocol.com/lbcs/mint/:candyMachineId?cluster=:cluster" />
 :::
 
 import { QueryStringSetter } from "@site/src/components/QueryStringSetter";
@@ -28,19 +28,42 @@ You’ll need these important links to access your deployment.
 
 This admin page:
 
-<UrlDisplay subs={["candyMachineId", "tokenBondingKey"]} value="https://docs.strataprotocol.com/launchpad/admin/dynamic-pricing-mint?candyMachineId=:candyMachineId&tokenBondingKey=:tokenBondingKey" />
+<UrlDisplay subs={["candyMachineId", "tokenBondingKey"]} value="https://docs.strataprotocol.com/launchpad/admin/dynamic-pricing-mint?candyMachineId=:candyMachineId&tokenBondingKey=:tokenBondingKey&cluster=:cluster" />
 
 The url for the mint:
 
-<UrlDisplay subs={["candyMachineId"]} value="https://app.strataprotocol.com/lbcs/mint/:candyMachineId" />
+<UrlDisplay subs={["candyMachineId"]} value="https://app.strataprotocol.com/lbcs/mint/:candyMachineId?cluster=:cluster" />
+
+
+## Configuration - Convert to Dynamic Pricing
+
+If your candy machine is not currently running with the dynamic pricing you created, you can convert it here. 
+Make sure to remove any whitelist settings from the configuration, unless you want dynamic price minting to also
+require a whitelist token.
+
+import { ConvertCMIfNeeded } from "@site/src/components/ConvertCMIfNeeded";
+
+<ConvertCMIfNeeded />
+
+
+You can look at the current configuration here:
+
+import { CandyMachineConfig } from "@site/src/components/CandyMachineConfig"
+
+<CandyMachineConfig />
+
 
 ## Collect Funds
 
 When the mint is over, if you are the beneficiary (admin) of the mint you should see a disburse funds option here:
 
-import { VariableDisburseFunds } from "@site/src/components/DisburseFunds";
+import { VariableDisburseFunds } from "@site/src/components/VariableDisburseFunds";
 
 <VariableDisburseFunds />
+
+If you would like to disburse funds _and_ recover rent from the bonding curve (this will render the UI unusable):
+
+<VariableDisburseFunds closeBonding />
 
 ## Embed to your site
 
@@ -65,8 +88,7 @@ function CandyMachine() {
 
   // Shadow div and css reset are not required, but will make sure our styles do not conflict with yours
   return <ReactShadow.div>
-    <CSSReset />
-    <MarketplaceProviders onError={(err) => console.error(err)}>
+    <MarketplaceProviders resetCSS onError={(err) => console.error(err)}>
       <DynamicPricingCandyMachine candyMachineId={candyMachineId} onConnectWallet={() => setVisible(true)} />
     </MarketplaceProviders>
   </ReactShadow.div>
@@ -75,7 +97,7 @@ function CandyMachine() {
 
 Dark Mode:
 ```js
-import { DarkMode, CSSReset } from "@chakra-ui/react";
+import { DarkMode } from "@chakra-ui/react";
 ```
 ```jsx live allowMainnet
 function CandyMachine() {
@@ -85,7 +107,7 @@ function CandyMachine() {
   // Shadow div and css reset are not required, but will make sure our styles do not conflict with yours
   return <ReactShadow.div>
     <CSSReset />
-      <MarketplaceProviders onError={(err) => console.error(err)}>
+      <MarketplaceProviders resetCSS onError={(err) => console.error(err)}>
         <DarkMode>
           <div style={{ color: "white", backgroundColor: "black" }}>
             <DynamicPricingCandyMachine candyMachineId={candyMachineId} onConnectWallet={() => setVisible(true)} />
@@ -95,20 +117,3 @@ function CandyMachine() {
   </ReactShadow.div>
 }
 ```
-
-## Advanced Settings - Configuration
-
-If your LBC is not currently running with an LBC (you may have updated it to do a whitelist mint), you can convert it back here. 
-Make sure to remove any whitelist settings from the configuration, unless you want dynamic price minting to also
-require a whitelist token.
-
-import { ConvertCMIfNeeded } from "@site/src/components/ConvertCMIfNeeded";
-
-<ConvertCMIfNeeded />
-
-
-You can look at the current configuration here:
-
-import { CandyMachineConfig } from "@site/src/components/CandyMachineConfig"
-
-<CandyMachineConfig />

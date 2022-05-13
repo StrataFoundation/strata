@@ -4,11 +4,12 @@ import { MarketplaceSdkProvider } from "../contexts";
 import { HolaplexGraphqlProvider } from "./HolaplexGraphqlProvider";
 
 const defaultOnError = (error: Error) => console.log(error);
-export const MarketplaceProviders: FC<{ onError?: (error: Error) => void }> = ({
+export const MarketplaceProviders: FC<{ onError?: (error: Error) => void, resetCSS?: boolean }> = ({
   children,
   onError = defaultOnError,
+  resetCSS = false
 }) => (
-  <StrataProviders onError={onError}>
+  <StrataProviders onError={onError} resetCSS={resetCSS}>
     <MarketplaceSdkProvider>
       <HolaplexGraphqlProvider>{children}</HolaplexGraphqlProvider>
     </MarketplaceSdkProvider>

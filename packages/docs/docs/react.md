@@ -109,7 +109,7 @@ var { ownerTokenRef, tokenBonding } =
 Now display it in React! We can use an advanced, pre-canned trade form:
 
 ```js
-import { Swap } from "@strata-foundation/react";
+import { Swap, StrataProviders } from "@strata-foundation/react";
 import ReactShadow from "react-shadow/emotion";
 import { CSSReset } from "@chakra-ui/react";
 ```
@@ -121,8 +121,9 @@ function TokenDisplay() {
   if (tokenBonding) {
     // Shadow div and css reset are not required, but will make sure our styles do not conflict with yours
     return <ReactShadow.div>
-      <CSSReset />
-      <Swap tokenBondingKey={tokenBonding} />
+      <StrataProviders resetCSS onError={e => console.error(e)}>
+        <Swap tokenBondingKey={tokenBonding} />
+      </StrataProviders>
     </ReactShadow.div>
   }
 

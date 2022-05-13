@@ -93,7 +93,7 @@ export const DisburseFunds = ({
             mt={4}
             isLoading={bondingLoading || governanceLoading}
             variant="outline"
-            colorScheme="primary"
+            colorScheme={closeBonding ? "red": "primary"}
             w="full"
             action={async () => {
               if (marketplaceSdk) {
@@ -105,7 +105,7 @@ export const DisburseFunds = ({
               }
             }}
           >
-            Disburse
+            { closeBonding ? "Disburse and Close" : "Disburse" }
           </AsyncButton>
         )}
         <VStack spacing={2} align="flex-start">
