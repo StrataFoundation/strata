@@ -35,6 +35,7 @@ import {
   useTokenRef,
   useBondedTokenPrice,
   useErrorHandler,
+  usePublicKey
 } from "@strata-foundation/react";
 import {
   TimeDecayExponentialCurveConfig,
@@ -192,6 +193,7 @@ const ReactLiveScope = {
   ReactShadow,
   CSSReset,
   MarketplaceProviders,
+  usePublicKey,
   ...React,
 };
 

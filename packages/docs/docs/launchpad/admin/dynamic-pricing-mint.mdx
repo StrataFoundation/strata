@@ -73,6 +73,7 @@ yarn add @strata-foundation/react @strata-foundation/marketplace-ui react-shadow
 
 ```js
 import { MarketplaceProviders, DynamicPricingCandyMachine } from "@strata-foundation/marketplace-ui";
+import { usePublicKey } from "@strata-foundation/react";
 import { CSSReset } from "@chakra-ui/react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import ReactShadow from "react-shadow/emotion";
@@ -85,11 +86,12 @@ Light Mode:
 function CandyMachine() {
   const { candyMachineId } = useVariables();
   const { setVisible } = useWalletModal();
+  const candyMachineIdPubkey = usePublicKey(candyMachineId);
 
   // Shadow div and css reset are not required, but will make sure our styles do not conflict with yours
   return <ReactShadow.div>
     <MarketplaceProviders resetCSS onError={(err) => console.error(err)}>
-      <DynamicPricingCandyMachine candyMachineId={candyMachineId} onConnectWallet={() => setVisible(true)} />
+      <DynamicPricingCandyMachine candyMachineId={candyMachineIdPubkey} onConnectWallet={() => setVisible(true)} />
     </MarketplaceProviders>
   </ReactShadow.div>
 }
@@ -103,6 +105,7 @@ import { DarkMode } from "@chakra-ui/react";
 function CandyMachine() {
   const { candyMachineId } = useVariables();
   const { setVisible } = useWalletModal();
+  const candyMachineIdPubkey = usePublicKey(candyMachineId);
 
   // Shadow div and css reset are not required, but will make sure our styles do not conflict with yours
   return <ReactShadow.div>
@@ -110,7 +113,7 @@ function CandyMachine() {
       <MarketplaceProviders resetCSS onError={(err) => console.error(err)}>
         <DarkMode>
           <div style={{ color: "white", backgroundColor: "black" }}>
-            <DynamicPricingCandyMachine candyMachineId={candyMachineId} onConnectWallet={() => setVisible(true)} />
+            <DynamicPricingCandyMachine candyMachineId={candyMachineIdPubkey} onConnectWallet={() => setVisible(true)} />
           </div>
         </DarkMode>
     </MarketplaceProviders>

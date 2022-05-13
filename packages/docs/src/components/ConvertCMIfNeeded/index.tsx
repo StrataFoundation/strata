@@ -23,6 +23,7 @@ import { PublicKey, TransactionInstruction } from "@solana/web3.js";
 import { useAsyncCallback } from "react-async-hook";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { usePublicKey } from "@strata-foundation/react";
 
 async function convertToLBC(
   provider: Provider | undefined,
@@ -83,12 +84,12 @@ export const ConvertCMIfNeeded = () => {
   const { connected } = useWallet();
   const { provider } = useProvider();
   const variables = useVariables();
+  const tokenBondingKey = usePublicKey(variables?.tokenBondingKey);
+  const candyMachineKey = usePublicKey(variables?.candyMachineId);
   const { info: bonding, loading: loadingBonding } = useTokenBonding(
-    variables?.tokenBondingKey
+    tokenBondingKey
   );
-  const { info: cm, loading: loadingCM } = useCandyMachine(
-    variables?.candyMachineId
-  );
+  const { info: cm, loading: loadingCM } = useCandyMachine(candyMachineKey);
   const { setVisible } = useWalletModal();
   const isConverted = bonding && cm && cm.tokenMint && cm.tokenMint.equals(bonding.targetMint);
   const {

@@ -4,6 +4,7 @@ import { Spinner } from "@chakra-ui/react";
 import { useVariables, useVariablesContext, VariablesProvider } from "../../theme/Root/variables";
 import { recursiveTransformBN } from "../../theme/ReactLiveScope/AsyncButton";
 import BrowserOnly from "@docusaurus/BrowserOnly";
+import { usePublicKey } from "@strata-foundation/react";
 
 function BrowserOnlyReactJson(props) {
   return (
@@ -19,7 +20,8 @@ function BrowserOnlyReactJson(props) {
 export function CandyMachineConfig() {
   const { setVariables } = useVariablesContext();
   const variables = useVariables();
-  const { info, loading } = useCandyMachine(variables?.candyMachineId);
+  const candyMachineKey = usePublicKey(variables?.candyMachineId);
+  const { info, loading } = useCandyMachine(candyMachineKey);
 
   useEffect(() => {
     setVariables((vars) => ({
