@@ -10,6 +10,7 @@ pub struct FungibleParentEntanglerV0 {
   pub freeze_swap_unix_time: Option<i64>,
   pub created_at_unix_time: i64,
 
+  pub dynamic_seed: Vec<u8>,
   pub bump_seed: u8,
   pub storage_bump_seed: u8,
 }

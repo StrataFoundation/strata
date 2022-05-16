@@ -26,7 +26,7 @@ pub struct SwapCommonV0<'info> {
   #[account(mut)]
   pub source: Box<Account<'info, TokenAccount>>,
   pub source_authority: Signer<'info>,
-  #[account(mut, constraint = destination.mint == child_entangler.mint)]
+  #[account(mut)]
   pub destination: Box<Account<'info, TokenAccount>>,  
 
   pub token_program: Program<'info, Token>,

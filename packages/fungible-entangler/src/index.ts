@@ -338,7 +338,7 @@ export class FungibleEntangler extends AnchorSdk<any> {
       await this.instruction.initializeFungibleParentEntanglerV0(
         {
           authority,
-          entanglerSeed: dynamicSeed,
+          dynamicSeed,
           goLiveUnixTime: new BN(Math.floor(goLiveDate.valueOf() / 1000)),
           freezeSwapUnixTime: freezeSwapDate
             ? new BN(Math.floor(freezeSwapDate.valueOf() / 1000))
@@ -538,20 +538,17 @@ export class FungibleEntangler extends AnchorSdk<any> {
 
   async swapParentInstructions({
     payer = this.wallet.publicKey,
-    source = this.wallet.publicKey,
+    source,
     sourceAuthority = this.wallet.publicKey,
     parentEntangler,
     childEntangler,
     destination,
-    amount,
-    all,
+    amount = 0,
+    all = false,
   }: ISwapParentArgs): Promise<InstructionResult<any>> {
     const parentAcct = (await this.getParentEntangler(parentEntangler))!;
     const childAcct = (await this.getChildEntangler(childEntangler))!;
-
-    const parentMint = await getMintInfo(this.provider, parentAcct.mint);
-    const childMint = await getMintInfo(this.provider, childAcct.mint);
-
+    const parentMint = await getMintInfo(this.provider, parentAcct.parentMint);
     const instructions: TransactionInstruction[] = [];
     const signers: Keypair[] = [];
 
@@ -559,18 +556,18 @@ export class FungibleEntangler extends AnchorSdk<any> {
       destination = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
-        childAcct.mint,
+        childAcct.childMint,
         sourceAuthority,
         true
       );
 
       if (!(await this.accountExists(destination))) {
-        console.log(`Creating child ${childAcct.mint.toBase58()} account`);
+        console.log(`Creating child ${childAcct.childMint.toBase58()} account`);
         instructions.push(
           Token.createAssociatedTokenAccountInstruction(
             ASSOCIATED_TOKEN_PROGRAM_ID,
             TOKEN_PROGRAM_ID,
-            childAcct.mint,
+            childAcct.childMint,
             destination,
             sourceAuthority,
             payer
@@ -587,7 +584,7 @@ export class FungibleEntangler extends AnchorSdk<any> {
       source = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
-        parentAcct.mint,
+        parentAcct.parentMint,
         sourceAuthority,
         true
       );
@@ -611,11 +608,11 @@ export class FungibleEntangler extends AnchorSdk<any> {
         accounts: {
           common: {
             parentEntangler,
-            parentStorage: parentAcct.storage,
-            parentMint: parentAcct.mint,
+            parentMint: parentAcct.parentMint,
+            parentStorage: parentAcct.parentStorage,
             childEntangler,
-            childStorage: childAcct.storage,
-            childMint: childAcct.mint,
+            childMint: childAcct.childMint,
+            childStorage: childAcct.childStorage,
             source,
             sourceAuthority,
             destination,
@@ -646,21 +643,97 @@ export class FungibleEntangler extends AnchorSdk<any> {
 
   async swapChildInstructions({
     payer = this.wallet.publicKey,
-    source = this.wallet.publicKey,
+    source,
     sourceAuthority = this.wallet.publicKey,
     parentEntangler,
     childEntangler,
     destination,
-    amount,
-    all,
+    amount = 0,
+    all = false,
   }: ISwapChildArgs): Promise<InstructionResult<any>> {
+    const parentAcct = (await this.getParentEntangler(parentEntangler))!;
+    const childAcct = (await this.getChildEntangler(childEntangler))!;
+    const childMint = await getMintInfo(this.provider, childAcct.childMint);
     const instructions: TransactionInstruction[] = [];
     const signers: Keypair[] = [];
+
+    if (!destination) {
+      destination = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        parentAcct.parentMint,
+        sourceAuthority,
+        true
+      );
+
+      if (!(await this.accountExists(destination))) {
+        console.log(
+          `Creating parent ${parentAcct.parentMint.toBase58()} account`
+        );
+        instructions.push(
+          Token.createAssociatedTokenAccountInstruction(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            parentAcct.parentMint,
+            destination,
+            sourceAuthority,
+            payer
+          )
+        );
+      }
+    }
+
+    if (amount) {
+      amount = toBN(amount, childMint);
+    }
+
+    if (!source) {
+      source = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        childAcct.childMint,
+        sourceAuthority,
+        true
+      );
+
+      if (!(await this.accountExists(source))) {
+        console.warn(
+          "Source account for swap does not exist, if it is not created in an earlier instruction this can cause an error"
+        );
+      }
+    }
+
+    const args: IdlTypes<FungibleEntanglerIDL>["SwapV0Args"] = {
+      // @ts-ignore
+      amount,
+      // @ts-ignore
+      all,
+    };
+
+    instructions.push(
+      await this.instruction.swapChildV0(args, {
+        accounts: {
+          common: {
+            parentEntangler,
+            parentMint: parentAcct.parentMint,
+            parentStorage: parentAcct.parentStorage,
+            childEntangler,
+            childMint: childAcct.childMint,
+            childStorage: childAcct.childStorage,
+            source,
+            sourceAuthority,
+            destination,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            clock: SYSVAR_CLOCK_PUBKEY,
+          },
+        },
+      })
+    );
 
     return {
       instructions,
       signers,
-      output: {},
+      output: null,
     };
   }
 

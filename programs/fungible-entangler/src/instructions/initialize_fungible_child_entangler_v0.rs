@@ -44,7 +44,7 @@ pub struct InitializeFungibleChildEntanglerV0<'info> {
     seeds = [b"storage", entangler.key().as_ref()],
     bump,
     token::mint = child_mint,
-    token::authority = parent_entangler,
+    token::authority = entangler,
   )]
   pub child_storage: Box<Account<'info, TokenAccount>>,
   #[account(
@@ -77,7 +77,7 @@ pub fn handler(
   entangler.freeze_swap_unix_time = args.freeze_swap_unix_time;
   entangler.created_at_unix_time = ctx.accounts.clock.unix_timestamp;
   entangler.bump_seed = *ctx.bumps.get("entangler").unwrap();
-  entangler.storage_bump_seed = *ctx.bumps.get("storage").unwrap();
+  entangler.storage_bump_seed = *ctx.bumps.get("child_storage").unwrap();
 
   Ok(())
 }

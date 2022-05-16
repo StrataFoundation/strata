@@ -33,37 +33,37 @@ describe("fungible-entangler", () => {
   it("allows creation of a parent entangler", async () => {
     const dynamicSeed = Keypair.generate().publicKey;
     const parentMint = await createMint(provider, me, 0);
-    await tokenUtils.createAtaAndMint(provider, parentMint, 10000);
+    await tokenUtils.createAtaAndMint(provider, parentMint, 100);
 
     const { entangler: parentEntanglerOut } =
       await fungibleEntanglerProgram.createFungibleParentEntangler({
         authority: me,
         mint: parentMint,
-        amount: 10000,
+        amount: 100,
         dynamicSeed: dynamicSeed.toBuffer(),
       });
 
     const parentEntanglerAcct =
       (await fungibleEntanglerProgram.getParentEntangler(parentEntanglerOut))!;
 
-    expect(tB58(parentEntanglerAcct.mint)).to.eq(tB58(parentMint));
+    expect(tB58(parentEntanglerAcct.parentMint)).to.eq(tB58(parentMint));
     expect(tB58(parentEntanglerAcct.authority)).to.eq(tB58(me));
 
-    await tokenUtils.expectAtaBalance(me, parentEntanglerAcct.mint, 0);
-    await tokenUtils.expectBalance(parentEntanglerAcct.storage, 10000);
+    await tokenUtils.expectAtaBalance(me, parentEntanglerAcct.parentMint, 0);
+    await tokenUtils.expectBalance(parentEntanglerAcct.parentStorage, 100);
   });
 
   it("allows creation of a child entangler", async () => {
     const dynamicSeed = Keypair.generate().publicKey;
     const parentMint = await createMint(provider, me, 0);
     const childMint = await createMint(provider, me);
-    await tokenUtils.createAtaAndMint(provider, parentMint, 10000);
+    await tokenUtils.createAtaAndMint(provider, parentMint, 100);
 
     const { entangler: parentEntanglerOut } =
       await fungibleEntanglerProgram.createFungibleParentEntangler({
         authority: me,
         mint: parentMint,
-        amount: 10000,
+        amount: 100,
         dynamicSeed: dynamicSeed.toBuffer(),
       });
 
@@ -77,17 +77,17 @@ describe("fungible-entangler", () => {
     const childEntanglerAcct =
       (await fungibleEntanglerProgram.getChildEntangler(childEntanglerOut))!;
 
-    expect(tB58(childEntanglerAcct.mint)).to.eq(tB58(childMint));
+    expect(tB58(childEntanglerAcct.childMint)).to.eq(tB58(childMint));
     expect(tB58(childEntanglerAcct.authority)).to.eq(tB58(me));
 
-    await tokenUtils.expectBalance(childEntanglerAcct.storage, 0);
+    await tokenUtils.expectBalance(childEntanglerAcct.childStorage, 0);
   });
 
   it("creates both parentEntangler and childEntangler with a singleMethod", async () => {
     const dynamicSeed = Keypair.generate().publicKey;
     const parentMint = await createMint(provider, me, 0);
     const childMint = await createMint(provider, me, 0);
-    await tokenUtils.createAtaAndMint(provider, parentMint, 10000);
+    await tokenUtils.createAtaAndMint(provider, parentMint, 100);
 
     const {
       parentEntangler: parentEntanglerOut,
@@ -96,7 +96,7 @@ describe("fungible-entangler", () => {
       authority: me,
       parentMint,
       childMint,
-      amount: 10000,
+      amount: 100,
       dynamicSeed: dynamicSeed.toBuffer(),
     });
 
@@ -106,24 +106,89 @@ describe("fungible-entangler", () => {
     const childEntanglerAcct =
       (await fungibleEntanglerProgram.getChildEntangler(childEntanglerOut))!;
 
-    expect(tB58(parentEntanglerAcct.mint)).to.eq(tB58(parentMint));
+    expect(tB58(parentEntanglerAcct.parentMint)).to.eq(tB58(parentMint));
     expect(tB58(parentEntanglerAcct.authority)).to.eq(tB58(me));
-    await tokenUtils.expectAtaBalance(me, parentEntanglerAcct.mint, 0);
-    await tokenUtils.expectBalance(parentEntanglerAcct.storage, 10000);
-    expect(tB58(childEntanglerAcct.mint)).to.eq(tB58(childMint));
+    await tokenUtils.expectAtaBalance(me, parentEntanglerAcct.parentMint, 0);
+    await tokenUtils.expectBalance(parentEntanglerAcct.parentStorage, 100);
+    expect(tB58(childEntanglerAcct.childMint)).to.eq(tB58(childMint));
     expect(tB58(childEntanglerAcct.authority)).to.eq(tB58(me));
-    await tokenUtils.expectBalance(childEntanglerAcct.storage, 0);
+    await tokenUtils.expectBalance(childEntanglerAcct.childStorage, 0);
   });
 
   describe("swapping", () => {
-    it("swaps from the parent to a child", () => {
-      // TODO: implement
-      expect(false).to.eq(true);
+    let parentMint,
+      childMint,
+      parentEntangler: PublicKey,
+      childEntangler: PublicKey,
+      parentEntanglerAcct: IFungibleParentEntangler | null,
+      childEntanglerAcct: IFungibleChildEntangler | null;
+
+    beforeEach(async () => {
+      const dynamicSeed = Keypair.generate().publicKey;
+      parentMint = await createMint(provider, me, 0);
+      childMint = await createMint(provider, me, 0);
+      await tokenUtils.createAtaAndMint(provider, parentMint, 100);
+      await tokenUtils.createAtaAndMint(provider, childMint, 50);
+
+      const {
+        parentEntangler: parentEntanglerOut,
+        childEntangler: childEntanglerOut,
+        childStorage: childStorageOut,
+      } = await fungibleEntanglerProgram.createFungibleEntangler({
+        authority: me,
+        parentMint,
+        childMint,
+        amount: 50,
+        dynamicSeed: dynamicSeed.toBuffer(),
+      });
+
+      parentEntangler = parentEntanglerOut;
+      childEntangler = childEntanglerOut;
+      await tokenUtils.mintTo(childMint, 50, childStorageOut);
+
+      parentEntanglerAcct = (await fungibleEntanglerProgram.getParentEntangler(
+        parentEntanglerOut
+      ))!;
+
+      childEntanglerAcct = (await fungibleEntanglerProgram.getChildEntangler(
+        childEntanglerOut
+      ))!;
+    });
+    it("swaps from the parent to a child", async () => {
+      await fungibleEntanglerProgram.swapChild({
+        parentEntangler,
+        childEntangler,
+        amount: 30,
+      });
+
+      await tokenUtils.expectAtaBalance(me, childEntanglerAcct!.childMint, 20);
+      await tokenUtils.expectBalance(parentEntanglerAcct!.parentStorage, 20);
+
+      await tokenUtils.expectAtaBalance(
+        me,
+        parentEntanglerAcct!.parentMint,
+        30
+      );
+
+      await tokenUtils.expectBalance(childEntanglerAcct!.childStorage, 80);
     });
 
-    it("swaps from the child to the parent", () => {
-      // TODO: implement
-      expect(false).to.eq(true);
+    it("swaps from the child to the parent", async () => {
+      await fungibleEntanglerProgram.swapChild({
+        parentEntangler,
+        childEntangler,
+        amount: 30,
+      });
+
+      await tokenUtils.expectBalance(parentEntanglerAcct!.parentStorage, 20);
+
+      await tokenUtils.expectAtaBalance(
+        me,
+        parentEntanglerAcct!.parentMint,
+        80
+      );
+
+      await tokenUtils.expectBalance(childEntanglerAcct!.childStorage, 80);
     });
   });
 

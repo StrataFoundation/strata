@@ -29,14 +29,14 @@ pub mod fungible_entangler {
     }
 
     pub fn swap_parent_v0(
-      ctx: Context<SwapBaseV0>,
+      ctx: Context<SwapParentV0>,
       args: SwapV0Args
     ) -> Result<()> {
       instructions::swap_parent_v0::handler(ctx, args)
     }
 
     pub fn swap_child_v0(
-      ctx: Context<SwapTargetV0>,
+      ctx: Context<SwapChildV0>,
       args: SwapV0Args
     ) -> Result<()> {
       instructions::swap_child_v0::handler(ctx, args)

@@ -17,12 +17,12 @@ export const FungibleEntanglerIDLJson: Idl & { metadata?: { address: string } } 
           "isSigner": false
         },
         {
-          "name": "storage",
+          "name": "parentStorage",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "mint",
+          "name": "parentMint",
           "isMut": false,
           "isSigner": false
         },
@@ -75,12 +75,12 @@ export const FungibleEntanglerIDLJson: Idl & { metadata?: { address: string } } 
           "isSigner": false
         },
         {
-          "name": "storage",
+          "name": "childStorage",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "mint",
+          "name": "childMint",
           "isMut": false,
           "isSigner": false
         },
@@ -115,13 +115,63 @@ export const FungibleEntanglerIDLJson: Idl & { metadata?: { address: string } } 
       ]
     },
     {
-      "name": "swapBaseV0",
+      "name": "swapParentV0",
       "accounts": [
         {
           "name": "common",
           "accounts": [
             {
-              "name": "entangler",
+              "name": "parentEntangler",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "parentMint",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "parentStorage",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "childEntangler",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "childMint",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "childStorage",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "source",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "sourceAuthority",
+              "isMut": false,
+              "isSigner": true
+            },
+            {
+              "name": "destination",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "tokenProgram",
+              "isMut": false,
+              "isSigner": false
+            },
+            {
+              "name": "clock",
               "isMut": false,
               "isSigner": false
             }
@@ -138,13 +188,63 @@ export const FungibleEntanglerIDLJson: Idl & { metadata?: { address: string } } 
       ]
     },
     {
-      "name": "swapTargetV0",
+      "name": "swapChildV0",
       "accounts": [
         {
           "name": "common",
           "accounts": [
             {
-              "name": "entangler",
+              "name": "parentEntangler",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "parentMint",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "parentStorage",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "childEntangler",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "childMint",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "childStorage",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "source",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "sourceAuthority",
+              "isMut": false,
+              "isSigner": true
+            },
+            {
+              "name": "destination",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "tokenProgram",
+              "isMut": false,
+              "isSigner": false
+            },
+            {
+              "name": "clock",
               "isMut": false,
               "isSigner": false
             }
@@ -174,11 +274,11 @@ export const FungibleEntanglerIDLJson: Idl & { metadata?: { address: string } } 
             }
           },
           {
-            "name": "mint",
+            "name": "parentMint",
             "type": "publicKey"
           },
           {
-            "name": "storage",
+            "name": "parentStorage",
             "type": "publicKey"
           },
           {
@@ -194,6 +294,10 @@ export const FungibleEntanglerIDLJson: Idl & { metadata?: { address: string } } 
           {
             "name": "createdAtUnixTime",
             "type": "i64"
+          },
+          {
+            "name": "dynamicSeed",
+            "type": "bytes"
           },
           {
             "name": "bumpSeed",
@@ -222,11 +326,11 @@ export const FungibleEntanglerIDLJson: Idl & { metadata?: { address: string } } 
             "type": "publicKey"
           },
           {
-            "name": "mint",
+            "name": "childMint",
             "type": "publicKey"
           },
           {
-            "name": "storage",
+            "name": "childStorage",
             "type": "publicKey"
           },
           {
@@ -263,11 +367,15 @@ export const FungibleEntanglerIDLJson: Idl & { metadata?: { address: string } } 
         "fields": [
           {
             "name": "amount",
-            "type": "u64"
+            "type": {
+              "option": "u64"
+            }
           },
           {
             "name": "all",
-            "type": "bool"
+            "type": {
+              "option": "bool"
+            }
           }
         ]
       }
@@ -308,7 +416,7 @@ export const FungibleEntanglerIDLJson: Idl & { metadata?: { address: string } } 
             }
           },
           {
-            "name": "entanglerSeed",
+            "name": "dynamicSeed",
             "type": "bytes"
           },
           {
@@ -328,15 +436,15 @@ export const FungibleEntanglerIDLJson: Idl & { metadata?: { address: string } } 
   "errors": [
     {
       "code": 6000,
-      "name": "InvalidMint",
-      "msg": "An account was provided that did not have the correct mint"
+      "name": "InvalidAmount",
+      "msg": "Invalid amount"
     }
   ],
   "metadata": {
     "address": "Ae6wbxtjpoKGCuSdHGQXRudmdpSfGpu6KHtjDcWEDjP8"
   }
 };
-export type FungibleEntanglerIDL = {"version":"1.0.0","name":"fungible_entangler","instructions":[{"name":"initializeFungibleParentEntanglerV0","accounts":[{"name":"payer","isMut":true,"isSigner":true},{"name":"entangler","isMut":true,"isSigner":false},{"name":"storage","isMut":true,"isSigner":false},{"name":"mint","isMut":false,"isSigner":false},{"name":"tokenProgram","isMut":false,"isSigner":false},{"name":"systemProgram","isMut":false,"isSigner":false},{"name":"rent","isMut":false,"isSigner":false},{"name":"clock","isMut":false,"isSigner":false}],"args":[{"name":"args","type":{"defined":"InitializeFungibleParentEntanglerV0Args"}}]},{"name":"initializeFungibleChildEntanglerV0","accounts":[{"name":"payer","isMut":true,"isSigner":true},{"name":"parentEntangler","isMut":false,"isSigner":false},{"name":"entangler","isMut":true,"isSigner":false},{"name":"storage","isMut":true,"isSigner":false},{"name":"mint","isMut":false,"isSigner":false},{"name":"tokenProgram","isMut":false,"isSigner":false},{"name":"systemProgram","isMut":false,"isSigner":false},{"name":"rent","isMut":false,"isSigner":false},{"name":"clock","isMut":false,"isSigner":false}],"args":[{"name":"args","type":{"defined":"InitializeFungibleChildEntanglerV0Args"}}]},{"name":"swapBaseV0","accounts":[{"name":"common","accounts":[{"name":"entangler","isMut":false,"isSigner":false}]}],"args":[{"name":"args","type":{"defined":"SwapV0Args"}}]},{"name":"swapTargetV0","accounts":[{"name":"common","accounts":[{"name":"entangler","isMut":false,"isSigner":false}]}],"args":[{"name":"args","type":{"defined":"SwapV0Args"}}]}],"accounts":[{"name":"fungibleParentEntanglerV0","type":{"kind":"struct","fields":[{"name":"authority","type":{"option":"publicKey"}},{"name":"mint","type":"publicKey"},{"name":"storage","type":"publicKey"},{"name":"goLiveUnixTime","type":"i64"},{"name":"freezeSwapUnixTime","type":{"option":"i64"}},{"name":"createdAtUnixTime","type":"i64"},{"name":"bumpSeed","type":"u8"},{"name":"storageBumpSeed","type":"u8"}]}},{"name":"fungibleChildEntanglerV0","type":{"kind":"struct","fields":[{"name":"authority","type":{"option":"publicKey"}},{"name":"parentEntangler","type":"publicKey"},{"name":"mint","type":"publicKey"},{"name":"storage","type":"publicKey"},{"name":"goLiveUnixTime","type":"i64"},{"name":"freezeSwapUnixTime","type":{"option":"i64"}},{"name":"createdAtUnixTime","type":"i64"},{"name":"bumpSeed","type":"u8"},{"name":"storageBumpSeed","type":"u8"}]}}],"types":[{"name":"SwapV0Args","type":{"kind":"struct","fields":[{"name":"amount","type":"u64"},{"name":"all","type":"bool"}]}},{"name":"InitializeFungibleChildEntanglerV0Args","type":{"kind":"struct","fields":[{"name":"authority","type":{"option":"publicKey"}},{"name":"goLiveUnixTime","type":"i64"},{"name":"freezeSwapUnixTime","type":{"option":"i64"}}]}},{"name":"InitializeFungibleParentEntanglerV0Args","type":{"kind":"struct","fields":[{"name":"authority","type":{"option":"publicKey"}},{"name":"entanglerSeed","type":"bytes"},{"name":"goLiveUnixTime","type":"i64"},{"name":"freezeSwapUnixTime","type":{"option":"i64"}}]}}],"errors":[{"code":6000,"name":"InvalidMint","msg":"An account was provided that did not have the correct mint"}],"metadata":{"address":"Ae6wbxtjpoKGCuSdHGQXRudmdpSfGpu6KHtjDcWEDjP8"}};
+export type FungibleEntanglerIDL = {"version":"1.0.0","name":"fungible_entangler","instructions":[{"name":"initializeFungibleParentEntanglerV0","accounts":[{"name":"payer","isMut":true,"isSigner":true},{"name":"entangler","isMut":true,"isSigner":false},{"name":"parentStorage","isMut":true,"isSigner":false},{"name":"parentMint","isMut":false,"isSigner":false},{"name":"tokenProgram","isMut":false,"isSigner":false},{"name":"systemProgram","isMut":false,"isSigner":false},{"name":"rent","isMut":false,"isSigner":false},{"name":"clock","isMut":false,"isSigner":false}],"args":[{"name":"args","type":{"defined":"InitializeFungibleParentEntanglerV0Args"}}]},{"name":"initializeFungibleChildEntanglerV0","accounts":[{"name":"payer","isMut":true,"isSigner":true},{"name":"parentEntangler","isMut":false,"isSigner":false},{"name":"entangler","isMut":true,"isSigner":false},{"name":"childStorage","isMut":true,"isSigner":false},{"name":"childMint","isMut":false,"isSigner":false},{"name":"tokenProgram","isMut":false,"isSigner":false},{"name":"systemProgram","isMut":false,"isSigner":false},{"name":"rent","isMut":false,"isSigner":false},{"name":"clock","isMut":false,"isSigner":false}],"args":[{"name":"args","type":{"defined":"InitializeFungibleChildEntanglerV0Args"}}]},{"name":"swapParentV0","accounts":[{"name":"common","accounts":[{"name":"parentEntangler","isMut":true,"isSigner":false},{"name":"parentMint","isMut":true,"isSigner":false},{"name":"parentStorage","isMut":true,"isSigner":false},{"name":"childEntangler","isMut":true,"isSigner":false},{"name":"childMint","isMut":true,"isSigner":false},{"name":"childStorage","isMut":true,"isSigner":false},{"name":"source","isMut":true,"isSigner":false},{"name":"sourceAuthority","isMut":false,"isSigner":true},{"name":"destination","isMut":true,"isSigner":false},{"name":"tokenProgram","isMut":false,"isSigner":false},{"name":"clock","isMut":false,"isSigner":false}]}],"args":[{"name":"args","type":{"defined":"SwapV0Args"}}]},{"name":"swapChildV0","accounts":[{"name":"common","accounts":[{"name":"parentEntangler","isMut":true,"isSigner":false},{"name":"parentMint","isMut":true,"isSigner":false},{"name":"parentStorage","isMut":true,"isSigner":false},{"name":"childEntangler","isMut":true,"isSigner":false},{"name":"childMint","isMut":true,"isSigner":false},{"name":"childStorage","isMut":true,"isSigner":false},{"name":"source","isMut":true,"isSigner":false},{"name":"sourceAuthority","isMut":false,"isSigner":true},{"name":"destination","isMut":true,"isSigner":false},{"name":"tokenProgram","isMut":false,"isSigner":false},{"name":"clock","isMut":false,"isSigner":false}]}],"args":[{"name":"args","type":{"defined":"SwapV0Args"}}]}],"accounts":[{"name":"fungibleParentEntanglerV0","type":{"kind":"struct","fields":[{"name":"authority","type":{"option":"publicKey"}},{"name":"parentMint","type":"publicKey"},{"name":"parentStorage","type":"publicKey"},{"name":"goLiveUnixTime","type":"i64"},{"name":"freezeSwapUnixTime","type":{"option":"i64"}},{"name":"createdAtUnixTime","type":"i64"},{"name":"dynamicSeed","type":"bytes"},{"name":"bumpSeed","type":"u8"},{"name":"storageBumpSeed","type":"u8"}]}},{"name":"fungibleChildEntanglerV0","type":{"kind":"struct","fields":[{"name":"authority","type":{"option":"publicKey"}},{"name":"parentEntangler","type":"publicKey"},{"name":"childMint","type":"publicKey"},{"name":"childStorage","type":"publicKey"},{"name":"goLiveUnixTime","type":"i64"},{"name":"freezeSwapUnixTime","type":{"option":"i64"}},{"name":"createdAtUnixTime","type":"i64"},{"name":"bumpSeed","type":"u8"},{"name":"storageBumpSeed","type":"u8"}]}}],"types":[{"name":"SwapV0Args","type":{"kind":"struct","fields":[{"name":"amount","type":{"option":"u64"}},{"name":"all","type":{"option":"bool"}}]}},{"name":"InitializeFungibleChildEntanglerV0Args","type":{"kind":"struct","fields":[{"name":"authority","type":{"option":"publicKey"}},{"name":"goLiveUnixTime","type":"i64"},{"name":"freezeSwapUnixTime","type":{"option":"i64"}}]}},{"name":"InitializeFungibleParentEntanglerV0Args","type":{"kind":"struct","fields":[{"name":"authority","type":{"option":"publicKey"}},{"name":"dynamicSeed","type":"bytes"},{"name":"goLiveUnixTime","type":"i64"},{"name":"freezeSwapUnixTime","type":{"option":"i64"}}]}}],"errors":[{"code":6000,"name":"InvalidAmount","msg":"Invalid amount"}],"metadata":{"address":"Ae6wbxtjpoKGCuSdHGQXRudmdpSfGpu6KHtjDcWEDjP8"}};
 
 
 
