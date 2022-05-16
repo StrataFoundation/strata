@@ -10,6 +10,8 @@ Docs are located in `packages/docs`
 
 # Development
 
+We recommend using [localnet](https://docs.solana.com/developing/test-validator) for working on Strata.
+
 ## Install Submodules
 
 Pull the deps
@@ -24,7 +26,7 @@ git submodule update
 Strata uses Lerna to make it easier to develope on our JS SDKs.
 
 ```
-lerna bootstrap
+npx lerna bootstrap
 ```
 
 ## Build the deps
@@ -33,10 +35,16 @@ lerna bootstrap
 anchor run build-deps
 ```
 
+## Build the Strata packages
+
+```
+yarn build
+```
+
 ## Test
 
 ```
-anchor test
+anchor test --provider.cluster localnet
 ```
 
 ## Bootstrap the Open Collective
