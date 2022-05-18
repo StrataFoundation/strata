@@ -1,10 +1,4 @@
 import * as anchor from "@project-serum/anchor";
-import { BN } from "@project-serum/anchor";
-import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  Token,
-  TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
@@ -14,7 +8,6 @@ import {
   IFungibleParentEntangler,
   IFungibleChildEntangler,
 } from "../packages/fungible-entangler/src";
-import { waitForUnixTime } from "./utils/clock";
 import { TokenUtils } from "./utils/token";
 
 use(ChaiAsPromised);
@@ -154,48 +147,149 @@ describe("fungible-entangler", () => {
         childEntanglerOut
       ))!;
     });
-    it("swaps from the parent to a child", async () => {
-      await fungibleEntanglerProgram.swapChild({
-        parentEntangler,
-        childEntangler,
-        amount: 30,
+
+    describe("swapParent", () => {
+      it("swaps amount from the parent to a child", async () => {
+        await fungibleEntanglerProgram.swapParent({
+          parentEntangler,
+          childEntangler,
+          amount: 30,
+        });
+
+        await tokenUtils.expectBalance(parentEntanglerAcct!.parentStorage, 80);
+        await tokenUtils.expectBalance(childEntanglerAcct!.childStorage, 20);
+        await tokenUtils.expectAtaBalance(
+          me,
+          parentEntanglerAcct!.parentMint,
+          20
+        );
+        await tokenUtils.expectAtaBalance(
+          me,
+          childEntanglerAcct!.childMint,
+          80
+        );
       });
 
-      await tokenUtils.expectAtaBalance(me, childEntanglerAcct!.childMint, 20);
-      await tokenUtils.expectBalance(parentEntanglerAcct!.parentStorage, 20);
+      it("swaps all from parent to a child", async () => {
+        await fungibleEntanglerProgram.swapParent({
+          parentEntangler,
+          childEntangler,
+          all: true,
+        });
 
-      await tokenUtils.expectAtaBalance(
-        me,
-        parentEntanglerAcct!.parentMint,
-        30
-      );
-
-      await tokenUtils.expectBalance(childEntanglerAcct!.childStorage, 80);
+        await tokenUtils.expectBalance(parentEntanglerAcct!.parentStorage, 100);
+        await tokenUtils.expectBalance(childEntanglerAcct!.childStorage, 0);
+        await tokenUtils.expectAtaBalance(
+          me,
+          parentEntanglerAcct!.parentMint,
+          0
+        );
+        await tokenUtils.expectAtaBalance(
+          me,
+          childEntanglerAcct!.childMint,
+          100
+        );
+      });
     });
 
-    it("swaps from the child to the parent", async () => {
-      await fungibleEntanglerProgram.swapChild({
-        parentEntangler,
-        childEntangler,
-        amount: 30,
+    describe("swapChild", () => {
+      it("swaps amount from the child to the parent", async () => {
+        await fungibleEntanglerProgram.swapChild({
+          parentEntangler,
+          childEntangler,
+          amount: 30,
+        });
+
+        await tokenUtils.expectBalance(parentEntanglerAcct!.parentStorage, 20);
+        await tokenUtils.expectBalance(childEntanglerAcct!.childStorage, 80);
+        await tokenUtils.expectAtaBalance(
+          me,
+          parentEntanglerAcct!.parentMint,
+          80
+        );
+        await tokenUtils.expectAtaBalance(
+          me,
+          childEntanglerAcct!.childMint,
+          20
+        );
       });
 
-      await tokenUtils.expectBalance(parentEntanglerAcct!.parentStorage, 20);
+      it("swaps all from child to a parent", async () => {
+        await fungibleEntanglerProgram.swapChild({
+          parentEntangler,
+          childEntangler,
+          all: true,
+        });
 
-      await tokenUtils.expectAtaBalance(
-        me,
-        parentEntanglerAcct!.parentMint,
-        80
-      );
-
-      await tokenUtils.expectBalance(childEntanglerAcct!.childStorage, 80);
+        await tokenUtils.expectBalance(parentEntanglerAcct!.parentStorage, 0);
+        await tokenUtils.expectBalance(childEntanglerAcct!.childStorage, 100);
+        await tokenUtils.expectAtaBalance(
+          me,
+          parentEntanglerAcct!.parentMint,
+          100
+        );
+        await tokenUtils.expectAtaBalance(me, childEntanglerAcct!.childMint, 0);
+      });
     });
   });
 
   describe("top off", () => {
-    it("allows topping off of parent", () => {
+    let parentMint,
+      childMint,
+      parentEntangler: PublicKey,
+      childEntangler: PublicKey,
+      parentEntanglerAcct: IFungibleParentEntangler | null,
+      childEntanglerAcct: IFungibleChildEntangler | null;
+
+    beforeEach(async () => {
+      const dynamicSeed = Keypair.generate().publicKey;
+      parentMint = await createMint(provider, me, 0);
+      childMint = await createMint(provider, me, 0);
+      await tokenUtils.createAtaAndMint(provider, parentMint, 100);
+      await tokenUtils.createAtaAndMint(provider, childMint, 100);
+
+      const {
+        parentEntangler: parentEntanglerOut,
+        childEntangler: childEntanglerOut,
+        childStorage: childStorageOut,
+      } = await fungibleEntanglerProgram.createFungibleEntangler({
+        authority: me,
+        parentMint,
+        childMint,
+        amount: 0,
+        dynamicSeed: dynamicSeed.toBuffer(),
+      });
+
+      parentEntangler = parentEntanglerOut;
+      childEntangler = childEntanglerOut;
+
+      parentEntanglerAcct = (await fungibleEntanglerProgram.getParentEntangler(
+        parentEntanglerOut
+      ))!;
+
+      childEntanglerAcct = (await fungibleEntanglerProgram.getChildEntangler(
+        childEntanglerOut
+      ))!;
+    });
+    it("allows topping off of parent", async () => {
       // TODO: implement
-      expect(false).to.eq(true);
+      await fungibleEntanglerProgram.topOff({
+        parentEntangler,
+        amount: 100,
+      });
+
+      await tokenUtils.expectBalance(parentEntanglerAcct!.parentStorage, 100);
+      await tokenUtils.expectAtaBalance(me, parentEntanglerAcct!.parentMint, 0);
+    });
+
+    it("allows topping off of child", async () => {
+      await fungibleEntanglerProgram.topOff({
+        childEntangler,
+        amount: 100,
+      });
+
+      await tokenUtils.expectBalance(childEntanglerAcct!.childStorage, 100);
+      await tokenUtils.expectAtaBalance(me, childEntanglerAcct!.childMint, 0);
     });
   });
 });

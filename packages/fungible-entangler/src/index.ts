@@ -64,7 +64,7 @@ interface ICreateFungibleParentEntanglerArgs {
   /** dynamicSeed used for created PDA of entangler */
   dynamicSeed: Buffer;
   /** The amount of the mint we will be entangling */
-  amount: number;
+  amount: BN | number;
   /**
    * General authority to change things like freeze swap.
    * **Default:** Wallet public key. Pass null to explicitly not set this authority.
@@ -151,12 +151,39 @@ interface ISwapArgs {
   sourceAuthority?: PublicKey;
   /** The source destination to purchase to. (**Default:** ata of `sourceAuthority`) */
   destination?: PublicKey;
-  amount?: BN | number;
-  all?: boolean;
 }
 
-export interface ISwapParentArgs extends ISwapArgs {}
-export interface ISwapChildArgs extends ISwapArgs {}
+interface ISwapArgsAll extends ISwapArgs {
+  all: boolean;
+}
+
+interface ISwapArgsAmount extends ISwapArgs {
+  amount: BN | number;
+}
+
+type SwapArgs = ISwapArgsAmount | ISwapArgsAll;
+
+export type ISwapParentArgs = SwapArgs & {};
+export type ISwapChildArgs = SwapArgs & {};
+
+interface ITopOffArgs {
+  payer?: PublicKey;
+  /** The source for the swap (**Default:** ata of provider wallet) */
+  source?: PublicKey;
+  /** The wallet funding the swap. (**Default:** Provider wallet) */
+  sourceAuthority?: PublicKey;
+  amount: BN | number;
+}
+
+interface ITopOffArgsParent extends ITopOffArgs {
+  parentEntangler: PublicKey;
+}
+
+interface ITopOffArgsChild extends ITopOffArgs {
+  childEntangler: PublicKey;
+}
+
+type TopOffArgs = ITopOffArgsParent | ITopOffArgsChild;
 
 export class FungibleEntangler extends AnchorSdk<any> {
   static ID = new PublicKey("Ae6wbxtjpoKGCuSdHGQXRudmdpSfGpu6KHtjDcWEDjP8");
@@ -303,6 +330,7 @@ export class FungibleEntangler extends AnchorSdk<any> {
   > {
     const mintAcct = await getMintInfo(this.provider, mint);
     const sourceAcct = await this.provider.connection.getAccountInfo(source);
+    amount = toNumber(amount, mintAcct);
 
     // Source is a wallet, need to get the ATA
     if (!sourceAcct || sourceAcct.owner.equals(SystemProgram.programId)) {
@@ -543,9 +571,9 @@ export class FungibleEntangler extends AnchorSdk<any> {
     parentEntangler,
     childEntangler,
     destination,
-    amount = 0,
-    all = false,
-  }: ISwapParentArgs): Promise<InstructionResult<any>> {
+    ...rest
+  }: ISwapParentArgs): Promise<InstructionResult<null>> {
+    let { amount, all } = { amount: null, all: null, ...rest };
     const parentAcct = (await this.getParentEntangler(parentEntangler))!;
     const childAcct = (await this.getChildEntangler(childEntangler))!;
     const parentMint = await getMintInfo(this.provider, parentAcct.parentMint);
@@ -576,10 +604,6 @@ export class FungibleEntangler extends AnchorSdk<any> {
       }
     }
 
-    if (amount) {
-      amount = toBN(amount, parentMint);
-    }
-
     if (!source) {
       source = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -594,6 +618,10 @@ export class FungibleEntangler extends AnchorSdk<any> {
           "Source account for swap does not exist, if it is not created in an earlier instruction this can cause an error"
         );
       }
+    }
+
+    if (amount) {
+      amount = toBN(amount, parentMint);
     }
 
     const args: IdlTypes<FungibleEntanglerIDL>["SwapV0Args"] = {
@@ -633,8 +661,8 @@ export class FungibleEntangler extends AnchorSdk<any> {
   async swapParent(
     args: ISwapParentArgs,
     commitment: Commitment = "confirmed"
-  ): Promise<any> {
-    return this.execute(
+  ): Promise<void> {
+    await this.execute(
       this.swapParentInstructions(args),
       args.payer,
       commitment
@@ -648,9 +676,9 @@ export class FungibleEntangler extends AnchorSdk<any> {
     parentEntangler,
     childEntangler,
     destination,
-    amount = 0,
-    all = false,
-  }: ISwapChildArgs): Promise<InstructionResult<any>> {
+    ...rest
+  }: ISwapChildArgs): Promise<InstructionResult<null>> {
+    let { amount, all } = { amount: null, all: null, ...rest };
     const parentAcct = (await this.getParentEntangler(parentEntangler))!;
     const childAcct = (await this.getChildEntangler(childEntangler))!;
     const childMint = await getMintInfo(this.provider, childAcct.childMint);
@@ -740,11 +768,89 @@ export class FungibleEntangler extends AnchorSdk<any> {
   async swapChild(
     args: ISwapChildArgs,
     commitment: Commitment = "confirmed"
-  ): Promise<any> {
-    return this.execute(
+  ): Promise<void> {
+    await this.execute(
       this.swapChildInstructions(args),
       args.payer,
       commitment
     );
+  }
+
+  async topOffInstructions({
+    payer = this.wallet.publicKey,
+    source,
+    sourceAuthority = this.wallet.publicKey,
+    amount,
+    ...rest
+  }: TopOffArgs): Promise<InstructionResult<null>> {
+    const { parentEntangler, childEntangler } = {
+      parentEntangler: null,
+      childEntangler: null,
+      ...rest,
+    };
+
+    const entanglerAcct = parentEntangler
+      ? await this.getParentEntangler(parentEntangler!)!
+      : await this.getChildEntangler(childEntangler!)!;
+
+    const mint = parentEntangler
+      ? (entanglerAcct as IFungibleParentEntangler).parentMint
+      : (entanglerAcct as IFungibleChildEntangler).childMint;
+
+    const mintAcct = await getMintInfo(this.provider, mint);
+    const instructions: TransactionInstruction[] = [];
+    const signers: Keypair[] = [];
+
+    if (!source) {
+      source = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        mint,
+        sourceAuthority,
+        true
+      );
+
+      if (!(await this.accountExists(source))) {
+        console.warn(
+          "Source account for swap does not exist, if it is not created in an earlier instruction this can cause an error"
+        );
+      }
+    }
+
+    const sourceAcctAta = await getTokenAccount(this.provider, source);
+    amount = toNumber(amount, mintAcct);
+
+    instructions.push(
+      Token.createTransferInstruction(
+        TOKEN_PROGRAM_ID,
+        source,
+        parentEntangler
+          ? (entanglerAcct as IFungibleParentEntangler).parentStorage
+          : (entanglerAcct as IFungibleChildEntangler).childStorage,
+        sourceAcctAta.owner,
+        [],
+        new u64(
+          (amount * Math.pow(10, mintAcct.decimals)).toLocaleString(
+            "fullwide",
+            {
+              useGrouping: false,
+            }
+          )
+        )
+      )
+    );
+
+    return {
+      instructions,
+      signers,
+      output: null,
+    };
+  }
+
+  async topOff(
+    args: TopOffArgs,
+    commitment: Commitment = "confirmed"
+  ): Promise<void> {
+    await this.execute(this.topOffInstructions(args), args.payer, commitment);
   }
 }
