@@ -15,7 +15,7 @@
       ],
       "env": {
         "ANCHOR_PROVIDER_URL": "http://127.0.0.1:8899",
-        "ANCHOR_WALLET": "/Users/bryanzettler/.config/solana/id.json"
+        "ANCHOR_WALLET": "/Users/nprince/.config/solana/id.json"
       },
       "internalConsoleOptions": "openOnSessionStart",
       "name": "Mocha Tests",
@@ -35,7 +35,7 @@
       ],
       "env": {
         "ANCHOR_PROVIDER_URL": "http://127.0.0.1:8899",
-        "ANCHOR_WALLET": "/Users/bryanzettler/.config/solana/id.json"
+        "ANCHOR_WALLET": "/Users/nprince/.config/solana/id.json"
       },
       "internalConsoleOptions": "openOnSessionStart",
       "name": "Account Split Test",
