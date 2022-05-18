@@ -7,8 +7,7 @@ import {
   PhantomWalletAdapter,
   SlopeWalletAdapter,
   SolflareWalletAdapter,
-  SolletExtensionWalletAdapter,
-  SolletWalletAdapter,
+  GlowWalletAdapter,
   TorusWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
 import { tokenAuthFetchMiddleware } from "@strata-foundation/web3-token-auth";
@@ -31,7 +30,7 @@ export const Wallet = ({
   children: React.ReactNode;
   cluster?: string;
 }) => {
-  const { endpoint } = useEndpoint();
+  const { endpoint, cluster: clusterFromUseEndpoint } = useEndpoint();
 
   // @solana/wallet-adapter-wallets includes all the adapters but supports tree shaking and lazy loading --
   // Only the wallets you configure here will be compiled into your application, and only the dependencies
@@ -39,14 +38,14 @@ export const Wallet = ({
   const wallets = useMemo(
     () => [
       new PhantomWalletAdapter(),
+      new GlowWalletAdapter(),
+      // @ts-ignore
+      new SolflareWalletAdapter({ network: clusterFromUseEndpoint }),
       new SlopeWalletAdapter(),
-      new SolflareWalletAdapter(),
       new TorusWalletAdapter(),
       new LedgerWalletAdapter(),
-      new SolletWalletAdapter({}),
-      new SolletExtensionWalletAdapter({}),
     ],
-    []
+    [clusterFromUseEndpoint]
   );
 
   return (

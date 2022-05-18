@@ -33,8 +33,8 @@ export const TokenIntervalInputs = () => {
   const interval = watch("interval");
   const group = getRootProps();
   const intervalOptions = [
-    { value: 900, heading: "15 Minutes" },
     { value: 1800, heading: "30 Minutes" },
+    { value: 3600, heading: "1 Hour" },
     { value: 10800, heading: "3 Hours" },
     { value: 43200, heading: "12 Hours" },
     { value: 86400, heading: "1 Day" },

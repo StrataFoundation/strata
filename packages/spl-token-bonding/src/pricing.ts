@@ -1,5 +1,6 @@
 import { NATIVE_MINT } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
+import { percent } from "@strata-foundation/spl-utils";
 import { BondingHierarchy, SplTokenBonding } from ".";
 
 /**
@@ -96,6 +97,10 @@ function reduceFromParent<A>({
   return value;
 }
 
+function now(): number {
+  return new Date().valueOf() / 1000;
+}
+
 export class BondingPricing {
   hierarchy: BondingHierarchy;
 
@@ -107,7 +112,7 @@ export class BondingPricing {
     return reduce({
       hierarchy: this.hierarchy,
       func: (acc: number, current: BondingHierarchy) => {
-        return acc * current.pricingCurve.current();
+        return acc * current.pricingCurve.current(now(), current.tokenBonding.buyBaseRoyaltyPercentage, current.tokenBonding.buyTargetRoyaltyPercentage);
       },
       initial: 1,
       destination: baseMint,
@@ -119,7 +124,14 @@ export class BondingPricing {
     return reduce({
       hierarchy: this.hierarchy.parent,
       func: (acc: number, current: BondingHierarchy) => {
-        return acc * current.pricingCurve.current();
+        return (
+          acc *
+          current.pricingCurve.current(
+            now(),
+            current.tokenBonding.buyBaseRoyaltyPercentage,
+            current.tokenBonding.buyTargetRoyaltyPercentage
+          )
+        );
       },
       initial: this.hierarchy.pricingCurve.locked(),
       destination: baseMint,
@@ -127,12 +139,17 @@ export class BondingPricing {
     });
   }
 
-  swap(baseAmount: number, baseMint: PublicKey, targetMint: PublicKey): number {
+  swap(
+    baseAmount: number,
+    baseMint: PublicKey,
+    targetMint: PublicKey,
+    ignoreFrozen: boolean = false
+  ): number {
     const lowMint = this.hierarchy.lowest(baseMint, targetMint);
     const highMint = lowMint.equals(baseMint) ? targetMint : baseMint;
     const isBuying = lowMint.equals(targetMint);
 
-    const path = this.hierarchy.path(lowMint, highMint);
+    const path = this.hierarchy.path(lowMint, highMint, ignoreFrozen);
 
     if (path.length == 0) {
       throw new Error(`No path from ${baseMint} to ${targetMint}`);
@@ -160,13 +177,15 @@ export class BondingPricing {
   swapTargetAmount(
     targetAmount: number,
     baseMint: PublicKey,
-    targetMint: PublicKey
+    targetMint: PublicKey,
+    /** Ignore frozen curves, just compute the value. */
+    ignoreFreeze: boolean = false
   ): number {
     const lowMint = this.hierarchy.lowest(baseMint, targetMint);
     const highMint = lowMint.equals(baseMint) ? targetMint : baseMint;
     const isBuying = lowMint.equals(targetMint);
 
-    const path = this.hierarchy.path(lowMint, highMint);
+    const path = this.hierarchy.path(lowMint, highMint, ignoreFreeze);
 
     if (path.length == 0) {
       throw new Error(`No path from ${baseMint} to ${targetMint}`);

@@ -3,3 +3,4 @@ export * from "./Spinner";
 export * from "./Notification";
 export * from "./Creator";
 export * from "./Wallet";
+export * from "./StrataProviders";

@@ -1,0 +1,124 @@
+---
+sidebar_position: 1
+slug: dynamic-pricing-mint
+title: Dynamic Pricing Mint
+description: Manage an Existing Dynamic Pricing Mint
+keywords: [Solana, Dynamic Pricing, LBP, LBC, Manage]
+---
+:::success Congratulations
+
+Your mint is live! You can visit it at the following url:
+
+<UrlDisplay subs={["candyMachineId", "cluster"]} value="https://app.strataprotocol.com/lbcs/mint/:candyMachineId?cluster=:cluster" />
+:::
+
+import { QueryStringSetter } from "@site/src/components/QueryStringSetter";
+import { UrlDisplay } from "@site/src/components/UrlDisplay";
+import { PublicKey } from "@solana/web3.js";
+import { NetworkSelect } from "@site/src/components/NetworkSelect";
+
+<NetworkSelect />
+
+<QueryStringSetter label="Candy Machine ID" name="candyMachineId" conv={(v) => new PublicKey(v)} />
+<QueryStringSetter label="Dynamic Pricing Token Bonding ID" name="tokenBondingKey" conv={(v) => new PublicKey(v)} />
+
+## Bookmark These Links
+
+You’ll need these important links to access your deployment.
+
+This admin page:
+
+<UrlDisplay subs={["candyMachineId", "tokenBondingKey", "cluster"]} value="https://docs.strataprotocol.com/launchpad/admin/dynamic-pricing-mint?candyMachineId=:candyMachineId&tokenBondingKey=:tokenBondingKey&cluster=:cluster" />
+
+The url for the mint:
+
+<UrlDisplay subs={["candyMachineId", "cluster"]} value="https://app.strataprotocol.com/lbcs/mint/:candyMachineId?cluster=:cluster" />
+
+
+## Configuration - Convert to Dynamic Pricing
+
+If your candy machine is not currently running with the dynamic pricing you created, you can convert it here. 
+Make sure to remove any whitelist settings from the configuration, unless you want dynamic price minting to also
+require a whitelist token.
+
+import { ConvertCMIfNeeded } from "@site/src/components/ConvertCMIfNeeded";
+
+<ConvertCMIfNeeded />
+
+
+You can look at the current configuration here:
+
+import { CandyMachineConfig } from "@site/src/components/CandyMachineConfig"
+
+<CandyMachineConfig />
+
+
+## Collect Funds
+
+When the mint is over, if you are the beneficiary (admin) of the mint you should see a disburse funds option here:
+
+import { VariableDisburseFunds } from "@site/src/components/VariableDisburseFunds";
+
+<VariableDisburseFunds />
+
+
+
+If you would like to disburse funds _and_ recover rent from the bonding curve (this will render the UI unusable):
+
+<VariableDisburseFunds closeBonding />
+
+## Embed to your site
+
+```bash
+yarn add @strata-foundation/react @strata-foundation/marketplace-ui react-shadow
+```
+
+```js
+import { MarketplaceProviders, DynamicPricingCandyMachine } from "@strata-foundation/marketplace-ui";
+import { usePublicKey } from "@strata-foundation/react";
+import { CSSReset } from "@chakra-ui/react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import ReactShadow from "react-shadow/emotion";
+```
+
+
+Light Mode:
+
+```jsx live allowMainnet
+function CandyMachine() {
+  const { candyMachineId } = useVariables();
+  const { setVisible } = useWalletModal();
+  const candyMachineIdPubkey = usePublicKey(candyMachineId);
+
+  // Shadow div and css reset are not required, but will make sure our styles do not conflict with yours
+  return <ReactShadow.div>
+    <MarketplaceProviders resetCSS onError={(err) => console.error(err)}>
+      <DynamicPricingCandyMachine candyMachineId={candyMachineIdPubkey} onConnectWallet={() => setVisible(true)} />
+    </MarketplaceProviders>
+  </ReactShadow.div>
+}
+```
+
+Dark Mode:
+```js
+import { DarkMode } from "@chakra-ui/react";
+```
+```jsx live allowMainnet
+function CandyMachine() {
+  const { candyMachineId } = useVariables();
+  const { setVisible } = useWalletModal();
+  const candyMachineIdPubkey = usePublicKey(candyMachineId);
+
+  // Shadow div and css reset are not required, but will make sure our styles do not conflict with yours
+  return <ReactShadow.div>
+    <CSSReset />
+      <MarketplaceProviders resetCSS onError={(err) => console.error(err)}>
+        <DarkMode>
+          <div style={{ color: "white", backgroundColor: "black" }}>
+            <DynamicPricingCandyMachine candyMachineId={candyMachineIdPubkey} onConnectWallet={() => setVisible(true)} />
+          </div>
+        </DarkMode>
+    </MarketplaceProviders>
+  </ReactShadow.div>
+}
+```

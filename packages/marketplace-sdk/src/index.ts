@@ -224,6 +224,9 @@ interface IDisburseCurveArgs {
 
   /** If this is an initial token offering, also close the second curve */
   includeRetrievalCurve?: boolean;
+
+  /** Should this only transfer reserves, or transfer and close? */
+  closeBonding?: Boolean
 }
 
 interface ICreateTokenBondingForSetSupplyArgs
@@ -425,6 +428,7 @@ export class MarketplaceSdk {
     tokenBonding,
     destination,
     includeRetrievalCurve,
+    closeBonding = true,
   }: IDisburseCurveArgs): Promise<InstructionResult<null>> {
     const instructions = [];
     const signers = [];
@@ -463,14 +467,16 @@ export class MarketplaceSdk {
       });
     instructions.push(...i1);
     signers.push(...s1);
-    const { instructions: i2, signers: s2 } =
-      await this.tokenBondingSdk.closeInstructions({
-        tokenBonding,
-        generalAuthority: authority || undefined,
-      });
 
-    instructions.push(...i2);
-    signers.push(...s2);
+    if (closeBonding) {
+      const { instructions: i2, signers: s2 } =
+        await this.tokenBondingSdk.closeInstructions({
+          tokenBonding,
+          generalAuthority: authority || undefined,
+        });
+      instructions.push(...i2);
+      signers.push(...s2);
+    }
 
     if (includeRetrievalCurve) {
       const retrievalInstrs = await this.disburseCurveInstructions({

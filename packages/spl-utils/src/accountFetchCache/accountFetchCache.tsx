@@ -190,16 +190,20 @@ export class AccountFetchCache {
       console.log(`Batching account fetch of ${currentBatch.size}`);
       const { keys, array } = await getMultipleAccounts(
         this.connection,
-        [...currentBatch],
+        Array.from(currentBatch),
         this.commitment
       );
       keys.forEach((key, index) => {
-        this.pendingCallbacks.get(key)!(array[index], null);
+        const callback = this.pendingCallbacks.get(key);
+        callback && callback(array[index], null);
       });
 
       return { keys, array };
     } catch (e: any) {
-      currentBatch.forEach((key) => this.pendingCallbacks.get(key)!(null, e));
+      currentBatch.forEach((key) => {
+        const callback = this.pendingCallbacks.get(key);
+        callback && callback(null, e)
+      });
       throw e;
     }
   }

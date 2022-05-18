@@ -1,17 +1,12 @@
-import { CSSReset } from "@chakra-ui/css-reset";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import {
-  AccountProvider,
-  ErrorHandlerProvider,
   Notification,
-  StrataSdksProvider,
-  TokenListProvider,
+  StrataProviders
 } from "@strata-foundation/react";
-import { ThemeProvider } from "./ThemeProvider";
-import { MarketplaceSdkProvider } from "../contexts/marketplaceSdkContext";
 import React from "react";
 import toast from "react-hot-toast";
-import { DEFAULT_ENDPOINT, Wallet } from "./Wallet";
+import { MarketplaceProviders } from "./MarketplaceProviders";
+import { Wallet } from "./Wallet";
 
 export const Providers = ({
   children,
@@ -54,20 +49,12 @@ export const Providers = ({
   );
 
   return (
-    <ThemeProvider>
-      <ErrorHandlerProvider onError={onError}>
-        <Wallet cluster={cluster}>
-          <WalletModalProvider>
-            <StrataSdksProvider>
-              <AccountProvider commitment="confirmed">
-                <TokenListProvider>
-                  <MarketplaceSdkProvider>{children}</MarketplaceSdkProvider>
-                </TokenListProvider>
-              </AccountProvider>
-            </StrataSdksProvider>
-          </WalletModalProvider>
-        </Wallet>
-      </ErrorHandlerProvider>
-    </ThemeProvider>
+    <Wallet cluster={cluster}>
+      <WalletModalProvider>
+        <StrataProviders onError={onError} resetCSS>
+          <MarketplaceProviders>{children}</MarketplaceProviders>
+        </StrataProviders>
+      </WalletModalProvider>
+    </Wallet>
   );
 };

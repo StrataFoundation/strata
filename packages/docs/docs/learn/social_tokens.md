@@ -231,7 +231,8 @@ We often refer to a name parent as the Top Level Domain (TLD). In the case of tw
 :::
 
 ```js
-import { Numberu64, NAME_PROGRAM_ID, createInstruction, createNameRegistry, getNameAccountKey, getHashedName, NameRegistryState } from "@solana/spl-name-service";
+import { Numberu32, Numberu64, NAME_PROGRAM_ID, createInstruction, createNameRegistry, getNameAccountKey, getHashedName, 
+NameRegistryState } from "@solana/spl-name-service";
 import { Keypair, SystemProgram, sendAndConfirmRawTransaction } from "@solana/web3.js";
 ```
 ```jsx async name=tld

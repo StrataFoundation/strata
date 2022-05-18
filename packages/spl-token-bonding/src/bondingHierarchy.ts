@@ -22,7 +22,7 @@ export class BondingHierarchy {
     child,
     tokenBonding,
     pricingCurve,
-    wrappedSolMint
+    wrappedSolMint,
   }: {
     parent?: BondingHierarchy;
     child?: BondingHierarchy;
@@ -48,12 +48,28 @@ export class BondingHierarchy {
     return arr;
   }
 
-  lowest(one: PublicKey, two: PublicKey): PublicKey {
+  lowestOrUndefined(one: PublicKey, two: PublicKey): PublicKey | undefined {
     return this.toArray().find(
       (hierarchy) =>
-        hierarchy.tokenBonding.targetMint.equals(sanitizeSolMint(one, this.wrappedSolMint)) ||
-        hierarchy.tokenBonding.targetMint.equals(sanitizeSolMint(two, this.wrappedSolMint))
-    )!.tokenBonding.targetMint;
+        hierarchy.tokenBonding.targetMint.equals(
+          sanitizeSolMint(one, this.wrappedSolMint)
+        ) ||
+        hierarchy.tokenBonding.targetMint.equals(
+          sanitizeSolMint(two, this.wrappedSolMint)
+        )
+    )?.tokenBonding?.targetMint;
+  }
+
+  lowest(one: PublicKey, two: PublicKey): PublicKey {
+    const found = this.lowestOrUndefined(one, two);
+
+    if (!found) {
+      throw new Error(
+        `No bonding found with target mint ${one.toBase58()} or ${two.toBase58()}`
+      );
+    }
+
+    return found;
   }
 
   /**
@@ -61,9 +77,18 @@ export class BondingHierarchy {
    *
    * @param one
    * @param two
+   * @param ignoreFrozen - Ignore frozen curves, just compute the value
    */
-  path(one: PublicKey, two: PublicKey): BondingHierarchy[] {
-    const lowest = this.lowest(one, two);
+  path(
+    one: PublicKey,
+    two: PublicKey,
+    ignoreFrozen: boolean = false
+  ): BondingHierarchy[] {
+    const lowest = this.lowestOrUndefined(one, two);
+    if (!lowest) {
+      return [];
+    }
+
     const highest = lowest.equals(one)
       ? sanitizeSolMint(two, this.wrappedSolMint)
       : sanitizeSolMint(one, this.wrappedSolMint);
@@ -74,7 +99,20 @@ export class BondingHierarchy {
     const highIdx = arr.findIndex((h) =>
       h.tokenBonding.baseMint.equals(highest)
     );
-    return arr.slice(lowIdx, highIdx + 1);
+
+    const buying = lowest.equals(two);
+    const result = arr.slice(lowIdx, highIdx + 1);
+
+    if (
+      ignoreFrozen ||
+      result.every((r) =>
+        buying ? !r.tokenBonding.buyFrozen : !r.tokenBonding.sellFrozen
+      )
+    ) {
+      return result;
+    } else {
+      return [];
+    }
   }
 
   /**

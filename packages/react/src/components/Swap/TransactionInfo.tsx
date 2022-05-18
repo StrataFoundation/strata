@@ -29,7 +29,7 @@ export const TransactionInfo = ({
               w={5}
               h={5}
               as={RiInformationLine}
-              _hover={{ color: "indigo.500", cursor: "pointer" }}
+              _hover={{ color: "primary.500", cursor: "pointer" }}
             />
           </Flex>
         </Tooltip>

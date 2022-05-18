@@ -51,7 +51,7 @@ export async function getMissingSpace(
   baseMint: PublicKey | undefined,
   targetMint: PublicKey | undefined
 ): Promise<number> {
-  if (!provider || !provider.wallet || !baseMint || !targetMint || !hierarchy) {
+  if (!provider || !provider.wallet || !provider.wallet.publicKey || !baseMint || !targetMint || !hierarchy) {
     return 0;
   }
 
@@ -78,7 +78,7 @@ export async function getMissingSpace(
       })
     )
   ).flat();
-  const distinctAccounts = [...new Set(accounts.map((a) => a.toBase58()))];
+  const distinctAccounts = Array.from(new Set(accounts.map((a) => a.toBase58())));
   const totalSpace = (
     await Promise.all(
       distinctAccounts.map(async (acct) => {
@@ -263,12 +263,34 @@ export const useSwapDriver = ({
     spendCap,
     feeAmount,
     baseOptions: React.useMemo(
-      () => allMints.filter((mint) => baseMint && !mint.equals(baseMint)),
+      () =>
+        allMints.filter(
+          (mint) =>
+            baseMint &&
+            !mint.equals(baseMint) &&
+            pricing &&
+            targetMint &&
+            pricing.hierarchy.path(mint, targetMint).length > 0
+        ),
       [baseMint, allMints]
     ),
     targetOptions: React.useMemo(
-      () => allMints.filter((mint) => targetMint && !mint.equals(targetMint)),
+      () =>
+        allMints.filter(
+          (mint) =>
+            targetMint &&
+            pricing &&
+            baseMint &&
+            !mint.equals(targetMint) &&
+            pricing.hierarchy.path(baseMint, mint).length > 0
+        ),
       [targetMint, allMints]
+    ),
+    swapBaseWithTargetEnabled: Boolean(
+      baseMint &&
+        targetMint &&
+        pricing &&
+        pricing.hierarchy.path(targetMint, baseMint).length > 0
     ),
   };
 };

@@ -17,6 +17,9 @@ module.exports = {
     });
     config.resolve.alias = {
       ...config.resolve.alias,
+      "@solana/wallet-adapter-base": path.resolve(
+        "../../node_modules/@solana/wallet-adapter-base"
+      ),
       "@solana/wallet-adapter-react": path.resolve(
         "../../node_modules/@solana/wallet-adapter-react"
       ),

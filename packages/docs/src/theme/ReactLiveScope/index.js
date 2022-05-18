@@ -9,6 +9,8 @@ import {
   Numberu32,
   Numberu64,
 } from "@solana/spl-name-service";
+import { Program } from "@project-serum/anchor";
+import { DarkMode, CSSReset } from "@chakra-ui/react";
 import {
   AccountLayout,
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -31,6 +33,9 @@ import {
   useTokenBonding,
   useTokenMetadata,
   useTokenRef,
+  useBondedTokenPrice,
+  useErrorHandler,
+  usePublicKey
 } from "@strata-foundation/react";
 import {
   TimeDecayExponentialCurveConfig,
@@ -47,17 +52,23 @@ import {
   getTokenAccount,
   sendMultipleInstructions,
   createMintInstructions,
+  sendInstructions,
 } from "@strata-foundation/spl-utils";
 import { BN } from "bn.js";
 import React from "react";
 import { useVariables, useVariablesContext } from "../Root/variables";
-import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
+import {
+  MarketplaceSdk,
+} from "@strata-foundation/marketplace-sdk";
 import { DataV2, Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import {
   BountyDetail,
   BountyCard,
   useBounties,
+  DynamicPricingCandyMachine
 } from "@strata-foundation/marketplace-ui";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import ReactShadow from "react-shadow/emotion";
 
 function BrowserOnlyAsyncButton(props) {
   return (
@@ -81,6 +92,29 @@ function Swap(props) {
   );
 }
 
+function StrataProviders(props) {
+  return (
+    <BrowserOnly fallback={<div>...</div>}>
+      {() => {
+        const Component = require("@strata-foundation/react").StrataProviders;
+        return <Component {...props} />;
+      }}
+    </BrowserOnly>
+  );
+}
+
+function MarketplaceProviders(props) {
+  return (
+    <BrowserOnly fallback={<div>...</div>}>
+      {() => {
+        const Component =
+          require("@strata-foundation/marketplace-ui").MarketplaceProviders;
+        return <Component {...props} />;
+      }}
+    </BrowserOnly>
+  );
+}
+
 function ManyToOneSwap(props) {
     return (
       <BrowserOnly fallback={<div>...</div>}>
@@ -96,6 +130,11 @@ function ManyToOneSwap(props) {
 
 // Add react-live imports you need here
 const ReactLiveScope = {
+  useWalletModal,
+  DarkMode,
+  DynamicPricingCandyMachine,
+  useErrorHandler,
+  useBondedTokenPrice,
   MintLayout,
   createMintInstructions,
   ManyToOneSwap,
@@ -148,6 +187,13 @@ const ReactLiveScope = {
   getAssociatedAccountBalance,
   ExponentialCurveConfig,
   TimeCurveConfig,
+  sendInstructions,
+  Program,
+  StrataProviders,
+  ReactShadow,
+  CSSReset,
+  MarketplaceProviders,
+  usePublicKey,
   ...React,
 };
 

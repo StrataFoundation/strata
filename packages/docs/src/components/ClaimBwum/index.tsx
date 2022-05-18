@@ -1,27 +1,28 @@
 import BrowserOnly from "@docusaurus/BrowserOnly";
-import { useEndpoint } from "@site/src/contexts/Endpoint";
-import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useWallet } from "@solana/wallet-adapter-react";
 import {
   WalletModalProvider,
   WalletMultiButton,
 } from "@solana/wallet-adapter-react-ui";
-import { clusterApiUrl } from "@solana/web3.js";
 import {
   useAssociatedAccount,
   useBondingPricing,
+  useErrorHandler,
+  useMint,
   usePublicKey,
-  useSell,
+  useSwap,
   useTokenBonding,
 } from "@strata-foundation/react";
+import { toNumber } from "@strata-foundation/spl-token-bonding";
 import React from "react";
+import { useEndpoint } from "@strata-foundation/marketplace-ui";
 import styles from "./styles.module.css";
+import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 
 const TOKEN_BONDING = "B8kzSwXLfmZMeLzekExz2e8vefoU1UqgGnZ8NZRYkeou";
 
 const MainnetGuard = ({ children = null as any }) => {
-  const { endpoint, setEndpoint } = useEndpoint();
-  console.log(endpoint);
+  const { endpoint, setClusterOrEndpoint } = useEndpoint();
 
   if (endpoint.includes("devnet")) {
     return (
@@ -29,7 +30,7 @@ const MainnetGuard = ({ children = null as any }) => {
         <h3>Net bWUM Exchange</h3>
         <button
           onClick={() => {
-            setEndpoint("https://strataprotocol.genesysgo.net");
+            setClusterOrEndpoint(WalletAdapterNetwork.Mainnet);
           }}
           className="white button button--primary"
         >
@@ -46,20 +47,22 @@ export const Claim = React.memo(() => {
   const tokenBondingKey = usePublicKey(TOKEN_BONDING);
   const { connected, publicKey } = useWallet();
   const { info: tokenBonding, loading } = useTokenBonding(tokenBondingKey);
-  const { curve, loading: loadingPricing } = useBondingPricing(tokenBondingKey);
-  const {
-    associatedAccount: netBwumAccount,
-    associatedAccountKey,
-    loading: assocAccountLoading,
-  } = useAssociatedAccount(publicKey, tokenBonding?.targetMint);
-  const netTotal = netBwumAccount && netBwumAccount.amount / Math.pow(10, 9);
-  const solTotal = curve?.sellTargetAmount(netTotal, 0, 0);
+  const { pricing, loading: loadingPricing } =
+    useBondingPricing(tokenBondingKey);
+  const { associatedAccount: netBwumAccount, loading: assocAccountLoading } =
+    useAssociatedAccount(publicKey, tokenBonding?.targetMint);
+  const targetMint = useMint(tokenBonding?.targetMint);
+  const netTotal =
+    netBwumAccount &&
+    targetMint &&
+    toNumber(netBwumAccount.amount, targetMint) / Math.pow(10, 9);
+  const solTotal = netTotal && pricing?.sellTargetAmount(netTotal);
   const connectedNotLoading =
     !(loading || loadingPricing || assocAccountLoading) && connected;
-  const [sell, { loading: exchanging, error }] = useSell();
-  if (error) {
-    console.error(error);
-  }
+
+  const { execute, loading: executing, error } = useSwap();
+  const { handleErrors } = useErrorHandler();
+  handleErrors(error);
 
   return (
     <div className={styles.container}>
@@ -86,9 +89,16 @@ export const Claim = React.memo(() => {
             SOL
           </p>
           <button
-            disabled={exchanging}
+            disabled={executing}
             onClick={() => {
-              sell(tokenBondingKey, netTotal, 0.05);
+              if (tokenBonding) {
+                execute({
+                  baseMint: tokenBonding.targetMint,
+                  targetMint: tokenBonding.baseMint,
+                  baseAmount: netTotal,
+                  slippage: 0.05,
+                });
+              }
             }}
             className="white button button--primary"
           >

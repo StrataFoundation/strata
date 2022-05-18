@@ -4,17 +4,43 @@ import {
   Icon, IconButton, Text, useColorModeValue, VStack
 } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
-import { Spinner, useErrorHandler, useTokenBonding, useTokenBondingKey } from "@strata-foundation/react";
+import { Spinner, useErrorHandler, useMint, useTokenBonding, useTokenBondingKey } from "@strata-foundation/react";
 import moment from "moment";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { BiRefresh } from "react-icons/bi";
 import {
   CartesianGrid, Line,
   LineChart, ResponsiveContainer, XAxis,
   YAxis
 } from "recharts";
-import { useSampledTransactions } from "../../hooks/useSampledTransactions";
 import { numberWithCommas } from "../../utils/numberWithCommas";
+import { gql, useQuery } from "@apollo/client";
+
+const GET_BONDING_CHANGES = gql`
+  query GetBondingChanges(
+    $address: PublicKey!
+    $startUnixTime: NaiveDateTime!
+    $stopUnixTime: NaiveDateTime!
+    $limit: Int!
+    $offset: Int!
+  ) {
+    enrichedBondingChanges(
+      address: $address
+      startUnixTime: $startUnixTime
+      stopUnixTime: $stopUnixTime
+      limit: $limit
+      offset: $offset
+    ) {
+      reserveChange
+      supplyChange
+      insertTs
+    }
+  }
+`;
+
+function now(): number {
+  return new Date().valueOf() / 1000;
+}
 
 export const BondingPlot = ({
   tokenBondingKey,
@@ -23,83 +49,63 @@ export const BondingPlot = ({
 }) => {
   const { info: tokenBonding, loading: loadingBonding } =
     useTokenBonding(tokenBondingKey);
-  const { result: sellOnlyTokenBondingKey, error: keyError1 } =
-    useTokenBondingKey(tokenBonding?.targetMint, 1);
-  if (keyError1) {
-    console.error(keyError1);
-  }
-  const { info: sellOnlyTokenBonding, loading: sellOnlyLoading } =
-    useTokenBonding(sellOnlyTokenBondingKey);
-    
-  const { transactions, error, loadingInitial, loadingMore, fetchMore } =
-    useSampledTransactions({
+
+  const [stopTime, setStopTime] = useState(now())
+
+  const baseMint = useMint(tokenBonding?.baseMint);
+  const targetMint = useMint(tokenBonding?.targetMint);
+  const {
+    data: { enrichedBondingChanges } = {},
+    error,
+    loading,
+  } = useQuery<{
+    enrichedBondingChanges: {
+      reserveChange: string;
+      supplyChange: string;
+      insertTs: number;
+    }[];
+  }>(GET_BONDING_CHANGES, {
+    variables: {
       address: tokenBondingKey,
-      numTransactions: 40,
-    });
+      startUnixTime: Math.max(
+        stopTime - 60 * 60 * 24,
+        tokenBonding?.goLiveUnixTime?.toNumber() || 0
+      ), // 24 hours
+      stopUnixTime: stopTime,
+      offset: 0,
+      limit: 1000,
+    },
+  });
+
+  const data = useMemo(() => {
+    if (enrichedBondingChanges && baseMint && targetMint) {
+      return enrichedBondingChanges.map((c) => ({
+        time: c.insertTs * 1000,
+        price: Math.abs((Number(c.reserveChange) / Math.pow(10, baseMint.decimals)) / (Number(c.supplyChange) / Math.pow(10, targetMint.decimals))),
+      })).filter(p => p.price !== NaN && p.price !== Infinity);
+    }
+
+    return [];
+  }, [enrichedBondingChanges, baseMint, targetMint]);
+
   const { handleErrors } = useErrorHandler();
   handleErrors(error);
   
   const labelColor = useColorModeValue("black", "white");
-
-  const data = useMemo(() => {
-    return tokenBonding && !sellOnlyLoading
-      ? transactions
-          .map((transaction) => {
-            const reserveIdx = transaction.transaction.message.accountKeys
-              .map((k) => k.toBase58())
-              .indexOf(tokenBonding.baseStorage.toBase58());
-            const sellOnlyReserveIdx =
-              transaction.transaction.message.accountKeys
-                .map((k) => k.toBase58())
-                .indexOf(sellOnlyTokenBonding?.baseStorage.toBase58() || "");
-            const preReserves = transaction.meta?.preTokenBalances?.find(
-              (b) =>
-                b.accountIndex == reserveIdx &&
-                b.mint == tokenBonding.baseMint.toBase58()
-            )?.uiTokenAmount.uiAmount;
-            const postReserves = transaction.meta?.postTokenBalances?.find(
-              (b) =>
-                b.accountIndex == reserveIdx &&
-                b.mint == tokenBonding.baseMint.toBase58()
-            )?.uiTokenAmount.uiAmount;
-            const reserveChange = (postReserves || 0) - (preReserves || 0);
-
-            const preToken = transaction.meta?.preTokenBalances
-              ?.filter((b) => b.mint == tokenBonding.targetMint.toBase58())
-              ?.map((v) => v.uiTokenAmount.uiAmount)
-              ?.reduce((v1, v2) => (v1 || 0) + (v2 || 0), 0);
-            const postToken = transaction.meta?.postTokenBalances
-              ?.filter((b) => b.mint == tokenBonding.targetMint.toBase58())
-              ?.map((v) => v.uiTokenAmount.uiAmount)
-              ?.reduce((v1, v2) => (v1 || 0) + (v2 || 0), 0);
-            const tokenChange = (postToken || 0) - (preToken || 0);
-
-            const preSellOnlyReserves =
-              transaction.meta?.preTokenBalances?.find(
-                (b) =>
-                  b.accountIndex == sellOnlyReserveIdx &&
-                  b.mint == sellOnlyTokenBonding?.baseMint.toBase58()
-              )?.uiTokenAmount.uiAmount;
-            const postSellOnlyReserves =
-              transaction.meta?.postTokenBalances?.find(
-                (b) =>
-                  b.accountIndex == sellOnlyReserveIdx &&
-                  b.mint == sellOnlyTokenBonding?.baseMint.toBase58()
-              )?.uiTokenAmount.uiAmount;
-            const sellOnlyChange =
-              (preSellOnlyReserves || 0) - (postSellOnlyReserves || 0);
-
-            return {
-              price: reserveChange / Math.max(tokenChange, sellOnlyChange),
-              time: (transaction.blockTime || 0) * 1000,
-            };
-          })
-          .filter((d) => d.price)
-      : [];
-  }, [transactions, tokenBonding, sellOnlyLoading, sellOnlyTokenBonding]);
   const icoColor = useColorModeValue("black", "white");
 
-  if (loadingBonding || loadingInitial) {
+  const longestLabelLength = useMemo(
+    () =>
+      Math.max(
+        data
+          .map((d) => numberWithCommas(d.price, 9))
+          .reduce((acc, cur) => (cur.length > acc ? cur.length : acc), 0),
+        1
+      ),
+    [data, baseMint]
+  );
+
+  if (loadingBonding || !baseMint || !targetMint) {
     return (
       <Center>
         <Spinner />
@@ -110,14 +116,14 @@ export const BondingPlot = ({
   return (
     <VStack spacing={4} w="full" align="left">
       <HStack spacing={0}>
-        <Text fontSize="14px" fontWeight="700">
+        <Text fontSize="18px" fontWeight="700">
           Price History
         </Text>
 
         <IconButton
           aria-label="Fetch More"
-          onClick={() => fetchMore(10)}
-          isLoading={loadingMore}
+          onClick={() => setStopTime(now())}
+          isLoading={loading}
           color={icoColor}
           variant="link"
           icon={<Icon h="24px" w="24px" mb="-2px" as={BiRefresh} />}
@@ -137,17 +143,18 @@ export const BondingPlot = ({
               type="number"
             />
             <YAxis
-              tickFormatter={(num) => numberWithCommas(num, 2)}
+              tickFormatter={(num) => numberWithCommas(num, baseMint.decimals)}
               tickCount={3}
               domain={["auto", "auto"]}
               tickLine={false}
               type="number"
               orientation="right"
               stroke={labelColor}
-              width={40}
+              width={longestLabelLength * 7}
               axisLine={false}
             />
             <Line
+              isAnimationActive={false}
               dot={false}
               type="monotone"
               dataKey="price"
