@@ -1,7 +1,7 @@
 use super::{
   account::*,
   arg::SwapV0Args,
-  common::{swap_shared_logic, SwapAmount}
+  common::{swap_shared_logic, SwapAmount},
 };
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, TokenAccount, Transfer};
@@ -14,7 +14,7 @@ pub struct SwapParentV0<'info> {
 
 pub fn handler(ctx: Context<SwapParentV0>, args: SwapV0Args) -> Result<()> {
   let parent_entangler = ctx.accounts.common.parent_entangler.to_account_info();
-  let child_entangler =  &mut ctx.accounts.common.child_entangler;
+  let child_entangler = &mut ctx.accounts.common.child_entangler;
   let parent_mint = ctx.accounts.common.parent_mint.to_account_info();
   let child_mint = ctx.accounts.common.child_mint.to_account_info();
   let source = ctx.accounts.common.source.to_account_info();
@@ -23,15 +23,13 @@ pub fn handler(ctx: Context<SwapParentV0>, args: SwapV0Args) -> Result<()> {
   let child_storage = ctx.accounts.common.child_storage.to_account_info();
   let source_authority = ctx.accounts.common.source_authority.to_account_info();
   let token_program = ctx.accounts.common.token_program.to_account_info();
- 
-  let SwapAmount {
-    amount
-  } = swap_shared_logic(
-    &ctx.accounts.common.parent_storage,    
+
+  let SwapAmount { amount } = swap_shared_logic(
+    &ctx.accounts.common.parent_storage,
     &ctx.accounts.common.source,
-    &args
+    &args,
   )?;
-  
+
   msg!("Swapping out {} from source to parent storage", amount);
   token::transfer(
     CpiContext::new(
@@ -40,18 +38,18 @@ pub fn handler(ctx: Context<SwapParentV0>, args: SwapV0Args) -> Result<()> {
         from: source.clone(),
         to: parent_storage.clone(),
         authority: source_authority.clone(),
-      }
+      },
     ),
     amount,
   )?;
-    
+
   let child_entangler_seeds: &[&[&[u8]]] = &[&[
     b"entangler",
     parent_entangler.key.as_ref(),
     child_mint.key.as_ref(),
     &[child_entangler.bump_seed],
   ]];
-    
+
   msg!("Swapping out {} from child storage to source", amount);
   token::transfer(
     CpiContext::new_with_signer(
@@ -59,7 +57,7 @@ pub fn handler(ctx: Context<SwapParentV0>, args: SwapV0Args) -> Result<()> {
       Transfer {
         from: child_storage.clone(),
         to: destination.clone(),
-        authority: child_entangler.to_account_info().clone()
+        authority: child_entangler.to_account_info().clone(),
       },
       child_entangler_seeds,
     ),

@@ -31,7 +31,7 @@ pub struct InitializeFungibleChildEntanglerV0<'info> {
   )]
   pub parent_entangler: Box<Account<'info, FungibleParentEntanglerV0>>,
   #[account(
-    init, 
+    init,
     payer = payer,
     space = CHILD_ENTANGLER_SIZE,
     seeds = [b"entangler", parent_entangler.key().as_ref(), child_mint.key().as_ref()],
@@ -56,11 +56,11 @@ pub struct InitializeFungibleChildEntanglerV0<'info> {
   pub token_program: Program<'info, Token>,
   pub system_program: Program<'info, System>,
   pub rent: Sysvar<'info, Rent>,
-  pub clock: Sysvar<'info, Clock>,  
+  pub clock: Sysvar<'info, Clock>,
 }
 
 pub fn handler(
-  ctx: Context<InitializeFungibleChildEntanglerV0>,  
+  ctx: Context<InitializeFungibleChildEntanglerV0>,
   args: InitializeFungibleChildEntanglerV0Args,
 ) -> Result<()> {
   let entangler = &mut ctx.accounts.entangler;

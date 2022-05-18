@@ -25,7 +25,7 @@ pub struct FungibleChildEntanglerV0 {
   pub go_live_unix_time: i64,
   pub freeze_swap_unix_time: Option<i64>,
   pub created_at_unix_time: i64,
-  
+
   pub bump_seed: u8,
   pub storage_bump_seed: u8,
 }

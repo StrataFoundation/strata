@@ -10,7 +10,7 @@ pub struct SwapCommonV0<'info> {
   )]
   pub parent_entangler: Box<Account<'info, FungibleParentEntanglerV0>>,
   #[account(mut)]
-  pub parent_mint: Box<Account<'info, Mint>>,  
+  pub parent_mint: Box<Account<'info, Mint>>,
   #[account(mut)]
   pub parent_storage: Box<Account<'info, TokenAccount>>,
   #[account(mut,
@@ -20,14 +20,14 @@ pub struct SwapCommonV0<'info> {
   )]
   pub child_entangler: Box<Account<'info, FungibleChildEntanglerV0>>,
   #[account(mut)]
-  pub child_mint: Box<Account<'info, Mint>>,  
+  pub child_mint: Box<Account<'info, Mint>>,
   #[account(mut)]
   pub child_storage: Box<Account<'info, TokenAccount>>,
   #[account(mut)]
   pub source: Box<Account<'info, TokenAccount>>,
   pub source_authority: Signer<'info>,
   #[account(mut)]
-  pub destination: Box<Account<'info, TokenAccount>>,  
+  pub destination: Box<Account<'info, TokenAccount>>,
 
   pub token_program: Program<'info, Token>,
   pub clock: Sysvar<'info, Clock>,

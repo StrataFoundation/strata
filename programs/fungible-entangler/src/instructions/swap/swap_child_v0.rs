@@ -1,7 +1,7 @@
 use super::{
   account::*,
   arg::SwapV0Args,
-  common::{swap_shared_logic, SwapAmount}
+  common::{swap_shared_logic, SwapAmount},
 };
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, TokenAccount, Transfer};
@@ -13,7 +13,7 @@ pub struct SwapChildV0<'info> {
 }
 
 pub fn handler(ctx: Context<SwapChildV0>, args: SwapV0Args) -> Result<()> {
-  let parent_entangler =  &mut ctx.accounts.common.parent_entangler;
+  let parent_entangler = &mut ctx.accounts.common.parent_entangler;
   let parent_mint = ctx.accounts.common.parent_mint.to_account_info();
   let child_mint = ctx.accounts.common.child_mint.to_account_info();
   let token_program = ctx.accounts.common.token_program.to_account_info();
@@ -24,12 +24,10 @@ pub fn handler(ctx: Context<SwapChildV0>, args: SwapV0Args) -> Result<()> {
   let source_authority = ctx.accounts.common.source_authority.to_account_info();
   let token_program = ctx.accounts.common.token_program.to_account_info();
 
-  let SwapAmount {
-    amount
-  } = swap_shared_logic(
+  let SwapAmount { amount } = swap_shared_logic(
     &ctx.accounts.common.child_storage,
     &ctx.accounts.common.source,
-    &args
+    &args,
   )?;
 
   msg!("Swapping out from source to child storage");
@@ -40,19 +38,18 @@ pub fn handler(ctx: Context<SwapChildV0>, args: SwapV0Args) -> Result<()> {
         from: source.clone(),
         to: child_storage.clone(),
         authority: source_authority.clone(),
-      }
+      },
     ),
     amount,
   )?;
 
-  
   let parent_entangler_seeds: &[&[&[u8]]] = &[&[
     b"entangler",
     parent_mint.key.as_ref(),
     &parent_entangler.dynamic_seed,
     &[parent_entangler.bump_seed],
   ]];
-  
+
   msg!("Swapping out from parent storage to source");
   token::transfer(
     CpiContext::new_with_signer(
@@ -60,12 +57,12 @@ pub fn handler(ctx: Context<SwapChildV0>, args: SwapV0Args) -> Result<()> {
       Transfer {
         from: parent_storage.clone(),
         to: destination.clone(),
-        authority: parent_entangler.to_account_info().clone()
+        authority: parent_entangler.to_account_info().clone(),
       },
       parent_entangler_seeds,
     ),
-    amount
+    amount,
   )?;
 
   Ok(())
-}  
+}
