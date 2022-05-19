@@ -329,6 +329,18 @@ describe("spl-token-collective", () => {
       );
     });
 
+    it("allows creating a collective on a social token", async () => {
+      const mintTokenRef = (await tokenCollectiveProgram.getTokenRef(
+        claimedReverseTokenRef
+      ))!;
+      await tokenCollectiveProgram.createCollective({
+        mint: mintTokenRef.mint,
+        authority: tokenCollectiveProgram.wallet.publicKey,
+        config,
+        socialTokenRef: mintTokenRef.publicKey,
+      });
+    })
+
     it("Creates a claimed social token", async () => {
       const mintTokenRef = (await tokenCollectiveProgram.getTokenRef(
         claimedReverseTokenRef

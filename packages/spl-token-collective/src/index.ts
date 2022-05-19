@@ -92,6 +92,8 @@ export interface ICreateCollectiveArgs {
   authority?: PublicKey;
   /** The configs around what is and isn't allowed in the collective */
   config: ICollectiveConfig;
+  /** Only required if the mint is already initialised as a social token */
+  socialTokenRef?: PublicKey
 }
 
 // Taken from token bonding initialize
@@ -571,6 +573,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     config,
     bonding,
     metadata,
+    socialTokenRef,
   }: ICreateCollectiveArgs): Promise<
     BigInstructionResult<{ collective: PublicKey; tokenBonding?: PublicKey }>
   > {
@@ -639,26 +642,48 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       throw new Error("Collective already exists");
     }
 
-    instructions.push(
-      await this.instruction.initializeCollectiveV0(
-        // @ts-ignore
-        {
-          authority: authority ? authority : null,
-          bumpSeed: collectiveBump,
-          config: toIdlConfig(config),
-        },
-        {
-          accounts: {
-            collective,
-            mint: mint!,
-            mintAuthority: mintAuthority!,
-            payer,
-            systemProgram: SystemProgram.programId,
-            rent: SYSVAR_RENT_PUBKEY,
+    if (socialTokenRef) {
+      instructions.push(
+        await this.instruction.initializeCollectiveForSocialTokenV0(
+          // @ts-ignore
+          {
+            authority: authority ? authority : null,
+            config: toIdlConfig(config),
           },
-        }
-      )
-    );
+          {
+            accounts: {
+              collective,
+              mint: mint!,
+              ownerTokenRef: socialTokenRef,
+              payer,
+              systemProgram: SystemProgram.programId,
+              rent: SYSVAR_RENT_PUBKEY,
+            },
+          }
+        )
+      );
+    } else {
+      instructions.push(
+        await this.instruction.initializeCollectiveV0(
+          // @ts-ignore
+          {
+            authority: authority ? authority : null,
+            bumpSeed: collectiveBump,
+            config: toIdlConfig(config),
+          },
+          {
+            accounts: {
+              collective,
+              mint: mint!,
+              mintAuthority: mintAuthority!,
+              payer,
+              systemProgram: SystemProgram.programId,
+              rent: SYSVAR_RENT_PUBKEY,
+            },
+          }
+        )
+      );
+    }
 
     const instructions2 = [];
     const signers2 = [];

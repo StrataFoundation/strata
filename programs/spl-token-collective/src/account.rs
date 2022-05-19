@@ -69,6 +69,29 @@ pub struct InitializeCollectiveV0<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(args: InitializeCollectiveForSocialTokenV0Args)]
+pub struct InitializeCollectiveForSocialTokenV0<'info> {
+  #[account(init, seeds = [
+    b"collective", 
+    mint.key().as_ref()],
+    payer=payer,
+    bump,
+    space=312
+  )]
+  pub collective: Box<Account<'info, CollectiveV0>>,
+  pub mint: Box<Account<'info, Mint>>,
+  #[account(
+    constraint = owner_token_ref.authority.unwrap() == payer.key() || mint.mint_authority.unwrap() == payer.key()
+  )]
+  pub owner_token_ref: Box<Account<'info, TokenRefV0>>,
+
+  #[account(mut)]
+  pub payer: Signer<'info>,
+  pub system_program: Program<'info, System>,
+  pub rent: Sysvar<'info, Rent>,
+}
+
+#[derive(Accounts)]
 #[instruction(args: UpdateCollectiveV0Args)]
 pub struct UpdateCollectiveV0<'info> {
   #[account(
