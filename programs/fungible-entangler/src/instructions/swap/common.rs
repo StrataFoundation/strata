@@ -1,7 +1,7 @@
-use crate::{error::ErrorCode};
+use super::arg::SwapV0Args;
+use crate::error::ErrorCode;
 use anchor_lang::prelude::*;
 use anchor_spl::token::TokenAccount;
-use super::{arg::SwapV0Args};
 
 pub struct SwapAmount {
   pub amount: u64,
