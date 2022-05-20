@@ -8,7 +8,7 @@ export declare type FungibleEntanglerIDL = {
     "version": "1.0.0";
     "name": "fungible_entangler";
     "instructions": [{
-        "name": "initializeFungibleEntanglerV0";
+        "name": "initializeFungibleParentEntanglerV0";
         "accounts": [{
             "name": "payer";
             "isMut": true;
@@ -18,11 +18,11 @@ export declare type FungibleEntanglerIDL = {
             "isMut": true;
             "isSigner": false;
         }, {
-            "name": "storage";
+            "name": "parentStorage";
             "isMut": true;
             "isSigner": false;
         }, {
-            "name": "mint";
+            "name": "parentMint";
             "isMut": false;
             "isSigner": false;
         }, {
@@ -45,7 +45,7 @@ export declare type FungibleEntanglerIDL = {
         "args": [{
             "name": "args";
             "type": {
-                "defined": "InitializeFungibleEntanglerV0Args";
+                "defined": "InitializeFungibleParentEntanglerV0Args";
             };
         }];
     }, {
@@ -59,7 +59,7 @@ export declare type FungibleEntanglerIDL = {
             "isMut": false;
             "isSigner": false;
         }, {
-            "name": "childEntangler";
+            "name": "entangler";
             "isMut": true;
             "isSigner": false;
         }, {
@@ -94,11 +94,51 @@ export declare type FungibleEntanglerIDL = {
             };
         }];
     }, {
-        "name": "swapBaseV0";
+        "name": "swapParentV0";
         "accounts": [{
             "name": "common";
             "accounts": [{
-                "name": "entangler";
+                "name": "parentEntangler";
+                "isMut": true;
+                "isSigner": false;
+            }, {
+                "name": "parentMint";
+                "isMut": true;
+                "isSigner": false;
+            }, {
+                "name": "parentStorage";
+                "isMut": true;
+                "isSigner": false;
+            }, {
+                "name": "childEntangler";
+                "isMut": true;
+                "isSigner": false;
+            }, {
+                "name": "childMint";
+                "isMut": true;
+                "isSigner": false;
+            }, {
+                "name": "childStorage";
+                "isMut": true;
+                "isSigner": false;
+            }, {
+                "name": "source";
+                "isMut": true;
+                "isSigner": false;
+            }, {
+                "name": "sourceAuthority";
+                "isMut": false;
+                "isSigner": true;
+            }, {
+                "name": "destination";
+                "isMut": true;
+                "isSigner": false;
+            }, {
+                "name": "tokenProgram";
+                "isMut": false;
+                "isSigner": false;
+            }, {
+                "name": "clock";
                 "isMut": false;
                 "isSigner": false;
             }];
@@ -110,11 +150,51 @@ export declare type FungibleEntanglerIDL = {
             };
         }];
     }, {
-        "name": "swapTargetV0";
+        "name": "swapChildV0";
         "accounts": [{
             "name": "common";
             "accounts": [{
-                "name": "entangler";
+                "name": "parentEntangler";
+                "isMut": true;
+                "isSigner": false;
+            }, {
+                "name": "parentMint";
+                "isMut": true;
+                "isSigner": false;
+            }, {
+                "name": "parentStorage";
+                "isMut": true;
+                "isSigner": false;
+            }, {
+                "name": "childEntangler";
+                "isMut": true;
+                "isSigner": false;
+            }, {
+                "name": "childMint";
+                "isMut": true;
+                "isSigner": false;
+            }, {
+                "name": "childStorage";
+                "isMut": true;
+                "isSigner": false;
+            }, {
+                "name": "source";
+                "isMut": true;
+                "isSigner": false;
+            }, {
+                "name": "sourceAuthority";
+                "isMut": false;
+                "isSigner": true;
+            }, {
+                "name": "destination";
+                "isMut": true;
+                "isSigner": false;
+            }, {
+                "name": "tokenProgram";
+                "isMut": false;
+                "isSigner": false;
+            }, {
+                "name": "clock";
                 "isMut": false;
                 "isSigner": false;
             }];
@@ -127,7 +207,7 @@ export declare type FungibleEntanglerIDL = {
         }];
     }];
     "accounts": [{
-        "name": "fungibleEntanglerV0";
+        "name": "fungibleParentEntanglerV0";
         "type": {
             "kind": "struct";
             "fields": [{
@@ -136,10 +216,10 @@ export declare type FungibleEntanglerIDL = {
                     "option": "publicKey";
                 };
             }, {
-                "name": "mint";
+                "name": "parentMint";
                 "type": "publicKey";
             }, {
-                "name": "storage";
+                "name": "parentStorage";
                 "type": "publicKey";
             }, {
                 "name": "goLiveUnixTime";
@@ -152,6 +232,9 @@ export declare type FungibleEntanglerIDL = {
             }, {
                 "name": "createdAtUnixTime";
                 "type": "i64";
+            }, {
+                "name": "dynamicSeed";
+                "type": "bytes";
             }, {
                 "name": "bumpSeed";
                 "type": "u8";
@@ -173,10 +256,10 @@ export declare type FungibleEntanglerIDL = {
                 "name": "parentEntangler";
                 "type": "publicKey";
             }, {
-                "name": "mint";
+                "name": "childMint";
                 "type": "publicKey";
             }, {
-                "name": "storage";
+                "name": "childStorage";
                 "type": "publicKey";
             }, {
                 "name": "goLiveUnixTime";
@@ -204,10 +287,14 @@ export declare type FungibleEntanglerIDL = {
             "kind": "struct";
             "fields": [{
                 "name": "amount";
-                "type": "u64";
+                "type": {
+                    "option": "u64";
+                };
             }, {
                 "name": "all";
-                "type": "bool";
+                "type": {
+                    "option": "bool";
+                };
             }];
         };
     }, {
@@ -230,7 +317,7 @@ export declare type FungibleEntanglerIDL = {
             }];
         };
     }, {
-        "name": "InitializeFungibleEntanglerV0Args";
+        "name": "InitializeFungibleParentEntanglerV0Args";
         "type": {
             "kind": "struct";
             "fields": [{
@@ -239,7 +326,7 @@ export declare type FungibleEntanglerIDL = {
                     "option": "publicKey";
                 };
             }, {
-                "name": "entanglerSeed";
+                "name": "dynamicSeed";
                 "type": "bytes";
             }, {
                 "name": "goLiveUnixTime";
@@ -254,10 +341,21 @@ export declare type FungibleEntanglerIDL = {
     }];
     "errors": [{
         "code": 6000;
-        "name": "InvalidMint";
-        "msg": "An account was provided that did not have the correct mint";
+        "name": "InvalidAmount";
+        "msg": "Invalid amount";
+    }, {
+        "code": 6001;
+        "name": "TokenAccountAmountTooLow";
+        "msg": "Cannot swap more than the token account currently has";
+    }, {
+        "code": 6002;
+        "name": "InvalidArgs";
+        "msg": "Amount or All must be provided";
     }];
+    "metadata": {
+        "address": "Ae6wbxtjpoKGCuSdHGQXRudmdpSfGpu6KHtjDcWEDjP8";
+    };
 };
-export declare type FungibleEntanglerV0 = IdlAccounts<FungibleEntanglerIDL>["fungibleEntanglerV0"];
+export declare type FungibleParentEntanglerV0 = IdlAccounts<FungibleEntanglerIDL>["fungibleParentEntanglerV0"];
 export declare type FungibleChildEntanglerV0 = IdlAccounts<FungibleEntanglerIDL>["fungibleChildEntanglerV0"];
 //# sourceMappingURL=fungible-entangler.d.ts.map

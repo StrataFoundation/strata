@@ -1,15 +1,15 @@
-use crate::{error::ErrorCode, util::*};
+use crate::{error::ErrorCode};
 use anchor_lang::prelude::*;
 use anchor_spl::token::TokenAccount;
+use super::{arg::SwapV0Args};
 
-use super::{account::SwapCommonV0, arg::SwapV0Args};
 pub struct SwapAmount {
   pub amount: u64,
 }
 
 pub fn swap_shared_logic(
-  base: &Box<Account<TokenAccount>>,
-  source: &Box<Account<TokenAccount>>,
+  base: &Account<TokenAccount>,
+  source: &Account<TokenAccount>,
   args: &SwapV0Args,
 ) -> Result<SwapAmount> {
   let amount: u64;
@@ -28,7 +28,7 @@ pub fn swap_shared_logic(
       source.amount
     };
   } else {
-    amount = args.amount.clone().unwrap();
+    amount = args.amount.unwrap();
 
     require!(base.amount >= amount, ErrorCode::TokenAccountAmountTooLow);
   }

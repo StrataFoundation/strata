@@ -4,7 +4,7 @@ use super::{
   common::{swap_shared_logic, SwapAmount},
 };
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, TokenAccount, Transfer};
+use anchor_spl::token::{self, Transfer};
 
 #[derive(Accounts)]
 #[instruction(args: SwapV0Args)]
@@ -15,8 +15,6 @@ pub struct SwapChildV0<'info> {
 pub fn handler(ctx: Context<SwapChildV0>, args: SwapV0Args) -> Result<()> {
   let parent_entangler = &mut ctx.accounts.common.parent_entangler;
   let parent_mint = ctx.accounts.common.parent_mint.to_account_info();
-  let child_mint = ctx.accounts.common.child_mint.to_account_info();
-  let token_program = ctx.accounts.common.token_program.to_account_info();
   let source = ctx.accounts.common.source.to_account_info();
   let destination = ctx.accounts.common.destination.to_account_info();
   let parent_storage = ctx.accounts.common.parent_storage.to_account_info();
