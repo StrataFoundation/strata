@@ -10,18 +10,11 @@ import {
   GlowWalletAdapter,
   TorusWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
-import { tokenAuthFetchMiddleware } from "@strata-foundation/web3-token-auth";
 import React, { useMemo } from "react";
 import { SOLANA_URL } from "../constants";
 import { useEndpoint } from "../hooks";
 
 export const DEFAULT_ENDPOINT = SOLANA_URL;
-
-export const getToken = async () => {
-  const req = await fetch("/api/get-token");
-  const { access_token }: { access_token: string } = await req.json();
-  return access_token;
-};
 
 export const Wallet = ({
   children,
@@ -53,9 +46,6 @@ export const Wallet = ({
       endpoint={cluster || endpoint}
       config={{
         commitment: "confirmed",
-        fetchMiddleware: tokenAuthFetchMiddleware({
-          getToken,
-        }),
       }}
     >
       <WalletProvider wallets={wallets} autoConnect>

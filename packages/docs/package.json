@@ -40,7 +40,6 @@
     "@strata-foundation/react": "^3.6.0",
     "@strata-foundation/spl-token-bonding": "^3.6.0",
     "@strata-foundation/spl-token-collective": "^3.6.0",
-    "@strata-foundation/web3-token-auth": "^3.5.4",
     "@svgr/webpack": "^5.5.0",
     "assert": "^2.0.0",
     "browserify-zlib": "^0.2.0",
