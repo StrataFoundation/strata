@@ -93,7 +93,7 @@ export interface ICreateCollectiveArgs {
   /** The configs around what is and isn't allowed in the collective */
   config: ICollectiveConfig;
   /** Only required if the mint is already initialised as a social token */
-  socialTokenRef?: PublicKey
+  tokenRef?: PublicKey
 }
 
 // Taken from token bonding initialize
@@ -573,7 +573,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     config,
     bonding,
     metadata,
-    socialTokenRef,
+    tokenRef,
   }: ICreateCollectiveArgs): Promise<
     BigInstructionResult<{ collective: PublicKey; tokenBonding?: PublicKey }>
   > {
@@ -642,7 +642,12 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       throw new Error("Collective already exists");
     }
 
-    if (socialTokenRef) {
+    const [mintTokenRef] = await SplTokenCollective.mintTokenRefKey(
+      mint
+    );
+    const tokenRefExists = !!(await this.provider.connection.getAccountInfo(mintTokenRef));
+
+    if (tokenRef || tokenRefExists) {
       instructions.push(
         await this.instruction.initializeCollectiveForSocialTokenV0(
           // @ts-ignore
@@ -654,7 +659,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
             accounts: {
               collective,
               mint: mint!,
-              ownerTokenRef: socialTokenRef,
+              tokenRef: tokenRef ? tokenRef : mintTokenRef,
               payer,
               systemProgram: SystemProgram.programId,
               rent: SYSVAR_RENT_PUBKEY,

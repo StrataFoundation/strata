@@ -337,7 +337,7 @@ describe("spl-token-collective", () => {
         mint: mintTokenRef.mint,
         authority: tokenCollectiveProgram.wallet.publicKey,
         config,
-        socialTokenRef: mintTokenRef.publicKey,
+        tokenRef: mintTokenRef.publicKey,
       });
     })
 

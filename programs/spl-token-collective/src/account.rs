@@ -79,11 +79,14 @@ pub struct InitializeCollectiveForSocialTokenV0<'info> {
     space=312
   )]
   pub collective: Box<Account<'info, CollectiveV0>>,
+  #[account(
+    constraint = mint.key() == token_ref.mint
+  )]
   pub mint: Box<Account<'info, Mint>>,
   #[account(
-    constraint = owner_token_ref.authority.unwrap() == payer.key() || mint.mint_authority.unwrap() == payer.key()
+    constraint = token_ref.authority.unwrap() == payer.key()
   )]
-  pub owner_token_ref: Box<Account<'info, TokenRefV0>>,
+  pub token_ref: Box<Account<'info, TokenRefV0>>,
 
   #[account(mut)]
   pub payer: Signer<'info>,
