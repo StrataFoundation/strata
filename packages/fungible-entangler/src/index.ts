@@ -10,7 +10,6 @@ import {
   Commitment,
   Keypair,
   PublicKey,
-  Signer,
   SystemProgram,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
@@ -18,12 +17,9 @@ import {
 } from "@solana/web3.js";
 import {
   AnchorSdk,
-  createMintInstructions,
   getMintInfo,
   getTokenAccount,
   InstructionResult,
-  percent,
-  SplTokenMetadata,
   TypedAccountParser,
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
@@ -32,7 +28,7 @@ import {
   FungibleParentEntanglerV0,
   FungibleChildEntanglerV0,
 } from "./generated/fungible-entangler";
-import { amountAsNum, toBN, toNumber } from "./utils";
+import { toBN, toNumber } from "./utils";
 
 export * from "./generated/fungible-entangler";
 
