@@ -36,11 +36,11 @@ export const Disclaimer: FC = () => {
             liable for any losses incurred by using our platform.
           </Text>
           <Text fontSize="sm" mt={4}>
-            The Strata Protocol is open-source and self-service. As a result,
-            the Strata Protocol team does not perform diligence on projects and
+            Strata Protocol is open-source and self-service. As a result,
+            the Strata team does not perform diligence on projects and
             bears no responsibility for the quality of projects that utilize
-            Strata Protocol. Be careful and do your own research before
-            participating in any Strata Protocol.
+            the Strata Launchpad. Be careful and do your own research before
+            participating in any Strata Protocol launch.
           </Text>
           <Flex justifyContent="center">
             <Button
