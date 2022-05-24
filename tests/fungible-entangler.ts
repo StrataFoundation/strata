@@ -22,7 +22,6 @@ describe("fungible-entangler", () => {
   const tokenUtils = new TokenUtils(provider);
   const fungibleEntanglerProgram = new FungibleEntangler(provider, program);
   const me = fungibleEntanglerProgram.wallet.publicKey;
-  const you = Keypair.generate().publicKey;
 
   it("allows creation of a parent entangler", async () => {
     const dynamicSeed = Keypair.generate().publicKey;
