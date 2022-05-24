@@ -9,6 +9,7 @@ import {
   SlopeWalletAdapter,
   SolflareWalletAdapter,
   GlowWalletAdapter,
+  ExodusWalletAdapter,
   TorusWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
 import { useEndpoint } from "@strata-foundation/marketplace-ui";
@@ -43,6 +44,7 @@ export const Wallet: FC = ({ children }) => {
       new SlopeWalletAdapter(),
       new TorusWalletAdapter(),
       new LedgerWalletAdapter(),
+      new ExodusWalletAdapter(),
     ],
     [cluster]
   );

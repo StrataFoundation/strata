@@ -9,6 +9,7 @@ import {
   SolflareWalletAdapter,
   GlowWalletAdapter,
   TorusWalletAdapter,
+  ExodusWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
 import { tokenAuthFetchMiddleware } from "@strata-foundation/web3-token-auth";
 import React, { useMemo } from "react";
@@ -44,6 +45,7 @@ export const Wallet = ({
       new SlopeWalletAdapter(),
       new TorusWalletAdapter(),
       new LedgerWalletAdapter(),
+      new ExodusWalletAdapter(),
     ],
     [clusterFromUseEndpoint]
   );
