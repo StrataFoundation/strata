@@ -13,6 +13,15 @@ pub struct SwapParentV0<'info> {
 }
 
 pub fn handler(ctx: Context<SwapParentV0>, args: SwapV0Args) -> Result<()> {
+  let SwapAmount { amount } = swap_shared_logic(
+    &ctx.accounts.common.parent_entangler,
+    &ctx.accounts.common.child_entangler,
+    &ctx.accounts.common.parent_storage,
+    &ctx.accounts.common.source,
+    &ctx.accounts.common.clock,
+    &args,
+  )?; 
+
   let parent_entangler = ctx.accounts.common.parent_entangler.to_account_info();
   let child_entangler = &mut ctx.accounts.common.child_entangler;
   let child_mint = ctx.accounts.common.child_mint.to_account_info();
@@ -22,12 +31,6 @@ pub fn handler(ctx: Context<SwapParentV0>, args: SwapV0Args) -> Result<()> {
   let child_storage = ctx.accounts.common.child_storage.to_account_info();
   let source_authority = ctx.accounts.common.source_authority.to_account_info();
   let token_program = ctx.accounts.common.token_program.to_account_info();
-
-  let SwapAmount { amount } = swap_shared_logic(
-    &ctx.accounts.common.parent_storage,
-    &ctx.accounts.common.source,
-    &args,
-  )?;
 
   msg!("Swapping out {} from source to parent storage", amount);
   token::transfer(

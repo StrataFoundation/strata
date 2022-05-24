@@ -1,4 +1,4 @@
-use crate::state::*;
+use crate::{state::*, error::ErrorCode};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 
@@ -12,7 +12,7 @@ pub const CHILD_ENTANGLER_SIZE: usize = 8 + // key
 8 + // created
 1 + // bump
 1 + // storage bump
-200; // padding
+80; // padding
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct InitializeFungibleChildEntanglerV0Args {
@@ -63,6 +63,11 @@ pub fn handler(
   ctx: Context<InitializeFungibleChildEntanglerV0>,
   args: InitializeFungibleChildEntanglerV0Args,
 ) -> Result<()> {
+  require!(
+    args.authority == ctx.accounts.parent_entangler.authority,
+    ErrorCode::InvalidAuthority
+  );
+
   let entangler = &mut ctx.accounts.entangler;
 
   entangler.authority = args.authority;

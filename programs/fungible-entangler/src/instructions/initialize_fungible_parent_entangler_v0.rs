@@ -12,7 +12,7 @@ pub const PARENT_ENTANGLER_SIZE: usize = 8 + // key
 8 + // created
 1 + // bump
 1 + // storage bump
-200; // padding
+80; // padding
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct InitializeFungibleParentEntanglerV0Args {
