@@ -20,7 +20,7 @@ pub fn handler(ctx: Context<SwapParentV0>, args: SwapV0Args) -> Result<()> {
     &ctx.accounts.common.source,
     &ctx.accounts.common.clock,
     &args,
-  )?; 
+  )?;
 
   let parent_entangler = ctx.accounts.common.parent_entangler.to_account_info();
   let child_entangler = &mut ctx.accounts.common.child_entangler;

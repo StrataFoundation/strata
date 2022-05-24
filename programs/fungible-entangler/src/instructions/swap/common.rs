@@ -1,8 +1,8 @@
 use super::arg::SwapV0Args;
 use crate::error::ErrorCode;
+use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::TokenAccount;
-use crate::state::*;
 
 pub struct SwapAmount {
   pub amount: u64,
@@ -18,7 +18,7 @@ pub fn swap_shared_logic(
 ) -> Result<SwapAmount> {
   let amount: u64;
   let clock = clock;
-  
+
   require!(
     (args.all.is_some() && args.all == Some(true)) || args.amount.is_some(),
     ErrorCode::InvalidArgs
@@ -35,12 +35,14 @@ pub fn swap_shared_logic(
   );
 
   require!(
-    parent_entangler.freeze_swap_unix_time.is_none() || (parent_entangler.freeze_swap_unix_time > Some(clock.unix_timestamp)),
+    parent_entangler.freeze_swap_unix_time.is_none()
+      || (parent_entangler.freeze_swap_unix_time > Some(clock.unix_timestamp)),
     ErrorCode::ParentSwapFrozen
   );
 
   require!(
-    child_entangler.freeze_swap_unix_time.is_none() || (child_entangler.freeze_swap_unix_time > Some(clock.unix_timestamp)),
+    child_entangler.freeze_swap_unix_time.is_none()
+      || (child_entangler.freeze_swap_unix_time > Some(clock.unix_timestamp)),
     ErrorCode::ChildSwapFrozen
   );
 

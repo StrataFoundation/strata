@@ -1,4 +1,4 @@
-use crate::{state::*, error::ErrorCode};
+use crate::{error::ErrorCode, state::*};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 
