@@ -2,7 +2,7 @@ use crate::{error::ErrorCode, state::*};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 
-pub const CHILD_ENTANGLER_SIZE: usize = 8 + // key
+pub const CHILD_ENTANGLER_SIZE: usize = 1 + // key
 32 + // authority
 32 + // parent entangler
 32 + // mint

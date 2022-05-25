@@ -2,7 +2,7 @@ use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 
-pub const PARENT_ENTANGLER_SIZE: usize = 8 + // key
+pub const PARENT_ENTANGLER_SIZE: usize = 1 + // key
 32 + // authority
 32 + // mint
 32 + // dynamicSeed
