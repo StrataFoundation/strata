@@ -53,6 +53,6 @@ jobs:
           program-id: Ae6wbxtjpoKGCuSdHGQXRudmdpSfGpu6KHtjDcWEDjP8
           network: https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/
           keypair: ${{ secrets.DEPLOY_KEYPAIR }}
-          governance:
+          governance: C2QmGPr3qFHUXYZdBJn8NEoNz2kcxBm9mwMoGMn2QFdq
           name: Deploy Fungible Entangler ${{ github.ref_name }}
           description: https://github.com/StrataFoundation/strata/tree/${{ github.ref_name }}
