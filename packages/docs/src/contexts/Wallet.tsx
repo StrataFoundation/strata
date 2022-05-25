@@ -9,23 +9,13 @@ import {
   SlopeWalletAdapter,
   SolflareWalletAdapter,
   GlowWalletAdapter,
+  ExodusWalletAdapter,
   TorusWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
 import { useEndpoint } from "@strata-foundation/marketplace-ui";
 
 // Default styles that can be overridden by your app
 require("@solana/wallet-adapter-react-ui/styles.css");
-
-export const getToken =
-  (getTokenEndpoint: string, endpoint: string) => async () => {
-    if (endpoint.includes("genesysgo")) {
-      const req = await fetch(getTokenEndpoint);
-      const { access_token }: { access_token: string } = await req.json();
-      return access_token;
-    }
-
-    return "";
-  };
 
 export const Wallet: FC = ({ children }) => {
   // You can also provide a custom RPC endpoint
@@ -43,6 +33,7 @@ export const Wallet: FC = ({ children }) => {
       new SlopeWalletAdapter(),
       new TorusWalletAdapter(),
       new LedgerWalletAdapter(),
+      new ExodusWalletAdapter(),
     ],
     [cluster]
   );
