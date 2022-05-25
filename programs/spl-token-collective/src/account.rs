@@ -399,10 +399,14 @@ pub struct StaticUpdateTokenBondingV0<'info> {
   pub token_bonding: Box<Account<'info, TokenBondingV0>>,
   pub base_mint: Box<Account<'info, Mint>>,
   pub target_mint: Box<Account<'info, Mint>>,
-  pub buy_base_royalties: Box<Account<'info, TokenAccount>>,
-  pub buy_target_royalties: Box<Account<'info, TokenAccount>>,
-  pub sell_base_royalties: Box<Account<'info, TokenAccount>>,
-  pub sell_target_royalties: Box<Account<'info, TokenAccount>>,
+  /// CHECK: Checked by verify_empty_or_mint in CPI call to update_token_bonding_v0
+  pub buy_base_royalties: UncheckedAccount<'info>,
+  /// CHECK: Checked by verify_empty_or_mint in CPI call to update_token_bonding_v0
+  pub buy_target_royalties: UncheckedAccount<'info>,
+  /// CHECK: Checked by verify_empty_or_mint in CPI call to update_token_bonding_v0
+  pub sell_base_royalties: UncheckedAccount<'info>,
+  /// CHECK: Checked by verify_empty_or_mint in CPI call to update_token_bonding_v0
+  pub sell_target_royalties: UncheckedAccount<'info>,
 }
 
 #[derive(Accounts)]
