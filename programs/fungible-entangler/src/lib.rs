@@ -9,7 +9,7 @@ pub mod util;
 
 use instructions::*;
 
-declare_id!("Ae6wbxtjpoKGCuSdHGQXRudmdpSfGpu6KHtjDcWEDjP8");
+declare_id!("fent99TYZcj9PGbeooaZXEMQzMd7rz8vYFiudd8HevB");
 
 #[program]
 pub mod fungible_entangler {

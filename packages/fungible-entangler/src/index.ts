@@ -182,7 +182,7 @@ interface ITopOffArgsChild extends ITopOffArgs {
 type TopOffArgs = ITopOffArgsParent | ITopOffArgsChild;
 
 export class FungibleEntangler extends AnchorSdk<any> {
-  static ID = new PublicKey("Ae6wbxtjpoKGCuSdHGQXRudmdpSfGpu6KHtjDcWEDjP8");
+  static ID = new PublicKey("fent99TYZcj9PGbeooaZXEMQzMd7rz8vYFiudd8HevB");
 
   static async init(
     provider: Provider,
