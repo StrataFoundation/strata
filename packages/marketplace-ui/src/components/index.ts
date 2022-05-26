@@ -17,3 +17,4 @@ export * from "./DisburseFunds";
 export * from "./HolaplexGraphqlProvider";
 export * from "./MarketplaceProviders";
 export * from "./svgs";
+export * from "./Disclaimer";

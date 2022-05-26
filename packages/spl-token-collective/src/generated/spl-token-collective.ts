@@ -1515,6 +1515,7 @@ export type SplTokenCollectiveIDL = {"version":"3.2.5","name":"spl_token_collect
 
 
 
+
   
 
 export type CollectiveV0 = IdlAccounts<SplTokenCollectiveIDL>["collectiveV0"]
