@@ -66,11 +66,13 @@ export abstract class AnchorSdk<IDL extends Idl> {
     }
   }
 
-  async execute<Output>(command: Promise<InstructionResult<Output>>, payer: PublicKey = this.wallet.publicKey, commitment?: Commitment): Promise<Output> {
+  async execute<Output>(command: Promise<InstructionResult<Output>>, payer: PublicKey = this.wallet.publicKey, commitment?: Commitment): Promise<Output & { txid?: string }> {
     const { instructions, signers, output } = await command;
     if (instructions.length > 0) {
-      await this.sendInstructions(instructions, signers, payer, commitment);
+      const txid = await this.sendInstructions(instructions, signers, payer, commitment);
+      return { txid, ...output }
     }
+
     return output;
   }
 

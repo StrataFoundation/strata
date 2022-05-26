@@ -29,12 +29,14 @@ address = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
 program = "./deps/metaplex-program-library/token-metadata/target/deploy/mpl_token_metadata.so"
 
 [workspace]
-members = ["programs/spl-token-bonding", "programs/spl-token-collective"]
+members = ["programs/spl-token-bonding", "programs/spl-token-collective", "programs/chat"]
 
 [programs.mainnet]
 spl_token_bonding = "TBondmkCYxaPCKG4CHYfVTcwQ8on31xnJrPzk8F8WsS"
 spl_token_collective = "TCo1sfSr2nCudbeJPykbif64rG9K1JNMGzrtzvPmp3y"
+chat = "2hC44EVzM4JoL5EWU4ezcZsY6ns2puwxpivQdeUMTzZM"
 
 [programs.localnet]
 spl_token_bonding = "TBondmkCYxaPCKG4CHYfVTcwQ8on31xnJrPzk8F8WsS"
 spl_token_collective = "TCo1sfSr2nCudbeJPykbif64rG9K1JNMGzrtzvPmp3y"
+chat = "2hC44EVzM4JoL5EWU4ezcZsY6ns2puwxpivQdeUMTzZM"

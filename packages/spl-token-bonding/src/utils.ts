@@ -1,5 +1,6 @@
 import { MintInfo, u64 } from "@solana/spl-token";
 import BN from "bn.js";
+import { toBN as toBNUtils } from "@strata-foundation/spl-utils";
 
 /**
  * Convert a number to a string avoiding scientific notation
@@ -58,26 +59,7 @@ export function toNumber(numberOrBn: BN | number, mint: MintInfo): number {
   }
 }
 
-export function toBN(
-  numberOrBn: BN | number,
-  mintOrDecimals: MintInfo | number
-): BN {
-  const decimals: number =
-    typeof mintOrDecimals === "number"
-      ? mintOrDecimals
-      : (mintOrDecimals as MintInfo).decimals;
-
-  if (BN.isBN(numberOrBn)) {
-    return numberOrBn;
-  } else {
-    return new BN(
-      Math.ceil(Number(numberOrBn) * Math.pow(10, decimals)).toLocaleString(
-        "fullwide",
-        { useGrouping: false }
-      )
-    );
-  }
-}
+export const toBN = toBNUtils
 
 export function amountAsNum(amount: u64, mint: MintInfo): number {
   const decimals = new u64(Math.pow(10, mint.decimals).toString());

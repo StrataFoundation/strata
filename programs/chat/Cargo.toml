@@ -1,5 +1,5 @@
 [package]
-name = "spl-token-bonding"
+name = "chat"
 version = "3.2.5"
 description = "Created with Anchor"
 edition = "2018"
@@ -7,21 +7,16 @@ license = "AGPL-3.0-or-later"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "spl_token_bonding"
+name = "chat"
 
 [features]
 no-entrypoint = []
 no-idl = []
+no-log-ix-name = []
 cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
 anchor-lang = "0.22.0"
 anchor-spl = "0.22.0"
-uint = "0.9.2"
 spl-token = "3.2.0"
-
-[dev-dependencies]
-proptest = "1.0.0"
-
-
