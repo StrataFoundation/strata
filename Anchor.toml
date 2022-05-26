@@ -38,9 +38,9 @@ members = [
 [programs.mainnet]
 spl_token_bonding = "TBondmkCYxaPCKG4CHYfVTcwQ8on31xnJrPzk8F8WsS"
 spl_token_collective = "TCo1sfSr2nCudbeJPykbif64rG9K1JNMGzrtzvPmp3y"
-fungible_entangler = "Ae6wbxtjpoKGCuSdHGQXRudmdpSfGpu6KHtjDcWEDjP8"
+fungible_entangler = "fent99TYZcj9PGbeooaZXEMQzMd7rz8vYFiudd8HevB"
 
 [programs.localnet]
 spl_token_bonding = "TBondmkCYxaPCKG4CHYfVTcwQ8on31xnJrPzk8F8WsS"
 spl_token_collective = "TCo1sfSr2nCudbeJPykbif64rG9K1JNMGzrtzvPmp3y"
-fungible_entangler = "Ae6wbxtjpoKGCuSdHGQXRudmdpSfGpu6KHtjDcWEDjP8"
+fungible_entangler = "fent99TYZcj9PGbeooaZXEMQzMd7rz8vYFiudd8HevB"
