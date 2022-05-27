@@ -9,7 +9,7 @@ import { useWalletProfile } from '../hooks/useWalletProfile'
 import { ChatRooms } from './rooms/ChatRooms'
 import { ProfileButton } from "./ProfileButton";
 
-const CHAT_KEY = new PublicKey("CMrS7fTiGuU6dM6DBK9XQconmYhQJK5jYCd4CuGKqfLa");
+const CHAT_KEY = new PublicKey("abmuXRLQZXn93cDLxPVGxFusHu5qTMuzc4UTh8HVjLs");
 
 export const Sidebar = ({ fullWidth }: { fullWidth?: boolean }) => {
   const { colorMode, toggleColorMode } = useColorMode()
@@ -39,6 +39,8 @@ export const Sidebar = ({ fullWidth }: { fullWidth?: boolean }) => {
           <Stack maxWidth="30vw" direction="row" align="center">
             <ProfileButton />
             <IconButton
+              colorScheme="primary"
+              variant="outline"
               aria-label="Toggle Dark Mode"
               icon={
                 colorMode === "light" ? (
@@ -48,7 +50,7 @@ export const Sidebar = ({ fullWidth }: { fullWidth?: boolean }) => {
                 )
               }
               onClick={toggleColorMode}
-              isRound
+              
             />
           </Stack>
         </Flex>

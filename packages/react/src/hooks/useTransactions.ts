@@ -120,7 +120,7 @@ export const useTransactions = ({
       });
     }
     return () => {
-      if (subscribe && address) {
+      if (subId) {
         connection.removeOnLogsListener(subId);
       }
     }

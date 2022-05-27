@@ -33,13 +33,18 @@ export function Message({
     message = decodedMessage;
   }
 
-  const bgColor = { light: "gray.300", dark: "gray.600" };
+  const usernameColor = { light: "green.500", dark: "green.200" };
   const textColor = { light: "black", dark: "white" };
   return (
     <HStack w="full" align="start">
       <Avatar mt="6px" size="sm" src={profile?.imageUrl} />
       <VStack w="full" align="start" spacing={0}>
-        <Text fontSize="sm" mb="-4px" fontWeight="semibold" color={uid == id ? "blue.500" : bgColor[colorMode]}>
+        <Text
+          fontSize="sm"
+          mb="-4px"
+          fontWeight="semibold"
+          color={uid == id ? "blue.500" : usernameColor[colorMode]}
+        >
           {profile?.username}
         </Text>
         <Box

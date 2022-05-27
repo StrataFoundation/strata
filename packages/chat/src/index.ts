@@ -253,6 +253,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
       return {
         ...args,
+        txid,
         profileKey: decoded.profile,
         decodedMessage,
       };

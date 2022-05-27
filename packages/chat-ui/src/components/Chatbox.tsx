@@ -25,6 +25,8 @@ export function Chatbox({
 }: chatProps) {
   const [input, setInput] = useState("");
   const handleChange = (e: any) => {
+    e.preventDefault();
+    e.stopPropagation();
     setInput(e.target.value);
   };
   const { chatSdk } = useChatSdk();
@@ -37,6 +39,8 @@ export function Chatbox({
   and set chat state to "", then scroll to latst message
   */
   const sendMessage = async (e: any) => {
+    e.preventDefault();
+
     if (delegateWalletKeypair) {
       const message = {
         type: MessageType.Text,
@@ -83,26 +87,34 @@ export function Chatbox({
     }
   };
   return (
-    <form onSubmit={sendMessage}>
-      <Flex direction="row" position="sticky" bottom={0}>
-        <FormControl
-          p={2}
-          zIndex={3}
-          as="form"
-          display="flex"
-          alignItems="center"
-        >
-          <Input
-            size="lg"
-            value={input}
-            onChange={handleChange}
-            placeholder="Type Message"
-          />
-          <Button size="lg" onClick={sendMessage}>
-            Send
-          </Button>
-        </FormControl>
-      </Flex>
-    </form>
+    <Flex direction="row" position="sticky" bottom={0}>
+      <FormControl
+        p={2}
+        zIndex={3}
+        as="form"
+        display="flex"
+        alignItems="center"
+      >
+        <Input
+          onKeyPress={(ev) => {
+            if (ev.key === "Enter") {
+              if (ev.shiftKey) {
+                ev.preventDefault();
+                setInput(i => `${i}\n`)
+              } else {
+                sendMessage(ev);
+              }
+            }
+          }}
+          size="lg"
+          value={input}
+          onChange={handleChange}
+          placeholder="Type Message"
+        />
+        <Button size="lg" onClick={sendMessage}>
+          Send
+        </Button>
+      </FormControl>
+    </Flex>
   );
 }

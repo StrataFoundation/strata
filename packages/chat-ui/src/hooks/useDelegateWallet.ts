@@ -1,6 +1,5 @@
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useLocalStorage, useWallet } from "@solana/wallet-adapter-react";
 import { Keypair } from "@solana/web3.js";
-import { useLocalStorage } from "@strata-foundation/react";
 import { useMemo } from "react";
 
 export function useDelegateWallet(): Keypair | undefined {
@@ -12,6 +11,7 @@ export function useDelegateWallet(): Keypair | undefined {
         return JSON.parse(localStorage.delegateWallet)[publicKey?.toBase58()];
       } catch (e: any) {
         // ignore
+        console.error(e)
       }
     }
   }, [delegateData, publicKey?.toBase58()]);

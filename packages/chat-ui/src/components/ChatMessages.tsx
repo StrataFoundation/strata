@@ -28,7 +28,7 @@ export function ChatMessages({
       p="10px"
     >
       {messages?.map((msg, index) => (
-        <Message key={msg?.txid + index} {...msg} />
+        <Message key={msg?.id} {...msg} />
       ))}
       {pendingMessages?.map((msg, index) => (
         <Message

@@ -86,10 +86,8 @@ export function CreateProfileModal() {
   const { handleErrors } = useErrorHandler();
 
   handleErrors(error);
-  console.log(errors);
 
   async function onSubmit(args: IProfileProps): Promise<void> {
-    console.log("HELLOE");
     await execute(chatSdk, args);
   }
 
