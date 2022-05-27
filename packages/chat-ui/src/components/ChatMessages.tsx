@@ -1,26 +1,45 @@
-import { Flex } from "@chakra-ui/react";
+import { useMessages } from "../hooks/useMessages";
+import { Flex, VStack } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
 import React from "react";
+import { Message } from "./Message";
+import { IMessage } from "@strata-foundation/chat";
+import { IPendingMessage } from "./Chatbox";
+import { useWalletProfile } from "../hooks";
 
 export function ChatMessages({
   scrollRef,
-  chatKey,
+  messages,
+  pendingMessages,
 }: {
   scrollRef: any;
-  chatKey?: PublicKey;
+  messages?: IMessage[];
+  pendingMessages?: IPendingMessage[];
 }) {
-  //get messages then map onto a messages array
-  // const [values] = useCollectionData(
-  //   query(collection(db, `${chatType}`, id, "messages"), orderBy("createdAt", 'asc'))
-  // )
-  // const messages = [].map(msg => (
-  //   <Message key={Math.random()} id={msg.uid} message={msg.Message} photoURL={msg.photoURL} />
-  // ))
+  const { info: profile } = useWalletProfile();
 
   return (
-    <Flex grow="1" align="start" direction="column" overflowY="scroll" p="10px">
-      {/* {messages} */}
+    <VStack
+      grow="1"
+      align="start"
+      overflowY="scroll"
+      spacing={2}
+      h="full"
+      p="10px"
+    >
+      {messages?.map((msg, index) => (
+        <Message key={msg?.txid + index} {...msg} />
+      ))}
+      {pendingMessages?.map((msg, index) => (
+        <Message
+          key={msg?.txid + index}
+          profileKey={profile?.publicKey}
+          txid={msg.txid}
+          {...msg.content}
+          pending
+        />
+      ))}
       <div ref={scrollRef}></div>
-    </Flex>
+    </VStack>
   );
 }

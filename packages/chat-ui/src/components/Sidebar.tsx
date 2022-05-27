@@ -7,8 +7,9 @@ import { PublicKey } from '@solana/web3.js'
 import { IoLogOut, IoMoon, IoSunny } from 'react-icons/io5'
 import { useWalletProfile } from '../hooks/useWalletProfile'
 import { ChatRooms } from './rooms/ChatRooms'
+import { ProfileButton } from "./ProfileButton";
 
-const CHAT_KEY = PublicKey.default;
+const CHAT_KEY = new PublicKey("CMrS7fTiGuU6dM6DBK9XQconmYhQJK5jYCd4CuGKqfLa");
 
 export const Sidebar = ({ fullWidth }: { fullWidth?: boolean }) => {
   const { colorMode, toggleColorMode } = useColorMode()
@@ -36,12 +37,7 @@ export const Sidebar = ({ fullWidth }: { fullWidth?: boolean }) => {
         <Flex justify="space-between" height="71px" align="center" p="10px">
           {/* <Avatar src={profile?.imageUrl} /> */}
           <Stack maxWidth="30vw" direction="row" align="center">
-            <IconButton
-              aria-label="Sign Out"
-              icon={<Icon as={IoLogOut} />}
-              onClick={handleLogOut}
-              isRound
-            />
+            <ProfileButton />
             <IconButton
               aria-label="Toggle Dark Mode"
               icon={

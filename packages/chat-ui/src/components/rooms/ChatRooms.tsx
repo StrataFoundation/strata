@@ -1,5 +1,5 @@
 import React from "react";
-import { Flex, Text, useColorMode, SkeletonText } from "@chakra-ui/react";
+import { Flex, Text, useColorMode, SkeletonText, SkeletonCircle, Avatar } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
 import { useRouter } from "next/router";
 import { useChat } from "../../hooks/useChat";
@@ -27,6 +27,11 @@ export function ChatRooms({ chatKey }: chatRoomProps) {
       _hover={{ bg: colorMode === "light" ? "gray.200" : "gray.700" }}
       onClick={handleClick}
     >
+      {loading ? (
+        <SkeletonCircle />
+      ) : (
+        <Avatar mr={4} size="md" src={chat?.imageUrl} />
+      )}
       {loading ? <SkeletonText width="200px" /> : <Text>{chat?.name}</Text>}
     </Flex>
   );

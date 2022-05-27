@@ -5,8 +5,8 @@ import { useAsync } from "react-async-hook";
 export function useProfileKey(args: {
   wallet?: PublicKey;
   username?: string;
-}): PublicKey | undefined {
-  const { result } = useAsync(
+}): { loading: boolean, key: PublicKey | undefined } {
+  const { result, loading } = useAsync(
     (wallet?: string, username?: string) =>
       ChatSdk.profileKey({
         wallet: wallet ? new PublicKey(wallet) : undefined,
@@ -15,5 +15,8 @@ export function useProfileKey(args: {
     [args.wallet?.toBase58(), args.username]
   );
 
-  return result ? result[0] : undefined;
+  return {
+    loading: loading,
+    key: result ? result[0] : undefined
+  }
 }

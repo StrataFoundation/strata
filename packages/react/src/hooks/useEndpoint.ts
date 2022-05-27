@@ -34,7 +34,7 @@ export function getClusterAndEndpoint(clusterOrEndpoint: string): {
       if (clusterOrEndpoint === "localnet") {
         return {
           cluster: "localnet",
-          endpoint: clusterApiUrl(clusterOrEndpoint as WalletAdapterNetwork),
+          endpoint: "http://localhost:8899",
         };
       } else if (clusterOrEndpoint === "devnet") {
         return {

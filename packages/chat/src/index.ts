@@ -18,6 +18,15 @@ import LitJsSdk from "lit-js-sdk";
 // @ts-ignore
 import * as bs58 from "bs58";
 
+export enum MessageType {
+  Text = "text"
+}
+
+export interface IMessageContent {
+  type: MessageType;
+  text: string;
+}
+
 export interface IChat extends ChatV0 {
   publicKey: PublicKey;
 }
@@ -196,15 +205,31 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     if (!tx) {
       return []
     }
-
+    
+    if (tx.meta?.err) {
+      return []
+    }
+    
     const instructions = tx.transaction.message.instructions;
     const coder = this.program.coder.instruction;
 
-    // @ts-ignore
-    const decoded = instructions.map(ix => coder.decode(bs58.decode(ix.data))).filter(truthy)
+    const sendMessageIdl = this.program.idl.instructions.find(
+      (i: any) => i.name === "sendMessageV0"
+    )!;
+    const profileAccountIndex = sendMessageIdl.accounts.findIndex(
+      (account: any) => account.name === "profile"
+    );
+    const decoded = instructions
+      .map((ix) => ({
+        // @ts-ignore
+        data: coder.decode(bs58.decode(ix.data)),
+        profile:
+          tx.transaction.message.accountKeys[ix.accounts[profileAccountIndex]],
+      }))
+      .filter(truthy);
 
-    return Promise.all(decoded.filter(decoded => decoded.name === "sendMessageV0").map(async decoded => {
-      const args = decoded.data.args;
+    return Promise.all(decoded.filter(decoded => decoded.data.name === "sendMessageV0").map(async decoded => {
+      const args = decoded.data.data.args;
 
       let decodedMessage;
       if (args.encryptedSymmetricKey) {
@@ -228,7 +253,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
       return {
         ...args,
-        decodedMessage
+        profileKey: decoded.profile,
+        decodedMessage,
       };
     }))
   }

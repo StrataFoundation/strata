@@ -1,33 +1,65 @@
 import React from "react";
-import { Box, Text, useColorMode } from "@chakra-ui/react";
+import {
+  Avatar,
+  Box,
+  HStack,
+  Icon,
+  Text,
+  useColorMode,
+  useColorModeValue,
+  VStack,
+} from "@chakra-ui/react";
 import { IMessage } from "@strata-foundation/chat";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useProfile } from "../hooks";
-
-export function Message({ decodedMessage, profileKey }: IMessage) {
+import { BsCircle, BsCheckCircleFill } from "react-icons/bs";
+export function Message({
+  decodedMessage,
+  profileKey,
+  pending = false,
+}: Partial<IMessage> & { pending?: boolean }) {
   const { colorMode } = useColorMode();
   const { publicKey } = useWallet();
   const { info: profile } = useProfile(profileKey);
-  const id = profile?.publicKey.toBase58();
+  const id = profile?.ownerWallet.toBase58();
   const uid = publicKey?.toBase58();
+
+  const status = pending ? "Pending" : "Confirmed";
+
+  let message;
+  try {
+    message = decodedMessage && JSON.parse(decodedMessage).text;
+  } catch (e: any) {
+    message = decodedMessage;
+  }
 
   const bgColor = { light: "gray.300", dark: "gray.600" };
   const textColor = { light: "black", dark: "white" };
   return (
-    <Box
-      bg={uid == id ? "blue.500" : bgColor[colorMode]}
-      w="fit-content"
-      py={1}
-      px={3}
-      rounded="xl"
-      margin={2}
-      ml={uid == id ? "auto" : "0"}
-      position="relative"
-      textAlign={uid == id ? "right" : "left"}
-      wordBreak="break-word"
-      color={uid == id ? "white" : textColor[colorMode]}
-    >
-      <Text>{decodedMessage}</Text>
-    </Box>
+    <HStack w="full" align="start">
+      <Avatar mt="6px" size="sm" src={profile?.imageUrl} />
+      <VStack w="full" align="start" spacing={0}>
+        <Text fontSize="sm" mb="-4px" fontWeight="semibold" color={uid == id ? "blue.500" : bgColor[colorMode]}>
+          {profile?.username}
+        </Text>
+        <Box
+          w="fit-content"
+          position="relative"
+          textAlign={"left"}
+          wordBreak="break-word"
+          color={textColor[colorMode]}
+        >
+          <Text>{message}</Text>
+        </Box>
+      </VStack>
+      <Icon
+        alignSelf="center"
+        w="12px"
+        h="12px"
+        as={pending ? BsCircle : BsCheckCircleFill}
+        color="gray"
+        title={status}
+      />
+    </HStack>
   );
 }

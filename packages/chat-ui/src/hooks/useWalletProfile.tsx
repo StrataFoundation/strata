@@ -4,7 +4,11 @@ import { useProfileKey } from "./useProfileKey";
 
 export function useWalletProfile() {
   const { publicKey } = useWallet();
-  const profileKey = useProfileKey({ wallet: publicKey || undefined });
+  const { key: profileKey, loading } = useProfileKey({ wallet: publicKey || undefined });
 
-  return useProfile(profileKey);
+  const profile = useProfile(profileKey);
+  return {
+    ...profile,
+    loading: profile.loading || loading
+  }
 }
