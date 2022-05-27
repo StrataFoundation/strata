@@ -31,6 +31,7 @@ export interface IMessage extends MessageV0 {
   txid: string;
   /** Decoded message, if permissions were enough to decode it */
   decodedMessage?: string;
+  profileKey: PublicKey;
 }
 
 export interface InitializeChatArgs {
@@ -232,29 +233,29 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     }))
   }
 
-  chatKey(identifier: string): Promise<[PublicKey, number]> {
+  static chatKey(identifier: string, programId: PublicKey = ChatSdk.ID): Promise<[PublicKey, number]> {
     return PublicKey.findProgramAddress(
       [
         Buffer.from("chat", "utf-8"),
         Buffer.from(puff(identifier, 32), "utf-8"),
       ],
-      this.programId
+      programId
     );
   }
 
-  profileKey({
+  static profileKey({
     username,
     wallet,
   }: {
     username?: string;
     wallet?: PublicKey;
-  }): Promise<[PublicKey, number]> {
+  }, programId: PublicKey = ChatSdk.ID): Promise<[PublicKey, number]> {
     return PublicKey.findProgramAddress(
       [
         Buffer.from(username ? "username_profile" : "wallet_profile", "utf-8"),
         username ? Buffer.from(puff(username, 32)) : wallet!.toBuffer(),
       ],
-      this.programId
+      programId
     );
   }
 
@@ -273,7 +274,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     imageUrl = "",
     metadataUrl = "",
   }: InitializeChatArgs): Promise<InstructionResult<{ chat: PublicKey }>> {
-    const chat = (await this.chatKey(identifier))[0];
+    const chat = (await ChatSdk.chatKey(identifier, this.programId))[0];
     const postMint = await getMintInfo(this.provider, postPermissionMint);
     const readMint = await getMintInfo(this.provider, readPermissionMint);
     const instruction = await this.instruction.initializeChatV0(
@@ -351,8 +352,10 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     const instructions = [];
     const signers = [];
 
-    const usernameProfile = (await this.profileKey({ username }))[0];
-    const walletProfile = (await this.profileKey({ wallet: ownerWallet }))[0];
+    const usernameProfile = (await ChatSdk.profileKey({ username }, this.programId))[0];
+    const walletProfile = (
+      await ChatSdk.profileKey({ wallet: ownerWallet }, this.programId)
+    )[0];
 
     if (!delegateWallet) {
       delegateWalletKeypair = delegateWalletKeypair || Keypair.generate();
@@ -452,7 +455,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
     const instructions = [];
 
-    const profile = (await this.profileKey({ wallet: sender }))[0];
+    const profile = (await ChatSdk.profileKey({ wallet: sender }, this.programId))[0];
     const profileAcc = (await this.getProfile(profile))!;
 
     const postPermissionAccount = await Token.getAssociatedTokenAddress(
