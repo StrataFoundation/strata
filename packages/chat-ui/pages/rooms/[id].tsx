@@ -17,7 +17,7 @@ export default function Chatroom() {
   const chatKey = useChatKey(id as string | undefined);
   const [pendingMessages, setPendingMessages] = useState<IPendingMessage[]>();
   const { messages } = useMessages(chatKey);
-  const reverseMsg = useMemo(() => messages?.reverse(), [messages]);
+  const reverseMsg = useMemo(() => [...(messages || [])].reverse(), [messages]);
 
   useEffect(() => {
     if (messages) {
