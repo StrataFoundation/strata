@@ -48,7 +48,7 @@ async function createProfile(
       SystemProgram.transfer({
         fromPubkey: chatSdk.wallet.publicKey,
         toPubkey: delegateWalletKeypair!.publicKey,
-        lamports: 1000000,
+        lamports: 10000000, // 2000 messages
       })
     );
     await sendInstructions(
@@ -101,7 +101,7 @@ export function CreateProfileModal() {
       isCentered
       trapFocus={true}
     >
-      <ModalContent borderRadius="xl" shadow="xl" bg="white">
+      <ModalContent borderRadius="xl" shadow="xl">
         <ModalHeader>Create Chat Profile</ModalHeader>
         <ModalBody>
           <FormProvider {...formProps}>

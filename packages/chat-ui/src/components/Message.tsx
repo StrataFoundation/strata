@@ -36,7 +36,7 @@ export function Message({
   const usernameColor = { light: "green.500", dark: "green.200" };
   const textColor = { light: "black", dark: "white" };
   return (
-    <HStack w="full" align="start">
+    <HStack w="full" align="start" spacing={2}>
       <Avatar mt="6px" size="sm" src={profile?.imageUrl} />
       <VStack w="full" align="start" spacing={0}>
         <Text

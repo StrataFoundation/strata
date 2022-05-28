@@ -9,7 +9,7 @@ import { useWalletProfile } from '../hooks/useWalletProfile'
 import { ChatRooms } from './rooms/ChatRooms'
 import { ProfileButton } from "./ProfileButton";
 
-const CHAT_KEY = new PublicKey("abmuXRLQZXn93cDLxPVGxFusHu5qTMuzc4UTh8HVjLs");
+const CHAT_KEY = new PublicKey("8XUTcAhZUZWjoDotgCuvdMsF7BaN8i1XauZuK6dv7NxF");
 
 export const Sidebar = ({ fullWidth }: { fullWidth?: boolean }) => {
   const { colorMode, toggleColorMode } = useColorMode()

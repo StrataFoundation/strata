@@ -1,5 +1,5 @@
 import { Flex, useMediaQuery } from "@chakra-ui/react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ChatMessages } from "@/components/ChatMessages";
 import { Chatbox, IPendingMessage } from "@/components/Chatbox";
 import { Sidebar } from "@/components/Sidebar";
@@ -17,13 +17,14 @@ export default function Chatroom() {
   const chatKey = useChatKey(id as string | undefined);
   const [pendingMessages, setPendingMessages] = useState<IPendingMessage[]>();
   const { messages } = useMessages(chatKey);
+  const reverseMsg = useMemo(() => messages?.reverse(), [messages]);
 
   useEffect(() => {
     if (messages) {
       const txWeHave = new Set(Array.from(messages?.map(message => message.txid)))
       setPendingMessages(pendingMessages => pendingMessages?.filter(p => !txWeHave.has(p.txid)))
     }
-  }, [messages, pendingMessages])
+  }, [messages])
 
   return (
     <Container>
@@ -32,12 +33,12 @@ export default function Chatroom() {
         <Flex height="71px">
           <RoomsHeader chatKey={chatKey} />
         </Flex>
-        <ChatMessages scrollRef={lastMessage} messages={messages?.reverse()} pendingMessages={pendingMessages} />
+        <ChatMessages scrollRef={lastMessage} messages={reverseMsg} pendingMessages={pendingMessages} />
         <Chatbox
           scrollRef={lastMessage}
           chatKey={chatKey}
           onAddPendingMessage={(pending) =>
-            setPendingMessages((msgs) => msgs && [...msgs, pending])
+            setPendingMessages((msgs) => [...(msgs || []), pending])
           }
         />
       </Flex>

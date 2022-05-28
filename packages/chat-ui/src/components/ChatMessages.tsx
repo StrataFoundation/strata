@@ -35,7 +35,7 @@ export function ChatMessages({
           key={msg?.txid + index}
           profileKey={profile?.publicKey}
           txid={msg.txid}
-          {...msg.content}
+          decodedMessage={JSON.stringify(msg.content)}
           pending
         />
       ))}

@@ -33,6 +33,8 @@ export function Chatbox({
   const delegateWalletKeypair = useDelegateWallet();
   const [error, setError] = useState<Error>();
   const { handleErrors } = useErrorHandler();
+
+  console.log(delegateWalletKeypair?.publicKey.toBase58())
   handleErrors(error);
 
   /*get uid and phoroURL from current User then send message 
@@ -47,6 +49,7 @@ export function Chatbox({
         text: input,
       };
       if (chatSdk && chatKey) {
+        setInput("");
         const { instructions, signers } = await chatSdk.sendMessageInstructions(
           {
             delegateWalletKeypair,
@@ -82,7 +85,6 @@ export function Chatbox({
           "confirmed"
         );
       }
-      setInput("");
       scrollRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
