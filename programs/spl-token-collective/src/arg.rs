@@ -14,6 +14,12 @@ pub struct InitializeCollectiveV0Args {
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
+pub struct InitializeCollectiveForSocialTokenV0Args {
+  pub authority: Option<Pubkey>,
+  pub config: CollectiveConfigV0,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct UpdateCollectiveV0Args {
   pub authority: Option<Pubkey>,
   pub config: CollectiveConfigV0,
