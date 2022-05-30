@@ -1,22 +1,28 @@
 import React from "react";
 import {
+  Avatar,
   Box,
   Flex,
   Heading,
+  HStack,
   Text,
   useColorMode,
   useMediaQuery,
 } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
 import { useChat } from "../../hooks/useChat";
+import { roundToDecimals, useMint, useTokenMetadata } from "@strata-foundation/react";
+import { toNumber } from "@strata-foundation/spl-token-bonding";
 
 export function RoomsHeader({ chatKey }: { chatKey?: PublicKey }) {
   const { info: chat } = useChat(chatKey);
   const [isMobile] = useMediaQuery("(max-width: 680px)");
+  const { metadata: readMetadata, image: readImage } = useTokenMetadata(
+    chat?.readPermissionMint
+  );
+  const postMint = useMint(chat?.postPermissionMint);
+  const { metadata: postMetadata, image: postImage } = useTokenMetadata(chat?.postPermissionMint);
   const { colorMode } = useColorMode();
-  //filter out other users so only avatars of other users show up
-  // const timeAgo = chatData.lastSent ? formatDistanceToNowStrict(new Date(chatData?.lastSent.toDate())) : "Not available"
-  const timeAgo = "Not Available";
 
   return (
     <Flex
@@ -32,7 +38,36 @@ export function RoomsHeader({ chatKey }: { chatKey?: PublicKey }) {
         <Heading size={isMobile ? "md" : "lg"} isTruncated>
           {chat?.name}
         </Heading>
-        {!isMobile && <Text>Last Active: {timeAgo}</Text>}
+        {!isMobile && (
+          <HStack spacing={4}>
+            { readMetadata && <HStack spacing={1}>
+              <Text>Read: 1 </Text>
+              <Avatar
+                w="16px"
+                h="16px"
+                title={readMetadata?.data.symbol}
+                src={readImage}
+              />
+            </HStack> }
+            { postMetadata && <HStack spacing={1}>
+              <Text>
+                Post:
+                {chat?.postPermissionAmount &&
+                  postMint &&
+                  roundToDecimals(
+                    toNumber(chat.postPermissionAmount, postMint),
+                    4
+                  )}
+              </Text>
+              <Avatar
+                w="16px"
+                h="16px"
+                title={postMetadata?.data.symbol}
+                src={postImage}
+              />
+            </HStack> }
+          </HStack>
+        )}
       </Box>
     </Flex>
   );

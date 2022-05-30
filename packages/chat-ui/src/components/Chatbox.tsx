@@ -1,12 +1,15 @@
-import { useDelegateWallet } from "@/hooks/useDelegateWallet";
+import { useDelegateWallet } from "../hooks/useDelegateWallet";
 import { Button, Flex, FormControl, Input } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import { IMessageContent, MessageType } from "@strata-foundation/chat";
-import { useErrorHandler } from "@strata-foundation/react";
+import { useErrorHandler, useMint, useOwnedAmount } from "@strata-foundation/react";
 import { sendAndConfirmWithRetry } from "@strata-foundation/spl-utils";
 import React, { useState } from "react";
 import { useChatSdk } from "../contexts";
+import { useChat } from "../hooks";
+import { toNumber } from "@strata-foundation/spl-token-bonding";
+import { BuyMoreButton } from "./BuyMoreButton";
 
 export interface IPendingMessage {
   content: IMessageContent;
@@ -33,6 +36,14 @@ export function Chatbox({
   const delegateWalletKeypair = useDelegateWallet();
   const [error, setError] = useState<Error>();
   const { handleErrors } = useErrorHandler();
+  const { info: chat } = useChat(chatKey);
+  const balance = useOwnedAmount(chat?.postPermissionMint);
+  const mint = useMint(chat?.postPermissionMint);
+  const postAmount =
+    chat?.postPermissionAmount &&
+    mint &&
+    toNumber(chat?.postPermissionAmount, mint);
+  const hasEnough = typeof postAmount == "undefined" || typeof balance == "undefined"|| (balance >= postAmount);
 
   handleErrors(error);
 
@@ -88,7 +99,7 @@ export function Chatbox({
       }
     }
   };
-  return (
+  return hasEnough ? (
     <Flex direction="row" position="sticky" bottom={0}>
       <FormControl
         p={2}
@@ -97,26 +108,37 @@ export function Chatbox({
         display="flex"
         alignItems="center"
       >
-        <Input
-          onKeyPress={(ev) => {
-            if (ev.key === "Enter") {
-              if (ev.shiftKey) {
-                ev.preventDefault();
-                setInput(i => `${i}\n`)
-              } else {
-                sendMessage(ev);
+        {hasEnough && (
+          <Input
+            onKeyPress={(ev) => {
+              if (ev.key === "Enter") {
+                if (ev.shiftKey) {
+                  ev.preventDefault();
+                  setInput((i) => `${i}\n`);
+                } else {
+                  sendMessage(ev);
+                }
               }
-            }
-          }}
+            }}
+            size="lg"
+            value={input}
+            onChange={handleChange}
+            placeholder="Type Message"
+          />
+        )}
+        <Button
+          alignSelf="flex-end"
+          isDisabled={!hasEnough}
           size="lg"
-          value={input}
-          onChange={handleChange}
-          placeholder="Type Message"
-        />
-        <Button size="lg" onClick={sendMessage}>
+          onClick={sendMessage}
+        >
           Send
         </Button>
       </FormControl>
+    </Flex>
+  ) : (
+    <Flex justify="center" mb="6px">
+      <BuyMoreButton mint={chat?.postPermissionMint} />
     </Flex>
   );
 }

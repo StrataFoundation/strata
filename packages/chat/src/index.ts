@@ -636,7 +636,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   }
 }
 
-function asArray<T>(arg: T | T[]): T[] {
+export function asArray<T>(arg: T | T[]): T[] {
   if (Array.isArray(arg)) {
     return arg
   }

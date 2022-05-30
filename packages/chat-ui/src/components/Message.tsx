@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Alert,
   Avatar,
@@ -10,13 +10,16 @@ import {
   useColorModeValue,
   VStack,
 } from "@chakra-ui/react";
-import { IMessage } from "@strata-foundation/chat";
+import { IMessage, asArray } from "@strata-foundation/chat";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useProfile } from "../hooks";
 import { BsCircle, BsCheckCircleFill } from "react-icons/bs";
+import { PublicKey } from "@solana/web3.js";
+import { BuyMoreButton } from "./BuyMoreButton";
 export function Message({
   decodedMessage,
   profileKey,
+  accessControlConditions,
   pending = false,
 }: Partial<IMessage> & { pending?: boolean }) {
   const { colorMode } = useColorMode();
@@ -26,6 +29,16 @@ export function Message({
   const uid = publicKey?.toBase58();
 
   const status = pending ? "Pending" : "Confirmed";
+  const readMint = useMemo(() => {
+    try {
+      if (accessControlConditions) {
+        const json = JSON.parse(accessControlConditions);
+        return new PublicKey(asArray(json)[0].params[0]);
+      }
+    } catch (e: any) {
+      console.error(e);
+    }
+  }, [accessControlConditions]);
 
   let message;
   try {
@@ -58,9 +71,12 @@ export function Message({
           {message ? (
             <Text>{message}</Text>
           ) : (
-            <Text color="red" fontStyle="italic">
-              You do not have enough tokens to read this message.
-            </Text>
+            <>
+              <Text color="red" fontStyle="italic">
+                You do not have enough tokens to read this message.
+              </Text>
+              <BuyMoreButton mint={readMint} />
+            </>
           )}
         </Box>
       </VStack>

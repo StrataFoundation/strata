@@ -34,7 +34,13 @@ export const Sidebar = ({ fullWidth }: { fullWidth?: boolean }) => {
       <Flex flexWrap="wrap" direction="column" position="sticky" top="0">
         <Flex justify="space-between" height="71px" align="center" p="10px">
           {/* <Avatar src={profile?.imageUrl} /> */}
-          <Stack maxWidth="30vw" direction="row" align="center">
+          <Stack
+            maxWidth="30vw"
+            direction="row"
+            w="full"
+            align="space-between"
+            justifyContent="space-evenly"
+          >
             <ProfileButton />
             <IconButton
               colorScheme="primary"
@@ -48,7 +54,6 @@ export const Sidebar = ({ fullWidth }: { fullWidth?: boolean }) => {
                 )
               }
               onClick={toggleColorMode}
-              
             />
           </Stack>
         </Flex>
