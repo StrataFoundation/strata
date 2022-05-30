@@ -18,6 +18,8 @@ import LitJsSdk from "lit-js-sdk";
 // @ts-ignore
 import * as bs58 from "bs58";
 
+export * from "./generated/chat";
+
 export enum MessageType {
   Text = "text"
 }
@@ -75,12 +77,18 @@ export interface InitializeProfileArgs {
   ownerWallet?: PublicKey;
   /** The unique shortname of the user. Must be alphanumeric. */
   username: string;
-  /** The delegate wallet to use for posting messages without auto approve. **Default:** Generate a new one */
-  delegateWalletKeypair?: Keypair;
-  /** The delegate wallet to use. If not needed, set to your wallet. **Default:** `delegateWalletKeypair.publicKey` */
-  delegateWallet?: PublicKey;
   imageUrl?: string;
   metadataUrl?: string;
+}
+
+export interface InitializeDelegateWalletArgs {
+  payer?: PublicKey;
+  /** The owning wallet of the delegate. **Default:** the current wallet */
+  ownerWallet?: PublicKey;
+  /** The delegate wallet to use. **Default:** from keypair */
+  delegateWallet?: PublicKey;
+  /** The delegate keypair. **Default:** Generate one */
+  delegateWalletKeypair?: Keypair;
 }
 
 export interface SendMessageArgs {
@@ -92,6 +100,8 @@ export interface SendMessageArgs {
   /** Lit protocol conditions, **Default:** The chatroom default */
   accessControlConditions?: any;
 
+  /** If using a delegate wallet, will send and sign. **Defualt:** delegateWalletKeypair.publicKey */
+  delegateWallet?: PublicKey;
   /** If using a delegate wallet, will send and sign */
   delegateWalletKeypair?: Keypair;
 
@@ -152,7 +162,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
     // @ts-ignore
     if (provider.connection._rpcEndpoint.includes("dev")) {
-      this.chain = "solanaDevnet"
+      this.chain = "solanaDevnet";
     } else {
       this.chain = "solana";
     }
@@ -200,17 +210,19 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
   async getMessagesFromTx(txid: string): Promise<IMessage[]> {
     const connection = this.provider.connection;
-    const tx = await connection.getTransaction(txid, { commitment: "confirmed" });
+    const tx = await connection.getTransaction(txid, {
+      commitment: "confirmed",
+    });
 
     if (!tx) {
-      return []
+      return [];
     }
-    
+
     if (tx.meta?.err) {
-      return []
+      return [];
     }
-    
-    const instructions = tx.transaction.message.instructions;
+
+    const instructions = tx.transaction.message.instructions.filter(ix => tx.transaction.message.accountKeys[ix.programIdIndex].equals(this.programId));
     const coder = this.program.coder.instruction;
 
     const sendMessageIdl = this.program.idl.instructions.find(
@@ -228,39 +240,50 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       }))
       .filter(truthy);
 
-    return Promise.all(decoded.filter(decoded => decoded.data.name === "sendMessageV0").map(async decoded => {
-      const args = decoded.data.data.args;
+    return Promise.all(
+      decoded
+        .filter((decoded) => decoded.data.name === "sendMessageV0")
+        .map(async (decoded) => {
+          const args = decoded.data.data.args;
 
-      let decodedMessage;
-      if (args.encryptedSymmetricKey) {
-        if (!this.isLitAuthed) {
-          await this.litAuth();
-        }
-        const symmetricKey = await this.litClient.getEncryptionKey({
-          accessControlConditions: JSON.parse(args.accessControlConditions),
-          // Note, below we convert the encryptedSymmetricKey from a UInt8Array to a hex string.  This is because we obtained the encryptedSymmetricKey from "saveEncryptionKey" which returns a UInt8Array.  But the getEncryptionKey method expects a hex string.
-          toDecrypt: args.encryptedSymmetricKey,
-          chain: this.chain,
-          authSig: this.litAuthSig,
+          let decodedMessage;
+          if (args.encryptedSymmetricKey) {
+            if (!this.isLitAuthed) {
+              await this.litAuth();
+            }
+            try {
+              const symmetricKey = await this.litClient.getEncryptionKey({
+                accessControlConditions: asArray(JSON.parse(args.accessControlConditions)),
+                // Note, below we convert the encryptedSymmetricKey from a UInt8Array to a hex string.  This is because we obtained the encryptedSymmetricKey from "saveEncryptionKey" which returns a UInt8Array.  But the getEncryptionKey method expects a hex string.
+                toDecrypt: args.encryptedSymmetricKey,
+                chain: this.chain,
+                authSig: this.litAuthSig,
+              });
+              decodedMessage = await LitJsSdk.decryptString(
+                new Blob([args.content]),
+                symmetricKey
+              );
+            } catch(e: any) {
+              console.error("Failed to decode message", e);
+            }
+          } else {
+            decodedMessage = args.content;
+          }
+
+          return {
+            ...args,
+            txid,
+            profileKey: decoded.profile,
+            decodedMessage,
+          };
         })
-        decodedMessage = await LitJsSdk.decryptString(
-          new Blob([args.content]),
-          symmetricKey
-        );
-      } else {
-        decodedMessage = args.content;
-      }
-
-      return {
-        ...args,
-        txid,
-        profileKey: decoded.profile,
-        decodedMessage,
-      };
-    }))
+    );
   }
 
-  static chatKey(identifier: string, programId: PublicKey = ChatSdk.ID): Promise<[PublicKey, number]> {
+  static chatKey(
+    identifier: string,
+    programId: PublicKey = ChatSdk.ID
+  ): Promise<[PublicKey, number]> {
     return PublicKey.findProgramAddress(
       [
         Buffer.from("chat", "utf-8"),
@@ -270,13 +293,26 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     );
   }
 
-  static profileKey({
-    username,
-    wallet,
-  }: {
-    username?: string;
-    wallet?: PublicKey;
-  }, programId: PublicKey = ChatSdk.ID): Promise<[PublicKey, number]> {
+  static delegateWalletKey(
+    delegateWallet: PublicKey,
+    programId: PublicKey = ChatSdk.ID
+  ): Promise<[PublicKey, number]> {
+    return PublicKey.findProgramAddress(
+      [Buffer.from("delegate-wallet", "utf-8"), delegateWallet.toBuffer()],
+      programId
+    );
+  }
+
+  static profileKey(
+    {
+      username,
+      wallet,
+    }: {
+      username?: string;
+      wallet?: PublicKey;
+    },
+    programId: PublicKey = ChatSdk.ID
+  ): Promise<[PublicKey, number]> {
     return PublicKey.findProgramAddress(
       [
         Buffer.from(username ? "username_profile" : "wallet_profile", "utf-8"),
@@ -313,7 +349,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         metadataUrl: metadataUrl,
         defaultAccessControlConditions: Buffer.from(
           JSON.stringify(
-            defaultAccessControlConditions || {
+            defaultAccessControlConditions || [{
               method: "getTokenAccountBalance",
               params: [readPermissionMint?.toBase58()],
               chain: this.chain,
@@ -322,7 +358,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
                 comparator: ">=",
                 value: toBN(readPermissionAmount, readMint),
               },
-            }
+            }]
           )
         ),
         postPermissionMint,
@@ -366,29 +402,20 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     username,
     imageUrl = "",
     metadataUrl = "",
-    delegateWalletKeypair,
-    delegateWallet,
   }: InitializeProfileArgs): Promise<
     InstructionResult<{
       usernameProfile: PublicKey;
       walletProfile: PublicKey;
-      delegateWalletKeypair?: Keypair;
-      delegateWallet: PublicKey;
     }>
   > {
     const instructions = [];
-    const signers = [];
 
-    const usernameProfile = (await ChatSdk.profileKey({ username }, this.programId))[0];
+    const usernameProfile = (
+      await ChatSdk.profileKey({ username }, this.programId)
+    )[0];
     const walletProfile = (
       await ChatSdk.profileKey({ wallet: ownerWallet }, this.programId)
     )[0];
-
-    if (!delegateWallet) {
-      delegateWalletKeypair = delegateWalletKeypair || Keypair.generate();
-      signers.push(delegateWalletKeypair);
-      delegateWallet = delegateWalletKeypair.publicKey;
-    }
 
     instructions.push(
       await this.instruction.initializeProfileV0(
@@ -403,7 +430,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
             usernameProfile,
             walletProfile,
             ownerWallet,
-            delegateWallet,
             systemProgram: SystemProgram.programId,
           },
         }
@@ -412,13 +438,11 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
     return {
       output: {
-        delegateWalletKeypair,
-        delegateWallet,
         usernameProfile,
         walletProfile,
       },
       instructions,
-      signers,
+      signers: [],
     };
   }
 
@@ -428,11 +452,69 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   ): Promise<{
     usernameProfile: PublicKey;
     walletProfile: PublicKey;
-    delegateWalletKeypair?: Keypair;
-    delegateWallet: PublicKey;
   }> {
     return this.execute(
       this.initializeProfileInstructions(args),
+      args.payer,
+      commitment
+    );
+  }
+
+  async initializeDelegateWalletInstructions({
+    payer = this.wallet.publicKey,
+    ownerWallet = this.wallet.publicKey,
+    delegateWalletKeypair,
+    delegateWallet,
+  }: InitializeDelegateWalletArgs): Promise<
+    InstructionResult<{
+      delegateWallet: PublicKey;
+      delegateWalletKeypair?: Keypair;
+    }>
+  > {
+    if (!delegateWalletKeypair && !delegateWallet) {
+      delegateWalletKeypair = Keypair.generate();
+    }
+    if (!delegateWallet) {
+      delegateWallet = delegateWalletKeypair!.publicKey;
+    }
+
+    const delegateWalletAcc = (
+      await ChatSdk.delegateWalletKey(delegateWallet)
+    )[0];
+    const instructions = [];
+    const signers = [delegateWalletKeypair].filter(truthy);
+
+    instructions.push(
+      await this.instruction.initializeDelegateWalletV0({
+        accounts: {
+          delegateWallet: delegateWalletAcc,
+          payer,
+          owner: ownerWallet,
+          delegate: delegateWallet,
+          systemProgram: SystemProgram.programId,
+        },
+      })
+    );
+
+    return {
+      output: {
+        delegateWallet: delegateWalletAcc,
+        delegateWalletKeypair,
+      },
+      instructions,
+      signers,
+    };
+  }
+
+  async initializeDelegateWallet(
+    args: InitializeProfileArgs,
+    commitment: Commitment = "confirmed"
+  ): Promise<{
+    delegateWallet: PublicKey;
+    delegateWalletKeypair?: Keypair;
+  }> {
+    return this.execute(
+      this.initializeDelegateWalletInstructions(args),
       args.payer,
       commitment
     );
@@ -444,8 +526,9 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     chat,
     message,
     accessControlConditions,
+    delegateWallet,
     delegateWalletKeypair,
-    encrypted = true
+    encrypted = true,
   }: SendMessageArgs): Promise<InstructionResult<null>> {
     if (!this.isLitAuthed && encrypted) {
       await this.litAuth();
@@ -458,15 +541,14 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     const accessControlConditionsToUse =
       accessControlConditions || chatAccConditions;
 
-    
     let encryptedSymmetricKey, encryptedString;
     if (encrypted) {
       const { encryptedString: encryptedStringOut, symmetricKey } =
         await LitJsSdk.encryptString(message);
-      encryptedString = encryptedStringOut;
-      encryptedSymmetricKey =  LitJsSdk.uint8arrayToString(
+      encryptedString = await encryptedStringOut.text();
+      encryptedSymmetricKey = LitJsSdk.uint8arrayToString(
         await this.litClient.saveEncryptionKey({
-          accessControlConditions: accessControlConditionsToUse,
+          accessControlConditions: asArray(accessControlConditionsToUse),
           symmetricKey,
           authSig: this.litAuthSig,
           chain: this.chain,
@@ -475,14 +557,15 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       );
     } else {
       encryptedSymmetricKey = "";
-      encryptedString = message
+      encryptedString = message;
     }
 
-    const senderToUse = delegateWalletKeypair?.publicKey || sender;
 
     const instructions = [];
 
-    const profile = (await ChatSdk.profileKey({ wallet: sender }, this.programId))[0];
+    const profile = (
+      await ChatSdk.profileKey({ wallet: sender }, this.programId)
+    )[0];
     const profileAcc = (await this.getProfile(profile))!;
 
     const postPermissionAccount = await Token.getAssociatedTokenAddress(
@@ -493,6 +576,20 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       true
     );
 
+    const remainingAccounts = [];
+    if (delegateWallet || delegateWalletKeypair) {
+      if (!delegateWallet) {
+        delegateWallet = delegateWalletKeypair!.publicKey
+      }
+
+      remainingAccounts.push({
+        pubkey: (await ChatSdk.delegateWalletKey(delegateWallet, this.programId))[0],
+        isWritable: false,
+        isSigner: false
+      });
+    }
+
+    const senderToUse = delegateWallet || sender;
 
     instructions.push(
       await this.instruction.sendMessageV0(
@@ -500,9 +597,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
           id: uuid(),
           content: encryptedString,
           encryptedSymmetricKey,
-          accessControlConditions: JSON.stringify(
-            accessControlConditionsToUse
-          ),
+          accessControlConditions: JSON.stringify(accessControlConditionsToUse),
           nextId: null,
         },
         {
@@ -515,10 +610,10 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
             postPermissionMint: chatAcc.postPermissionMint,
             tokenProgram: TOKEN_PROGRAM_ID,
           },
-        }
+          remainingAccounts
+        },
       )
     );
-  
 
     return {
       instructions,
@@ -531,7 +626,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     args: SendMessageArgs,
     commitment: Commitment = "confirmed"
   ): Promise<{
-    txid?: string
+    txid?: string;
   }> {
     return this.execute(
       this.sendMessageInstructions(args),
@@ -539,4 +634,12 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       commitment
     );
   }
+}
+
+function asArray<T>(arg: T | T[]): T[] {
+  if (Array.isArray(arg)) {
+    return arg
+  }
+
+  return [arg]
 }

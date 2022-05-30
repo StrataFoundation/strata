@@ -64,7 +64,7 @@ describe("chat", () => {
   describe("initialize profile", () => {
     it("intializes a profile", async () => {
       const username = randomIdentifier();
-      const { walletProfile, delegateWalletKeypair } =
+      const { walletProfile } =
         await chatSdk.initializeProfile({
           username,
           imageUrl: "hey"
@@ -73,7 +73,6 @@ describe("chat", () => {
       const profileAcc = await chatSdk.getProfile(walletProfile);
       expect(profileAcc?.username).to.eq(username);
       expect(profileAcc?.imageUrl).to.eq("hey");
-      expect(profileAcc?.delegateWallet.toBase58()).to.eq(delegateWalletKeypair?.publicKey.toBase58());
     });
   });
 
@@ -111,9 +110,13 @@ describe("chat", () => {
       const { output: { walletProfile: outWalletProfile }, signers, instructions } =
         await chatSdk.initializeProfileInstructions({
           ownerWallet: profileKeypair.publicKey,
-          delegateWalletKeypair,
           username,
           imageUrl: "hey",
+        });
+
+      const { instructions: dInstructions, signers: dSigners } =
+        await chatSdk.initializeDelegateWalletInstructions({
+          delegateWalletKeypair,
         });
 
       walletProfile = outWalletProfile;
@@ -121,13 +124,13 @@ describe("chat", () => {
       await sendInstructions(
         new Map(),
         provider,
-        instructions,
-        [...signers, profileKeypair],
+        [...instructions, ...dInstructions],
+        [...signers, ...dSigners, profileKeypair],
         me
       )
     });
 
-    it("allows sending a basic encrypted message", async () => {
+    it("allows sending a basic encrypted message with delegate", async () => {
       console.log("Chat", chat.toBase58(), identifier)
       const { txid } = await chatSdk.sendMessage({
         sender: profileKeypair.publicKey,
@@ -138,6 +141,18 @@ describe("chat", () => {
       });
       const [{ decodedMessage }] = await chatSdk.getMessagesFromTx(txid!);
       expect(decodedMessage).to.eq("hello")
+    });
+
+    it("allows sending a basic encrypted message without delegate", async () => {
+      const { instructions, signers } = await chatSdk.sendMessageInstructions({
+        sender: profileKeypair.publicKey,
+        chat,
+        message: "hey",
+        encrypted: false,
+      });
+      const txid = await sendInstructions(chatSdk.errors || new Map(), provider, instructions, [...signers, profileKeypair]);
+      const [{ decodedMessage }] = await chatSdk.getMessagesFromTx(txid!);
+      expect(decodedMessage).to.eq("hey");
     });
   });
 })

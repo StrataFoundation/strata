@@ -10,5 +10,8 @@ pub enum ErrorCode {
   PermissionDenied,
 
   #[msg("The string was not alphanumeric")]
-  StringNotAlphanumeric
+  StringNotAlphanumeric,
+
+  #[msg("The sender must either be a delegate or owner wallet")]
+  IncorrectSender
 }

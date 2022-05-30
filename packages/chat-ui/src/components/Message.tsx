@@ -1,5 +1,6 @@
 import React from "react";
 import {
+  Alert,
   Avatar,
   Box,
   HStack,
@@ -54,7 +55,13 @@ export function Message({
           wordBreak="break-word"
           color={textColor[colorMode]}
         >
-          <Text>{message}</Text>
+          {message ? (
+            <Text>{message}</Text>
+          ) : (
+            <Text color="red" fontStyle="italic">
+              You do not have enough tokens to read this message.
+            </Text>
+          )}
         </Box>
       </VStack>
       <Icon

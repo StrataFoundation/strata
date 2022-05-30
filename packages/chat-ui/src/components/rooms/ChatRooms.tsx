@@ -15,7 +15,7 @@ export function ChatRooms({ chatKey }: chatRoomProps) {
 
   //push to url for specific chat
   const handleClick = () => {
-    router.push(`/rooms/${chat?.identifier}`);
+    router.push(`/chats/${chat?.identifier}`);
   };
 
   return (

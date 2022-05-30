@@ -34,7 +34,6 @@ export function Chatbox({
   const [error, setError] = useState<Error>();
   const { handleErrors } = useErrorHandler();
 
-  console.log(delegateWalletKeypair?.publicKey.toBase58())
   handleErrors(error);
 
   /*get uid and phoroURL from current User then send message 
@@ -76,6 +75,8 @@ export function Chatbox({
         if (onAddPendingMessage)
           onAddPendingMessage({ content: message, txid });
 
+        scrollRef.current.scrollIntoView({ behavior: "smooth" });
+
         await sendAndConfirmWithRetry(
           chatSdk.provider.connection,
           rawTx,
@@ -85,7 +86,6 @@ export function Chatbox({
           "confirmed"
         );
       }
-      scrollRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
   return (

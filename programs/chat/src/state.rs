@@ -37,9 +37,15 @@ pub struct ProfileV0 {
   pub username: String, // limit 32 characters, unique, (puffed)
   pub image_url: String, // limit 200 characters, (puffed)
   pub metadata_url: String, // limit 200 characters, (puffed)
-  // Most wallets do not allow for auto approve tx. So we create a local
+  pub bump: u8,
+}
+
+#[account]
+#[derive(Default)]
+pub struct DelegateWalletV0 {
+  pub owner_wallet: Pubkey,
+    // Most wallets do not allow for auto approve tx. So we create a local
   // wallet that will sign messages, and you just sign once saying that your
   // wallet is the owner and is delegating this wallet to sign.
   pub delegate_wallet: Pubkey,
-  pub bump: u8,
 }

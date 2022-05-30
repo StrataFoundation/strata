@@ -113,7 +113,7 @@ export const useTransactions = ({
               err,
             },
           ]);
-          setTransactions((txns) => [...txns, ...newTxns]);
+          setTransactions((txns) => [...newTxns, ...txns]);
         } catch (e: any) {
           console.error("Error while fetching new tx", e)
         }

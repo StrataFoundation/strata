@@ -37,13 +37,19 @@ async function createProfile(
 ): Promise<void> {
   if (chatSdk) {
     const {
-      output: { delegateWalletKeypair },
       instructions,
       signers,
     } = await chatSdk.initializeProfileInstructions({
       username: args.username,
       imageUrl: args.imageUrl,
     });
+    const {
+      output: { delegateWalletKeypair },
+      instructions: delInstructions,
+      signers: delSigners
+    } = await chatSdk.initializeDelegateWalletInstructions({});
+    instructions.push(...delInstructions);
+    signers.push(...delSigners);
     instructions.push(
       SystemProgram.transfer({
         fromPubkey: chatSdk.wallet.publicKey,

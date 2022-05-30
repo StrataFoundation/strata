@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 use crate::state::*;
 use crate::error::ErrorCode;
 use anchor_spl::token::{TokenAccount, Token, Mint};
+use std::convert::*;
 
 #[derive(Accounts)]
 pub struct SendMessageV0<'info> {
@@ -12,9 +13,6 @@ pub struct SendMessageV0<'info> {
   )]
   pub chat: Box<Account<'info, ChatV0>>,
   pub sender: Signer<'info>,
-  #[account(
-    constraint = profile.owner_wallet == sender.key() || profile.delegate_wallet == sender.key()
-  )]
   pub profile: Box<Account<'info, ProfileV0>>,
   #[account(
     mut,
@@ -41,6 +39,14 @@ pub fn handler(
   _args: MessageV0,
 ) -> Result<()> {
   require!(ctx.accounts.post_permission_account.amount >= ctx.accounts.chat.post_permission_amount, ErrorCode::PermissionDenied);
+
+  if ctx.accounts.profile.owner_wallet != ctx.accounts.sender.key() {
+    let delegate_acc = &ctx.remaining_accounts[0];
+    let delegate: Account<DelegateWalletV0> = Account::try_from(delegate_acc)?;
+    if delegate.delegate_wallet != ctx.accounts.sender.key() {
+      return Err(error!(ErrorCode::IncorrectSender))
+    }
+  }
 
   Ok(())
 }

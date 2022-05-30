@@ -8,6 +8,7 @@ import { useRouter } from "next/router";
 import { RoomsHeader } from "@/components/rooms/RoomsHeader";
 import { useChatKey } from "@/hooks/useChatKey";
 import { useMessages } from "@/hooks/useMessages";
+import { useErrorHandler } from "@strata-foundation/react";
 
 export default function Chatroom() {
   const [isMobile] = useMediaQuery('(max-width: 768px)')
@@ -15,16 +16,21 @@ export default function Chatroom() {
   const { id } = router.query
   const lastMessage = useRef(null)
   const chatKey = useChatKey(id as string | undefined);
-  const [pendingMessages, setPendingMessages] = useState<IPendingMessage[]>();
-  const { messages } = useMessages(chatKey);
-  const reverseMsg = useMemo(() => [...(messages || [])].reverse(), [messages]);
+  const [pendingMessages, setPendingMessages] = useState<IPendingMessage[]>([]);
+  const { messages, error } = useMessages(chatKey);
+  const { handleErrors } = useErrorHandler();
+  handleErrors(error)
+  
+  const txWeHave = useMemo(
+    () => new Set(Array.from(messages?.map((message) => message.txid) || [])),
+    [messages]
+  );
 
   useEffect(() => {
-    if (messages) {
-      const txWeHave = new Set(Array.from(messages?.map(message => message.txid)))
-      setPendingMessages(pendingMessages => pendingMessages?.filter(p => !txWeHave.has(p.txid)))
-    }
-  }, [messages])
+    setPendingMessages((pendingMessages) =>
+      pendingMessages.filter((p) => !txWeHave.has(p.txid))
+    );
+  }, [txWeHave]);
 
   return (
     <Container>
@@ -33,7 +39,11 @@ export default function Chatroom() {
         <Flex height="71px">
           <RoomsHeader chatKey={chatKey} />
         </Flex>
-        <ChatMessages scrollRef={lastMessage} messages={reverseMsg} pendingMessages={pendingMessages} />
+        <ChatMessages
+          scrollRef={lastMessage}
+          messages={messages}
+          pendingMessages={pendingMessages.filter((p) => !txWeHave.has(p.txid))}
+        />
         <Chatbox
           scrollRef={lastMessage}
           chatKey={chatKey}

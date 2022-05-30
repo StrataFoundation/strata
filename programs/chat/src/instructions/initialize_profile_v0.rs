@@ -8,7 +8,6 @@ pub const PROFILE_SIZE: usize = 1 + // key
   32 + // username
   200 + // image_url
   200 + // metadata_url
-  32 + // delegate_wallet
   80; // padding
 
 #[derive(Accounts)]
@@ -33,7 +32,6 @@ pub struct InitializeProfileV0<'info> {
   )]
   pub wallet_profile: Box<Account<'info, ProfileV0>>,
   pub owner_wallet: Signer<'info>,
-  pub delegate_wallet: Signer<'info>,
   pub system_program: Program<'info, System>,
 }
 
@@ -54,7 +52,6 @@ pub fn handler(
   require!(args.username.chars().all(char::is_alphanumeric), ErrorCode::StringNotAlphanumeric);
 
   ctx.accounts.wallet_profile.username = puffed_out_string(&args.username, 32);
-  ctx.accounts.wallet_profile.delegate_wallet = ctx.accounts.delegate_wallet.key();
   ctx.accounts.wallet_profile.owner_wallet = ctx.accounts.owner_wallet.key();
   ctx.accounts.wallet_profile.bump = *ctx.bumps.get("wallet_profile").unwrap();
   ctx.accounts.wallet_profile.metadata_url = puffed_out_string(&args.metadata_url, 200);

@@ -1,15 +1,13 @@
+import { Flex, Icon, IconButton, Stack, useColorMode } from '@chakra-ui/react';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { PublicKey } from '@solana/web3.js';
 import React from "react";
-import {
-  Avatar, Flex, Icon, IconButton, Stack, useColorMode
-} from '@chakra-ui/react'
-import { useWallet } from '@solana/wallet-adapter-react'
-import { PublicKey } from '@solana/web3.js'
-import { IoLogOut, IoMoon, IoSunny } from 'react-icons/io5'
-import { useWalletProfile } from '../hooks/useWalletProfile'
-import { ChatRooms } from './rooms/ChatRooms'
+import { IoMoon, IoSunny } from 'react-icons/io5';
+import { useWalletProfile } from '../hooks/useWalletProfile';
 import { ProfileButton } from "./ProfileButton";
+import { ChatRooms } from './rooms/ChatRooms';
 
-const CHAT_KEY = new PublicKey("8XUTcAhZUZWjoDotgCuvdMsF7BaN8i1XauZuK6dv7NxF");
+const CHAT_KEY = new PublicKey("CED7XAUJH8jmaoGoP5X2BSPD3uvzMYUHByoXPmkWzoRF");
 
 export const Sidebar = ({ fullWidth }: { fullWidth?: boolean }) => {
   const { colorMode, toggleColorMode } = useColorMode()

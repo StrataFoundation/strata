@@ -1,7 +1,7 @@
 import { PublicKey } from "@solana/web3.js";
 import { ChatSdk, IMessage } from "@strata-foundation/chat";
 import { useTransactions } from "@strata-foundation/react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAsync } from "react-async-hook";
 import { useChatSdk } from "../contexts";
 
@@ -38,13 +38,20 @@ export function useMessages(chat: PublicKey | undefined): IUseMessages {
     numTransactions: 50,
     subscribe: true
   });
-  const signatures = useMemo(() => transactions.map(t => t.signature), [transactions]);
-  const { result: messages, loading, error } = useAsync(getMessages, [chatSdk, signatures])
-
+  // For a stable messages array that doesn't go undefined when we do the next
+  // useAsync fetch
+  const [messagesStable, setMessagesStable] = useState<IMessage[]>();
+  const signatures = useMemo(() => transactions.map(t => t.signature).reverse(), [transactions]);
+  const { result: messages, loading, error } = useAsync(getMessages, [chatSdk, signatures]);
+  useEffect(() => {
+    if (messages) {
+      setMessagesStable(messages)
+    }
+  }, [messages])
   return {
     ...rest,
     loadingInitial: rest.loadingInitial || loading,
     error: rest.error || error,
-    messages,
+    messages: messagesStable,
   };
 }
