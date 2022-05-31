@@ -22,12 +22,12 @@ async function run(): Promise<void> {
 
   const chatSdk = new ChatSdk(provider, chat, client);
 
-  console.log(args)
   await chatSdk.initializeChat({
     identifier: args[2],
     name: args[3],
     readPermissionMint: new PublicKey(args[4]),
     postPermissionMint: new PublicKey(args[4]),
+    imageUrl: args[5]
   });
 }
 

@@ -29,7 +29,7 @@ pub struct SendMessageV0<'info> {
 pub struct MessageV0 {
   pub id: String, // uuid
   pub encrypted_symmetric_key: String,
-  pub access_control_conditions: String, // encoded json
+  pub read_permission_amount: u64,
   pub content: String,
   pub next_id: Option<String>
 }

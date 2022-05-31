@@ -1,48 +1,69 @@
-import React, { useMemo } from "react";
 import {
-  Alert,
   Avatar,
   Box,
   HStack,
   Icon,
+  Skeleton,
   Text,
   useColorMode,
   useColorModeValue,
-  VStack,
+  VStack
 } from "@chakra-ui/react";
-import { IMessage, asArray } from "@strata-foundation/chat";
+import { GiphyFetch } from "@giphy/js-fetch-api";
+import { Gif } from "@giphy/react-components";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useProfile } from "../hooks";
-import { BsCircle, BsCheckCircleFill } from "react-icons/bs";
-import { PublicKey } from "@solana/web3.js";
+import { IMessage, MessageType } from "@strata-foundation/chat";
+import { roundToDecimals, useMint } from "@strata-foundation/react";
+import { toNumber } from "@strata-foundation/spl-token-bonding";
+import React from "react";
+import { useAsync } from "react-async-hook";
+import { BsCheckCircleFill, BsCircle } from "react-icons/bs";
+import { GIPHY_API_KEY } from "../constants";
+import { useChat, useProfile } from "../hooks";
 import { BuyMoreButton } from "./BuyMoreButton";
+
+const gf = new GiphyFetch(GIPHY_API_KEY);
+
+async function fetchGif(gifyId?: string): Promise<any | undefined> {
+  if (gifyId) {
+    const { data } = await gf.gif(gifyId);
+    return data;
+  }
+}
+
+function GifyGif({ gifyId }: { gifyId?: string }) {
+  const { result: data, loading } = useAsync(fetchGif, [gifyId]);
+
+  if (loading || !data) {
+    return <Skeleton w="300px" h="300px" />
+  }
+
+  return <Gif gif={data} width={300} />;
+}
+
 export function Message({
   decodedMessage,
   profileKey,
-  accessControlConditions,
+  readPermissionAmount,
+  chatKey,
   pending = false,
 }: Partial<IMessage> & { pending?: boolean }) {
   const { colorMode } = useColorMode();
   const { publicKey } = useWallet();
   const { info: profile } = useProfile(profileKey);
   const id = profile?.ownerWallet.toBase58();
+  const { info: chat } = useChat(chatKey);
+  const readMint = chat?.readPermissionMint;
+  const readMintAcc = useMint(readMint);
+
   const uid = publicKey?.toBase58();
 
   const status = pending ? "Pending" : "Confirmed";
-  const readMint = useMemo(() => {
-    try {
-      if (accessControlConditions) {
-        const json = JSON.parse(accessControlConditions);
-        return new PublicKey(asArray(json)[0].params[0]);
-      }
-    } catch (e: any) {
-      console.error(e);
-    }
-  }, [accessControlConditions]);
+  const redColor = useColorModeValue("red.600", "red.400");
 
   let message;
   try {
-    message = decodedMessage && JSON.parse(decodedMessage).text;
+    message = decodedMessage && JSON.parse(decodedMessage);
   } catch (e: any) {
     message = decodedMessage;
   }
@@ -55,7 +76,6 @@ export function Message({
       <VStack w="full" align="start" spacing={0}>
         <Text
           fontSize="sm"
-          mb="-4px"
           fontWeight="semibold"
           color={uid == id ? "blue.500" : usernameColor[colorMode]}
         >
@@ -69,11 +89,20 @@ export function Message({
           color={textColor[colorMode]}
         >
           {message ? (
-            <Text>{message}</Text>
+            message.type === MessageType.Gify ? (
+              <GifyGif gifyId={message.gifyId} />
+            ) : (
+              <Text mt={"-4px"}>{message.text}</Text>
+            )
           ) : (
             <>
-              <Text color="red" fontStyle="italic">
-                You do not have enough tokens to read this message.
+              <Text color={redColor} fontStyle="italic" mb={2}>
+                {readPermissionAmount && readMintAcc
+                  ? `You need at least ${roundToDecimals(
+                      toNumber(readPermissionAmount, readMintAcc),
+                      readMintAcc.decimals
+                    )} tokens to read this message.`
+                  : "You do not have enough tokens to read this message."}
               </Text>
               <BuyMoreButton mint={readMint} />
             </>

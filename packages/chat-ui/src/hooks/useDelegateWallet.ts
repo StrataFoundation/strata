@@ -1,5 +1,6 @@
-import { useLocalStorage, useWallet } from "@solana/wallet-adapter-react";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { Keypair } from "@solana/web3.js";
+import { useLocalStorage } from "@strata-foundation/react";
 import { useMemo } from "react";
 
 export function useDelegateWallet(): Keypair | undefined {

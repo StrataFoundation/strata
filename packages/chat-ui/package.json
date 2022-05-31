@@ -26,6 +26,9 @@
   "dependencies": {
     "@chakra-ui/icons": "^1.1.7",
     "@chakra-ui/react": "^1.8.1",
+    "@giphy/js-fetch-api": "^4.2.0",
+    "@giphy/react-components": "^5.8.0",
+    "@hookform/resolvers": "^2.8.8",
     "@metaplex-foundation/mpl-token-metadata": "^1.1.0",
     "@solana/wallet-adapter-react": "^0.15.4",
     "@solana/wallet-adapter-react-ui": "^0.9.5",
@@ -33,6 +36,7 @@
     "@solana/web3.js": "^1.32.0",
     "@strata-foundation/react": "^3.6.1",
     "@types/request-promise": "^4.1.48",
+    "add": "^2.0.6",
     "axios": "^0.26.1",
     "js-base64": "^3.7.2",
     "moment": "^2.29.1",
@@ -45,8 +49,8 @@
     "react-dom": "^17.0.2",
     "react-hook-form": "^7.25.1",
     "react-hot-toast": "^2.2.0",
-    "yup": "^0.32.11",
-    "@hookform/resolvers": "^2.8.8"
+    "yarn": "^1.22.18",
+    "yup": "^0.32.11"
   },
   "devDependencies": {
     "@types/gtag.js": "^0.0.10",

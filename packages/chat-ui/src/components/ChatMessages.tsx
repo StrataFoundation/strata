@@ -1,7 +1,7 @@
 import { useMessages } from "../hooks/useMessages";
-import { Flex, VStack } from "@chakra-ui/react";
+import { Flex, usePrevious, VStack } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
-import React from "react";
+import React, { useEffect } from "react";
 import { Message } from "./Message";
 import { IMessage } from "@strata-foundation/chat";
 import { IPendingMessage } from "./Chatbox";
@@ -17,6 +17,10 @@ export function ChatMessages({
   pendingMessages?: IPendingMessage[];
 }) {
   const { info: profile } = useWalletProfile();
+
+  useEffect(() => {
+    if (messages) scrollRef.current.scrollIntoView();
+  }, [messages]);
 
   return (
     <VStack

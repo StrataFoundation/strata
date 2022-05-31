@@ -34,38 +34,44 @@ export function RoomsHeader({ chatKey }: { chatKey?: PublicKey }) {
       borderColor={colorMode === "light" ? "gray.200" : "gray.700"}
       direction="row"
     >
-      <Box maxWidth="70%">
-        <Heading size={isMobile ? "md" : "lg"} isTruncated>
+      <Box maxWidth="70%" pt={1}>
+        <Heading size={isMobile ? "md" : "md"} isTruncated>
           {chat?.name}
         </Heading>
         {!isMobile && (
           <HStack spacing={4}>
-            { readMetadata && <HStack spacing={1}>
-              <Text>Read: 1 </Text>
-              <Avatar
-                w="16px"
-                h="16px"
-                title={readMetadata?.data.symbol}
-                src={readImage}
-              />
-            </HStack> }
-            { postMetadata && <HStack spacing={1}>
-              <Text>
-                Post:
-                {chat?.postPermissionAmount &&
-                  postMint &&
-                  roundToDecimals(
-                    toNumber(chat.postPermissionAmount, postMint),
-                    4
-                  )}
-              </Text>
-              <Avatar
-                w="16px"
-                h="16px"
-                title={postMetadata?.data.symbol}
-                src={postImage}
-              />
-            </HStack> }
+            {readMetadata && (
+              <HStack spacing={1}>
+                <Text fontWeight={600}>Read:</Text>
+                <Text>hold 1</Text>
+                <Avatar
+                  w="16px"
+                  h="16px"
+                  title={readMetadata?.data.symbol}
+                  src={readImage}
+                />
+              </HStack>
+            )}
+            {postMetadata && (
+              <HStack spacing={1}>
+                <Text fontWeight={600}>Post:</Text>
+                <Text>
+                  {Object.keys(chat?.postPermissionAction || {})[0]}{" "}
+                  {chat?.postPermissionAmount &&
+                    postMint &&
+                    roundToDecimals(
+                      toNumber(chat.postPermissionAmount, postMint),
+                      4
+                    )}
+                </Text>
+                <Avatar
+                  w="16px"
+                  h="16px"
+                  title={postMetadata?.data.symbol}
+                  src={postImage}
+                />
+              </HStack>
+            )}
           </HStack>
         )}
       </Box>

@@ -8,12 +8,13 @@ pub const CHAT_SIZE: usize = 1 + // key
   32 + // post_permission_mint
   32 + // read_permission_mint
   8 + // post_permission_amount
+  8 + // default_read_permission_amount
   1 + // post_permission_action
   33 + // pay_destination
-  32 + // name hard 32 bytes limit
+  100 + // name hard 100 bytes limit
   200 + // image hard 200 bytes limit
   200 + // metadata hard 200 bytes limit
-  300; // Enough room for ACL
+  80; // Some padding
 
 #[derive(Accounts)]
 #[instruction(args: InitializeChatArgsV0)]
@@ -37,13 +38,13 @@ pub struct InitializeChatArgsV0 {
   pub post_permission_mint: Pubkey,
   pub read_permission_mint: Pubkey, // Not used by program since blockchain is public, enforced by lit protocol
   pub post_permission_amount: u64,
+  pub default_read_permission_amount: u64,
   pub post_permission_action: PostAction,
   pub post_pay_destination: Option<Pubkey>,
   pub identifier: String,
   pub name: String,
   pub image_url: String,
   pub metadata_url: String,
-  pub default_access_control_conditions: Vec<u8>
 }
 
 pub fn handler(
@@ -62,11 +63,11 @@ pub fn handler(
   ctx.accounts.chat.post_permission_action = args.post_permission_action;
   ctx.accounts.chat.post_pay_destination = args.post_pay_destination;
   ctx.accounts.chat.read_permission_mint = args.read_permission_mint;
+  ctx.accounts.chat.default_read_permission_amount = args.default_read_permission_amount;
   ctx.accounts.chat.name = puffed_out_string(&args.name, 100);
   ctx.accounts.chat.identifier = puffed_out_string(&args.identifier, 32);
   ctx.accounts.chat.metadata_url = puffed_out_string(&args.metadata_url, 200);
   ctx.accounts.chat.image_url = puffed_out_string(&args.image_url, 200);
-  ctx.accounts.chat.default_access_control_conditions = args.default_access_control_conditions;
   ctx.accounts.chat.bump = *ctx.bumps.get("chat").unwrap();
   
   Ok(())

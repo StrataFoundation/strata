@@ -20,13 +20,13 @@ pub struct ChatV0 {
   pub post_permission_mint: Pubkey,
   pub read_permission_mint: Pubkey, // Not used by program since blockchain is public, enforced by lit protocol
   pub post_permission_amount: u64,
+  pub default_read_permission_amount: u64,
   pub post_permission_action: PostAction,
   pub identifier: String, // limit 32 characters (puffed)
   pub name: String, // limit 100 characters (puffed)
   pub image_url: String, // limit 200 characters (puffed)
   pub metadata_url: String, // limit 200 characters (puffed)
   pub post_pay_destination: Option<Pubkey>,
-  pub default_access_control_conditions: Vec<u8>, // encoded json, limit 300
   pub bump: u8,
 }
 

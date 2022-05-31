@@ -10,9 +10,8 @@ import {
 } from "@strata-foundation/spl-utils";
 import { ChatIDL, ChatV0, PostAction, ProfileV0 } from "./generated/chat";
 // @ts-ignore
-import LitJsSdk from "lit-js-sdk";
 import { v4 as uuid } from "uuid";
-import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo, Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
 // @ts-ignore
 import LitJsSdk from "lit-js-sdk";
 // @ts-ignore
@@ -21,12 +20,15 @@ import * as bs58 from "bs58";
 export * from "./generated/chat";
 
 export enum MessageType {
-  Text = "text"
+  Text = "text",
+  Gify = "gify",
 }
 
 export interface IMessageContent {
   type: MessageType;
-  text: string;
+  text?: string;
+  attachments?: string[];
+  gifyId?: string;
 }
 
 export interface IChat extends ChatV0 {
@@ -43,6 +45,7 @@ export interface IMessage extends MessageV0 {
   /** Decoded message, if permissions were enough to decode it */
   decodedMessage?: string;
   profileKey: PublicKey;
+  chatKey: PublicKey;
 }
 
 export interface InitializeChatArgs {
@@ -61,10 +64,8 @@ export interface InitializeChatArgs {
   postPermissionAmount?: number | BN;
   /** The action to take when posting. **Default:** hold */
   postPermissionAction?: PostAction;
-  /** The amount of tokens needed to read. **Default:** 1 */
-  readPermissionAmount?: number;
-  /** Lit protocol conditions. **Default:** `readAmount` readPermissionMint */
-  defaultAccessControlConditions?: any;
+  /** Amount of read permission mint required to read this chat by default. **Default:** 1 */
+  defaultReadPermissionAmount?: any;
   /** The destination to pay to on post */
   postPayDestination?: PublicKey;
   imageUrl?: string;
@@ -97,6 +98,10 @@ export interface SendMessageArgs {
   chat: PublicKey;
   /** The message to send, typically a json string. */
   message: string;
+
+  /** The amount of tokens needed to read. **Default:** from chat */
+  readPermissionAmount?: number;
+
   /** Lit protocol conditions, **Default:** The chatroom default */
   accessControlConditions?: any;
 
@@ -231,29 +236,46 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     const profileAccountIndex = sendMessageIdl.accounts.findIndex(
       (account: any) => account.name === "profile"
     );
+    const chatAccountIndex = sendMessageIdl.accounts.findIndex(
+      (account: any) => account.name === "chat"
+    );
     const decoded = instructions
       .map((ix) => ({
         // @ts-ignore
         data: coder.decode(bs58.decode(ix.data)),
         profile:
           tx.transaction.message.accountKeys[ix.accounts[profileAccountIndex]],
+        chat:
+          tx.transaction.message.accountKeys[ix.accounts[chatAccountIndex]],
       }))
       .filter(truthy);
+
 
     return Promise.all(
       decoded
         .filter((decoded) => decoded.data.name === "sendMessageV0")
         .map(async (decoded) => {
           const args = decoded.data.data.args;
+          const chatAcc = await this.getChat(decoded.chat);
+          const readMint = await getMintInfo(this.provider, chatAcc!.readPermissionMint);
 
           let decodedMessage;
           if (args.encryptedSymmetricKey) {
             if (!this.isLitAuthed) {
               await this.litAuth();
             }
+            const accessControlConditions = [tokenAccessPermissions(
+              chatAcc!.readPermissionMint,
+              toBN(
+                args.readPermissionAmount,
+                readMint
+              ),
+              this.chain
+            )];
+
             try {
               const symmetricKey = await this.litClient.getEncryptionKey({
-                accessControlConditions: asArray(JSON.parse(args.accessControlConditions)),
+                solRpcConditions: accessControlConditions,
                 // Note, below we convert the encryptedSymmetricKey from a UInt8Array to a hex string.  This is because we obtained the encryptedSymmetricKey from "saveEncryptionKey" which returns a UInt8Array.  But the getEncryptionKey method expects a hex string.
                 toDecrypt: args.encryptedSymmetricKey,
                 chain: this.chain,
@@ -273,6 +295,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
           return {
             ...args,
             txid,
+            chatKey: decoded.chat,
             profileKey: decoded.profile,
             decodedMessage,
           };
@@ -327,13 +350,12 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     admin = this.wallet.publicKey,
     identifier,
     name,
-    defaultAccessControlConditions,
     readPermissionMint,
     postPermissionMint,
     postPermissionAction = PostAction.Hold,
     postPayDestination,
     postPermissionAmount = 1,
-    readPermissionAmount = 1,
+    defaultReadPermissionAmount = 1,
     imageUrl = "",
     metadataUrl = "",
   }: InitializeChatArgs): Promise<InstructionResult<{ chat: PublicKey }>> {
@@ -347,20 +369,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         name,
         imageUrl: imageUrl,
         metadataUrl: metadataUrl,
-        defaultAccessControlConditions: Buffer.from(
-          JSON.stringify(
-            defaultAccessControlConditions || [{
-              method: "getTokenAccountBalance",
-              params: [readPermissionMint?.toBase58()],
-              chain: this.chain,
-              returnValueTest: {
-                key: "amount",
-                comparator: ">=",
-                value: toBN(readPermissionAmount, readMint),
-              },
-            }]
-          )
-        ),
+        defaultReadPermissionAmount: toBN(defaultReadPermissionAmount, readMint),
         postPermissionMint,
         readPermissionMint,
         postPermissionAction: postPermissionAction as never,
@@ -525,7 +534,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     sender = this.wallet.publicKey,
     chat,
     message,
-    accessControlConditions,
+    readPermissionAmount,
     delegateWallet,
     delegateWalletKeypair,
     encrypted = true,
@@ -535,12 +544,24 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     }
 
     const chatAcc = (await this.getChat(chat))!;
-    const chatAccConditions = JSON.parse(
-      (chatAcc.defaultAccessControlConditions as Buffer).toString("utf-8")
+    const readMint = await getMintInfo(
+      this.provider,
+      chatAcc.readPermissionMint
     );
-    const accessControlConditionsToUse =
-      accessControlConditions || chatAccConditions;
 
+    const accessControlConditionsToUse = [
+      tokenAccessPermissions(
+        chatAcc.readPermissionMint,
+        toBN(
+          readPermissionAmount || chatAcc.defaultReadPermissionAmount,
+          readMint
+        ),
+        this.chain
+      ),
+    ];
+
+    console.log("set", accessControlConditionsToUse)
+    
     let encryptedSymmetricKey, encryptedString;
     if (encrypted) {
       const { encryptedString: encryptedStringOut, symmetricKey } =
@@ -548,7 +569,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       encryptedString = await encryptedStringOut.text();
       encryptedSymmetricKey = LitJsSdk.uint8arrayToString(
         await this.litClient.saveEncryptionKey({
-          accessControlConditions: asArray(accessControlConditionsToUse),
+          solRpcConditions: accessControlConditionsToUse,
           symmetricKey,
           authSig: this.litAuthSig,
           chain: this.chain,
@@ -597,7 +618,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
           id: uuid(),
           content: encryptedString,
           encryptedSymmetricKey,
-          accessControlConditions: JSON.stringify(accessControlConditionsToUse),
+          readPermissionAmount: toBN(readPermissionAmount || chatAcc.defaultReadPermissionAmount, readMint),
           nextId: null,
         },
         {
@@ -610,8 +631,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
             postPermissionMint: chatAcc.postPermissionMint,
             tokenProgram: TOKEN_PROGRAM_ID,
           },
-          remainingAccounts
-        },
+          remainingAccounts,
+        }
       )
     );
 
@@ -636,10 +657,25 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   }
 }
 
-export function asArray<T>(arg: T | T[]): T[] {
-  if (Array.isArray(arg)) {
-    return arg
-  }
-
-  return [arg]
+function tokenAccessPermissions(readPermissionMint: PublicKey, threshold: BN, chain: string) {
+  return {
+    method: "getTokenAccountsByOwner",
+    params: [
+      ":userAddress",
+      {
+        programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+      },
+      {
+        encoding: "jsonParsed",
+      },
+    ],
+    chain,
+    returnValueTest: {
+      key: `$[?(@.account.data.parsed.info.mint == "${readPermissionMint.toBase58()}")].account.data.parsed.info.tokenAmount.amount'`,
+      comparator: ">=",
+      value: threshold.toString(10),
+    },
+  };
+  throw new Error("Function not implemented.");
 }
+

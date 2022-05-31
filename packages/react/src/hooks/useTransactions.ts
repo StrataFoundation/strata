@@ -58,6 +58,7 @@ async function retryGetTxn(connection: Connection, sig: string, tries: number = 
   if (tries < 5) {
     console.log(`Failed to fetch ${sig}, retrying in 500ms...`)
     await sleep(500);
+    console.log(`Retrying ${sig}...`);
     return retryGetTxn(connection, sig, tries + 1)
   }
 

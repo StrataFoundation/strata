@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useInterval } from "./useInterval";
 
 export function useLocalStorage<T>(
   key: string,
@@ -23,6 +24,14 @@ export function useLocalStorage<T>(
     },
     [value, setValue, key]
   );
+
+  useInterval(() => {
+    if (typeof localStorage !== "undefined" && localStorage.getItem(key) != JSON.stringify(value)) {
+    const value =
+      typeof localStorage !== "undefined" && localStorage.getItem(key);
+      if (value) setValue(JSON.parse(value) as T);
+    }
+  }, 1000)
 
   return [value, setLocalStorage];
 }

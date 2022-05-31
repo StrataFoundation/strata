@@ -1,5 +1,5 @@
 import { useDelegateWallet } from "../hooks/useDelegateWallet";
-import { Button, Flex, FormControl, Input } from "@chakra-ui/react";
+import { Button, Flex, FormControl, HStack, Icon, IconButton, Input, Modal, ModalBody, ModalContent, ModalHeader, useDisclosure } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import { IMessageContent, MessageType } from "@strata-foundation/chat";
@@ -10,10 +10,14 @@ import { useChatSdk } from "../contexts";
 import { useChat } from "../hooks";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import { BuyMoreButton } from "./BuyMoreButton";
+import { AiOutlineGif } from "react-icons/ai";
+import { GifSearch } from "./GifSearch";
+import { AiOutlineSend } from "react-icons/ai";
 
 export interface IPendingMessage {
   content: IMessageContent;
   txid: string;
+  chatKey?: PublicKey;
 }
 export type chatProps = {
   onAddPendingMessage?: (message: IPendingMessage) => void;
@@ -27,6 +31,7 @@ export function Chatbox({
   onAddPendingMessage,
 }: chatProps) {
   const [input, setInput] = useState("");
+  const { isOpen, onToggle, onClose } = useDisclosure();
   const handleChange = (e: any) => {
     e.preventDefault();
     e.stopPropagation();
@@ -50,14 +55,8 @@ export function Chatbox({
   /*get uid and phoroURL from current User then send message 
   and set chat state to "", then scroll to latst message
   */
-  const sendMessage = async (e: any) => {
-    e.preventDefault();
-
+  const sendMessage = async (message: IMessageContent) => {
     if (delegateWalletKeypair) {
-      const message = {
-        type: MessageType.Text,
-        text: input,
-      };
       if (chatSdk && chatKey) {
         setInput("");
         const { instructions, signers } = await chatSdk.sendMessageInstructions(
@@ -84,7 +83,7 @@ export function Chatbox({
           }
         );
         if (onAddPendingMessage)
-          onAddPendingMessage({ content: message, txid });
+          onAddPendingMessage({ content: message, txid, chatKey });
 
         scrollRef.current.scrollIntoView({ behavior: "smooth" });
 
@@ -100,42 +99,75 @@ export function Chatbox({
     }
   };
   return hasEnough ? (
-    <Flex direction="row" position="sticky" bottom={0}>
-      <FormControl
-        p={2}
-        zIndex={3}
-        as="form"
-        display="flex"
-        alignItems="center"
-      >
-        {hasEnough && (
-          <Input
-            onKeyPress={(ev) => {
-              if (ev.key === "Enter") {
-                if (ev.shiftKey) {
-                  ev.preventDefault();
-                  setInput((i) => `${i}\n`);
-                } else {
-                  sendMessage(ev);
+    <>
+      <Flex direction="row" position="sticky" bottom={0}>
+        <HStack p="10px" spacing={2} w="full" align="stretch">
+          {hasEnough && (
+            <Input
+              onKeyPress={(ev) => {
+                if (ev.key === "Enter") {
+                  if (ev.shiftKey) {
+                    ev.preventDefault();
+                    setInput((i) => `${i}\n`);
+                  } else {
+                    ev.preventDefault();
+                    sendMessage({
+                      type: MessageType.Text,
+                      text: input,
+                    });
+                  }
                 }
-              }
-            }}
+              }}
+              size="lg"
+              value={input}
+              onChange={handleChange}
+              placeholder="Type Message"
+            />
+          )}
+          <IconButton
             size="lg"
-            value={input}
-            onChange={handleChange}
-            placeholder="Type Message"
+            aria-label="Select GIF"
+            variant="outline"
+            onClick={onToggle}
+            icon={<Icon w="24px" h="24px" as={AiOutlineGif} />}
           />
-        )}
-        <Button
-          alignSelf="flex-end"
-          isDisabled={!hasEnough}
-          size="lg"
-          onClick={sendMessage}
-        >
-          Send
-        </Button>
-      </FormControl>
-    </Flex>
+          <Button
+            colorScheme="primary"
+            variant="outline"
+            alignSelf="flex-end"
+            isDisabled={!hasEnough || !input}
+            size="lg"
+            onClick={() =>
+              sendMessage({
+                type: MessageType.Text,
+                text: input,
+              })
+            }
+          >
+            <Icon as={AiOutlineSend} />
+          </Button>
+        </HStack>
+      </Flex>
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        size="2xl"
+        isCentered
+        trapFocus={true}
+      >
+        <ModalContent borderRadius="xl" shadow="xl">
+          <ModalHeader>Select GIF</ModalHeader>
+          <ModalBody>
+            <GifSearch
+              onSelect={(gifyId) => {
+                onClose();
+                sendMessage({ type: MessageType.Gify, gifyId });
+              }}
+            />
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+    </>
   ) : (
     <Flex justify="center" mb="6px">
       <BuyMoreButton mint={chat?.postPermissionMint} />

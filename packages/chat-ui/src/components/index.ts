@@ -8,3 +8,4 @@ export * from "./Wallet";
 export * from "./rooms";
 export * from "./CreateProfileModal";
 export * from "./ProfileButton";
+export * from "./GifSearch";
