@@ -229,56 +229,28 @@ async function createLbpCandyMachine(
   })
 }
 
-async function createLiquidityBootstrapper(
+async function createLbpExistingMint(
   marketplaceSdk: MarketplaceSdk,
   values: ILbpFormProps,
-  cluster: WalletAdapterNetwork | "localnet",
 ): Promise<string> {
-  if (values.useCandyMachine) {
-    return await createLbpCandyMachine(marketplaceSdk, values, cluster);
-  }
-
   const targetMintKeypair = Keypair.generate();
   const authority = new PublicKey(values.authority);
   const mint = new PublicKey(values.mint);
+  const existingMint = new PublicKey(values.existingMint!);
 
-  let metadata;
-  if (values.useExistingMint) {
-    const existingMint = new PublicKey(values.existingMint!);
+  values.decimals = (
+    await getMintInfo(marketplaceSdk.provider, existingMint)
+  ).decimals;
 
-    values.decimals = (
-      await getMintInfo(marketplaceSdk.provider, existingMint)
-    ).decimals;
-
-    metadata = new DataV2({
-      name: values.name || "",
-      symbol: values.symbol || "",
-      uri: values.uri || "",
-      sellerFeeBasisPoints: 0,
-      creators: null,
-      collection: null,
-      uses: null,
-    });
-  } else {
-    const uri = await marketplaceSdk.tokenMetadataSdk.uploadMetadata({
-      provider: values.provider,
-      name: values.name!,
-      symbol: values.symbol! || "",
-      description: values.description,
-      image: values.image,
-      mint: targetMintKeypair.publicKey,
-    });
-    metadata = new DataV2({
-      // Max name len 32
-      name: values.name!.substring(0, 32),
-      symbol: (values.symbol || "").substring(0, 10),
-      uri,
-      sellerFeeBasisPoints: 0,
-      creators: null,
-      collection: null,
-      uses: null,
-    });
-  }
+  const metadata = new DataV2({
+    name: values.name || "",
+    symbol: values.symbol || "",
+    uri: values.uri || "",
+    sellerFeeBasisPoints: 0,
+    creators: null,
+    collection: null,
+    uses: null,
+  });
 
   const {
     output: { targetMint },
@@ -300,17 +272,15 @@ async function createLiquidityBootstrapper(
     },
   });
 
-  if (values.useExistingMint) {
-    const retrievalInstrs =
-      await marketplaceSdk.createRetrievalCurveForSetSupplyInstructions({
-        reserveAuthority: authority,
-        supplyMint: new PublicKey(values.existingMint!),
-        supplyAmount: values.mintCap,
-        targetMint,
-      });
-    instructions.push(retrievalInstrs.instructions);
-    signers.push(retrievalInstrs.signers);
-  }
+  const retrievalInstrs =
+    await marketplaceSdk.createRetrievalCurveForSetSupplyInstructions({
+      reserveAuthority: authority,
+      supplyMint: new PublicKey(values.existingMint!),
+      supplyAmount: values.mintCap,
+      targetMint,
+    });
+  instructions.push(retrievalInstrs.instructions);
+  signers.push(retrievalInstrs.signers);
 
   await sendMultipleInstructions(
     marketplaceSdk.tokenBondingSdk.errors || new Map(),
@@ -320,6 +290,78 @@ async function createLiquidityBootstrapper(
   );
 
   return route(routes.tokenLbc, { mintKey: targetMint.toBase58() })
+
+}
+
+async function createLbpNewMint(
+  marketplaceSdk: MarketplaceSdk,
+  values: ILbpFormProps,
+): Promise<string> {
+  const targetMintKeypair = Keypair.generate();
+  const authority = new PublicKey(values.authority);
+  const mint = new PublicKey(values.mint);
+
+  const uri = await marketplaceSdk.tokenMetadataSdk.uploadMetadata({
+    provider: values.provider,
+    name: values.name!,
+    symbol: values.symbol! || "",
+    description: values.description,
+    image: values.image,
+    mint: targetMintKeypair.publicKey,
+  });
+  const metadata = new DataV2({
+    // Max name len 32
+    name: values.name!.substring(0, 32),
+    symbol: (values.symbol || "").substring(0, 10),
+    uri,
+    sellerFeeBasisPoints: 0,
+    creators: null,
+    collection: null,
+    uses: null,
+  });
+
+  const {
+    output: { targetMint },
+    instructions,
+    signers,
+  } = await marketplaceSdk.createLiquidityBootstrapperInstructions({
+    targetMintKeypair,
+    authority,
+    metadata,
+    baseMint: mint,
+    startPrice: Number(values.startPrice),
+    minPrice: Number(values.minPrice),
+    interval: Number(values.interval),
+    maxSupply: Number(values.mintCap),
+    bondingArgs: {
+      targetMintDecimals: Number(values.decimals || 0),
+      goLiveDate: values.goLiveDate,
+      sellFrozen: values.useExistingMint
+    },
+  });
+
+  await sendMultipleInstructions(
+    marketplaceSdk.tokenBondingSdk.errors || new Map(),
+    marketplaceSdk.provider,
+    instructions,
+    signers
+  );
+
+  return route(routes.tokenLbc, { mintKey: targetMint.toBase58() })
+}
+
+async function createLiquidityBootstrapper(
+  marketplaceSdk: MarketplaceSdk,
+  values: ILbpFormProps,
+  cluster: WalletAdapterNetwork | "localnet",
+): Promise<string> {
+  if (values.useCandyMachine) {
+    return await createLbpCandyMachine(marketplaceSdk, values, cluster);
+  } else if (values.useExistingMint) {
+    return await createLbpExistingMint(marketplaceSdk, values);
+  } else {
+    return await createLbpNewMint(marketplaceSdk, values);
+  }
 }
 
 export const LbcForm: React.FC = () => {
@@ -381,7 +423,6 @@ export const LbcForm: React.FC = () => {
   }, [startPrice, minPrice, setError, clearErrors]);
 
   const onSubmit = async (values: ILbpFormProps) => {
-    // const mintKey = await execute(marketplaceSdk!, values);
     const url = await execute(marketplaceSdk!, values, cluster);
     if (values.useCandyMachine) {
       router.push(
