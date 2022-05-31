@@ -7,6 +7,7 @@ import {
 } from "@solana/web3.js";
 import { truthy } from "../utils";
 import { useEffect, useMemo, useState } from "react";
+import { sleep } from "@strata-foundation/spl-utils";
 
 async function getSignatures(
   connection: Connection | undefined,
@@ -47,6 +48,22 @@ async function getSignatures(
 
 type TransactionResponseWithSig = TransactionResponse & { signature: string }
 
+async function retryGetTxn(connection: Connection, sig: string, tries: number = 0): Promise<TransactionResponse> {
+  const result = await connection.getTransaction(sig, { commitment: "confirmed" });
+
+  if (result) {
+    return result
+  }
+
+  if (tries < 5) {
+    console.log(`Failed to fetch ${sig}, retrying in 500ms...`)
+    await sleep(500);
+    return retryGetTxn(connection, sig, tries + 1)
+  }
+
+  throw new Error("Failed to fetch tx with signature " + sig);
+}
+
 async function hydrateTransactions(
   connection: Connection | undefined,
   signatures: ConfirmedSignatureInfo[]
@@ -61,7 +78,7 @@ async function hydrateTransactions(
   return (
     await Promise.all(
       sorted.map(async (s) => {
-        const ret = await connection.getTransaction(s.signature);
+        const ret = await retryGetTxn(connection, s.signature);
         // @ts-ignore
         ret.signature = s.signature;
         return ret as TransactionResponseWithSig;
@@ -117,7 +134,7 @@ export const useTransactions = ({
         } catch (e: any) {
           console.error("Error while fetching new tx", e)
         }
-      });
+      }, "confirmed");
     }
     return () => {
       if (subId) {
