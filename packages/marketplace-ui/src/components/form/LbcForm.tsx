@@ -229,11 +229,18 @@ async function createLbpCandyMachine(
   })
 }
 
+/**
+ * For an existing mint, the token is sold using an LBC and a fungible entangler.
+ * The LBC converts between the base to and from an intermediary token.
+ * The fungible entangler converts between the intermediary to and from the token to sell.
+ * 
+ * This makes the sale process reversible without requiring the mint authority.
+ */
 async function createLbpExistingMint(
   marketplaceSdk: MarketplaceSdk,
   values: ILbpFormProps,
 ): Promise<string> {
-  const targetMintKeypair = Keypair.generate();
+  const intermediaryMintKeypair = Keypair.generate();
   const authority = new PublicKey(values.authority);
   const mint = new PublicKey(values.mint);
   const existingMint = new PublicKey(values.existingMint!);
@@ -253,11 +260,11 @@ async function createLbpExistingMint(
   });
 
   const {
-    output: { targetMint },
+    output: { targetMint: intermediaryMint },
     instructions,
     signers,
   } = await marketplaceSdk.createLiquidityBootstrapperInstructions({
-    targetMintKeypair,
+    targetMintKeypair: intermediaryMintKeypair,
     authority,
     metadata,
     baseMint: mint,
@@ -272,15 +279,15 @@ async function createLbpExistingMint(
     },
   });
 
-  const retrievalInstrs =
-    await marketplaceSdk.createRetrievalCurveForSetSupplyInstructions({
-      reserveAuthority: authority,
-      supplyMint: new PublicKey(values.existingMint!),
-      supplyAmount: values.mintCap,
-      targetMint,
-    });
-  instructions.push(retrievalInstrs.instructions);
-  signers.push(retrievalInstrs.signers);
+  const entanglerInstrs = await marketplaceSdk.fungibleEntanglerSdk.createFungibleEntanglerInstructions({
+    authority,
+    dynamicSeed: Keypair.generate().publicKey.toBuffer(),
+    amount: values.mintCap,
+    parentMint: existingMint, // swaps from childMint to parentMint
+    childMint: intermediaryMint,
+  })
+  instructions.push(entanglerInstrs.instructions);
+  signers.push(entanglerInstrs.signers);
 
   await sendMultipleInstructions(
     marketplaceSdk.tokenBondingSdk.errors || new Map(),
@@ -288,9 +295,7 @@ async function createLbpExistingMint(
     instructions,
     signers
   );
-
-  return route(routes.tokenLbc, { mintKey: targetMint.toBase58() })
-
+  return route(routes.tokenLbc, { mintKey: intermediaryMint.toBase58() })
 }
 
 async function createLbpNewMint(
