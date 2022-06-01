@@ -22,6 +22,7 @@ export * from "./generated/chat";
 export enum MessageType {
   Text = "text",
   Gify = "gify",
+  Image = "image",
 }
 
 export interface IMessageContent {
@@ -286,6 +287,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
                 symmetricKey
               );
             } catch(e: any) {
+              console.error(e)
               console.error("Failed to decode message", e);
             }
           } else {
@@ -671,7 +673,7 @@ function tokenAccessPermissions(readPermissionMint: PublicKey, threshold: BN, ch
     ],
     chain,
     returnValueTest: {
-      key: `$[?(@.account.data.parsed.info.mint == "${readPermissionMint.toBase58()}")].account.data.parsed.info.tokenAmount.amount'`,
+      key: `$[?(@.account.data.parsed.info.mint == "${readPermissionMint.toBase58()}")].account.data.parsed.info.tokenAmount.amount`,
       comparator: ">=",
       value: threshold.toString(10),
     },

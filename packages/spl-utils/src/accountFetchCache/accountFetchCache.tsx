@@ -250,6 +250,10 @@ export class AccountFetchCache {
     } else {
       id = pubKey;
     }
+    if (!pubKey) {
+      return [undefined, () => {}];
+    }
+    
     const address = id.toBase58();
 
     const data = await this.search(pubKey, parser, isStatic, forceRequery);

@@ -57,7 +57,7 @@ npm manifest:
     },
     "dependencies": {
       "@project-serum/anchor": "^0.22.0",
-      "@solana/web3.js": "^1.32.0",
+      "@solana/web3.js": "^1.43.4",
       "@strata-foundation/spl-utils": "^3.6.1",
       "add": "^2.0.6",
       "bn.js": "^5.2.0",

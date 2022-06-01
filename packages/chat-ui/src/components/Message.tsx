@@ -7,7 +7,8 @@ import {
   Text,
   useColorMode,
   useColorModeValue,
-  VStack
+  VStack,
+  Image,
 } from "@chakra-ui/react";
 import { GiphyFetch } from "@giphy/js-fetch-api";
 import { Gif } from "@giphy/react-components";
@@ -91,6 +92,13 @@ export function Message({
           {message ? (
             message.type === MessageType.Gify ? (
               <GifyGif gifyId={message.gifyId} />
+            ) : message.type === MessageType.Image ? (
+              <Image
+                mt={"4px"}
+                alt={message.text}
+                height="300px"
+                src={message.attachments[0]}
+              />
             ) : (
               <Text mt={"-4px"}>{message.text}</Text>
             )

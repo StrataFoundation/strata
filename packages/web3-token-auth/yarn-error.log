@@ -52,7 +52,7 @@ npm manifest:
       "prepare": "yarn run build"
     },
     "dependencies": {
-      "@solana/web3.js": "^1.32.0"a
+      "@solana/web3.js": "^1.43.4"
     },
     "devDependencies": {
       "git-format-staged": "^2.1.3",

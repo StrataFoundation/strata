@@ -20,7 +20,7 @@
         "create-governance-token": "tsc && node dist/lib/createGovernanceToken"
     },
     "dependencies": {
-        "@solana/web3.js": "^1.32.0",
+        "@solana/web3.js": "^1.43.4",
         "@strata-foundation/spl-token-bonding": "^3.6.1",
         "@strata-foundation/spl-token-collective": "^3.6.1",
         "@strata-foundation/spl-token-staking": "^3.2.6",

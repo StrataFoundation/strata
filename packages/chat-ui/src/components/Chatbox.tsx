@@ -13,6 +13,7 @@ import { BuyMoreButton } from "./BuyMoreButton";
 import { AiOutlineGif } from "react-icons/ai";
 import { GifSearch } from "./GifSearch";
 import { AiOutlineSend } from "react-icons/ai";
+import { ShdwAttachment } from "./ShdwAttachment";
 
 export interface IPendingMessage {
   content: IMessageContent;
@@ -124,6 +125,10 @@ export function Chatbox({
               placeholder="Type Message"
             />
           )}
+          <ShdwAttachment onUpload={(url) => sendMessage({
+            type: MessageType.Image,
+            attachments: [url]
+          })} />
           <IconButton
             size="lg"
             aria-label="Select GIF"

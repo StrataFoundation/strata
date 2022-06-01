@@ -46,9 +46,9 @@
   },
   "dependencies": {
     "@bonfida/spl-name-service": "^0.1.22",
-    "@solana/buffer-layout": "^3.0.0",
-    "@solana/spl-token": "^0.1.8",
-    "@solana/web3.js": "^1.32.0",
+    "@solana/buffer-layout": "^4.0.0",
+    "@solana/spl-token": "0.1.8",
+    "@solana/web3.js": "^1.43.4",
     "husky": "^7.0.4",
     "lerna": "^4.0.0",
     "quicktype-core": "^6.0.70"

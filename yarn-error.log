@@ -61,7 +61,7 @@ npm manifest:
       "@project-serum/common": "^0.0.1-beta.3",
       "@solana/buffer-layout": "^3.0.0",
       "@solana/spl-name-service": "^0.1.3",
-      "@solana/spl-token": "^0.1.8",
+    "@solana/spl-token": "0.1.8",
       "quicktype-core": "^6.0.70"
     }
   }

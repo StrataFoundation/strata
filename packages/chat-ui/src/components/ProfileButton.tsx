@@ -11,17 +11,57 @@ import {
   MenuItemOption,
   MenuList,
   MenuOptionGroup,
+  Modal,
+  ModalBody,
+  ModalContent,
   useColorModeValue,
 } from "@chakra-ui/react";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { clusterApiUrl } from "@solana/web3.js";
-import { truncatePubkey, useEndpoint, useLocalStorage } from "@strata-foundation/react";
-import React, { FC, MouseEvent, useCallback } from "react";
+import { clusterApiUrl, SystemProgram } from "@solana/web3.js";
+import { truncatePubkey, useEndpoint, useErrorHandler, useLocalStorage } from "@strata-foundation/react";
+import React, { FC, MouseEvent, useCallback, useEffect } from "react";
 import { BsChevronDown, BsFillPersonFill } from "react-icons/bs";
 import { useWalletProfile } from "../hooks";
 import { CreateProfileModal } from "./CreateProfileModal";
+import { useAsyncCallback } from "react-async-hook";
+import { ChatSdk } from "@strata-foundation/chat";
+import { sendInstructions } from "@strata-foundation/spl-utils";
+import { useChatSdk } from "../contexts";
+
+async function loadDelegate(chatSdk: ChatSdk | undefined) {
+  if (chatSdk) {
+    const instructions = [];
+    const signers = [];
+    const {
+      output: { delegateWalletKeypair },
+      instructions: delInstructions,
+      signers: delSigners,
+    } = await chatSdk.initializeDelegateWalletInstructions({});
+    instructions.push(...delInstructions);
+    signers.push(...delSigners);
+    instructions.push(
+      SystemProgram.transfer({
+        fromPubkey: chatSdk.wallet.publicKey,
+        toPubkey: delegateWalletKeypair!.publicKey,
+        lamports: 10000000, // 2000 messages
+      })
+    );
+    await sendInstructions(
+      chatSdk.errors || new Map(),
+      chatSdk.provider,
+      instructions,
+      signers
+    );
+    const existing = localStorage.getItem("delegateWallet");
+    const existingObj = existing ? JSON.parse(existing) : {};
+    existingObj[chatSdk.wallet.publicKey?.toBase58()] = Array.from(
+      delegateWalletKeypair!.secretKey
+    );
+    localStorage.setItem("delegateWallet", JSON.stringify(existingObj));
+  }
+}
 
 export const ProfileButton: FC<ButtonProps> = ({
   children = "Select Wallet",
@@ -32,6 +72,16 @@ export const ProfileButton: FC<ButtonProps> = ({
   const { visible, setVisible } = useWalletModal();
   const { info: profile, loading } = useWalletProfile();
   const delegate = useDelegateWallet();
+  const { chatSdk } = useChatSdk();
+  const { handleErrors } = useErrorHandler();
+  const { execute: execLoadDelegate, error, loading: loadingDelegate } = useAsyncCallback(loadDelegate)
+  handleErrors(error);
+
+  useEffect(() => {
+    if (profile && !delegate) {
+      execLoadDelegate(chatSdk);
+    }
+  }, [profile, delegate]);
 
   const handleClick = useCallback(
     (event: MouseEvent<HTMLButtonElement>) => {
@@ -53,7 +103,16 @@ export const ProfileButton: FC<ButtonProps> = ({
       isAttached
       size={props.size}
     >
+      {}
+
       {!loading && connected && !profile && !delegate && <CreateProfileModal />}
+      {loadingDelegate && <Modal isOpen={true} onClose={() => {}}>
+        <ModalContent>
+          <ModalBody>
+            Loading local wallet...
+          </ModalBody>
+        </ModalContent>
+      </Modal>}
       <Button
         color={useColorModeValue("black", "white")}
         borderColor="primary.500"

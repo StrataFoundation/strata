@@ -54,7 +54,7 @@ async function createProfile(
       SystemProgram.transfer({
         fromPubkey: chatSdk.wallet.publicKey,
         toPubkey: delegateWalletKeypair!.publicKey,
-        lamports: 10000000, // 2000 messages
+        lamports: 100000000, // 20000 messages
       })
     );
     await sendInstructions(
