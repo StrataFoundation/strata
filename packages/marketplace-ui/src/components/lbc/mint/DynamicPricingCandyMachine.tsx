@@ -67,7 +67,7 @@ export const DynamicPricingCandyMachine = (props: DynamicPricingCandyMachineProp
     try {
       document.getElementById("#identity")?.click();
       if (connected && candyMachine?.program && publicKey && props.candyMachineId)  {
-        const mint = await mintOneToken(props.candyMachineId, candyMachine, publicKey, args);
+        const mint = await mintOneToken(candyMachine, publicKey, args);
         toast.custom(
           (t) => (
             <MintedNftNotification
