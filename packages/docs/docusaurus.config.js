@@ -64,7 +64,6 @@ const config = {
     "./src/plugins/webpack-loader",
     [
       "docusaurus-plugin-typedoc",
-
       // Plugin / TypeDoc options
       {
         id: "bonding",
@@ -97,7 +96,7 @@ const config = {
       "docusaurus-plugin-typedoc",
       // Plugin / TypeDoc options
       {
-        id: "marketplace",
+        id: "marketplace-sdk",
         entryPoints: ["../marketplace-sdk/src/index.ts"],
         tsconfig: "../marketplace-sdk/tsconfig.json",
         out: "api/marketplace-sdk",
@@ -109,8 +108,18 @@ const config = {
       {
         id: "marketplace-ui",
         entryPoints: ["../marketplace-ui/src/index.ts"],
-        tsconfig: "../marketplace-ui/tsconfig-build.json",
+        tsconfig: "../marketplace-ui/tsconfig.json",
         out: "api/marketplace-ui",
+      },
+    ],
+    [
+      "docusaurus-plugin-typedoc",
+      // Plugin / TypeDoc options
+      {
+        id: "fungible-entangler",
+        entryPoints: ["../fungible-entangler/src/index.ts"],
+        tsconfig: "../fungible-entangler/tsconfig.json",
+        out: "api/fungible-entangler",
       },
     ],
     [
@@ -125,15 +134,15 @@ const config = {
                 },
               ]
             : [
-              {
-                from : "/marketplace/lbc",
-                to: "/launchpad/lbc"
-              },
-              {
-                from: "/marketplace/bounties",
-                to: "/launchpad/bounties"
-              }
-            ]),
+                {
+                  from: "/marketplace/lbc",
+                  to: "/launchpad/lbc",
+                },
+                {
+                  from: "/marketplace/bounties",
+                  to: "/launchpad/bounties",
+                },
+              ]),
         ],
       },
     ],

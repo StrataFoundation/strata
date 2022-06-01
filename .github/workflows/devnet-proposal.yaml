@@ -40,3 +40,19 @@ jobs:
           governance: 6yc2jb7LCjYXD3hbRKjYkpx13j4VXYcCBzYsZbmntdVk
           name: Deploy Token Collective ${{ github.ref_name }}
           description: https://github.com/StrataFoundation/strata/tree/${{ github.ref_name }}
+
+  create-fungible-entangler-proposal:
+    name: Create Fungible Entangler Proposal
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/deploy-with-gov-proposal/
+        id: deploy
+        with:
+          program: fungible_entangler
+          program-id: Ae6wbxtjpoKGCuSdHGQXRudmdpSfGpu6KHtjDcWEDjP8
+          network: https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/
+          keypair: ${{ secrets.DEPLOY_KEYPAIR }}
+          governance: C2QmGPr3qFHUXYZdBJn8NEoNz2kcxBm9mwMoGMn2QFdq
+          name: Deploy Fungible Entangler ${{ github.ref_name }}
+          description: https://github.com/StrataFoundation/strata/tree/${{ github.ref_name }}
