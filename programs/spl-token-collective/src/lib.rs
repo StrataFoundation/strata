@@ -107,6 +107,20 @@ pub mod spl_token_collective {
     Ok(())
   }
 
+  pub fn initialize_collective_for_social_token_v0(
+    ctx: Context<InitializeCollectiveForSocialTokenV0>,
+    args: InitializeCollectiveForSocialTokenV0Args,
+  ) -> Result<()> {
+    let collective = &mut ctx.accounts.collective;
+
+    collective.mint = ctx.accounts.mint.key();
+    collective.config = args.config;
+    collective.authority = args.authority;
+    collective.bump_seed = *ctx.bumps.get("collective").unwrap();
+
+    Ok(())
+  }
+
   pub fn update_collective_v0(
     ctx: Context<UpdateCollectiveV0>,
     args: UpdateCollectiveV0Args,
