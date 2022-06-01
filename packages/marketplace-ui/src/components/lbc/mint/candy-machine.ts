@@ -196,7 +196,6 @@ export const getCollectionAuthorityRecordPDA = async (
 }
 
 export const mintOneToken = async (
-  candyMachineId: PublicKey,
   candyMachine: ICandyMachine,
   payer: anchor.web3.PublicKey,
   { tokenBondingSdk, tokenBonding, maxPrice }: IMintArgs
@@ -219,7 +218,7 @@ export const mintOneToken = async (
     ? (await getAtaForMint(candyMachine.tokenMint, payer))[0]
     : payer
 
-  const candyMachineAddress = candyMachineId
+  const candyMachineAddress = candyMachine.publicKey
   const remainingAccounts = []
   const instructions = []
   const signers: Signer[] = [mint]
