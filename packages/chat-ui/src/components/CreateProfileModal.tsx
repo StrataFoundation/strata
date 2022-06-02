@@ -1,4 +1,9 @@
 import {
+  Alert,
+  AlertDescription,
+  AlertIcon,
+  AlertTitle,
+  Box,
   Button,
   Input,
   Modal,
@@ -113,6 +118,20 @@ export function CreateProfileModal() {
           <FormProvider {...formProps}>
             <form onSubmit={handleSubmit(onSubmit)}>
               <VStack>
+                <Alert status="info">
+                  <AlertIcon />
+                  <Box>
+                    <AlertTitle>Local Wallet</AlertTitle>
+                    <AlertDescription>
+                      Strata Chat is fully decentralized. In order to avoid
+                      asking for approval on every message, we create a wallet stored in your machine's
+                      localStorage that can send messages on your main wallet's
+                      behalf. Creating a profile will also load this wallet with
+                      0.1 Sol to pay for messages (0.000005 SOL each) and file
+                      uploads (1 $SHDW per GB)
+                    </AlertDescription>
+                  </Box>
+                </Alert>
                 <FormControlWithError
                   id="username"
                   help="A less than 32 character username. This will show as your name in the chat. These must be unique."
