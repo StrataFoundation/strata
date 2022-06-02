@@ -159,8 +159,8 @@ interface ISwapArgsAmount extends ISwapArgs {
 
 type SwapArgs = ISwapArgsAmount | ISwapArgsAll;
 
-export type ISwapParentArgs = SwapArgs & {};
-export type ISwapChildArgs = SwapArgs & {};
+export type ISwapParentForChildArgs = SwapArgs & {};
+export type ISwapChildForParentArgs = SwapArgs & {};
 
 interface ITopOffArgs {
   payer?: PublicKey;
@@ -495,9 +495,9 @@ export class FungibleEntangler extends AnchorSdk<any> {
     amount,
     parentMint,
     childMint,
-    parentGoLiveDate = new Date(new Date().valueOf() - 10000), // 10 secs ago
+    parentGoLiveDate = new Date(new Date().valueOf() - 60000), // 60 secs ago
     parentFreezeSwapDate,
-    childGoLiveDate = new Date(new Date().valueOf() - 10000), // 10 secs ago
+    childGoLiveDate = new Date(new Date().valueOf() - 60000), // 60 secs ago
     childFreezeSwapDate,
   }: ICreateFungibleEntanglerArgs): Promise<
     InstructionResult<ICreateFungibleEntanglerOutput>
@@ -560,7 +560,7 @@ export class FungibleEntangler extends AnchorSdk<any> {
     );
   }
 
-  async swapParentInstructions({
+  async swapParentForChildInstructions({
     payer = this.wallet.publicKey,
     source,
     sourceAuthority = this.wallet.publicKey,
@@ -568,7 +568,7 @@ export class FungibleEntangler extends AnchorSdk<any> {
     childEntangler,
     destination,
     ...rest
-  }: ISwapParentArgs): Promise<InstructionResult<null>> {
+  }: ISwapParentForChildArgs): Promise<InstructionResult<null>> {
     let { amount, all } = { amount: null, all: null, ...rest };
     const parentAcct = (await this.getParentEntangler(parentEntangler))!;
     const childAcct = (await this.getChildEntangler(childEntangler))!;
@@ -628,7 +628,7 @@ export class FungibleEntangler extends AnchorSdk<any> {
     };
 
     instructions.push(
-      await this.instruction.swapParentV0(args, {
+      await this.instruction.swapParentForChildV0(args, {
         accounts: {
           common: {
             parentEntangler,
@@ -654,18 +654,18 @@ export class FungibleEntangler extends AnchorSdk<any> {
     };
   }
 
-  async swapParent(
-    args: ISwapParentArgs,
+  async swapParentForChild(
+    args: ISwapParentForChildArgs,
     commitment: Commitment = "confirmed"
   ): Promise<void> {
     await this.execute(
-      this.swapParentInstructions(args),
+      this.swapParentForChildInstructions(args),
       args.payer,
       commitment
     );
   }
 
-  async swapChildInstructions({
+  async swapChildForParentInstructions({
     payer = this.wallet.publicKey,
     source,
     sourceAuthority = this.wallet.publicKey,
@@ -673,7 +673,7 @@ export class FungibleEntangler extends AnchorSdk<any> {
     childEntangler,
     destination,
     ...rest
-  }: ISwapChildArgs): Promise<InstructionResult<null>> {
+  }: ISwapChildForParentArgs): Promise<InstructionResult<null>> {
     let { amount, all } = { amount: null, all: null, ...rest };
     const parentAcct = (await this.getParentEntangler(parentEntangler))!;
     const childAcct = (await this.getChildEntangler(childEntangler))!;
@@ -735,7 +735,7 @@ export class FungibleEntangler extends AnchorSdk<any> {
     };
 
     instructions.push(
-      await this.instruction.swapChildV0(args, {
+      await this.instruction.swapChildForParentV0(args, {
         accounts: {
           common: {
             parentEntangler,
@@ -761,12 +761,12 @@ export class FungibleEntangler extends AnchorSdk<any> {
     };
   }
 
-  async swapChild(
-    args: ISwapChildArgs,
+  async swapChildForParent(
+    args: ISwapChildForParentArgs,
     commitment: Commitment = "confirmed"
   ): Promise<void> {
     await this.execute(
-      this.swapChildInstructions(args),
+      this.swapChildForParentInstructions(args),
       args.payer,
       commitment
     );
