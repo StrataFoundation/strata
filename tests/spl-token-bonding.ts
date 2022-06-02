@@ -1,7 +1,15 @@
 import * as anchor from "@project-serum/anchor";
 import { BN } from "@project-serum/anchor";
-import { createMint, getAssociatedAccountBalance } from "@strata-foundation/spl-utils";
-import { ASSOCIATED_TOKEN_PROGRAM_ID, NATIVE_MINT, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import {
+  createMint,
+  getAssociatedAccountBalance,
+} from "@strata-foundation/spl-utils";
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  NATIVE_MINT,
+  Token,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
@@ -44,14 +52,17 @@ describe("spl-token-bonding", () => {
   describe("exp curve test", () => {
     it("it does the correct calculation when supply is 0", () => {
       const curve = new ExponentialCurve(
-      {
-        c: new BN(1000000000000), // c = 1
-        b: new BN(0),
-        // @ts-ignore
-        pow: 1,
-        // @ts-ignore
-        frac: 2
-      }, 0, 0,);
+        {
+          c: new BN(1000000000000), // c = 1
+          b: new BN(0),
+          // @ts-ignore
+          pow: 1,
+          // @ts-ignore
+          frac: 2,
+        },
+        0,
+        0
+      );
 
       const baseAmount = curve.buyTargetAmount(10, percent(5), percent(5));
       expect(baseAmount).to.be.closeTo(23.96623025761275, 0.005);
@@ -65,10 +76,10 @@ describe("spl-token-bonding", () => {
           // @ts-ignore
           pow: 1,
           // @ts-ignore
-          frac: 2
+          frac: 2,
         },
         1,
-        1,
+        1
       );
 
       const baseAmount = curve.buyTargetAmount(10, percent(5), percent(5));
@@ -471,14 +482,14 @@ describe("spl-token-bonding", () => {
         baseMint: tokenBondingAcct.baseMint,
         targetMint: tokenBondingAcct.targetMint,
         baseAmount: 1,
-        slippage: 1
+        slippage: 1,
       });
       // expect(amount0).to.within(0.001, 0.5);
       await waitForUnixTime(
         provider.connection,
         BigInt(tokenBondingAcct.goLiveUnixTime.toNumber() + 10)
       );
-      
+
       const { targetAmount: amount1 } = await tokenBondingProgram.swap({
         baseMint: tokenBondingAcct.baseMint,
         targetMint: tokenBondingAcct.targetMint,
@@ -540,13 +551,18 @@ describe("spl-token-bonding", () => {
     });
 
     it("does not fail when the royalty account is closed and royalties are 0", async () => {
-      await tokenBondingProgram.sendInstructions([Token.createCloseAccountInstruction(
-        TOKEN_PROGRAM_ID,
-        buyBaseRoyalties,
-        me,
-        me,
+      await tokenBondingProgram.sendInstructions(
+        [
+          Token.createCloseAccountInstruction(
+            TOKEN_PROGRAM_ID,
+            buyBaseRoyalties,
+            me,
+            me,
+            []
+          ),
+        ],
         []
-      )], []);
+      );
       const { instructions, signers } =
         await tokenBondingProgram.buyInstructions({
           tokenBonding,
@@ -559,13 +575,17 @@ describe("spl-token-bonding", () => {
         newWallet,
       ]);
 
-      const { instructions: instructions2, signers: signers2 } = await tokenBondingProgram.sellInstructions({
-        tokenBonding,
-        targetAmount: new BN(100),
-        slippage: 0.5,
-        sourceAuthority: newWallet.publicKey
-      });
-      await tokenBondingProgram.sendInstructions(instructions2, [...signers2, newWallet])
+      const { instructions: instructions2, signers: signers2 } =
+        await tokenBondingProgram.sellInstructions({
+          tokenBonding,
+          targetAmount: new BN(100),
+          slippage: 0.5,
+          sourceAuthority: newWallet.publicKey,
+        });
+      await tokenBondingProgram.sendInstructions(instructions2, [
+        ...signers2,
+        newWallet,
+      ]);
 
       await tokenUtils.expectAtaBalance(
         newWallet.publicKey,
@@ -717,9 +737,13 @@ describe("spl-token-bonding", () => {
         slippage: 0.05,
       });
       await tokenUtils.expectAtaBalance(me, baseMint, 95);
-      const tokenBondingAcct2 = (await tokenBondingProgram.getTokenBonding(tokenBonding))!;
-      expect(tokenBondingAcct2.reserveBalanceFromBonding.toNumber()).to.eq(5 * 100)
-      expect(tokenBondingAcct2.supplyFromBonding.toNumber()).to.eq(1 * 100)
+      const tokenBondingAcct2 = (await tokenBondingProgram.getTokenBonding(
+        tokenBonding
+      ))!;
+      expect(tokenBondingAcct2.reserveBalanceFromBonding.toNumber()).to.eq(
+        5 * 100
+      );
+      expect(tokenBondingAcct2.supplyFromBonding.toNumber()).to.eq(1 * 100);
     });
   });
 
@@ -1256,8 +1280,8 @@ describe("spl-token-bonding", () => {
           c: 0,
           b: 5,
           pow: 0,
-          frac: 1
-        })
+          frac: 1,
+        }),
       });
       const ata = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -1265,7 +1289,9 @@ describe("spl-token-bonding", () => {
         baseMint,
         me
       );
-      const initialBalance = (await provider.connection.getTokenAccountBalance(ata)).value.uiAmount!;
+      const initialBalance = (
+        await provider.connection.getTokenAccountBalance(ata)
+      ).value.uiAmount!;
       await tokenBondingProgram.buy({
         tokenBonding,
         baseAmount: 10,
@@ -1273,17 +1299,18 @@ describe("spl-token-bonding", () => {
       });
       await tokenBondingProgram.transferReserves({
         tokenBonding,
-        amount: 10
-      })
+        amount: 10,
+      });
       await tokenUtils.expectAtaBalance(me, baseMint, initialBalance);
 
       // Test that close works, since the curve is empty
       await tokenBondingProgram.close({
-        tokenBonding
+        tokenBonding,
       });
     });
 
-    it ("can transfer funds from the curve when native", async () => {      // Also ensure zero sum.
+    it("can transfer funds from the curve when native", async () => {
+      // Also ensure zero sum.
       const initLamports = (await provider.connection.getAccountInfo(me))!
         .lamports;
       const curve = await tokenBondingProgram.initializeCurve({
@@ -1291,8 +1318,8 @@ describe("spl-token-bonding", () => {
           c: 1,
           b: 0,
           pow: 1,
-          frac: 1
-        })
+          frac: 1,
+        }),
       });
 
       const { tokenBonding } = await tokenBondingProgram.createTokenBonding({
@@ -1314,17 +1341,17 @@ describe("spl-token-bonding", () => {
       });
       await tokenBondingProgram.transferReserves({
         tokenBonding,
-        amount: 2
-      })
+        amount: 2,
+      });
       const postLamports = (await provider.connection.getAccountInfo(me))!
         .lamports;
-        
+
       expect(postLamports).to.within(100000000, initLamports);
 
       // Test that close works, since the curve is empty
       await tokenBondingProgram.close({
-        tokenBonding
+        tokenBonding,
       });
-    })
-  })
+    });
+  });
 });

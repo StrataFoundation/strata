@@ -8,15 +8,15 @@ use anchor_spl::token::{self, Transfer};
 
 #[derive(Accounts)]
 #[instruction(args: SwapV0Args)]
-pub struct SwapParentV0<'info> {
+pub struct SwapParentForChildV0<'info> {
   pub common: SwapCommonV0<'info>,
 }
 
-pub fn handler(ctx: Context<SwapParentV0>, args: SwapV0Args) -> Result<()> {
+pub fn handler(ctx: Context<SwapParentForChildV0>, args: SwapV0Args) -> Result<()> {
   let SwapAmount { amount } = swap_shared_logic(
     &ctx.accounts.common.parent_entangler,
     &ctx.accounts.common.child_entangler,
-    &ctx.accounts.common.parent_storage,
+    &ctx.accounts.common.child_storage,
     &ctx.accounts.common.source,
     &ctx.accounts.common.clock,
     &args,
