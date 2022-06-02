@@ -65,8 +65,8 @@ export function Chatbox({
             delegateWalletKeypair,
             payer: delegateWalletKeypair.publicKey,
             chat: chatKey,
-            message: JSON.stringify(message),
-            encrypted: false,
+            message,
+            encrypted: true,
           }
         );
         let tx = new Transaction();

@@ -16,6 +16,7 @@ import { ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo, Token, TOKEN_PROGRAM_ID, u64 } f
 import LitJsSdk from "lit-js-sdk";
 // @ts-ignore
 import * as bs58 from "bs58";
+import { uploadFile } from "./shdw";
 
 export * from "./generated/chat";
 
@@ -30,6 +31,10 @@ export interface IMessageContent {
   text?: string;
   attachments?: string[];
   gifyId?: string;
+}
+
+export interface ISendMessageContent extends IMessageContent {
+  fileAttachments?: File[];
 }
 
 export interface IChat extends ChatV0 {
@@ -97,8 +102,8 @@ export interface SendMessageArgs {
   payer?: PublicKey;
   /** The chat to send to */
   chat: PublicKey;
-  /** The message to send, typically a json string. */
-  message: string;
+  /** The message to send */
+  message: ISendMessageContent;
 
   /** The amount of tokens needed to read. **Default:** from chat */
   readPermissionAmount?: number;
@@ -262,7 +267,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
           let decodedMessage;
           if (args.encryptedSymmetricKey) {
-            if (!this.isLitAuthed) {
+            if (!this.isLitAuthed && this.wallet && this.wallet.publicKey) {
               await this.litAuth();
             }
             const accessControlConditions = [tokenAccessPermissions(
@@ -282,12 +287,15 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
                 chain: this.chain,
                 authSig: this.litAuthSig,
               });
+
+              const blob = new Blob([
+                LitJsSdk.uint8arrayFromString(args.content, "base16"),
+              ]);
               decodedMessage = await LitJsSdk.decryptString(
-                new Blob([args.content]),
+                blob,
                 symmetricKey
               );
             } catch(e: any) {
-              console.error(e)
               console.error("Failed to decode message", e);
             }
           } else {
@@ -544,6 +552,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     if (!this.isLitAuthed && encrypted) {
       await this.litAuth();
     }
+    const { fileAttachments, ...normalMessage } = message;
 
     const chatAcc = (await this.getChat(chat))!;
     const readMint = await getMintInfo(
@@ -562,13 +571,11 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       ),
     ];
 
-    console.log("set", accessControlConditionsToUse)
-    
     let encryptedSymmetricKey, encryptedString;
     if (encrypted) {
       const { encryptedString: encryptedStringOut, symmetricKey } =
         await LitJsSdk.encryptString(message);
-      encryptedString = await encryptedStringOut.text();
+      encryptedString = buf2hex(await (encryptedStringOut as Blob).arrayBuffer());
       encryptedSymmetricKey = LitJsSdk.uint8arrayToString(
         await this.litClient.saveEncryptionKey({
           solRpcConditions: accessControlConditionsToUse,
@@ -578,9 +585,33 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         }),
         "base16"
       );
+      
+      if (fileAttachments) {
+        await Promise.all(fileAttachments.map(async (fileAttachment) => {
+          LitJsSdk.encryptFile({
+            file: 
+          })
+        }))
+      }
     } else {
       encryptedSymmetricKey = "";
       encryptedString = message;
+    }
+
+    if (fileAttachments) {
+      normalMessage.attachments = normalMessage.attachments || [];
+      await Promise.all(
+        fileAttachments.map(async (fileAttachment) => {
+          const file = await uploadFile(
+            this.provider,
+            fileAttachment,
+            delegateWalletKeypair
+          );
+          if (file) {
+            normalMessage.attachments!.push(file);
+          }
+        })
+      );
     }
 
 
@@ -681,3 +712,9 @@ function tokenAccessPermissions(readPermissionMint: PublicKey, threshold: BN, ch
   throw new Error("Function not implemented.");
 }
 
+function buf2hex(buffer: ArrayBuffer): string {
+  // buffer is an ArrayBuffer
+  return [...new Uint8Array(buffer)]
+    .map((x) => x.toString(16).padStart(2, "0"))
+    .join("");
+}

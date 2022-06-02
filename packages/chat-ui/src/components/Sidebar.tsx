@@ -4,7 +4,7 @@ import { IoMoon, IoSunny } from 'react-icons/io5';
 import { ProfileButton } from "./ProfileButton";
 import { ChatSidebarPreview } from './rooms/ChatSidebarPreview';
 
-const VISIBLE_CHATS = ["open6"]
+const VISIBLE_CHATS = ["open3"]
 
 export const Sidebar = ({ fullWidth }: { fullWidth?: boolean }) => {
   const { colorMode, toggleColorMode } = useColorMode()
