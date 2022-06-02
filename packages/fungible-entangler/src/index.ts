@@ -67,9 +67,9 @@ interface ICreateFungibleParentEntanglerArgs {
    */
   authority?: PublicKey | null;
   /** The date this entangler will go live. Before this date, {@link FungibleEntangler.swap} is disabled. **Default:** 1 second ago */
-  goLiveDate?: Date;
+  goLiveDate?: Date | number;
   /** The date this entangler will shut down. After this date, {@link FungibleEntangler.swap} is disabled. **Default:** null */
-  freezeSwapDate?: Date;
+  freezeSwapDate?: Date | number;
 }
 
 export interface ICreateFungibleParentEntanglerOutput {
@@ -90,9 +90,9 @@ interface ICreateFungibleChildEntanglerArgs {
    */
   authority?: PublicKey | null;
   /** The date this entangler will go live. Before this date, {@link FungibleEntangler.swap} is disabled. **Default:** 1 second ago */
-  goLiveDate?: Date;
+  goLiveDate?: Date | number;
   /** The date this entangler will shut down. After this date, {@link FungibleEntangler.swap} is disabled. **Default:** null */
-  freezeSwapDate?: Date;
+  freezeSwapDate?: Date | number;
 }
 
 export interface ICreateFungibleChildEntanglerOutput {
@@ -119,13 +119,13 @@ export interface ICreateFungibleEntanglerArgs {
    */
   authority?: PublicKey | null;
   /** The date this entangler will go live. Before this date, {@link FungibleEntangler.swap} is disabled. **Default:** 1 second ago */
-  parentGoLiveDate?: Date;
+  parentGoLiveDate?: Date | number;
   /** The date this entangler will shut down. After this date, {@link FungibleEntangler.swap} is disabled. **Default:** null */
-  parentFreezeSwapDate?: Date;
+  parentFreezeSwapDate?: Date | number;
   /** The date this entangler will go live. Before this date, {@link FungibleEntangler.swap} is disabled. **Default:** 1 second ago */
-  childGoLiveDate?: Date;
+  childGoLiveDate?: Date | number;
   /** The date this entangler will shut down. After this date, {@link FungibleEntangler.swap} is disabled. **Default:** null */
-  childFreezeSwapDate?: Date;
+  childFreezeSwapDate?: Date | number;
 }
 
 export interface ICreateFungibleEntanglerOutput {
@@ -312,6 +312,13 @@ export class FungibleEntangler extends AnchorSdk<any> {
     return this.getAccount(entanglerKey, this.childEntanglerDecoder);
   }
 
+  async getUnixTime(): Promise<number> {
+    const acc = await this.provider.connection.getAccountInfo(
+      SYSVAR_CLOCK_PUBKEY
+    );
+    return Number(acc!.data.readBigInt64LE(8 * 4));
+  }
+
   async createFungibleParentEntanglerInstructions({
     authority = this.provider.wallet.publicKey,
     payer = this.provider.wallet.publicKey,
@@ -319,11 +326,15 @@ export class FungibleEntangler extends AnchorSdk<any> {
     mint,
     dynamicSeed,
     amount,
-    goLiveDate = new Date(new Date().valueOf() - 10000), // 10 secs ago
+    goLiveDate,
     freezeSwapDate,
   }: ICreateFungibleParentEntanglerArgs): Promise<
     InstructionResult<ICreateFungibleParentEntanglerOutput>
   > {
+    if (!goLiveDate) {
+      goLiveDate = new Date(0).setUTCSeconds((await this.getUnixTime()) - 60);
+    }
+
     const mintAcct = await getMintInfo(this.provider, mint);
     const sourceAcct = await this.provider.connection.getAccountInfo(source);
     amount = toNumber(amount, mintAcct);
@@ -425,13 +436,17 @@ export class FungibleEntangler extends AnchorSdk<any> {
     payer = this.provider.wallet.publicKey,
     parentEntangler,
     mint,
-    goLiveDate = new Date(new Date().valueOf() - 10000), // 10 secs ago
+    goLiveDate,
     freezeSwapDate,
   }: ICreateFungibleChildEntanglerArgs): Promise<
     InstructionResult<ICreateFungibleChildEntanglerOutput>
   > {
     const instructions: TransactionInstruction[] = [];
     const signers: Keypair[] = [];
+
+    if (!goLiveDate) {
+      goLiveDate = new Date(0).setUTCSeconds((await this.getUnixTime()) - 60);
+    }
 
     const [entangler, _entanglerBump] =
       await FungibleEntangler.fungibleChildEntanglerKey(parentEntangler, mint);
@@ -495,15 +510,27 @@ export class FungibleEntangler extends AnchorSdk<any> {
     amount,
     parentMint,
     childMint,
-    parentGoLiveDate = new Date(new Date().valueOf() - 60000), // 60 secs ago
+    parentGoLiveDate,
     parentFreezeSwapDate,
-    childGoLiveDate = new Date(new Date().valueOf() - 60000), // 60 secs ago
+    childGoLiveDate,
     childFreezeSwapDate,
   }: ICreateFungibleEntanglerArgs): Promise<
     InstructionResult<ICreateFungibleEntanglerOutput>
   > {
     const instructions: TransactionInstruction[] = [];
     const signers: Keypair[] = [];
+
+    if (!parentGoLiveDate) {
+      parentGoLiveDate = new Date(0).setUTCSeconds(
+        (await this.getUnixTime()) - 60
+      );
+    }
+
+    if (!childGoLiveDate) {
+      childGoLiveDate = new Date(0).setUTCSeconds(
+        (await this.getUnixTime()) - 60
+      );
+    }
 
     const {
       instructions: parentInstructions,
