@@ -153,7 +153,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   litClient: LitJsSdk;
   litAuthSig: any | undefined;
   chain: string;
-  authingLit: boolean;
+  authingLit: Promise<void> | null;
 
   static ID = new PublicKey("chatGL6yNgZT2Z3BeMYGcgdMpcBKdmxko4C5UhEX4To");
 
@@ -161,11 +161,17 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     return Boolean(this.litAuthSig);
   }
 
-  async litAuth() {
+  async _litAuth() {
     this.litAuthSig = await LitJsSdk.checkAndSignAuthMessage({
       chain: this.chain,
       alertWhenUnauthorized: false,
     });
+  }
+
+  async litAuth() {
+    this.authingLit = this._litAuth();
+
+    return this.authingLit;
   }
 
   static async init(
@@ -191,7 +197,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   ) {
     super({ provider, program });
 
-    this.authingLit = false;
+    this.authingLit = null;
 
     // @ts-ignore
     if (provider.connection._rpcEndpoint.includes("dev")) {
@@ -294,15 +300,15 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
           let decodedMessage;
           if (args.encryptedSymmetricKey) {
+            await this.authingLit;
             if (
-              !this.authingLit &&
               !this.isLitAuthed &&
               this.wallet &&
               this.wallet.publicKey
             ) {
-              this.authingLit = true;
               await this.litAuth();
             }
+
             const accessControlConditions = [
               tokenAccessPermissions(
                 chatAcc!.readPermissionMint,
@@ -601,7 +607,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     delegateWalletKeypair,
     encrypted = true,
   }: SendMessageArgs): Promise<InstructionResult<null>> {
-    if (!this.isLitAuthed && encrypted) {
+    if (encrypted) {
+      await this.authingLit;
       await this.litAuth();
     }
     let { fileAttachments, ...normalMessage } = message;
