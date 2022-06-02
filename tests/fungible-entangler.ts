@@ -150,7 +150,7 @@ describe("fungible-entangler", () => {
 
     describe("swapParent", () => {
       it("swaps amount from the parent to a child", async () => {
-        await fungibleEntanglerProgram.swapParent({
+        await fungibleEntanglerProgram.swapParentForChild({
           parentEntangler,
           childEntangler,
           amount: 30,
@@ -171,7 +171,7 @@ describe("fungible-entangler", () => {
       });
 
       it("swaps all from parent to a child", async () => {
-        await fungibleEntanglerProgram.swapParent({
+        await fungibleEntanglerProgram.swapParentForChild({
           parentEntangler,
           childEntangler,
           all: true,
@@ -194,7 +194,7 @@ describe("fungible-entangler", () => {
 
     describe("swapChild", () => {
       it("swaps amount from the child to the parent", async () => {
-        await fungibleEntanglerProgram.swapChild({
+        await fungibleEntanglerProgram.swapChildForParent({
           parentEntangler,
           childEntangler,
           amount: 30,
@@ -215,7 +215,7 @@ describe("fungible-entangler", () => {
       });
 
       it("swaps all from child to a parent", async () => {
-        await fungibleEntanglerProgram.swapChild({
+        await fungibleEntanglerProgram.swapChildForParent({
           parentEntangler,
           childEntangler,
           all: true,
