@@ -28,11 +28,17 @@ pub mod fungible_entangler {
     instructions::initialize_fungible_child_entangler_v0::handler(ctx, args)
   }
 
-  pub fn swap_parent_for_child_v0(ctx: Context<SwapParentForChildV0>, args: SwapV0Args) -> Result<()> {
+  pub fn swap_parent_for_child_v0(
+    ctx: Context<SwapParentForChildV0>,
+    args: SwapV0Args,
+  ) -> Result<()> {
     instructions::swap_parent_for_child_v0::handler(ctx, args)
   }
 
-  pub fn swap_child_for_parent_v0(ctx: Context<SwapChildForParentV0>, args: SwapV0Args) -> Result<()> {
+  pub fn swap_child_for_parent_v0(
+    ctx: Context<SwapChildForParentV0>,
+    args: SwapV0Args,
+  ) -> Result<()> {
     instructions::swap_child_for_parent_v0::handler(ctx, args)
   }
 }

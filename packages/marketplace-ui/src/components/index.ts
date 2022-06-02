@@ -7,7 +7,6 @@ export * from "./FormContainer";
 export * from "./Header";
 export * from "./MetadataMeta";
 export * from "./Providers";
-export * from "./TokenDisplay";
 export * from "./TwitterLink";
 export * from "./Wallet";
 export * from "./WalletModalButton";

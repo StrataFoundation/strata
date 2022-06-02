@@ -11,7 +11,7 @@ pub struct SwapAmount {
 pub fn swap_shared_logic(
   parent_entangler: &Account<FungibleParentEntanglerV0>,
   child_entangler: &Account<FungibleChildEntanglerV0>,
-  exit: &Account<TokenAccount>,
+  target: &Account<TokenAccount>,
   source: &Account<TokenAccount>,
   clock: &Sysvar<Clock>,
   args: &SwapV0Args,
@@ -47,15 +47,15 @@ pub fn swap_shared_logic(
   );
 
   if args.all == Some(true) {
-    amount = if source.amount > exit.amount {
-      exit.amount
+    amount = if source.amount > target.amount {
+      target.amount
     } else {
       source.amount
     };
   } else {
     amount = args.amount.unwrap();
 
-    require!(exit.amount >= amount, ErrorCode::TokenAccountAmountTooLow);
+    require!(target.amount >= amount, ErrorCode::TokenAccountAmountTooLow);
   }
 
   Ok(SwapAmount { amount })
