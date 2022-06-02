@@ -588,9 +588,11 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       
       if (fileAttachments) {
         await Promise.all(fileAttachments.map(async (fileAttachment) => {
-          LitJsSdk.encryptFile({
-            file: 
-          })
+          const encrypted = await LitJsSdk.encryptWithSymmetricKey(
+            symmetricKey,
+            fileAttachment.arrayBuffer()
+          );
+          return new File([encrypted], fileAttachment.name)
         }))
       }
     } else {
