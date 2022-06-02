@@ -177,6 +177,8 @@ async function createLiquidityBootstrapper(
     instructions,
     signers,
   } = await marketplaceSdk.createLiquidityBootstrapperInstructions({
+    iAmAFreeloader: true,
+    protocolFee: 0,
     targetMintKeypair,
     authority,
     metadata,
