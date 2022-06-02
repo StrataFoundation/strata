@@ -39,7 +39,6 @@
     "@solana/web3.js": "^1.43.4",
     "@strata-foundation/marketplace-sdk": "^3.6.1",
     "@strata-foundation/react": "^3.6.1",
-    "@strata-foundation/web3-token-auth": "^3.5.4",
     "@types/auth0-js": "^9.14.5",
     "@types/cors": "^2.8.12",
     "@types/node-localstorage": "^1.3.0",

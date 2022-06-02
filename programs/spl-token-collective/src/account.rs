@@ -69,6 +69,32 @@ pub struct InitializeCollectiveV0<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(args: InitializeCollectiveForSocialTokenV0Args)]
+pub struct InitializeCollectiveForSocialTokenV0<'info> {
+  #[account(init, seeds = [
+    b"collective", 
+    mint.key().as_ref()],
+    payer=payer,
+    bump,
+    space=312
+  )]
+  pub collective: Box<Account<'info, CollectiveV0>>,
+  #[account(
+    constraint = mint.key() == token_ref.mint
+  )]
+  pub mint: Box<Account<'info, Mint>>,
+  #[account(
+    constraint = token_ref.authority.unwrap() == payer.key()
+  )]
+  pub token_ref: Box<Account<'info, TokenRefV0>>,
+
+  #[account(mut)]
+  pub payer: Signer<'info>,
+  pub system_program: Program<'info, System>,
+  pub rent: Sysvar<'info, Rent>,
+}
+
+#[derive(Accounts)]
 #[instruction(args: UpdateCollectiveV0Args)]
 pub struct UpdateCollectiveV0<'info> {
   #[account(
@@ -399,10 +425,14 @@ pub struct StaticUpdateTokenBondingV0<'info> {
   pub token_bonding: Box<Account<'info, TokenBondingV0>>,
   pub base_mint: Box<Account<'info, Mint>>,
   pub target_mint: Box<Account<'info, Mint>>,
-  pub buy_base_royalties: Box<Account<'info, TokenAccount>>,
-  pub buy_target_royalties: Box<Account<'info, TokenAccount>>,
-  pub sell_base_royalties: Box<Account<'info, TokenAccount>>,
-  pub sell_target_royalties: Box<Account<'info, TokenAccount>>,
+  /// CHECK: Checked by verify_empty_or_mint in CPI call to update_token_bonding_v0
+  pub buy_base_royalties: UncheckedAccount<'info>,
+  /// CHECK: Checked by verify_empty_or_mint in CPI call to update_token_bonding_v0
+  pub buy_target_royalties: UncheckedAccount<'info>,
+  /// CHECK: Checked by verify_empty_or_mint in CPI call to update_token_bonding_v0
+  pub sell_base_royalties: UncheckedAccount<'info>,
+  /// CHECK: Checked by verify_empty_or_mint in CPI call to update_token_bonding_v0
+  pub sell_target_royalties: UncheckedAccount<'info>,
 }
 
 #[derive(Accounts)]

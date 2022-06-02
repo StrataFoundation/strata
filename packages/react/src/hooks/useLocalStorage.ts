@@ -5,9 +5,12 @@ export function useLocalStorage<T>(
   key: string,
   defaultState: T
 ): [T, (newValue: T) => void] {
+  const isBrowser: boolean = ((): boolean => typeof window !== "undefined")();
   const [value, setValue] = useState<T>(() => {
-    const value = typeof localStorage !== "undefined" && localStorage.getItem(key);
-    if (value) return JSON.parse(value) as T;
+    if (isBrowser) {
+      const value = localStorage.getItem(key);
+      if (value) return JSON.parse(value) as T;
+    }
     return defaultState;
   });
 
@@ -26,7 +29,7 @@ export function useLocalStorage<T>(
   );
 
   useInterval(() => {
-    if (typeof localStorage !== "undefined" && localStorage.getItem(key) != JSON.stringify(value)) {
+    if (isBrowser && localStorage.getItem(key) != JSON.stringify(value)) {
     const value =
       typeof localStorage !== "undefined" && localStorage.getItem(key);
       if (value) setValue(JSON.parse(value) as T);

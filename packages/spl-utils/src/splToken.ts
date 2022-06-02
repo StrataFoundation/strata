@@ -4,7 +4,7 @@
 
 import { Provider } from "@project-serum/anchor";
 import { AccountInfo, AccountLayout, MintInfo, MintLayout, Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
-import { Account, PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { Keypair, PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
 
 export async function createMint(
   provider: Provider,
@@ -14,7 +14,7 @@ export async function createMint(
   if (authority === undefined) {
     authority = provider.wallet.publicKey;
   }
-  const mint = new Account();
+  const mint = Keypair.generate();
   const instructions = await createMintInstructions(
     provider,
     authority,

@@ -18,7 +18,6 @@
     "@solana/spl-governance": "^0.0.27",
     "@solana/web3.js": "^1.43.4",
     "@strata-foundation/spl-utils": "^3.6.1",
-    "@strata-foundation/web3-token-auth": "^3.5.4",
     "borsh": "^0.7.0",
     "js-base64": "^3.7.2",
     "shelljs": "^0.8.4"

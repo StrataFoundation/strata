@@ -21,9 +21,7 @@
       "name": "Mocha Tests",
       "program": "${workspaceFolder}/node_modules/ts-mocha/bin/ts-mocha",
       "request": "launch",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
+      "skipFiles": ["<node_internals>/**"],
       "type": "pwa-node"
     },
     {
@@ -43,9 +41,7 @@
       "name": "Account Split Test",
       "program": "${workspaceFolder}/node_modules/ts-mocha/bin/ts-mocha",
       "request": "launch",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
+      "skipFiles": ["<node_internals>/**"],
       "type": "pwa-node"
     }
   ]

@@ -13,20 +13,9 @@ import {
   TorusWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
 import { useEndpoint } from "@strata-foundation/marketplace-ui";
-import { tokenAuthFetchMiddleware } from "@strata-foundation/web3-token-auth";
 
 // Default styles that can be overridden by your app
 require("@solana/wallet-adapter-react-ui/styles.css");
-
-export const getToken = (getTokenEndpoint: string, endpoint: string) => async () => {
-  if (endpoint.includes("genesysgo")) {
-    const req = await fetch(getTokenEndpoint);
-    const { access_token }: { access_token: string } = await req.json();
-    return access_token;
-  }
-
-  return ""
-};
 
 export const Wallet: FC = ({ children }) => {
   // You can also provide a custom RPC endpoint
@@ -53,11 +42,7 @@ export const Wallet: FC = ({ children }) => {
     <ConnectionProvider
       endpoint={endpoint}
       config={{
-        fetchMiddleware: tokenAuthFetchMiddleware({
-          // @ts-ignore
-          getToken: getToken(process.env.GET_TOKEN_ENDPOINT, endpoint),
-        }),
-        commitment: "confirmed"
+        commitment: "confirmed",
       }}
     >
       <WalletProvider wallets={wallets} autoConnect>
