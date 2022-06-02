@@ -7,6 +7,7 @@ import {
 } from "../components";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { ICandyMachine, useCandyMachine } from "./useCandyMachine";
+import BN from "bn.js";
 
 export interface ICandyMachineState {
   candyMachine: ICandyMachine | undefined;
@@ -15,7 +16,7 @@ export interface ICandyMachineState {
   itemsRemaining: number | undefined;
   isWhitelistUser: boolean;
   isPresale: boolean;
-  discountPrice: anchor.BN | undefined;
+  discountPrice: BN | undefined;
 }
 
 export function useCandyMachineInfo(
@@ -27,7 +28,7 @@ export function useCandyMachineInfo(
   const [itemsRemaining, setItemsRemaining] = useState<number>();
   const [isWhitelistUser, setIsWhitelistUser] = useState(false);
   const [isPresale, setIsPresale] = useState(false);
-  const [discountPrice, setDiscountPrice] = useState<anchor.BN>();
+  const [discountPrice, setDiscountPrice] = useState<BN>();
   const { connection } = useConnection();
 
   const { publicKey } = useWallet();

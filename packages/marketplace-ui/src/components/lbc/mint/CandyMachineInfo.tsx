@@ -6,6 +6,7 @@ import { PublicKey } from "@solana/web3.js";
 import { useMint, useTokenMetadata } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import { BigText, BlackBox } from "../LbcInfo";
+import * as anchor from "@project-serum/anchor";
 
 export const CandyMachineInfo = ({ candyMachine, itemsRemaining, isWhitelistUser, discountPrice }: ICandyMachineState) => {
   const { metadata, loading: loadingMeta } = useTokenMetadata(
@@ -25,13 +26,13 @@ export const CandyMachineInfo = ({ candyMachine, itemsRemaining, isWhitelistUser
             {isWhitelistUser && discountPrice
               ? `${
                   targetMint && discountPrice
-                    ? toNumber(discountPrice, targetMint)
+                    ? toNumber(discountPrice as anchor.BN, targetMint)
                     : ""
                 } ${ticker}`
               : candyMachine
               ? `${
                   targetMint && candyMachine?.price
-                    ? toNumber(discountPrice || candyMachine.price, targetMint)
+                    ? toNumber((discountPrice || candyMachine.price) as anchor.BN, targetMint)
                     : ""
                 } ${ticker}`
               : ""}

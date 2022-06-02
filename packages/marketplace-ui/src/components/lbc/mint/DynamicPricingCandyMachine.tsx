@@ -1,8 +1,4 @@
 import {
-  mintOneToken
-} from "./candy-machine";
-import { MintedNftNotification } from "./MintedNftNotification";
-import {
   Box,
   Button,
   Center, Spinner,
@@ -19,23 +15,26 @@ import { PublicKey } from "@solana/web3.js";
 import {
   Notification, useTokenBondingFromMint
 } from "@strata-foundation/react";
-import React, { useEffect } from "react";
+import BN from "bn.js";
+import React from "react";
 import toast from "react-hot-toast";
 import {
   CANDY_MACHINE_PROGRAM,
-  ICandyMachine,
-  useCandyMachine,
-  useCandyMachineInfo,
-  useLivePrice,
+  ICandyMachine, useCandyMachineInfo,
+  useLivePrice
 } from "../../../hooks";
-import { toDate } from "./utils";
-import { IMintArgs, MintButton } from "../MintButton";
-import { LbcStatus } from "../LbcStatus";
-import { Branding } from "../Branding";
 import { BondingPlot } from "../BondingPlot";
-import { TransactionHistory } from "../TransactionHistory";
-import { CandyMachineInfo } from "./CandyMachineInfo";
+import { Branding } from "../Branding";
 import { LbcInfo } from "../LbcInfo";
+import { LbcStatus } from "../LbcStatus";
+import { IMintArgs, MintButton } from "../MintButton";
+import { TransactionHistory } from "../TransactionHistory";
+import {
+  mintOneToken
+} from "./candy-machine";
+import { CandyMachineInfo } from "./CandyMachineInfo";
+import { MintedNftNotification } from "./MintedNftNotification";
+import { toDate } from "./utils";
 
 export interface DynamicPricingCandyMachineProps {
   candyMachineId?: anchor.web3.PublicKey;
@@ -272,7 +271,7 @@ const getCountdownDate = (
     candyMachine.goLiveDate
       ? candyMachine.goLiveDate
       : candyMachine.isPresale
-      ? new anchor.BN(new Date().getTime() / 1000)
+      ? new BN(new Date().getTime() / 1000)
       : undefined
   );
 };
