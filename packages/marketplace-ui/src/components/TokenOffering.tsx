@@ -12,6 +12,8 @@ import {
   useTokenAccount,
   useMint,
   useTokenBondingKey,
+  useFungibleChildEntangler,
+  useFungibleParentEntangler,
   roundToDecimals,
 } from "@strata-foundation/react";
 import { useAsync, useAsyncCallback, UseAsyncReturn } from "react-async-hook";
@@ -23,28 +25,33 @@ import {
 const identity = () => {};
 export const TokenOffering = ({
   mintKey,
+  childEntanglerKey,
   showAttribution = true,
   onConnectWallet = () => {}
 }: {
   mintKey: PublicKey | undefined;
+  childEntanglerKey?: PublicKey | undefined;
   showAttribution?: boolean;
   onConnectWallet?: () => void;
 }) => {
-  const { result: sellOnlyTokenBondingKey, error: keyError1 } =
-    useTokenBondingKey(mintKey, 1);
-  const { tokenBondingSdk } = useStrataSdks();
-  const { info: sellOnlyTokenBonding, loading: sellOnlyLoading } =
-    useTokenBonding(sellOnlyTokenBondingKey);
-  const { result: tokenBondingKey, error: keyError2 } = useTokenBondingKey(
-    sellOnlyTokenBonding?.targetMint,
+  const { tokenBondingSdk, fungibleEntanglerSdk } = useStrataSdks();
+
+  // load the initial curve
+  const { result: tokenBondingKey, error: keyError1 } = useTokenBondingKey(
+    mintKey,
     0
   );
-
   const { info: tokenBonding } = useTokenBonding(tokenBondingKey);
+  
+  // load the fungible entangler. may or may not be undefined
+  const { info: childEntangler } = useFungibleChildEntangler(childEntanglerKey);
+  const { info: parentEntangler } = useFungibleParentEntangler(childEntangler?.parentEntangler);
+
+  // load to find the amount remaining in the fungible entangler
   const { info: supplyAcc } = useTokenAccount(
-    sellOnlyTokenBonding?.baseStorage
+    parentEntangler?.parentStorage
   );
-  const supplyMint = useMint(sellOnlyTokenBonding?.baseMint);
+  const supplyMint = useMint(parentEntangler?.parentMint);
 
   const {
     execute: onSubmit,
@@ -53,6 +60,8 @@ export const TokenOffering = ({
   } = useAsyncCallback(async function (values: ISwapFormValues) {
     const instructions = [];
     const signers = [];
+
+    // buy the first bonding curve
     const { instructions: i1, signers: s1 } =
       await tokenBondingSdk!.buyInstructions({
         desiredTargetAmount: +values.bottomAmount,
@@ -61,21 +70,18 @@ export const TokenOffering = ({
       });
     instructions.push(...i1);
     signers.push(...s1);
-    if (sellOnlyTokenBonding) {
-      const { instructions: i2, signers: s2 } =
-        await tokenBondingSdk!.sellInstructions({
-          targetAmount: roundToDecimals(
-            +values.bottomAmount,
-            supplyMint.decimals
-          ),
-          slippage: +values.slippage / 100,
-          tokenBonding: sellOnlyTokenBondingKey!,
-        });
 
+    // if there is an entangler, then swap the token from the bonding curve through it
+    if (childEntangler && parentEntangler) {
+      const { instructions: i2, signers: s2 } = 
+        await fungibleEntanglerSdk!.swapChildInstructions({
+          parentEntangler: parentEntangler.publicKey,
+          childEntangler: childEntangler.publicKey,
+          amount: +values.bottomAmount,
+      })
       instructions.push(...i2);
       signers.push(...s2);
     }
-
     await tokenBondingSdk!.sendInstructions(instructions, signers);
     toast.custom((t) => (
       <Notification
@@ -91,7 +97,7 @@ export const TokenOffering = ({
   });
 
   const { handleErrors } = useErrorHandler();
-  handleErrors(keyError1, keyError2, submitError);
+  handleErrors(keyError1, submitError);
 
   const tradingMints = useMemo(() => {
     return {
@@ -110,7 +116,7 @@ export const TokenOffering = ({
   return (
     <SwapForm
       showAttribution={showAttribution}
-      isLoading={driverLoading || sellOnlyLoading}
+      isLoading={driverLoading}
       isSubmitting={submitting}
       {...swapProps}
       onSubmit={onSubmit}

@@ -47,8 +47,11 @@ export const LbcDisplay: NextPage = ({
   description,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const router = useRouter();
-  const { mintKey: mintKeyRaw } = router.query;
+
+  const { mintKey: mintKeyRaw, entangler: childEntanglerRaw } = router.query;
   const mintKey = usePublicKey(mintKeyRaw as string);
+  const childEntanglerKey = usePublicKey(childEntanglerRaw as string);
+
   const { info: tokenBonding, loading } = useTokenBondingFromMint(mintKey);
   const { price } = useLivePrice(tokenBonding?.publicKey);
   const { publicKey } = useWallet();
@@ -138,6 +141,7 @@ export const LbcDisplay: NextPage = ({
                         <TokenOffering
                           onConnectWallet={onConnectWallet}
                           mintKey={mintKey}
+                          childEntanglerKey={childEntanglerKey}
                         />
                       </VStack>
                     )}

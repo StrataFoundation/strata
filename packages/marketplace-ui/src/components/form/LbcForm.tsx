@@ -295,7 +295,10 @@ async function createLbpExistingMint(
     instructions,
     signers
   );
-  return route(routes.tokenLbc, { mintKey: intermediaryMint.toBase58() })
+  return route(routes.tokenLbc, { 
+    mintKey: intermediaryMint.toBase58(), 
+    entangler: entanglerInstrs.output.childEntangler 
+  })
 }
 
 async function createLbpNewMint(
