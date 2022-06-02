@@ -5,7 +5,7 @@ import { ShdwDrive, StorageAccount } from "@shadow-drive/sdk";
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
-import { getMintInfo, sendAndConfirmWithRetry } from "@strata-foundation/spl-utils";
+import { getMintInfo, sendAndConfirmWithRetry, truthy } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
 import Decimal from "decimal.js";
 
@@ -76,21 +76,21 @@ export async function uploadFile(
     );
     let storageAccount: StorageAccount | undefined;
     try {
-      const storageAccount = await shdwDrive.getStorageAccount(accountKey);
+      storageAccount = await shdwDrive.getStorageAccount(accountKey);
     } catch (e: any) {
       // ignore
     }
 
     // Double storage size every time there's not enough
     let sizeKB = 0;
-    if (storageAccount && storageAccount.storageAvailable < file.size) {
+    if (storageAccount && Number(storageAccount.storageAvailable) < file.size) {
       let sizeToAdd = storageAccount.storageAvailable;
       while (sizeToAdd < file.size) {
         sizeToAdd += sizeToAdd;
       }
       sizeKB = Math.ceil(sizeToAdd / 1024);
     } else if (!storageAccount) {
-      sizeKB = ((file.size * 1024) / Math.pow(10, 9)) * 4; // Take roughly 4x the file
+      sizeKB = Math.ceil(file.size / 1024);
     }
 
     const shdwNeeded = (sizeKB * 1024) / Math.pow(10, 9);
@@ -115,10 +115,8 @@ export async function uploadFile(
         await provider.connection.getRecentBlockhash()
       ).blockhash;
       tx.feePayer = pubKey;
-      tx.partialSign(...swapPayload.signers);
-      if (delegateWallet) {
-        tx.sign(delegateWallet)
-      }
+      const signers = [...swapPayload.signers, delegateWallet].filter(truthy);
+      tx.sign(...signers);
 
       await sendAndConfirmWithRetry(
         provider.connection,
@@ -136,7 +134,7 @@ export async function uploadFile(
       await shdwDrive.createStorageAccount("chat", sizeKB + "KB");
     }
 
-    const ext = file.name.split(".").slice(-1)[0];
+    const ext = file.name.split(".").slice(1, -1).join(".");
     const name = randomIdentifier() + (ext ? `.${ext}` : "");
     console.log(name);
     Object.defineProperty(file, "name", {

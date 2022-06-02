@@ -1,22 +1,20 @@
-import { useDelegateWallet } from "../hooks/useDelegateWallet";
-import { Button, Flex, FormControl, HStack, Icon, IconButton, Input, Modal, ModalBody, ModalContent, ModalHeader, useDisclosure } from "@chakra-ui/react";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
-import { IMessageContent, ISendMessageContent, MessageType } from "@strata-foundation/chat";
+import { Button, Flex, HStack, Icon, IconButton, Input, Modal, ModalBody, ModalContent, ModalHeader, useDisclosure } from "@chakra-ui/react";
+import { PublicKey, Transaction } from "@solana/web3.js";
+import { IDecryptedMessageContent, ISendMessageContent, MessageType } from "@strata-foundation/chat";
 import { useErrorHandler, useMint, useOwnedAmount } from "@strata-foundation/react";
+import { toNumber } from "@strata-foundation/spl-token-bonding";
 import { sendAndConfirmWithRetry } from "@strata-foundation/spl-utils";
 import React, { useState } from "react";
+import { AiOutlineGif, AiOutlineSend } from "react-icons/ai";
 import { useChatSdk } from "../contexts";
 import { useChat } from "../hooks";
-import { toNumber } from "@strata-foundation/spl-token-bonding";
+import { useDelegateWallet } from "../hooks/useDelegateWallet";
 import { BuyMoreButton } from "./BuyMoreButton";
-import { AiOutlineGif } from "react-icons/ai";
-import { GifSearch } from "./GifSearch";
-import { AiOutlineSend } from "react-icons/ai";
 import { FileAttachment } from "./FileAttachment";
+import { GifSearch } from "./GifSearch";
 
 export interface IPendingMessage {
-  content: IMessageContent;
+  content: IDecryptedMessageContent;
   txid: string;
   chatKey?: PublicKey;
 }
@@ -83,8 +81,12 @@ export function Chatbox({
             skipPreflight: true,
           }
         );
-        if (onAddPendingMessage)
-          onAddPendingMessage({ content: message, txid, chatKey });
+        if (onAddPendingMessage) {
+          const { fileAttachments, ...rest } = message;
+
+          onAddPendingMessage({ content: { ...rest, decryptedAttachments: fileAttachments }, txid, chatKey });
+
+        }
 
         scrollRef.current.scrollIntoView({ behavior: "smooth" });
 

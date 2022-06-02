@@ -20,6 +20,19 @@ import { uploadFile } from "./shdw";
 
 export * from "./generated/chat";
 
+const SYMM_KEY_ALGO_PARAMS = {
+  name: "AES-CBC",
+  length: 256,
+};
+
+async function generateSymmetricKey() {
+  const symmKey = await crypto.subtle.generateKey(SYMM_KEY_ALGO_PARAMS, true, [
+    "encrypt",
+    "decrypt",
+  ]);
+  return symmKey;
+}
+
 export enum MessageType {
   Text = "text",
   Gify = "gify",
@@ -140,6 +153,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   litClient: LitJsSdk;
   litAuthSig: any | undefined;
   chain: string;
+  authingLit: boolean;
 
   static ID = new PublicKey("2hC44EVzM4JoL5EWU4ezcZsY6ns2puwxpivQdeUMTzZM");
 
@@ -150,6 +164,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   async litAuth() {
     this.litAuthSig = await LitJsSdk.checkAndSignAuthMessage({
       chain: this.chain,
+      alertWhenUnauthorized: false,
     });
   }
 
@@ -175,6 +190,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     litClient: LitJsSdk
   ) {
     super({ provider, program });
+
+    this.authingLit = false;
 
     // @ts-ignore
     if (provider.connection._rpcEndpoint.includes("dev")) {
@@ -238,7 +255,11 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       return [];
     }
 
-    const instructions = tx.transaction.message.instructions.filter(ix => tx.transaction.message.accountKeys[ix.programIdIndex].equals(this.programId));
+    const instructions = tx.transaction.message.instructions.filter((ix) =>
+      tx.transaction.message.accountKeys[ix.programIdIndex].equals(
+        this.programId
+      )
+    );
     const coder = this.program.coder.instruction;
 
     const sendMessageIdl = this.program.idl.instructions.find(
@@ -256,11 +277,9 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         data: coder.decode(bs58.decode(ix.data)),
         profile:
           tx.transaction.message.accountKeys[ix.accounts[profileAccountIndex]],
-        chat:
-          tx.transaction.message.accountKeys[ix.accounts[chatAccountIndex]],
+        chat: tx.transaction.message.accountKeys[ix.accounts[chatAccountIndex]],
       }))
       .filter(truthy);
-
 
     return Promise.all(
       decoded
@@ -268,21 +287,29 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         .map(async (decoded) => {
           const args = decoded.data.data.args;
           const chatAcc = await this.getChat(decoded.chat);
-          const readMint = await getMintInfo(this.provider, chatAcc!.readPermissionMint);
+          const readMint = await getMintInfo(
+            this.provider,
+            chatAcc!.readPermissionMint
+          );
 
           let decodedMessage;
           if (args.encryptedSymmetricKey) {
-            if (!this.isLitAuthed && this.wallet && this.wallet.publicKey) {
+            if (
+              !this.authingLit &&
+              !this.isLitAuthed &&
+              this.wallet &&
+              this.wallet.publicKey
+            ) {
+              this.authingLit = true;
               await this.litAuth();
             }
-            const accessControlConditions = [tokenAccessPermissions(
-              chatAcc!.readPermissionMint,
-              toBN(
-                args.readPermissionAmount,
-                readMint
+            const accessControlConditions = [
+              tokenAccessPermissions(
+                chatAcc!.readPermissionMint,
+                toBN(args.readPermissionAmount, readMint),
+                this.chain
               ),
-              this.chain
-            )];
+            ];
 
             try {
               const symmetricKey = await this.litClient.getEncryptionKey({
@@ -296,10 +323,9 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
               const blob = new Blob([
                 LitJsSdk.uint8arrayFromString(args.content, "base16"),
               ]);
-              decodedMessage = JSON.parse(await LitJsSdk.decryptString(
-                blob,
-                symmetricKey
-              ));
+              decodedMessage = JSON.parse(
+                await LitJsSdk.decryptString(blob, symmetricKey)
+              );
 
               decodedMessage.decryptedAttachments = [];
               decodedMessage.decryptedAttachments.push(
@@ -318,7 +344,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
                   )
                 ))
               );
-            } catch(e: any) {
+            } catch (e: any) {
               console.error("Failed to decode message", e);
             }
           } else {
@@ -402,7 +428,10 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         name,
         imageUrl: imageUrl,
         metadataUrl: metadataUrl,
-        defaultReadPermissionAmount: toBN(defaultReadPermissionAmount, readMint),
+        defaultReadPermissionAmount: toBN(
+          defaultReadPermissionAmount,
+          readMint
+        ),
         postPermissionMint,
         readPermissionMint,
         postPermissionAction: postPermissionAction as never,
@@ -575,7 +604,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     if (!this.isLitAuthed && encrypted) {
       await this.litAuth();
     }
-    const { fileAttachments, ...normalMessage } = message;
+    let { fileAttachments, ...normalMessage } = message;
 
     const chatAcc = (await this.getChat(chat))!;
     const readMint = await getMintInfo(
@@ -594,35 +623,21 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       ),
     ];
 
-    let encryptedSymmetricKey, encryptedString;
-    if (encrypted) {
-      const { encryptedString: encryptedStringOut, symmetricKey } =
-        await LitJsSdk.encryptString(JSON.stringify(message));
-      encryptedString = buf2hex(await (encryptedStringOut as Blob).arrayBuffer());
-      encryptedSymmetricKey = LitJsSdk.uint8arrayToString(
-        await this.litClient.saveEncryptionKey({
-          solRpcConditions: accessControlConditionsToUse,
-          symmetricKey,
-          authSig: this.litAuthSig,
-          chain: this.chain,
-        }),
-        "base16"
-      );
-      
-      if (fileAttachments) {
-        await Promise.all(fileAttachments.map(async (fileAttachment) => {
+    const symmKey = await generateSymmetricKey();
+    // Encrypt fileAttachements if needed
+    if (fileAttachments && encrypted) {
+      fileAttachments = await Promise.all(
+        fileAttachments.map(async (fileAttachment) => {
           const encrypted = await LitJsSdk.encryptWithSymmetricKey(
-            symmetricKey,
-            fileAttachment.arrayBuffer()
+            symmKey,
+            await fileAttachment.arrayBuffer()
           );
-          return new File([encrypted], fileAttachment.name)
-        }))
-      }
-    } else {
-      encryptedSymmetricKey = "";
-      encryptedString = JSON.stringify(message);
+          return new File([encrypted], fileAttachment.name + ".encrypted");
+        })
+      );
     }
 
+    // Attach files to either attachments or encryptedAttachments based on whether they were encrypted
     if (fileAttachments) {
       let attachments: string[];
       if (encrypted) {
@@ -634,20 +649,46 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         attachments = normalMessage.attachments;
       }
 
-      await Promise.all(
-        fileAttachments.map(async (fileAttachment) => {
-          const file = await uploadFile(
-            this.provider,
-            fileAttachment,
-            delegateWalletKeypair
-          );
-          if (file) {
-            attachments.push(file);
-          }
-        })
+      attachments.push(
+        ...(
+          await Promise.all(
+            fileAttachments.map(async (fileAttachment) => {
+              return await uploadFile(
+                this.provider,
+                fileAttachment,
+                delegateWalletKeypair
+              );
+            })
+          )
+        ).filter(truthy)
       );
     }
 
+    // Encrypt the actual json structure
+    let encryptedSymmetricKey, encryptedString;
+    if (encrypted) {
+      const encryptedStringOut = await LitJsSdk.encryptWithSymmetricKey(
+        symmKey,
+        LitJsSdk.uint8arrayFromString(JSON.stringify(normalMessage))
+      );
+      encryptedString = buf2hex(
+        await(encryptedStringOut as Blob).arrayBuffer()
+      );
+      encryptedSymmetricKey = LitJsSdk.uint8arrayToString(
+        await this.litClient.saveEncryptionKey({
+          solRpcConditions: accessControlConditionsToUse,
+          symmetricKey: new Uint8Array(
+            await crypto.subtle.exportKey("raw", symmKey)
+          ),
+          authSig: this.litAuthSig,
+          chain: this.chain,
+        }),
+        "base16"
+      );
+    } else {
+      encryptedSymmetricKey = "";
+      encryptedString = JSON.stringify(message);
+    }
 
     const instructions = [];
 
@@ -667,13 +708,15 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     const remainingAccounts = [];
     if (delegateWallet || delegateWalletKeypair) {
       if (!delegateWallet) {
-        delegateWallet = delegateWalletKeypair!.publicKey
+        delegateWallet = delegateWalletKeypair!.publicKey;
       }
 
       remainingAccounts.push({
-        pubkey: (await ChatSdk.delegateWalletKey(delegateWallet, this.programId))[0],
+        pubkey: (
+          await ChatSdk.delegateWalletKey(delegateWallet, this.programId)
+        )[0],
         isWritable: false,
-        isSigner: false
+        isSigner: false,
       });
     }
 
@@ -685,7 +728,10 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
           id: uuid(),
           content: encryptedString,
           encryptedSymmetricKey,
-          readPermissionAmount: toBN(readPermissionAmount || chatAcc.defaultReadPermissionAmount, readMint),
+          readPermissionAmount: toBN(
+            readPermissionAmount || chatAcc.defaultReadPermissionAmount,
+            readMint
+          ),
           nextId: null,
         },
         {
@@ -743,7 +789,6 @@ function tokenAccessPermissions(readPermissionMint: PublicKey, threshold: BN, ch
       value: threshold.toString(10),
     },
   };
-  throw new Error("Function not implemented.");
 }
 
 function buf2hex(buffer: ArrayBuffer): string {
