@@ -62,12 +62,7 @@ export function Message({
   const status = pending ? "Pending" : "Confirmed";
   const redColor = useColorModeValue("red.600", "red.400");
 
-  let message;
-  try {
-    message = decodedMessage && JSON.parse(decodedMessage);
-  } catch (e: any) {
-    message = decodedMessage;
-  }
+  const message = decodedMessage;
 
   const usernameColor = { light: "green.500", dark: "green.200" };
   const textColor = { light: "black", dark: "white" };
@@ -97,7 +92,7 @@ export function Message({
                 mt={"4px"}
                 alt={message.text}
                 height="300px"
-                src={message.attachments[0]}
+                src={(message.attachments || [])[0] || blobToUrl((message.decryptedAttachments || [])[0])}
               />
             ) : (
               <Text mt={"-4px"}>{message.text}</Text>
@@ -128,3 +123,10 @@ export function Message({
     </HStack>
   );
 }
+function blobToUrl(blob: Blob | undefined): string | undefined {
+  if (blob) {
+    const urlCreator = window.URL || window.webkitURL;
+    return urlCreator.createObjectURL(blob);
+  }
+}
+

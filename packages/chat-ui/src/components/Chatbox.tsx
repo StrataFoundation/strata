@@ -2,7 +2,7 @@ import { useDelegateWallet } from "../hooks/useDelegateWallet";
 import { Button, Flex, FormControl, HStack, Icon, IconButton, Input, Modal, ModalBody, ModalContent, ModalHeader, useDisclosure } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
-import { IMessageContent, MessageType } from "@strata-foundation/chat";
+import { IMessageContent, ISendMessageContent, MessageType } from "@strata-foundation/chat";
 import { useErrorHandler, useMint, useOwnedAmount } from "@strata-foundation/react";
 import { sendAndConfirmWithRetry } from "@strata-foundation/spl-utils";
 import React, { useState } from "react";
@@ -13,7 +13,7 @@ import { BuyMoreButton } from "./BuyMoreButton";
 import { AiOutlineGif } from "react-icons/ai";
 import { GifSearch } from "./GifSearch";
 import { AiOutlineSend } from "react-icons/ai";
-import { ShdwAttachment } from "./ShdwAttachment";
+import { FileAttachment } from "./FileAttachment";
 
 export interface IPendingMessage {
   content: IMessageContent;
@@ -56,7 +56,7 @@ export function Chatbox({
   /*get uid and phoroURL from current User then send message 
   and set chat state to "", then scroll to latst message
   */
-  const sendMessage = async (message: IMessageContent) => {
+  const sendMessage = async (message: ISendMessageContent) => {
     if (delegateWalletKeypair) {
       if (chatSdk && chatKey) {
         setInput("");
@@ -125,10 +125,14 @@ export function Chatbox({
               placeholder="Type Message"
             />
           )}
-          <ShdwAttachment onUpload={(url) => sendMessage({
-            type: MessageType.Image,
-            attachments: [url]
-          })} />
+          <FileAttachment 
+            onUpload={async (file) => {
+              await sendMessage({
+                type: MessageType.Image,
+                fileAttachments: [file]
+              })
+            }}
+          />
           <IconButton
             size="lg"
             aria-label="Select GIF"

@@ -1,39 +1,22 @@
 import { Icon, IconButton } from "@chakra-ui/react";
-import { getOrca, OrcaPoolConfig } from "@orca-so/sdk";
-import { Provider } from "@project-serum/anchor";
-import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
-import { ShdwDrive, StorageAccount } from "@shadow-drive/sdk";
-import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
-import { Connection, Keypair, PublicKey } from "@solana/web3.js";
-import { useErrorHandler, useProvider } from "@strata-foundation/react";
-import { toNumber } from "@strata-foundation/spl-token-bonding";
-import { getMintInfo, sendAndConfirmWithRetry } from "@strata-foundation/spl-utils";
-import BN from "bn.js";
-import Decimal from "decimal.js";
+import { useErrorHandler } from "@strata-foundation/react";
 import React from "react";
 import { useAsyncCallback } from "react-async-hook";
 import { IoMdAttach } from "react-icons/io";
-import { useDelegateWallet } from "../hooks";
 
-
-export function ShdwAttachment({
+export function FileAttachment({
   onUpload,
 }: {
-  onUpload: (url: string) => void;
+  onUpload: (file: File) => Promise<void>;
 }) {
   const hiddenFileInput = React.useRef<HTMLInputElement>(null);
-  const { provider } = useProvider();
-  const delegateWallet = useDelegateWallet();
-  const { execute, loading, error } = useAsyncCallback(uploadFile);
+  const { execute, loading, error } = useAsyncCallback(onUpload);
   const { handleErrors } = useErrorHandler();
   handleErrors(error);
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files![0];
     try {
-      const url = await execute(provider, delegateWallet, file);
-      if (url) {
-        onUpload(url);
-      }
+      await execute(file);
     } finally {
       if (hiddenFileInput.current) {
         hiddenFileInput.current.value = ""
