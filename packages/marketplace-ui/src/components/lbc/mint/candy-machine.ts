@@ -228,7 +228,7 @@ export const mintOneToken = async (
 
   let bondingInstructions: TransactionInstruction[] = []
   let bondingSigners: Signer[] = []
-  if (ataBalance < 1) {
+  if (tokenBonding && ataBalance < 1) {
     console.log("Buying bonding curve...", ataBalance)
     const { instructions: bondInstrs, signers: bondSigners } = await tokenBondingSdk.buyInstructions({
       tokenBonding,
