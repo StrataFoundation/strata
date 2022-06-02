@@ -155,7 +155,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   chain: string;
   authingLit: boolean;
 
-  static ID = new PublicKey("2hC44EVzM4JoL5EWU4ezcZsY6ns2puwxpivQdeUMTzZM");
+  static ID = new PublicKey("chatGL6yNgZT2Z3BeMYGcgdMpcBKdmxko4C5UhEX4To");
 
   get isLitAuthed() {
     return Boolean(this.litAuthSig);
@@ -369,7 +369,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     return PublicKey.findProgramAddress(
       [
         Buffer.from("chat", "utf-8"),
-        Buffer.from(puff(identifier, 32), "utf-8"),
+        Buffer.from(puff(identifier.toLowerCase(), 32), "utf-8"),
       ],
       programId
     );
@@ -398,7 +398,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     return PublicKey.findProgramAddress(
       [
         Buffer.from(username ? "username_profile" : "wallet_profile", "utf-8"),
-        username ? Buffer.from(puff(username, 32)) : wallet!.toBuffer(),
+        username ? Buffer.from(puff(username.toLowerCase(), 32)) : wallet!.toBuffer(),
       ],
       programId
     );

@@ -25,7 +25,7 @@ pub struct InitializeChatV0<'info> {
     init,
     payer = payer,
     space = CHAT_SIZE,
-    seeds = ["chat".as_bytes(), &puffed_out_string(&args.identifier, 32).as_bytes()],
+    seeds = ["chat".as_bytes(), &puffed_out_string(&args.identifier.to_lowercase(), 32).as_bytes()],
     bump,
   )]
   pub chat: Box<Account<'info, ChatV0>>,

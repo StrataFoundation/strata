@@ -19,7 +19,7 @@ pub struct InitializeProfileV0<'info> {
     init,
     payer = payer,
     space = PROFILE_SIZE,
-    seeds = ["username_profile".as_bytes(), puffed_out_string(&args.username, 32).as_bytes()],
+    seeds = ["username_profile".as_bytes(), puffed_out_string(&args.username.to_lowercase(), 32).as_bytes()],
     bump,
   )]
   pub username_profile: Box<Account<'info, ProfileV0>>,

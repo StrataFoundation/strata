@@ -9,7 +9,7 @@ pub mod utils;
 
 use instructions::*;
 
-declare_id!("2hC44EVzM4JoL5EWU4ezcZsY6ns2puwxpivQdeUMTzZM");
+declare_id!("chatGL6yNgZT2Z3BeMYGcgdMpcBKdmxko4C5UhEX4To");
 
 #[program]
 pub mod chat {

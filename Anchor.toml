@@ -39,11 +39,11 @@ members = [
 [programs.mainnet]
 spl_token_bonding = "TBondmkCYxaPCKG4CHYfVTcwQ8on31xnJrPzk8F8WsS"
 spl_token_collective = "TCo1sfSr2nCudbeJPykbif64rG9K1JNMGzrtzvPmp3y"
-chat = "2hC44EVzM4JoL5EWU4ezcZsY6ns2puwxpivQdeUMTzZM"
+chat = "chatGL6yNgZT2Z3BeMYGcgdMpcBKdmxko4C5UhEX4To"
 fungible_entangler = "fent99TYZcj9PGbeooaZXEMQzMd7rz8vYFiudd8HevB"
 
 [programs.localnet]
 spl_token_bonding = "TBondmkCYxaPCKG4CHYfVTcwQ8on31xnJrPzk8F8WsS"
 spl_token_collective = "TCo1sfSr2nCudbeJPykbif64rG9K1JNMGzrtzvPmp3y"
-chat = "2hC44EVzM4JoL5EWU4ezcZsY6ns2puwxpivQdeUMTzZM"
+chat = "chatGL6yNgZT2Z3BeMYGcgdMpcBKdmxko4C5UhEX4To"
 fungible_entangler = "fent99TYZcj9PGbeooaZXEMQzMd7rz8vYFiudd8HevB"
