@@ -8,6 +8,7 @@ import {
   ModalFooter,
   ModalOverlay,
   Text,
+  useColorModeValue,
   useDisclosure,
 } from "@chakra-ui/react";
 import { useLocalStorage } from "@strata-foundation/react";
@@ -27,7 +28,7 @@ export const Disclaimer: FC = () => {
     <Modal isOpen={!hasAcknowledged} onClose={onClose} size="sm" isCentered>
       <ModalOverlay />
       <ModalContent>
-        <ModalBody pt={4}>
+        <ModalBody pt={4} color={useColorModeValue("black", "white")}>
           <Text fontWeight="bold">Disclaimer</Text>
           <Text fontSize="sm">
             Please note that participating in any Strata Protocol launch is a

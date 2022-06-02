@@ -22,11 +22,12 @@ import {
 import { PublicKey } from "@solana/web3.js";
 import {
   useCapInfo, useCurve,
+  useSolanaUnixTime,
   useTokenBonding,
   useTokenMetadata
 } from "@strata-foundation/react";
 import moment from "moment";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
 import { BsChevronDown, BsChevronUp } from "react-icons/bs";
 import { useLivePrice } from "../..//hooks/useLivePrice";
@@ -82,19 +83,22 @@ export const LbcInfo = ({
     // @ts-ignore
     curve?.definition.timeV0.curves[0].curve.timeDecayExponentialCurveV0
       .interval;
+  const unixTime = useSolanaUnixTime();
   const [elapsedTime, setElapsedTime] = useState<number | undefined>();
-  useInterval(() => {
+  useEffect(() => {
     setElapsedTime(
       tokenBonding
-        ? new Date().valueOf() / 1000 - tokenBonding.goLiveUnixTime.toNumber()
+        ? (unixTime || (new Date().valueOf() / 1000)) - tokenBonding.goLiveUnixTime.toNumber()
         : undefined
     );
-  }, 500);
+  }, [unixTime]);
 
   const endDate = new Date(0);
   endDate.setUTCSeconds(
     (tokenBonding?.goLiveUnixTime.toNumber() || 0) + (maxTime || 0)
   );
+
+  const isLive = (tokenBonding && unixTime) ? tokenBonding.goLiveUnixTime.toNumber() < unixTime : false;
 
   const { metadata } = useTokenMetadata(tokenBonding?.baseMint);
   const { metadata: targetMeta } = useTokenMetadata(tokenBonding?.targetMint);
@@ -131,31 +135,32 @@ export const LbcInfo = ({
           <VStack align="left" spacing={0}>
             <HStack spacing={1} position="relative">
               <Text fontSize="sm">Time Remaining</Text>
-              <Tooltip
-                hasArrow
-                label={
-                  "Time during which the price will decrease. After this time, the price will only increase with purchases."
-                }
-              >
-                <Box w="14px" h="14px">
-                  <CircularProgressbar
-                    counterClockwise
-                    value={
-                      elapsedTime && maxTime
-                        ? ((maxTime - elapsedTime) / maxTime) * 100
-                        : 0
-                    }
-                    strokeWidth={50}
-                    styles={buildStyles({
-                      strokeLinecap: "butt",
-                      trailColor: "transparent",
-                      pathColor: "rgba(255, 255, 255, 0.36)",
-                    })}
-                  />
-                </Box>
-              </Tooltip>
+              <Box w="14px" h="14px">
+                <CircularProgressbar
+                  counterClockwise
+                  value={
+                    elapsedTime && maxTime
+                      ? ((maxTime - elapsedTime) / maxTime) * 100
+                      : 0
+                  }
+                  strokeWidth={50}
+                  styles={buildStyles({
+                    strokeLinecap: "butt",
+                    trailColor: "transparent",
+                    pathColor: "rgba(255, 255, 255, 0.36)",
+                  })}
+                />
+              </Box>
             </HStack>
-            <ReactCountdown date={endDate} renderer={renderer} />
+            {isLive ? (
+              <ReactCountdown
+                date={endDate}
+                now={() => (unixTime ? unixTime * 1000 : new Date().valueOf())}
+                renderer={renderer}
+              />
+            ) : (
+              <BigText>Not Started</BigText>
+            )}
           </VStack>
         </BlackBox>
         <Stack direction={["column", "row"]} justify="stretch">

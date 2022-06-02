@@ -108,11 +108,18 @@ export class BondingPricing {
     this.hierarchy = args.hierarchy;
   }
 
-  current(baseMint: PublicKey = this.hierarchy.tokenBonding.baseMint): number {
+  current(baseMint: PublicKey = this.hierarchy.tokenBonding.baseMint, unixTime?: number): number {
     return reduce({
       hierarchy: this.hierarchy,
       func: (acc: number, current: BondingHierarchy) => {
-        return acc * current.pricingCurve.current(now(), current.tokenBonding.buyBaseRoyaltyPercentage, current.tokenBonding.buyTargetRoyaltyPercentage);
+        return (
+          acc *
+          current.pricingCurve.current(
+            unixTime || now(),
+            current.tokenBonding.buyBaseRoyaltyPercentage,
+            current.tokenBonding.buyTargetRoyaltyPercentage
+          )
+        );
       },
       initial: 1,
       destination: baseMint,
@@ -143,7 +150,8 @@ export class BondingPricing {
     baseAmount: number,
     baseMint: PublicKey,
     targetMint: PublicKey,
-    ignoreFrozen: boolean = false
+    ignoreFrozen: boolean = false,
+    unixTime?: number
   ): number {
     const lowMint = this.hierarchy.lowest(baseMint, targetMint);
     const highMint = lowMint.equals(baseMint) ? targetMint : baseMint;
@@ -160,7 +168,8 @@ export class BondingPricing {
         return pricingCurve.buyWithBaseAmount(
           amount,
           tokenBonding.buyBaseRoyaltyPercentage,
-          tokenBonding.buyTargetRoyaltyPercentage
+          tokenBonding.buyTargetRoyaltyPercentage,
+          unixTime
         );
       }, baseAmount);
     } else {
@@ -168,7 +177,8 @@ export class BondingPricing {
         return pricingCurve.sellTargetAmount(
           amount,
           tokenBonding.sellBaseRoyaltyPercentage,
-          tokenBonding.sellTargetRoyaltyPercentage
+          tokenBonding.sellTargetRoyaltyPercentage,
+          unixTime
         );
       }, baseAmount);
     }
@@ -179,7 +189,8 @@ export class BondingPricing {
     baseMint: PublicKey,
     targetMint: PublicKey,
     /** Ignore frozen curves, just compute the value. */
-    ignoreFreeze: boolean = false
+    ignoreFreeze: boolean = false,
+    unixTime?: number
   ): number {
     const lowMint = this.hierarchy.lowest(baseMint, targetMint);
     const highMint = lowMint.equals(baseMint) ? targetMint : baseMint;
@@ -196,21 +207,24 @@ export class BondingPricing {
           return pricingCurve.buyWithBaseAmount(
             -amount,
             tokenBonding.sellBaseRoyaltyPercentage,
-            tokenBonding.sellTargetRoyaltyPercentage
+            tokenBonding.sellTargetRoyaltyPercentage,
+            unixTime
           );
         }, targetAmount)
       : path.reverse().reduce((amount, { pricingCurve, tokenBonding }) => {
           return pricingCurve.buyTargetAmount(
             amount,
             tokenBonding.buyBaseRoyaltyPercentage,
-            tokenBonding.buyTargetRoyaltyPercentage
+            tokenBonding.buyTargetRoyaltyPercentage,
+            unixTime
           );
         }, targetAmount);
   }
 
   sellTargetAmount(
     targetAmountNum: number,
-    baseMint: PublicKey = this.hierarchy.tokenBonding.baseMint
+    baseMint: PublicKey = this.hierarchy.tokenBonding.baseMint,
+    unixTime?: number
   ): number {
     return reduce({
       hierarchy: this.hierarchy,
@@ -218,7 +232,8 @@ export class BondingPricing {
         return current.pricingCurve.sellTargetAmount(
           acc,
           current.tokenBonding.sellBaseRoyaltyPercentage,
-          current.tokenBonding.sellTargetRoyaltyPercentage
+          current.tokenBonding.sellTargetRoyaltyPercentage,
+          unixTime
         );
       },
       initial: targetAmountNum,
@@ -229,7 +244,8 @@ export class BondingPricing {
 
   buyTargetAmount(
     targetAmountNum: number,
-    baseMint: PublicKey = this.hierarchy.tokenBonding.baseMint
+    baseMint: PublicKey = this.hierarchy.tokenBonding.baseMint,
+    unixTime?: number
   ): number {
     return reduce({
       hierarchy: this.hierarchy,
@@ -237,7 +253,8 @@ export class BondingPricing {
         return current.pricingCurve.buyTargetAmount(
           acc,
           current.tokenBonding.buyBaseRoyaltyPercentage,
-          current.tokenBonding.buyTargetRoyaltyPercentage
+          current.tokenBonding.buyTargetRoyaltyPercentage,
+          unixTime
         );
       },
       initial: targetAmountNum,
@@ -248,7 +265,8 @@ export class BondingPricing {
 
   buyWithBaseAmount(
     baseAmountNum: number,
-    baseMint: PublicKey = this.hierarchy.tokenBonding.baseMint
+    baseMint: PublicKey = this.hierarchy.tokenBonding.baseMint,
+    unixTime?: number
   ): number {
     return reduceFromParent({
       hierarchy: this.hierarchy,
@@ -256,7 +274,8 @@ export class BondingPricing {
         return current.pricingCurve.buyWithBaseAmount(
           acc,
           current.tokenBonding.buyBaseRoyaltyPercentage,
-          current.tokenBonding.buyTargetRoyaltyPercentage
+          current.tokenBonding.buyTargetRoyaltyPercentage,
+          unixTime
         );
       },
       initial: baseAmountNum,
