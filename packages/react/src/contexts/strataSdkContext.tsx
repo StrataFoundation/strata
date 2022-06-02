@@ -67,6 +67,7 @@ export const StrataSdksProviderRaw: React.FC = ({ children }) => {
     () => ({
       tokenCollectiveSdk: result?.tokenCollectiveSdk,
       tokenBondingSdk: result?.tokenBondingSdk,
+      fungibleEntanglerSdk: result?.fungibleEntanglerSdk,
       tokenMetadataSdk: result?.tokenMetadataSdk,
       error,
       loading,
