@@ -66,7 +66,7 @@ export const DynamicPricingCandyMachine = (props: DynamicPricingCandyMachineProp
   const onMint = async (args: IMintArgs) => {
     try {
       document.getElementById("#identity")?.click();
-      if (connected && candyMachine?.program && publicKey) {
+      if (connected && candyMachine?.program && publicKey && props.candyMachineId)  {
         const mint = await mintOneToken(candyMachine, publicKey, args);
         toast.custom(
           (t) => (
