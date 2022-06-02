@@ -900,7 +900,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     sellTargetRoyaltyPercentage = 0,
     mintCap,
     purchaseCap,
-    goLiveDate = new Date(new Date().valueOf() - 10000), // 10 secs ago
+    goLiveDate,
     freezeBuyDate,
     targetMintDecimals,
     targetMintKeypair = Keypair.generate(),
@@ -916,6 +916,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
   }: ICreateTokenBondingArgs): Promise<
     InstructionResult<ICreateTokenBondingOutput>
   > {
+
     if (!targetMint) {
       if (sellTargetRoyalties || buyTargetRoyalties) {
         throw new Error(
@@ -927,6 +928,12 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         throw new Error("Cannot define mint without decimals ");
       }
     }
+
+    if (!goLiveDate) {
+      goLiveDate = new Date(0);
+      goLiveDate.setUTCSeconds((await this.getUnixTime()) - 10);
+    }
+
     const provider = this.provider;
     const state = (await this.getState())!;
     let isNative =
@@ -1242,6 +1249,11 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       args.payer,
       commitment
     );
+  }
+
+  async getUnixTime(): Promise<number> {
+    const acc = await this.provider.connection.getAccountInfo(SYSVAR_CLOCK_PUBKEY);
+    return Number(acc!.data.readBigInt64LE(8 * 4))
   }
 
   /**
@@ -1657,6 +1669,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     let buyWithBase = null;
     let maxPrice: number = 0;
 
+    const unixTime = await this.getUnixTime();
+
     if (desiredTargetAmount) {
       const desiredTargetAmountNum = toNumber(desiredTargetAmount, targetMint);
 
@@ -1669,7 +1683,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         : curve.buyTargetAmount(
             desiredTargetAmountNum,
             tokenBondingAcct.buyBaseRoyaltyPercentage,
-            tokenBondingAcct.buyTargetRoyaltyPercentage
+            tokenBondingAcct.buyTargetRoyaltyPercentage,
+            unixTime
           );
 
       maxPrice = min * (1 + slippage);
@@ -1691,7 +1706,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         : curve.buyWithBaseAmount(
             baseAmountNum,
             tokenBondingAcct.buyBaseRoyaltyPercentage,
-            tokenBondingAcct.buyTargetRoyaltyPercentage
+            tokenBondingAcct.buyTargetRoyaltyPercentage,
+            unixTime
           );
 
       buyWithBase = {
@@ -2140,6 +2156,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       }
     }
 
+    const unixTime = await this.getUnixTime();
     const targetAmountNum = toNumber(targetAmount, targetMint);
 
     const min = expectedOutputAmount
@@ -2147,7 +2164,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       : curve.sellTargetAmount(
           targetAmountNum,
           tokenBondingAcct.sellBaseRoyaltyPercentage,
-          tokenBondingAcct.sellTargetRoyaltyPercentage
+          tokenBondingAcct.sellTargetRoyaltyPercentage,
+          unixTime
         );
 
     const args: IdlTypes<SplTokenBondingIDL>["SellV0Args"] = {

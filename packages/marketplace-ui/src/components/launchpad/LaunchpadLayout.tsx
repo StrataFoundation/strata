@@ -35,7 +35,7 @@ export const LaunchpadLayout: FC<LaunchpadLayoutProps> = ({
     <>
       <Center padding="54px" backgroundColor="black.500">
         <Stack spacing={6}>
-          <Text fontSize="xl" color="white" textAlign="center">
+          <Text fontSize="2xl" color="white" textAlign="center">
             Welcome to
             <Text
               fontWeight="Bold"
