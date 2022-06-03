@@ -21,6 +21,13 @@ pub mod chat {
     instructions::initialize_chat_v0::handler(ctx, args)
   }
 
+  pub fn update_chat_v0(
+    ctx: Context<UpdateChatV0>,
+    args: UpdateChatArgsV0,
+  ) -> Result<()> {
+    instructions::update_chat_v0::handler(ctx, args)
+  }
+  
   pub fn initialize_profile_v0(
     ctx: Context<InitializeProfileV0>,
     args: InitializeProfileArgsV0,
