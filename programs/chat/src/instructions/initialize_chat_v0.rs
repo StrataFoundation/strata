@@ -11,6 +11,7 @@ pub const CHAT_SIZE: usize = 1 + // key
   8 + // default_read_permission_amount
   1 + // post_permission_action
   33 + // pay_destination
+  32 + // identifier_certificate_mint
   100 + // name hard 100 bytes limit
   200 + // image hard 200 bytes limit
   200 + // metadata hard 200 bytes limit
@@ -25,7 +26,7 @@ pub struct InitializeChatV0<'info> {
     init,
     payer = payer,
     space = CHAT_SIZE,
-    seeds = ["chat".as_bytes(), &puffed_out_string(&args.identifier.to_lowercase(), 32).as_bytes()],
+    seeds = ["chat".as_bytes(), args],
     bump,
   )]
   pub chat: Box<Account<'info, ChatV0>>,
@@ -41,7 +42,7 @@ pub struct InitializeChatArgsV0 {
   pub default_read_permission_amount: u64,
   pub post_permission_action: PostAction,
   pub post_pay_destination: Option<Pubkey>,
-  pub identifier: String,
+  pub identifier_certificate_mint: Pubkey,
   pub name: String,
   pub image_url: String,
   pub metadata_url: String,

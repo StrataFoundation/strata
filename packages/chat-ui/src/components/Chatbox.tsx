@@ -85,7 +85,6 @@ export function Chatbox({
           const { fileAttachments, ...rest } = message;
 
           onAddPendingMessage({ content: { ...rest, decryptedAttachments: fileAttachments }, txid, chatKey });
-
         }
 
         scrollRef.current.scrollIntoView({ behavior: "smooth" });
