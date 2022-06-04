@@ -1,4 +1,4 @@
-import { Program, Provider } from "@project-serum/anchor";
+import { Program, Provider } from "anchor-17";
 import { AccountInfo, PublicKey } from "@solana/web3.js";
 import {
   useAccount,
