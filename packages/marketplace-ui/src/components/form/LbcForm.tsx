@@ -296,8 +296,7 @@ async function createLbpExistingMint(
     signers
   );
   return route(routes.tokenLbc, { 
-    mintKey: intermediaryMint.toBase58(), 
-    entangler: entanglerInstrs.output.childEntangler 
+    id: entanglerInstrs.output.childEntangler 
   })
 }
 
@@ -355,7 +354,7 @@ async function createLbpNewMint(
     signers
   );
 
-  return route(routes.tokenLbc, { mintKey: targetMint.toBase58() })
+  return route(routes.tokenLbc, { id: targetMint.toBase58() })
 }
 
 async function createLiquidityBootstrapper(

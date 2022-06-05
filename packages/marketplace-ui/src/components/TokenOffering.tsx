@@ -5,53 +5,31 @@ import {
   SwapForm,
   Notification,
   useErrorHandler,
-  useTokenBonding,
   useSwapDriver,
   ISwapFormValues,
   useStrataSdks,
-  useTokenAccount,
-  useMint,
-  useTokenBondingKey,
-  useFungibleChildEntangler,
-  useFungibleParentEntangler,
-  roundToDecimals,
+  useTokenSwapFromId,
 } from "@strata-foundation/react";
-import { useAsync, useAsyncCallback, UseAsyncReturn } from "react-async-hook";
-import {
-  SplTokenBonding,
-  toNumber,
-} from "@strata-foundation/spl-token-bonding";
+import { useAsyncCallback } from "react-async-hook";
 
 const identity = () => {};
 export const TokenOffering = ({
-  mintKey,
-  childEntanglerKey,
+  id,
   showAttribution = true,
   onConnectWallet = () => {}
 }: {
-  mintKey: PublicKey | undefined;
-  childEntanglerKey?: PublicKey | undefined;
+  id: PublicKey | undefined;
   showAttribution?: boolean;
   onConnectWallet?: () => void;
 }) => {
   const { tokenBondingSdk, fungibleEntanglerSdk } = useStrataSdks();
 
-  // load the initial curve
-  const { result: tokenBondingKey, error: keyError1 } = useTokenBondingKey(
-    mintKey,
-    0
-  );
-  const { info: tokenBonding } = useTokenBonding(tokenBondingKey);
-  
-  // load the fungible entangler. may or may not be undefined
-  const { info: childEntangler } = useFungibleChildEntangler(childEntanglerKey);
-  const { info: parentEntangler } = useFungibleParentEntangler(childEntangler?.parentEntangler);
-
-  // load to find the amount remaining in the fungible entangler
-  const { info: supplyAcc } = useTokenAccount(
-    parentEntangler?.parentStorage
-  );
-  const supplyMint = useMint(parentEntangler?.parentMint);
+  const { 
+    tokenBonding, 
+    numRemaining, 
+    childEntangler, 
+    parentEntangler 
+  } = useTokenSwapFromId(id);
 
   const {
     execute: onSubmit,
@@ -66,7 +44,7 @@ export const TokenOffering = ({
       await tokenBondingSdk!.buyInstructions({
         desiredTargetAmount: +values.bottomAmount,
         slippage: +values.slippage / 100,
-        tokenBonding: tokenBondingKey!,
+        tokenBonding: tokenBonding?.publicKey!,
       });
     instructions.push(...i1);
     signers.push(...s1);
@@ -110,7 +88,7 @@ export const TokenOffering = ({
     onTradingMintsChange: () => {},
     swap: (args) => {},
     onConnectWallet: onConnectWallet,
-    tokenBondingKey: tokenBondingKey,
+    tokenBondingKey: tokenBonding?.publicKey,
   });
 
   return (
@@ -120,9 +98,7 @@ export const TokenOffering = ({
       isSubmitting={submitting}
       {...swapProps}
       onSubmit={onSubmit}
-      numRemaining={
-        supplyAcc && supplyMint && toNumber(supplyAcc.amount, supplyMint)
-      }
+      numRemaining={numRemaining}
     />
   );
 };
