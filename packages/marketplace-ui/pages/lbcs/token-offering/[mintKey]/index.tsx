@@ -47,9 +47,11 @@ export const LbcDisplay: NextPage = ({
   description,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const router = useRouter();
-  const { mintKey: mintKeyRaw } = router.query;
-  const mintKey = usePublicKey(mintKeyRaw as string);
-  const { info: tokenBonding, loading } = useTokenBondingFromMint(mintKey);
+
+  const { id: idRaw } = router.query;
+  const id = usePublicKey(idRaw as string);
+
+  const { info: tokenBonding, loading } = useTokenBondingFromMint(id);
   const { price } = useLivePrice(tokenBonding?.publicKey);
   const { publicKey } = useWallet();
   const { isAdmin } = useIsBountyAdmin(
@@ -84,7 +86,7 @@ export const LbcDisplay: NextPage = ({
           title={`Strata LBC Token Offering | ${name}`}
           description={description}
           image={image}
-          url={`${SITE_URL}/bounty/${mintKey}/`}
+          url={`${SITE_URL}/bounty/${id}/`}
         />
         <VStack spacing={2} align="left">
           <Container mt={"35px"} justify="stretch" maxW="600px">
@@ -137,7 +139,7 @@ export const LbcDisplay: NextPage = ({
                         />
                         <TokenOffering
                           onConnectWallet={onConnectWallet}
-                          mintKey={mintKey}
+                          id={id}
                         />
                       </VStack>
                     )}

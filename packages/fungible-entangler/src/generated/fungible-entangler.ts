@@ -361,26 +361,6 @@ export const FungibleEntanglerIDLJson: Idl & { metadata?: { address: string } } 
   ],
   "types": [
     {
-      "name": "SwapV0Args",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "amount",
-            "type": {
-              "option": "u64"
-            }
-          },
-          {
-            "name": "all",
-            "type": {
-              "option": "bool"
-            }
-          }
-        ]
-      }
-    },
-    {
       "name": "InitializeFungibleChildEntanglerV0Args",
       "type": {
         "kind": "struct",
@@ -427,6 +407,26 @@ export const FungibleEntanglerIDLJson: Idl & { metadata?: { address: string } } 
             "name": "freezeSwapUnixTime",
             "type": {
               "option": "i64"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "SwapV0Args",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "amount",
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "all",
+            "type": {
+              "option": "bool"
             }
           }
         ]
