@@ -573,6 +573,11 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     };
   }
 
+  /**
+   * Attempt to claim the identifier. If the identifier entry already exists, attempt to approve/claim.
+   * @param param0 
+   * @returns 
+   */
   async claimIdentifierInstructions({
     owner = this.wallet.publicKey,
     identifier,
@@ -581,8 +586,11 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     BigInstructionResult<{ certificateMint: PublicKey }>
   > {
     const transaction = new Transaction();
-    const certificateMint = Keypair.generate();
+    const certificateMintKeypair = Keypair.generate();
+    let signers = [certificateMintKeypair];
+    let certificateMint = certificateMintKeypair.publicKey;
     const namespaces = await this.getNamespaces();
+
 
     let namespaceName: string;
     let namespaceId: PublicKey;
@@ -595,15 +603,19 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     }
 
     const [entryId] = await ChatSdk.entryKey(namespaceId, identifier);
-    if (!(await this.provider.connection.getAccountInfo(entryId))) {
+    const existingEntry = await this.namespacesProgram.account.entry.fetchNullable(entryId);
+    if (!existingEntry) {
       await withInitEntry(
         this.provider.connection,
         this.provider.wallet,
-        certificateMint.publicKey,
+        certificateMint,
         namespaceName,
         identifier,
         transaction
       );
+    } else {
+      certificateMint = existingEntry.mint;
+      signers = []
     }
 
     const [claimRequestId] = await PublicKey.findProgramAddress(
@@ -630,11 +642,10 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     const instructions = transaction.instructions;
 
     const certificateMintMetadata = await Metadata.getPDA(
-      certificateMint.publicKey
+      certificateMint
     );
 
-    const signers = [certificateMint];
-    if (type === IdentifierType.Chat) {
+    if (type === IdentifierType.Chat && !existingEntry?.isApproved) {
       instructions.push(
         await this.program.instruction.approveChatIdentifierV0({
           accounts: {
@@ -648,7 +659,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
           },
         })
       );
-    } else {
+    } else if (!existingEntry?.isApproved) {
       instructions.push(
         await this.program.instruction.approveUserIdentifierV0({
           accounts: {
@@ -665,23 +676,25 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     }
 
     const tx2 = new Transaction();
-    await withClaimEntry(
-      this.provider.connection,
-      {
-        ...this.provider.wallet,
-        publicKey: owner,
-      },
-      namespaceName,
-      identifier,
-      certificateMint.publicKey,
-      0,
-      tx2
-    );
+    if (!existingEntry?.isClaimed) {
+      await withClaimEntry(
+        this.provider.connection,
+        {
+          ...this.provider.wallet,
+          publicKey: owner,
+        },
+        namespaceName,
+        identifier,
+        certificateMint,
+        0,
+        tx2
+      );
+    }
 
     return {
       instructions: [instructions, tx2.instructions],
       signers: [signers, []],
-      output: { certificateMint: certificateMint.publicKey },
+      output: { certificateMint },
     };
   }
 

@@ -1,3 +1,4 @@
+import { useWalletFromIdentifier } from "../hooks/useWalletFromIdentifier";
 import {
   Alert,
   AlertDescription,
@@ -6,6 +7,7 @@ import {
   Box,
   Button,
   Input,
+  Link,
   Modal,
   ModalBody,
   ModalContent, ModalHeader,
@@ -15,13 +17,14 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { SystemProgram } from "@solana/web3.js";
 import { ChatSdk, IdentifierType } from "@strata-foundation/chat";
-import { useErrorHandler, useProvider } from "@strata-foundation/react";
+import { truncatePubkey, useErrorHandler, useProvider } from "@strata-foundation/react";
 import { sendMultipleInstructions } from "@strata-foundation/spl-utils";
 import React from "react";
 import { useAsyncCallback } from "react-async-hook";
 import { FormProvider, useForm } from "react-hook-form";
 import * as yup from "yup";
 import { useChatSdk } from "../contexts";
+import { useChatKeyFromIdentifier, useProfile } from "../hooks";
 import { FormControlWithError } from "./FormControlWithError";
 
 interface IProfileProps {
@@ -91,16 +94,31 @@ export function CreateProfileModal() {
     resolver: yupResolver(validationSchema),
     defaultValues: {},
   });
-  const { disconnect } = useWallet();
+  const { disconnect, publicKey } = useWallet();
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = formProps;
   const { execute, loading, error } = useAsyncCallback(createProfile);
   const { chatSdk } = useChatSdk();
   const { awaitingApproval } = useProvider();
   const { handleErrors } = useErrorHandler();
+
+  const { username } = watch();
+
+  const { wallet } = useWalletFromIdentifier(username);
+
+  const userError = wallet && publicKey && !wallet.equals(publicKey) && (
+    <Box>
+      Username is already in owned by{" "}
+      <Link href={`https://explorer.solana.com/${wallet.toBase58()}`}>
+        {truncatePubkey(wallet)}
+      </Link>
+    </Box>
+  );
+  "";
 
   handleErrors(error);
 
@@ -130,11 +148,12 @@ export function CreateProfileModal() {
                     <AlertTitle>Local Wallet</AlertTitle>
                     <AlertDescription>
                       Strata Chat is fully decentralized. In order to avoid
-                      asking for approval on every message, we create a wallet stored in your machine's
-                      localStorage that can send messages on your main wallet's
-                      behalf. Creating a profile will also load this wallet with
-                      0.1 Sol to pay for messages (0.000005 SOL each) and file
-                      uploads (1 $SHDW per GB)
+                      asking for approval on every message, we create a wallet
+                      stored in your machine's localStorage that can send
+                      messages on your main wallet's behalf. Creating a profile
+                      will also load this wallet with 0.1 Sol to pay for
+                      messages (0.000005 SOL each) and file uploads (1 $SHDW per
+                      GB)
                     </AlertDescription>
                   </Box>
                 </Alert>
@@ -146,6 +165,7 @@ export function CreateProfileModal() {
                 >
                   <Input {...register("username")} />
                 </FormControlWithError>
+                {userError && <Alert status="error">{ userError }</Alert>}
                 <FormControlWithError
                   id="imageUrl"
                   help="A url to the image to use for your profile"
@@ -155,6 +175,7 @@ export function CreateProfileModal() {
                   <Input {...register("imageUrl")} />
                 </FormControlWithError>
                 <Button
+                  isDisabled={userError}
                   isLoading={loading}
                   colorScheme="primary"
                   alignSelf="flex-end"

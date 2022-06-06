@@ -63,7 +63,7 @@ pub fn handler(ctx: Context<ApproveUserIdentifierV0>) -> Result<()> {
       UpdateEntryMintMetadataCtx {
         namespace: ctx.accounts.user_namespace.to_account_info(),
         entry: ctx.accounts.entry.to_account_info(),
-        approve_authority: ctx.accounts.namespaces.to_account_info(),
+        update_authority: ctx.accounts.namespaces.to_account_info(),
         certificate_mint_metadata: ctx.accounts.certificate_mint_metadata.to_account_info(),
         token_metadata_program: ctx.accounts.token_metadata_program.to_account_info(),
       },

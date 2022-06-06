@@ -6,3 +6,4 @@ export * from "./useMessages";
 export * from "./useDelegateWallet";
 export * from "./useChatKeyFromIdentifier";
 export * from "./useChatKey";
+export * from "./useWalletFromIdentifier";

@@ -882,8 +882,8 @@ dependencies = [
 
 [[package]]
 name = "namespaces"
-version = "0.1.0"
-source = "git+https://github.com/StrataFoundation/cardinal-namespaces?branch=feature/metadata-update#c6c65781a50cbb3dada787fe72a53d3545432ad6"
+version = "3.2.0"
+source = "git+https://github.com/cardinal-labs/cardinal-namespaces#d888f8e45041beeb886cb4ee97631036247ebfed"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
