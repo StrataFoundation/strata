@@ -116,13 +116,6 @@ describe("chat", () => {
       readPermissionMint = await createMint(provider, me, 1);
       postPermissionMint = readPermissionMint;
       await tokenUtils.createAtaAndMint(provider, readPermissionMint, 10, profileKeypair.publicKey);
-      const noah = new PublicKey("wwm872RcvN7XwNZBjXLSHfAYrFUATKgkV9v3BewHj5M");
-      await tokenUtils.createAtaAndMint(
-        provider,
-        readPermissionMint,
-        10,
-        noah
-      );
 
       const { certificateMint: chatIdentifierCertificateMint } = await chatSdk.claimIdentifier({
         identifier,
@@ -192,7 +185,6 @@ describe("chat", () => {
     });
 
     it("allows sending a basic message with delegate", async () => {
-      console.log("Chat", chat.toBase58(), identifier)
       const { txid } = await chatSdk.sendMessage({
         sender: profileKeypair.publicKey,
         delegateWalletKeypair,

@@ -5,7 +5,7 @@ import {
   MetadataProgram,
 } from "@metaplex-foundation/mpl-token-metadata";
 import * as anchor from "@project-serum/anchor";
-import { IdlTypes, Program, Provider } from "@project-serum/anchor";
+import { AnchorProvider, IdlTypes, Program, Provider } from "@project-serum/anchor";
 import { getHashedName, NameRegistryState } from "@solana/spl-name-service";
 import {
   AccountInfo as TokenAccountInfo,
@@ -473,7 +473,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
   );
 
   static async init(
-    provider: Provider,
+    provider: AnchorProvider,
     splCollectiveProgramId: PublicKey = SplTokenCollective.ID,
     splTokenBondingProgramId: PublicKey = SplTokenBonding.ID
   ): Promise<SplTokenCollective> {
@@ -503,7 +503,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
   }
 
   constructor(opts: {
-    provider: Provider;
+    provider: AnchorProvider;
     program: Program<SplTokenCollectiveIDL>;
     splTokenBondingProgram: SplTokenBonding;
     splTokenMetadata: SplTokenMetadata;
@@ -642,10 +642,10 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       throw new Error("Collective already exists");
     }
 
-    const [mintTokenRef] = await SplTokenCollective.mintTokenRefKey(
-      mint
-    );
-    const tokenRefExists = !!(await this.provider.connection.getAccountInfo(mintTokenRef));
+    const [mintTokenRef] = await SplTokenCollective.mintTokenRefKey(mint);
+    const tokenRefExists = !!(await this.provider.connection.getAccountInfo(
+      mintTokenRef
+    ));
 
     if (tokenRef || tokenRefExists) {
       instructions.push(
@@ -1344,14 +1344,18 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
         .ownedByName
         ? mintTokenRef
         : undefined,
-      // @ts-ignore
-      buyBaseRoyalties: tokenBondingSettings?.buyBaseRoyalties?.address || undefined,
-      // @ts-ignore
-      sellBaseRoyalties: tokenBondingSettings?.sellBaseRoyalties?.address || undefined,
-      // @ts-ignore
-      buyTargetRoyalties: tokenBondingSettings?.buyTargetRoyalties?.address || undefined,
-      // @ts-ignore
-      sellTargetRoyalties: tokenBondingSettings?.sellTargetRoyalties?.address || undefined,
+      buyBaseRoyalties:
+        // @ts-ignore
+        tokenBondingSettings?.buyBaseRoyalties?.address || undefined,
+      sellBaseRoyalties:
+        // @ts-ignore
+        tokenBondingSettings?.sellBaseRoyalties?.address || undefined,
+      buyTargetRoyalties:
+        // @ts-ignore
+        tokenBondingSettings?.buyTargetRoyalties?.address || undefined,
+      sellTargetRoyalties:
+        // @ts-ignore
+        tokenBondingSettings?.sellTargetRoyalties?.address || undefined,
       ...tokenBondingParams,
     });
     instructions2.push(...bondingInstructions);

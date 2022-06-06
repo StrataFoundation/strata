@@ -1,5 +1,15 @@
-import { AnchorProvider, BN as AnchorBN, BorshAccountsCoder, IdlTypes, Program, utils } from "@project-serum/anchor";
-import BN from "bn.js";
+import {
+  CLAIM_REQUEST_SEED, EntryData, ENTRY_SEED, NamespaceData,
+  NAMESPACES_IDL,
+  NAMESPACES_PROGRAM,
+  NAMESPACES_PROGRAM_ID,
+  NAMESPACE_SEED,
+  withClaimEntry,
+  withCreateClaimRequest, withInitEntry
+} from "@cardinal/namespaces";
+import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
+import { AnchorProvider, BN as AnchorBN, IdlTypes, Program, utils } from "@project-serum/anchor";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { Commitment, Finality, Keypair, Message, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import {
   AnchorSdk,
@@ -8,34 +18,17 @@ import {
   InstructionResult,
   toBN,
   truthy,
-  TypedAccountParser,
+  TypedAccountParser
 } from "@strata-foundation/spl-utils";
-import { ChatIDL, ChatV0, NamespacesV0, PostAction, ProfileV0 } from "./generated/chat";
-import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
+import BN from "bn.js";
 // @ts-ignore
-import { v4 as uuid } from "uuid";
-import { ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo, Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
+import * as bs58 from "bs58";
 // @ts-ignore
 import LitJsSdk from "lit-js-sdk";
 // @ts-ignore
-import * as bs58 from "bs58";
+import { v4 as uuid } from "uuid";
+import { ChatIDL, ChatV0, NamespacesV0, PostAction, ProfileV0 } from "./generated/chat";
 import { uploadFile } from "./shdw";
-import {
-  CLAIM_REQUEST_SEED,
-  ENTRY_SEED,
-  nameEntryId,
-  NamespaceData,
-  NAMESPACES_IDL,
-  NAMESPACES_PROGRAM,
-  NAMESPACES_PROGRAM_ID,
-  NAMESPACE_SEED,
-  withClaimEntry,
-  withCreateClaimRequest,
-  withCreateNamespace,
-  withInitEntry,
-  EntryData,
-} from "@cardinal/namespaces";
-import type { AccountData } from "@cardinal/common";
 
 export * from "./generated/chat";
 
@@ -458,6 +451,20 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     );
   }
 
+  static entryKey(
+    namespaceId: PublicKey,
+    identifier: string
+  ): Promise<[PublicKey, number]> {
+    return PublicKey.findProgramAddress(
+      [
+        utils.bytes.utf8.encode(ENTRY_SEED),
+        namespaceId.toBytes(),
+        utils.bytes.utf8.encode(identifier),
+      ],
+      NAMESPACES_PROGRAM_ID
+    );
+  }
+
   static delegateWalletKey(
     delegateWallet: PublicKey,
     programId: PublicKey = ChatSdk.ID
@@ -496,7 +503,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         output: null,
       };
     } catch (e: any) {
-      console.error(e);
       // This is expected
     }
 
@@ -588,14 +594,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       namespaceId = namespaces.userNamespace;
     }
 
-    const [entryId] = await PublicKey.findProgramAddress(
-      [
-        utils.bytes.utf8.encode(ENTRY_SEED),
-        namespaceId.toBytes(),
-        utils.bytes.utf8.encode(identifier),
-      ],
-      NAMESPACES_PROGRAM_ID
-    );
+    const [entryId] = await ChatSdk.entryKey(namespaceId, identifier);
     if (!(await this.provider.connection.getAccountInfo(entryId))) {
       await withInitEntry(
         this.provider.connection,
@@ -729,14 +728,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     );
     const namespaces = await this.getNamespaces();
     const [entryName] = metadata.data.data.name.split(".");
-    const [entry] = await PublicKey.findProgramAddress(
-      [
-        utils.bytes.utf8.encode(ENTRY_SEED),
-        namespaces.chatNamespace.toBytes(),
-        utils.bytes.utf8.encode(entryName),
-      ],
-      NAMESPACES_PROGRAM_ID
-    );
+    const [entry] = await await ChatSdk.entryKey(namespaces.chatNamespace, entryName);
 
     const identifierCertificateMintAccount =
       await Token.getAssociatedTokenAddress(
@@ -825,14 +817,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       identifier = entryName;
     }
 
-    const [entry] = await PublicKey.findProgramAddress(
-      [
-        utils.bytes.utf8.encode(ENTRY_SEED),
-        namespaces.userNamespace.toBytes(),
-        utils.bytes.utf8.encode(identifier),
-      ],
-      NAMESPACES_PROGRAM_ID
-    );
+    const [entry] = await ChatSdk.entryKey(namespaces.userNamespace, identifier);
 
     const identifierCertificateMintAccount =
       await Token.getAssociatedTokenAddress(
@@ -1062,14 +1047,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     );
     const namespaces = await this.getNamespaces();
     const [entryName] = metadata.data.data.name.split(".");
-    const [entry] = await PublicKey.findProgramAddress(
-      [
-        utils.bytes.utf8.encode(ENTRY_SEED),
-        namespaces.userNamespace.toBytes(),
-        utils.bytes.utf8.encode(entryName),
-      ],
-      NAMESPACES_PROGRAM_ID
-    );
+    const [entry] = await ChatSdk.entryKey(namespaces.userNamespace, entryName);
+
     const identifierCertificateMintAccount =
       await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,

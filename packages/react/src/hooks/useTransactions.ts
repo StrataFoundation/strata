@@ -127,7 +127,9 @@ export const useTransactions = ({
   numTransactions: number;
   until?: Date;
   address?: PublicKey;
+  /** Subscribe to new transactions on the address */
   subscribe?: boolean;
+  /** Use the Strata accelerator service to see transacions before they are confirmed (if the user also sends to the accelerator) */
   accelerated?: boolean;
 }): ITransactions => {
   const { accelerator } = useAccelerator();
