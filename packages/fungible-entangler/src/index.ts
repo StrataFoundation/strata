@@ -1,5 +1,5 @@
 import * as anchor from "@project-serum/anchor";
-import { IdlTypes, Program, Provider } from "@project-serum/anchor";
+import { IdlTypes, Program, AnchorProvider } from "@project-serum/anchor";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   Token,
@@ -185,7 +185,7 @@ export class FungibleEntangler extends AnchorSdk<any> {
   static ID = new PublicKey("fent99TYZcj9PGbeooaZXEMQzMd7rz8vYFiudd8HevB");
 
   static async init(
-    provider: Provider,
+    provider: AnchorProvider,
     fungibleEntanglerProgramId: PublicKey = FungibleEntangler.ID
   ): Promise<FungibleEntangler> {
     const FungibleEntanglerIDLJson = await anchor.Program.fetchIdl(
@@ -202,7 +202,7 @@ export class FungibleEntangler extends AnchorSdk<any> {
     return new this(provider, fungibleEntangler);
   }
 
-  constructor(provider: Provider, program: Program<FungibleEntanglerIDL>) {
+  constructor(provider: AnchorProvider, program: Program<FungibleEntanglerIDL>) {
     super({ provider, program });
   }
 

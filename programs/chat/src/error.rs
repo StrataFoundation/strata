@@ -13,5 +13,5 @@ pub enum ErrorCode {
   StringNotAlphanumeric,
 
   #[msg("The sender must either be a delegate or owner wallet")]
-  IncorrectSender
+  IncorrectSender,
 }

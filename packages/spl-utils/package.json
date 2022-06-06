@@ -25,7 +25,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx}\""
   },
   "dependencies": {
-    "@metaplex-foundation/mpl-token-metadata": "^1.1.0",
+    "@metaplex-foundation/mpl-token-metadata": "^1.2.5",
     "@metaplex/arweave-cost": "1.0.4",
     "@metaplex/js": "^4.3.0",
     "@solana/spl-name-service": "^0.1.3",

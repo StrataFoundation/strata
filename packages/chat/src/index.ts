@@ -1,14 +1,17 @@
-import { BN, IdlAccounts, IdlTypes, Program, Provider } from "@project-serum/anchor";
-import { Commitment, Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
+import { AnchorProvider, BN as AnchorBN, BorshAccountsCoder, IdlTypes, Program, utils } from "@project-serum/anchor";
+import BN from "bn.js";
+import { Commitment, Finality, Keypair, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import {
   AnchorSdk,
+  BigInstructionResult,
   getMintInfo,
   InstructionResult,
   toBN,
   truthy,
   TypedAccountParser,
 } from "@strata-foundation/spl-utils";
-import { ChatIDL, ChatV0, PostAction, ProfileV0 } from "./generated/chat";
+import { ChatIDL, ChatV0, NamespacesV0, PostAction, ProfileV0 } from "./generated/chat";
+import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 // @ts-ignore
 import { v4 as uuid } from "uuid";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo, Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
@@ -17,8 +20,15 @@ import LitJsSdk from "lit-js-sdk";
 // @ts-ignore
 import * as bs58 from "bs58";
 import { uploadFile } from "./shdw";
+import { CLAIM_REQUEST_SEED, ENTRY_SEED, nameEntryId, NamespaceData, NAMESPACES_IDL, NAMESPACES_PROGRAM, NAMESPACES_PROGRAM_ID, NAMESPACE_SEED, withClaimEntry, withCreateClaimRequest, withCreateNamespace, withInitEntry } from "@cardinal/namespaces";
+import type { AccountData } from "@cardinal/common";
 
 export * from "./generated/chat";
+
+const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
+  "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+);
+
 
 const SYMM_KEY_ALGO_PARAMS = {
   name: "AES-CBC",
@@ -37,6 +47,12 @@ export enum MessageType {
   Text = "text",
   Gify = "gify",
   Image = "image",
+}
+
+export interface INamespaces extends NamespacesV0 {
+  publicKey: PublicKey;
+  chat: NamespaceData;
+  user: NamespaceData;
 }
 
 export interface IMessageContent {
@@ -76,14 +92,14 @@ export interface InitializeChatArgs {
   payer?: PublicKey;
   /** The admin of this chat instance. **Default:** This wallet */
   admin?: PublicKey;
-  /** The unique shortname of the chat. Must be alphanumeric. */
-  identifier: string;
+  /** The unique shortname of the chat. This is a cardinal certificate NFT */
+  identifierCertificateMint: PublicKey;
   /** Human readable name for the chat */
   name: string;
   /** The mint you need to read this chat */
-  readPermissionMint: PublicKey;
+  readPermissionMintOrCollection: PublicKey;
   /** The mint you need to post to this chat */
-  postPermissionMint: PublicKey;
+  postPermissionMintOrCollection: PublicKey;
   /** The number of tokens needed to post to this chat. **Default:** 1 */
   postPermissionAmount?: number | BN;
   /** The action to take when posting. **Default:** hold */
@@ -100,8 +116,10 @@ export interface InitializeProfileArgs {
   payer?: PublicKey;
   /** The owner of this profile. **Default:** the current wallet */
   ownerWallet?: PublicKey;
-  /** The unique shortname of the user. Must be alphanumeric. */
-  username: string;
+  /** The unique shortname of the user. This is a cardinal certificate NFT */
+  identifierCertificateMint: PublicKey;
+  /** Useful when metadata is being created in the same instruction set, short circuit call to get metadata for the identifier. **Default:** metadata of certificate mint name */
+  identifier?: string;
   imageUrl?: string;
   metadataUrl?: string;
 }
@@ -141,6 +159,19 @@ export interface SendMessageArgs {
   encrypted?: boolean;
 }
 
+export enum IdentifierType {
+  Chat = "chat",
+  User = "user"
+}
+
+export interface ClaimIdentifierArgs {
+  payer?: PublicKey;
+  /** The wallet to own this. **Default:** this wallet */
+  owner?: PublicKey;
+  type: IdentifierType;
+  identifier: string;
+}
+
 function puff(str: string, len: number): string {
   return str.padEnd(32, "\0");
 }
@@ -154,6 +185,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   litAuthSig: any | undefined;
   chain: string;
   authingLit: Promise<void> | null;
+
+  namespacesProgram: Program<NAMESPACES_PROGRAM>;
 
   static ID = new PublicKey("chatGL6yNgZT2Z3BeMYGcgdMpcBKdmxko4C5UhEX4To");
 
@@ -174,10 +207,24 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     return this.authingLit;
   }
 
+  async getNamespace(namespace: PublicKey): Promise<NamespaceData> {
+    return (await this.namespacesProgram.account.namespace.fetch(
+      namespace
+    )) as NamespaceData;
+  }
+
   static async init(
-    provider: Provider,
+    provider: AnchorProvider,
     chatProgramId: PublicKey = ChatSdk.ID
   ): Promise<ChatSdk> {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const namespacesProgram = new Program<NAMESPACES_PROGRAM>(
+      NAMESPACES_IDL,
+      NAMESPACES_PROGRAM_ID,
+      provider
+    );
+
     const ChatIDLJson = await Program.fetchIdl(chatProgramId, provider);
     const chat = new Program<ChatIDL>(
       ChatIDLJson as ChatIDL,
@@ -187,15 +234,18 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     const client = new LitJsSdk.LitNodeClient();
     await client.connect();
 
-    return new this(provider, chat, client);
+    return new this(provider, chat, client, namespacesProgram);
   }
 
   constructor(
-    provider: Provider,
+    provider: AnchorProvider,
     program: Program<ChatIDL>,
-    litClient: LitJsSdk
+    litClient: LitJsSdk,
+    namespacesProgram: Program<NAMESPACES_PROGRAM>
   ) {
     super({ provider, program });
+
+    this.namespacesProgram = namespacesProgram;
 
     this.authingLit = null;
 
@@ -216,7 +266,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
     return {
       ...coded,
-      identifier: depuff(coded.identifier),
       name: depuff(coded.name),
       imageUrl: depuff(coded.imageUrl),
       metadataUrl: depuff(coded.metadataUrl),
@@ -232,7 +281,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
     return {
       ...coded,
-      username: depuff(coded.username),
       imageUrl: depuff(coded.imageUrl),
       metadataUrl: depuff(coded.metadataUrl),
       publicKey: pubkey,
@@ -295,23 +343,19 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
           const chatAcc = await this.getChat(decoded.chat);
           const readMint = await getMintInfo(
             this.provider,
-            chatAcc!.readPermissionMint
+            chatAcc!.readPermissionMintOrCollection
           );
 
           let decodedMessage;
           if (args.encryptedSymmetricKey) {
             await this.authingLit;
-            if (
-              !this.isLitAuthed &&
-              this.wallet &&
-              this.wallet.publicKey
-            ) {
+            if (!this.isLitAuthed && this.wallet && this.wallet.publicKey) {
               await this.litAuth();
             }
 
             const accessControlConditions = [
               tokenAccessPermissions(
-                chatAcc!.readPermissionMint,
+                chatAcc!.readPermissionMintOrCollection,
                 toBN(args.readPermissionAmount, readMint),
                 this.chain
               ),
@@ -369,14 +413,11 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   }
 
   static chatKey(
-    identifier: string,
+    identifierCertificateMint: PublicKey,
     programId: PublicKey = ChatSdk.ID
   ): Promise<[PublicKey, number]> {
     return PublicKey.findProgramAddress(
-      [
-        Buffer.from("chat", "utf-8"),
-        Buffer.from(puff(identifier.toLowerCase(), 32), "utf-8"),
-      ],
+      [Buffer.from("chat", "utf-8"), identifierCertificateMint.toBuffer()],
       programId
     );
   }
@@ -392,31 +433,244 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   }
 
   static profileKey(
-    {
-      username,
-      wallet,
-    }: {
-      username?: string;
-      wallet?: PublicKey;
-    },
+    wallet: PublicKey,
     programId: PublicKey = ChatSdk.ID
   ): Promise<[PublicKey, number]> {
     return PublicKey.findProgramAddress(
-      [
-        Buffer.from(username ? "username_profile" : "wallet_profile", "utf-8"),
-        username ? Buffer.from(puff(username.toLowerCase(), 32)) : wallet!.toBuffer(),
-      ],
+      [Buffer.from("wallet_profile", "utf-8"), wallet.toBuffer()],
       programId
+    );
+  }
+
+  static namespacesKey(
+    programId: PublicKey = ChatSdk.ID
+  ): Promise<[PublicKey, number]> {
+    return PublicKey.findProgramAddress(
+      [Buffer.from("namespaces", "utf-8")],
+      programId
+    );
+  }
+
+  async initializeNamespacesInstructions(): Promise<InstructionResult<null>> {
+    try {
+      await this.getNamespaces();
+      return {
+        instructions: [],
+        signers: [],
+        output: null
+      }
+    } catch (e: any) {
+      console.error(e)
+      // This is expected
+    }
+
+    const [namespaces] = await ChatSdk.namespacesKey();
+    const [chatNamespace, chatNamespaceBump] =
+      await PublicKey.findProgramAddress(
+        [
+          utils.bytes.utf8.encode(NAMESPACE_SEED),
+          utils.bytes.utf8.encode(IdentifierType.Chat),
+        ],
+        NAMESPACES_PROGRAM_ID
+      );
+    const [userNamespace, userNamespaceBump] =
+      await PublicKey.findProgramAddress(
+        [
+          utils.bytes.utf8.encode(NAMESPACE_SEED),
+          utils.bytes.utf8.encode(IdentifierType.User),
+        ],
+        NAMESPACES_PROGRAM_ID
+      );
+
+    const instructions = [];
+    instructions.push(
+      await this.program.instruction.initializeNamespacesV0(
+        {
+          chatNamespaceName: IdentifierType.Chat,
+          userNamespaceName: IdentifierType.User,
+          chatNamespaceBump,
+          userNamespaceBump,
+        },
+        {
+          accounts: {
+            payer: this.wallet.publicKey,
+            namespaces,
+            namespacesProgram: NAMESPACES_PROGRAM_ID,
+            chatNamespace,
+            userNamespace,
+            systemProgram: SystemProgram.programId,
+          },
+        }
+      )
+    );
+
+    return {
+      instructions,
+      signers: [],
+      output: null,
+    };
+  }
+
+  async initializeNamespaces(): Promise<null> {
+    return this.execute(
+      this.initializeNamespacesInstructions(),
+      this.wallet.publicKey,
+      "confirmed"
+    );
+  }
+
+  async getNamespaces(): Promise<INamespaces> {
+    const key = (await ChatSdk.namespacesKey(this.programId))[0];
+    const namespaces = await this.program.account.namespacesV0.fetch(key);
+
+    return {
+      ...namespaces,
+      publicKey: key,
+      chat: await this.getNamespace(
+        namespaces.chatNamespace
+      ),
+      user: await this.getNamespace(
+        namespaces.userNamespace
+      ),
+    };
+  }
+
+  async claimIdentifierInstructions({
+    owner = this.wallet.publicKey,
+    identifier,
+    type,
+  }: ClaimIdentifierArgs): Promise<
+    BigInstructionResult<{ certificateMint: PublicKey }>
+  > {
+    const transaction = new Transaction();
+    const certificateMint = Keypair.generate();
+    const namespaces = await this.getNamespaces();
+
+    let namespaceName: string;
+    let namespaceId: PublicKey;
+    if (type === IdentifierType.Chat) {
+      namespaceName = namespaces.chat.name;
+      namespaceId = namespaces.chatNamespace;
+    } else {
+      namespaceName = namespaces.user.name;
+      namespaceId = namespaces.userNamespace;
+    }
+
+    const [entryId] = await PublicKey.findProgramAddress(
+      [
+        utils.bytes.utf8.encode(ENTRY_SEED),
+        namespaceId.toBytes(),
+        utils.bytes.utf8.encode(identifier),
+      ],
+      NAMESPACES_PROGRAM_ID
+    );
+    if (!(await this.provider.connection.getAccountInfo(entryId))) {
+      await withInitEntry(
+        this.provider.connection,
+        this.provider.wallet,
+        certificateMint.publicKey,
+        namespaceName,
+        identifier,
+        transaction
+      );
+    }
+
+    const [claimRequestId] = await PublicKey.findProgramAddress(
+      [
+        utils.bytes.utf8.encode(CLAIM_REQUEST_SEED),
+        namespaceId.toBytes(),
+        utils.bytes.utf8.encode(identifier),
+        owner.toBytes(),
+      ],
+      NAMESPACES_PROGRAM_ID
+    );
+
+    if (!(await this.provider.connection.getAccountInfo(claimRequestId))) {
+      await withCreateClaimRequest(
+        this.provider.connection,
+        this.provider.wallet,
+        namespaceName,
+        identifier,
+        owner,
+        transaction
+      );
+    }
+
+    const instructions = transaction.instructions;
+
+    const certificateMintMetadata = await Metadata.getPDA(
+      certificateMint.publicKey
+    );
+
+    const signers = [certificateMint];
+    if (type === IdentifierType.Chat) {
+      instructions.push(
+        await this.program.instruction.approveChatIdentifierV0({
+          accounts: {
+            namespaces: namespaces.publicKey,
+            chatNamespace: namespaces.chatNamespace,
+            claimRequest: claimRequestId,
+            entry: entryId,
+            certificateMintMetadata,
+            namespacesProgram: NAMESPACES_PROGRAM_ID,
+            tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+          },
+        })
+      );
+    } else {
+      instructions.push(
+        await this.program.instruction.approveUserIdentifierV0({
+          accounts: {
+            namespaces: namespaces.publicKey,
+            userNamespace: namespaces.userNamespace,
+            claimRequest: claimRequestId,
+            entry: entryId,
+            certificateMintMetadata,
+            namespacesProgram: NAMESPACES_PROGRAM_ID,
+            tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+          },
+        })
+      );
+    }
+
+    const tx2 = new Transaction();
+    await withClaimEntry(
+      this.provider.connection,
+      {
+        ...this.provider.wallet,
+        publicKey: owner
+      },
+      namespaceName,
+      identifier,
+      certificateMint.publicKey,
+      0,
+      tx2
+    );
+
+    return {
+      instructions: [instructions, tx2.instructions],
+      signers: [signers, []],
+      output: { certificateMint: certificateMint.publicKey },
+    };
+  }
+
+  async claimIdentifier(
+    args: ClaimIdentifierArgs,
+    commitment?: Finality
+  ): Promise<{ certificateMint: PublicKey }> {
+    return this.executeBig(
+      this.claimIdentifierInstructions(args),
+      args.payer,
+      commitment
     );
   }
 
   async initializeChatInstructions({
     payer = this.wallet.publicKey,
-    admin = this.wallet.publicKey,
-    identifier,
+    identifierCertificateMint,
     name,
-    readPermissionMint,
-    postPermissionMint,
+    readPermissionMintOrCollection,
+    postPermissionMintOrCollection,
     postPermissionAction = PostAction.Hold,
     postPayDestination,
     postPermissionAmount = 1,
@@ -424,30 +678,67 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     imageUrl = "",
     metadataUrl = "",
   }: InitializeChatArgs): Promise<InstructionResult<{ chat: PublicKey }>> {
-    const chat = (await ChatSdk.chatKey(identifier, this.programId))[0];
-    const postMint = await getMintInfo(this.provider, postPermissionMint);
-    const readMint = await getMintInfo(this.provider, readPermissionMint);
+    const chat = (
+      await ChatSdk.chatKey(identifierCertificateMint, this.programId)
+    )[0];
+    const postMint = await getMintInfo(
+      this.provider,
+      postPermissionMintOrCollection
+    );
+    const readMint = await getMintInfo(
+      this.provider,
+      readPermissionMintOrCollection
+    );
+
+    const metadataKey = await Metadata.getPDA(identifierCertificateMint);
+    const metadata = await new Metadata(
+      metadataKey,
+      (await this.provider.connection.getAccountInfo(metadataKey))!
+    );
+    const namespaces = await this.getNamespaces();
+    const [entryName] = metadata.data.data.name.split(".");
+    const [entry] = await PublicKey.findProgramAddress(
+      [
+        utils.bytes.utf8.encode(ENTRY_SEED),
+        namespaces.chatNamespace.toBytes(),
+        utils.bytes.utf8.encode(entryName),
+      ],
+      NAMESPACES_PROGRAM_ID
+    );
+
+    const identifierCertificateMintAccount =
+      await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        identifierCertificateMint,
+        this.wallet.publicKey,
+        true
+      );
+
     const instruction = await this.instruction.initializeChatV0(
       {
-        admin: admin,
-        identifier,
         name,
         imageUrl: imageUrl,
         metadataUrl: metadataUrl,
         defaultReadPermissionAmount: toBN(
           defaultReadPermissionAmount,
           readMint
-        ),
-        postPermissionMint,
-        readPermissionMint,
+        ) as AnchorBN,
+        postPermissionMintOrCollection,
+        readPermissionMintOrCollection,
         postPermissionAction: postPermissionAction as never,
-        postPermissionAmount: toBN(postPermissionAmount, postMint),
+        postPermissionAmount: toBN(postPermissionAmount, postMint) as AnchorBN,
         postPayDestination: postPayDestination || null,
       },
       {
         accounts: {
           payer,
           chat,
+          namespaces: namespaces.publicKey,
+          entry,
+          identifierCertificateMint,
+          identifierCertificateMintAccount,
+          ownerWallet: this.wallet.publicKey,
           systemProgram: SystemProgram.programId,
         },
       }
@@ -476,36 +767,64 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   async initializeProfileInstructions({
     payer = this.wallet.publicKey,
     ownerWallet = this.wallet.publicKey,
-    username,
+    identifierCertificateMint,
+    identifier,
     imageUrl = "",
     metadataUrl = "",
   }: InitializeProfileArgs): Promise<
     InstructionResult<{
-      usernameProfile: PublicKey;
       walletProfile: PublicKey;
     }>
   > {
     const instructions = [];
 
-    const usernameProfile = (
-      await ChatSdk.profileKey({ username }, this.programId)
-    )[0];
     const walletProfile = (
-      await ChatSdk.profileKey({ wallet: ownerWallet }, this.programId)
+      await ChatSdk.profileKey(ownerWallet, this.programId)
     )[0];
+
+    const namespaces = await this.getNamespaces();
+    const metadataKey = await Metadata.getPDA(identifierCertificateMint);
+    if (!identifier) {
+      const metadata = await new Metadata(
+        metadataKey,
+        (await this.provider.connection.getAccountInfo(metadataKey))!
+      );
+      const [entryName] = metadata.data.data.name.split(".");
+      identifier = entryName;
+    }
+
+    const [entry] = await PublicKey.findProgramAddress(
+      [
+        utils.bytes.utf8.encode(ENTRY_SEED),
+        namespaces.userNamespace.toBytes(),
+        utils.bytes.utf8.encode(identifier),
+      ],
+      NAMESPACES_PROGRAM_ID
+    );
+
+    const identifierCertificateMintAccount =
+      await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        identifierCertificateMint,
+        ownerWallet,
+        true
+      );
 
     instructions.push(
       await this.instruction.initializeProfileV0(
         {
-          username,
           imageUrl,
           metadataUrl,
         },
         {
           accounts: {
             payer,
-            usernameProfile,
             walletProfile,
+            namespaces: namespaces.publicKey,
+            entry,
+            identifierCertificateMint,
+            identifierCertificateMintAccount,
             ownerWallet,
             systemProgram: SystemProgram.programId,
           },
@@ -515,7 +834,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
     return {
       output: {
-        usernameProfile,
         walletProfile,
       },
       instructions,
@@ -527,7 +845,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     args: InitializeProfileArgs,
     commitment: Commitment = "confirmed"
   ): Promise<{
-    usernameProfile: PublicKey;
     walletProfile: PublicKey;
   }> {
     return this.execute(
@@ -584,7 +901,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   }
 
   async initializeDelegateWallet(
-    args: InitializeProfileArgs,
+    args: InitializeDelegateWalletArgs,
     commitment: Commitment = "confirmed"
   ): Promise<{
     delegateWallet: PublicKey;
@@ -616,12 +933,12 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     const chatAcc = (await this.getChat(chat))!;
     const readMint = await getMintInfo(
       this.provider,
-      chatAcc.readPermissionMint
+      chatAcc.readPermissionMintOrCollection
     );
 
     const accessControlConditionsToUse = [
       tokenAccessPermissions(
-        chatAcc.readPermissionMint,
+        chatAcc.readPermissionMintOrCollection,
         toBN(
           readPermissionAmount || chatAcc.defaultReadPermissionAmount,
           readMint
@@ -630,7 +947,10 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       ),
     ];
 
-    const symmKey = await generateSymmetricKey();
+    let symmKey: any;
+    if (encrypted) {
+      symmKey = await generateSymmetricKey();
+    }
     // Encrypt fileAttachements if needed
     if (fileAttachments && encrypted) {
       fileAttachments = await Promise.all(
@@ -679,7 +999,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         LitJsSdk.uint8arrayFromString(JSON.stringify(normalMessage))
       );
       encryptedString = buf2hex(
-        await(encryptedStringOut as Blob).arrayBuffer()
+        await (encryptedStringOut as Blob).arrayBuffer()
       );
       encryptedSymmetricKey = LitJsSdk.uint8arrayToString(
         await this.litClient.saveEncryptionKey({
@@ -699,15 +1019,31 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
     const instructions = [];
 
-    const profile = (
-      await ChatSdk.profileKey({ wallet: sender }, this.programId)
-    )[0];
+    const profile = (await ChatSdk.profileKey(sender, this.programId))[0];
     const profileAcc = (await this.getProfile(profile))!;
+
+    const identifierCertificateMint = profileAcc.identifierCertificateMint;
+    const metadataKey = await Metadata.getPDA(identifierCertificateMint);
+    const metadata = await new Metadata(
+      metadataKey,
+      (await this.provider.connection.getAccountInfo(metadataKey))!
+    );
+    const [namespace, entryName] = metadata.data.data.name.split(".");
+    const [entry] = await nameEntryId(namespace, entryName);
+    const namespaces = await this.getNamespaces();
+    const identifierCertificateMintAccount =
+      await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        identifierCertificateMint,
+        profileAcc.ownerWallet,
+        true
+      );
 
     const postPermissionAccount = await Token.getAssociatedTokenAddress(
       ASSOCIATED_TOKEN_PROGRAM_ID,
       TOKEN_PROGRAM_ID,
-      chatAcc.postPermissionMint,
+      chatAcc.postPermissionMintOrCollection,
       profileAcc.ownerWallet,
       true
     );
@@ -730,7 +1066,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     const senderToUse = delegateWallet || sender;
 
     instructions.push(
-      await this.instruction.sendMessageV0(
+      await this.instruction.sendTokenMessageV0(
         {
           id: uuid(),
           content: encryptedString,
@@ -748,7 +1084,11 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
             sender: senderToUse,
             profile,
             postPermissionAccount,
-            postPermissionMint: chatAcc.postPermissionMint,
+            postPermissionMint: chatAcc.postPermissionMintOrCollection,
+            namespaces: namespaces.publicKey,
+            entry,
+            identifierCertificateMint,
+            identifierCertificateMintAccount,
             tokenProgram: TOKEN_PROGRAM_ID,
           },
           remainingAccounts,

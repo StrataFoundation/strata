@@ -1,11 +1,11 @@
-import { Provider } from "@project-serum/anchor";
+import { AnchorProvider } from "@project-serum/anchor";
 import { PublicKey, Transaction, SystemProgram } from "@solana/web3.js";
 import { NATIVE_MINT, AccountLayout, TOKEN_PROGRAM_ID, Token, ASSOCIATED_TOKEN_PROGRAM_ID, AccountInfo as TokenAccountInfo, u64 } from '@solana/spl-token';
 import { expect } from "chai";
 export class TokenUtils {
-  provider: Provider;
+  provider: AnchorProvider;
 
-  constructor(provider: Provider) {
+  constructor(provider: AnchorProvider) {
     this.provider = provider;
   }
 
@@ -13,12 +13,20 @@ export class TokenUtils {
     if (!(await this.provider.connection.getAccountInfo(account))) {
       return 0;
     }
-    const actual = await this.provider.connection.getTokenAccountBalance(account);
+    const actual = await this.provider.connection.getTokenAccountBalance(
+      account
+    );
     expect(actual.value.uiAmount).to.equal(balance);
   }
 
-  async expectBalanceWithin(account: PublicKey, balance: number, precision: number) {
-    const actual = await this.provider.connection.getTokenAccountBalance(account);
+  async expectBalanceWithin(
+    account: PublicKey,
+    balance: number,
+    precision: number
+  ) {
+    const actual = await this.provider.connection.getTokenAccountBalance(
+      account
+    );
     expect(actual.value.uiAmount).to.within(balance, precision);
   }
 
@@ -32,7 +40,10 @@ export class TokenUtils {
     return this.expectBalance(ata, balance);
   }
 
-  async createWrappedNativeAccount(provider: Provider, amount: number): Promise<PublicKey> {
+  async createWrappedNativeAccount(
+    provider: AnchorProvider,
+    amount: number
+  ): Promise<PublicKey> {
     const newAccount = await Token.getAssociatedTokenAddress(
       ASSOCIATED_TOKEN_PROGRAM_ID,
       TOKEN_PROGRAM_ID,
@@ -42,29 +53,33 @@ export class TokenUtils {
 
     const transaction = new Transaction();
     if (!(await provider.connection.getAccountInfo(newAccount))) {
-      transaction.add(Token.createAssociatedTokenAccountInstruction(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        NATIVE_MINT,
-        newAccount,
-        provider.wallet.publicKey,
-        provider.wallet.publicKey
-      ));
+      transaction.add(
+        Token.createAssociatedTokenAccountInstruction(
+          ASSOCIATED_TOKEN_PROGRAM_ID,
+          TOKEN_PROGRAM_ID,
+          NATIVE_MINT,
+          newAccount,
+          provider.wallet.publicKey,
+          provider.wallet.publicKey
+        )
+      );
     }
 
     // Send lamports to it (these will be wrapped into native tokens by the token program)
-    transaction.add(SystemProgram.transfer({
-      fromPubkey: provider.wallet.publicKey,
-      toPubkey: newAccount,
-      lamports: amount
-    })); 
+    transaction.add(
+      SystemProgram.transfer({
+        fromPubkey: provider.wallet.publicKey,
+        toPubkey: newAccount,
+        lamports: amount,
+      })
+    );
     // Assign the new account to the native token mint.
     // the account will be initialized with a balance equal to the native token balance.
     // (i.e. amount)
     // transaction.add(Token.createInitAccountInstruction(TOKEN_PROGRAM_ID, NATIVE_MINT, newAccount.publicKey, provider.wallet.publicKey)); // Send the three instructions
-    await provider.send(transaction);
+    await provider.sendAndConfirm(transaction);
 
-    return newAccount
+    return newAccount;
   }
 
   async mintTo(
@@ -82,12 +97,12 @@ export class TokenUtils {
         [],
         amount
       )
-    )
-    await this.provider.send(mintTx);
+    );
+    await this.provider.sendAndConfirm(mintTx);
   }
 
   async createAtaAndMint(
-    provider: Provider,
+    provider: AnchorProvider,
     mint: PublicKey,
     amount: number,
     to: PublicKey = provider.wallet.publicKey,
@@ -99,17 +114,19 @@ export class TokenUtils {
       TOKEN_PROGRAM_ID,
       mint,
       to
-    )
+    );
     const mintTx = new Transaction({ feePayer: payer });
-    if (!await provider.connection.getAccountInfo(ata)) {
-      mintTx.add(Token.createAssociatedTokenAccountInstruction(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        mint,
-        ata,
-        to,
-        payer
-      ))
+    if (!(await provider.connection.getAccountInfo(ata))) {
+      mintTx.add(
+        Token.createAssociatedTokenAccountInstruction(
+          ASSOCIATED_TOKEN_PROGRAM_ID,
+          TOKEN_PROGRAM_ID,
+          mint,
+          ata,
+          to,
+          payer
+        )
+      );
     }
     mintTx.add(
       Token.createMintToInstruction(
@@ -120,9 +137,9 @@ export class TokenUtils {
         [],
         amount
       )
-    )
-    await provider.send(mintTx);
-  
+    );
+    await provider.sendAndConfirm(mintTx);
+
     return ata;
   }
 }

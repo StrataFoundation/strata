@@ -13,22 +13,35 @@ impl Default for PostAction {
   }
 }
 
+pub const NAMESPACES_SIZE: usize = 8 +  std::mem::size_of::<NamespacesV0>() + 80; // padding
+
+#[account]
+#[derive(Default)]
+pub struct NamespacesV0 {
+  pub bump: u8,
+  pub chat_namespace: Pubkey,
+  pub user_namespace: Pubkey,
+}
+
+pub const CHAT_SIZE: usize = 8 +  std::mem::size_of::<ChatV0>() + 80 + 100 + 200 + 200; // padding
+
 #[account]
 #[derive(Default)]
 pub struct ChatV0 {
   pub bump: u8,
-  pub admin: Pubkey,
   pub post_permission_mint_or_collection: Pubkey,
-  pub read_permission_mint_or_collection: Pubkey, // Not used by program since blockchain is public, enforced by lit protocol
+  pub read_permission_mint_or_collection: Pubkey,
   pub post_permission_amount: u64,
   pub default_read_permission_amount: u64,
   pub post_permission_action: PostAction,
-  pub post_pay_destination: Option<Pubkey>,
-  pub identifier_certificate_mint: PublicKey, // The certificate of the primary identifier for this chat
+  pub identifier_certificate_mint: Pubkey, // The certificate of the primary identifier for this chat
   pub name: String, // limit 100 characters (puffed)
   pub image_url: String, // limit 200 characters (puffed)
   pub metadata_url: String, // limit 200 characters (puffed)
+  pub post_pay_destination: Option<Pubkey>,
 }
+
+pub const PROFILE_SIZE: usize = 8 +  std::mem::size_of::<ProfileV0>() + 200 + 200 + 80; // padding
 
 #[account]
 #[derive(Default)]
@@ -38,8 +51,9 @@ pub struct ProfileV0 {
   pub identifier_certificate_mint: Pubkey, // The certificate of the primary identifier for this profile
   pub image_url: String, // limit 200 characters (puffed). Can just be empty.
   pub metadata_url: String, // limit 200 characters (puffed)
-  pub image_mint: Option<Pubkey>, // Image as an NFT instead of as a url.
 }
+
+pub const DELEGATE_WALLET_SIZE: usize = 8 +  std::mem::size_of::<DelegateWalletV0>() + 80; // padding
 
 #[account]
 #[derive(Default)]

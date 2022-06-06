@@ -1,5 +1,5 @@
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
-import { BorshAccountsCoder, Provider } from "@project-serum/anchor";
+import { AnchorProvider, BorshAccountsCoder, Provider } from "@project-serum/anchor";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   NATIVE_MINT,
@@ -300,7 +300,7 @@ export class MarketplaceSdk {
   }
 
   static async init(
-    provider: Provider,
+    provider: AnchorProvider,
     splTokenBondingProgramId: PublicKey = SplTokenBonding.ID,
     splTokenCollectiveProgramId: PublicKey = SplTokenCollective.ID
   ): Promise<MarketplaceSdk> {
@@ -313,7 +313,7 @@ export class MarketplaceSdk {
   }
 
   constructor(
-    readonly provider: Provider,
+    readonly provider: AnchorProvider,
     readonly tokenBondingSdk: SplTokenBonding,
     readonly tokenCollectiveSdk: SplTokenCollective,
     readonly tokenMetadataSdk: SplTokenMetadata

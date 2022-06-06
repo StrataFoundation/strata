@@ -1,4 +1,4 @@
-import { Provider } from "@project-serum/anchor";
+import { AnchorProvider } from "@project-serum/anchor";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import { GetServerSideProps } from "next";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
@@ -15,7 +15,7 @@ export const mintMetadataServerSideProps: GetServerSideProps = async (
   );
 
   const connection = new Connection(endpoint, {});
-  const provider = new Provider(
+  const provider = new AnchorProvider(
     connection,
     new NodeWallet(Keypair.generate()),
     {}

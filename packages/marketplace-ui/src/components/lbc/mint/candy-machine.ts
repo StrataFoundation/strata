@@ -383,9 +383,10 @@ export const mintOneToken = async (
   if (collectionPDAAccount && candyMachine.retainAuthority) {
     try {
       const collectionData =
+        // @ts-ignore
         (await candyMachine.program.account.collectionPda.fetch(
           collectionPDA
-        )) as CollectionData
+        )) as CollectionData;
       console.log(collectionData)
       const collectionMint = collectionData.mint
       const collectionAuthorityRecord = await getCollectionAuthorityRecordPDA(

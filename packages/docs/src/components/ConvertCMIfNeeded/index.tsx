@@ -10,7 +10,7 @@ import {
   ICandyMachine,
   useCandyMachine,
 } from "@strata-foundation/marketplace-ui";
-import { Provider } from "@project-serum/anchor";
+import { AnchorProvider } from "@project-serum/anchor";
 import { Button } from "@chakra-ui/react";
 
 import { sendInstructions } from "@strata-foundation/spl-utils";
@@ -26,11 +26,11 @@ import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { usePublicKey } from "@strata-foundation/react";
 
 async function convertToLBC(
-  provider: Provider | undefined,
+  provider: AnchorProvider | undefined,
   targetMint: PublicKey | undefined,
   cm: ICandyMachine | undefined
 ): Promise<void> {
-  console.log(provider, targetMint, cm)
+  console.log(provider, targetMint, cm);
   if (provider && targetMint && cm) {
     const instructions: TransactionInstruction[] = [];
     const incinerator = new PublicKey(
@@ -74,7 +74,7 @@ async function convertToLBC(
       isWritable: false,
       isSigner: false,
     });
-    instructions.push(updateIX)
+    instructions.push(updateIX);
 
     await sendInstructions(new Map(), provider, instructions, []);
   }

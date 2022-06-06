@@ -4,3 +4,9 @@
 [submodule "deps/solana-program-library"]
 	path = deps/solana-program-library
 	url = https://github.com/solana-labs/solana-program-library.git
+[submodule "deps/cardinal-namespaces"]
+	path = deps/cardinal-namespaces
+	url = git@github.com:cardinal-labs/cardinal-namespaces.git
+[submodule "deps/cardinal-protocol"]
+	path = deps/cardinal-protocol
+	url = git@github.com:cardinal-labs/cardinal-protocol.git

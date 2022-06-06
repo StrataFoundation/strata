@@ -1,7 +1,9 @@
+import { NAMESPACES_IDL, NAMESPACES_PROGRAM, NAMESPACES_PROGRAM_ID } from "@cardinal/namespaces";
 import * as anchor from "@project-serum/anchor";
-import { Keypair, PublicKey } from "@solana/web3.js";
-import { ChatSdk, IChat } from "@strata-foundation/chat";
-import { createMint, sendInstructions } from "@strata-foundation/spl-utils";
+import { AnchorProvider, Program } from "@project-serum/anchor";
+import { Keypair, PublicKey, SystemInstruction, SystemProgram } from "@solana/web3.js";
+import { ChatSdk, IChat, IdentifierType, MessageType } from "@strata-foundation/chat";
+import { createMint, sendInstructions, sendMultipleInstructions } from "@strata-foundation/spl-utils";
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
 // @ts-ignore
@@ -17,13 +19,18 @@ function randomIdentifier(): string {
 
 describe("chat", () => {
   // Configure the client to use the local cluster.
-  anchor.setProvider(anchor.Provider.local("http://127.0.0.1:8899"));
-  const provider = anchor.getProvider();
+  anchor.setProvider(anchor.AnchorProvider.local("http://127.0.0.1:8899"));
+  const provider = anchor.getProvider() as AnchorProvider;
 
   const program = anchor.workspace.Chat;
   const tokenUtils = new TokenUtils(provider);
   const litClient = new LitJsSdk.LitNodeClient();
-  const chatSdk = new ChatSdk(provider, program, litClient);
+  const namespacesProgram = new Program<NAMESPACES_PROGRAM>(
+    NAMESPACES_IDL,
+    NAMESPACES_PROGRAM_ID,
+    provider
+  );
+  const chatSdk = new ChatSdk(provider, program, litClient, namespacesProgram);
   const me = chatSdk.wallet.publicKey;
 
   describe("initialize chat", () => {
@@ -31,6 +38,7 @@ describe("chat", () => {
     let postPermissionMint: PublicKey;
 
     before(async () => {
+      await chatSdk.initializeNamespaces();
       readPermissionMint = await createMint(provider, me, 9);
       postPermissionMint = readPermissionMint;
       await tokenUtils.createAtaAndMint(
@@ -43,19 +51,25 @@ describe("chat", () => {
     it("intializes a chat", async () => {
       const identifier = randomIdentifier();
       const name = "Test Test";
-      const { chat } = await chatSdk.initializeChat({
+      const { certificateMint: chatIdentifierCertificateMint } = await chatSdk.claimIdentifier({
         identifier,
+        type: IdentifierType.Chat,
+      })
+      const { chat } = await chatSdk.initializeChat({
+        identifierCertificateMint: chatIdentifierCertificateMint,
         name,
-        readPermissionMint,
-        postPermissionMint,
+        readPermissionMintOrCollection: readPermissionMint,
+        postPermissionMintOrCollection: postPermissionMint,
       });
       const chatAcc = await chatSdk.getChat(chat);
-      expect(chatAcc?.identifier).to.eq(identifier);
+      expect(chatAcc?.identifierCertificateMint.toBase58()).to.eq(
+        chatIdentifierCertificateMint.toBase58()
+      );
       expect(chatAcc?.name).to.eq(name);
-      expect(chatAcc?.readPermissionMint?.toBase58()).to.eq(
+      expect(chatAcc?.readPermissionMintOrCollection?.toBase58()).to.eq(
         readPermissionMint.toBase58()
       );
-      expect(chatAcc?.postPermissionMint?.toBase58()).to.eq(
+      expect(chatAcc?.postPermissionMintOrCollection?.toBase58()).to.eq(
         postPermissionMint.toBase58()
       );
     })
@@ -64,14 +78,20 @@ describe("chat", () => {
   describe("initialize profile", () => {
     it("intializes a profile", async () => {
       const username = randomIdentifier();
-      const { walletProfile } =
-        await chatSdk.initializeProfile({
-          username,
-          imageUrl: "hey"
+      const { certificateMint: userIdentifierCertificateMint } =
+        await chatSdk.claimIdentifier({
+          identifier: username,
+          type: IdentifierType.User,
         });
-      
+      const { walletProfile } = await chatSdk.initializeProfile({
+        identifierCertificateMint: userIdentifierCertificateMint,
+        imageUrl: "hey",
+      });
+
       const profileAcc = await chatSdk.getProfile(walletProfile);
-      expect(profileAcc?.username).to.eq(username);
+      expect(profileAcc?.identifierCertificateMint.toBase58()).to.eq(
+        userIdentifierCertificateMint.toBase58()
+      );
       expect(profileAcc?.imageUrl).to.eq("hey");
     });
   });
@@ -100,19 +120,34 @@ describe("chat", () => {
         noah
       );
 
-      ({ chat } = await chatSdk.initializeChat({
+      const { certificateMint: chatIdentifierCertificateMint } = await chatSdk.claimIdentifier({
         identifier,
+        type: IdentifierType.Chat,
+      });
+      ({ chat } = await chatSdk.initializeChat({
+        identifierCertificateMint: chatIdentifierCertificateMint,
         name,
-        readPermissionMint,
-        postPermissionMint,
+        readPermissionMintOrCollection: readPermissionMint,
+        postPermissionMintOrCollection: postPermissionMint,
       }));
       chatAcc = (await chatSdk.getChat(chat))!;
-      const { output: { walletProfile: outWalletProfile }, signers, instructions } =
-        await chatSdk.initializeProfileInstructions({
-          ownerWallet: profileKeypair.publicKey,
-          username,
-          imageUrl: "hey",
+
+      const { instructions: claimInstructions, signers: claimSigners, output: { certificateMint: userIdentifierCertificateMint } } =
+        await chatSdk.claimIdentifierInstructions({
+          identifier: username,
+          type: IdentifierType.User,
+          owner: profileKeypair.publicKey,
         });
+      const {
+        output: { walletProfile: outWalletProfile },
+        signers,
+        instructions,
+      } = await chatSdk.initializeProfileInstructions({
+        identifier: username,
+        ownerWallet: profileKeypair.publicKey,
+        identifierCertificateMint: userIdentifierCertificateMint,
+        imageUrl: "hey",
+      });
 
       const { instructions: dInstructions, signers: dSigners } =
         await chatSdk.initializeDelegateWalletInstructions({
@@ -121,13 +156,35 @@ describe("chat", () => {
 
       walletProfile = outWalletProfile;
 
-      await sendInstructions(
-        new Map(),
-        provider,
-        [...instructions, ...dInstructions],
-        [...signers, ...dSigners, profileKeypair],
-        me
-      )
+      try {
+        await sendMultipleInstructions(
+          new Map(),
+          provider,
+          [
+            [
+              SystemProgram.transfer({
+                fromPubkey: provider.wallet.publicKey,
+                toPubkey: profileKeypair.publicKey,
+                lamports: 10000000000,
+              }),
+            ],
+            ...claimInstructions,
+            instructions,
+            dInstructions,
+          ],
+          [
+            [],
+            [...claimSigners[0]],
+            [...claimSigners[1], profileKeypair],
+            [...signers, profileKeypair],
+            dSigners,
+          ],
+          me
+        );
+      } catch (e: any) {
+        console.error(e)
+        throw e
+      }
     });
 
     it("allows sending a basic encrypted message with delegate", async () => {
@@ -136,23 +193,23 @@ describe("chat", () => {
         sender: profileKeypair.publicKey,
         delegateWalletKeypair,
         chat,
-        message: "hello",
+        message: { type: MessageType.Text, text: "hello" },
         encrypted: false,
       });
       const [{ decodedMessage }] = await chatSdk.getMessagesFromTx(txid!);
-      expect(decodedMessage).to.eq("hello")
+      expect(decodedMessage?.text).to.eq("hello")
     });
 
     it("allows sending a basic encrypted message without delegate", async () => {
       const { instructions, signers } = await chatSdk.sendMessageInstructions({
         sender: profileKeypair.publicKey,
         chat,
-        message: "hey",
+        message: { type: MessageType.Text, text: "hello" },
         encrypted: false,
       });
       const txid = await sendInstructions(chatSdk.errors || new Map(), provider, instructions, [...signers, profileKeypair]);
       const [{ decodedMessage }] = await chatSdk.getMessagesFromTx(txid!);
-      expect(decodedMessage).to.eq("hey");
+      expect(decodedMessage?.text).to.eq("hey");
     });
   });
 })

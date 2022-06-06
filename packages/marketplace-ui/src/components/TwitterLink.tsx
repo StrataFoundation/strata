@@ -1,5 +1,5 @@
 import { Button, Icon } from "@chakra-ui/react";
-import { Provider } from "@project-serum/anchor";
+import { AnchorProvider } from "@project-serum/anchor";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import {
@@ -22,7 +22,7 @@ const link = async (
   state: string,
   code: string,
   ownerTwitterHandle: string | undefined,
-  provider: Provider | undefined
+  provider: AnchorProvider | undefined
 ) => {
   if (!ownerTwitterHandle) {
     if (state == localStorage.getItem("state") && provider && publicKey) {

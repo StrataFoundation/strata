@@ -1,15 +1,16 @@
 use anchor_lang::prelude::*;
+use namespaces::state::Entry;
 use crate::state::*;
 use crate::error::ErrorCode;
 use anchor_spl::token::{TokenAccount, Token, Mint};
 use std::convert::*;
 
 #[derive(Accounts)]
-pub struct SendMessageV0<'info> {
+pub struct SendTokenMessageV0<'info> {
   #[account(mut)]
   pub payer: Signer<'info>,
   #[account(
-    has_one = post_permission_mint
+    constraint = chat.post_permission_mint_or_collection == post_permission_mint.key()
   )]
   pub chat: Box<Account<'info, ChatV0>>,
   pub sender: Signer<'info>,
@@ -22,6 +23,19 @@ pub struct SendMessageV0<'info> {
   pub post_permission_account: Account<'info, TokenAccount>,
   #[account(mut)]
   pub post_permission_mint: Box<Account<'info, Mint>>,
+  pub namespaces: Box<Account<'info, NamespacesV0>>,
+  #[account(
+    constraint = entry.mint == identifier_certificate_mint.key(),
+    constraint = namespaces.user_namespace == entry.namespace
+  )]
+  pub entry: Box<Account<'info, Entry>>,
+  pub identifier_certificate_mint: Box<Account<'info, Mint>>,
+  #[account(
+    constraint = profile.owner_wallet == identifier_certificate_mint_account.owner,
+    constraint = identifier_certificate_mint_account.mint == identifier_certificate_mint.key(),
+    constraint = identifier_certificate_mint_account.amount > 0
+  )]
+  pub identifier_certificate_mint_account: Box<Account<'info, TokenAccount>>,
   pub token_program: Program<'info, Token>,
 }
 
@@ -35,7 +49,7 @@ pub struct MessageV0 {
 }
 
 pub fn handler(
-  ctx: Context<SendMessageV0>,
+  ctx: Context<SendTokenMessageV0>,
   _args: MessageV0,
 ) -> Result<()> {
   require!(ctx.accounts.post_permission_account.amount >= ctx.accounts.chat.post_permission_amount, ErrorCode::PermissionDenied);

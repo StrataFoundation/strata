@@ -11,7 +11,7 @@ import {
   MetadataKey,
   UpdateMetadataV2,
 } from "@metaplex-foundation/mpl-token-metadata";
-import { Provider } from "@project-serum/anchor";
+import { AnchorProvider } from "@project-serum/anchor";
 import { AccountInfo as TokenAccountInfo, MintInfo } from "@solana/spl-token";
 import { PublicKey, Signer, TransactionInstruction } from "@solana/web3.js";
 import { getMintInfo, InstructionResult, sendInstructions, truthy } from ".";
@@ -173,15 +173,15 @@ const imageFromJson = (newUri: string, extended: any) => {
 const localStorage = global.localStorage || localStorageMemory;
 
 export class SplTokenMetadata {
-  provider: Provider;
+  provider: AnchorProvider;
 
-  static async init(provider: Provider): Promise<SplTokenMetadata> {
+  static async init(provider: AnchorProvider): Promise<SplTokenMetadata> {
     return new this({
       provider,
     });
   }
 
-  constructor(opts: { provider: Provider }) {
+  constructor(opts: { provider: AnchorProvider }) {
     this.provider = opts.provider;
   }
 

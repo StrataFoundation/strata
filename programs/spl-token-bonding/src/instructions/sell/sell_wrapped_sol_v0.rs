@@ -69,7 +69,7 @@ pub fn sell_wrapped_sol(
   let token_program = accounts.token_program.to_account_info().clone();
   let command = Burn {
     mint: accounts.wrapped_sol_mint.to_account_info().clone(),
-    to: accounts.source.to_account_info().clone(),
+    from: accounts.source.to_account_info().clone(),
     authority: accounts.owner.to_account_info().clone(),
   };
   let context = match seeds {

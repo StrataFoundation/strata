@@ -1,11 +1,6 @@
 use anchor_lang::prelude::*;
 use crate::state::*;
 
-pub const DELEGATE_WALLET_SIZE: usize = 1 + // key
-  32 + // owner_wallet
-  32 + // delegate_wallet
-  80; // padding
-
 #[derive(Accounts)]
 pub struct InitializeDelegateWalletV0<'info> {
   #[account(mut)]

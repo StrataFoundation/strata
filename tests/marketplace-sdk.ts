@@ -10,6 +10,7 @@ import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
 import { NATIVE_MINT } from "@solana/spl-token";
 import { waitForUnixTime } from "./utils/clock";
 import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
+import { AnchorProvider } from "@project-serum/anchor";
 
 use(ChaiAsPromised);
 
@@ -19,8 +20,8 @@ function percent(percent: number): number {
 
 describe("marketplace-sdk", () => {
   // Configure the client to use the local cluster.
-  anchor.setProvider(anchor.Provider.local());
-  const provider = anchor.getProvider();
+  anchor.setProvider(anchor.AnchorProvider.local("http://127.0.0.1:8899"));
+  const provider = anchor.getProvider() as AnchorProvider;
 
   const program = anchor.workspace.SplTokenBonding;
   const tokenUtils = new TokenUtils(provider);

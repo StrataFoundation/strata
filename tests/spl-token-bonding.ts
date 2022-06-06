@@ -1,5 +1,5 @@
 import * as anchor from "@project-serum/anchor";
-import { BN } from "@project-serum/anchor";
+import { AnchorProvider, BN } from "@project-serum/anchor";
 import {
   createMint,
   getAssociatedAccountBalance,
@@ -34,8 +34,8 @@ function percent(percent: number): number {
 
 describe("spl-token-bonding", () => {
   // Configure the client to use the local cluster.
-  anchor.setProvider(anchor.Provider.local());
-  const provider = anchor.getProvider();
+  anchor.setProvider(anchor.AnchorProvider.local("http://127.0.0.1:8899"));
+  const provider = anchor.getProvider() as AnchorProvider;
 
   const program = anchor.workspace.SplTokenBonding;
   const tokenUtils = new TokenUtils(provider);
@@ -658,7 +658,7 @@ describe("spl-token-bonding", () => {
 
       const tx = new Transaction();
       tx.add(...instructions);
-      await provider.send(tx, [...signers, newWallet]);
+      await provider.sendAndConfirm(tx, [...signers, newWallet]);
 
       await tokenUtils.expectAtaBalance(
         newWallet.publicKey,
@@ -685,7 +685,7 @@ describe("spl-token-bonding", () => {
 
       const tx = new Transaction();
       tx.add(...instructions);
-      await provider.send(tx, [...signers, newWallet]);
+      await provider.sendAndConfirm(tx, [...signers, newWallet]);
 
       await tokenUtils.expectAtaBalance(
         newWallet.publicKey,

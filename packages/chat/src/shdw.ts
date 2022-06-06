@@ -1,5 +1,5 @@
 import { getOrca, OrcaPoolConfig } from "@orca-so/sdk";
-import { Provider } from "@project-serum/anchor";
+import { AnchorProvider, Provider } from "@project-serum/anchor";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
 import { ShdwDrive, StorageAccount } from "@shadow-drive/sdk";
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
@@ -29,7 +29,7 @@ function getStorageAccount(
 }
 
 async function getOwnedAmount(
-  provider: Provider,
+  provider: AnchorProvider,
   wallet: PublicKey,
   mint: PublicKey
 ): Promise<number> {
@@ -54,12 +54,14 @@ async function getOwnedAmount(
 
 
 export async function uploadFile(
-  provider: Provider | undefined,
+  provider: AnchorProvider | undefined,
   file: File,
   delegateWallet: Keypair | undefined
 ): Promise<string | undefined> {
   if (provider) {
-    const pubKey = delegateWallet ? delegateWallet.publicKey : provider.wallet.publicKey;
+    const pubKey = delegateWallet
+      ? delegateWallet.publicKey
+      : provider.wallet.publicKey;
 
     const shdwDrive = new ShdwDrive(
       // @ts-ignore
@@ -70,10 +72,7 @@ export async function uploadFile(
     const orca = getOrca(provider.connection);
     const orcaSolPool = orca.getPool(OrcaPoolConfig.SHDW_SOL);
 
-    const [accountKey] = await getStorageAccount(
-      pubKey,
-      new BN(0)
-    );
+    const [accountKey] = await getStorageAccount(pubKey, new BN(0));
     let storageAccount: StorageAccount | undefined;
     try {
       storageAccount = await shdwDrive.getStorageAccount(accountKey);
