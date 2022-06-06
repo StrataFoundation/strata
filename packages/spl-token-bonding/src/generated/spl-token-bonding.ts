@@ -1301,6 +1301,56 @@ export const SplTokenBondingIDLJson: Idl & { metadata?: { address: string } } = 
       }
     },
     {
+      "name": "TimeCurveV0",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "offset",
+            "type": "i64"
+          },
+          {
+            "name": "curve",
+            "type": {
+              "defined": "PrimitiveCurve"
+            }
+          },
+          {
+            "name": "buyTransitionFees",
+            "type": {
+              "option": {
+                "defined": "TransitionFeeV0"
+              }
+            }
+          },
+          {
+            "name": "sellTransitionFees",
+            "type": {
+              "option": {
+                "defined": "TransitionFeeV0"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "TransitionFeeV0",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "percentage",
+            "type": "u32"
+          },
+          {
+            "name": "interval",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
       "name": "TransferReservesV0Args",
       "type": {
         "kind": "struct",

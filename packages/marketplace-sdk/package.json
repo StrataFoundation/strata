@@ -32,7 +32,6 @@
     "@solana/web3.js": "^1.32.0",
     "@strata-foundation/spl-token-bonding": "^3.7.0",
     "@strata-foundation/spl-token-collective": "^3.7.0",
-    "@strata-foundation/fungible-entangler": "^3.7.0",
     "@strata-foundation/spl-utils": "^3.7.0",
     "bn.js": "^5.2.0",
     "copyfiles": "^2.4.1"
