@@ -2,11 +2,20 @@ import { PublicKey } from "@solana/web3.js";
 import { ChatSdk } from "@strata-foundation/chat";
 import { useAsync } from "react-async-hook";
 
-export function useChatKey(identifer: string | undefined): PublicKey | undefined {
-  const { result } = useAsync(
-    async (id: string | undefined) => id && ChatSdk.chatKey(id),
-    [identifer]
+export function useChatKey(identifierCertificateMint?: PublicKey): {
+  loading: boolean;
+  key: PublicKey | undefined;
+} {
+  const { result, loading } = useAsync(
+    async (identifierCertificateMint?: string) =>
+      identifierCertificateMint
+        ? ChatSdk.chatKey(new PublicKey(identifierCertificateMint))
+        : undefined,
+    [identifierCertificateMint?.toBase58()]
   );
 
-  return result ? result[0] : undefined;
+  return {
+    loading: loading,
+    key: result ? result[0] : undefined,
+  };
 }

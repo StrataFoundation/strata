@@ -1,8 +1,9 @@
+import { useChatKeyFromIdentifier } from "../../hooks/useChatKeyFromIdentifier";
 import { Avatar, Flex, SkeletonCircle, SkeletonText, Text, useColorMode, useColorModeValue } from "@chakra-ui/react";
+import { useTokenMetadata } from "@strata-foundation/react";
 import { useRouter } from "next/router";
 import React from "react";
 import { useChat } from "../../hooks/useChat";
-import { useChatKey } from "../../hooks/useChatKey";
 import { route, routes } from "../../routes";
 
 export type chatRoomProps = {
@@ -10,23 +11,27 @@ export type chatRoomProps = {
 };
 
 export function ChatSidebarPreview({ identifier }: chatRoomProps) {
-  const chatKey = useChatKey(identifier);
+  const { chatKey } = useChatKeyFromIdentifier(
+    identifier
+  );
   const { info: chat, loading } = useChat(chatKey);
   const { colorMode } = useColorMode();
   const router = useRouter();
   const { id } = router.query;
   const highlightedBg = useColorModeValue("gray.200", "gray.800");
+  const { metadata } = useTokenMetadata(chat?.identifierCertificateMint);
+  const chatId = metadata?.data.name.split(".")[0];
 
   //push to url for specific chat
   const handleClick = () => {
-    router.push(route(routes.chat, { id: chat?.identifier }));
+    router.push(route(routes.chat, { id: chatId }));
   };
 
   return (
     <Flex
       minW="200px"
       align="center"
-      bg={id == chat?.identifier ? highlightedBg : undefined}
+      bg={identifier === id ? highlightedBg : undefined}
       p={4}
       cursor="pointer"
       _hover={{ bg: colorMode === "light" ? "gray.200" : "gray.700" }}

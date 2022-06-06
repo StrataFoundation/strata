@@ -41,8 +41,8 @@ export function Chatbox({
   const [error, setError] = useState<Error>();
   const { handleErrors } = useErrorHandler();
   const { info: chat } = useChat(chatKey);
-  const balance = useOwnedAmount(chat?.postPermissionMint);
-  const mint = useMint(chat?.postPermissionMint);
+  const balance = useOwnedAmount(chat?.postPermissionMintOrCollection);
+  const mint = useMint(chat?.postPermissionMintOrCollection);
   const postAmount =
     chat?.postPermissionAmount &&
     mint &&
@@ -180,7 +180,7 @@ export function Chatbox({
     </>
   ) : (
     <Flex justify="center" mb="6px">
-      <BuyMoreButton mint={chat?.postPermissionMint} />
+      <BuyMoreButton mint={chat?.postPermissionMintOrCollection} />
     </Flex>
   );
 }

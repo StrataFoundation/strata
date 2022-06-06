@@ -35,7 +35,7 @@ pub struct ApproveChatIdentifierV0<'info> {
 
 pub fn handler(ctx: Context<ApproveChatIdentifierV0>) -> Result<()> {
   let entry_name = &ctx.accounts.claim_request.entry_name;
-  require!(entry_name.chars().all(char::is_alphanumeric), ErrorCode::StringNotAlphanumeric);
+  require!(entry_name.chars().all(|c| char::is_alphanumeric(c) || c == '_' || c == '-'), ErrorCode::StringNotAlphanumeric);
   require!(entry_name.len() >= 6, ErrorCode::InvalidStringLength);
 
   let namespace_signer_seeds: &[&[&[u8]]] = &[&[

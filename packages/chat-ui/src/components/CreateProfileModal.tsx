@@ -8,23 +8,21 @@ import {
   Input,
   Modal,
   ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  VStack,
+  ModalContent, ModalHeader,
+  VStack
 } from "@chakra-ui/react";
-import React from "react";
-import * as yup from "yup";
-import { DefaultValues, FormProvider, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { ChatSdk } from "@strata-foundation/chat";
-import { useAsyncCallback } from "react-async-hook";
-import { useChatSdk } from "../contexts";
-import { useErrorHandler, useProvider } from "@strata-foundation/react";
-import { SystemProgram } from "@solana/web3.js";
-import { sendInstructions } from "@strata-foundation/spl-utils";
-import { FormControlWithError } from "./FormControlWithError";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { SystemProgram } from "@solana/web3.js";
+import { ChatSdk, IdentifierType } from "@strata-foundation/chat";
+import { useErrorHandler, useProvider } from "@strata-foundation/react";
+import { sendMultipleInstructions } from "@strata-foundation/spl-utils";
+import React from "react";
+import { useAsyncCallback } from "react-async-hook";
+import { FormProvider, useForm } from "react-hook-form";
+import * as yup from "yup";
+import { useChatSdk } from "../contexts";
+import { FormControlWithError } from "./FormControlWithError";
 
 interface IProfileProps {
   username: string;
@@ -32,8 +30,8 @@ interface IProfileProps {
 }
 
 const validationSchema = yup.object({
-  username: yup.string().required().min(1),
-  imageUrl: yup.string(),
+  username: yup.string().required().min(6).max(28),
+  imageUrl: yup.string().max(200),
 });
 
 async function createProfile(
@@ -42,12 +40,20 @@ async function createProfile(
 ): Promise<void> {
   if (chatSdk) {
     const {
-      instructions,
-      signers,
-    } = await chatSdk.initializeProfileInstructions({
-      username: args.username,
-      imageUrl: args.imageUrl,
+      instructions: claimInstructions,
+      signers: claimSigners,
+      output: { certificateMint },
+    } = await chatSdk.claimIdentifierInstructions({
+      type: IdentifierType.User,
+      identifier: args.username
     });
+
+    const { instructions, signers } =
+      await chatSdk.initializeProfileInstructions({
+        identifierCertificateMint: certificateMint,
+        imageUrl: args.imageUrl,
+        identifier: args.username
+      });
     const {
       output: { delegateWalletKeypair },
       instructions: delInstructions,
@@ -62,11 +68,11 @@ async function createProfile(
         lamports: 100000000, // 20000 messages
       })
     );
-    await sendInstructions(
+    await sendMultipleInstructions(
       chatSdk.errors || new Map(),
       chatSdk.provider,
-      instructions,
-      signers
+      [claimInstructions[0], [...claimInstructions[1], ...instructions]],
+      [claimSigners[0], [...claimSigners[1], ...signers]]
     );
     const existing = localStorage.getItem("delegateWallet");
     const existingObj = existing ? JSON.parse(existing) : {};
@@ -134,7 +140,7 @@ export function CreateProfileModal() {
                 </Alert>
                 <FormControlWithError
                   id="username"
-                  help="A less than 32 character username. This will show as your name in the chat. These must be unique."
+                  help="A less than 28 character username. This will show as your name in the chat. These must be unique."
                   label="Username"
                   errors={errors}
                 >

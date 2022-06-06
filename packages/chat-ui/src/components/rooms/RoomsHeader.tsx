@@ -18,10 +18,10 @@ export function RoomsHeader({ chatKey }: { chatKey?: PublicKey }) {
   const { info: chat } = useChat(chatKey);
   const [isMobile] = useMediaQuery("(max-width: 680px)");
   const { metadata: readMetadata, image: readImage } = useTokenMetadata(
-    chat?.readPermissionMint
+    chat?.readPermissionMintOrCollection
   );
-  const postMint = useMint(chat?.postPermissionMint);
-  const { metadata: postMetadata, image: postImage } = useTokenMetadata(chat?.postPermissionMint);
+  const postMint = useMint(chat?.postPermissionMintOrCollection);
+  const { metadata: postMetadata, image: postImage } = useTokenMetadata(chat?.postPermissionMintOrCollection);
   const { colorMode } = useColorMode();
 
   return (

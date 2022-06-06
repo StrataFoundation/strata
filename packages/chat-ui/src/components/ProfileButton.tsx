@@ -20,7 +20,7 @@ import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { clusterApiUrl, SystemProgram } from "@solana/web3.js";
-import { truncatePubkey, useEndpoint, useErrorHandler, useLocalStorage } from "@strata-foundation/react";
+import { truncatePubkey, useEndpoint, useErrorHandler, useLocalStorage, useTokenMetadata } from "@strata-foundation/react";
 import React, { FC, MouseEvent, useCallback, useEffect } from "react";
 import { BsChevronDown, BsFillPersonFill } from "react-icons/bs";
 import { useWalletProfile } from "../hooks";
@@ -71,6 +71,8 @@ export const ProfileButton: FC<ButtonProps> = ({
   const { connected, publicKey } = useWallet();
   const { visible, setVisible } = useWalletModal();
   const { info: profile, loading } = useWalletProfile();
+  const { metadata } = useTokenMetadata(profile?.identifierCertificateMint);
+  const username = metadata?.data.name.split(".")[0];
   const delegate = useDelegateWallet();
   const { chatSdk } = useChatSdk();
   const { handleErrors } = useErrorHandler();
@@ -106,13 +108,13 @@ export const ProfileButton: FC<ButtonProps> = ({
       {}
 
       {!loading && connected && !profile && !delegate && <CreateProfileModal />}
-      {loadingDelegate && <Modal isOpen={true} onClose={() => {}}>
-        <ModalContent>
-          <ModalBody>
-            Loading local wallet...
-          </ModalBody>
-        </ModalContent>
-      </Modal>}
+      {loadingDelegate && (
+        <Modal isOpen={true} onClose={() => {}}>
+          <ModalContent>
+            <ModalBody>Loading local wallet...</ModalBody>
+          </ModalContent>
+        </Modal>
+      )}
       <Button
         color={useColorModeValue("black", "white")}
         borderColor="primary.500"
@@ -129,7 +131,7 @@ export const ProfileButton: FC<ButtonProps> = ({
       >
         {connected
           ? profile
-            ? profile.username
+            ? username
             : truncatePubkey(publicKey!)
           : children}
       </Button>

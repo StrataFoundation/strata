@@ -19,7 +19,7 @@ export const ProviderContextProvider: React.FC = ({ children }) => {
     if (connection) {
       // Let adapter be null, it'll fail if anyone issues transaction commands but will let fetch go through
       // @ts-ignore
-      const provider = new Provider(connection, wallet?.adapter, {});
+      const provider = new AnchorProvider(connection, wallet?.adapter, {});
 
       // The default impl of send does not use the transaction resuling from wallet.signTransaciton. So we need to fix it.
       provider.sendAndConfirm = async function FixedSend(

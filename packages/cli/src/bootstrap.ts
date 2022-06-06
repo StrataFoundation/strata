@@ -68,8 +68,8 @@ function timeIncrease(curve: TimeCurveConfig, c: number = 1): TimeCurveConfig {
 
 async function run() {
   console.log(process.env.ANCHOR_PROVIDER_URL)
-  anchor.setProvider(anchor.Provider.env());
-  const provider = anchor.getProvider();
+  anchor.setProvider(anchor.AnchorProvider.env());
+  const provider = anchor.getProvider() as anchor.AnchorProvider;
 
   const tokenBondingSdk = await SplTokenBonding.init(provider);
   const tokenCollectiveSdk = await SplTokenCollective.init(provider);

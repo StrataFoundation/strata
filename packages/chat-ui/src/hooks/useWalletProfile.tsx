@@ -4,7 +4,7 @@ import { useProfileKey } from "./useProfileKey";
 
 export function useWalletProfile() {
   const { publicKey } = useWallet();
-  const { key: profileKey, loading } = useProfileKey({ wallet: publicKey || undefined });
+  const { key: profileKey, loading } = useProfileKey(publicKey || undefined);
 
   const profile = useProfile(profileKey);
   return {

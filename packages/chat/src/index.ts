@@ -20,7 +20,21 @@ import LitJsSdk from "lit-js-sdk";
 // @ts-ignore
 import * as bs58 from "bs58";
 import { uploadFile } from "./shdw";
-import { CLAIM_REQUEST_SEED, ENTRY_SEED, nameEntryId, NamespaceData, NAMESPACES_IDL, NAMESPACES_PROGRAM, NAMESPACES_PROGRAM_ID, NAMESPACE_SEED, withClaimEntry, withCreateClaimRequest, withCreateNamespace, withInitEntry } from "@cardinal/namespaces";
+import {
+  CLAIM_REQUEST_SEED,
+  ENTRY_SEED,
+  nameEntryId,
+  NamespaceData,
+  NAMESPACES_IDL,
+  NAMESPACES_PROGRAM,
+  NAMESPACES_PROGRAM_ID,
+  NAMESPACE_SEED,
+  withClaimEntry,
+  withCreateClaimRequest,
+  withCreateNamespace,
+  withInitEntry,
+  EntryData,
+} from "@cardinal/namespaces";
 import type { AccountData } from "@cardinal/common";
 
 export * from "./generated/chat";
@@ -73,6 +87,11 @@ export interface ISendMessageContent extends IMessageContent {
 
 export interface IChat extends ChatV0 {
   publicKey: PublicKey;
+}
+
+export interface IEntry extends EntryData {
+  publicKey: PublicKey;
+  mint: PublicKey;
 }
 
 export interface IProfile extends ProfileV0 {
@@ -257,6 +276,18 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     }
     this.litClient = litClient;
   }
+
+  entryDecoder: TypedAccountParser<IEntry> = (pubkey, account) => {
+    const coded = this.namespacesProgram.coder.accounts.decode<IEntry>(
+      "entry",
+      account.data
+    );
+
+    return {
+      ...coded,
+      publicKey: pubkey,
+    };
+  };
 
   chatDecoder: TypedAccountParser<IChat> = (pubkey, account) => {
     const coded = this.program.coder.accounts.decode<IChat>(
@@ -457,10 +488,10 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       return {
         instructions: [],
         signers: [],
-        output: null
-      }
+        output: null,
+      };
     } catch (e: any) {
-      console.error(e)
+      console.error(e);
       // This is expected
     }
 
@@ -526,12 +557,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     return {
       ...namespaces,
       publicKey: key,
-      chat: await this.getNamespace(
-        namespaces.chatNamespace
-      ),
-      user: await this.getNamespace(
-        namespaces.userNamespace
-      ),
+      chat: await this.getNamespace(namespaces.chatNamespace),
+      user: await this.getNamespace(namespaces.userNamespace),
     };
   }
 
@@ -638,7 +665,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       this.provider.connection,
       {
         ...this.provider.wallet,
-        publicKey: owner
+        publicKey: owner,
       },
       namespaceName,
       identifier,

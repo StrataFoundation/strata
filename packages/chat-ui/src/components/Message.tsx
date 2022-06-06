@@ -14,7 +14,7 @@ import { GiphyFetch } from "@giphy/js-fetch-api";
 import { Gif } from "@giphy/react-components";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { IMessage, MessageType } from "@strata-foundation/chat";
-import { roundToDecimals, useMint } from "@strata-foundation/react";
+import { roundToDecimals, useMint, useTokenMetadata } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import React from "react";
 import { useAsync } from "react-async-hook";
@@ -52,9 +52,11 @@ export function Message({
   const { colorMode } = useColorMode();
   const { publicKey } = useWallet();
   const { info: profile } = useProfile(profileKey);
+  const { metadata } = useTokenMetadata(profile?.identifierCertificateMint);
+  const username = metadata?.data.name.split(".")[0]
   const id = profile?.ownerWallet.toBase58();
   const { info: chat } = useChat(chatKey);
-  const readMint = chat?.readPermissionMint;
+  const readMint = chat?.readPermissionMintOrCollection;
   const readMintAcc = useMint(readMint);
 
   const uid = publicKey?.toBase58();
@@ -75,7 +77,7 @@ export function Message({
           fontWeight="semibold"
           color={uid == id ? "blue.500" : usernameColor[colorMode]}
         >
-          {profile?.username}
+          {username}
         </Text>
         <Box
           w="fit-content"
