@@ -1,7 +1,6 @@
 import { Provider } from "@project-serum/anchor";
 import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
-import { FungibleEntangler } from "@strata-foundation/fungible-entangler"
 import { SplTokenMetadata } from "@strata-foundation/spl-utils";
 import React, { useMemo } from "react";
 import { useAsync } from "react-async-hook";
@@ -15,7 +14,6 @@ export const StrataSdksContext = React.createContext<IStrataSdksReactState>({
 export interface IStrataSdks {
   tokenBondingSdk?: SplTokenBonding;
   tokenCollectiveSdk?: SplTokenCollective;
-  fungibleEntanglerSdk?: FungibleEntangler;
   tokenMetadataSdk?: SplTokenMetadata;
 }
 
@@ -44,19 +42,16 @@ async function getSdks(
   const [
     tokenCollective,
     tokenBonding,
-    fungibleEntangler,
-    splTokenMetadataSdk,
+    splTokenMetadataSdk
   ] = (await tryProm(Promise.all([
     SplTokenCollective.init(provider),
     SplTokenBonding.init(provider),
-    FungibleEntangler.init(provider),
-    SplTokenMetadata.init(provider),
+    SplTokenMetadata.init(provider)
   ])) || []);
   return {
     tokenCollectiveSdk: tokenCollective,
     tokenBondingSdk: tokenBonding,
     tokenMetadataSdk: splTokenMetadataSdk,
-    fungibleEntanglerSdk: fungibleEntangler, 
   };
 }
 
@@ -67,7 +62,6 @@ export const StrataSdksProviderRaw: React.FC = ({ children }) => {
     () => ({
       tokenCollectiveSdk: result?.tokenCollectiveSdk,
       tokenBondingSdk: result?.tokenBondingSdk,
-      fungibleEntanglerSdk: result?.fungibleEntanglerSdk,
       tokenMetadataSdk: result?.tokenMetadataSdk,
       error,
       loading,
