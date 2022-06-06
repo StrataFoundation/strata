@@ -14,7 +14,7 @@ export function useTokenSwapFromId(
 ): ITokenSwap {
 
   // try and load a token bonding curve as if the id is a mint
-  const { info: tokenBonding } = useTokenBondingFromMint(id, 0);
+  const { info: tokenBonding, loading: bondingLoading } = useTokenBondingFromMint(id, 0);
   const { info: supplyAcc } = useTokenAccount(
     tokenBonding?.baseStorage
   );
@@ -27,7 +27,8 @@ export function useTokenSwapFromId(
   if (tokenBonding) {
     return {
       tokenBonding,
-      numRemaining: supplyAcc && supplyMint && toNumber(supplyAcc?.amount, supplyMint)
+      numRemaining: supplyAcc && supplyMint && toNumber(supplyAcc?.amount, supplyMint),
+      loading: bondingLoading,
     }
   }
 

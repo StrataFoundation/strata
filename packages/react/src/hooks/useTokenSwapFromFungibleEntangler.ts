@@ -19,15 +19,17 @@ export interface ITokenSwap {
 
   childEntangler?: IFungibleChildEntangler;
   parentEntangler?: IFungibleParentEntangler;
+  
+  loading: boolean;
 }
 export function useTokenSwapFromFungibleEntangler (
   id: PublicKey | undefined | null,
 ): ITokenSwap {
 
   // load the fungible entangler
-  const { info: childEntangler } = useFungibleChildEntangler(id);
-  const { info: parentEntangler } = useFungibleParentEntangler(childEntangler?.parentEntangler);
-  const { info: tokenBonding } = useTokenBondingFromMint(childEntangler?.childMint, 0);
+  const { info: childEntangler, loading: loading1 } = useFungibleChildEntangler(id);
+  const { info: parentEntangler, loading: loading2 } = useFungibleParentEntangler(childEntangler?.parentEntangler);
+  const { info: tokenBonding, loading: loading3 } = useTokenBondingFromMint(childEntangler?.childMint, 0);
 
   // load to find the amount remaining in the fungible entangler
   const { info: supplyAcc } = useTokenAccount(
@@ -40,5 +42,6 @@ export function useTokenSwapFromFungibleEntangler (
     numRemaining: supplyAcc && supplyMint && toNumber(supplyAcc?.amount, supplyMint),
     childEntangler: childEntangler,
     parentEntangler: parentEntangler,
+    loading: loading1 || loading2 || loading3
   }
 }
