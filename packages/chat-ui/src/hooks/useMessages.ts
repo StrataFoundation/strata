@@ -1,51 +1,70 @@
-import { PublicKey } from "@solana/web3.js";
+import { Message, PublicKey } from "@solana/web3.js";
 import { ChatSdk, IMessage } from "@strata-foundation/chat";
 import { useTransactions } from "@strata-foundation/react";
 import { useEffect, useMemo, useState } from "react";
 import { useAsync } from "react-async-hook";
 import { useChatSdk } from "../contexts";
 
+export interface IMessageWithPending extends IMessage {
+  pending?: boolean;
+}
+
 interface IUseMessages {
   error: Error | undefined;
   loadingInitial: boolean;
   loadingMore: boolean;
-  messages: IMessage[] | undefined;
+  messages: IMessageWithPending[] | undefined;
   fetchMore(num: number): void;
   fetchNew(num: number): void;
 }
 
-const seen: Record<string, IMessage[]> = {};
+const seen: Record<string, IMessageWithPending[]> = {};
 
-async function getMessages(chatSdk?: ChatSdk, signatures?: string[]): Promise<IMessage[]> {
-  if (chatSdk && signatures) {
-    return (await Promise.all(signatures.map(async (sig) => {
-      if (seen[sig]) {
-        return seen[sig]
-      }
-      const found = await chatSdk.getMessagesFromTx(sig);
-      seen[sig] = found;
-      return found;
-    }))).flat()
+async function getMessages(
+  chatSdk?: ChatSdk,
+  txs?: {
+    transaction: { message: Message; signatures: string[] };
+    signature: string;
+    pending?: boolean;
+  }[]
+): Promise<IMessageWithPending[]> {
+  if (chatSdk && txs) {
+    return (
+      await Promise.all(
+        txs.map(async ({ signature: sig, transaction, pending }) => {
+          if (seen[sig + pending]) {
+            return seen[sig + pending];
+          }
+          const found = (await chatSdk.getMessagesFromInflatedTx(
+            transaction,
+            sig
+          )).map(f => ({...f, pending }));
+          seen[sig + pending] = found;
+
+          return found;
+        })
+      )
+    ).flat();
   }
 
-  return []
+  return [];
 }
 
-export function useMessages(chat: PublicKey | undefined): IUseMessages {
+export function useMessages(chat: PublicKey | undefined, accelerated: boolean = true): IUseMessages {
   const { chatSdk } = useChatSdk();
   const { transactions, ...rest } = useTransactions({
     address: chat,
     numTransactions: 50,
-    subscribe: true
+    subscribe: true,
+    accelerated
   });
   // For a stable messages array that doesn't go undefined when we do the next
   // useAsync fetch
-  const [messagesStable, setMessagesStable] = useState<IMessage[]>();
-  const signatures = useMemo(() => transactions.map(t => t.signature).reverse(), [transactions]);
-  const { result: messages, loading, error } = useAsync(getMessages, [chatSdk, signatures]);
+  const [messagesStable, setMessagesStable] = useState<IMessageWithPending[]>();
+  const { result: messages, loading, error } = useAsync(getMessages, [chatSdk, transactions]);
   useEffect(() => {
     if (messages) {
-      setMessagesStable(messages)
+      setMessagesStable([...messages].reverse())
     }
   }, [messages])
   return {

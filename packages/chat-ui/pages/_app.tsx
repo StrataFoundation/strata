@@ -2,7 +2,11 @@ import { AppProps } from "next/app";
 import React from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { Wallet } from "@/components/Wallet";
-import { Notification, StrataProviders } from "@strata-foundation/react";
+import {
+  AcceleratorProvider,
+  Notification,
+  StrataProviders,
+} from "@strata-foundation/react";
 import { ChatSdkProvider } from "@/contexts/chatSdk";
 import { BrowserView, MobileView } from "react-device-detect";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
@@ -46,27 +50,29 @@ function MyApp({ Component, pageProps }: AppProps) {
     <Wallet>
       <WalletModalProvider>
         <StrataProviders resetCSS onError={onError}>
-          <ChatSdkProvider>
-            <Component {...pageProps} />
-            <BrowserView>
-              <Toaster
-                position="bottom-left"
-                containerStyle={{
-                  width: "420px",
-                }}
-              />
-            </BrowserView>
-            <MobileView>
-              <Toaster
-                position="bottom-center"
-                containerStyle={{
-                  margin: "0 auto",
-                  width: "90%",
-                  maxWidth: "420px",
-                }}
-              />
-            </MobileView>
-          </ChatSdkProvider>
+          <AcceleratorProvider url="wss://prod-api.teamwumbo.com/accelerator">
+            <ChatSdkProvider>
+              <Component {...pageProps} />
+              <BrowserView>
+                <Toaster
+                  position="bottom-left"
+                  containerStyle={{
+                    width: "420px",
+                  }}
+                />
+              </BrowserView>
+              <MobileView>
+                <Toaster
+                  position="bottom-center"
+                  containerStyle={{
+                    margin: "0 auto",
+                    width: "90%",
+                    maxWidth: "420px",
+                  }}
+                />
+              </MobileView>
+            </ChatSdkProvider>
+          </AcceleratorProvider>
         </StrataProviders>
       </WalletModalProvider>
     </Wallet>

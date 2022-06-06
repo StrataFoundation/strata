@@ -1,0 +1,175 @@
+import { PublicKey, Transaction } from "@solana/web3.js";
+import { v4 as uuid } from "uuid";
+
+export enum Cluster {
+  Devnet = "devnet",
+  Mainnet = "mainnet-beta",
+  Testnet = "testnet",
+  Localnet = "localnet",
+};
+
+
+enum ResponseType {
+  Error = "error",
+  Transaction = "transaction",
+  Unsubscribe = "unsubscribe",
+  Subscribe = "subscribe",
+}
+
+enum RequestType {
+  Transaction = "transaction",
+  Subscribe = "subscribe",
+  Unsubscribe = "unsubscribe",
+}
+
+interface Response {
+  type: ResponseType
+}
+
+interface TransactionResponse extends Response {
+  cluster: Cluster,
+  transactionBytes: number[]
+}
+
+export class Accelerator {
+  ws: WebSocket;
+  listeners: Record<string, (resp: Response) => void>;
+
+  // Map of our id to subId
+  transactionListeners: Record<string, string>;
+
+  static async waitForConnect(socket: WebSocket): Promise<WebSocket> {
+    return new Promise((resolve, reject) => {
+      let resolved = false;
+      socket.onopen = function (e) {
+        resolved = true;
+        resolve(socket);
+      };
+      setTimeout(() => {
+        if (!resolved) {
+          reject(new Error("Failed to connect to socket within 60 seconds"));
+        }
+      }, 60 * 1000);
+    });
+  }
+
+  static async init(url: string) {
+    const socket = new WebSocket(url);
+    await Accelerator.waitForConnect(socket);
+    return new Accelerator({ ws: socket });
+  }
+
+  constructor({ ws }: { ws: WebSocket }) {
+    this.ws = ws;
+    this.initSocket(ws);
+    this.listeners = {};
+    this.transactionListeners = {};
+  }
+
+  private send(payload: any) {
+    this.ws.send(JSON.stringify(payload));
+  }
+
+  sendTransaction(cluster: Cluster, tx: Transaction): void {
+    this.send({
+      type: RequestType.Transaction,
+      transactionBytes: tx.serialize().toJSON().data,
+      cluster
+    })
+  }
+
+  async unsubscribeTransaction(id: string): Promise<void> {
+    const subId = this.transactionListeners[id];
+    if (subId) {
+      this.send({
+        type: RequestType.Unsubscribe,
+        id: subId,
+      });
+      await this.listenOnce((resp) => resp.type === ResponseType.Unsubscribe);
+    }
+  }
+
+  async onTransaction(
+    cluster: Cluster,
+    account: PublicKey,
+    callback: (resp: { txid: string; transaction: Transaction }) => void
+  ): Promise<string> {
+    this.send({
+      type: RequestType.Subscribe,
+      cluster,
+      account: account.toBase58(),
+    });
+
+    const response: any = await this.listenOnce(
+      (resp) => resp.type === ResponseType.Subscribe
+    );
+    const subId = response.id;
+
+    const listenerId = await this.listen((resp) => {
+      if (resp.type === ResponseType.Transaction) {
+        const tx = Transaction.from(new Uint8Array((resp as any).transactionBytes));
+        if (
+          tx.compileMessage().accountKeys.some((key) => key.equals(account))
+        ) {
+          callback({
+            transaction: tx,
+            txid: (resp as any).txid
+          });
+        }
+      }
+    });
+    this.transactionListeners[listenerId] = subId;
+
+    return listenerId;
+  }
+
+  listen(listener: (resp: Response) => void): string {
+    const id = uuid();
+    this.listeners[id] = listener;
+    return id;
+  }
+
+  unlisten(id: string): void {
+    delete this.listeners[id];
+  }
+
+  async listenOnce(matcher: (resp: Response) => boolean): Promise<Response> {
+    return new Promise((resolve, reject) => {
+      let resolved = false;
+      let id: string;
+      const listener = (resp: Response) => {
+        if (matcher(resp)) {
+          resolved = true;
+          this.unlisten(id);
+          resolve(resp);
+        }
+      };
+      id = this.listen(listener);
+
+      setTimeout(() => {
+        if (!resolved) {
+          this.unlisten(id);
+          reject(new Error("Failed to match matcher in 60 seconds"));
+        }
+      }, 60 * 1000);
+    });
+  }
+
+  initSocket(ws: WebSocket) {
+    this.ws = ws;
+    const that = this;
+    ws.onclose = async function () {
+      // Try to reconnect
+      const newWs = new WebSocket(ws.url);
+      await Accelerator.waitForConnect(newWs);
+      that.initSocket(newWs);
+    };
+
+    ws.onmessage = this.onMessage.bind(this);
+  }
+
+  onMessage(message: MessageEvent<any>) {
+    const parsed: Response = JSON.parse(message.data) as Response;
+    Object.values(this.listeners).map((listener) => listener && listener(parsed));
+  }
+}

@@ -1,7 +1,14 @@
 import { Button, Flex, HStack, Icon, IconButton, Input, Modal, ModalBody, ModalContent, ModalHeader, useDisclosure } from "@chakra-ui/react";
 import { PublicKey, Transaction } from "@solana/web3.js";
+import { Cluster } from "@strata-foundation/accelerator";
 import { IDecryptedMessageContent, ISendMessageContent, MessageType } from "@strata-foundation/chat";
-import { useErrorHandler, useMint, useOwnedAmount } from "@strata-foundation/react";
+import {
+  useEndpoint,
+  useErrorHandler,
+  useMint,
+  useOwnedAmount,
+  useAccelerator,
+} from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import { sendAndConfirmWithRetry } from "@strata-foundation/spl-utils";
 import React, { useState } from "react";
@@ -37,6 +44,7 @@ export function Chatbox({
     setInput(e.target.value);
   };
   const { chatSdk } = useChatSdk();
+  const { accelerator } = useAccelerator();
   const delegateWalletKeypair = useDelegateWallet();
   const [error, setError] = useState<Error>();
   const { handleErrors } = useErrorHandler();
@@ -48,6 +56,7 @@ export function Chatbox({
     mint &&
     toNumber(chat?.postPermissionAmount, mint);
   const hasEnough = typeof postAmount == "undefined" || typeof balance == "undefined"|| (balance >= postAmount);
+  const { cluster } = useEndpoint();
 
   handleErrors(error);
 
@@ -64,7 +73,7 @@ export function Chatbox({
             payer: delegateWalletKeypair.publicKey,
             chat: chatKey,
             message,
-            encrypted: true,
+            encrypted: cluster !== "localnet",
           }
         );
         let tx = new Transaction();
@@ -81,12 +90,15 @@ export function Chatbox({
             skipPreflight: true,
           }
         );
+
         if (onAddPendingMessage) {
           const { fileAttachments, ...rest } = message;
 
           onAddPendingMessage({ content: { ...rest, decryptedAttachments: fileAttachments }, txid, chatKey });
         }
-
+        
+        accelerator?.sendTransaction(cluster as Cluster, tx);
+        
         scrollRef.current.scrollIntoView({ behavior: "smooth" });
 
         await sendAndConfirmWithRetry(

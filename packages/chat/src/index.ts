@@ -1,6 +1,6 @@
 import { AnchorProvider, BN as AnchorBN, BorshAccountsCoder, IdlTypes, Program, utils } from "@project-serum/anchor";
 import BN from "bn.js";
-import { Commitment, Finality, Keypair, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+import { Commitment, Finality, Keypair, Message, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import {
   AnchorSdk,
   BigInstructionResult,
@@ -326,24 +326,12 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     return this.getAccount(profileKey, this.profileDecoder);
   }
 
-  async getMessagesFromTx(txid: string): Promise<IMessage[]> {
-    const connection = this.provider.connection;
-    const tx = await connection.getTransaction(txid, {
-      commitment: "confirmed",
-    });
-
-    if (!tx) {
-      return [];
-    }
-
-    if (tx.meta?.err) {
-      return [];
-    }
-
-    const instructions = tx.transaction.message.instructions.filter((ix) =>
-      tx.transaction.message.accountKeys[ix.programIdIndex].equals(
-        this.programId
-      )
+  async getMessagesFromInflatedTx(
+    transaction: { message: Message; signatures: string[] },
+    txid: string
+  ): Promise<IMessage[]> {
+    const instructions = transaction.message.instructions.filter((ix) =>
+      transaction.message.accountKeys[ix.programIdIndex].equals(this.programId)
     );
     const coder = this.program.coder.instruction;
 
@@ -361,8 +349,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         // @ts-ignore
         data: coder.decode(bs58.decode(ix.data)),
         profile:
-          tx.transaction.message.accountKeys[ix.accounts[profileAccountIndex]],
-        chat: tx.transaction.message.accountKeys[ix.accounts[chatAccountIndex]],
+          transaction.message.accountKeys[ix.accounts[profileAccountIndex]],
+        chat: transaction.message.accountKeys[ix.accounts[chatAccountIndex]],
       }))
       .filter(truthy);
 
@@ -441,6 +429,23 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
           };
         })
     );
+  }
+
+  async getMessagesFromTx(txid: string): Promise<IMessage[]> {
+    const connection = this.provider.connection;
+    const tx = await connection.getTransaction(txid, {
+      commitment: "confirmed",
+    });
+
+    if (!tx) {
+      return [];
+    }
+
+    if (tx.meta?.err) {
+      return [];
+    }
+
+    return this.getMessagesFromInflatedTx(tx.transaction, txid);
   }
 
   static chatKey(

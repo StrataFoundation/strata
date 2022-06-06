@@ -3,11 +3,15 @@ import {
   ConfirmedSignatureInfo,
   Connection,
   PublicKey,
+  Transaction,
   TransactionResponse,
 } from "@solana/web3.js";
 import { truthy } from "../utils";
 import { useEffect, useMemo, useState } from "react";
 import { sleep } from "@strata-foundation/spl-utils";
+import { useAccelerator } from "../contexts/acceleratorContext";
+import { useEndpoint } from "./useEndpoint";
+import { Cluster } from "@strata-foundation/accelerator";
 
 async function getSignatures(
   connection: Connection | undefined,
@@ -46,7 +50,8 @@ async function getSignatures(
   return withinTime;
 }
 
-type TransactionResponseWithSig = TransactionResponse & { signature: string }
+// Pending when coming from the accelerator
+type TransactionResponseWithSig = Partial<TransactionResponse> & { signature: string; pending?: boolean }
 
 async function retryGetTxn(connection: Connection, sig: string, tries: number = 0): Promise<TransactionResponse> {
   const result = await connection.getTransaction(sig, { commitment: "confirmed" });
@@ -97,17 +102,36 @@ interface ITransactions {
   fetchNew(num: number): void;
 }
 
+function removeDups(txns: TransactionResponseWithSig[]): TransactionResponseWithSig[] {
+  const notPending = new Set(
+    Array.from(txns.filter((tx) => !tx.pending).map((tx) => tx.signature))
+  );
+  const seen = new Set();
+
+  return txns.map(tx => {
+    const nonPendingAvailable = tx.pending && notPending.has(tx.signature);
+    if (!seen.has(tx.signature) && !nonPendingAvailable) {
+      seen.add(tx.signature);
+      return tx;
+    }
+  }).filter(truthy)
+}
+
 export const useTransactions = ({
   numTransactions,
   until,
   address,
-  subscribe = false
+  subscribe = false,
+  accelerated = false
 }: {
   numTransactions: number;
   until?: Date;
   address?: PublicKey;
   subscribe?: boolean;
+  accelerated?: boolean;
 }): ITransactions => {
+  const { accelerator } = useAccelerator();
+  const { cluster } = useEndpoint();
   const { connection } = useConnection();
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -131,7 +155,7 @@ export const useTransactions = ({
               err,
             },
           ]);
-          setTransactions((txns) => [...newTxns, ...txns]);
+          setTransactions((txns) => removeDups([...newTxns, ...txns]));
         } catch (e: any) {
           console.error("Error while fetching new tx", e)
         }
@@ -143,6 +167,34 @@ export const useTransactions = ({
       }
     }
   }, [subscribe, connection, addrStr, setTransactions]);
+
+  useEffect(() => {
+    let subId: string;
+    (async () => {
+      if (subscribe && address && accelerated && accelerator) {
+        subId = await accelerator.onTransaction(
+          cluster as Cluster,
+          address,
+          ({ transaction, txid } ) => {
+            setTransactions((txns) => removeDups([{ 
+              signature: txid, 
+              transaction: { 
+                message: transaction.compileMessage(), 
+                signatures: transaction.signatures.map(sig => sig.publicKey.toBase58())
+              },
+              pending: true 
+            }, ...txns]));
+          }
+        );
+      }
+    })()
+    
+    return () => {
+      if (subId && accelerator) {
+        accelerator.unsubscribeTransaction(subId);
+      }
+    };
+  }, [subscribe, accelerated, accelerator, addrStr, setTransactions]);
 
   useEffect(() => {
     (async () => {
@@ -174,12 +226,12 @@ export const useTransactions = ({
         connection,
         address,
         until,
-        lastTx && lastTx.transaction.signatures[0],
+        lastTx && lastTx.transaction && lastTx.transaction.signatures[0],
         num
       );
       const newTxns = await hydrateTransactions(connection, signatures);
 
-      setTransactions((txns) => [...txns, ...newTxns]);
+      setTransactions((txns) => removeDups([...txns, ...newTxns]));
     } catch (e: any) {
       setError(e);
     } finally {
@@ -207,7 +259,7 @@ export const useTransactions = ({
       );
       const newTxns = await hydrateTransactions(connection, signatures);
 
-      setTransactions((txns) => [...newTxns, ...txns]);
+      setTransactions((txns) => removeDups([...newTxns, ...txns]));
     } catch (e: any) {
       setError(e);
     } finally {
