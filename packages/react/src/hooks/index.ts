@@ -46,4 +46,8 @@ export * from "./useTokenBondingKey";
 export * from "./useBondedTokenPrice";
 export * from "./useJupiterPrice";
 export * from "./useManyToOneSwapDriver";
+export * from "./useFungibleChildEntangler";
+export * from "./useFungibleParentEntangler";
 export * from "./useSolanaUnixTime";
+export * from "./useTokenSwapFromFungibleEntangler";
+export * from "./useTokenSwapFromId";
