@@ -28,7 +28,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import {
   usePublicKey,
-  useTokenBondingFromMint,
+  useTokenSwapFromId,
 } from "@strata-foundation/react";
 import {
   GetServerSideProps,
@@ -51,7 +51,11 @@ export const LbcDisplay: NextPage = ({
   const { id: idRaw } = router.query;
   const id = usePublicKey(idRaw as string);
 
-  const { info: tokenBonding, loading } = useTokenBondingFromMint(id);
+  const { 
+    tokenBonding, 
+    loading,
+  } = useTokenSwapFromId(id);
+
   const { price } = useLivePrice(tokenBonding?.publicKey);
   const { publicKey } = useWallet();
   const { isAdmin } = useIsBountyAdmin(

@@ -52,7 +52,7 @@ export const TokenOffering = ({
     // if there is an entangler, then swap the token from the bonding curve through it
     if (childEntangler && parentEntangler) {
       const { instructions: i2, signers: s2 } = 
-        await fungibleEntanglerSdk!.swapChildInstructions({
+        await fungibleEntanglerSdk!.swapChildForParentInstructions({
           parentEntangler: parentEntangler.publicKey,
           childEntangler: childEntangler.publicKey,
           amount: +values.bottomAmount,
@@ -75,8 +75,9 @@ export const TokenOffering = ({
   });
 
   const { handleErrors } = useErrorHandler();
-  handleErrors(keyError1, submitError);
+  handleErrors(submitError);
 
+  const targetMint = parentEntangler && childEntangler ? parentEntangler?.parentMint : tokenBonding?.targetMint;
   const tradingMints = useMemo(() => {
     return {
       base: tokenBonding?.baseMint,
