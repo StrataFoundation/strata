@@ -1,4 +1,5 @@
 import { VStack, Center, HStack, Text, Box } from "@chakra-ui/react";
+import { useSolanaUnixTime } from "@strata-foundation/react";
 import React, { Children } from "react";
 import ReactCountdown from "react-countdown";
 
@@ -16,6 +17,7 @@ const TimeCard = ({ name, value }: { name: string; value: number }) => (
 const Sep = () => <Text fontWeight={600} fontSize="24px" color="gray.500">:</Text>
 
 export const Countdown = ({ date, children }: { date: Date, children?: React.ReactNode }) => {
+  const unixTime = useSolanaUnixTime();
   const renderer = ({ days, hours, minutes, seconds, completed }: { days: number, hours: number, minutes: number, seconds: number, completed: boolean }) => {
     if (completed) {
       // Render a completed state
@@ -37,5 +39,16 @@ export const Countdown = ({ date, children }: { date: Date, children?: React.Rea
       );
     }
   };
-  return <ReactCountdown date={date} renderer={renderer} />;
+
+  if (!unixTime) {
+    return <div />
+  }
+
+  return (
+    <ReactCountdown
+      now={() => unixTime * 1000}
+      date={date}
+      renderer={renderer}
+    />
+  );
 }

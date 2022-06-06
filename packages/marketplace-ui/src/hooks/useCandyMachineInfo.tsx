@@ -1,11 +1,12 @@
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import * as anchor from "@project-serum/anchor";
+import { useSolanaUnixTime } from "@strata-foundation/react";
+import * as anchor from "anchor-17";
+import { useEffect, useState } from "react";
 import {
   getAtaForMint,
-  toDate,
+  toDate
 } from "../components";
-import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { ICandyMachine, useCandyMachine } from "./useCandyMachine";
 
 export interface ICandyMachineState {
@@ -33,13 +34,14 @@ export function useCandyMachineInfo(
   const { publicKey } = useWallet();
 
   const { info: cndy } = useCandyMachine(candyMachineId);
+  const unixTime = useSolanaUnixTime();
 
   useEffect(() => {
     (async () => {
       if (cndy && publicKey) {
         try {
           let active =
-            cndy?.goLiveDate?.toNumber() < new Date().getTime() / 1000;
+            cndy?.goLiveDate?.toNumber() < (unixTime || new Date().getTime() / 1000);
 
           let presale = false;
           // whitelist mint?
@@ -126,7 +128,7 @@ export function useCandyMachineInfo(
         }
       }
     })();
-  }, [publicKey, cndy, connection]);
+  }, [publicKey, cndy, connection, unixTime]);
 
   return {
     candyMachine,

@@ -48,9 +48,6 @@ module.exports = function (context, options) {
         },
         plugins: [
           new Dotenv(),
-          new webpack.EnvironmentPlugin([
-            "GET_TOKEN_ENDPOINT",
-          ]),
           new webpack.ProvidePlugin({
             process: "process/browser",
           }),

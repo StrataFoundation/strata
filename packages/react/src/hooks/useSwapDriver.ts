@@ -25,6 +25,7 @@ import {
   useMint,
   useOwnedAmount,
   useProvider,
+  useSolanaUnixTime,
   useTokenBonding,
   useTokenMetadata,
 } from "./";
@@ -160,17 +161,19 @@ export const useSwapDriver = ({
     error
   );
 
+  const unixTime = useSolanaUnixTime();
+
   useEffect(() => {
     if (tokenBonding && targetMintAcct && pricing) {
       const purchaseCap = tokenBonding.purchaseCap
         ? amountAsNum(tokenBonding.purchaseCap as u64, targetMintAcct)
         : Number.POSITIVE_INFINITY;
 
-      const maxSpend = pricing.buyTargetAmount(purchaseCap);
+      const maxSpend = pricing.buyTargetAmount(purchaseCap, pricing.hierarchy.tokenBonding.baseMint, unixTime);
 
       setSpendCap(maxSpend);
     }
-  }, [tokenBonding, targetMint, pricing, setSpendCap]);
+  }, [tokenBonding, targetMint, pricing, setSpendCap, unixTime]);
 
   const base = baseMint && {
     name: baseMeta?.data.name || "",

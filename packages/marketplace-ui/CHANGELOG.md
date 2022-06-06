@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.7.0](https://github.com/StrataFoundation/strata/compare/v3.5.5...v3.7.0) (2022-06-02)
+
+
+### Bug Fixes
+
+* **CandyMachine:** add setCollectionDuringMint instruction to mintOneToken ([#246](https://github.com/StrataFoundation/strata/issues/246)) ([275c627](https://github.com/StrataFoundation/strata/commit/275c6274a50ac7fb7f35292fc34f5d03ee287396))
+* **transactions:** remove subscription if available ([#230](https://github.com/StrataFoundation/strata/issues/230)) ([e99f05c](https://github.com/StrataFoundation/strata/commit/e99f05c02dd1f0176c8303608ea4859c68774cf4))
+
+
+
+
+
 ## [3.6.1](https://github.com/StrataFoundation/strata/compare/v3.6.0...v3.6.1) (2022-05-21)
 
 **Note:** Version bump only for package @strata-foundation/marketplace-ui

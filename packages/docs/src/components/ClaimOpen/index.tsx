@@ -12,7 +12,7 @@ import {
   Spinner, useAssociatedAccount, useBondingPricing,
   useErrorHandler,
   useOwnedAmount,
-  usePublicKey, useStrataSdks, useTokenBonding
+  usePublicKey, useSolanaUnixTime, useStrataSdks, useTokenBonding
 } from "@strata-foundation/react";
 import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import React, { useEffect, useState } from "react";
@@ -71,6 +71,7 @@ export const ClaimO = () => {
     useBondingPricing(tokenBondingKey);
   const ownedTarget = useOwnedAmount(tokenBonding?.targetMint);
   const { associatedAccount } = useAssociatedAccount(publicKey, tokenBonding?.targetMint);
+  const unixTime = useSolanaUnixTime();
 
   useEffect(() => {
     if (ownedTarget && ownedTarget >= 0 && tokenBonding && pricing) {
@@ -78,6 +79,8 @@ export const ClaimO = () => {
         +ownedTarget,
         tokenBonding.targetMint,
         tokenBonding.baseMint,
+        false,
+        unixTime
       );
 
       setClaimableOPEN(ownedTarget == 0 ? 0 : roundToDecimals(claimable, 9));

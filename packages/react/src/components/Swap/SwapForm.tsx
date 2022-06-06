@@ -33,7 +33,7 @@ import { useForm } from "react-hook-form";
 import { BsChevronDown } from "react-icons/bs";
 import { RiArrowUpDownFill, RiInformationLine } from "react-icons/ri";
 import * as yup from "yup";
-import { useFtxPayLink, useMint, useProvider, useTokenMetadata } from "../../hooks";
+import { useFtxPayLink, useMint, useProvider, useSolanaUnixTime, useTokenMetadata } from "../../hooks";
 import { Royalties } from "./Royalties";
 import { TransactionInfo, TransactionInfoArgs } from "./TransactionInfo";
 import { useTwWrappedSolMint } from "../../hooks/useTwWrappedSolMint";
@@ -172,6 +172,7 @@ export const SwapForm = ({
   const slippage = watch("slippage");
   const hasBaseAmount = (ownedBase || 0) >= +(topAmount || 0);
   const moreThanSpendCap = +(topAmount || 0) > spendCap;
+  const unixTime = useSolanaUnixTime();
 
   const lowMint =
     base &&
@@ -207,14 +208,19 @@ export const SwapForm = ({
   }
 
   useEffect(() => {
-    const interval = setInterval(updatePrice, 1000);
-    return () => clearInterval(interval);
-  }, [pricing, bottomAmount, topAmount, targetMintAcc, baseMintAcc]);
+    updatePrice()
+  }, [pricing, bottomAmount, topAmount, targetMintAcc, baseMintAcc, unixTime]);
 
   const handleTopChange = (value: number | undefined = 0) => {
     if (tokenBonding && pricing && base && target && value && +value >= 0) {
       setLastSet("top");
-      const amount = pricing.swap(+value, base.publicKey, target.publicKey, true);
+      const amount = pricing.swap(
+        +value,
+        base.publicKey,
+        target.publicKey,
+        true,
+        unixTime
+      );
       if (isNaN(amount)) {
         setInsufficientLiq(true);
       } else {
@@ -244,7 +250,7 @@ export const SwapForm = ({
   const handleBottomChange = (value: number | undefined = 0) => {
     if (tokenBonding && pricing && base && target && value && +value >= 0) {
       let amount = Math.abs(
-        pricing.swapTargetAmount(+value, target.publicKey, base.publicKey, true)
+        pricing.swapTargetAmount(+value, target.publicKey, base.publicKey, true, unixTime)
       );
       setLastSet("bottom");
 

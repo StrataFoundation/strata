@@ -1,4 +1,4 @@
-import { Program, Provider } from "@project-serum/anchor";
+import { Program, Provider } from "anchor-17";
 import { AccountInfo, PublicKey } from "@solana/web3.js";
 import {
   useAccount,
@@ -17,6 +17,7 @@ export const CANDY_MACHINE_PROGRAM = new PublicKey(
  * Unified token bonding interface wrapping the raw TokenBondingV0
  */
 export interface ICandyMachine {
+  authority: PublicKey;
   publicKey: PublicKey;
   program: Program;
   itemsAvailable: number;
@@ -49,6 +50,7 @@ export interface ICandyMachine {
     uri: string;
     hash: Uint8Array;
   };
+  retainAuthority: boolean
 }
 
 async function getCoder(
