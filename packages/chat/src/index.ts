@@ -317,7 +317,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     const coder = this.program.coder.instruction;
 
     const sendMessageIdl = this.program.idl.instructions.find(
-      (i: any) => i.name === "sendMessageV0"
+      (i: any) => i.name === "sendTokenMessageV0"
     )!;
     const profileAccountIndex = sendMessageIdl.accounts.findIndex(
       (account: any) => account.name === "profile"
@@ -337,7 +337,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
     return Promise.all(
       decoded
-        .filter((decoded) => decoded.data.name === "sendMessageV0")
+        .filter((decoded) => decoded.data.name === "sendTokenMessageV0")
         .map(async (decoded) => {
           const args = decoded.data.data.args;
           const chatAcc = await this.getChat(decoded.chat);
@@ -398,7 +398,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
               console.error("Failed to decode message", e);
             }
           } else {
-            decodedMessage = args.content;
+            decodedMessage = JSON.parse(args.content);
           }
 
           return {
@@ -1028,9 +1028,16 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       metadataKey,
       (await this.provider.connection.getAccountInfo(metadataKey))!
     );
-    const [namespace, entryName] = metadata.data.data.name.split(".");
-    const [entry] = await nameEntryId(namespace, entryName);
     const namespaces = await this.getNamespaces();
+    const [entryName] = metadata.data.data.name.split(".");
+    const [entry] = await PublicKey.findProgramAddress(
+      [
+        utils.bytes.utf8.encode(ENTRY_SEED),
+        namespaces.userNamespace.toBytes(),
+        utils.bytes.utf8.encode(entryName),
+      ],
+      NAMESPACES_PROGRAM_ID
+    );
     const identifierCertificateMintAccount =
       await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,

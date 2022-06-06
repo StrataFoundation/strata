@@ -33,6 +33,10 @@ describe("chat", () => {
   const chatSdk = new ChatSdk(provider, program, litClient, namespacesProgram);
   const me = chatSdk.wallet.publicKey;
 
+  before(async () => {
+    await chatSdk.initializeNamespaces();
+  })
+
   describe("initialize chat", () => {
     let readPermissionMint: PublicKey;
     let postPermissionMint: PublicKey;
@@ -187,7 +191,7 @@ describe("chat", () => {
       }
     });
 
-    it("allows sending a basic encrypted message with delegate", async () => {
+    it("allows sending a basic message with delegate", async () => {
       console.log("Chat", chat.toBase58(), identifier)
       const { txid } = await chatSdk.sendMessage({
         sender: profileKeypair.publicKey,
@@ -200,11 +204,11 @@ describe("chat", () => {
       expect(decodedMessage?.text).to.eq("hello")
     });
 
-    it("allows sending a basic encrypted message without delegate", async () => {
+    it("allows sending a basic message without delegate", async () => {
       const { instructions, signers } = await chatSdk.sendMessageInstructions({
         sender: profileKeypair.publicKey,
         chat,
-        message: { type: MessageType.Text, text: "hello" },
+        message: { type: MessageType.Text, text: "hey" },
         encrypted: false,
       });
       const txid = await sendInstructions(chatSdk.errors || new Map(), provider, instructions, [...signers, profileKeypair]);
