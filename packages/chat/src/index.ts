@@ -191,6 +191,7 @@ export interface IProfile extends ProfileV0 {
 type MessageV0 = IdlTypes<ChatIDL>["MessageV0"];
 export interface IMessage extends MessageV0 {
   txid: string;
+  blockTime: number;
   /** Decoded message, if permissions were enough to decode it */
   decodedMessage?: IDecryptedMessageContent;
   profileKey: PublicKey;
@@ -443,10 +444,12 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     transaction,
     txid,
     meta,
+    blockTime
   }: {
     transaction: { message: Message; signatures: string[] };
     txid: string;
     meta?: ConfirmedTransactionMeta | null;
+    blockTime?: number | null;
   }): Promise<IMessage[]> {
     if (meta?.err) {
       return [];
@@ -558,6 +561,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
           return {
             ...args,
+            blockTime,
             txid,
             chatKey: decoded.chat,
             profileKey: decoded.profile,
@@ -585,6 +589,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       transaction: tx.transaction,
       txid,
       meta: tx.meta,
+      blockTime: tx.blockTime
     });
   }
 

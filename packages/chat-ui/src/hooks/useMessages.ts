@@ -27,24 +27,30 @@ async function getMessages(
     transaction: { message: Message; signatures: string[] };
     signature: string;
     pending?: boolean;
+    blockTime: number | null;
   }[]
 ): Promise<IMessageWithPending[]> {
   if (chatSdk && txs) {
     return (
       await Promise.all(
-        txs.map(async ({ signature: sig, transaction, pending, meta }) => {
-          if (seen[sig + Boolean(pending).toString()]) {
-            return seen[sig + Boolean(pending).toString()];
-          }
-          const found = (await chatSdk.getMessagesFromInflatedTx({
-            transaction,
-            txid: sig,
-            meta
-          })).map(f => ({...f, pending }));
-          seen[sig + Boolean(pending).toString()] = found;
+        txs.map(
+          async ({ signature: sig, transaction, pending, meta, blockTime }) => {
+            if (seen[sig + Boolean(pending).toString()]) {
+              return seen[sig + Boolean(pending).toString()];
+            }
+            const found = (
+              await chatSdk.getMessagesFromInflatedTx({
+                transaction,
+                txid: sig,
+                meta,
+                blockTime,
+              })
+            ).map((f) => ({ ...f, pending }));
+            seen[sig + Boolean(pending).toString()] = found;
 
-          return found;
-        })
+            return found;
+          }
+        )
       )
     ).flat();
   }

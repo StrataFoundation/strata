@@ -1,4 +1,4 @@
-import { Chatbox, IPendingMessage } from "@/components/Chatbox";
+import { Chatbox } from "@/components/Chatbox";
 import { ChatMessages } from "@/components/ChatMessages";
 import { Container } from "@/components/Container";
 import { RoomsHeader } from "@/components/rooms/RoomsHeader";
@@ -16,7 +16,7 @@ export default function Chatroom() {
   const { id } = router.query
   const lastMessage = useRef(null)
   const { chatKey } = useChatKeyFromIdentifier(id as string | undefined)
-  const [pendingMessages, setPendingMessages] = useState<IPendingMessage[]>([]);
+  const [pendingMessages, setPendingMessages] = useState<IMessageWithPending[]>([]);
   const { messages, error } = useMessages(chatKey);
   const { handleErrors } = useErrorHandler();
   handleErrors(error)

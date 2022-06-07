@@ -10,13 +10,14 @@ import {
   VStack,
   Image,
 } from "@chakra-ui/react";
+import moment from "moment";
 import { GiphyFetch } from "@giphy/js-fetch-api";
 import { Gif } from "@giphy/react-components";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { IMessage, MessageType } from "@strata-foundation/chat";
 import { roundToDecimals, useMint, useTokenMetadata } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
-import React from "react";
+import React, { useMemo } from "react";
 import { useAsync } from "react-async-hook";
 import { BsCheckCircleFill, BsCircle } from "react-icons/bs";
 import { GIPHY_API_KEY } from "../constants";
@@ -47,6 +48,7 @@ export function Message({
   profileKey,
   readPermissionAmount,
   chatKey,
+  blockTime,
   showUser = true,
   pending = false,
 }: Partial<IMessage> & { pending?: boolean; showUser: boolean }) {
@@ -59,6 +61,15 @@ export function Message({
   const { info: chat } = useChat(chatKey);
   const readMint = chat?.readPermissionMintOrCollection;
   const readMintAcc = useMint(readMint);
+  const muted = useColorModeValue("gray.500", "gray.400");
+  const time = useMemo(() => {
+    if (blockTime) {
+      const t = new Date(0);
+      t.setUTCSeconds(blockTime);
+      return t;
+    }
+  }, [blockTime]);
+  
 
   const uid = publicKey?.toBase58();
 
@@ -71,15 +82,25 @@ export function Message({
   const textColor = { light: "black", dark: "white" };
   return (
     <HStack w="full" align="start" spacing={2}>
-      { showUser ? <Avatar mt="6px" size="sm" src={profile?.imageUrl} /> : <Box w="36px" /> }
+      {showUser ? (
+        <Avatar mt="6px" size="sm" src={profile?.imageUrl} />
+      ) : (
+        <Box w="36px" />
+      )}
       <VStack w="full" align="start" spacing={0}>
-        { showUser && <Text
-          fontSize="sm"
-          fontWeight="semibold"
-          color={uid == id ? "blue.500" : usernameColor[colorMode]}
-        >
-          {username}
-        </Text> }
+        {showUser && (
+          <HStack>
+            <Text
+              fontSize="sm"
+              fontWeight="semibold"
+              color={uid == id ? "blue.500" : usernameColor[colorMode]}
+            >
+              {username}
+            </Text>
+            <Text fontSize="xs" color={muted}>{moment(time).format("LT")}</Text>
+          </HStack>
+        )}
+
         <Box
           w="fit-content"
           position="relative"
@@ -95,7 +116,10 @@ export function Message({
                 mt={"4px"}
                 alt={message.text}
                 height="300px"
-                src={(message.attachments || [])[0] || blobToUrl((message.decryptedAttachments || [])[0])}
+                src={
+                  (message.attachments || [])[0] ||
+                  blobToUrl((message.decryptedAttachments || [])[0])
+                }
               />
             ) : (
               <Text mt={"-4px"}>{message.text}</Text>

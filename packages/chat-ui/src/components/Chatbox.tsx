@@ -8,6 +8,7 @@ import {
   useMint,
   useOwnedAmount,
   useAccelerator,
+  useSolanaUnixTime,
 } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import { sendAndConfirmWithRetry } from "@strata-foundation/spl-utils";
@@ -53,6 +54,7 @@ export function Chatbox({
     toNumber(chat?.postPermissionAmount, mint);
   const hasEnough = typeof postAmount == "undefined" || typeof balance == "undefined"|| (balance >= postAmount);
   const { cluster } = useEndpoint();
+  const blockTime = useSolanaUnixTime();
 
   handleErrors(error);
 
@@ -100,7 +102,8 @@ export function Chatbox({
             decodedMessage: content,
             encryptedSymmetricKey: "",
             nextId: null,
-            readPermissionAmount: chat!.defaultReadPermissionAmount
+            readPermissionAmount: chat!.defaultReadPermissionAmount,
+            blockTime: blockTime!
           });
         }
         
