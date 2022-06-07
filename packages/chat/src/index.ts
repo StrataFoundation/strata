@@ -466,7 +466,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       }))
       .filter(truthy);
     
-      await this.authingLit;
+    await this.authingLit;
     if (
       !this.isLitAuthed &&
       this.wallet &&
@@ -1098,7 +1098,9 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   }: SendMessageArgs): Promise<InstructionResult<null>> {
     if (encrypted) {
       await this.authingLit;
-      await this.litAuth();
+      if (!this.isLitAuthed && this.wallet && this.wallet.publicKey) {
+        await this.litAuth();
+      }
     }
     let { fileAttachments, ...normalMessage } = message;
 
