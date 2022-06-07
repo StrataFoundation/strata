@@ -30,7 +30,12 @@ describe("chat", () => {
     NAMESPACES_PROGRAM_ID,
     provider
   );
-  const chatSdk = new ChatSdk(provider, program, litClient, namespacesProgram);
+  const chatSdk = new ChatSdk({
+    provider,
+    program,
+    litClient,
+    namespacesProgram,
+  });
   const me = chatSdk.wallet.publicKey;
 
   before(async () => {
@@ -185,6 +190,7 @@ describe("chat", () => {
     });
 
     it("allows sending a basic message with delegate", async () => {
+      console.log("cha", identifier)
       const { txid } = await chatSdk.sendMessage({
         sender: profileKeypair.publicKey,
         delegateWalletKeypair,

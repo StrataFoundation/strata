@@ -113,10 +113,9 @@ export function Chatbox({
     }
   };
   return hasEnough ? (
-    <>
-      <Flex direction="row" position="sticky" bottom={0}>
-        <HStack p="10px" spacing={2} w="full" align="stretch">
-          {hasEnough && (
+      <>
+        <Flex direction="row" position="sticky" bottom={0}>
+          <HStack p="10px" spacing={2} w="full" align="stretch">
             <Input
               onKeyPress={(ev) => {
                 if (ev.key === "Enter") {
@@ -137,59 +136,58 @@ export function Chatbox({
               onChange={handleChange}
               placeholder="Type Message"
             />
-          )}
-          <FileAttachment 
-            onUpload={async (file) => {
-              await sendMessage({
-                type: MessageType.Image,
-                fileAttachments: [file]
-              })
-            }}
-          />
-          <IconButton
-            size="lg"
-            aria-label="Select GIF"
-            variant="outline"
-            onClick={onToggle}
-            icon={<Icon w="24px" h="24px" as={AiOutlineGif} />}
-          />
-          <Button
-            colorScheme="primary"
-            variant="outline"
-            alignSelf="flex-end"
-            isDisabled={!hasEnough || !input}
-            size="lg"
-            onClick={() =>
-              sendMessage({
-                type: MessageType.Text,
-                text: input,
-              })
-            }
-          >
-            <Icon as={AiOutlineSend} />
-          </Button>
-        </HStack>
-      </Flex>
-      <Modal
-        isOpen={isOpen}
-        onClose={onClose}
-        size="2xl"
-        isCentered
-        trapFocus={true}
-      >
-        <ModalContent borderRadius="xl" shadow="xl">
-          <ModalHeader>Select GIF</ModalHeader>
-          <ModalBody>
-            <GifSearch
-              onSelect={(gifyId) => {
-                onClose();
-                sendMessage({ type: MessageType.Gify, gifyId });
+            <FileAttachment
+              onUpload={async (file) => {
+                await sendMessage({
+                  type: MessageType.Image,
+                  fileAttachments: [file],
+                });
               }}
             />
-          </ModalBody>
-        </ModalContent>
-      </Modal>
-    </>
+            <IconButton
+              size="lg"
+              aria-label="Select GIF"
+              variant="outline"
+              onClick={onToggle}
+              icon={<Icon w="24px" h="24px" as={AiOutlineGif} />}
+            />
+            <Button
+              colorScheme="primary"
+              variant="outline"
+              alignSelf="flex-end"
+              isDisabled={!hasEnough || !input}
+              size="lg"
+              onClick={() =>
+                sendMessage({
+                  type: MessageType.Text,
+                  text: input,
+                })
+              }
+            >
+              <Icon as={AiOutlineSend} />
+            </Button>
+          </HStack>
+        </Flex>
+        <Modal
+          isOpen={isOpen}
+          onClose={onClose}
+          size="2xl"
+          isCentered
+          trapFocus={true}
+        >
+          <ModalContent borderRadius="xl" shadow="xl">
+            <ModalHeader>Select GIF</ModalHeader>
+            <ModalBody>
+              <GifSearch
+                onSelect={(gifyId) => {
+                  onClose();
+                  sendMessage({ type: MessageType.Gify, gifyId });
+                }}
+              />
+            </ModalBody>
+          </ModalContent>
+        </Modal>
+      </>
   ) : (
     <Flex justify="center" mb="6px">
       <BuyMoreButton mint={chat?.postPermissionMintOrCollection} />

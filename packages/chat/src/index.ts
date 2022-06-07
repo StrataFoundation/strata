@@ -10,7 +10,7 @@ import {
 import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { AnchorProvider, BN as AnchorBN, IdlTypes, Program, utils } from "@project-serum/anchor";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { Commitment, Finality, Keypair, Message, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+import { Commitment, ConfirmedTransactionMeta, Finality, Keypair, Message, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import {
   AnchorSdk,
   BigInstructionResult,
@@ -36,18 +36,115 @@ const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
   "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
 );
 
+interface SymKeyInfo {
+  encryptedSymKey: string;
+  symKey: string;
+  timeMillis: number;
+}
+
+interface ISymKeyStorage {
+  setSymKeyToUse(
+    mintOrCollection: PublicKey,
+    amount: number,
+    key: SymKeyInfo
+  ): void;
+  getSymKeyToUse(
+    mintOrCollection: PublicKey,
+    amount: number
+  ): SymKeyInfo | null;
+  setSymKey(encrypted: string, unencrypted: string): void;
+  getSymKey(encrypted: string): string | null;
+  getTimeSinceLastSet(
+    mintOrCollection: PublicKey,
+    amount: number
+  ): number | null;
+}
+
+const storage =
+  typeof localStorage !== "undefined"
+    ? localStorage
+    : require("localstorage-memory");
+
+// 3 hours
+const KEY_EXPIRY = 3 * 60 * 60 * 1000;
+
+export class LocalSymKeyStorage implements ISymKeyStorage {
+  setSymKey(encrypted: string, unencrypted: string): void {
+    storage.setItem("enc" + encrypted, unencrypted);
+  }
+  getSymKey(encrypted: string): string | null {
+    return storage.getItem("enc" + encrypted);
+  }
+  private getKey(mintOrCollection: PublicKey, amount: number): string {
+    return `sym-${mintOrCollection.toBase58()}-${amount}`;
+  }
+  setSymKeyToUse(
+    mintOrCollection: PublicKey,
+    amount: number,
+    symKey: SymKeyInfo
+  ): void {
+    const key = this.getKey(mintOrCollection, amount);
+    storage.setItem(key, JSON.stringify(symKey));
+  }
+  getTimeSinceLastSet(
+    mintOrCollection: PublicKey,
+    amount: number
+  ): number | null {
+    const item = storage.getItem(this.getKey(mintOrCollection, amount));
+
+    if (item) {
+      return new Date().valueOf() - JSON.parse(item).timeMillis;
+    }
+    return null;
+  }
+  getSymKeyToUse(mintOrCollection: PublicKey, amount: number): SymKeyInfo | null {
+    const aDayAgo = new Date();
+    aDayAgo.setDate(aDayAgo.getDate() - 1);
+    const lastSet = this.getTimeSinceLastSet(mintOrCollection, amount);
+    if (!lastSet) {
+      return null;
+    }
+
+    if (lastSet > KEY_EXPIRY) {
+      return null;
+    }
+
+    const item = storage.getItem(this.getKey(mintOrCollection, amount));
+    if (item) {
+      return JSON.parse(item);
+    }
+
+    return null;
+  }
+}
+
 
 const SYMM_KEY_ALGO_PARAMS = {
   name: "AES-CBC",
   length: 256,
 };
 
-async function generateSymmetricKey() {
+async function generateSymmetricKey(): Promise<CryptoKey> {
   const symmKey = await crypto.subtle.generateKey(SYMM_KEY_ALGO_PARAMS, true, [
     "encrypt",
     "decrypt",
   ]);
   return symmKey;
+}
+
+export async function importSymmetricKey(symmKey: BufferSource): Promise<CryptoKey> {
+  const importedSymmKey = await crypto.subtle.importKey(
+    "raw",
+    symmKey,
+    SYMM_KEY_ALGO_PARAMS,
+    true,
+    ["encrypt", "decrypt"]
+  );
+  return importedSymmKey;
+}
+
+export function exportSymmetricKey(symmKey: CryptoKey): Promise<ArrayBuffer> {
+  return crypto.subtle.exportKey("raw", symmKey);
 }
 
 export enum MessageType {
@@ -197,6 +294,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   litAuthSig: any | undefined;
   chain: string;
   authingLit: Promise<void> | null;
+  symKeyStorage: ISymKeyStorage;
 
   namespacesProgram: Program<NAMESPACES_PROGRAM>;
 
@@ -243,18 +341,29 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       chatProgramId,
       provider
     ) as Program<ChatIDL>;
-    const client = new LitJsSdk.LitNodeClient();
+    const client = new LitJsSdk.LitNodeClient({
+      alertWhenUnauthorized: false
+    });
     await client.connect();
 
-    return new this(provider, chat, client, namespacesProgram);
+    return new this({
+      provider, program: chat, litClient: client, namespacesProgram
+    });
   }
 
-  constructor(
+  constructor({
+    provider,
+    program,
+    litClient,
+    namespacesProgram,
+    symKeyStorage = new LocalSymKeyStorage()
+  }: {
     provider: AnchorProvider,
     program: Program<ChatIDL>,
     litClient: LitJsSdk,
-    namespacesProgram: Program<NAMESPACES_PROGRAM>
-  ) {
+    namespacesProgram: Program<NAMESPACES_PROGRAM>,
+    symKeyStorage?: ISymKeyStorage
+  }) {
     super({ provider, program });
 
     this.namespacesProgram = namespacesProgram;
@@ -268,6 +377,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       this.chain = "solana";
     }
     this.litClient = litClient;
+    this.symKeyStorage = symKeyStorage;
   }
 
   entryDecoder: TypedAccountParser<IEntry> = (pubkey, account) => {
@@ -319,10 +429,19 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     return this.getAccount(profileKey, this.profileDecoder);
   }
 
-  async getMessagesFromInflatedTx(
-    transaction: { message: Message; signatures: string[] },
-    txid: string
-  ): Promise<IMessage[]> {
+  async getMessagesFromInflatedTx({
+    transaction,
+    txid,
+    meta,
+  }: {
+    transaction: { message: Message; signatures: string[] };
+    txid: string;
+    meta?: ConfirmedTransactionMeta | null;
+  }): Promise<IMessage[]> {
+    if (meta?.err) {
+      return [];
+    }
+
     const instructions = transaction.message.instructions.filter((ix) =>
       transaction.message.accountKeys[ix.programIdIndex].equals(this.programId)
     );
@@ -346,6 +465,15 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         chat: transaction.message.accountKeys[ix.accounts[chatAccountIndex]],
       }))
       .filter(truthy);
+    
+      await this.authingLit;
+    if (
+      !this.isLitAuthed &&
+      this.wallet &&
+      this.wallet.publicKey
+    ) {
+      await this.litAuth();
+    }
 
     return Promise.all(
       decoded
@@ -360,11 +488,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
           let decodedMessage;
           if (args.encryptedSymmetricKey) {
-            await this.authingLit;
-            if (!this.isLitAuthed && this.wallet && this.wallet.publicKey) {
-              await this.litAuth();
-            }
-
             const accessControlConditions = [
               tokenAccessPermissions(
                 chatAcc!.readPermissionMintOrCollection,
@@ -374,13 +497,24 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
             ];
 
             try {
-              const symmetricKey = await this.litClient.getEncryptionKey({
-                solRpcConditions: accessControlConditions,
-                // Note, below we convert the encryptedSymmetricKey from a UInt8Array to a hex string.  This is because we obtained the encryptedSymmetricKey from "saveEncryptionKey" which returns a UInt8Array.  But the getEncryptionKey method expects a hex string.
-                toDecrypt: args.encryptedSymmetricKey,
-                chain: this.chain,
-                authSig: this.litAuthSig,
-              });
+              const storedKey = this.symKeyStorage.getSymKey(
+                args.encryptedSymmetricKey
+              );
+              let symmetricKey: Uint8Array | undefined = storedKey ? Buffer.from(storedKey, "hex") : undefined;
+              if (!symmetricKey) {
+                symmetricKey = await this.litClient.getEncryptionKey({
+                  solRpcConditions: accessControlConditions,
+                  // Note, below we convert the encryptedSymmetricKey from a UInt8Array to a hex string.  This is because we obtained the encryptedSymmetricKey from "saveEncryptionKey" which returns a UInt8Array.  But the getEncryptionKey method expects a hex string.
+                  toDecrypt: args.encryptedSymmetricKey,
+                  chain: this.chain,
+                  authSig: this.litAuthSig,
+                });
+                const symKeyStr = Buffer.from(symmetricKey!).toString("hex");
+                this.symKeyStorage.setSymKey(
+                  args.encryptedSymmetricKey,
+                  symKeyStr
+                );
+              }
 
               const blob = new Blob([
                 LitJsSdk.uint8arrayFromString(args.content, "base16"),
@@ -438,7 +572,11 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       return [];
     }
 
-    return this.getMessagesFromInflatedTx(tx.transaction, txid);
+    return this.getMessagesFromInflatedTx({
+      transaction: tx.transaction,
+      txid,
+      meta: tx.meta,
+    });
   }
 
   static chatKey(
@@ -575,8 +713,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
   /**
    * Attempt to claim the identifier. If the identifier entry already exists, attempt to approve/claim.
-   * @param param0 
-   * @returns 
+   * @param param0
+   * @returns
    */
   async claimIdentifierInstructions({
     owner = this.wallet.publicKey,
@@ -591,7 +729,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     let certificateMint = certificateMintKeypair.publicKey;
     const namespaces = await this.getNamespaces();
 
-
     let namespaceName: string;
     let namespaceId: PublicKey;
     if (type === IdentifierType.Chat) {
@@ -603,7 +740,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     }
 
     const [entryId] = await ChatSdk.entryKey(namespaceId, identifier);
-    const existingEntry = await this.namespacesProgram.account.entry.fetchNullable(entryId);
+    const existingEntry =
+      await this.namespacesProgram.account.entry.fetchNullable(entryId);
     if (!existingEntry) {
       await withInitEntry(
         this.provider.connection,
@@ -615,7 +753,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       );
     } else {
       certificateMint = existingEntry.mint;
-      signers = []
+      signers = [];
     }
 
     const [claimRequestId] = await PublicKey.findProgramAddress(
@@ -641,9 +779,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
     const instructions = transaction.instructions;
 
-    const certificateMintMetadata = await Metadata.getPDA(
-      certificateMint
-    );
+    const certificateMintMetadata = await Metadata.getPDA(certificateMint);
 
     if (type === IdentifierType.Chat && !existingEntry?.isApproved) {
       instructions.push(
@@ -741,7 +877,10 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     );
     const namespaces = await this.getNamespaces();
     const [entryName] = metadata.data.data.name.split(".");
-    const [entry] = await await ChatSdk.entryKey(namespaces.chatNamespace, entryName);
+    const [entry] = await await ChatSdk.entryKey(
+      namespaces.chatNamespace,
+      entryName
+    );
 
     const identifierCertificateMintAccount =
       await Token.getAssociatedTokenAddress(
@@ -830,7 +969,10 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       identifier = entryName;
     }
 
-    const [entry] = await ChatSdk.entryKey(namespaces.userNamespace, identifier);
+    const [entry] = await ChatSdk.entryKey(
+      namespaces.userNamespace,
+      identifier
+    );
 
     const identifierCertificateMintAccount =
       await Token.getAssociatedTokenAddress(
@@ -966,20 +1108,31 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       chatAcc.readPermissionMintOrCollection
     );
 
+    const readAmount = toBN(
+      readPermissionAmount || chatAcc.defaultReadPermissionAmount,
+      readMint
+    );
     const accessControlConditionsToUse = [
       tokenAccessPermissions(
         chatAcc.readPermissionMintOrCollection,
-        toBN(
-          readPermissionAmount || chatAcc.defaultReadPermissionAmount,
-          readMint
-        ),
+        readAmount,
         this.chain
       ),
     ];
 
+    const storedSymKey = this.symKeyStorage.getSymKeyToUse(
+      chatAcc.readPermissionMintOrCollection,
+      readAmount.toNumber()
+    );
     let symmKey: any;
     if (encrypted) {
-      symmKey = await generateSymmetricKey();
+      if (storedSymKey) {
+        symmKey = await importSymmetricKey(
+          Buffer.from(storedSymKey.symKey, "hex")
+        );
+      } else {
+        symmKey = await generateSymmetricKey();
+      }
     }
     // Encrypt fileAttachements if needed
     if (fileAttachments && encrypted) {
@@ -1031,17 +1184,33 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       encryptedString = buf2hex(
         await (encryptedStringOut as Blob).arrayBuffer()
       );
-      encryptedSymmetricKey = LitJsSdk.uint8arrayToString(
-        await this.litClient.saveEncryptionKey({
-          solRpcConditions: accessControlConditionsToUse,
-          symmetricKey: new Uint8Array(
-            await crypto.subtle.exportKey("raw", symmKey)
-          ),
-          authSig: this.litAuthSig,
-          chain: this.chain,
-        }),
-        "base16"
-      );
+      if (storedSymKey) {
+        encryptedSymmetricKey = storedSymKey.encryptedSymKey;
+      } else {
+        // Cache the sym key we're using
+        encryptedSymmetricKey = LitJsSdk.uint8arrayToString(
+          await this.litClient.saveEncryptionKey({
+            solRpcConditions: accessControlConditionsToUse,
+            symmetricKey: new Uint8Array(
+              await crypto.subtle.exportKey("raw", symmKey)
+            ),
+            authSig: this.litAuthSig,
+            chain: this.chain,
+          }),
+          "base16"
+        );
+        this.symKeyStorage.setSymKeyToUse(
+          chatAcc.readPermissionMintOrCollection,
+          readAmount.toNumber(),
+          {
+            symKey: Buffer.from(await exportSymmetricKey(symmKey)).toString(
+              "hex"
+            ),
+            encryptedSymKey: encryptedSymmetricKey,
+            timeMillis: new Date().valueOf(),
+          }
+        );
+      }
     } else {
       encryptedSymmetricKey = "";
       encryptedString = JSON.stringify(message);

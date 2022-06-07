@@ -1,4 +1,4 @@
-import { Message, PublicKey } from "@solana/web3.js";
+import { ConfirmedTransactionMeta, Message, PublicKey } from "@solana/web3.js";
 import { ChatSdk, IMessage } from "@strata-foundation/chat";
 import { useTransactions } from "@strata-foundation/react";
 import { useEffect, useMemo, useState } from "react";
@@ -23,6 +23,7 @@ const seen: Record<string, IMessageWithPending[]> = {};
 async function getMessages(
   chatSdk?: ChatSdk,
   txs?: {
+    meta?: ConfirmedTransactionMeta | null;
     transaction: { message: Message; signatures: string[] };
     signature: string;
     pending?: boolean;
@@ -31,15 +32,16 @@ async function getMessages(
   if (chatSdk && txs) {
     return (
       await Promise.all(
-        txs.map(async ({ signature: sig, transaction, pending }) => {
-          if (seen[sig + pending]) {
-            return seen[sig + pending];
+        txs.map(async ({ signature: sig, transaction, pending, meta }) => {
+          if (seen[sig + Boolean(pending).toString()]) {
+            return seen[sig + Boolean(pending).toString()];
           }
-          const found = (await chatSdk.getMessagesFromInflatedTx(
+          const found = (await chatSdk.getMessagesFromInflatedTx({
             transaction,
-            sig
-          )).map(f => ({...f, pending }));
-          seen[sig + pending] = found;
+            txid: sig,
+            meta
+          })).map(f => ({...f, pending }));
+          seen[sig + Boolean(pending).toString()] = found;
 
           return found;
         })

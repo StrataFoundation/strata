@@ -178,6 +178,7 @@ export const useTransactions = ({
           cluster as Cluster,
           address,
           ({ transaction, txid } ) => {
+            console.log("ACCELERATION", txid)
             setTransactions((txns) => removeDups([{ 
               signature: txid, 
               transaction: { 

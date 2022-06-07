@@ -11,10 +11,11 @@ export type chatRoomProps = {
 };
 
 export function ChatSidebarPreview({ identifier }: chatRoomProps) {
-  const { chatKey } = useChatKeyFromIdentifier(
+  const { chatKey, loading: loadingId } = useChatKeyFromIdentifier(
     identifier
   );
-  const { info: chat, loading } = useChat(chatKey);
+  const { info: chat, loading: loadingChat } = useChat(chatKey);
+  const loading = loadingId || loadingChat;
   const { colorMode } = useColorMode();
   const router = useRouter();
   const { id } = router.query;

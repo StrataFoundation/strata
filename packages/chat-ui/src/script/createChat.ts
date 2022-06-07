@@ -25,7 +25,12 @@ async function run(): Promise<void> {
     NAMESPACES_PROGRAM_ID,
     provider
   );
-  const chatSdk = new ChatSdk(provider, chat, client, namespacesProgram);
+  const chatSdk = new ChatSdk({
+    provider,
+    program: chat,
+    litClient: client,
+    namespacesProgram,
+  });
   await chatSdk.initializeNamespaces();
 
   console.log("Claiming identifier...");

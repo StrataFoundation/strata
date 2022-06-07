@@ -175,7 +175,7 @@ export function CreateProfileModal() {
                   <Input {...register("imageUrl")} />
                 </FormControlWithError>
                 <Button
-                  isDisabled={userError}
+                  isDisabled={!!userError}
                   isLoading={loading}
                   colorScheme="primary"
                   alignSelf="flex-end"
