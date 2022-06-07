@@ -3,6 +3,8 @@ import { IMessage } from "@strata-foundation/chat";
 import React, { useEffect } from "react";
 import { Message } from "./Message";
 
+const INACTIVE_TIME = 60 // After 1 minute, new grouping
+
 export function ChatMessages({
   scrollRef,
   messages,
@@ -30,7 +32,8 @@ export function ChatMessages({
           showUser={
             !(
               messages[index - 1] &&
-              messages[index - 1].profileKey.equals(msg.profileKey)
+              messages[index - 1].profileKey.equals(msg.profileKey) &&
+              messages[index - 1].blockTime >= msg.blockTime - INACTIVE_TIME
             )
           }
         />
