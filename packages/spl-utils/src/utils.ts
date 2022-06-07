@@ -1,5 +1,4 @@
 import BN from "bn.js";
-import { MintInfo } from "@solana/spl-token";
 import { MintInfo, u64 } from "@solana/spl-token";
 
 export type Truthy<T> = T extends false | "" | 0 | null | undefined ? never : T; // from lodash
