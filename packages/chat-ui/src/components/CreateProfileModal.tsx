@@ -149,9 +149,9 @@ export function CreateProfileModal() {
                     <AlertDescription>
                       Strata Chat is fully decentralized. In order to avoid
                       asking for approval on every message, we create a wallet
-                      stored in your machine's localStorage that can send
-                      messages on your main wallet's behalf. Creating a profile
-                      will also load this wallet with 0.1 Sol to pay for
+                      stored in your machine$apos;s localStorage that can send
+                      messages on your main wallet$apos;s behalf. Creating a
+                      profile will also load this wallet with 0.1 Sol to pay for
                       messages (0.000005 SOL each) and file uploads (1 $SHDW per
                       GB)
                     </AlertDescription>
@@ -165,7 +165,7 @@ export function CreateProfileModal() {
                 >
                   <Input {...register("username")} />
                 </FormControlWithError>
-                {userError && <Alert status="error">{ userError }</Alert>}
+                {userError && <Alert status="error">{userError}</Alert>}
                 <FormControlWithError
                   id="imageUrl"
                   help="A url to the image to use for your profile"
