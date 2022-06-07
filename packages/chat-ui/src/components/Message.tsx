@@ -47,8 +47,9 @@ export function Message({
   profileKey,
   readPermissionAmount,
   chatKey,
+  showUser = true,
   pending = false,
-}: Partial<IMessage> & { pending?: boolean }) {
+}: Partial<IMessage> & { pending?: boolean; showUser: boolean }) {
   const { colorMode } = useColorMode();
   const { publicKey } = useWallet();
   const { info: profile } = useProfile(profileKey);
@@ -70,15 +71,15 @@ export function Message({
   const textColor = { light: "black", dark: "white" };
   return (
     <HStack w="full" align="start" spacing={2}>
-      <Avatar mt="6px" size="sm" src={profile?.imageUrl} />
+      { showUser ? <Avatar mt="6px" size="sm" src={profile?.imageUrl} /> : <Box w="36px" /> }
       <VStack w="full" align="start" spacing={0}>
-        <Text
+        { showUser && <Text
           fontSize="sm"
           fontWeight="semibold"
           color={uid == id ? "blue.500" : usernameColor[colorMode]}
         >
           {username}
-        </Text>
+        </Text> }
         <Box
           w="fit-content"
           position="relative"

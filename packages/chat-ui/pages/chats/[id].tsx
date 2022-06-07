@@ -4,7 +4,7 @@ import { Container } from "@/components/Container";
 import { RoomsHeader } from "@/components/rooms/RoomsHeader";
 import { Sidebar } from "@/components/Sidebar";
 import { useChatKeyFromIdentifier } from "@/hooks/useChatKeyFromIdentifier";
-import { useMessages } from "@/hooks/useMessages";
+import { IMessageWithPending, useMessages } from "@/hooks/useMessages";
 import { Flex, useMediaQuery } from "@chakra-ui/react";
 import { useErrorHandler } from "@strata-foundation/react";
 import { useRouter } from "next/router";
@@ -25,6 +25,13 @@ export default function Chatroom() {
     () => new Set(Array.from(messages?.map((message) => message.txid) || [])),
     [messages]
   );
+  const messagesWithPending = useMemo(
+    () => [
+      ...(messages || []),
+      ...pendingMessages.filter((p) => !txWeHave.has(p.txid)),
+    ],
+    [txWeHave, messages, pendingMessages]
+  );
 
   useEffect(() => {
     setPendingMessages((pendingMessages) =>
@@ -39,11 +46,7 @@ export default function Chatroom() {
         <Flex height="71px">
           <RoomsHeader chatKey={chatKey} />
         </Flex>
-        <ChatMessages
-          scrollRef={lastMessage}
-          messages={messages}
-          pendingMessages={pendingMessages.filter((p) => !txWeHave.has(p.txid))}
-        />
+        <ChatMessages scrollRef={lastMessage} messages={messagesWithPending} />
         <Chatbox
           scrollRef={lastMessage}
           chatKey={chatKey}

@@ -305,14 +305,21 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   }
 
   async _litAuth() {
-    this.litAuthSig = await LitJsSdk.checkAndSignAuthMessage({
-      chain: this.chain,
-      alertWhenUnauthorized: false,
-    });
+    try {
+      this.litAuthSig = await LitJsSdk.checkAndSignAuthMessage({
+        chain: this.chain,
+        alertWhenUnauthorized: false,
+      });
+    } finally {
+      this.authingLit = null;
+    }
   }
 
   async litAuth() {
-    this.authingLit = this._litAuth();
+    await this.authingLit;
+    if (!this.isLitAuthed && !this.authingLit) {
+      this.authingLit = this._litAuth();
+    }
 
     return this.authingLit;
   }
@@ -342,12 +349,15 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       provider
     ) as Program<ChatIDL>;
     const client = new LitJsSdk.LitNodeClient({
-      alertWhenUnauthorized: false
+      alertWhenUnauthorized: false,
     });
     await client.connect();
 
     return new this({
-      provider, program: chat, litClient: client, namespacesProgram
+      provider,
+      program: chat,
+      litClient: client,
+      namespacesProgram,
     });
   }
 
@@ -356,13 +366,13 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     program,
     litClient,
     namespacesProgram,
-    symKeyStorage = new LocalSymKeyStorage()
+    symKeyStorage = new LocalSymKeyStorage(),
   }: {
-    provider: AnchorProvider,
-    program: Program<ChatIDL>,
-    litClient: LitJsSdk,
-    namespacesProgram: Program<NAMESPACES_PROGRAM>,
-    symKeyStorage?: ISymKeyStorage
+    provider: AnchorProvider;
+    program: Program<ChatIDL>;
+    litClient: LitJsSdk;
+    namespacesProgram: Program<NAMESPACES_PROGRAM>;
+    symKeyStorage?: ISymKeyStorage;
   }) {
     super({ provider, program });
 
@@ -465,13 +475,10 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         chat: transaction.message.accountKeys[ix.accounts[chatAccountIndex]],
       }))
       .filter(truthy);
-    
+
     await this.authingLit;
-    if (
-      !this.isLitAuthed &&
-      this.wallet &&
-      this.wallet.publicKey
-    ) {
+    console.log(this.authingLit, this.isLitAuthed);
+    if (!this.isLitAuthed && this.wallet && this.wallet.publicKey) {
       await this.litAuth();
     }
 
@@ -500,7 +507,9 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
               const storedKey = this.symKeyStorage.getSymKey(
                 args.encryptedSymmetricKey
               );
-              let symmetricKey: Uint8Array | undefined = storedKey ? Buffer.from(storedKey, "hex") : undefined;
+              let symmetricKey: Uint8Array | undefined = storedKey
+                ? Buffer.from(storedKey, "hex")
+                : undefined;
               if (!symmetricKey) {
                 symmetricKey = await this.litClient.getEncryptionKey({
                   solRpcConditions: accessControlConditions,
@@ -1095,7 +1104,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     delegateWallet,
     delegateWalletKeypair,
     encrypted = true,
-  }: SendMessageArgs): Promise<InstructionResult<null>> {
+  }: SendMessageArgs): Promise<InstructionResult<{ messageId: string }>> {
     if (encrypted) {
       await this.authingLit;
       if (!this.isLitAuthed && this.wallet && this.wallet.publicKey) {
@@ -1267,10 +1276,11 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
     const senderToUse = delegateWallet || sender;
 
+    const messageId = uuid();
     instructions.push(
       await this.instruction.sendTokenMessageV0(
         {
-          id: uuid(),
+          id: messageId,
           content: encryptedString,
           encryptedSymmetricKey,
           readPermissionAmount: toBN(
@@ -1300,7 +1310,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
     return {
       instructions,
-      output: null,
+      output: { messageId },
       signers: [delegateWalletKeypair].filter(truthy),
     };
   }
@@ -1310,6 +1320,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     commitment: Commitment = "confirmed"
   ): Promise<{
     txid?: string;
+    messageId: string;
   }> {
     return this.execute(
       this.sendMessageInstructions(args),

@@ -14,19 +14,14 @@ import { sendAndConfirmWithRetry } from "@strata-foundation/spl-utils";
 import React, { useState } from "react";
 import { AiOutlineGif, AiOutlineSend } from "react-icons/ai";
 import { useChatSdk } from "../contexts";
-import { useChat } from "../hooks";
+import { IMessageWithPending, useChat, useWalletProfile } from "../hooks";
 import { useDelegateWallet } from "../hooks/useDelegateWallet";
 import { BuyMoreButton } from "./BuyMoreButton";
 import { FileAttachment } from "./FileAttachment";
 import { GifSearch } from "./GifSearch";
 
-export interface IPendingMessage {
-  content: IDecryptedMessageContent;
-  txid: string;
-  chatKey?: PublicKey;
-}
 export type chatProps = {
-  onAddPendingMessage?: (message: IPendingMessage) => void;
+  onAddPendingMessage?: (message: IMessageWithPending) => void;
   chatKey?: PublicKey;
   scrollRef?: any;
 };
@@ -49,6 +44,7 @@ export function Chatbox({
   const [error, setError] = useState<Error>();
   const { handleErrors } = useErrorHandler();
   const { info: chat } = useChat(chatKey);
+  const { info: profile } = useWalletProfile();
   const balance = useOwnedAmount(chat?.postPermissionMintOrCollection);
   const mint = useMint(chat?.postPermissionMintOrCollection);
   const postAmount =
@@ -67,7 +63,7 @@ export function Chatbox({
     if (delegateWalletKeypair) {
       if (chatSdk && chatKey) {
         setInput("");
-        const { instructions, signers } = await chatSdk.sendMessageInstructions(
+        const { instructions, signers, output: { messageId } } = await chatSdk.sendMessageInstructions(
           {
             delegateWalletKeypair,
             payer: delegateWalletKeypair.publicKey,
@@ -93,8 +89,19 @@ export function Chatbox({
 
         if (onAddPendingMessage) {
           const { fileAttachments, ...rest } = message;
+          const content = { ...rest, decryptedAttachments: fileAttachments };
 
-          onAddPendingMessage({ content: { ...rest, decryptedAttachments: fileAttachments }, txid, chatKey });
+          onAddPendingMessage({
+            profileKey: profile!.publicKey,
+            id: messageId,
+            content: JSON.stringify(content),
+            txid,
+            chatKey,
+            decodedMessage: content,
+            encryptedSymmetricKey: "",
+            nextId: null,
+            readPermissionAmount: chat!.defaultReadPermissionAmount
+          });
         }
         
         accelerator?.sendTransaction(cluster as Cluster, tx);

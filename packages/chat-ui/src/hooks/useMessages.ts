@@ -56,7 +56,7 @@ export function useMessages(chat: PublicKey | undefined, accelerated: boolean = 
   const { chatSdk } = useChatSdk();
   const { transactions, ...rest } = useTransactions({
     address: chat,
-    numTransactions: 50,
+    numTransactions: 25,
     subscribe: true,
     accelerated
   });

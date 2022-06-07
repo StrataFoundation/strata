@@ -1,23 +1,15 @@
-import { useMessages } from "../hooks/useMessages";
-import { Flex, usePrevious, VStack } from "@chakra-ui/react";
-import { PublicKey } from "@solana/web3.js";
+import { VStack } from "@chakra-ui/react";
+import { IMessage } from "@strata-foundation/chat";
 import React, { useEffect } from "react";
 import { Message } from "./Message";
-import { IMessage } from "@strata-foundation/chat";
-import { IPendingMessage } from "./Chatbox";
-import { useWalletProfile } from "../hooks";
 
 export function ChatMessages({
   scrollRef,
   messages,
-  pendingMessages,
 }: {
   scrollRef: any;
   messages?: IMessage[];
-  pendingMessages?: IPendingMessage[];
 }) {
-  const { info: profile } = useWalletProfile();
-
   useEffect(() => {
     if (messages) scrollRef.current.scrollIntoView();
   }, [messages]);
@@ -31,16 +23,16 @@ export function ChatMessages({
       h="full"
       p="10px"
     >
-      {messages?.map((msg) => (
-        <Message key={msg?.id} {...msg} />
-      ))}
-      {pendingMessages?.map((msg, index) => (
+      {messages?.map((msg, index) => (
         <Message
-          key={msg?.txid + index}
-          profileKey={profile?.publicKey}
-          txid={msg.txid}
-          decodedMessage={msg.content}
-          pending
+          key={msg?.id}
+          {...msg}
+          showUser={
+            !(
+              messages[index - 1] &&
+              messages[index - 1].profileKey.equals(msg.profileKey)
+            )
+          }
         />
       ))}
       <div ref={scrollRef}></div>
