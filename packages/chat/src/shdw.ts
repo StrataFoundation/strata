@@ -4,8 +4,12 @@ import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
 import { ShdwDrive, StorageAccount } from "@shadow-drive/sdk";
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
-import { toNumber } from "@strata-foundation/spl-token-bonding";
-import { getMintInfo, sendAndConfirmWithRetry, truthy } from "@strata-foundation/spl-utils";
+import {
+  toNumber,
+  getMintInfo,
+  sendAndConfirmWithRetry,
+  truthy,
+} from "@strata-foundation/spl-utils";
 import BN from "bn.js";
 import Decimal from "decimal.js";
 

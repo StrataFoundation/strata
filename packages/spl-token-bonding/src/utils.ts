@@ -1,6 +1,10 @@
-import { MintInfo, u64 } from "@solana/spl-token";
 import BN from "bn.js";
-import { toBN as toBNUtils } from "@strata-foundation/spl-utils";
+import {
+  toBN as toBNUtils,
+  toNumber as toNumberUtils,
+  amountAsNum as amountAsNumUtils,
+  supplyAsNum as supplyAsNumUtils,
+} from "@strata-foundation/spl-utils";
 
 /**
  * Convert a number to a string avoiding scientific notation
@@ -51,25 +55,13 @@ export function toU128(num: number | BN): BN {
   }
 }
 
-export function toNumber(numberOrBn: BN | number, mint: MintInfo): number {
-  if (BN.isBN(numberOrBn)) {
-    return amountAsNum(numberOrBn, mint);
-  } else {
-    return numberOrBn;
-  }
-}
+export const toNumber = toNumberUtils;
 
-export const toBN = toBNUtils
+export const toBN = toBNUtils;
 
-export function amountAsNum(amount: u64, mint: MintInfo): number {
-  const decimals = new u64(Math.pow(10, mint.decimals).toString());
-  const decimal = amount.mod(decimals).toNumber() / decimals.toNumber();
-  return amount.div(decimals).toNumber() + decimal;
-}
+export const amountAsNum = amountAsNumUtils;
 
-export function supplyAsNum(mint: MintInfo): number {
-  return amountAsNum(mint.supply, mint);
-}
+export const supplyAsNum = supplyAsNumUtils;
 
 export function asDecimal(percent: number): number {
   return percent / 4294967295; // uint32 max value
