@@ -1321,19 +1321,13 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
 function tokenAccessPermissions(readPermissionMint: PublicKey, threshold: BN, chain: string) {
   return {
-    method: "getTokenAccountsByOwner",
+    method: "balanceOfToken",
     params: [
-      ":userAddress",
-      {
-        programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
-      },
-      {
-        encoding: "jsonParsed",
-      },
+      readPermissionMint.toBase58()
     ],
     chain,
     returnValueTest: {
-      key: `$[?(@.account.data.parsed.info.mint == "${readPermissionMint.toBase58()}")].account.data.parsed.info.tokenAmount.amount`,
+      key: `$.amount`,
       comparator: ">=",
       value: threshold.toString(10),
     },
