@@ -30,7 +30,6 @@ export const TokenOffering = ({
     childEntangler, 
     parentEntangler 
   } = useTokenSwapFromId(id);
-
   const {
     execute: onSubmit,
     loading: submitting,
@@ -89,7 +88,7 @@ export const TokenOffering = ({
     onTradingMintsChange: () => {},
     swap: (args) => {},
     onConnectWallet: onConnectWallet,
-    tokenBondingKey: tokenBonding?.publicKey,
+    id,
   });
 
   return (

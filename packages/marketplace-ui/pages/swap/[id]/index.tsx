@@ -3,7 +3,7 @@ import { Box, Center, Container, Heading, Spinner } from "@chakra-ui/react";
 import {
   Swap,
   usePublicKey,
-  useTokenBondingFromMint,
+  useTokenSwapFromId,
 } from "@strata-foundation/react";
 import {
   GetServerSideProps,
@@ -24,10 +24,13 @@ export const SwapDisplay: NextPage = ({
   description,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const router = useRouter();
-  const { mintKey: mintKeyRaw } = router.query;
-  const mintKey = usePublicKey(mintKeyRaw as string);
-  const { info: tokenBonding, loading } = useTokenBondingFromMint(mintKey);
-
+  const { id: idRaw } = router.query;
+  const id = usePublicKey(idRaw as string);
+  const { 
+    tokenBonding, 
+    parentEntangler,
+    loading,
+  } = useTokenSwapFromId(id);
   return (
     <Box
       w="full"
@@ -40,7 +43,7 @@ export const SwapDisplay: NextPage = ({
         title={`Strata Swap | ${name}`}
         description={description}
         image={image}
-        url={`${SITE_URL}/bounty/${mintKey}/`}
+        url={`${SITE_URL}/bounty/${ parentEntangler ? parentEntangler.parentMint.toString() : tokenBonding?.targetMint.toString()}/`}
       />
       <Box padding="54px" backgroundColor="black.500" />
       <Container mt="-72px" justify="stretch" maxW="460px">
@@ -54,7 +57,7 @@ export const SwapDisplay: NextPage = ({
             </Center>
           )}
           {!loading && tokenBonding && (
-            <Swap tokenBondingKey={tokenBonding!.publicKey} />
+            <Swap id={id} />
           )}
         </Box>
       </Container>

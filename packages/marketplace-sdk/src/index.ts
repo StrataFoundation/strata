@@ -19,6 +19,7 @@ import {
   toBN,
 } from "@strata-foundation/spl-token-bonding";
 import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
+import { FungibleEntangler } from "@strata-foundation/fungible-entangler";
 import {
   Attribute,
   BigInstructionResult,
@@ -302,13 +303,15 @@ export class MarketplaceSdk {
   static async init(
     provider: Provider,
     splTokenBondingProgramId: PublicKey = SplTokenBonding.ID,
-    splTokenCollectiveProgramId: PublicKey = SplTokenCollective.ID
+    splTokenCollectiveProgramId: PublicKey = SplTokenCollective.ID,
+    fungibleEntanglerProgramId: PublicKey = FungibleEntangler.ID,
   ): Promise<MarketplaceSdk> {
     return new this(
       provider,
       await SplTokenBonding.init(provider, splTokenBondingProgramId),
       await SplTokenCollective.init(provider, splTokenCollectiveProgramId),
-      await SplTokenMetadata.init(provider)
+      await FungibleEntangler.init(provider, fungibleEntanglerProgramId),
+      await SplTokenMetadata.init(provider),
     );
   }
 
@@ -316,6 +319,7 @@ export class MarketplaceSdk {
     readonly provider: Provider,
     readonly tokenBondingSdk: SplTokenBonding,
     readonly tokenCollectiveSdk: SplTokenCollective,
+    readonly fungibleEntanglerSdk: FungibleEntangler,
     readonly tokenMetadataSdk: SplTokenMetadata
   ) {}
 

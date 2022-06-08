@@ -2,16 +2,30 @@ import { PublicKey } from "@solana/web3.js";
 import { useSwapDriver } from "../../hooks/useSwapDriver";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { useErrorHandler, useSwap, useTokenBonding } from "../../hooks";
+import { useErrorHandler, useSwap, useStrataSdks, useTokenSwapFromId, useMint } from "../../hooks";
 import { Notification } from "../Notification";
 import { SwapForm } from "./SwapForm";
+import { BN } from "@project-serum/anchor";
+import { toNumber } from "@strata-foundation/spl-token-bonding";
+import { InstructionResult } from "@strata-foundation/spl-utils";
 
 const identity = () => {};
-export const Swap = ({ tokenBondingKey }: { tokenBondingKey: PublicKey }) => {
+export const Swap = ({ id }: { id: PublicKey }) => {
+  const { fungibleEntanglerSdk } = useStrataSdks()
+
   const { loading, error, execute } = useSwap();
   const { handleErrors } = useErrorHandler();
   handleErrors(error);
-  const { info: tokenBonding } = useTokenBonding(tokenBondingKey);
+
+  const { 
+    tokenBonding, 
+    numRemaining, 
+    childEntangler, 
+    parentEntangler,
+  } = useTokenSwapFromId(id);
+
+  const childMint = useMint(childEntangler?.childMint);
+
   const [tradingMints, setTradingMints] = useState<{
     base?: PublicKey;
     target?: PublicKey;
@@ -33,7 +47,39 @@ export const Swap = ({ tokenBondingKey }: { tokenBondingKey: PublicKey }) => {
     tradingMints,
     onTradingMintsChange: setTradingMints,
     swap: (args) =>
-      execute(args).then(({ targetAmount }) => {
+      execute({
+        async postInstructions({isLast, amount, isBuy}: {isLast: boolean, amount: BN | undefined, isBuy: boolean}): Promise<InstructionResult<null>> {
+          if (!isLast || !childEntangler || !parentEntangler) {
+            return {
+              instructions: [],
+              signers: [],
+              output: null,
+            }
+          }
+          let numAmount = toNumber(amount!, childMint)
+          let instr;
+          if (isBuy) {
+            instr = await fungibleEntanglerSdk?.swapChildForParentInstructions({
+              parentEntangler: parentEntangler.publicKey,
+              childEntangler: childEntangler.publicKey,
+              amount: numAmount,
+            })
+          } else {
+            instr = await fungibleEntanglerSdk?.swapParentForChildInstructions({
+              parentEntangler: parentEntangler.publicKey,
+              childEntangler: childEntangler.publicKey,
+              amount: numAmount,
+            })
+          }
+          console.log(instr);
+          return instr ? instr : {
+            instructions: [],
+            signers: [],
+            output: null,
+          }
+        },
+        ...args
+      }).then(({ targetAmount }) => {
         toast.custom((t) => (
           <Notification
             show={t.visible}
@@ -47,7 +93,7 @@ export const Swap = ({ tokenBondingKey }: { tokenBondingKey: PublicKey }) => {
         ));
       }).catch(console.error),
     onConnectWallet: identity,
-    tokenBondingKey: tokenBondingKey,
+    id,
   });
 
   return (

@@ -499,6 +499,12 @@ export interface ISwapArgs {
     amount: BN | undefined;
     desiredTargetAmount?: BN | number;
   }) => Promise<InstructionResult<null>>;
+  /** Optionally inject extra instructions after each transaction */
+  postInstructions?: (args: {
+    isBuy: boolean;
+    amount: number | BN | undefined;
+    isLast: boolean; // is this the last swap transaction
+  }) => Promise<InstructionResult<null>>;
 
   /**
    * Number of times to retry the checks for a change in balance. Default: 5
@@ -1845,6 +1851,12 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         signers: [],
         output: null,
       }),
+    postInstructions = () =>
+      Promise.resolve({
+        instructions: [],
+        signers: [],
+        output: null,
+      }),
   }: ISwapArgs): Promise<{ targetAmount: number }> {
     const hierarchyFromTarget = await this.getBondingHierarchy(
       (
@@ -1955,10 +1967,17 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           isBuy,
         });
 
+      const { instructions: postInstrs, signers: postSigners } = 
+        await postInstructions({
+          isLast: isLastHop,
+          amount: expectedOutputAmount,
+          isBuy,
+        })
+
       try {
         await this.sendInstructions(
-          [...instructions, ...extraInstrs],
-          [...signers, ...extaSigners],
+          [...instructions, ...extraInstrs, ...postInstrs],
+          [...signers, ...extaSigners, ...postSigners],
           payer
         );
       } catch (e: any) {

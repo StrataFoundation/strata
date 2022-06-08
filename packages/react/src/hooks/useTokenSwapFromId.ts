@@ -1,4 +1,5 @@
 import { PublicKey } from "@solana/web3.js";
+import { BN } from "@project-serum/anchor";
 import { 
   useTokenSwapFromFungibleEntangler, 
   ITokenSwap, 
@@ -15,19 +16,23 @@ export function useTokenSwapFromId(
 
   // try and load a token bonding curve as if the id is a mint
   const { info: tokenBonding, loading: bondingLoading } = useTokenBondingFromMint(id, 0);
-  const { info: supplyAcc } = useTokenAccount(
-    tokenBonding?.baseStorage
-  );
-  const supplyMint = useMint(tokenBonding?.baseMint);
+  const targetMintAcct = useMint(tokenBonding?.targetMint);
 
   // try and load the fungible entangler
   const entanglerTokenSwap = useTokenSwapFromFungibleEntangler(id);
 
 
   if (tokenBonding) {
+    const targetMintSupply = targetMintAcct && toNumber(targetMintAcct.supply, targetMintAcct);
+    const mintCap = tokenBonding && targetMintAcct &&
+      (tokenBonding.mintCap as BN | undefined) &&
+      toNumber(tokenBonding.mintCap as BN, targetMintAcct);
+    const numRemaining = typeof targetMintSupply != "undefined" && !!mintCap
+        ? mintCap - targetMintSupply
+        : undefined;
     return {
       tokenBonding,
-      numRemaining: supplyAcc && supplyMint && toNumber(supplyAcc?.amount, supplyMint),
+      numRemaining,
       loading: bondingLoading,
     }
   }

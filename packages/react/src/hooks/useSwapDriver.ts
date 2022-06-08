@@ -26,13 +26,13 @@ import {
   useOwnedAmount,
   useProvider,
   useSolanaUnixTime,
-  useTokenBonding,
+  useTokenSwapFromId,
   useTokenMetadata,
 } from "./";
 
 export interface ISwapDriverArgs
   extends Pick<ISwapFormProps, "onConnectWallet" | "extraTransactionInfo"> {
-  tokenBondingKey: PublicKey | undefined;
+  id: PublicKey | undefined;
   tradingMints: { base?: PublicKey; target?: PublicKey };
   onTradingMintsChange(mints: { base: PublicKey; target: PublicKey }): void;
   swap(args: ISwapArgs & { ticker: string }): void;
@@ -96,7 +96,7 @@ export async function getMissingSpace(
 
 export const useSwapDriver = ({
   onConnectWallet,
-  tokenBondingKey,
+  id,
   tradingMints,
   onTradingMintsChange,
   swap,
@@ -107,8 +107,13 @@ export const useSwapDriver = ({
   const { provider } = useProvider();
   const [internalError, setInternalError] = useState<Error | undefined>();
   const [spendCap, setSpendCap] = useState<number>(0);
-  const { info: tokenBonding, loading: tokenBondingLoading } =
-    useTokenBonding(tokenBondingKey);
+  const { 
+    tokenBonding, 
+    numRemaining, 
+    childEntangler, 
+    parentEntangler,
+    loading: tokenSwapLoading,
+  } = useTokenSwapFromId(id);
   const { base: baseMint, target: targetMint } = tradingMints;
 
   const {
@@ -144,7 +149,7 @@ export const useSwapDriver = ({
 
   const allMints = React.useMemo(
     () =>
-      [tokenBonding?.targetMint, ...getMints(pricing?.hierarchy)].filter(
+      [tokenBonding?.targetMint, ...getMints(pricing?.hierarchy), parentEntangler?.parentMint].filter(
         truthy
       ),
     [tokenBonding, pricing]
@@ -200,7 +205,6 @@ export const useSwapDriver = ({
     (targetBonding.mintCap as BN | undefined) &&
     toNumber(targetBonding.mintCap as BN, targetMintAcct);
 
-  const { numRemaining } = useCapInfo(tokenBondingKey);
 
   const handleSubmit = async (values: ISwapFormValues) => {
     if (values.topAmount) {
@@ -245,7 +249,7 @@ export const useSwapDriver = ({
     loading:
       targetMetaLoading ||
       baseMetaLoading ||
-      tokenBondingLoading ||
+      tokenSwapLoading ||
       !tokenBonding ||
       !baseMeta,
     onConnectWallet,

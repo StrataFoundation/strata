@@ -4,6 +4,7 @@ import { GetServerSideProps } from "next";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
 import { DEFAULT_ENDPOINT } from "../components/Wallet";
 import { SplTokenMetadata } from "@strata-foundation/spl-utils";
+import { FungibleEntangler } from "@strata-foundation/fungible-entangler";
 import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { getClusterAndEndpoint } from "../hooks";
 
@@ -20,7 +21,21 @@ export const mintMetadataServerSideProps: GetServerSideProps = async (
     new NodeWallet(Keypair.generate()),
     {}
   );
-  const mint = new PublicKey(context.params?.mintKey as string);
+  let mintKeyStr;
+  if (context.params?.mintKey) {
+    mintKeyStr = context.params?.mintKey;
+  } else if (context.params?.id) {
+    mintKeyStr = context.params?.id;
+    const id = new PublicKey(mintKeyStr as string);
+    const fungibleEntanglerSdk = await FungibleEntangler.init(provider);
+    let childEntangler = await fungibleEntanglerSdk.getChildEntangler(id);
+    if (childEntangler) {
+      const parentEntangler = await fungibleEntanglerSdk.getParentEntangler(childEntangler.parentEntangler);
+      mintKeyStr = parentEntangler.parentMint.toString()
+    }
+  }
+  const mint = new PublicKey(mintKeyStr as string);
+
   const tokenMetadataSdk = await SplTokenMetadata.init(provider);
   const metadataAcc = await tokenMetadataSdk.getMetadata(
     await Metadata.getPDA(mint)

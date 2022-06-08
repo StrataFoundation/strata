@@ -11,7 +11,12 @@ export type SwapArgs = {
     tokenBonding: ITokenBonding;
     isBuy: boolean;
     amount: BN | undefined;
-  }) => Promise<InstructionResult<null>>;
+  }) => Promise<InstructionResult<null>>; // instructions executed before swap instructions
+  postInstructions?: (args: {
+    isBuy: boolean;
+    amount: number | BN | undefined;
+    isLast: boolean; // is this the last swap transaction
+  }) => Promise<InstructionResult<null>>; // instructions executed after swap instructions
 };
 
 export const useSwap = (

@@ -138,7 +138,7 @@ export const LbcDisplay: NextPage = ({
                       <VStack align="stretch" spacing={8}>
                         <LbcInfo
                           price={price}
-                          tokenBondingKey={tokenBonding.publicKey}
+                          id={id}
                           useTokenOfferingCurve
                         />
                         <TokenOffering
