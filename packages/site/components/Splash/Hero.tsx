@@ -86,19 +86,18 @@ export const Hero = () => {
               <Link
                 href="https://solana.com/news/riptide-hackathon-winners-solana#daos-track"
                 isExternal
+                w="auto"
                 _hover={{
                   cursor: "pointer",
                   opacity: "0.7",
                 }}
               >
-                <Box w="180px" textAlign="center" mb={2}>
-                  <ChakraImage
-                    src="/riptideBanner.png"
-                    alt="riptide hackathon 1st place winner"
-                    h="46px"
-                  />
-                  <Text fontSize="10px">DAOs Track</Text>
-                </Box>
+                <ChakraImage
+                  mb={4}
+                  src="/riptideBanner.png"
+                  alt="riptide hackathon 1st place winner"
+                  height="60px"
+                />
               </Link>
               The fastest way to
               <br />
