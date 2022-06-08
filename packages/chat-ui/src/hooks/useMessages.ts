@@ -18,8 +18,6 @@ interface IUseMessages {
   fetchNew(num: number): void;
 }
 
-const seen: Record<string, IMessageWithPending[]> = {};
-
 async function getMessages(
   chatSdk?: ChatSdk,
   txs?: {
@@ -28,31 +26,54 @@ async function getMessages(
     signature: string;
     pending?: boolean;
     blockTime: number | null;
-  }[]
+  }[],
+  prevMessages?: IMessageWithPending[]
 ): Promise<IMessageWithPending[]> {
   if (chatSdk && txs) {
-    return (
-      await Promise.all(
-        txs.map(
-          async ({ signature: sig, transaction, pending, meta, blockTime }) => {
-            if (seen[sig + Boolean(pending).toString()]) {
-              return seen[sig + Boolean(pending).toString()];
-            }
-            const found = (
-              await chatSdk.getMessagesFromInflatedTx({
-                transaction,
-                txid: sig,
-                meta,
-                blockTime,
-              })
-            ).map((f) => ({ ...f, pending }));
-            seen[sig + Boolean(pending).toString()] = found;
+    const completedMessages = (prevMessages || []).filter(msg => !msg.pending);
+    const completedTxs = new Set(
+      Array.from((completedMessages || []).map((msg) => msg.txids).flat())
+    );
+    const newTxs = txs.filter((tx) => !completedTxs.has(tx.signature));
+    if (newTxs.length > 0) {
+      const newParts = (
+        await Promise.all(
+          newTxs.map(
+            async ({
+              signature: sig,
+              transaction,
+              pending,
+              meta,
+              blockTime,
+            }) => {
+              const found = (
+                await chatSdk.getMessagePartsFromInflatedTx({
+                  transaction,
+                  txid: sig,
+                  meta,
+                  blockTime,
+                })
+              ).map((f) => ({ ...f, pending }));
 
-            return found;
-          }
+              return found;
+            }
+          )
         )
-      )
-    ).flat();
+      ).flat();
+      return [
+        ...(completedMessages || []),
+        ...(await chatSdk.getDecodedMessagesFromParts(newParts)),
+      ]
+        .sort((a, b) => a.startBlockTime - b.startBlockTime)
+        .map(({ parts, ...rest }) => ({
+          ...rest,
+          parts,
+          // @ts-ignore
+          pending: parts.some((p) => p.pending),
+        }));
+    } else {
+      return prevMessages || [];
+    }
   }
 
   return [];
@@ -69,10 +90,10 @@ export function useMessages(chat: PublicKey | undefined, accelerated: boolean = 
   // For a stable messages array that doesn't go undefined when we do the next
   // useAsync fetch
   const [messagesStable, setMessagesStable] = useState<IMessageWithPending[]>();
-  const { result: messages, loading, error } = useAsync(getMessages, [chatSdk, transactions]);
+  const { result: messages, loading, error } = useAsync(getMessages, [chatSdk, transactions, messagesStable]);
   useEffect(() => {
-    if (messages) {
-      setMessagesStable([...messages].reverse())
+    if (messages && messagesStable != messages) {
+      setMessagesStable(messages)
     }
   }, [messages])
   return {

@@ -46,7 +46,7 @@ pub mod chat {
 
   pub fn send_token_message_v0(
     ctx: Context<SendTokenMessageV0>,
-    args: MessageV0,
+    args: MessagePartV0,
   ) -> Result<()> {
     instructions::send_token_message_v0::handler(ctx, args)
   }

@@ -21,23 +21,23 @@ export default function Chatroom() {
   const { handleErrors } = useErrorHandler();
   handleErrors(error)
   
-  const txWeHave = useMemo(
-    () => new Set(Array.from(messages?.map((message) => message.txid) || [])),
+  const msgWeHave = useMemo(
+    () => new Set(Array.from(messages?.map((message) => message.id) || [])),
     [messages]
   );
   const messagesWithPending = useMemo(
     () => [
       ...(messages || []),
-      ...pendingMessages.filter((p) => !txWeHave.has(p.txid)),
+      ...pendingMessages.filter((p) => !msgWeHave.has(p.id)),
     ],
-    [txWeHave, messages, pendingMessages]
+    [msgWeHave, messages, pendingMessages]
   );
 
   useEffect(() => {
     setPendingMessages((pendingMessages) =>
-      pendingMessages.filter((p) => !txWeHave.has(p.txid))
+      pendingMessages.filter((p) => !msgWeHave.has(p.id))
     );
-  }, [txWeHave]);
+  }, [msgWeHave]);
 
   return (
     <Container>

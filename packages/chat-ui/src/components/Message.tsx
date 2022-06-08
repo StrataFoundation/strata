@@ -48,7 +48,7 @@ export function Message({
   profileKey,
   readPermissionAmount,
   chatKey,
-  blockTime,
+  startBlockTime,
   showUser = true,
   pending = false,
 }: Partial<IMessage> & { pending?: boolean; showUser: boolean }) {
@@ -63,12 +63,12 @@ export function Message({
   const readMintAcc = useMint(readMint);
   const muted = useColorModeValue("gray.500", "gray.400");
   const time = useMemo(() => {
-    if (blockTime) {
+    if (startBlockTime) {
       const t = new Date(0);
-      t.setUTCSeconds(blockTime);
+      t.setUTCSeconds(startBlockTime);
       return t;
     }
-  }, [blockTime]);
+  }, [startBlockTime]);
   
 
   const uid = publicKey?.toBase58();

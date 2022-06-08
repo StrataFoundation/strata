@@ -7,8 +7,6 @@ use std::convert::*;
 
 #[derive(Accounts)]
 pub struct SendTokenMessageV0<'info> {
-  #[account(mut)]
-  pub payer: Signer<'info>,
   #[account(
     constraint = chat.post_permission_mint_or_collection == post_permission_mint.key()
   )]
@@ -40,17 +38,19 @@ pub struct SendTokenMessageV0<'info> {
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct MessageV0 {
-  pub id: String, // uuid
-  pub encrypted_symmetric_key: String,
+pub struct MessagePartV0 {
+  pub id: String, // uuid v4
+  // Content can be too large for a single tx... Indicate the total parts and the current part.
+  pub total_parts: u16,
+  pub current_part: u16,
   pub read_permission_amount: u64,
+  pub encrypted_symmetric_key: String,
   pub content: String,
-  pub next_id: Option<String>
 }
 
 pub fn handler(
   ctx: Context<SendTokenMessageV0>,
-  _args: MessageV0,
+  _args: MessagePartV0,
 ) -> Result<()> {
   require!(ctx.accounts.post_permission_account.amount >= ctx.accounts.chat.post_permission_amount, ErrorCode::PermissionDenied);
 

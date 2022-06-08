@@ -106,10 +106,10 @@ export abstract class AnchorSdk<IDL extends Idl> {
     command: Promise<BigInstructionResult<Output>>,
     payer: PublicKey = this.wallet.publicKey,
     finality?: Finality
-  ): Promise<Output> {
+  ): Promise<Output & { txids?: string[] }> {
     const { instructions, signers, output } = await command;
     if (instructions.length > 0) {
-      await sendMultipleInstructions(
+      const txids = await sendMultipleInstructions(
         this.errors || new Map(),
         this.provider,
         instructions,
@@ -117,7 +117,12 @@ export abstract class AnchorSdk<IDL extends Idl> {
         payer || this.wallet.publicKey,
         finality
       );
+      return {
+        ...output,
+        txids: Array.from(txids),
+      }
     }
+
     return output;
   }
 }

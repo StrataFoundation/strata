@@ -33,7 +33,9 @@ export function ChatMessages({
             !(
               messages[index - 1] &&
               messages[index - 1].profileKey.equals(msg.profileKey) &&
-              messages[index - 1].blockTime >= (msg.blockTime || (new Date().valueOf() / 1000)) - INACTIVE_TIME
+              messages[index - 1].endBlockTime >=
+                (msg.startBlockTime || new Date().valueOf() / 1000) -
+                  INACTIVE_TIME
             )
           }
         />

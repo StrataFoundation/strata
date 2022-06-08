@@ -27,11 +27,7 @@ export type chatProps = {
   scrollRef?: any;
 };
 
-export function Chatbox({
-  scrollRef,
-  chatKey,
-  onAddPendingMessage,
-}: chatProps) {
+export function Chatbox({ scrollRef, chatKey, onAddPendingMessage }: chatProps) {
   const [input, setInput] = useState("");
   const { isOpen, onToggle, onClose } = useDisclosure();
   const handleChange = (e: any) => {
@@ -52,7 +48,10 @@ export function Chatbox({
     chat?.postPermissionAmount &&
     mint &&
     toNumber(chat?.postPermissionAmount, mint);
-  const hasEnough = typeof postAmount == "undefined" || typeof balance == "undefined"|| (balance >= postAmount);
+  const hasEnough =
+    typeof postAmount == "undefined" ||
+    typeof balance == "undefined" ||
+    balance >= postAmount;
   const { cluster } = useEndpoint();
   const blockTime = useSolanaUnixTime();
 
@@ -62,142 +61,161 @@ export function Chatbox({
   and set chat state to "", then scroll to latst message
   */
   const sendMessage = async (message: ISendMessageContent) => {
-    if (delegateWalletKeypair) {
-      if (chatSdk && chatKey) {
-        setInput("");
-        const { instructions, signers, output: { messageId } } = await chatSdk.sendMessageInstructions(
-          {
+    try {
+      if (delegateWalletKeypair) {
+        if (chatSdk && chatKey) {
+          setInput("");
+          const {
+            instructions: instructionGroups,
+            signers: signerGroups,
+            output: { messageId },
+          } = await chatSdk.sendMessageInstructions({
             delegateWalletKeypair,
             payer: delegateWalletKeypair.publicKey,
             chat: chatKey,
             message,
             encrypted: cluster !== "localnet",
-          }
-        );
-        let tx = new Transaction();
-        tx.recentBlockhash = (
-          await chatSdk.provider.connection.getRecentBlockhash()
-        ).blockhash;
-        tx.feePayer = delegateWalletKeypair.publicKey;
-        tx.add(...instructions);
-        tx.sign(...signers);
-        const rawTx = tx.serialize();
-        const txid = await chatSdk.provider.connection.sendRawTransaction(
-          rawTx,
-          {
-            skipPreflight: true,
-          }
-        );
-
-        if (onAddPendingMessage) {
-          const { fileAttachments, ...rest } = message;
-          const content = { ...rest, decryptedAttachments: fileAttachments };
-
-          onAddPendingMessage({
-            profileKey: profile!.publicKey,
-            id: messageId,
-            content: JSON.stringify(content),
-            txid,
-            chatKey,
-            decodedMessage: content,
-            encryptedSymmetricKey: "",
-            nextId: null,
-            readPermissionAmount: chat!.defaultReadPermissionAmount,
-            blockTime: blockTime!
           });
-        }
-        
-        accelerator?.sendTransaction(cluster as Cluster, tx);
-        
-        scrollRef.current.scrollIntoView({ behavior: "smooth" });
+          const txsAndIds = await Promise.all(
+            instructionGroups.map(async (instructions, index) => {
+              const tx = new Transaction();
+              tx.recentBlockhash = (
+                await chatSdk.provider.connection.getRecentBlockhash()
+              ).blockhash;
+              tx.feePayer = delegateWalletKeypair.publicKey;
+              tx.add(...instructions);
+              tx.sign(...signerGroups[index]);
+              const rawTx = tx.serialize();
+              accelerator?.sendTransaction(cluster as Cluster, tx);
+              const txid = await chatSdk.provider.connection.sendRawTransaction(
+                rawTx,
+                {
+                  skipPreflight: true,
+                }
+              );
+              return {
+                txid,
+                rawTx,
+              };
+            })
+          );
 
-        await sendAndConfirmWithRetry(
-          chatSdk.provider.connection,
-          rawTx,
-          {
-            skipPreflight: true,
-          },
-          "confirmed"
-        );
+          if (onAddPendingMessage) {
+            const { fileAttachments, ...rest } = message;
+            const content = { ...rest, decryptedAttachments: fileAttachments };
+
+            onAddPendingMessage({
+              profileKey: profile!.publicKey,
+              id: messageId,
+              content: JSON.stringify(content),
+              txids: txsAndIds.map(({ txid }) => txid),
+              chatKey,
+              decodedMessage: content,
+              encryptedSymmetricKey: "",
+              readPermissionAmount: chat!.defaultReadPermissionAmount,
+              startBlockTime: blockTime!,
+              endBlockTime: blockTime!,
+              parts: [],
+              pending: true
+            });
+          }
+
+          scrollRef.current.scrollIntoView({ behavior: "smooth" });
+
+          await Promise.all(
+            txsAndIds.map(({ rawTx }) =>
+              sendAndConfirmWithRetry(
+                chatSdk.provider.connection,
+                rawTx,
+                {
+                  skipPreflight: true,
+                },
+                "confirmed"
+              )
+            )
+          );
+        }
       }
+    } catch (e: any) {
+      setError(e);
     }
   };
   return hasEnough ? (
-      <>
-        <Flex direction="row" position="sticky" bottom={0}>
-          <HStack p="10px" spacing={2} w="full" align="stretch">
-            <Input
-              onKeyPress={(ev) => {
-                if (ev.key === "Enter") {
-                  if (ev.shiftKey) {
-                    ev.preventDefault();
-                    setInput((i) => `${i}\n`);
-                  } else {
-                    ev.preventDefault();
-                    sendMessage({
-                      type: MessageType.Text,
-                      text: input,
-                    });
-                  }
+    <>
+      <Flex direction="row" position="sticky" bottom={0}>
+        <HStack p="10px" spacing={2} w="full" align="stretch">
+          <Input
+            onKeyPress={(ev) => {
+              if (ev.key === "Enter") {
+                if (ev.shiftKey) {
+                  ev.preventDefault();
+                  setInput((i) => `${i}\n`);
+                } else {
+                  ev.preventDefault();
+                  sendMessage({
+                    type: MessageType.Text,
+                    text: input,
+                  });
                 }
-              }}
-              size="lg"
-              value={input}
-              onChange={handleChange}
-              placeholder="Type Message"
-            />
-            <FileAttachment
-              onUpload={async (file) => {
-                await sendMessage({
-                  type: MessageType.Image,
-                  fileAttachments: [file],
-                });
-              }}
-            />
-            <IconButton
-              size="lg"
-              aria-label="Select GIF"
-              variant="outline"
-              onClick={onToggle}
-              icon={<Icon w="24px" h="24px" as={AiOutlineGif} />}
-            />
-            <Button
-              colorScheme="primary"
-              variant="outline"
-              alignSelf="flex-end"
-              isDisabled={!hasEnough || !input}
-              size="lg"
-              onClick={() =>
-                sendMessage({
-                  type: MessageType.Text,
-                  text: input,
-                })
               }
-            >
-              <Icon as={AiOutlineSend} />
-            </Button>
-          </HStack>
-        </Flex>
-        <Modal
-          isOpen={isOpen}
-          onClose={onClose}
-          size="2xl"
-          isCentered
-          trapFocus={true}
-        >
-          <ModalContent borderRadius="xl" shadow="xl">
-            <ModalHeader>Select GIF</ModalHeader>
-            <ModalBody>
-              <GifSearch
-                onSelect={(gifyId) => {
-                  onClose();
-                  sendMessage({ type: MessageType.Gify, gifyId });
-                }}
-              />
-            </ModalBody>
-          </ModalContent>
-        </Modal>
-      </>
+            }}
+            size="lg"
+            value={input}
+            onChange={handleChange}
+            placeholder="Type Message"
+          />
+          <FileAttachment
+            onUpload={async (file) => {
+              await sendMessage({
+                type: MessageType.Image,
+                fileAttachments: [file],
+              });
+            }}
+          />
+          <IconButton
+            size="lg"
+            aria-label="Select GIF"
+            variant="outline"
+            onClick={onToggle}
+            icon={<Icon w="24px" h="24px" as={AiOutlineGif} />}
+          />
+          <Button
+            colorScheme="primary"
+            variant="outline"
+            alignSelf="flex-end"
+            isDisabled={!hasEnough || !input}
+            size="lg"
+            onClick={() =>
+              sendMessage({
+                type: MessageType.Text,
+                text: input,
+              })
+            }
+          >
+            <Icon as={AiOutlineSend} />
+          </Button>
+        </HStack>
+      </Flex>
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        size="2xl"
+        isCentered
+        trapFocus={true}
+      >
+        <ModalContent borderRadius="xl" shadow="xl">
+          <ModalHeader>Select GIF</ModalHeader>
+          <ModalBody>
+            <GifSearch
+              onSelect={(gifyId) => {
+                onClose();
+                sendMessage({ type: MessageType.Gify, gifyId });
+              }}
+            />
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+    </>
   ) : (
     <Flex justify="center" mb="6px">
       <BuyMoreButton mint={chat?.postPermissionMintOrCollection} />

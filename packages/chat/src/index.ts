@@ -30,6 +30,8 @@ import { v4 as uuid } from "uuid";
 import { ChatIDL, ChatV0, NamespacesV0, PostAction, ProfileV0 } from "./generated/chat";
 import { uploadFile } from "./shdw";
 
+const MESSAGE_MAX_CHARACTERS = 103;
+
 export * from "./generated/chat";
 
 const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
@@ -188,14 +190,31 @@ export interface IProfile extends ProfileV0 {
   publicKey: PublicKey;
 }
 
-type MessageV0 = IdlTypes<ChatIDL>["MessageV0"];
-export interface IMessage extends MessageV0 {
+type MessagePartV0 = IdlTypes<ChatIDL>["MessagePartV0"];
+export interface IMessagePart extends MessagePartV0 {
   txid: string;
   blockTime: number;
-  /** Decoded message, if permissions were enough to decode it */
-  decodedMessage?: IDecryptedMessageContent;
   profileKey: PublicKey;
   chatKey: PublicKey;
+}
+
+export interface IMessage {
+  id: string;
+  txids: string[];
+  startBlockTime: number;
+  endBlockTime: number;
+  readPermissionAmount: BN;
+
+  encryptedSymmetricKey: string;
+
+  content: string;
+  /** Decoded message, if permissions were enough to decode it */
+  decodedMessage?: IDecryptedMessageContent;
+
+  profileKey: PublicKey;
+  chatKey: PublicKey;
+
+  parts: IMessagePart[]
 }
 
 export interface InitializeChatArgs {
@@ -440,17 +459,134 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     return this.getAccount(profileKey, this.profileDecoder);
   }
 
-  async getMessagesFromInflatedTx({
+  async getDecodedMessagesFromParts(
+    parts: IMessagePart[],
+    ignorePartial: boolean = true
+  ): Promise<IMessage[]> {
+    const partsById = parts.reduce((acc, part) => {
+      acc[part.id] = acc[part.id] || [];
+      acc[part.id].push(part);
+      return acc;
+    }, {} as Record<string, IMessagePart[]>);
+
+    const messages = await Promise.all(
+      Object.values(partsById).map((parts) =>
+        this.getDecodedMessageFromParts(parts, ignorePartial)
+      )
+    );
+
+    return messages
+      .filter(truthy)
+      .sort((a, b) => a.startBlockTime - b.startBlockTime);
+  }
+
+  async getDecodedMessageFromParts(
+    parts: IMessagePart[],
+    ignorePartial: boolean = true
+  ): Promise<IMessage | undefined> {
+    if (ignorePartial && parts.length !== parts[0].totalParts) {
+      return undefined;
+    }
+
+    const content = parts
+      .sort((a, b) => a.currentPart - b.currentPart)
+      .map((part) => part.content)
+      .join("");
+    const { readPermissionAmount, chatKey, encryptedSymmetricKey, ...rest } =
+      parts[0];
+    const chatAcc = await this.getChat(chatKey);
+    const readMint = await getMintInfo(
+      this.provider,
+      chatAcc!.readPermissionMintOrCollection
+    );
+
+    let decodedMessage;
+    if (encryptedSymmetricKey) {
+      const accessControlConditions = [
+        tokenAccessPermissions(
+          chatAcc!.readPermissionMintOrCollection,
+          toBN(readPermissionAmount, readMint),
+          this.chain
+        ),
+      ];
+
+      try {
+        const storedKey = this.symKeyStorage.getSymKey(encryptedSymmetricKey);
+        let symmetricKey: Uint8Array | undefined = storedKey
+          ? Buffer.from(storedKey, "hex")
+          : undefined;
+        if (!symmetricKey) {
+          await this.authingLit;
+          if (!this.isLitAuthed && this.wallet && this.wallet.publicKey) {
+            await this.litAuth();
+          }
+          symmetricKey = await this.litClient.getEncryptionKey({
+            solRpcConditions: accessControlConditions,
+            // Note, below we convert the encryptedSymmetricKey from a UInt8Array to a hex string.  This is because we obtained the encryptedSymmetricKey from "saveEncryptionKey" which returns a UInt8Array.  But the getEncryptionKey method expects a hex string.
+            toDecrypt: encryptedSymmetricKey,
+            chain: this.chain,
+            authSig: this.litAuthSig,
+          });
+          const symKeyStr = Buffer.from(symmetricKey!).toString("hex");
+          this.symKeyStorage.setSymKey(encryptedSymmetricKey, symKeyStr);
+        }
+
+        const blob = new Blob([
+          LitJsSdk.uint8arrayFromString(content, "base16"),
+        ]);
+        decodedMessage = JSON.parse(
+          await LitJsSdk.decryptString(blob, symmetricKey)
+        );
+
+        decodedMessage.decryptedAttachments = [];
+        decodedMessage.decryptedAttachments.push(
+          ...(await Promise.all(
+            (decodedMessage.encryptedAttachments || []).map(
+              async (encryptedAttachment: string) => {
+                const blob = await fetch(encryptedAttachment).then((r) =>
+                  r.blob()
+                );
+                const arrBuffer = await LitJsSdk.decryptFile({
+                  symmetricKey,
+                  file: blob,
+                });
+                return new Blob([arrBuffer]);
+              }
+            )
+          ))
+        );
+      } catch (e: any) {
+        console.error("Failed to decode message", e);
+      }
+    } else {
+      decodedMessage = JSON.parse(content);
+    }
+
+    return {
+      ...rest,
+      encryptedSymmetricKey,
+      startBlockTime: parts[0].blockTime,
+      endBlockTime: parts[parts.length - 1].blockTime,
+      txids: parts.map((part) => part.txid),
+      readPermissionAmount,
+      content,
+      chatKey,
+      decodedMessage,
+      parts,
+    };
+  }
+
+  async getMessagePartsFromInflatedTx({
     transaction,
     txid,
     meta,
-    blockTime
+    blockTime,
   }: {
     transaction: { message: Message; signatures: string[] };
     txid: string;
     meta?: ConfirmedTransactionMeta | null;
     blockTime?: number | null;
-  }): Promise<IMessage[]> {
+  }): Promise<IMessagePart[]> {
     if (meta?.err) {
       return [];
     }
@@ -479,85 +615,11 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       }))
       .filter(truthy);
 
-    await this.authingLit;
-    console.log(this.authingLit, this.isLitAuthed);
-    if (!this.isLitAuthed && this.wallet && this.wallet.publicKey) {
-      await this.litAuth();
-    }
-
     return Promise.all(
       decoded
         .filter((decoded) => decoded.data.name === "sendTokenMessageV0")
         .map(async (decoded) => {
           const args = decoded.data.data.args;
-          const chatAcc = await this.getChat(decoded.chat);
-          const readMint = await getMintInfo(
-            this.provider,
-            chatAcc!.readPermissionMintOrCollection
-          );
-
-          let decodedMessage;
-          if (args.encryptedSymmetricKey) {
-            const accessControlConditions = [
-              tokenAccessPermissions(
-                chatAcc!.readPermissionMintOrCollection,
-                toBN(args.readPermissionAmount, readMint),
-                this.chain
-              ),
-            ];
-
-            try {
-              const storedKey = this.symKeyStorage.getSymKey(
-                args.encryptedSymmetricKey
-              );
-              let symmetricKey: Uint8Array | undefined = storedKey
-                ? Buffer.from(storedKey, "hex")
-                : undefined;
-              if (!symmetricKey) {
-                symmetricKey = await this.litClient.getEncryptionKey({
-                  solRpcConditions: accessControlConditions,
-                  // Note, below we convert the encryptedSymmetricKey from a UInt8Array to a hex string.  This is because we obtained the encryptedSymmetricKey from "saveEncryptionKey" which returns a UInt8Array.  But the getEncryptionKey method expects a hex string.
-                  toDecrypt: args.encryptedSymmetricKey,
-                  chain: this.chain,
-                  authSig: this.litAuthSig,
-                });
-                const symKeyStr = Buffer.from(symmetricKey!).toString("hex");
-                this.symKeyStorage.setSymKey(
-                  args.encryptedSymmetricKey,
-                  symKeyStr
-                );
-              }
-
-              const blob = new Blob([
-                LitJsSdk.uint8arrayFromString(args.content, "base16"),
-              ]);
-              decodedMessage = JSON.parse(
-                await LitJsSdk.decryptString(blob, symmetricKey)
-              );
-
-              decodedMessage.decryptedAttachments = [];
-              decodedMessage.decryptedAttachments.push(
-                ...(await Promise.all(
-                  (decodedMessage.encryptedAttachments || []).map(
-                    async (encryptedAttachment: string) => {
-                      const blob = await fetch(encryptedAttachment).then((r) =>
-                        r.blob()
-                      );
-                      const arrBuffer = await LitJsSdk.decryptFile({
-                        symmetricKey,
-                        file: blob,
-                      });
-                      return new Blob([arrBuffer]);
-                    }
-                  )
-                ))
-              );
-            } catch (e: any) {
-              console.error("Failed to decode message", e);
-            }
-          } else {
-            decodedMessage = JSON.parse(args.content);
-          }
 
           return {
             ...args,
@@ -565,13 +627,12 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
             txid,
             chatKey: decoded.chat,
             profileKey: decoded.profile,
-            decodedMessage,
           };
         })
     );
   }
 
-  async getMessagesFromTx(txid: string): Promise<IMessage[]> {
+  async getMessagePartsFromTx(txid: string): Promise<IMessagePart[]> {
     const connection = this.provider.connection;
     const tx = await connection.getTransaction(txid, {
       commitment: "confirmed",
@@ -585,11 +646,11 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       return [];
     }
 
-    return this.getMessagesFromInflatedTx({
+    return this.getMessagePartsFromInflatedTx({
       transaction: tx.transaction,
       txid,
       meta: tx.meta,
-      blockTime: tx.blockTime
+      blockTime: tx.blockTime,
     });
   }
 
@@ -1109,7 +1170,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     delegateWallet,
     delegateWalletKeypair,
     encrypted = true,
-  }: SendMessageArgs): Promise<InstructionResult<{ messageId: string }>> {
+  }: SendMessageArgs): Promise<BigInstructionResult<{ messageId: string }>> {
     if (encrypted) {
       await this.authingLit;
       if (!this.isLitAuthed && this.wallet && this.wallet.publicKey) {
@@ -1232,8 +1293,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       encryptedString = JSON.stringify(message);
     }
 
-    const instructions = [];
-
     const profile = (await ChatSdk.profileKey(sender, this.programId))[0];
     const profileAcc = (await this.getProfile(profile))!;
 
@@ -1281,53 +1340,65 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
     const senderToUse = delegateWallet || sender;
 
+    const contentLength = encryptedString.length;
+    const numGroups = Math.ceil(contentLength / MESSAGE_MAX_CHARACTERS);
+    const instructionGroups = [];
+    const signerGroups = [];
     const messageId = uuid();
-    instructions.push(
-      await this.instruction.sendTokenMessageV0(
-        {
-          id: messageId,
-          content: encryptedString,
-          encryptedSymmetricKey,
-          readPermissionAmount: toBN(
-            readPermissionAmount || chatAcc.defaultReadPermissionAmount,
-            readMint
-          ),
-          nextId: null,
-        },
-        {
-          accounts: {
-            payer,
-            chat,
-            sender: senderToUse,
-            profile,
-            postPermissionAccount,
-            postPermissionMint: chatAcc.postPermissionMintOrCollection,
-            namespaces: namespaces.publicKey,
-            entry,
-            identifierCertificateMint,
-            identifierCertificateMintAccount,
-            tokenProgram: TOKEN_PROGRAM_ID,
+    for (let i = 0; i < numGroups; i++) {
+      const instructions = [];
+      instructions.push(
+        await this.instruction.sendTokenMessageV0(
+          {
+            id: messageId,
+            content: encryptedString.slice(
+              i * MESSAGE_MAX_CHARACTERS,
+              (i + 1) * MESSAGE_MAX_CHARACTERS
+            ),
+            encryptedSymmetricKey,
+            readPermissionAmount: toBN(
+              readPermissionAmount || chatAcc.defaultReadPermissionAmount,
+              readMint
+            ),
+            totalParts: numGroups,
+            currentPart: i,
           },
-          remainingAccounts,
-        }
-      )
-    );
+          {
+            accounts: {
+              chat,
+              sender: senderToUse,
+              profile,
+              postPermissionAccount,
+              postPermissionMint: chatAcc.postPermissionMintOrCollection,
+              namespaces: namespaces.publicKey,
+              entry,
+              identifierCertificateMint,
+              identifierCertificateMintAccount,
+              tokenProgram: TOKEN_PROGRAM_ID,
+            },
+            remainingAccounts,
+          }
+        )
+      );
+      instructionGroups.push(instructions);
+      signerGroups.push([delegateWalletKeypair].filter(truthy));
+    }
 
     return {
-      instructions,
+      instructions: instructionGroups,
       output: { messageId },
-      signers: [delegateWalletKeypair].filter(truthy),
+      signers: signerGroups,
     };
   }
 
   async sendMessage(
     args: SendMessageArgs,
-    commitment: Commitment = "confirmed"
+    commitment: Finality = "confirmed"
   ): Promise<{
-    txid?: string;
+    txids?: string[];
     messageId: string;
   }> {
-    return this.execute(
+    return this.executeBig(
       this.sendMessageInstructions(args),
       args.payer,
       commitment
