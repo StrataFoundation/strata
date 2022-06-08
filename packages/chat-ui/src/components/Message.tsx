@@ -60,7 +60,7 @@ export function Message({
   htmlAllowlist = defaultOptions,
   showUser = true,
   pending = false,
-}: Partial<IMessage> & {htmlAllowlist: any, pending?: boolean; showUser: boolean }) {
+}: Partial<IMessage> & {htmlAllowlist?: any, pending?: boolean; showUser: boolean }) {
   const { colorMode } = useColorMode();
   const { publicKey } = useWallet();
   const { info: profile } = useProfile(profileKey);
@@ -89,7 +89,6 @@ export function Message({
 
   const usernameColor = { light: "green.500", dark: "green.200" };
   const textColor = { light: "black", dark: "white" };
-  console.log(message.html ? sanitizeHtml(message.html, htmlAllowlist) : "");
 
   return (
     <HStack w="full" align="start" spacing={2} className="strata-message">
