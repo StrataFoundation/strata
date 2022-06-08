@@ -7,3 +7,8 @@ export * from "./useDelegateWallet";
 export * from "./useChatKeyFromIdentifier";
 export * from "./useChatKey";
 export * from "./useWalletFromIdentifier";
+export * from "./useSendMessage";
+export * from "./useUsernameFromIdentifierCertificate";
+export * from "./useDelegateWalletStructKey";
+export * from "./useDelegateWalletStruct";
+export * from "./useChatIdFromIdentifierCertificate";

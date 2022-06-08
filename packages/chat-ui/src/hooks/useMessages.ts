@@ -1,6 +1,6 @@
 import { ConfirmedTransactionMeta, Message, PublicKey } from "@solana/web3.js";
 import { ChatSdk, IMessage } from "@strata-foundation/chat";
-import { useTransactions } from "@strata-foundation/react";
+import { truthy, useTransactions } from "@strata-foundation/react";
 import { useEffect, useMemo, useState } from "react";
 import { useAsync } from "react-async-hook";
 import { useChatSdk } from "../contexts";
@@ -18,6 +18,8 @@ interface IUseMessages {
   fetchNew(num: number): void;
 }
 
+const emptyTx = new Set<string>();
+
 async function getMessages(
   chatSdk?: ChatSdk,
   txs?: {
@@ -32,7 +34,7 @@ async function getMessages(
   if (chatSdk && txs) {
     const completedMessages = (prevMessages || []).filter(msg => !msg.pending);
     const completedTxs = new Set(
-      Array.from((completedMessages || []).map((msg) => msg.txids).flat())
+      [...Array.from((completedMessages || []).map((msg) => msg.txids).flat()), ...emptyTx]
     );
     const newTxs = txs.filter((tx) => !completedTxs.has(tx.signature));
     if (newTxs.length > 0) {
@@ -46,20 +48,29 @@ async function getMessages(
               meta,
               blockTime,
             }) => {
-              const found = (
-                await chatSdk.getMessagePartsFromInflatedTx({
-                  transaction,
-                  txid: sig,
-                  meta,
-                  blockTime,
-                })
-              ).map((f) => ({ ...f, pending }));
+              let found;
+              try {
+                found = (
+                  await chatSdk.getMessagePartsFromInflatedTx({
+                    transaction,
+                    txid: sig,
+                    meta,
+                    blockTime,
+                  })
+                ).map((f) => ({ ...f, pending }));
+              } catch (e: any) {
+                console.warn("Failed to decode message", e);
+              }
+
+              if (!found || (found && found.length == 0)) {
+                emptyTx.add(sig);
+              }
 
               return found;
             }
           )
         )
-      ).flat();
+      ).flat().filter(truthy);
       return [
         ...(completedMessages || []),
         ...(await chatSdk.getDecodedMessagesFromParts(newParts)),

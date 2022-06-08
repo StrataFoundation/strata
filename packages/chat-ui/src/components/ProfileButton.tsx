@@ -21,14 +21,15 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { clusterApiUrl, SystemProgram } from "@solana/web3.js";
 import { truncatePubkey, useEndpoint, useErrorHandler, useLocalStorage, useTokenMetadata } from "@strata-foundation/react";
-import React, { FC, MouseEvent, useCallback, useEffect } from "react";
+import React, { FC, MouseEvent, useCallback, useEffect, useState } from "react";
 import { BsChevronDown, BsFillPersonFill } from "react-icons/bs";
-import { useWalletProfile } from "../hooks";
+import { useDelegateWalletStruct, useUsernameFromIdentifierCertificate, useWalletProfile } from "../hooks";
 import { CreateProfileModal } from "./CreateProfileModal";
 import { useAsyncCallback } from "react-async-hook";
 import { ChatSdk } from "@strata-foundation/chat";
 import { sendInstructions } from "@strata-foundation/spl-utils";
 import { useChatSdk } from "../contexts";
+import { useDelegateWalletStructKey } from "../hooks/useDelegateWalletStructKey";
 
 async function loadDelegate(chatSdk: ChatSdk | undefined) {
   if (chatSdk) {
@@ -71,19 +72,37 @@ export const ProfileButton: FC<ButtonProps> = ({
   const { connected, publicKey } = useWallet();
   const { visible, setVisible } = useWalletModal();
   const { info: profile, loading } = useWalletProfile();
-  const { metadata } = useTokenMetadata(profile?.identifierCertificateMint);
-  const username = metadata?.data.name.split(".")[0];
+  const { username } = useUsernameFromIdentifierCertificate(profile?.identifierCertificateMint);
   const delegate = useDelegateWallet();
+  const { key: delegateWalletKey, loading: loadingS1 } = useDelegateWalletStructKey(delegate?.publicKey);
+  const { info: delegateWalletStruct, loading: loadingS2 } =
+    useDelegateWalletStruct(delegateWalletKey);
+  
   const { chatSdk } = useChatSdk();
   const { handleErrors } = useErrorHandler();
   const { execute: execLoadDelegate, error, loading: loadingDelegate } = useAsyncCallback(loadDelegate)
+  const [happenedOnce, setHappened] = useState(false);
   handleErrors(error);
 
   useEffect(() => {
-    if (profile && !delegate) {
+    if (
+      !happenedOnce &&
+      profile &&
+      (!delegate || (delegateWalletKey && !loadingS1 && !loadingS2 && !delegateWalletStruct))
+    ) {
+      setHappened(true)
       execLoadDelegate(chatSdk);
     }
-  }, [profile, delegate]);
+  }, [
+    happenedOnce,
+    profile,
+    delegate,
+    delegateWalletStruct,
+    loadingS1,
+    loadingS2,
+    chatSdk,
+    execLoadDelegate
+  ]);
 
   const handleClick = useCallback(
     (event: MouseEvent<HTMLButtonElement>) => {

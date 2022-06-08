@@ -1,25 +1,20 @@
 import { Button, Flex, HStack, Icon, IconButton, Input, Modal, ModalBody, ModalContent, ModalHeader, useDisclosure } from "@chakra-ui/react";
-import { PublicKey, Transaction } from "@solana/web3.js";
-import { Cluster } from "@strata-foundation/accelerator";
-import { IDecryptedMessageContent, ISendMessageContent, MessageType } from "@strata-foundation/chat";
+import { PublicKey } from "@solana/web3.js";
+import { ISendMessageContent, MessageType } from "@strata-foundation/chat";
 import {
-  useEndpoint,
   useErrorHandler,
   useMint,
-  useOwnedAmount,
-  useAccelerator,
-  useSolanaUnixTime,
+  useOwnedAmount
 } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
-import { sendAndConfirmWithRetry } from "@strata-foundation/spl-utils";
 import React, { useState } from "react";
 import { AiOutlineGif, AiOutlineSend } from "react-icons/ai";
-import { useChatSdk } from "../contexts";
-import { IMessageWithPending, useChat, useWalletProfile } from "../hooks";
-import { useDelegateWallet } from "../hooks/useDelegateWallet";
+import { IMessageWithPending, useChat, useSendMessage } from "../hooks";
 import { BuyMoreButton } from "./BuyMoreButton";
 import { FileAttachment } from "./FileAttachment";
 import { GifSearch } from "./GifSearch";
+// import { Editor, EditorState } from "draft-js";
+
 
 export type chatProps = {
   onAddPendingMessage?: (message: IMessageWithPending) => void;
@@ -35,13 +30,8 @@ export function Chatbox({ scrollRef, chatKey, onAddPendingMessage }: chatProps) 
     e.stopPropagation();
     setInput(e.target.value);
   };
-  const { chatSdk } = useChatSdk();
-  const { accelerator } = useAccelerator();
-  const delegateWalletKeypair = useDelegateWallet();
-  const [error, setError] = useState<Error>();
   const { handleErrors } = useErrorHandler();
   const { info: chat } = useChat(chatKey);
-  const { info: profile } = useWalletProfile();
   const balance = useOwnedAmount(chat?.postPermissionMintOrCollection);
   const mint = useMint(chat?.postPermissionMintOrCollection);
   const postAmount =
@@ -52,99 +42,33 @@ export function Chatbox({ scrollRef, chatKey, onAddPendingMessage }: chatProps) 
     typeof postAmount == "undefined" ||
     typeof balance == "undefined" ||
     balance >= postAmount;
-  const { cluster } = useEndpoint();
-  const blockTime = useSolanaUnixTime();
+
+    const [loading, setLoading] = useState(false);
+  const { sendMessage: sendMessageImpl, error } = useSendMessage({
+    chatKey,
+    onAddPendingMessage: (msg) => {
+      setInput("");
+      setLoading(false)
+      scrollRef.current.scrollIntoView({ behavior: "smooth" });
+      if (onAddPendingMessage) {
+        onAddPendingMessage(msg);
+      }
+    },
+  });
+
+  const sendMessage = (m: ISendMessageContent) => {
+    setLoading(true);
+    sendMessageImpl(m);
+  }
 
   handleErrors(error);
 
-  /*get uid and phoroURL from current User then send message 
-  and set chat state to "", then scroll to latst message
-  */
-  const sendMessage = async (message: ISendMessageContent) => {
-    try {
-      if (delegateWalletKeypair) {
-        if (chatSdk && chatKey) {
-          setInput("");
-          const {
-            instructions: instructionGroups,
-            signers: signerGroups,
-            output: { messageId },
-          } = await chatSdk.sendMessageInstructions({
-            delegateWalletKeypair,
-            payer: delegateWalletKeypair.publicKey,
-            chat: chatKey,
-            message,
-            encrypted: cluster !== "localnet",
-          });
-          const txsAndIds = await Promise.all(
-            instructionGroups.map(async (instructions, index) => {
-              const tx = new Transaction();
-              tx.recentBlockhash = (
-                await chatSdk.provider.connection.getRecentBlockhash()
-              ).blockhash;
-              tx.feePayer = delegateWalletKeypair.publicKey;
-              tx.add(...instructions);
-              tx.sign(...signerGroups[index]);
-              const rawTx = tx.serialize();
-              accelerator?.sendTransaction(cluster as Cluster, tx);
-              const txid = await chatSdk.provider.connection.sendRawTransaction(
-                rawTx,
-                {
-                  skipPreflight: true,
-                }
-              );
-              return {
-                txid,
-                rawTx,
-              };
-            })
-          );
-
-          if (onAddPendingMessage) {
-            const { fileAttachments, ...rest } = message;
-            const content = { ...rest, decryptedAttachments: fileAttachments };
-
-            onAddPendingMessage({
-              profileKey: profile!.publicKey,
-              id: messageId,
-              content: JSON.stringify(content),
-              txids: txsAndIds.map(({ txid }) => txid),
-              chatKey,
-              decodedMessage: content,
-              encryptedSymmetricKey: "",
-              readPermissionAmount: chat!.defaultReadPermissionAmount,
-              startBlockTime: blockTime!,
-              endBlockTime: blockTime!,
-              parts: [],
-              pending: true
-            });
-          }
-
-          scrollRef.current.scrollIntoView({ behavior: "smooth" });
-
-          await Promise.all(
-            txsAndIds.map(({ rawTx }) =>
-              sendAndConfirmWithRetry(
-                chatSdk.provider.connection,
-                rawTx,
-                {
-                  skipPreflight: true,
-                },
-                "confirmed"
-              )
-            )
-          );
-        }
-      }
-    } catch (e: any) {
-      setError(e);
-    }
-  };
   return hasEnough ? (
     <>
       <Flex direction="row" position="sticky" bottom={0}>
         <HStack p="10px" spacing={2} w="full" align="stretch">
           <Input
+            disabled={loading}
             onKeyPress={(ev) => {
               if (ev.key === "Enter") {
                 if (ev.shiftKey) {
@@ -180,6 +104,7 @@ export function Chatbox({ scrollRef, chatKey, onAddPendingMessage }: chatProps) 
             icon={<Icon w="24px" h="24px" as={AiOutlineGif} />}
           />
           <Button
+            isLoading={loading}
             colorScheme="primary"
             variant="outline"
             alignSelf="flex-end"

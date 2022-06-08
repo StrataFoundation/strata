@@ -1,3 +1,4 @@
+import { useChatIdFromIdentifierCertificate } from "../../hooks/useChatIdFromIdentifierCertificate";
 import { Avatar, Flex, SkeletonCircle, SkeletonText, Text, useColorMode, useColorModeValue, VStack } from "@chakra-ui/react";
 import { useTokenMetadata } from "@strata-foundation/react";
 import { useRouter } from "next/router";
@@ -20,13 +21,11 @@ export function ChatSidebarPreview({ identifier }: chatRoomProps) {
   const router = useRouter();
   const { id } = router.query;
   const highlightedBg = useColorModeValue("gray.200", "gray.800");
-  const { metadata } = useTokenMetadata(chat?.identifierCertificateMint);
-  const chatId = metadata?.data.name.split(".")[0];
   const subtext = useColorModeValue("gray.500", "gray.400");
 
   //push to url for specific chat
   const handleClick = () => {
-    router.push(route(routes.chat, { id: chatId }));
+    router.push(route(routes.chat, { id: identifier }));
   };
 
   return (
@@ -50,7 +49,7 @@ export function ChatSidebarPreview({ identifier }: chatRoomProps) {
         <VStack spacing={0} align="start">
           <Text>{chat?.name}</Text>
           <Text size="sm" color={subtext}>
-            /{chatId}
+            /{identifier}
           </Text>
         </VStack>
       )}

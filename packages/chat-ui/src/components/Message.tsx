@@ -21,7 +21,7 @@ import React, { useMemo } from "react";
 import { useAsync } from "react-async-hook";
 import { BsCheckCircleFill, BsCircle } from "react-icons/bs";
 import { GIPHY_API_KEY } from "../constants";
-import { useChat, useProfile } from "../hooks";
+import { useChat, useProfile, useUsernameFromIdentifierCertificate } from "../hooks";
 import { BuyMoreButton } from "./BuyMoreButton";
 
 const gf = new GiphyFetch(GIPHY_API_KEY);
@@ -55,8 +55,8 @@ export function Message({
   const { colorMode } = useColorMode();
   const { publicKey } = useWallet();
   const { info: profile } = useProfile(profileKey);
-  const { metadata } = useTokenMetadata(profile?.identifierCertificateMint);
-  const username = metadata?.data.name.split(".")[0]
+  const { username } = useUsernameFromIdentifierCertificate(profile?.identifierCertificateMint);
+  
   const id = profile?.ownerWallet.toBase58();
   const { info: chat } = useChat(chatKey);
   const readMint = chat?.readPermissionMintOrCollection;

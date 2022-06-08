@@ -27,7 +27,7 @@ import * as bs58 from "bs58";
 import LitJsSdk from "lit-js-sdk";
 // @ts-ignore
 import { v4 as uuid } from "uuid";
-import { ChatIDL, ChatV0, NamespacesV0, PostAction, ProfileV0 } from "./generated/chat";
+import { ChatIDL, ChatV0, DelegateWalletV0, NamespacesV0, PostAction, ProfileV0 } from "./generated/chat";
 import { uploadFile } from "./shdw";
 
 const MESSAGE_MAX_CHARACTERS = 103;
@@ -175,6 +175,10 @@ export interface IDecryptedMessageContent extends IMessageContent {
 
 export interface ISendMessageContent extends IMessageContent {
   fileAttachments?: File[];
+}
+
+export interface IDelegateWallet extends DelegateWalletV0 {
+  publicKey: PublicKey;
 }
 
 export interface IChat extends ChatV0 {
@@ -433,6 +437,18 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       name: depuff(coded.name),
       imageUrl: depuff(coded.imageUrl),
       metadataUrl: depuff(coded.metadataUrl),
+      publicKey: pubkey,
+    };
+  };
+
+  delegateWalletDecoder: TypedAccountParser<IDelegateWallet> = (pubkey, account) => {
+    const coded = this.program.coder.accounts.decode<IDelegateWallet>(
+      "DelegateWalletV0",
+      account.data
+    );
+
+    return {
+      ...coded,
       publicKey: pubkey,
     };
   };

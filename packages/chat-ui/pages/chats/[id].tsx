@@ -20,7 +20,7 @@ export default function Chatroom() {
   const { messages, error } = useMessages(chatKey);
   const { handleErrors } = useErrorHandler();
   handleErrors(error)
-  
+
   const msgWeHave = useMemo(
     () => new Set(Array.from(messages?.map((message) => message.id) || [])),
     [messages]
