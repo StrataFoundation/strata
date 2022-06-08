@@ -9,3 +9,5 @@ export * from "./rooms";
 export * from "./CreateProfileModal";
 export * from "./ProfileButton";
 export * from "./GifSearch";
+export * from "./ChatInput";
+export * from "./FileAttachment";

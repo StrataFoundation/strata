@@ -11,10 +11,14 @@ import React, { useState } from "react";
 import { AiOutlineGif, AiOutlineSend } from "react-icons/ai";
 import { IMessageWithPending, useChat, useSendMessage } from "../hooks";
 import { BuyMoreButton } from "./BuyMoreButton";
+import { ChatInput } from "./ChatInput";
 import { FileAttachment } from "./FileAttachment";
 import { GifSearch } from "./GifSearch";
-import { MarkdownInput } from "./MarkdownInput";
+import { Converter } from "showdown";
 
+const converter = new Converter({
+  simpleLineBreaks: true,
+});
 
 export type chatProps = {
   onAddPendingMessage?: (message: IMessageWithPending) => void;
@@ -68,20 +72,20 @@ export function Chatbox({ scrollRef, chatKey, onAddPendingMessage }: chatProps) 
           p="10px"
           spacing={2}
           w="full"
-          align="stretch"
+          align="center"
           bg="gray.800"
           rounded="lg"
         >
-          <MarkdownInput
-            onChange={handleChange}
-            disabled={loading}
+          <ChatInput
+            onChange={(e) => handleChange(e.target.value)}
+            value={input}
             onKeyDown={(ev) => {
               if (ev.key === "Enter") {
                 if (!ev.shiftKey) {
                   ev.preventDefault();
                   sendMessage({
                     type: MessageType.Html,
-                    text: input,
+                    html: converter.makeHtml(input.replace("\n", "\n\n")),
                   });
                 }
               }
@@ -108,8 +112,8 @@ export function Chatbox({ scrollRef, chatKey, onAddPendingMessage }: chatProps) 
             isDisabled={!hasEnough || !input}
             onClick={() =>
               sendMessage({
-                type: MessageType.Text,
-                text: input,
+                type: MessageType.Html,
+                html: converter.makeHtml(input),
               })
             }
           >

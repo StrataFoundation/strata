@@ -45,7 +45,7 @@ function GifyGif({ gifyId }: { gifyId?: string }) {
 }
 
 const defaultOptions = {
-  allowedTags: ["b", "i", "em", "strong", "a"],
+  allowedTags: ["b", "i", "em", "strong", "a", "code", "ul", "li", "p"],
   allowedAttributes: {
     a: ["href", "target"],
   },
@@ -89,8 +89,10 @@ export function Message({
 
   const usernameColor = { light: "green.500", dark: "green.200" };
   const textColor = { light: "black", dark: "white" };
+  console.log(message.html ? sanitizeHtml(message.html, htmlAllowlist) : "");
+
   return (
-    <HStack w="full" align="start" spacing={2}>
+    <HStack w="full" align="start" spacing={2} className="strata-message">
       {showUser ? (
         <Avatar mt="6px" size="sm" src={profile?.imageUrl} />
       ) : (
@@ -106,7 +108,9 @@ export function Message({
             >
               {username}
             </Text>
-            <Text fontSize="xs" color={muted}>{moment(time).format("LT")}</Text>
+            <Text fontSize="xs" color={muted}>
+              {moment(time).format("LT")}
+            </Text>
           </HStack>
         )}
 
@@ -132,7 +136,13 @@ export function Message({
               />
             ) : message.type === MessageType.Text ? (
               <Text mt={"-4px"}>{message.text}</Text>
-            ) : <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(message.html, htmlAllowlist) }} />
+            ) : (
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: message.html ? sanitizeHtml(message.html, htmlAllowlist) : "",
+                }}
+              />
+            )
           ) : (
             <>
               <Text color={redColor} fontStyle="italic" mb={2}>

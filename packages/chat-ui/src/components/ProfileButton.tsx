@@ -75,7 +75,7 @@ export const ProfileButton: FC<ButtonProps> = ({
   const { username } = useUsernameFromIdentifierCertificate(profile?.identifierCertificateMint);
   const delegate = useDelegateWallet();
   const { key: delegateWalletKey, loading: loadingS1 } = useDelegateWalletStructKey(delegate?.publicKey);
-  const { info: delegateWalletStruct, loading: loadingS2 } =
+  const { account: delegateWalletStruct, loading: loadingS2 } =
     useDelegateWalletStruct(delegateWalletKey);
   
   const { chatSdk } = useChatSdk();
@@ -90,6 +90,7 @@ export const ProfileButton: FC<ButtonProps> = ({
       profile &&
       (!delegate || (delegateWalletKey && !loadingS1 && !loadingS2 && !delegateWalletStruct))
     ) {
+      console.log("wal", delegate, delegateWalletKey, loadingS1, loadingS2, delegateWalletStruct)
       setHappened(true)
       execLoadDelegate(chatSdk);
     }
