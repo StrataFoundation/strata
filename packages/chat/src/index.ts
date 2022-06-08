@@ -151,6 +151,7 @@ export function exportSymmetricKey(symmKey: CryptoKey): Promise<ArrayBuffer> {
 
 export enum MessageType {
   Text = "text",
+  Html = "html",
   Gify = "gify",
   Image = "image",
 }
@@ -163,6 +164,7 @@ export interface INamespaces extends NamespacesV0 {
 
 export interface IMessageContent {
   type: MessageType;
+  html?: string;
   text?: string;
   attachments?: string[];
   encryptedAttachments?: string[];

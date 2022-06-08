@@ -51,7 +51,7 @@ async function getSignatures(
 }
 
 // Pending when coming from the accelerator
-type TransactionResponseWithSig = Partial<TransactionResponse> & { signature: string; pending?: boolean }
+export type TransactionResponseWithSig = Partial<TransactionResponse> & { signature: string; pending?: boolean }
 
 async function retryGetTxn(connection: Connection, sig: string, tries: number = 0): Promise<TransactionResponse> {
   const result = await connection.getTransaction(sig, { commitment: "confirmed" });

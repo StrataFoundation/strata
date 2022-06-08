@@ -13,7 +13,7 @@ import { IMessageWithPending, useChat, useSendMessage } from "../hooks";
 import { BuyMoreButton } from "./BuyMoreButton";
 import { FileAttachment } from "./FileAttachment";
 import { GifSearch } from "./GifSearch";
-// import { Editor, EditorState } from "draft-js";
+import { MarkdownInput } from "./MarkdownInput";
 
 
 export type chatProps = {
@@ -25,10 +25,8 @@ export type chatProps = {
 export function Chatbox({ scrollRef, chatKey, onAddPendingMessage }: chatProps) {
   const [input, setInput] = useState("");
   const { isOpen, onToggle, onClose } = useDisclosure();
-  const handleChange = (e: any) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setInput(e.target.value);
+  const handleChange = (html: string) => {
+    setInput(html);
   };
   const { handleErrors } = useErrorHandler();
   const { info: chat } = useChat(chatKey);
@@ -65,28 +63,29 @@ export function Chatbox({ scrollRef, chatKey, onAddPendingMessage }: chatProps) 
 
   return hasEnough ? (
     <>
-      <Flex direction="row" position="sticky" bottom={0}>
-        <HStack p="10px" spacing={2} w="full" align="stretch">
-          <Input
+      <Flex direction="row" position="sticky" bottom={0} p={2}>
+        <HStack
+          p="10px"
+          spacing={2}
+          w="full"
+          align="stretch"
+          bg="gray.800"
+          rounded="lg"
+        >
+          <MarkdownInput
+            onChange={handleChange}
             disabled={loading}
-            onKeyPress={(ev) => {
+            onKeyDown={(ev) => {
               if (ev.key === "Enter") {
-                if (ev.shiftKey) {
-                  ev.preventDefault();
-                  setInput((i) => `${i}\n`);
-                } else {
+                if (!ev.shiftKey) {
                   ev.preventDefault();
                   sendMessage({
-                    type: MessageType.Text,
+                    type: MessageType.Html,
                     text: input,
                   });
                 }
               }
             }}
-            size="lg"
-            value={input}
-            onChange={handleChange}
-            placeholder="Type Message"
           />
           <FileAttachment
             onUpload={async (file) => {
@@ -97,7 +96,6 @@ export function Chatbox({ scrollRef, chatKey, onAddPendingMessage }: chatProps) 
             }}
           />
           <IconButton
-            size="lg"
             aria-label="Select GIF"
             variant="outline"
             onClick={onToggle}
@@ -107,9 +105,7 @@ export function Chatbox({ scrollRef, chatKey, onAddPendingMessage }: chatProps) 
             isLoading={loading}
             colorScheme="primary"
             variant="outline"
-            alignSelf="flex-end"
             isDisabled={!hasEnough || !input}
-            size="lg"
             onClick={() =>
               sendMessage({
                 type: MessageType.Text,

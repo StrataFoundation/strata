@@ -15,3 +15,10 @@ a {
   box-sizing: border-box;
 }
 
+.DraftEditor-root {
+    width: 500px;
+    height: 500px;
+  border: 1px solid #ccc;
+  cursor: text;
+  padding: 10px;
+}

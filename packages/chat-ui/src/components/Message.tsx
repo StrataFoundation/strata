@@ -23,6 +23,7 @@ import { BsCheckCircleFill, BsCircle } from "react-icons/bs";
 import { GIPHY_API_KEY } from "../constants";
 import { useChat, useProfile, useUsernameFromIdentifierCertificate } from "../hooks";
 import { BuyMoreButton } from "./BuyMoreButton";
+import sanitizeHtml from "sanitize-html";
 
 const gf = new GiphyFetch(GIPHY_API_KEY);
 
@@ -43,15 +44,23 @@ function GifyGif({ gifyId }: { gifyId?: string }) {
   return <Gif gif={data} width={300} />;
 }
 
+const defaultOptions = {
+  allowedTags: ["b", "i", "em", "strong", "a"],
+  allowedAttributes: {
+    a: ["href", "target"],
+  },
+};
+
 export function Message({
   decodedMessage,
   profileKey,
   readPermissionAmount,
   chatKey,
   startBlockTime,
+  htmlAllowlist = defaultOptions,
   showUser = true,
   pending = false,
-}: Partial<IMessage> & { pending?: boolean; showUser: boolean }) {
+}: Partial<IMessage> & {htmlAllowlist: any, pending?: boolean; showUser: boolean }) {
   const { colorMode } = useColorMode();
   const { publicKey } = useWallet();
   const { info: profile } = useProfile(profileKey);
@@ -121,9 +130,9 @@ export function Message({
                   blobToUrl((message.decryptedAttachments || [])[0])
                 }
               />
-            ) : (
+            ) : message.type === MessageType.Text ? (
               <Text mt={"-4px"}>{message.text}</Text>
-            )
+            ) : <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(message.html, htmlAllowlist) }} />
           ) : (
             <>
               <Text color={redColor} fontStyle="italic" mb={2}>

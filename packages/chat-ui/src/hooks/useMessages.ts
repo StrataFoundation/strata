@@ -1,6 +1,10 @@
 import { ConfirmedTransactionMeta, Message, PublicKey } from "@solana/web3.js";
 import { ChatSdk, IMessage } from "@strata-foundation/chat";
-import { truthy, useTransactions } from "@strata-foundation/react";
+import {
+  truthy,
+  useTransactions,
+  TransactionResponseWithSig,
+} from "@strata-foundation/react";
 import { useEffect, useMemo, useState } from "react";
 import { useAsync } from "react-async-hook";
 import { useChatSdk } from "../contexts";
@@ -22,20 +26,17 @@ const emptyTx = new Set<string>();
 
 async function getMessages(
   chatSdk?: ChatSdk,
-  txs?: {
-    meta?: ConfirmedTransactionMeta | null;
-    transaction: { message: Message; signatures: string[] };
-    signature: string;
-    pending?: boolean;
-    blockTime: number | null;
-  }[],
+  txs?: TransactionResponseWithSig[],
   prevMessages?: IMessageWithPending[]
 ): Promise<IMessageWithPending[]> {
   if (chatSdk && txs) {
-    const completedMessages = (prevMessages || []).filter(msg => !msg.pending);
-    const completedTxs = new Set(
-      [...Array.from((completedMessages || []).map((msg) => msg.txids).flat()), ...emptyTx]
+    const completedMessages = (prevMessages || []).filter(
+      (msg) => !msg.pending
     );
+    const completedTxs = new Set([
+      ...Array.from((completedMessages || []).map((msg) => msg.txids).flat()),
+      ...emptyTx,
+    ]);
     const newTxs = txs.filter((tx) => !completedTxs.has(tx.signature));
     if (newTxs.length > 0) {
       const newParts = (
@@ -52,7 +53,7 @@ async function getMessages(
               try {
                 found = (
                   await chatSdk.getMessagePartsFromInflatedTx({
-                    transaction,
+                    transaction: transaction!,
                     txid: sig,
                     meta,
                     blockTime,
@@ -70,7 +71,9 @@ async function getMessages(
             }
           )
         )
-      ).flat().filter(truthy);
+      )
+        .flat()
+        .filter(truthy);
       return [
         ...(completedMessages || []),
         ...(await chatSdk.getDecodedMessagesFromParts(newParts)),
@@ -98,19 +101,30 @@ export function useMessages(chat: PublicKey | undefined, accelerated: boolean = 
     subscribe: true,
     accelerated
   });
-  // For a stable messages array that doesn't go undefined when we do the next
-  // useAsync fetch
-  const [messagesStable, setMessagesStable] = useState<IMessageWithPending[]>();
-  const { result: messages, loading, error } = useAsync(getMessages, [chatSdk, transactions, messagesStable]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error>();
+  const [messages, setMessages] = useState<IMessageWithPending[]>();
+
   useEffect(() => {
-    if (messages && messagesStable != messages) {
-      setMessagesStable(messages)
-    }
-  }, [messages])
+    (async () => {
+      try {
+        setLoading(true);
+        const newMessages = await getMessages(
+          chatSdk, transactions, messages
+        )
+        setMessages(newMessages);
+      } catch (e: any) {
+        setError(e)
+      } finally {
+        setLoading(false)
+      }
+    })()
+  }, [chatSdk, transactions, setMessages])
+
   return {
     ...rest,
     loadingInitial: rest.loadingInitial || loading,
     error: rest.error || error,
-    messages: messagesStable,
+    messages,
   };
 }

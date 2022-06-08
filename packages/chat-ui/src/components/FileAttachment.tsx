@@ -37,7 +37,6 @@ export function FileAttachment({
       />
       <IconButton
         isLoading={loading}
-        size="lg"
         aria-label="Select Image"
         variant="outline"
         onClick={() => hiddenFileInput.current!.click()}
