@@ -139,7 +139,7 @@ interface ICreateBountyArgs {
   bondingArgs?: Partial<ICreateTokenBondingArgs>;
 }
 
-interface ILbpCurveArgs {
+interface ILbcCurveArgs {
   /** Max tokens to be sold */
   maxSupply: number;
   /** Interval in seconds to sell them over */
@@ -157,7 +157,7 @@ interface ILbpCurveArgs {
 }
 
 interface ICreateLiquidityBootstrapperArgs
-  extends ILbpCurveArgs,
+  extends ILbcCurveArgs,
     IProtocolFees {
   payer?: PublicKey;
   /**
@@ -173,7 +173,7 @@ interface ICreateLiquidityBootstrapperArgs
    */
   authority?: PublicKey;
   /**
-   * The token metadata for the LBP item
+   * The token metadata for the LBC item
    */
   metadata?: DataV2;
 
@@ -944,7 +944,7 @@ export class MarketplaceSdk {
     minPrice,
     maxSupply,
     timeDecay,
-  }: ILbpCurveArgs): {
+  }: ILbcCurveArgs): {
     reserves: number;
     supply: number;
     curveConfig: ICurveConfig;

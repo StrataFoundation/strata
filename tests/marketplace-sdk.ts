@@ -46,7 +46,7 @@ describe("marketplace-sdk", () => {
     });
   });
 
-  it("allows creation of an lbp", async () => {
+  it("allows creation of an lbc", async () => {
     const { targetMint, tokenBonding } =
       await marketplaceSdk.createLiquidityBootstrapper({
         authority: me,

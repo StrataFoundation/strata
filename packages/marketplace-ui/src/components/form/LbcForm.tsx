@@ -55,7 +55,7 @@ import { TokenIntervalInputs } from "./TokenIntervalnputs";
 import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import { useEndpoint } from "../../hooks/useEndpoint";
 
-interface ILbpFormProps
+interface ILbcFormProps
   extends Partial<IMetadataFormProps>,
     IUseExistingMintProps {
   useCandyMachine: boolean;
@@ -116,9 +116,9 @@ const validationSchema = yup.object({
   disclosures: disclosuresSchema,
 });
 
-async function createLbpCandyMachine(
+async function createLbcCandyMachine(
   marketplaceSdk: MarketplaceSdk, 
-  values: ILbpFormProps,
+  values: ILbcFormProps,
   cluster: WalletAdapterNetwork | "localnet",
 ): Promise<string> {
   const targetMintKeypair = Keypair.generate();
@@ -236,9 +236,9 @@ async function createLbpCandyMachine(
  * 
  * This makes the sale process reversible without requiring the mint authority.
  */
-async function createLbpExistingMint(
+async function createLbcExistingMint(
   marketplaceSdk: MarketplaceSdk,
-  values: ILbpFormProps,
+  values: ILbcFormProps,
 ): Promise<string> {
   const intermediaryMintKeypair = Keypair.generate();
   const authority = new PublicKey(values.authority);
@@ -300,9 +300,9 @@ async function createLbpExistingMint(
   })
 }
 
-async function createLbpNewMint(
+async function createLbcNewMint(
   marketplaceSdk: MarketplaceSdk,
-  values: ILbpFormProps,
+  values: ILbcFormProps,
 ): Promise<string> {
   const targetMintKeypair = Keypair.generate();
   const authority = new PublicKey(values.authority);
@@ -359,20 +359,20 @@ async function createLbpNewMint(
 
 async function createLiquidityBootstrapper(
   marketplaceSdk: MarketplaceSdk,
-  values: ILbpFormProps,
+  values: ILbcFormProps,
   cluster: WalletAdapterNetwork | "localnet",
 ): Promise<string> {
   if (values.useCandyMachine) {
-    return await createLbpCandyMachine(marketplaceSdk, values, cluster);
+    return await createLbcCandyMachine(marketplaceSdk, values, cluster);
   } else if (values.useExistingMint) {
-    return await createLbpExistingMint(marketplaceSdk, values);
+    return await createLbcExistingMint(marketplaceSdk, values);
   } else {
-    return await createLbpNewMint(marketplaceSdk, values);
+    return await createLbcNewMint(marketplaceSdk, values);
   }
 }
 
 export const LbcForm: React.FC = () => {
-  const formProps = useForm<ILbpFormProps>({
+  const formProps = useForm<ILbcFormProps>({
     resolver: yupResolver(validationSchema),
     defaultValues: { useExistingMint: true },
   });
@@ -429,7 +429,7 @@ export const LbcForm: React.FC = () => {
     }
   }, [startPrice, minPrice, setError, clearErrors]);
 
-  const onSubmit = async (values: ILbpFormProps) => {
+  const onSubmit = async (values: ILbcFormProps) => {
     const url = await execute(marketplaceSdk!, values, cluster);
     if (values.useCandyMachine) {
       router.push(
