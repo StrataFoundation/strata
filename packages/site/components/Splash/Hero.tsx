@@ -8,7 +8,6 @@ import {
   Text,
   Button,
   Link,
-  Image as ChakraImage,
 } from "@chakra-ui/react";
 import { DOCS_URL, MARKETPLACE_URL } from "@/constants";
 import TextTransition, { presets } from "react-text-transition";
@@ -83,22 +82,6 @@ export const Hero = () => {
               color="white"
               textAlign={["center", "center", "left", "left"]}
             >
-              <Link
-                href="https://solana.com/news/riptide-hackathon-winners-solana#daos-track"
-                isExternal
-                w="auto"
-                _hover={{
-                  cursor: "pointer",
-                  opacity: "0.7",
-                }}
-              >
-                <ChakraImage
-                  mb={4}
-                  src="/riptideBanner.png"
-                  alt="riptide hackathon 1st place winner"
-                  height="60px"
-                />
-              </Link>
               The fastest way to
               <br />
               launch and grow your
