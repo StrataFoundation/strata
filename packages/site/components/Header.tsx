@@ -1,7 +1,6 @@
 import React, { ReactNode } from "react";
 import {
   Box,
-  Button,
   Center,
   Container,
   HStack,
@@ -9,6 +8,7 @@ import {
   Image,
   Link,
   IconButton,
+  Flex,
   useDisclosure,
 } from "@chakra-ui/react";
 import { HamburgerIcon, CloseIcon } from "@chakra-ui/icons";
@@ -41,6 +41,7 @@ export const Header: React.FC = () => {
             w="full"
             display="flex"
             justifyContent="space-between"
+            alignItems="center"
           >
             <IconButton
               size={"md"}
@@ -72,6 +73,21 @@ export const Header: React.FC = () => {
                 ))}
               </HStack>
             </HStack>
+            <Link
+              href="https://solana.com/news/riptide-hackathon-winners-solana#daos-track"
+              isExternal
+              w="auto"
+              _hover={{
+                cursor: "pointer",
+                opacity: "0.7",
+              }}
+            >
+              <Image
+                src="/riptideAppBarBanner.png"
+                alt="riptide hackathon 1st place winner DAOs Track"
+                height="40px"
+              />
+            </Link>
           </Container>
         </Center>
 
