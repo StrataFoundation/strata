@@ -33,7 +33,7 @@ import { useForm } from "react-hook-form";
 import { BsChevronDown } from "react-icons/bs";
 import { RiArrowUpDownFill, RiInformationLine } from "react-icons/ri";
 import * as yup from "yup";
-import { useFtxPayLink, useMint, useProvider, useSolanaUnixTime, useTokenMetadata } from "../../hooks";
+import { useFtxPayLink, useMint, useProvider, useSolanaUnixTime, useTokenMetadata, useTokenSwapFromId } from "../../hooks";
 import { Royalties } from "./Royalties";
 import { TransactionInfo, TransactionInfoArgs } from "./TransactionInfo";
 import { useTwWrappedSolMint } from "../../hooks/useTwWrappedSolMint";
@@ -63,7 +63,7 @@ export interface ISwapFormProps {
   onTradingMintsChange: (args: { base: PublicKey; target: PublicKey }) => void;
   onBuyBase?: (tokenBonding: PublicKey) => void;
   onSubmit: (values: ISwapFormValues) => Promise<void>;
-  tokenBonding: ITokenBonding | undefined;
+  id: PublicKey | undefined;
   pricing: BondingPricing | undefined;
   baseOptions: PublicKey[];
   targetOptions: PublicKey[];
@@ -126,7 +126,7 @@ export const SwapForm = ({
   onTradingMintsChange,
   onBuyBase,
   onSubmit,
-  tokenBonding,
+  id,
   pricing,
   base,
   target,
@@ -174,11 +174,15 @@ export const SwapForm = ({
   const moreThanSpendCap = +(topAmount || 0) > spendCap;
   const unixTime = useSolanaUnixTime();
 
-  const lowMint =
-    base &&
-    target &&
-    pricing?.hierarchy.lowest(base.publicKey, target.publicKey);
-  const isBuying = lowMint && lowMint.equals(target?.publicKey!);
+  const {
+    tokenBonding,
+    childEntangler,
+    parentEntangler,
+  } = useTokenSwapFromId(id);
+
+  const lowMint = pricing?.hierarchy.lowest(base!.publicKey, target!.publicKey, childEntangler?.childMint, parentEntangler?.parentMint);
+  const isBuying = pricing?.isBuying(lowMint!, target!.publicKey, childEntangler?.childMint, parentEntangler?.parentMint);
+
   const targetBonding = lowMint && pricing?.hierarchy.findTarget(lowMint);
   const passedMintCap =
     typeof numRemaining !== "undefined" && numRemaining < bottomAmount;
@@ -219,7 +223,9 @@ export const SwapForm = ({
         base.publicKey,
         target.publicKey,
         true,
-        unixTime
+        unixTime,
+        childEntangler?.childMint,
+        parentEntangler?.parentMint,
       );
       if (isNaN(amount)) {
         setInsufficientLiq(true);
@@ -250,7 +256,7 @@ export const SwapForm = ({
   const handleBottomChange = (value: number | undefined = 0) => {
     if (tokenBonding && pricing && base && target && value && +value >= 0) {
       let amount = Math.abs(
-        pricing.swapTargetAmount(+value, target.publicKey, base.publicKey, true, unixTime)
+        pricing.swapTargetAmount(+value, target.publicKey, base.publicKey, true, unixTime, childEntangler?.childMint, parentEntangler?.parentMint)
       );
       setLastSet("bottom");
 

@@ -5,8 +5,8 @@ import toast from "react-hot-toast";
 import { useErrorHandler, useSwap, useStrataSdks, useTokenSwapFromId, useMint } from "../../hooks";
 import { Notification } from "../Notification";
 import { SwapForm } from "./SwapForm";
-import { BN } from "@project-serum/anchor";
-import { toNumber } from "@strata-foundation/spl-token-bonding";
+import { BN, Instruction } from "@project-serum/anchor";
+import { toNumber, IExtraInstructionArgs, IPostInstructionArgs } from "@strata-foundation/spl-token-bonding";
 import { InstructionResult } from "@strata-foundation/spl-utils";
 
 const identity = () => {};
@@ -31,11 +31,18 @@ export const Swap = ({ id }: { id: PublicKey }) => {
     target?: PublicKey;
   }>({
     base: tokenBonding?.baseMint,
-    target: tokenBonding?.targetMint,
+    target: (parentEntangler && childEntangler) ? parentEntangler.parentMint : tokenBonding?.targetMint,
   });
 
   React.useEffect(() => {
     if ((!tradingMints.base || !tradingMints.target) && tokenBonding) {
+      if (childEntangler && parentEntangler) {
+        setTradingMints({
+          base: tokenBonding.baseMint,
+          target: parentEntangler.parentMint,
+        });
+        return;
+      }
       setTradingMints({
         base: tokenBonding.baseMint,
         target: tokenBonding.targetMint,
@@ -48,36 +55,48 @@ export const Swap = ({ id }: { id: PublicKey }) => {
     onTradingMintsChange: setTradingMints,
     swap: (args) =>
       execute({
-        async postInstructions({isLast, amount, isBuy}: {isLast: boolean, amount: BN | undefined, isBuy: boolean}): Promise<InstructionResult<null>> {
-          if (!isLast || !childEntangler || !parentEntangler) {
+        async extraInstructions({isFirst, amount, isBuy}: IExtraInstructionArgs): Promise<InstructionResult<null>> {
+          if (!isFirst || !childEntangler || !parentEntangler || isBuy) {
             return {
               instructions: [],
               signers: [],
               output: null,
             }
           }
+
           let numAmount = toNumber(amount!, childMint)
-          let instr;
-          if (isBuy) {
-            instr = await fungibleEntanglerSdk?.swapChildForParentInstructions({
-              parentEntangler: parentEntangler.publicKey,
-              childEntangler: childEntangler.publicKey,
-              amount: numAmount,
-            })
-          } else {
-            instr = await fungibleEntanglerSdk?.swapParentForChildInstructions({
-              parentEntangler: parentEntangler.publicKey,
-              childEntangler: childEntangler.publicKey,
-              amount: numAmount,
-            })
-          }
-          console.log(instr);
+          const instr = await fungibleEntanglerSdk?.swapParentForChildInstructions({
+            parentEntangler: parentEntangler.publicKey,
+            childEntangler: childEntangler.publicKey,
+            amount: numAmount,
+          })
           return instr ? instr : {
             instructions: [],
             signers: [],
             output: null,
           }
         },
+        async postInstructions({isLast, amount, isBuy}: IPostInstructionArgs): Promise<InstructionResult<null>> {
+          if (!isLast || !childEntangler || !parentEntangler || !isBuy) {
+            return {
+              instructions: [],
+              signers: [],
+              output: null,
+            }
+          }
+          const numAmount = toNumber(amount!, childMint)
+          const instr = await fungibleEntanglerSdk?.swapChildForParentInstructions({
+              parentEntangler: parentEntangler.publicKey,
+              childEntangler: childEntangler.publicKey,
+              amount: numAmount,
+            })
+          return instr ? instr : {
+            instructions: [],
+            signers: [],
+            output: null,
+          }
+        },
+        entangled: parentEntangler?.parentMint,
         ...args
       }).then(({ targetAmount }) => {
         toast.custom((t) => (

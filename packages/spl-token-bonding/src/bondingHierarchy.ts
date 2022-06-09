@@ -60,8 +60,42 @@ export class BondingHierarchy {
     )?.tokenBonding?.targetMint;
   }
 
-  lowest(one: PublicKey, two: PublicKey): PublicKey {
+  lowest(one: PublicKey, two: PublicKey, childEntangledMint?: PublicKey | undefined, parentEntangledMint?: PublicKey | undefined): PublicKey {
+    if (parentEntangledMint && childEntangledMint) {
+      // account for entangled tokens
+      if (one.equals(parentEntangledMint)) one = childEntangledMint;
+      else if (two.equals(parentEntangledMint)) two = childEntangledMint;
+    }
     const found = this.lowestOrUndefined(one, two);
+
+    if (!found) {
+      throw new Error(
+        `No bonding found with target mint ${one.toBase58()} or ${two.toBase58()}`
+      );
+    }
+
+    return found;
+  }
+
+  highestOrUndefined(one: PublicKey, two: PublicKey): PublicKey | undefined {
+    return this.toArray().find(
+      (hierarchy) =>
+        hierarchy.tokenBonding.baseMint.equals(
+          sanitizeSolMint(one, this.wrappedSolMint)
+        ) ||
+        hierarchy.tokenBonding.baseMint.equals(
+          sanitizeSolMint(two, this.wrappedSolMint)
+        )
+    )?.tokenBonding?.baseMint;
+  }
+
+  highest(one: PublicKey, two: PublicKey, childEntangledMint?: PublicKey | undefined, parentEntangledMint?: PublicKey | undefined): PublicKey {
+    if (parentEntangledMint && childEntangledMint) {
+      // account for entangled tokens
+      if (one.equals(parentEntangledMint)) one = childEntangledMint;
+      else if (two.equals(parentEntangledMint)) two = childEntangledMint;
+    }
+    const found = this.highestOrUndefined(one, two);
 
     if (!found) {
       throw new Error(

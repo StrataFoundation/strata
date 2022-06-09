@@ -275,7 +275,7 @@ async function createLbpExistingMint(
     bondingArgs: {
       targetMintDecimals: Number(values.decimals || 0),
       goLiveDate: values.goLiveDate,
-      sellFrozen: values.useExistingMint
+      sellFrozen: false,
     },
   });
 
@@ -343,7 +343,7 @@ async function createLbpNewMint(
     bondingArgs: {
       targetMintDecimals: Number(values.decimals || 0),
       goLiveDate: values.goLiveDate,
-      sellFrozen: values.useExistingMint
+      sellFrozen: false,
     },
   });
 

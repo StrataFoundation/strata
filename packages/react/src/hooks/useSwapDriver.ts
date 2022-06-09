@@ -147,11 +147,10 @@ export const useSwapDriver = ({
 
   const targetMintAcct = useMint(targetMint);
 
-  const allMints = React.useMemo(
-    () =>
-      [tokenBonding?.targetMint, ...getMints(pricing?.hierarchy), parentEntangler?.parentMint].filter(
+  const allMints: PublicKey[] = React.useMemo(
+    () => [tokenBonding?.targetMint, ...getMints(pricing?.hierarchy), parentEntangler?.parentMint].filter(
         truthy
-      ),
+      ).filter((x) => (childEntangler ? !x.equals(childEntangler.childMint) : true)), // don't display child entangled tokens
     [tokenBonding, pricing]
   );
 
@@ -194,10 +193,8 @@ export const useSwapDriver = ({
     publicKey: targetMint,
   };
 
-  const lowMint =
-    base &&
-    target &&
-    pricing?.hierarchy.lowest(base.publicKey, target.publicKey);
+  const lowMint = pricing?.hierarchy.lowest(base!.publicKey, target!.publicKey, childEntangler?.childMint, parentEntangler?.parentMint);
+
   const targetBonding = lowMint && pricing?.hierarchy.findTarget(lowMint);
   const mintCap: number | undefined =
     targetBonding &&
@@ -229,9 +226,11 @@ export const useSwapDriver = ({
           };
         }
 
+        const entangledBase = (parentEntangler && childEntangler && parentEntangler.parentMint.equals(baseMint!)) ? childEntangler.childMint : baseMint;
+        const entangledTarget = (parentEntangler && childEntangler && parentEntangler.parentMint.equals(targetMint!)) ? childEntangler.childMint : targetMint;
         await swap({
-          baseMint: baseMint!,
-          targetMint: targetMint!,
+          baseMint: entangledBase!,
+          targetMint: entangledTarget!,
           ...outputAmountSetting,
           slippage: +values.slippage / 100,
           ticker: target!.ticker,
@@ -262,7 +261,7 @@ export const useSwapDriver = ({
       });
     },
     onSubmit: handleSubmit,
-    tokenBonding,
+    id,
     pricing,
     base,
     target,
@@ -274,10 +273,7 @@ export const useSwapDriver = ({
         allMints.filter(
           (mint) =>
             baseMint &&
-            !mint.equals(baseMint) &&
-            pricing &&
-            targetMint &&
-            pricing.hierarchy.path(mint, targetMint).length > 0
+            !mint.equals(baseMint)
         ),
       [baseMint, allMints]
     ),
@@ -288,8 +284,7 @@ export const useSwapDriver = ({
             targetMint &&
             pricing &&
             baseMint &&
-            !mint.equals(targetMint) &&
-            pricing.hierarchy.path(baseMint, mint).length > 0
+            !mint.equals(targetMint)
         ),
       [targetMint, allMints]
     ),
