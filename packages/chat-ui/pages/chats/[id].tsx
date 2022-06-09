@@ -19,6 +19,7 @@ export default function Chatroom() {
   const [pendingMessages, setPendingMessages] = useState<IMessageWithPending[]>([]);
   const { messages, error } = useMessages(chatKey);
   const { handleErrors } = useErrorHandler();
+  console.log(isMobile)
   handleErrors(error)
 
   const msgWeHave = useMemo(
@@ -41,8 +42,8 @@ export default function Chatroom() {
 
   return (
     <Container>
-      {!isMobile && <Sidebar />}
-      <Flex direction="column" grow="1" height="100vh">
+      {!isMobile && <Sidebar fullWidth={isMobile} />}
+      <Flex direction="column" grow="1" height="100vh" width="100%">
         <Flex height="71px">
           <RoomsHeader chatKey={chatKey} />
         </Flex>
