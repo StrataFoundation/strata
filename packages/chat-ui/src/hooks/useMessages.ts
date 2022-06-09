@@ -33,6 +33,9 @@ async function getMessages(
     const completedMessages = (prevMessages || []).filter(
       (msg) => !msg.pending
     );
+    const failedTx = new Set(
+      Array.from(txs.filter((tx) => tx.meta?.err).map((tx) => tx.signature))
+    );
     const completedTxs = new Set([
       ...Array.from((completedMessages || []).map((msg) => msg.txids).flat()),
       ...emptyTx,
@@ -78,6 +81,7 @@ async function getMessages(
         ...(completedMessages || []),
         ...(await chatSdk.getDecodedMessagesFromParts(newParts)),
       ]
+        .filter((msg) => msg.txids.every(txid => !failedTx.has(txid)))
         .sort((a, b) => a.startBlockTime - b.startBlockTime)
         .map(({ parts, ...rest }) => ({
           ...rest,
