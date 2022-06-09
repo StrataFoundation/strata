@@ -138,12 +138,12 @@ export const LbcDisplay: NextPage = ({
                       <VStack align="stretch" spacing={8}>
                         <LbcInfo
                           price={price}
-                          id={id}
+                          id={id!}
                           useTokenOfferingCurve
                         />
                         <TokenOffering
                           onConnectWallet={onConnectWallet}
-                          id={id}
+                          id={id!}
                         />
                       </VStack>
                     )}

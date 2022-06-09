@@ -57,7 +57,7 @@ export const SwapDisplay: NextPage = ({
             </Center>
           )}
           {!loading && tokenBonding && (
-            <Swap id={id} />
+            <Swap id={id!} />
           )}
         </Box>
       </Container>

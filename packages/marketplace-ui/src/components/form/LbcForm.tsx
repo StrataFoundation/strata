@@ -296,7 +296,7 @@ async function createLbpExistingMint(
     signers
   );
   return route(routes.tokenLbc, { 
-    id: entanglerInstrs.output.childEntangler 
+    id: entanglerInstrs.output.childEntangler.toString()
   })
 }
 

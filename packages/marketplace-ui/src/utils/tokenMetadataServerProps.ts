@@ -31,7 +31,7 @@ export const mintMetadataServerSideProps: GetServerSideProps = async (
     let childEntangler = await fungibleEntanglerSdk.getChildEntangler(id);
     if (childEntangler) {
       const parentEntangler = await fungibleEntanglerSdk.getParentEntangler(childEntangler.parentEntangler);
-      mintKeyStr = parentEntangler.parentMint.toString()
+      mintKeyStr = parentEntangler?.parentMint.toString()
     }
   }
   const mint = new PublicKey(mintKeyStr as string);

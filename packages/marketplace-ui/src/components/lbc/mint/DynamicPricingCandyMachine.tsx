@@ -166,7 +166,7 @@ export const DynamicPricingCandyMachine = (props: DynamicPricingCandyMachineProp
                     {tokenBonding && (
                       <LbcInfo
                         price={price}
-                        tokenBondingKey={tokenBonding.publicKey}
+                        id={tokenBonding.targetMint}
                       />
                     )}
 
