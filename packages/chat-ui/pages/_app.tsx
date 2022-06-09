@@ -50,7 +50,9 @@ function MyApp({ Component, pageProps }: AppProps) {
     <Wallet>
       <WalletModalProvider>
         <StrataProviders resetCSS onError={onError}>
-          <AcceleratorProvider url="wss://prod-api.teamwumbo.com/accelerator">
+          <AcceleratorProvider
+            url="wss://prod-api.teamwumbo.com/accelerator"
+          >
             <ChatSdkProvider>
               <Component {...pageProps} />
               <BrowserView>

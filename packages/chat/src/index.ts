@@ -30,7 +30,7 @@ import { v4 as uuid } from "uuid";
 import { ChatIDL, ChatV0, DelegateWalletV0, NamespacesV0, PostAction, ProfileV0 } from "./generated/chat";
 import { uploadFile } from "./shdw";
 
-const MESSAGE_MAX_CHARACTERS = 103;
+const MESSAGE_MAX_CHARACTERS = 288; // TODO: This changes with optional accounts in the future
 
 export * from "./generated/chat";
 
@@ -1401,6 +1401,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       instructionGroups.push(instructions);
       signerGroups.push([delegateWalletKeypair].filter(truthy));
     }
+
+    console.log("Split", numGroups, contentLength, message, encryptedString)
 
     return {
       instructions: instructionGroups,

@@ -19,7 +19,6 @@ export default function Chatroom() {
   const [pendingMessages, setPendingMessages] = useState<IMessageWithPending[]>([]);
   const { messages, error } = useMessages(chatKey);
   const { handleErrors } = useErrorHandler();
-  console.log(isMobile)
   handleErrors(error)
 
   const msgWeHave = useMemo(
