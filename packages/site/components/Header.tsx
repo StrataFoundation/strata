@@ -85,7 +85,7 @@ export const Header: React.FC = () => {
               <Image
                 src="/riptideAppBarBanner.png"
                 alt="riptide hackathon 1st place winner DAOs Track"
-                height="40px"
+                height="46px"
               />
             </Link>
           </Container>
