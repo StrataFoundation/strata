@@ -4,7 +4,7 @@ import { UseAccountState, useStrataSdks, useAccount } from "./";
 
 export function useFungibleChildEntangler(
   childEntanglerKey: PublicKey | undefined | null,
-): UseAccountState<IFungibleChildEntangler> & { error?: Error } {
+): UseAccountState<IFungibleChildEntangler | undefined> & { error?: Error } {
   const { fungibleEntanglerSdk } = useStrataSdks();
   return useAccount(childEntanglerKey, fungibleEntanglerSdk?.childEntanglerDecoder);
 }

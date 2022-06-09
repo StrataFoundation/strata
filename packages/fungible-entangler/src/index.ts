@@ -291,24 +291,27 @@ export class FungibleEntangler extends AnchorSdk<any> {
     return this.getAccount(entanglerKey, this.parentEntanglerDecoder);
   }
 
-  childEntanglerDecoder: TypedAccountParser<IFungibleChildEntangler> = (
+  childEntanglerDecoder: TypedAccountParser<IFungibleChildEntangler | undefined> = (
     pubkey,
     account
   ) => {
-    const coded = this.program.coder.accounts.decode<IFungibleChildEntangler>(
-      "FungibleChildEntanglerV0",
-      account.data
-    );
-
-    return {
-      ...coded,
-      publicKey: pubkey,
-    };
+    try {
+      const coded = this.program.coder.accounts.decode<IFungibleChildEntangler>(
+        "FungibleChildEntanglerV0",
+        account.data
+      );
+      return {
+        ...coded,
+        publicKey: pubkey,
+      };
+    } catch(err) {
+      return undefined
+    }
   };
 
   getChildEntangler(
     entanglerKey: PublicKey
-  ): Promise<IFungibleChildEntangler | null> {
+  ): Promise<IFungibleChildEntangler | null | undefined> {
     return this.getAccount(entanglerKey, this.childEntanglerDecoder);
   }
 

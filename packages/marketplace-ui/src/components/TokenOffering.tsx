@@ -76,7 +76,6 @@ export const TokenOffering = ({
   const { handleErrors } = useErrorHandler();
   handleErrors(submitError);
 
-  const targetMint = parentEntangler && childEntangler ? parentEntangler?.parentMint : tokenBonding?.targetMint;
   const tradingMints = useMemo(() => {
     return {
       base: tokenBonding?.baseMint,
