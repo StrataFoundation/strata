@@ -24,6 +24,7 @@ export function ChatInput(props: React.TextareaHTMLAttributes<HTMLTextAreaElemen
 
   return (
     <textarea
+      placeholder="Say something. gm..."
       ref={textareaRef}
       // @ts-ignore
       style={{ ...defaultStyle, ...props.style }}
