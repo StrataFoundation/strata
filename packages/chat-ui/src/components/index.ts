@@ -11,3 +11,4 @@ export * from "./ProfileButton";
 export * from "./GifSearch";
 export * from "./ChatInput";
 export * from "./FileAttachment";
+export * from "./EmojiSearch";

@@ -51,20 +51,29 @@ async function getSignatures(
 }
 
 // Pending when coming from the accelerator
-export type TransactionResponseWithSig = Partial<TransactionResponse> & { signature: string; pending?: boolean }
+export type TransactionResponseWithSig = Partial<TransactionResponse> & {
+  signature: string;
+  pending?: boolean;
+};
 
-async function retryGetTxn(connection: Connection, sig: string, tries: number = 0): Promise<TransactionResponse> {
-  const result = await connection.getTransaction(sig, { commitment: "confirmed" });
+async function retryGetTxn(
+  connection: Connection,
+  sig: string,
+  tries: number = 0
+): Promise<TransactionResponse> {
+  const result = await connection.getTransaction(sig, {
+    commitment: "confirmed",
+  });
 
   if (result) {
-    return result
+    return result;
   }
 
   if (tries < 5) {
-    console.log(`Failed to fetch ${sig}, retrying in 500ms...`)
+    console.log(`Failed to fetch ${sig}, retrying in 500ms...`);
     await sleep(500);
     console.log(`Retrying ${sig}...`);
-    return retryGetTxn(connection, sig, tries + 1)
+    return retryGetTxn(connection, sig, tries + 1);
   }
 
   throw new Error("Failed to fetch tx with signature " + sig);
@@ -87,6 +96,8 @@ async function hydrateTransactions(
         const ret = await retryGetTxn(connection, s.signature);
         // @ts-ignore
         ret.signature = s.signature;
+        // @ts-ignore
+        ret.pending = false;
         return ret as TransactionResponseWithSig;
       })
     )
@@ -102,19 +113,23 @@ interface ITransactions {
   fetchNew(num: number): void;
 }
 
-function removeDups(txns: TransactionResponseWithSig[]): TransactionResponseWithSig[] {
+function removeDups(
+  txns: TransactionResponseWithSig[]
+): TransactionResponseWithSig[] {
   const notPending = new Set(
     Array.from(txns.filter((tx) => !tx.pending).map((tx) => tx.signature))
   );
   const seen = new Set();
 
-  return txns.map(tx => {
-    const nonPendingAvailable = tx.pending && notPending.has(tx.signature);
-    if (!seen.has(tx.signature) && !nonPendingAvailable) {
-      seen.add(tx.signature);
-      return tx;
-    }
-  }).filter(truthy)
+  return txns
+    .map((tx) => {
+      const nonPendingAvailable = tx.pending && notPending.has(tx.signature);
+      if (!seen.has(tx.signature) && !nonPendingAvailable) {
+        seen.add(tx.signature);
+        return tx;
+      }
+    })
+    .filter(truthy);
 }
 
 export const useTransactions = ({
@@ -122,7 +137,7 @@ export const useTransactions = ({
   until,
   address,
   subscribe = false,
-  accelerated = false
+  accelerated = false,
 }: {
   numTransactions: number;
   until?: Date;
@@ -146,28 +161,32 @@ export const useTransactions = ({
   useEffect(() => {
     let subId: number;
     if (subscribe && address) {
-      subId = connection.onLogs(address, async ({ signature, err }, { slot }) => {
-        try {
-          const newTxns = await hydrateTransactions(connection, [
-            {
-              slot,
-              signature,
-              blockTime: new Date().valueOf() / 1000,
-              memo: "",
-              err,
-            },
-          ]);
-          setTransactions((txns) => removeDups([...newTxns, ...txns]));
-        } catch (e: any) {
-          console.error("Error while fetching new tx", e)
-        }
-      }, "confirmed");
+      subId = connection.onLogs(
+        address,
+        async ({ signature, err }, { slot }) => {
+          try {
+            const newTxns = await hydrateTransactions(connection, [
+              {
+                slot,
+                signature,
+                blockTime: new Date().valueOf() / 1000,
+                memo: "",
+                err,
+              },
+            ]);
+            setTransactions((txns) => removeDups([...newTxns, ...txns]));
+          } catch (e: any) {
+            console.error("Error while fetching new tx", e);
+          }
+        },
+        "confirmed"
+      );
     }
     return () => {
       if (subId) {
         connection.removeOnLogsListener(subId);
       }
-    }
+    };
   }, [subscribe, connection, addrStr, setTransactions]);
 
   useEffect(() => {
@@ -177,20 +196,33 @@ export const useTransactions = ({
         subId = await accelerator.onTransaction(
           cluster as Cluster,
           address,
-          ({ transaction, txid } ) => {
-            setTransactions((txns) => removeDups([{ 
-              signature: txid, 
-              transaction: { 
-                message: transaction.compileMessage(), 
-                signatures: transaction.signatures.map(sig => sig.publicKey.toBase58())
-              },
-              pending: true 
-            }, ...txns]));
+          ({ transaction, txid }) => {
+            console.log("Accelerated got", txid);
+            setTransactions((txns) => {
+              try {
+                return removeDups([
+                  {
+                    signature: txid,
+                    transaction: {
+                      message: transaction.compileMessage(),
+                      signatures: transaction.signatures.map((sig) =>
+                        sig.publicKey.toBase58()
+                      ),
+                    },
+                    pending: true,
+                  },
+                  ...txns,
+                ]);
+              } catch (e: any) {
+                console.error(e);
+                throw e;
+              }
+            });
           }
         );
       }
-    })()
-    
+    })();
+
     return () => {
       if (subId && accelerator) {
         accelerator.unsubscribeTransaction(subId);

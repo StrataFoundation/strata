@@ -1,4 +1,4 @@
-import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
+import { Keypair, PublicKey, SYSVAR_CLOCK_PUBKEY, Transaction } from "@solana/web3.js";
 import { Cluster } from "@strata-foundation/accelerator";
 import { Accelerator } from "@strata-foundation/accelerator";
 import {
@@ -39,7 +39,6 @@ async function sendMessage({
   accelerator,
   delegateWalletKeypair,
   cluster,
-  blockTime,
   onAddPendingMessage,
   message
 }: {
@@ -49,7 +48,6 @@ async function sendMessage({
   accelerator: Accelerator | undefined,
   delegateWalletKeypair: Keypair | undefined,
   cluster: string,
-  blockTime: number | undefined,
   onAddPendingMessage: ((message: IMessageWithPending) => void) | undefined,
   message: ISendMessageContent
 }) {
@@ -90,6 +88,10 @@ async function sendMessage({
           };
         })
       );
+
+      const blockTime = Number((await chatSdk.provider.connection.getAccountInfo(
+        SYSVAR_CLOCK_PUBKEY
+      ))!.data.readBigInt64LE(8 * 4));
 
       if (onAddPendingMessage) {
         const { fileAttachments, ...rest } = message;
@@ -133,7 +135,6 @@ export function useSendMessage({ chatKey, onAddPendingMessage }: IUseSendMessage
   const { info: chat } = useChat(chatKey);
   const { info: profile } = useWalletProfile();
   const { cluster } = useEndpoint();
-  const blockTime = useSolanaUnixTime();
 
   const {
     error,
@@ -151,7 +152,6 @@ export function useSendMessage({ chatKey, onAddPendingMessage }: IUseSendMessage
         accelerator,
         delegateWalletKeypair,
         cluster,
-        blockTime,
         onAddPendingMessage,
         message,
       }),

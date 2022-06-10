@@ -1,5 +1,5 @@
 import { ConfirmedTransactionMeta, Message, PublicKey } from "@solana/web3.js";
-import { ChatSdk, IMessage } from "@strata-foundation/chat";
+import { ChatSdk, IMessage, MessageType, ReactMessage } from "@strata-foundation/chat";
 import {
   truthy,
   useTransactions,
@@ -13,11 +13,15 @@ export interface IMessageWithPending extends IMessage {
   pending?: boolean;
 }
 
+export interface IMessageWithPendingAndReacts extends IMessage {
+  reacts: IMessageWithPending[];
+};
+
 interface IUseMessages {
   error: Error | undefined;
   loadingInitial: boolean;
   loadingMore: boolean;
-  messages: IMessageWithPending[] | undefined;
+  messages: IMessageWithPendingAndReacts[] | undefined;
   fetchMore(num: number): void;
   fetchNew(num: number): void;
 }
@@ -103,7 +107,7 @@ export function useMessages(chat: PublicKey | undefined, accelerated: boolean = 
     address: chat,
     numTransactions: 25,
     subscribe: true,
-    accelerated
+    accelerated,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
@@ -113,22 +117,52 @@ export function useMessages(chat: PublicKey | undefined, accelerated: boolean = 
     (async () => {
       try {
         setLoading(true);
-        const newMessages = await getMessages(
-          chatSdk, transactions, messages
-        )
+        const newMessages = await getMessages(chatSdk, transactions, messages);
         setMessages(newMessages);
       } catch (e: any) {
-        setError(e)
+        setError(e);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    })()
-  }, [chatSdk, transactions, setMessages])
+    })();
+  }, [chatSdk, transactions, setMessages]);
+
+  // Group by and pull off reaction messages
+  const messagesWithReacts = useMemo(() => {
+    if (!messages) {
+      return undefined;
+    }
+    // Don't allow the same react from one person more than once
+    const seen = new Set<string>();
+    const reacts = messages.reduce((acc, msg) => {
+      if (msg?.decodedMessage?.type === MessageType.React) {
+        const reactMessage = msg.decodedMessage as ReactMessage;
+        if (!acc[reactMessage.referenceMessageId]) {
+          acc[reactMessage.referenceMessageId] = [];
+        }
+        const seenKey =
+          msg.profileKey?.toBase58() + reactMessage.referenceMessageId + reactMessage.emoji;
+        if (!seen.has(seenKey)) {
+          seen.add(seenKey);
+          acc[reactMessage.referenceMessageId].push(msg);
+        }
+      }
+
+      return acc;
+    }, {} as Record<string, IMessageWithPending[]>);
+
+    return messages
+      .filter((msg) => msg?.decodedMessage?.type !== MessageType.React)
+      .map((message) => ({
+        ...message,
+        reacts: reacts[message.id] || [],
+      }));
+  }, [messages]);
 
   return {
     ...rest,
     loadingInitial: rest.loadingInitial || loading,
     error: rest.error || error,
-    messages,
+    messages: messagesWithReacts,
   };
 }

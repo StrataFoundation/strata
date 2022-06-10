@@ -154,6 +154,7 @@ export enum MessageType {
   Html = "html",
   Gify = "gify",
   Image = "image",
+  React = "react" // An emoji react to another message
 }
 
 export interface INamespaces extends NamespacesV0 {
@@ -162,13 +163,30 @@ export interface INamespaces extends NamespacesV0 {
   user: NamespaceData;
 }
 
-export interface IMessageContent {
+export interface ReactMessage {
+  referenceMessageId: string; // For reacts, they reference another message
+  emoji: string; // The unicode emoji
+}
+
+export interface TextMessage {
+  text: string;
+}
+
+export interface HtmlMessage {
+  html: string;
+}
+
+export interface ImageMessage {
+  attachments: string[];
+  encryptedAttachments: string[];
+}
+
+export interface GifyMessage {
+  gifyId: string;
+}
+
+export interface IMessageContent extends Partial<ReactMessage>, Partial<TextMessage>, Partial<HtmlMessage>, Partial<ImageMessage>, Partial<GifyMessage> {
   type: MessageType;
-  html?: string;
-  text?: string;
-  attachments?: string[];
-  encryptedAttachments?: string[];
-  gifyId?: string;
 }
 
 export interface IDecryptedMessageContent extends IMessageContent {

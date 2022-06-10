@@ -21,9 +21,8 @@ export function ChatMessages({
       grow="1"
       align="start"
       overflowY="scroll"
-      spacing={2}
+      spacing={0}
       h="full"
-      p="10px"
     >
       {messages?.map((msg, index) => (
         <Message
