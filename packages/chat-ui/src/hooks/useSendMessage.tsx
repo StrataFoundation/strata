@@ -131,7 +131,7 @@ async function sendMessage({
 export function useSendMessage({ chatKey, onAddPendingMessage }: IUseSendMessageArgs): IUseSendMessageReturn {
   const { chatSdk } = useChatSdk();
   const { accelerator } = useAccelerator();
-  const delegateWalletKeypair = useDelegateWallet();
+  const { keypair: delegateWalletKeypair } = useDelegateWallet();
   const { info: chat } = useChat(chatKey);
   const { info: profile } = useWalletProfile();
   const { cluster } = useEndpoint();

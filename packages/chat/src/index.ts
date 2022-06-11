@@ -33,6 +33,7 @@ import { uploadFile } from "./shdw";
 const MESSAGE_MAX_CHARACTERS = 288; // TODO: This changes with optional accounts in the future
 
 export * from "./generated/chat";
+export * from "./shdw";
 
 const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
   "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
@@ -461,7 +462,10 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     };
   };
 
-  delegateWalletDecoder: TypedAccountParser<IDelegateWallet> = (pubkey, account) => {
+  delegateWalletDecoder: TypedAccountParser<IDelegateWallet> = (
+    pubkey,
+    account
+  ) => {
     const coded = this.program.coder.accounts.decode<IDelegateWallet>(
       "DelegateWalletV0",
       account.data
@@ -1420,7 +1424,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       signerGroups.push([delegateWalletKeypair].filter(truthy));
     }
 
-    console.log("Split", numGroups, contentLength, message, encryptedString)
+    console.log("Split", numGroups, contentLength, message, encryptedString);
 
     return {
       instructions: instructionGroups,

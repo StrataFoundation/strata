@@ -30,39 +30,8 @@ import { ChatSdk } from "@strata-foundation/chat";
 import { sendInstructions } from "@strata-foundation/spl-utils";
 import { useChatSdk } from "../contexts";
 import { useDelegateWalletStructKey } from "../hooks/useDelegateWalletStructKey";
+import { useLoadDelegate } from "../hooks/useLoadDelegate";
 
-async function loadDelegate(chatSdk: ChatSdk | undefined) {
-  if (chatSdk) {
-    const instructions = [];
-    const signers = [];
-    const {
-      output: { delegateWalletKeypair },
-      instructions: delInstructions,
-      signers: delSigners,
-    } = await chatSdk.initializeDelegateWalletInstructions({});
-    instructions.push(...delInstructions);
-    signers.push(...delSigners);
-    instructions.push(
-      SystemProgram.transfer({
-        fromPubkey: chatSdk.wallet.publicKey,
-        toPubkey: delegateWalletKeypair!.publicKey,
-        lamports: 10000000, // 2000 messages
-      })
-    );
-    await sendInstructions(
-      chatSdk.errors || new Map(),
-      chatSdk.provider,
-      instructions,
-      signers
-    );
-    const existing = localStorage.getItem("delegateWallet");
-    const existingObj = existing ? JSON.parse(existing) : {};
-    existingObj[chatSdk.wallet.publicKey?.toBase58()] = Array.from(
-      delegateWalletKeypair!.secretKey
-    );
-    localStorage.setItem("delegateWallet", JSON.stringify(existingObj));
-  }
-}
 
 export const ProfileButton: FC<ButtonProps> = ({
   children = "Select Wallet",
@@ -71,16 +40,21 @@ export const ProfileButton: FC<ButtonProps> = ({
 }) => {
   const { connected, publicKey } = useWallet();
   const { visible, setVisible } = useWalletModal();
-  const { info: profile, loading } = useWalletProfile();
+  const { info: profile, account: profileAccount, loading } = useWalletProfile();
   const { username } = useUsernameFromIdentifierCertificate(profile?.identifierCertificateMint);
-  const delegate = useDelegateWallet();
+  const { keypair: delegate } = useDelegateWallet();
   const { key: delegateWalletKey, loading: loadingS1 } = useDelegateWalletStructKey(delegate?.publicKey);
   const { account: delegateWalletStruct, loading: loadingS2 } =
     useDelegateWalletStruct(delegateWalletKey);
   
   const { chatSdk } = useChatSdk();
   const { handleErrors } = useErrorHandler();
-  const { execute: execLoadDelegate, error, loading: loadingDelegate } = useAsyncCallback(loadDelegate)
+  const {
+    needsTopOff,
+    loadDelegate,
+    loading: loadingDelegate,
+    error,
+  } = useLoadDelegate();
   const [happenedOnce, setHappened] = useState(false);
   handleErrors(error);
 
@@ -88,13 +62,21 @@ export const ProfileButton: FC<ButtonProps> = ({
     if (
       !happenedOnce &&
       profile &&
-      (!delegate || (delegateWalletKey && !loadingS1 && !loadingS2 && !delegateWalletStruct))
+      (!delegate ||
+        (delegateWalletKey &&
+          !loadingS1 &&
+          !loadingS2 &&
+          !delegateWalletStruct))
     ) {
-      console.log("wal", delegate, delegateWalletKey, loadingS1, loadingS2, delegateWalletStruct)
-      setHappened(true)
-      execLoadDelegate(chatSdk);
+      setHappened(true);
+      loadDelegate();
+    }
+
+    if (needsTopOff && profile) {
+      loadDelegate();
     }
   }, [
+    needsTopOff,
     happenedOnce,
     profile,
     delegate,
@@ -102,7 +84,7 @@ export const ProfileButton: FC<ButtonProps> = ({
     loadingS1,
     loadingS2,
     chatSdk,
-    execLoadDelegate
+    loadDelegate,
   ]);
 
   const handleClick = useCallback(
@@ -127,7 +109,7 @@ export const ProfileButton: FC<ButtonProps> = ({
     >
       {}
 
-      {!loading && connected && !profile && !delegate && <CreateProfileModal />}
+      {!loading && connected && !profileAccount && <CreateProfileModal />}
       {loadingDelegate && (
         <Modal isOpen={true} onClose={() => {}}>
           <ModalContent>
