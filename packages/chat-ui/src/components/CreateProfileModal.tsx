@@ -17,12 +17,18 @@ import {
   Image,
   Flex,
   Divider,
+  useDisclosure,
 } from "@chakra-ui/react";
+import { LoadWalletModal } from "./LoadWalletModal";
 import { RiCheckFill } from "react-icons/ri";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { ChatSdk, IdentifierType, uploadFile } from "@strata-foundation/chat";
-import { truncatePubkey, useErrorHandler, useProvider } from "@strata-foundation/react";
+import {
+  truncatePubkey,
+  useErrorHandler,
+  useProvider,
+} from "@strata-foundation/react";
 import { sendMultipleInstructions } from "@strata-foundation/spl-utils";
 import React, { useEffect, useState } from "react";
 import { useAsyncCallback } from "react-async-hook";
@@ -55,7 +61,9 @@ async function createProfile(
     let imageUrl: string | undefined = args.imageUrl;
     if (args.image) {
       setProgress("Uploading pfp...");
-      const delegateWalletKeypair = delegateWalletStorage.getDelegateWallet(chatSdk.provider.wallet.publicKey);
+      const delegateWalletKeypair = delegateWalletStorage.getDelegateWallet(
+        chatSdk.provider.wallet.publicKey
+      );
       imageUrl = await uploadFile(
         chatSdk.provider,
         args.image,
@@ -70,14 +78,14 @@ async function createProfile(
       output: { certificateMint },
     } = await chatSdk.claimIdentifierInstructions({
       type: IdentifierType.User,
-      identifier: args.username
+      identifier: args.username,
     });
 
     const { instructions, signers } =
       await chatSdk.initializeProfileInstructions({
         identifierCertificateMint: certificateMint,
         imageUrl,
-        identifier: args.username
+        identifier: args.username,
       });
 
     await sendMultipleInstructions(
@@ -108,13 +116,14 @@ export function CreateProfileModal() {
   const { chatSdk } = useChatSdk();
   const { awaitingApproval } = useProvider();
   const { handleErrors } = useErrorHandler();
+  const { isOpen: loadWalletIsOpen, onClose, onOpen } = useDisclosure();
   const {
     loading: loadingDelegate,
     loadDelegate,
     needsInit,
     needsTopOff,
     mnemonic,
-    error: delegateError
+    error: delegateError,
   } = useLoadDelegate();
 
   const { username, image } = watch();
@@ -129,7 +138,7 @@ export function CreateProfileModal() {
       </Link>
     </Box>
   );
-  "";
+  ("");
 
   handleErrors(error, delegateError);
 
@@ -138,12 +147,19 @@ export function CreateProfileModal() {
   }
 
   const loadup = (
-    <Button colorScheme="primary" onClick={() => loadDelegate()} isLoading={loadingDelegate}>
+    <Button
+      colorScheme="primary"
+      onClick={() => loadDelegate()}
+      isLoading={loadingDelegate}
+    >
       Load Hot Wallet
     </Button>
   );
 
   const needsLoadup = needsInit || needsTopOff;
+  useEffect(() => {
+    if (needsLoadup) onOpen();
+  }, [needsLoadup])
 
   const hiddenFileInput = React.useRef<HTMLInputElement>(null);
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -166,13 +182,18 @@ export function CreateProfileModal() {
       setImgUrl(undefined);
     }
   }, [image]);
+
+  if (loadWalletIsOpen) {
+    return <LoadWalletModal onLoaded={() => onClose()} />;
+  }
+
   return (
     <Modal
       isOpen={true}
       onClose={() => {
         disconnect();
       }}
-      size="2xl"
+      size="lg"
       isCentered
       trapFocus={true}
     >
@@ -181,110 +202,98 @@ export function CreateProfileModal() {
           <VStack pb={4} pt={4} spacing={4} align="left">
             <VStack spacing={2} align="left">
               <Text fontSize="xl" fontWeight="bold">
-                Step 1. Let&apos;s load up your Chat Wallet
+                Save your local seed phrase
               </Text>
-              <Text>
-                Strata Chat loads a hot wallet in your local storage with 0.1
-                Sol, or 20,000 messages. This helps us avoid asking for approval
-                for every message.
-              </Text>
-              {needsLoadup && loadup}
-              {!needsLoadup && mnemonic && <SeedPhrase mnemonic={mnemonic} />}
+              {!needsLoadup && mnemonic && <SeedPhrase mnemonic={mnemonic!} />}
             </VStack>
 
-            {!needsLoadup && (
-              <FormProvider {...formProps}>
-                <form onSubmit={handleSubmit(onSubmit)}>
-                  <Text fontSize="xl" fontWeight="bold">
-                    Step 2. Setup your Profile
-                  </Text>
-                  <VStack>
-                    <FormControlWithError
-                      id="username"
-                      help="Your username that will appear in the chat. You own your username. Upon claiming, you will receive a free Cardinal certificate NFT."
-                      label="Username"
-                      errors={errors}
-                    >
-                      <Input {...register("username")} />
-                    </FormControlWithError>
-                    {userError && <Alert status="error">{userError}</Alert>}
+            <FormProvider {...formProps}>
+              <form onSubmit={handleSubmit(onSubmit)}>
+                <Text fontSize="xl" fontWeight="bold">
+                  Step 2. Setup your Profile
+                </Text>
+                <VStack>
+                  <FormControlWithError
+                    id="username"
+                    help="Your username that will appear in the chat. You own your username. Upon claiming, you will receive a free Cardinal certificate NFT."
+                    label="Username"
+                    errors={errors}
+                  >
+                    <Input {...register("username")} />
+                  </FormControlWithError>
+                  {userError && <Alert status="error">{userError}</Alert>}
 
-                    <FormControl id="image">
-                      <FormLabel>Upload Picture</FormLabel>
-                      <HStack w="full" spacing={4}>
-                        <Button
-                          size="md"
-                          colorScheme="primary"
-                          variant="outline"
-                          onClick={() => hiddenFileInput.current!.click()}
-                        >
-                          Choose Image
-                        </Button>
-
-                        {image && (
-                          <HStack spacing={2} align="center">
-                            <Image
-                              alt={image.name}
-                              w="32px"
-                              h="32px"
-                              src={imgUrl}
-                            />
-                            <Text color="gray.500">{image.name}</Text>
-                            <Icon
-                              w="22px"
-                              h="22px"
-                              color="green.400"
-                              as={RiCheckFill}
-                            />
-                          </HStack>
-                        )}
-                      </HStack>
-                      <input
-                        id="image"
-                        type="file"
-                        accept=".png,.jpg,.gif,.mp4,.svg"
-                        multiple={false}
-                        onChange={handleImageChange}
-                        ref={hiddenFileInput}
-                        style={{ display: "none" }}
-                      />
-                      <FormHelperText
-                        color={errors.image?.message && "red.400"}
+                  <FormControl id="image">
+                    <FormLabel>Upload Picture</FormLabel>
+                    <HStack w="full" spacing={4}>
+                      <Button
+                        size="md"
+                        colorScheme="primary"
+                        variant="outline"
+                        onClick={() => hiddenFileInput.current!.click()}
                       >
-                        {errors.image?.message ||
-                          `The image that will be displayed as your pfp`}
-                      </FormHelperText>
-                    </FormControl>
-                    <Flex align="center" w="full">
-                      <Divider borderColor="gray.500" />
-                      <Text padding="2">OR</Text>
-                      <Divider borderColor="gray.500" />
-                    </Flex>
-                    <FormControlWithError
-                      id="imageUrl"
-                      help="A url to the image to use for your profile (ex: right click your PFP on twitter and copy image URL)"
-                      label="Image URL"
-                      errors={errors}
-                    >
-                      <Input {...register("imageUrl")} />
-                    </FormControlWithError>
-                    <Button
-                      isDisabled={!!userError}
-                      isLoading={loading}
-                      colorScheme="primary"
-                      alignSelf="flex-end"
-                      mr={3}
-                      type="submit"
-                      loadingText={
-                        awaitingApproval ? "Awaiting Approval" : step
-                      }
-                    >
-                      Save
-                    </Button>
-                  </VStack>
-                </form>
-              </FormProvider>
-            )}
+                        Choose Image
+                      </Button>
+
+                      {image && (
+                        <HStack spacing={2} align="center">
+                          <Image
+                            alt={image?.name}
+                            w="32px"
+                            h="32px"
+                            src={imgUrl}
+                          />
+                          <Text color="gray.500">{image?.name}</Text>
+                          <Icon
+                            w="22px"
+                            h="22px"
+                            color="green.400"
+                            as={RiCheckFill}
+                          />
+                        </HStack>
+                      )}
+                    </HStack>
+                    <input
+                      id="image"
+                      type="file"
+                      accept=".png,.jpg,.gif,.mp4,.svg"
+                      multiple={false}
+                      onChange={handleImageChange}
+                      ref={hiddenFileInput}
+                      style={{ display: "none" }}
+                    />
+                    <FormHelperText color={errors.image?.message && "red.400"}>
+                      {errors.image?.message ||
+                        `The image that will be displayed as your pfp`}
+                    </FormHelperText>
+                  </FormControl>
+                  <Flex align="center" w="full">
+                    <Divider borderColor="gray.500" />
+                    <Text padding="2">OR</Text>
+                    <Divider borderColor="gray.500" />
+                  </Flex>
+                  <FormControlWithError
+                    id="imageUrl"
+                    help="A url to the image to use for your profile (ex: right click your PFP on twitter and copy image URL)"
+                    label="Image URL"
+                    errors={errors}
+                  >
+                    <Input {...register("imageUrl")} />
+                  </FormControlWithError>
+                  <Button
+                    isDisabled={!!userError}
+                    isLoading={loading}
+                    colorScheme="primary"
+                    alignSelf="flex-end"
+                    mr={3}
+                    type="submit"
+                    loadingText={awaitingApproval ? "Awaiting Approval" : step}
+                  >
+                    Save
+                  </Button>
+                </VStack>
+              </form>
+            </FormProvider>
           </VStack>
         </ModalBody>
       </ModalContent>

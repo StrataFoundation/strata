@@ -31,6 +31,7 @@ import { sendInstructions } from "@strata-foundation/spl-utils";
 import { useChatSdk } from "../contexts";
 import { useDelegateWalletStructKey } from "../hooks/useDelegateWalletStructKey";
 import { useLoadDelegate } from "../hooks/useLoadDelegate";
+import { LoadWalletModal } from "./LoadWalletModal";
 
 
 export const ProfileButton: FC<ButtonProps> = ({
@@ -107,8 +108,6 @@ export const ProfileButton: FC<ButtonProps> = ({
       isAttached
       size={props.size}
     >
-      {}
-
       {!loading && connected && !profileAccount && <CreateProfileModal />}
       {loadingDelegate && (
         <Modal isOpen={true} onClose={() => {}}>

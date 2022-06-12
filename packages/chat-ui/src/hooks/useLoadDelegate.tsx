@@ -81,7 +81,7 @@ export function useLoadDelegate() {
     needsInit: !loadingStruct && !loadingKey && !account,
     needsTopOff: !loadingBalance && balance < 0.01,
     loadDelegate: () => {
-      loadDelegate(chatSdk)
+      return loadDelegate(chatSdk)
     },
     loading,
     error,
