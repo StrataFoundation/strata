@@ -146,16 +146,6 @@ export function CreateProfileModal() {
     await execute(chatSdk, args, setStep);
   }
 
-  const loadup = (
-    <Button
-      colorScheme="primary"
-      onClick={() => loadDelegate()}
-      isLoading={loadingDelegate}
-    >
-      Load Hot Wallet
-    </Button>
-  );
-
   const needsLoadup = needsInit || needsTopOff;
   useEffect(() => {
     if (needsLoadup) onOpen();

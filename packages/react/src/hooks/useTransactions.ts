@@ -56,29 +56,6 @@ export type TransactionResponseWithSig = Partial<TransactionResponse> & {
   pending?: boolean;
 };
 
-async function retryGetTxn(
-  connection: Connection,
-  sig: string,
-  tries: number = 0
-): Promise<TransactionResponse> {
-  const result = await connection.getTransaction(sig, {
-    commitment: "confirmed",
-  });
-
-  if (result) {
-    return result;
-  }
-
-  if (tries < 5) {
-    console.log(`Failed to fetch ${sig}, retrying in 500ms...`);
-    await sleep(500);
-    console.log(`Retrying ${sig}...`);
-    return retryGetTxn(connection, sig, tries + 1);
-  }
-
-  throw new Error("Failed to fetch tx with signature " + sig);
-}
-
 async function hydrateTransactions(
   connection: Connection | undefined,
   signatures: ConfirmedSignatureInfo[]
@@ -87,21 +64,20 @@ async function hydrateTransactions(
     return [];
   }
 
-  const sorted = signatures.sort(
-    (a, b) => (b.blockTime || 0) - (a.blockTime || 0)
-  );
-  return (
-    await Promise.all(
-      sorted.map(async (s) => {
-        const ret = await retryGetTxn(connection, s.signature);
-        // @ts-ignore
-        ret.signature = s.signature;
-        // @ts-ignore
-        ret.pending = false;
-        return ret as TransactionResponseWithSig;
-      })
-    )
-  ).filter(truthy);
+  const txs = (
+    await connection.getTransactions(signatures.map((sig) => sig.signature))
+  ).map((t, index) => {
+    // @ts-ignore
+    t.signature = signatures[index].signature;
+    // @ts-ignore
+    t.pending = false;
+
+    return t as TransactionResponseWithSig;
+  });
+
+  return txs
+    .filter(truthy)
+    .sort((a, b) => (b.blockTime || 0) - (a.blockTime || 0));
 }
 
 interface ITransactions {
@@ -174,6 +150,7 @@ export const useTransactions = ({
                 err,
               },
             ]);
+            console.log("new", newTxns)
             setTransactions((txns) => removeDups([...newTxns, ...txns]));
           } catch (e: any) {
             console.error("Error while fetching new tx", e);

@@ -79,7 +79,7 @@ export function useLoadDelegate() {
     delegateWallet,
     mnemonic,
     needsInit: !loadingStruct && !loadingKey && !account,
-    needsTopOff: !loadingBalance && balance < 0.01,
+    needsTopOff: !delegateWallet || (!loadingBalance && balance < 0.01),
     loadDelegate: () => {
       return loadDelegate(chatSdk)
     },

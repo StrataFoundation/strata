@@ -29,10 +29,6 @@ export function useSolOwnedAmount(ownerPublicKey?: PublicKey): {
   amount: number;
   loading: boolean;
 } {
-  const { publicKey } = useWallet();
-  if (!ownerPublicKey) {
-    ownerPublicKey = publicKey || undefined;
-  }
   const { info: lamports, loading } = useAccount<number>(
     ownerPublicKey,
     (_, account) => account.lamports

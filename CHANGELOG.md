@@ -9,6 +9,8 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 
 
+## Breaking
+  * Stop defaulting to my wallet in `useSolOwnedAmount`, causes issues with params that were not originally passed but are passed later
 
 
 # [3.6.0](https://github.com/StrataFoundation/strata/compare/v3.5.7...v3.6.0) (2022-05-13)

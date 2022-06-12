@@ -632,7 +632,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     }
 
     const instructions = transaction.message.instructions.filter((ix) =>
-      transaction.message.accountKeys[ix.programIdIndex].equals(this.programId)
+      ensurePubkey(transaction.message.accountKeys[ix.programIdIndex]).equals(this.programId)
     );
     const coder = this.program.coder.instruction;
 
@@ -649,9 +649,12 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       .map((ix) => ({
         // @ts-ignore
         data: coder.decode(bs58.decode(ix.data)),
-        profile:
-          transaction.message.accountKeys[ix.accounts[profileAccountIndex]],
-        chat: transaction.message.accountKeys[ix.accounts[chatAccountIndex]],
+        profile: ensurePubkey(
+          transaction.message.accountKeys[ix.accounts[profileAccountIndex]]
+        ),
+        chat: ensurePubkey(transaction.message.accountKeys[
+          ix.accounts[chatAccountIndex]
+        ]),
       }))
       .filter(truthy);
 
@@ -1424,8 +1427,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       signerGroups.push([delegateWalletKeypair].filter(truthy));
     }
 
-    console.log("Split", numGroups, contentLength, message, encryptedString);
-
     return {
       instructions: instructionGroups,
       output: { messageId },
@@ -1469,3 +1470,11 @@ function buf2hex(buffer: ArrayBuffer): string {
     .map((x) => x.toString(16).padStart(2, "0"))
     .join("");
 }
+
+function ensurePubkey(arg0: PublicKey | string) {
+  if (typeof arg0 === "string") {
+    return new PublicKey(arg0)
+  }
+  return arg0
+}
+

@@ -96,9 +96,9 @@ export const Wallet = React.memo(
     wumLeaderboardLink: string;
     onSendClick: () => void;
   }) => {
-    const { amount: solOwned } = useSolOwnedAmount();
-    const solPrice = usePriceInUsd(NATIVE_MINT);
     const { publicKey } = useWallet();
+    const { amount: solOwned } = useSolOwnedAmount(publicKey);
+    const solPrice = usePriceInUsd(NATIVE_MINT);
     const {
       data: tokens,
       loading,

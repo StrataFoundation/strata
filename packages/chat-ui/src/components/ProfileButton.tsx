@@ -1,4 +1,3 @@
-import { useDelegateWallet } from "../hooks/useDelegateWallet";
 import {
   Avatar,
   Button,
@@ -10,27 +9,18 @@ import {
   MenuButton,
   MenuItemOption,
   MenuList,
-  MenuOptionGroup,
-  Modal,
-  ModalBody,
-  ModalContent,
-  useColorModeValue,
+  MenuOptionGroup, useColorModeValue,
+  useDisclosure
 } from "@chakra-ui/react";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { clusterApiUrl, SystemProgram } from "@solana/web3.js";
-import { truncatePubkey, useEndpoint, useErrorHandler, useLocalStorage, useTokenMetadata } from "@strata-foundation/react";
-import React, { FC, MouseEvent, useCallback, useEffect, useState } from "react";
+import { truncatePubkey, useEndpoint, useErrorHandler } from "@strata-foundation/react";
+import React, { FC, MouseEvent, useCallback, useEffect } from "react";
 import { BsChevronDown, BsFillPersonFill } from "react-icons/bs";
-import { useDelegateWalletStruct, useUsernameFromIdentifierCertificate, useWalletProfile } from "../hooks";
-import { CreateProfileModal } from "./CreateProfileModal";
-import { useAsyncCallback } from "react-async-hook";
-import { ChatSdk } from "@strata-foundation/chat";
-import { sendInstructions } from "@strata-foundation/spl-utils";
-import { useChatSdk } from "../contexts";
-import { useDelegateWalletStructKey } from "../hooks/useDelegateWalletStructKey";
+import { useUsernameFromIdentifierCertificate, useWalletProfile } from "../hooks";
 import { useLoadDelegate } from "../hooks/useLoadDelegate";
+import { CreateProfileModal } from "./CreateProfileModal";
 import { LoadWalletModal } from "./LoadWalletModal";
 
 
@@ -43,50 +33,19 @@ export const ProfileButton: FC<ButtonProps> = ({
   const { visible, setVisible } = useWalletModal();
   const { info: profile, account: profileAccount, loading } = useWalletProfile();
   const { username } = useUsernameFromIdentifierCertificate(profile?.identifierCertificateMint);
-  const { keypair: delegate } = useDelegateWallet();
-  const { key: delegateWalletKey, loading: loadingS1 } = useDelegateWalletStructKey(delegate?.publicKey);
-  const { account: delegateWalletStruct, loading: loadingS2 } =
-    useDelegateWalletStruct(delegateWalletKey);
+  const { isOpen: loadWalletIsOpen, onClose, onOpen } = useDisclosure();
   
-  const { chatSdk } = useChatSdk();
   const { handleErrors } = useErrorHandler();
   const {
     needsTopOff,
-    loadDelegate,
-    loading: loadingDelegate,
     error,
   } = useLoadDelegate();
-  const [happenedOnce, setHappened] = useState(false);
   handleErrors(error);
 
+  // Open load wallet dialog if we have a profile but wallet is empty
   useEffect(() => {
-    if (
-      !happenedOnce &&
-      profile &&
-      (!delegate ||
-        (delegateWalletKey &&
-          !loadingS1 &&
-          !loadingS2 &&
-          !delegateWalletStruct))
-    ) {
-      setHappened(true);
-      loadDelegate();
-    }
-
-    if (needsTopOff && profile) {
-      loadDelegate();
-    }
-  }, [
-    needsTopOff,
-    happenedOnce,
-    profile,
-    delegate,
-    delegateWalletStruct,
-    loadingS1,
-    loadingS2,
-    chatSdk,
-    loadDelegate,
-  ]);
+    if (needsTopOff && !loading && profileAccount) onOpen();
+  }, [needsTopOff, profile, loading, onOpen]);
 
   const handleClick = useCallback(
     (event: MouseEvent<HTMLButtonElement>) => {
@@ -109,13 +68,7 @@ export const ProfileButton: FC<ButtonProps> = ({
       size={props.size}
     >
       {!loading && connected && !profileAccount && <CreateProfileModal />}
-      {loadingDelegate && (
-        <Modal isOpen={true} onClose={() => {}}>
-          <ModalContent>
-            <ModalBody>Loading local wallet...</ModalBody>
-          </ModalContent>
-        </Modal>
-      )}
+      <LoadWalletModal isOpen={loadWalletIsOpen} onLoaded={() => onClose()} />
       <Button
         color={useColorModeValue("black", "white")}
         borderColor="primary.500"
