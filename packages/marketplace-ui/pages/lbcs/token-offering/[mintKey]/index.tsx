@@ -87,7 +87,7 @@ export const LbcDisplay: NextPage = ({
           url={`${SITE_URL}/bounty/${mintKey}/`}
         />
         <VStack spacing={2} align="left">
-          <Container mt={"35px"} justify="stretch" maxW="600px">
+          <Container mt={"35px"} justifyContent="stretch" maxW="600px">
             <Tabs varaint="unstyled" isLazy>
               <TabList borderBottom="none">
                 <Tab _selected={selectedProps} fontWeight={"normal"}>

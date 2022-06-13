@@ -98,7 +98,7 @@ export const Bounties: NextPage = () => {
           </Button>
         </VStack>
       </Center>
-      <Container justify="stretch" maxW="container.lg">
+      <Container justifyContent="stretch" maxW="container.lg">
         <VStack pt={16} spacing={8} align="stretch" justify="stretch">
           <Heading fontWeight={700} color="black.700" fontSize="32px">
             Recent Bounties
