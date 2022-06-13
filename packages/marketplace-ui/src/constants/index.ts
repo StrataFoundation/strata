@@ -1,6 +1,5 @@
 export const SOLANA_URL =
-  process.env.NEXT_PUBLIC_SOLANA_URL ||
-  "https://psytrbhymqlkfrhudd.dev.genesysgo.net:8899/";
+  process.env.NEXT_PUBLIC_SOLANA_URL || "https://devnet.genesysgo.net/";
 
 export const NFT_STORAGE_API_KEY = process.env.NEXT_PUBLIC_NFT_STORAGE_API_KEY;
 

@@ -1,8 +1,17 @@
 import { Link, usePrevious } from "@chakra-ui/react";
-import { FormControl, FormLabel, HStack, Center, Avatar, Circle, VStack, Text, Icon } from "@chakra-ui/react";
+import {
+  FormControl,
+  HStack,
+  Center,
+  Avatar,
+  Circle,
+  VStack,
+  Text,
+  Icon,
+} from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
 import {
-  WUMBO_TWITTER_VERIFIER, 
+  WUMBO_TWITTER_VERIFIER,
   WUMBO_TWITTER_TLD,
   usePrimaryClaimedTokenRef,
   usePublicKey,
@@ -15,17 +24,30 @@ import { FormEvent } from "react";
 import { AiOutlineExclamation } from "react-icons/ai";
 import { BiCheck } from "react-icons/bi";
 
-export const Recipient = ({ value, onChange, name }: { name: string, value: string, onChange: (e: FormEvent<HTMLParagraphElement>) => void }) => {
+export const Recipient = ({
+  value,
+  onChange,
+  name,
+}: {
+  name: string;
+  value: string;
+  onChange: (e: FormEvent<HTMLParagraphElement>) => void;
+}) => {
   const [internalValue, setInternalValue] = useState(value);
   const recipient = usePublicKey(internalValue);
   const { info: tokenRefForOwner } = usePrimaryClaimedTokenRef(recipient);
   const { info: recipientAsTokenRef } = useTokenRef(recipient);
-  const tokenRef = useMemo(() => tokenRefForOwner || recipientAsTokenRef, [tokenRefForOwner, recipientAsTokenRef]);
-  
-  const { metadata, image, loading: metadataLoading } = useTokenMetadata(
-    tokenRef?.mint
+  const tokenRef = useMemo(
+    () => tokenRefForOwner || recipientAsTokenRef,
+    [tokenRefForOwner, recipientAsTokenRef]
   );
-  const prevValue = usePrevious(value)
+
+  const {
+    metadata,
+    image,
+    loading: metadataLoading,
+  } = useTokenMetadata(tokenRef?.mint);
+  const prevValue = usePrevious(value);
   const { nameString: handle, loading: handleLoading } = useReverseName(
     recipient,
     WUMBO_TWITTER_VERIFIER,
@@ -34,7 +56,7 @@ export const Recipient = ({ value, onChange, name }: { name: string, value: stri
   const invalidAddress = Boolean(!recipient && internalValue);
   const recipientRef = React.useRef<HTMLParagraphElement>(null);
   const prevRecipientRef = usePrevious(recipientRef);
-  
+
   useEffect(() => {
     if (value != internalValue && prevValue != value) {
       if (recipientRef.current && value) {
@@ -46,29 +68,23 @@ export const Recipient = ({ value, onChange, name }: { name: string, value: stri
 
   useEffect(() => {
     if (
-      (!prevRecipientRef || !prevRecipientRef.current) && recipientRef.current
+      (!prevRecipientRef || !prevRecipientRef.current) &&
+      recipientRef.current
     ) {
       if (internalValue) {
         recipientRef.current.innerText = internalValue;
       }
     }
-  }, [prevRecipientRef, recipientRef, internalValue])
+  }, [prevRecipientRef, recipientRef, internalValue]);
 
   return (
     <FormControl>
       <HStack spacing={4} rounded={4} border="1px" borderColor="gray.200" p={4}>
         <Center>
-          {metadata && (
-            <Avatar
-              w="57px"
-              h="57px"
-              src={image}
-            />
-          )}
+          {metadata && <Avatar w="57px" h="57px" src={image} />}
           {!metadata && (
             <Circle
-              w={internalValue ? "57px" : "24px"}
-              h={internalValue ? "57px" : "24px"}
+              size={internalValue ? "57px" : "24px"}
               backgroundColor="gray.200"
             >
               {recipient && (
@@ -151,4 +167,3 @@ export const Recipient = ({ value, onChange, name }: { name: string, value: stri
     </FormControl>
   );
 };
-
