@@ -1,45 +1,58 @@
-import { VStack } from "@chakra-ui/react";
+import { Flex } from "@chakra-ui/react";
 import { IMessage } from "@strata-foundation/chat";
-import React, { useEffect } from "react";
+import React from "react";
+import throttle from "lodash/throttle";
 import { Message } from "./Message";
 
-const INACTIVE_TIME = 60 // After 1 minute, new grouping
+const INACTIVE_TIME = 60; // After 1 minute, new grouping
+const INFINITE_SCROLL_THRESHOLD = 300;
 
-export function ChatMessages({
+export const ChatMessages = ({
+  isLoading,
+  fetchMore = () => null,
   scrollRef,
-  messages,
+  messages = [],
 }: {
+  isLoading: boolean;
+  fetchMore: (num: number) => void;
   scrollRef: any;
   messages?: IMessage[];
-}) {
-  useEffect(() => {
-    if (messages) scrollRef.current.scrollIntoView();
-  }, [messages]);
+}) => {
+  const reversedMessages = [...messages].reverse();
+  const handleOnScroll = throttle((e: any) => {
+    const scrollOffset = e.target.scrollHeight + e.target.scrollTop;
+    if (
+      scrollOffset <= e.target.offsetHeight + INFINITE_SCROLL_THRESHOLD &&
+      !isLoading
+    ) {
+      fetchMore(50);
+    }
+  }, 300);
 
   return (
-    <VStack
+    <Flex
       grow="1"
-      align="start"
-      overflowY="scroll"
-      spacing={0}
+      overflowY="auto"
+      direction="column-reverse"
       h="full"
+      ref={scrollRef}
+      onScroll={handleOnScroll}
     >
-      {messages?.map((msg, index) => (
+      {reversedMessages?.map((msg, index) => (
         <Message
           key={msg?.id}
           {...msg}
           showUser={
             !(
-              messages[index - 1] &&
-              messages[index - 1].profileKey.equals(msg.profileKey) &&
-              messages[index - 1].endBlockTime >=
+              reversedMessages[index + 1] &&
+              reversedMessages[index + 1].profileKey.equals(msg.profileKey) &&
+              reversedMessages[index + 1].endBlockTime >=
                 (msg.startBlockTime || new Date().valueOf() / 1000) -
                   INACTIVE_TIME
             )
           }
         />
       ))}
-      <div ref={scrollRef}></div>
-    </VStack>
+    </Flex>
   );
-}
+};
