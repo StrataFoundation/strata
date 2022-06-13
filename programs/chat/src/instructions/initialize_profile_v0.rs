@@ -1,10 +1,9 @@
-use anchor_lang::prelude::*;
-use anchor_spl::token::{Mint, TokenAccount};
-use namespaces::state::Entry;
 use crate::error::ErrorCode;
 use crate::state::*;
 use crate::utils::puffed_out_string;
-
+use anchor_lang::prelude::*;
+use anchor_spl::token::{Mint, TokenAccount};
+use namespaces::state::Entry;
 
 #[derive(Accounts)]
 #[instruction(args: InitializeProfileArgsV0)]
@@ -39,22 +38,23 @@ pub struct InitializeProfileV0<'info> {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct InitializeProfileArgsV0 {
   pub image_url: String,
-  pub metadata_url: String
+  pub metadata_url: String,
 }
 
-pub fn handler(
-  ctx: Context<InitializeProfileV0>,
-  args: InitializeProfileArgsV0,
-) -> Result<()> {
+pub fn handler(ctx: Context<InitializeProfileV0>, args: InitializeProfileArgsV0) -> Result<()> {
   require!(args.image_url.len() <= 200, ErrorCode::InvalidStringLength);
-  require!(args.metadata_url.len() <= 200, ErrorCode::InvalidStringLength);
+  require!(
+    args.metadata_url.len() <= 200,
+    ErrorCode::InvalidStringLength
+  );
   // require!(args.username.chars().all(char::is_alphanumeric), ErrorCode::StringNotAlphanumeric);
 
-  ctx.accounts.wallet_profile.identifier_certificate_mint = ctx.accounts.identifier_certificate_mint.key();
+  ctx.accounts.wallet_profile.identifier_certificate_mint =
+    ctx.accounts.identifier_certificate_mint.key();
   ctx.accounts.wallet_profile.owner_wallet = ctx.accounts.owner_wallet.key();
   ctx.accounts.wallet_profile.bump = *ctx.bumps.get("wallet_profile").unwrap();
   ctx.accounts.wallet_profile.metadata_url = puffed_out_string(&args.metadata_url, 200);
   ctx.accounts.wallet_profile.image_url = puffed_out_string(&args.image_url, 200);
-  
+
   Ok(())
 }

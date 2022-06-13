@@ -1,10 +1,9 @@
-use anchor_lang::prelude::*;
-use namespaces::cpi::{create_namespace, accounts::CreateNamespace};
-use namespaces::program::Namespaces;
-use namespaces::instructions::CreateNamespaceIx;
-use spl_token::native_mint;
 use crate::state::*;
-
+use anchor_lang::prelude::*;
+use namespaces::cpi::{accounts::CreateNamespace, create_namespace};
+use namespaces::instructions::CreateNamespaceIx;
+use namespaces::program::Namespaces;
+use spl_token::native_mint;
 
 #[derive(Accounts)]
 #[instruction(args: InitializeNamespacesArgsV0)]
@@ -56,7 +55,7 @@ pub fn handler(
         authority: authority.clone(),
         payer: ctx.accounts.payer.to_account_info().clone(),
         system_program: ctx.accounts.system_program.to_account_info().clone(),
-      }
+      },
     ),
     CreateNamespaceIx {
       bump: args.chat_namespace_bump,
@@ -69,8 +68,8 @@ pub fn handler(
       payment_mint: native_mint::id(),
       min_rental_seconds: 0,
       max_rental_seconds: None,
-      transferable_entries: true
-    }
+      transferable_entries: true,
+    },
   )?;
 
   create_namespace(
@@ -81,7 +80,7 @@ pub fn handler(
         authority,
         payer: ctx.accounts.payer.to_account_info().clone(),
         system_program: ctx.accounts.system_program.to_account_info().clone(),
-      }
+      },
     ),
     CreateNamespaceIx {
       bump: args.user_namespace_bump,
@@ -94,9 +93,9 @@ pub fn handler(
       payment_mint: native_mint::id(),
       min_rental_seconds: 0,
       max_rental_seconds: None,
-      transferable_entries: true
-    }
+      transferable_entries: true,
+    },
   )?;
-  
+
   Ok(())
 }

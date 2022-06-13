@@ -424,6 +424,48 @@ dependencies = [
 ]
 
 [[package]]
+name = "cardinal-payment-manager"
+version = "1.4.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e3d22f67a8d66624a5936fbe01608dc46e3b81c3c7ee2114a7a9dfda2bdac7a4"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "solana-program",
+ "spl-associated-token-account",
+ "spl-token",
+]
+
+[[package]]
+name = "cardinal-time-invalidator"
+version = "1.4.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5ebcb0451a8ab444e596f9efe7dd99e8adc9a373660ac347587c2de716cbe4d6"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "cardinal-payment-manager",
+ "cardinal-token-manager",
+ "solana-program",
+ "spl-associated-token-account",
+ "spl-token",
+]
+
+[[package]]
+name = "cardinal-token-manager"
+version = "1.4.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "db91c85d86c81a95a0874f7903ce28c1c1920b2f5ca438e65a4feec4e08adfeb"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "mpl-token-metadata",
+ "solana-program",
+ "spl-associated-token-account",
+ "spl-token",
+]
+
+[[package]]
 name = "cc"
 version = "1.0.73"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -820,36 +862,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "metaplex-token-metadata"
-version = "0.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "abcc939f0afdc6db054b9998a1292d0a016244b382462e61cfc7c570624982cb"
-dependencies = [
- "arrayref",
- "borsh",
- "metaplex-token-vault",
- "num-derive",
- "num-traits",
- "solana-program",
- "spl-token",
- "thiserror",
-]
-
-[[package]]
-name = "metaplex-token-vault"
-version = "0.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a5211991ba3273df89cd5e0f6f558bc8d7453c87c0546f915b4a319e1541df33"
-dependencies = [
- "borsh",
- "num-derive",
- "num-traits",
- "solana-program",
- "spl-token",
- "thiserror",
-]
-
-[[package]]
 name = "mpl-token-metadata"
 version = "1.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -882,13 +894,15 @@ dependencies = [
 
 [[package]]
 name = "namespaces"
-version = "3.2.0"
-source = "git+https://github.com/cardinal-labs/cardinal-namespaces#d888f8e45041beeb886cb4ee97631036247ebfed"
+version = "4.0.0"
+source = "git+https://github.com/cardinal-labs/cardinal-namespaces#cd84cf784afa6f90731de60737990e4b3b55b0df"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
  "cardinal-certificate",
- "metaplex-token-metadata",
+ "cardinal-time-invalidator",
+ "cardinal-token-manager",
+ "mpl-token-metadata",
  "spl-associated-token-account",
  "spl-token",
 ]

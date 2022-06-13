@@ -1,8 +1,8 @@
-use anchor_lang::prelude::*;
-use namespaces::state::Entry;
-use crate::state::*;
 use crate::error::ErrorCode;
-use anchor_spl::token::{TokenAccount, Token, Mint};
+use crate::state::*;
+use anchor_lang::prelude::*;
+use anchor_spl::token::{Mint, Token, TokenAccount};
+use namespaces::state::Entry;
 use std::convert::*;
 
 #[derive(Accounts)]
@@ -48,17 +48,17 @@ pub struct MessagePartV0 {
   pub content: String,
 }
 
-pub fn handler(
-  ctx: Context<SendTokenMessageV0>,
-  _args: MessagePartV0,
-) -> Result<()> {
-  require!(ctx.accounts.post_permission_account.amount >= ctx.accounts.chat.post_permission_amount, ErrorCode::PermissionDenied);
+pub fn handler(ctx: Context<SendTokenMessageV0>, _args: MessagePartV0) -> Result<()> {
+  require!(
+    ctx.accounts.post_permission_account.amount >= ctx.accounts.chat.post_permission_amount,
+    ErrorCode::PermissionDenied
+  );
 
   if ctx.accounts.profile.owner_wallet != ctx.accounts.sender.key() {
     let delegate_acc = &ctx.remaining_accounts[0];
     let delegate: Account<DelegateWalletV0> = Account::try_from(delegate_acc)?;
     if delegate.delegate_wallet != ctx.accounts.sender.key() {
-      return Err(error!(ErrorCode::IncorrectSender))
+      return Err(error!(ErrorCode::IncorrectSender));
     }
   }
 

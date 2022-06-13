@@ -4,8 +4,8 @@ use anchor_lang::prelude::*;
 
 pub mod error;
 pub mod instructions;
-pub mod state;
 pub mod metadata;
+pub mod state;
 pub mod utils;
 
 use instructions::*;
@@ -23,7 +23,6 @@ pub mod chat {
     instructions::initialize_namespaces_v0::handler(ctx, args)
   }
 
-  
   pub fn initialize_chat_v0(
     ctx: Context<InitializeChatV0>,
     args: InitializeChatArgsV0,
@@ -38,9 +37,7 @@ pub mod chat {
     instructions::initialize_profile_v0::handler(ctx, args)
   }
 
-  pub fn initialize_delegate_wallet_v0(
-    ctx: Context<InitializeDelegateWalletV0>,
-  ) -> Result<()> {
+  pub fn initialize_delegate_wallet_v0(ctx: Context<InitializeDelegateWalletV0>) -> Result<()> {
     instructions::initialize_delegate_wallet_v0::handler(ctx)
   }
 
@@ -51,16 +48,11 @@ pub mod chat {
     instructions::send_token_message_v0::handler(ctx, args)
   }
 
-  pub fn approve_chat_identifier_v0(
-    ctx: Context<ApproveChatIdentifierV0>,
-  ) -> Result<()> {
+  pub fn approve_chat_identifier_v0(ctx: Context<ApproveChatIdentifierV0>) -> Result<()> {
     instructions::approve_chat_identifier_v0::handler(ctx)
   }
 
-
-  pub fn approve_user_identifier_v0(
-    ctx: Context<ApproveUserIdentifierV0>,
-  ) -> Result<()> {
+  pub fn approve_user_identifier_v0(ctx: Context<ApproveUserIdentifierV0>) -> Result<()> {
     instructions::approve_user_identifier_v0::handler(ctx)
   }
 }

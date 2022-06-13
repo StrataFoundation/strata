@@ -97,7 +97,7 @@ export const Wallet = React.memo(
     onSendClick: () => void;
   }) => {
     const { publicKey } = useWallet();
-    const { amount: solOwned } = useSolOwnedAmount(publicKey);
+    const { amount: solOwned } = useSolOwnedAmount(publicKey || undefined);
     const solPrice = usePriceInUsd(NATIVE_MINT);
     const {
       data: tokens,

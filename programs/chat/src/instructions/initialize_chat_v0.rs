@@ -1,9 +1,9 @@
-use anchor_lang::prelude::*;
-use anchor_spl::token::{Mint, TokenAccount};
-use namespaces::state::Entry;
 use crate::error::ErrorCode;
 use crate::state::*;
 use crate::utils::puffed_out_string;
+use anchor_lang::prelude::*;
+use anchor_spl::token::{Mint, TokenAccount};
+use namespaces::state::Entry;
 
 #[derive(Accounts)]
 #[instruction(args: InitializeChatArgsV0)]
@@ -48,13 +48,13 @@ pub struct InitializeChatArgsV0 {
   pub metadata_url: String,
 }
 
-pub fn handler(
-  ctx: Context<InitializeChatV0>,
-  args: InitializeChatArgsV0,
-) -> Result<()> {
+pub fn handler(ctx: Context<InitializeChatV0>, args: InitializeChatArgsV0) -> Result<()> {
   require!(args.name.len() <= 100, ErrorCode::InvalidStringLength);
   require!(args.image_url.len() <= 200, ErrorCode::InvalidStringLength);
-  require!(args.metadata_url.len() <= 200, ErrorCode::InvalidStringLength);
+  require!(
+    args.metadata_url.len() <= 200,
+    ErrorCode::InvalidStringLength
+  );
   // require!(args.identifier.chars().all(char::is_alphanumeric), ErrorCode::StringNotAlphanumeric);
 
   ctx.accounts.chat.post_permission_mint_or_collection = args.post_permission_mint_or_collection;
@@ -68,6 +68,6 @@ pub fn handler(
   ctx.accounts.chat.metadata_url = puffed_out_string(&args.metadata_url, 200);
   ctx.accounts.chat.image_url = puffed_out_string(&args.image_url, 200);
   ctx.accounts.chat.bump = *ctx.bumps.get("chat").unwrap();
-  
+
   Ok(())
 }
