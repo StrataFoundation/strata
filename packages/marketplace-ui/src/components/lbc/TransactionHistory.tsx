@@ -24,7 +24,11 @@ import {
   Icon,
 } from "@chakra-ui/react";
 import { useTransactions } from "../../hooks/useTransactions";
-import { useMint, useTokenBonding, useTokenBondingKey } from "@strata-foundation/react";
+import {
+  useMint,
+  useTokenBonding,
+  useTokenBondingKey,
+} from "@strata-foundation/react";
 import { useMemo } from "react";
 import moment from "moment";
 import { numberWithCommas } from "../../utils/numberWithCommas";
@@ -52,12 +56,11 @@ export const TransactionHistory = ({
     () => (mineOnly ? publicKey || undefined : tokenBondingKey),
     [publicKey, tokenBondingKey, mineOnly]
   );
-  const { transactions, fetchMore, loadingInitial, fetchNew, loadingMore } = useTransactions(
-    {
+  const { transactions, fetchMore, loadingInitial, fetchNew, loadingMore } =
+    useTransactions({
       numTransactions: 5,
       address,
-    }
-  );
+    });
   const baseMint = useMint(tokenBonding?.baseMint);
   const targetMint = useMint(tokenBonding?.targetMint);
 
@@ -153,7 +156,7 @@ export const TransactionHistory = ({
       </HStack>
       <TableContainer>
         <Table variant="simple">
-          <Thead variant="unstyled">
+          <Thead>
             <Tr>
               <Th {...thProps}>Volume</Th>
               <Th {...thProps}>Price</Th>

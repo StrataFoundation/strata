@@ -21,7 +21,8 @@
     "prepare": "yarn run build"
   },
   "dependencies": {
-    "@chakra-ui/react": "^1.7.2",
+    "@chakra-ui/icons": "^1.1.7",
+    "@chakra-ui/react": "^1.8.1",
     "@emotion/react": "^11.6.0",
     "@emotion/styled": "^11.6.0",
     "@hookform/resolvers": "^2.8.3",

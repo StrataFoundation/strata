@@ -55,7 +55,7 @@ export const SwapDisplay: NextPage = ({
           url={`${SITE_URL}/token-offering/${mintKey}/`}
         />
         <Box padding="54px" backgroundColor="black.500" />
-        <Container mt="-72px" justify="stretch" maxW="460px">
+        <Container mt="-72px" justifyContent="stretch" maxW="460px">
           <Heading mb={2} color="white" fontSize="24px" fontWeight={600}>
             Swap
           </Heading>

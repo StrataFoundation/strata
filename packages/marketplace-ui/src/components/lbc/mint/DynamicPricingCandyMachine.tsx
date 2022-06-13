@@ -1,30 +1,31 @@
-import {
-  mintOneToken
-} from "./candy-machine";
+import { mintOneToken } from "./candy-machine";
 import { MintedNftNotification } from "./MintedNftNotification";
 import {
   Box,
   Button,
-  Center, Spinner,
+  Center,
+  Spinner,
   Tab,
   TabList,
   TabPanel,
   TabPanels,
-  Tabs, useColorModeValue, VStack
+  Tabs,
+  useColorModeValue,
+  VStack,
 } from "@chakra-ui/react";
 import { GatewayProvider } from "@civic/solana-gateway-react";
 import * as anchor from "@project-serum/anchor";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import {
-  Notification, useTokenBondingFromMint
+  Notification,
+  useTokenBondingFromMint,
 } from "@strata-foundation/react";
-import React, { useEffect } from "react";
+import React from "react";
 import toast from "react-hot-toast";
 import {
   CANDY_MACHINE_PROGRAM,
   ICandyMachine,
-  useCandyMachine,
   useCandyMachineInfo,
   useLivePrice,
 } from "../../../hooks";
@@ -39,20 +40,17 @@ import { LbcInfo } from "../LbcInfo";
 
 export interface DynamicPricingCandyMachineProps {
   candyMachineId?: anchor.web3.PublicKey;
-  onConnectWallet: () => void
+  onConnectWallet: () => void;
 }
 
-export const DynamicPricingCandyMachine = (props: DynamicPricingCandyMachineProps) => {
+export const DynamicPricingCandyMachine = (
+  props: DynamicPricingCandyMachineProps
+) => {
   const { connection } = useConnection();
   const { publicKey, connected, signTransaction } = useWallet();
 
   const cmState = useCandyMachineInfo(props.candyMachineId);
-  const {
-    candyMachine,
-    isWhitelistUser,
-    isActive,
-    isPresale,
-  } = cmState;
+  const { candyMachine, isWhitelistUser, isActive, isPresale } = cmState;
 
   const mintKey = candyMachine?.tokenMint;
   const {
@@ -66,7 +64,12 @@ export const DynamicPricingCandyMachine = (props: DynamicPricingCandyMachineProp
   const onMint = async (args: IMintArgs) => {
     try {
       document.getElementById("#identity")?.click();
-      if (connected && candyMachine?.program && publicKey && props.candyMachineId)  {
+      if (
+        connected &&
+        candyMachine?.program &&
+        publicKey &&
+        props.candyMachineId
+      ) {
         const mint = await mintOneToken(candyMachine, publicKey, args);
         toast.custom(
           (t) => (
@@ -131,7 +134,7 @@ export const DynamicPricingCandyMachine = (props: DynamicPricingCandyMachineProp
   };
 
   return (
-    <Tabs varaint="unstyled" isLazy>
+    <Tabs variant="unstyled" isLazy>
       <TabList borderBottom="none">
         <Tab _selected={selectedProps} fontWeight={600}>
           Mint
@@ -225,7 +228,13 @@ export const DynamicPricingCandyMachine = (props: DynamicPricingCandyMachineProp
             )}
             {!connected && (
               <Center>
-                <Button variant="outline" colorScheme="primary" onClick={props.onConnectWallet}>Connect Wallet</Button>
+                <Button
+                  variant="outline"
+                  colorScheme="primary"
+                  onClick={props.onConnectWallet}
+                >
+                  Connect Wallet
+                </Button>
               </Center>
             )}
           </Box>
@@ -258,13 +267,8 @@ export const DynamicPricingCandyMachine = (props: DynamicPricingCandyMachineProp
   );
 };
 
-const getCountdownDate = (
-  candyMachine: ICandyMachine
-): Date | undefined => {
-  if (
-    candyMachine.isActive &&
-    candyMachine.endSettings?.endSettingType.date
-  ) {
+const getCountdownDate = (candyMachine: ICandyMachine): Date | undefined => {
+  if (candyMachine.isActive && candyMachine.endSettings?.endSettingType.date) {
     return toDate(candyMachine.endSettings.number);
   }
 

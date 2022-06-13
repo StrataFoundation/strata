@@ -101,12 +101,10 @@ function MintMenuItem({
   onClick: () => void;
 }) {
   const { image, metadata } = useTokenMetadata(mint);
-  const dropdownVariant = useColorModeValue("solid", "ghost");
 
   return (
     <MenuItem
       onClick={onClick}
-      variant={dropdownVariant}
       icon={
         <Center w={8} h={8} rounded="full">
           <Avatar w={"100%"} h={"100%"} size="sm" src={image} />
@@ -212,7 +210,7 @@ export const SwapForm = ({
   }
 
   useEffect(() => {
-    updatePrice()
+    updatePrice();
   }, [pricing, bottomAmount, topAmount, targetMintAcc, baseMintAcc, unixTime]);
 
   const handleTopChange = (value: number | undefined = 0) => {
