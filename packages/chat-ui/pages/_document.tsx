@@ -8,7 +8,7 @@ export default class Document extends NextDocument {
     return (
       <Html>
         <Head />
-        <body>
+        <body style={{ width: "100vw", overflow: "hidden" }}>
           {/* Make Color mode to persists when you refresh the page. */}
           <ColorModeScript initialColorMode="dark" />
           <Main />
