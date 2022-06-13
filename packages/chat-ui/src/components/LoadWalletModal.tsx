@@ -68,14 +68,14 @@ export const LoadWalletModal = (props: Partial<ModalProps> & { onLoaded: () => v
             />
           </Box>
           <VStack spacing={6} align="left" p={12}>
-            <VStack spacing={2} align="center">
-              <Text fontSize="xl" fontWeight="bold">
-                Step 1. Let&apos;s load up your wallet.
+            <VStack spacing={2} align="stretch">
+              <Text textAlign="center" fontSize="xl" fontWeight="bold">
+                Let&apos;s load up your Chat wallet
               </Text>
               <Text textAlign="center">
-                Strata Chat loads a hot wallet in your local storage with 0.1
-                Sol, or 20,000 messages. This helps us avoid asking for approval
-                for every message.
+                Strata Chat loads a hot wallet in your local storage with{" "}
+                <b>0.1 Sol</b>, or <b>20,000 messages</b>. This helps us avoid
+                asking for approval for every message.
               </Text>
             </VStack>
             <Button

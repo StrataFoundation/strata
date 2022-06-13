@@ -200,7 +200,7 @@ export function CreateProfileModal() {
             <FormProvider {...formProps}>
               <form onSubmit={handleSubmit(onSubmit)}>
                 <Text fontSize="xl" fontWeight="bold">
-                  Step 2. Setup your Profile
+                  Setup your Profile
                 </Text>
                 <VStack>
                   <FormControlWithError
