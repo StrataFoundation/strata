@@ -150,7 +150,7 @@ export const useTransactions = ({
                 err,
               },
             ]);
-            console.log("new", newTxns)
+            console.log("new", newTxns);
             setTransactions((txns) => removeDups([...newTxns, ...txns]));
           } catch (e: any) {
             console.error("Error while fetching new tx", e);

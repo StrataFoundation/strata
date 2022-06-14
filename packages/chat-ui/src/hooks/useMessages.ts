@@ -91,6 +91,7 @@ async function getMessages(
         ...(await chatSdk.getDecodedMessagesFromParts(newParts)),
       ]
         .filter((msg) => msg.txids.every((txid) => !failedTx.has(txid)))
+        .sort((a, b) => b.startBlockTime - a.startBlockTime)
         .map(({ parts, ...rest }) => ({
           ...rest,
           parts,

@@ -18,13 +18,13 @@ export const ChatMessages = ({
   scrollRef: any;
   messages?: IMessage[];
 }) => {
-  const reversedMessages = [...messages].reverse();
   const handleOnScroll = throttle((e: any) => {
     const scrollOffset = e.target.scrollHeight + e.target.scrollTop;
     if (
       scrollOffset <= e.target.offsetHeight + INFINITE_SCROLL_THRESHOLD &&
       !isLoading
     ) {
+      console.log("Fetching More");
       fetchMore(50);
     }
   }, 300);
@@ -38,15 +38,15 @@ export const ChatMessages = ({
       ref={scrollRef}
       onScroll={handleOnScroll}
     >
-      {reversedMessages?.map((msg, index) => (
+      {messages?.map((msg, index) => (
         <Message
           key={msg?.id}
           {...msg}
           showUser={
             !(
-              reversedMessages[index + 1] &&
-              reversedMessages[index + 1].profileKey.equals(msg.profileKey) &&
-              reversedMessages[index + 1].endBlockTime >=
+              messages[index + 1] &&
+              messages[index + 1].profileKey.equals(msg.profileKey) &&
+              messages[index + 1].endBlockTime >=
                 (msg.startBlockTime || new Date().valueOf() / 1000) -
                   INACTIVE_TIME
             )
