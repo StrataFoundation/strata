@@ -29,7 +29,7 @@ export const ProfileButton: FC<ButtonProps> = ({
   onClick,
   ...props
 }) => {
-  const { connected, publicKey } = useWallet();
+  const { disconnect, connected, publicKey } = useWallet();
   const { visible, setVisible } = useWalletModal();
   const { info: profile, account: profileAccount, loading } = useWalletProfile();
   const { username } = useUsernameFromIdentifierCertificate(profile?.identifierCertificateMint);
@@ -68,7 +68,14 @@ export const ProfileButton: FC<ButtonProps> = ({
       size={props.size}
     >
       {!loading && connected && !profileAccount && <CreateProfileModal />}
-      <LoadWalletModal isOpen={loadWalletIsOpen} onLoaded={() => onClose()} />
+      <LoadWalletModal
+        isOpen={loadWalletIsOpen}
+        onLoaded={() => onClose()}
+        onClose={() => { 
+          onClose();
+          disconnect();
+        }} 
+      />
       <Button
         color={useColorModeValue("black", "white")}
         borderColor="primary.500"
