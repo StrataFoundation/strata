@@ -754,16 +754,16 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   }
 
   async initializeNamespacesInstructions(): Promise<InstructionResult<null>> {
-    // try {
-    //   await this.getNamespaces();
-    //   return {
-    //     instructions: [],
-    //     signers: [],
-    //     output: null,
-    //   };
-    // } catch (e: any) {
-    //   // This is expected
-    // }
+    try {
+      await this.getNamespaces();
+      return {
+        instructions: [],
+        signers: [],
+        output: null,
+      };
+    } catch (e: any) {
+      // This is expected
+    }
 
     const [namespaces] = await ChatSdk.namespacesKey();
     const [chatNamespace, chatNamespaceBump] =
