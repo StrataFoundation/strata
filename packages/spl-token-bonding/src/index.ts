@@ -470,7 +470,14 @@ export interface IBuyArgs {
   slippage: number;
 }
 
+/** DEPRECATED. Will be removed in a future version */
 export interface IExtraInstructionArgs {
+  tokenBonding: ITokenBonding;
+  isBuy: boolean;
+  amount: BN | undefined;
+}
+
+export interface IPreInstructionArgs {
   tokenBonding: ITokenBonding;
   isBuy: boolean;
   amount: BN | undefined;
@@ -506,8 +513,11 @@ export interface ISwapArgs {
   desiredTargetAmount?: BN | number;
   /** The slippage PER TRANSACTION */
   slippage: number;
-  /** Optionally inject extra instructions before each trade. Usefull for adding txn fees */
+
+  /** DEPRECATED. Will be removed in a future version. Please use preInstructions instead */
   extraInstructions?: (args: IExtraInstructionArgs) => Promise<InstructionResult<null>>;
+  /** Optionally inject extra instructions before each trade. Usefull for adding txn fees */
+  preInstructions?: (args: IPreInstructionArgs) => Promise<InstructionResult<null>>;
   /** Optionally inject extra instructions after each transaction */
   postInstructions?: (args: IPostInstructionArgs) => Promise<InstructionResult<null>>;
 
@@ -1859,6 +1869,13 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         signers: [],
         output: null,
       }),
+    preInstructions = async () => {
+      return {
+        instructions: [],
+        signers: [],
+        output: null,
+      }
+    },
     postInstructions = () =>
       Promise.resolve({
         instructions: [],
@@ -1973,6 +1990,13 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         await extraInstructions({
           tokenBonding,
           amount: currAmount,
+          isBuy,
+        });
+
+      const { instructions: preInstrs, signers: preSigners } =
+        await preInstructions({
+          tokenBonding,
+          amount: currAmount,
           desiredTargetAmount,
           isBuy,
           isFirst: index == 0,
@@ -1987,8 +2011,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
 
       try {
         await this.sendInstructions(
-          [...extraInstrs, ...instructions, ...postInstrs],
-          [...extraSigners, ...signers, ...postSigners],
+          [...extraInstrs, ...preInstrs, ...instructions, ...postInstrs],
+          [...extraSigners, ...preSigners, ...signers, ...postSigners],
           payer
         );
       } catch (e: any) {

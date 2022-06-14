@@ -54,18 +54,6 @@ export const ManyToOneSwap = ({
         await execute({
           ...args,
           balanceCheckTries: 0,
-          extraInstructions: async ({
-            tokenBonding,
-          }) => {
-            const burnBondingKey = (
-              await SplTokenBonding.tokenBondingKey(tokenBonding.targetMint, 1)
-            )[0];
-            return tokenBondingSdk!.sellInstructions({
-              tokenBonding: burnBondingKey,
-              targetAmount: amount!,
-              slippage: 0,
-            });
-          },
         });
         toast.custom((t) => (
           <Notification

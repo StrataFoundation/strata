@@ -12,6 +12,8 @@ import {
   BondingHierarchy,
   ISwapArgs,
   toNumber,
+  IPreInstructionArgs, 
+  IPostInstructionArgs
 } from "@strata-foundation/spl-token-bonding";
 import React, { useEffect, useState } from "react";
 import { useAsync } from "react-async-hook";
@@ -28,7 +30,9 @@ import {
   useSolanaUnixTime,
   useTokenSwapFromId,
   useTokenMetadata,
+  useStrataSdks,
 } from "./";
+import { InstructionResult } from "@strata-foundation/spl-utils";
 
 export interface ISwapDriverArgs
   extends Pick<ISwapFormProps, "onConnectWallet" | "extraTransactionInfo"> {
@@ -104,6 +108,7 @@ export const useSwapDriver = ({
 }: ISwapDriverArgs): Omit<ISwapFormProps, "isSubmitting"> & {
   loading: boolean;
 } => {
+  const { fungibleEntanglerSdk } = useStrataSdks()
   const { provider } = useProvider();
   const [internalError, setInternalError] = useState<Error | undefined>();
   const [spendCap, setSpendCap] = useState<number>(0);
@@ -179,6 +184,8 @@ export const useSwapDriver = ({
     }
   }, [tokenBonding, targetMint, pricing, setSpendCap, unixTime]);
 
+  const childMint = useMint(childEntangler?.childMint);
+
   const base = baseMint && {
     name: baseMeta?.data.name || "",
     ticker: baseMeta?.data.symbol || "",
@@ -234,6 +241,37 @@ export const useSwapDriver = ({
           ...outputAmountSetting,
           slippage: +values.slippage / 100,
           ticker: target!.ticker,
+          async preInstructions({isFirst, amount, isBuy}: IPreInstructionArgs): Promise<InstructionResult<null>> {
+            if (!isFirst || !childEntangler || !parentEntangler || isBuy || !fungibleEntanglerSdk) {
+              return {
+                instructions: [],
+                signers: [],
+                output: null,
+              }
+            }
+  
+            let numAmount = toNumber(amount!, childMint)
+            return await fungibleEntanglerSdk?.swapParentForChildInstructions({
+              parentEntangler: parentEntangler.publicKey,
+              childEntangler: childEntangler.publicKey,
+              amount: numAmount,
+            });
+          },
+          async postInstructions({isLast, amount, isBuy}: IPostInstructionArgs): Promise<InstructionResult<null>> {
+            if (!isLast || !childEntangler || !parentEntangler || !isBuy || !fungibleEntanglerSdk) {
+              return {
+                instructions: [],
+                signers: [],
+                output: null,
+              }
+            }
+            const numAmount = toNumber(amount!, childMint)
+            return await fungibleEntanglerSdk?.swapChildForParentInstructions({
+              parentEntangler: parentEntangler.publicKey,
+              childEntangler: childEntangler.publicKey,
+              amount: numAmount,
+            })
+          },
         });
       } catch (e: any) {
         setInternalError(e);

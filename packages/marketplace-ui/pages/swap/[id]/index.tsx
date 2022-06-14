@@ -28,7 +28,6 @@ export const SwapDisplay: NextPage = ({
   const id = usePublicKey(idRaw as string);
   const { 
     tokenBonding, 
-    parentEntangler,
     loading,
   } = useTokenSwapFromId(id);
   return (
@@ -43,7 +42,7 @@ export const SwapDisplay: NextPage = ({
         title={`Strata Swap | ${name}`}
         description={description}
         image={image}
-        url={`${SITE_URL}/bounty/${ parentEntangler ? parentEntangler.parentMint.toString() : tokenBonding?.targetMint.toString()}/`}
+        url={`${SITE_URL}/swap/${ id?.toString() }/`}
       />
       <Box padding="54px" backgroundColor="black.500" />
       <Container mt="-72px" justifyContent="stretch" maxW="460px">

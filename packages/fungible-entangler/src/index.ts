@@ -509,7 +509,7 @@ export class FungibleEntangler extends AnchorSdk<any> {
     authority = this.provider.wallet.publicKey,
     payer = this.provider.wallet.publicKey,
     source = this.provider.wallet.publicKey,
-    dynamicSeed,
+    dynamicSeed = Keypair.generate().publicKey.toBuffer(),
     amount,
     parentMint,
     childMint,

@@ -2,16 +2,13 @@ import { PublicKey } from "@solana/web3.js";
 import { useSwapDriver } from "../../hooks/useSwapDriver";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { useErrorHandler, useSwap, useStrataSdks, useTokenSwapFromId, useMint } from "../../hooks";
+import { useErrorHandler, useSwap, useTokenSwapFromId, useMint } from "../../hooks";
 import { Notification } from "../Notification";
 import { SwapForm } from "./SwapForm";
-import { BN, Instruction } from "@project-serum/anchor";
-import { toNumber, IExtraInstructionArgs, IPostInstructionArgs } from "@strata-foundation/spl-token-bonding";
-import { InstructionResult } from "@strata-foundation/spl-utils";
+
 
 const identity = () => {};
 export const Swap = ({ id }: { id: PublicKey }) => {
-  const { fungibleEntanglerSdk } = useStrataSdks()
 
   const { loading, error, execute } = useSwap();
   const { handleErrors } = useErrorHandler();
@@ -23,8 +20,6 @@ export const Swap = ({ id }: { id: PublicKey }) => {
     childEntangler, 
     parentEntangler,
   } = useTokenSwapFromId(id);
-
-  const childMint = useMint(childEntangler?.childMint);
 
   const [tradingMints, setTradingMints] = useState<{
     base?: PublicKey;
@@ -55,47 +50,6 @@ export const Swap = ({ id }: { id: PublicKey }) => {
     onTradingMintsChange: setTradingMints,
     swap: (args) =>
       execute({
-        async extraInstructions({isFirst, amount, isBuy}: IExtraInstructionArgs): Promise<InstructionResult<null>> {
-          if (!isFirst || !childEntangler || !parentEntangler || isBuy) {
-            return {
-              instructions: [],
-              signers: [],
-              output: null,
-            }
-          }
-
-          let numAmount = toNumber(amount!, childMint)
-          const instr = await fungibleEntanglerSdk?.swapParentForChildInstructions({
-            parentEntangler: parentEntangler.publicKey,
-            childEntangler: childEntangler.publicKey,
-            amount: numAmount,
-          })
-          return instr ? instr : {
-            instructions: [],
-            signers: [],
-            output: null,
-          }
-        },
-        async postInstructions({isLast, amount, isBuy}: IPostInstructionArgs): Promise<InstructionResult<null>> {
-          if (!isLast || !childEntangler || !parentEntangler || !isBuy) {
-            return {
-              instructions: [],
-              signers: [],
-              output: null,
-            }
-          }
-          const numAmount = toNumber(amount!, childMint)
-          const instr = await fungibleEntanglerSdk?.swapChildForParentInstructions({
-              parentEntangler: parentEntangler.publicKey,
-              childEntangler: childEntangler.publicKey,
-              amount: numAmount,
-            })
-          return instr ? instr : {
-            instructions: [],
-            signers: [],
-            output: null,
-          }
-        },
         entangled: parentEntangler?.parentMint,
         ...args
       }).then(({ targetAmount }) => {

@@ -90,7 +90,7 @@ export const LbcDisplay: NextPage = ({
           title={`Strata LBC Token Offering | ${name}`}
           description={description}
           image={image}
-          url={`${SITE_URL}/bounty/${id}/`}
+          url={`${SITE_URL}/lbcs/token-offering/${id?.toString()}/`}
         />
         <VStack spacing={2} align="left">
           <Container mt={"35px"} justifyContent="stretch" maxW="600px">
