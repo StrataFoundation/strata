@@ -11,15 +11,17 @@ import { useRouter } from "next/router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
 export default function Chatroom() {
-  const [isMobile] = useMediaQuery('(max-width: 768px)')
-  const router = useRouter()
-  const { id } = router.query
-  const lastMessage = useRef(null)
-  const { chatKey } = useChatKeyFromIdentifier(id as string | undefined)
-  const [pendingMessages, setPendingMessages] = useState<IMessageWithPending[]>([]);
+  const [isMobile] = useMediaQuery("(max-width: 768px)");
+  const router = useRouter();
+  const { id } = router.query;
+  const lastMessage = useRef(null);
+  const { chatKey } = useChatKeyFromIdentifier(id as string | undefined);
+  const [pendingMessages, setPendingMessages] = useState<IMessageWithPending[]>(
+    []
+  );
   const { messages, error } = useMessages(chatKey);
   const { handleErrors } = useErrorHandler();
-  handleErrors(error)
+  handleErrors(error);
 
   const msgWeHave = useMemo(
     () => new Set(Array.from(messages?.map((message) => message.id) || [])),

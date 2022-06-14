@@ -1,10 +1,22 @@
-import { Button, Flex, HStack, Icon, IconButton, Input, Modal, ModalBody, ModalContent, ModalHeader, useDisclosure } from "@chakra-ui/react";
+import {
+  Button,
+  Flex,
+  HStack,
+  Icon,
+  IconButton,
+  Input,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalHeader,
+  useDisclosure,
+} from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
 import { ISendMessageContent, MessageType } from "@strata-foundation/chat";
 import {
   useErrorHandler,
   useMint,
-  useOwnedAmount
+  useOwnedAmount,
 } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import React, { useState } from "react";
@@ -26,7 +38,11 @@ export type chatProps = {
   scrollRef?: any;
 };
 
-export function Chatbox({ scrollRef, chatKey, onAddPendingMessage }: chatProps) {
+export function Chatbox({
+  scrollRef,
+  chatKey,
+  onAddPendingMessage,
+}: chatProps) {
   const [input, setInput] = useState("");
   const { isOpen, onToggle, onClose } = useDisclosure();
   const handleChange = (html: string) => {
@@ -45,12 +61,12 @@ export function Chatbox({ scrollRef, chatKey, onAddPendingMessage }: chatProps) 
     typeof balance == "undefined" ||
     balance >= postAmount;
 
-    const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { sendMessage: sendMessageImpl, error } = useSendMessage({
     chatKey,
     onAddPendingMessage: (msg) => {
       setInput("");
-      setLoading(false)
+      setLoading(false);
       scrollRef.current.scrollIntoView({ behavior: "smooth" });
       if (onAddPendingMessage) {
         onAddPendingMessage(msg);
@@ -61,7 +77,7 @@ export function Chatbox({ scrollRef, chatKey, onAddPendingMessage }: chatProps) 
   const sendMessage = (m: ISendMessageContent) => {
     setLoading(true);
     sendMessageImpl(m);
-  }
+  };
 
   handleErrors(error);
 

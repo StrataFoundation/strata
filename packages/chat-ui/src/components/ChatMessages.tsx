@@ -3,7 +3,7 @@ import { IMessage } from "@strata-foundation/chat";
 import React, { useEffect } from "react";
 import { Message } from "./Message";
 
-const INACTIVE_TIME = 60 // After 1 minute, new grouping
+const INACTIVE_TIME = 60; // After 1 minute, new grouping
 
 export function ChatMessages({
   scrollRef,
@@ -17,13 +17,7 @@ export function ChatMessages({
   }, [messages]);
 
   return (
-    <VStack
-      grow="1"
-      align="start"
-      overflowY="scroll"
-      spacing={0}
-      h="full"
-    >
+    <VStack grow="1" align="start" overflowY="scroll" spacing={0} h="full">
       {messages?.map((msg, index) => (
         <Message
           key={msg?.id}
