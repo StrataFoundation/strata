@@ -26,7 +26,7 @@ export const CreateToken: FC = () => {
       heading: "Fully Managed",
       illustration: "/fully-managed.svg",
       helpText:
-        "Create you a token that you can let people buy right now. You do not need to worry about liquidity providers, supply management, or pricing.",
+        "Create a token that you can let people buy right now. You do not need to worry about liquidity providers, supply management, or pricing.",
     },
     {
       value: CreateTokenOption.SelfManaged,
