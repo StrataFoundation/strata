@@ -33,7 +33,7 @@ import { v4 as uuid } from "uuid";
 import { ChatIDL, ChatV0, DelegateWalletV0, NamespacesV0, PostAction, ProfileV0 } from "./generated/chat";
 import { uploadFile } from "./shdw";
 
-const MESSAGE_MAX_CHARACTERS = 288; // TODO: This changes with optional accounts in the future
+const MESSAGE_MAX_CHARACTERS = 352; // TODO: This changes with optional accounts in the future
 
 export * from "./generated/chat";
 export * from "./shdw";
@@ -318,7 +318,7 @@ export interface SendMessageArgs {
 
 export enum IdentifierType {
   Chat = "chat",
-  User = "user"
+  User = "me"
 }
 
 export interface ClaimIdentifierArgs {
@@ -754,16 +754,16 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   }
 
   async initializeNamespacesInstructions(): Promise<InstructionResult<null>> {
-    try {
-      await this.getNamespaces();
-      return {
-        instructions: [],
-        signers: [],
-        output: null,
-      };
-    } catch (e: any) {
-      // This is expected
-    }
+    // try {
+    //   await this.getNamespaces();
+    //   return {
+    //     instructions: [],
+    //     signers: [],
+    //     output: null,
+    //   };
+    // } catch (e: any) {
+    //   // This is expected
+    // }
 
     const [namespaces] = await ChatSdk.namespacesKey();
     const [chatNamespace, chatNamespaceBump] =
@@ -1360,9 +1360,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       metadataKey,
       (await this.provider.connection.getAccountInfo(metadataKey))!
     );
-    const namespaces = await this.getNamespaces();
-    const [entryName] = metadata.data.data.name.split(".");
-    const [entry] = await ChatSdk.entryKey(namespaces.userNamespace, entryName);
 
     const identifierCertificateMintAccount =
       await Token.getAssociatedTokenAddress(
@@ -1428,8 +1425,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
               profile,
               postPermissionAccount,
               postPermissionMint: chatAcc.postPermissionMintOrCollection,
-              namespaces: namespaces.publicKey,
-              entry,
               identifierCertificateMint,
               identifierCertificateMintAccount,
               tokenProgram: TOKEN_PROGRAM_ID,

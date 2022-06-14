@@ -33,19 +33,19 @@ async function run(): Promise<void> {
   });
   await chatSdk.initializeNamespaces();
 
-  console.log("Claiming identifier...");
-  const { certificateMint: identifierCertificateMint } = await chatSdk.claimIdentifier({
-    type: IdentifierType.Chat,
-    identifier: args[2],
-  });
-  console.log("Init chat...");
-  await chatSdk.initializeChat({
-    identifierCertificateMint,
-    name: args[3],
-    readPermissionMintOrCollection: new PublicKey(args[4]),
-    postPermissionMintOrCollection: new PublicKey(args[4]),
-    imageUrl: args[5]
-  });
+  // console.log("Claiming identifier...");
+  // const { certificateMint: identifierCertificateMint } = await chatSdk.claimIdentifier({
+  //   type: IdentifierType.Chat,
+  //   identifier: args[2],
+  // });
+  // console.log("Init chat...");
+  // await chatSdk.initializeChat({
+  //   identifierCertificateMint,
+  //   name: args[3],
+  //   readPermissionMintOrCollection: new PublicKey(args[4]),
+  //   postPermissionMintOrCollection: new PublicKey(args[4]),
+  //   imageUrl: args[5]
+  // });
 }
 
 run().catch((e) => {

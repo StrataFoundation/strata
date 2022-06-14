@@ -2,7 +2,6 @@ use crate::error::ErrorCode;
 use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
-use namespaces::state::Entry;
 use std::convert::*;
 
 #[derive(Accounts)]
@@ -21,12 +20,6 @@ pub struct SendTokenMessageV0<'info> {
   pub post_permission_account: Account<'info, TokenAccount>,
   #[account(mut)]
   pub post_permission_mint: Box<Account<'info, Mint>>,
-  pub namespaces: Box<Account<'info, NamespacesV0>>,
-  #[account(
-    constraint = entry.mint == identifier_certificate_mint.key(),
-    constraint = namespaces.user_namespace == entry.namespace
-  )]
-  pub entry: Box<Account<'info, Entry>>,
   pub identifier_certificate_mint: Box<Account<'info, Mint>>,
   #[account(
     constraint = profile.owner_wallet == identifier_certificate_mint_account.owner,
