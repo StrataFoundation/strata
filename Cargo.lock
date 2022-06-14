@@ -894,8 +894,8 @@ dependencies = [
 
 [[package]]
 name = "namespaces"
-version = "4.0.0"
-source = "git+https://github.com/cardinal-labs/cardinal-namespaces#cd84cf784afa6f90731de60737990e4b3b55b0df"
+version = "4.1.4"
+source = "git+https://github.com/cardinal-labs/cardinal-namespaces#aa08ea775046b2773c70515c46c39fea639f5e99"
 dependencies = [
  "anchor-lang",
  "anchor-spl",

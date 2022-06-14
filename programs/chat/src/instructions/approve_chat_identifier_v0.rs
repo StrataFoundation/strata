@@ -65,6 +65,7 @@ pub fn handler(ctx: Context<ApproveChatIdentifierV0>) -> Result<()> {
     CpiContext::new_with_signer(
       ctx.accounts.namespaces_program.to_account_info(),
       UpdateClaimRequestCtx {
+        name_entry: ctx.accounts.entry.to_account_info().clone(),
         namespace: ctx.accounts.chat_namespace.to_account_info(),
         approve_authority: ctx.accounts.namespaces.to_account_info(),
         rent_request: ctx.accounts.claim_request.to_account_info(),

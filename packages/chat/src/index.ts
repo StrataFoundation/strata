@@ -5,7 +5,7 @@ import {
   NAMESPACES_PROGRAM_ID,
   NAMESPACE_SEED,
   withClaimNameEntry,
-  withCreateClaimRequest, withInitNameEntry,
+  withCreateClaimRequest, withInitNameEntry, withInitNameEntryMint,
 } from "@cardinal/namespaces";
 import {
   Metadata,
@@ -867,40 +867,21 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       await this.namespacesProgram.account.entry.fetchNullable(entryId);
     if (!existingEntry) {
       await withInitNameEntry(
+        transaction,
         this.provider.connection,
         this.provider.wallet,
         namespaceName,
         identifier,
-        transaction
       );
       signers.push(certificateMintKeypair);
-      const initMint =
-        await this.namespacesProgram.instruction.initNameEntryMint({
-          accounts: {
-            namespace: namespaceId,
-            nameEntry: entryId,
-            payer,
-            namespaceTokenAccount: await Token.getAssociatedTokenAddress(
-              ASSOCIATED_TOKEN_PROGRAM_ID,
-              TOKEN_PROGRAM_ID,
-              certificateMint,
-              namespaceId,
-              true
-            ),
-            mint: certificateMint,
-            mintMetadata: await Metadata.getPDA(certificateMint),
-            masterEdition: await MasterEdition.getPDA(certificateMint),
-            tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
-            tokenProgram: TOKEN_PROGRAM_ID,
-            associatedToken: ASSOCIATED_TOKEN_PROGRAM_ID,
-            rent: SYSVAR_RENT_PUBKEY,
-            systemProgram: SystemProgram.programId,
-          },
-        });
-      initMint.keys[4].isSigner = true;
-      transaction.add(
-        initMint
-      );
+      await withInitNameEntryMint(
+        transaction,
+        this.provider.connection,
+        this.provider.wallet,
+        namespaceName,
+        identifier,
+        certificateMintKeypair
+      )
     } else {
       certificateMint = existingEntry.mint;
       signers = [];
@@ -964,15 +945,18 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     const tx2 = new Transaction();
     if (!existingEntry?.isClaimed) {
       await withClaimNameEntry(
-        this.provider.connection,
-        this.provider.wallet,
         tx2,
+        this.provider.connection,
+        {
+          ...this.provider.wallet,
+          publicKey: owner
+        },
         namespaceName,
         identifier,
         certificateMint,
         0,
         owner,
-        owner
+        payer
       );
     }
 
