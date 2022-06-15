@@ -1,4 +1,4 @@
-import { Button, Flex, HStack, Icon, IconButton, Input, Modal, ModalBody, ModalContent, ModalHeader, useDisclosure } from "@chakra-ui/react";
+import { Button, Flex, HStack, Icon, IconButton, Input, Modal, ModalBody, ModalContent, ModalHeader, useColorModeValue, useDisclosure } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
 import { ISendMessageContent, MessageType } from "@strata-foundation/chat";
 import {
@@ -32,6 +32,7 @@ export function Chatbox({ scrollRef, chatKey, onAddPendingMessage }: chatProps) 
   const handleChange = (html: string) => {
     setInput(html);
   };
+  const chatBg = useColorModeValue("gray.100", "gray.800");
   const { handleErrors } = useErrorHandler();
   const { info: chat } = useChat(chatKey);
   const balance = useOwnedAmount(chat?.postPermissionMintOrCollection);
@@ -77,7 +78,7 @@ export function Chatbox({ scrollRef, chatKey, onAddPendingMessage }: chatProps) 
           spacing={2}
           w="full"
           align="center"
-          bg="gray.800"
+          bg={chatBg}
           rounded="lg"
         >
           <ChatInput
