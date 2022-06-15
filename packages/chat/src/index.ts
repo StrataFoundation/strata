@@ -912,7 +912,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
     const certificateMintMetadata = await Metadata.getPDA(certificateMint);
 
-    if (type === IdentifierType.Chat && !existingEntry?.isApproved) {
+    if (type === IdentifierType.Chat && !existingEntry?.isClaimed) {
       instructions.push(
         await this.program.instruction.approveChatIdentifierV0({
           accounts: {
@@ -926,7 +926,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
           },
         })
       );
-    } else if (!existingEntry?.isApproved) {
+    } else if (!existingEntry?.isClaimed) {
       instructions.push(
         await this.program.instruction.approveUserIdentifierV0({
           accounts: {

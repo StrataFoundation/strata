@@ -47,7 +47,7 @@ interface IProfileProps {
 }
 
 const validationSchema = yup.object({
-  username: yup.string().required().min(6).max(28),
+  username: yup.string().required().max(28),
   image: yup.mixed(),
   imageUrl: yup.string(),
 });
@@ -60,7 +60,7 @@ async function createProfile(
   if (chatSdk) {
     let imageUrl: string | undefined = args.imageUrl;
     if (args.image) {
-      setProgress("Uploading pfp...");
+      setProgress("Uploading pfp, this can take up to 3 minutes...");
       const delegateWalletKeypair = delegateWalletStorage.getDelegateWallet(
         chatSdk.provider.wallet.publicKey
       );
@@ -255,7 +255,7 @@ export function CreateProfileModal() {
                     />
                     <FormHelperText color={errors.image?.message && "red.400"}>
                       {errors.image?.message ||
-                        `The image that will be displayed as your pfp`}
+                        `The image that will be displayed as your pfp. Note that your first upload to SHDW can take up to 3 minutes depending on Solana confirmation times.`}
                     </FormHelperText>
                   </FormControl>
                   <Flex align="center" w="full">
