@@ -38,11 +38,6 @@ export default function Chatroom() {
   );
 
   useEffect(() => {
-  console.log(messagesWithPending);
-
-}, [messagesWithPending])
-
-  useEffect(() => {
     setPendingMessages((pendingMessages) =>
       pendingMessages.filter((p) => !msgWeHave.has(p.id))
     );
