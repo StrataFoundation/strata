@@ -90,7 +90,8 @@ async function sendMessage({
       );
 
       const blockTime = Number((await chatSdk.provider.connection.getAccountInfo(
-        SYSVAR_CLOCK_PUBKEY
+        SYSVAR_CLOCK_PUBKEY,
+        "processed"
       ))!.data.readBigInt64LE(8 * 4));
 
       if (onAddPendingMessage) {

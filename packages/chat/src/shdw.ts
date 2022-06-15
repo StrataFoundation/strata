@@ -100,8 +100,9 @@ export async function initStorageIfNeeded(
 
     // Double storage size every time there's not enough
     let sizeKB = 0;
-    if (storageAccount && Number(storageAccount.storageAvailable) < sizeBytes) {
-      let sizeToAdd = storageAccount.storageAvailable;
+    const storageAccountBigEnough = storageAccount && (Number(storageAccount.storageAvailable) < sizeBytes);
+    if (storageAccountBigEnough) {
+      let sizeToAdd = storageAccount!.storageAvailable;
       while (sizeToAdd < sizeBytes) {
         sizeToAdd += sizeToAdd;
       }
@@ -110,7 +111,7 @@ export async function initStorageIfNeeded(
       sizeKB = Math.ceil(sizeBytes / 1024);
     }
 
-    const shdwNeeded = (sizeKB * 1024) / Math.pow(10, 9);
+    const shdwNeeded = storageAccountBigEnough ? 0 : (sizeKB * 1024) / Math.pow(10, 9);
     const solToken = orcaSolPool.getTokenB();
     const shdwToken = orcaSolPool.getTokenA();
     const shdwOwnedAmount = await getOwnedAmount(localProvider, pubKey, SHDW);
@@ -156,7 +157,8 @@ export async function initStorageIfNeeded(
 export async function uploadFile(
   provider: AnchorProvider | undefined,
   file: File,
-  delegateWallet: Keypair | undefined
+  delegateWallet: Keypair | undefined,
+  tries: number = 5
 ): Promise<string | undefined> {
   await initStorageIfNeeded(provider, delegateWallet, file.size);
   if (provider) {
@@ -179,8 +181,14 @@ export async function uploadFile(
       writable: true,
       value: name,
     });
-    const res = await shdwDrive.uploadFile(accountKey, file);
-    return res.finalized_location;
+    try {
+      const res = await shdwDrive.uploadFile(accountKey, file);
+      return res.finalized_location;
+    } catch (e: any) {
+      if (e.toString().includes("Blockhash not found") && tries > 0) {
+        return uploadFile(provider, file, delegateWallet, tries - 1)
+      }
+    }
   }
 }
 

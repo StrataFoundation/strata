@@ -106,12 +106,18 @@ function removeDups(
   const notPending = new Set(
     Array.from(txns.filter((tx) => !tx.pending).map((tx) => tx.signature))
   );
+  // Use the block times from pending messages so that there's no weird reording on screen
+  const pendingBlockTimes = txns
+    .filter((tx) => tx.pending)
+    .reduce((acc, tx) => ({ ...acc, [tx.signature]: tx.blockTime }), {} as Record<string, number | null | undefined>);
+    
   const seen = new Set();
 
   return txns
     .map((tx) => {
       const nonPendingAvailable = tx.pending && notPending.has(tx.signature);
       if (!seen.has(tx.signature) && !nonPendingAvailable) {
+        tx.blockTime = pendingBlockTimes[tx.signature] || tx.blockTime;
         seen.add(tx.signature);
         return tx;
       }

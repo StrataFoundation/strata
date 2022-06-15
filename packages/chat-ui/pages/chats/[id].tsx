@@ -33,9 +33,14 @@ export default function Chatroom() {
     () => [
       ...(messages || []),
       ...pendingMessages.filter((p) => !msgWeHave.has(p.id)),
-    ],
+    ].sort((a, b) => b.startBlockTime - a.startBlockTime),
     [msgWeHave, messages, pendingMessages]
   );
+
+  useEffect(() => {
+  console.log(messagesWithPending);
+
+}, [messagesWithPending])
 
   useEffect(() => {
     setPendingMessages((pendingMessages) =>
