@@ -1,4 +1,12 @@
-import { Flex } from "@chakra-ui/react";
+import {
+  Box,
+  Flex,
+  HStack,
+  Skeleton,
+  SkeletonCircle,
+  SkeletonText,
+  VStack,
+} from "@chakra-ui/react";
 import { IMessage } from "@strata-foundation/chat";
 import React, { useEffect } from "react";
 import throttle from "lodash/throttle";
@@ -6,6 +14,23 @@ import { Message } from "./Message";
 
 const INACTIVE_TIME = 60; // After 1 minute, new grouping
 const INFINITE_SCROLL_THRESHOLD = 300;
+const FETCH_COUNT = 25;
+
+export const ChatMessageSkeleton = () => (
+  <Flex padding={2} gap={2}>
+    <Flex>
+      <SkeletonCircle size="9" />
+    </Flex>
+    <Flex grow="1" direction="column" gap={2}>
+      <Flex gap={2}>
+        <Skeleton height="8px" w="120px" />
+        <Skeleton height="8px" w="60px" />
+      </Flex>
+      <Skeleton height="8px" w="full" />
+      <Skeleton height="8px" w="full" />
+    </Flex>
+  </Flex>
+);
 
 export const ChatMessages = ({
   isLoading,
@@ -20,23 +45,29 @@ export const ChatMessages = ({
   scrollRef: any;
   messages?: IMessage[];
 }) => {
+  // On render if we dont have a scroll bar
+  // and we have hasMore then fetch initialMore
   useEffect(() => {
-    // fetchMore initialy if hasMore
-    // & no scrollBar height detected
-  }, [scrollRef, hasMore, fetchMore]);
+    if (
+      scrollRef.current.scrollHeight == scrollRef.current.offsetHeight &&
+      hasMore &&
+      !isLoading
+    ) {
+      fetchMore(FETCH_COUNT);
+    }
+  }, [scrollRef, hasMore, isLoading, fetchMore]);
 
-  const handleOnScroll = throttle(() => {
-    if (!isLoading && hasMore) {
-      console.log("fetchMore");
-      // fetchMore(5);
+  const handleOnScroll = throttle((e: any) => {
+    const scrollOffset = e.target.scrollHeight + e.target.scrollTop;
+
+    if (
+      scrollOffset <= e.target.offsetHeight + INFINITE_SCROLL_THRESHOLD &&
+      !isLoading &&
+      hasMore
+    ) {
+      fetchMore(FETCH_COUNT);
     }
   }, 300);
-
-  const loader = (
-    <div className="loader" key={0}>
-      Loading ...
-    </div>
-  );
 
   return (
     <Flex
@@ -62,7 +93,15 @@ export const ChatMessages = ({
           }
         />
       ))}
-      {isLoading && <div>Loading....</div>}
+      {isLoading || !messages.length ? (
+        !messages.length ? (
+          Array.from(Array(FETCH_COUNT).keys()).map((x, index) => (
+            <ChatMessageSkeleton key={`skeleton-${index}`} />
+          ))
+        ) : (
+          <ChatMessageSkeleton />
+        )
+      ) : null}
     </Flex>
   );
 };
