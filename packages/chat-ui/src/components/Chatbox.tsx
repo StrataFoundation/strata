@@ -67,7 +67,6 @@ export function Chatbox({
   const { sendMessage: sendMessageImpl, error } = useSendMessage({
     chatKey,
     onAddPendingMessage: (msg) => {
-      setInput("");
       setLoading(false);
       scrollRef.current.scrollTop = 0;
       if (onAddPendingMessage) {
@@ -77,6 +76,7 @@ export function Chatbox({
   });
 
   const sendMessage = async (m: ISendMessageContent) => {
+    setInput("");
     setLoading(true);
     try {
       await sendMessageImpl(m);
