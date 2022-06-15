@@ -20,7 +20,7 @@ build-deps = "anchor run build-name-service && anchor run build-metadata && anch
 build-name-service = "cd deps/solana-program-library/name-service/program && pwd && cargo build-bpf && cd ../../../../"
 build-metadata = "cd deps/metaplex-program-library/token-metadata/program && pwd && cargo build-bpf && cd ../../../../"
 build-cardinal-namespaces = "cd deps/cardinal-namespaces/programs/cardinal-namespaces/ && pwd && cargo build-bpf && cd ../../../../"
-build-cardinal-certificate = "cd deps/cardinal-protocol/programs/certificate && pwd && cargo build-bpf && cd ../../../../"
+build-cardinal-certificate = "cd deps/cardinal-token-manager/programs/cardinal-token-manager && pwd && cargo build-bpf && cd ../../../../"
 
 [[test.genesis]]
 address = "namesLPneVptA9Z5rqUDD9tMTWEJwofgaYwp8cawRkX"
@@ -35,8 +35,8 @@ address = "nameXpT2PwZ2iA6DTNYTotTmiMYusBCYqwBLN2QgF4w"
 program = "./deps/cardinal-namespaces/target/deploy/namespaces.so"
 
 [[test.genesis]]
-address = "crt4Ymiqtk3M5w6JuKDT7GuZfUDiPLnhwRVqymSSBBn"
-program = "./deps/cardinal-protocol/programs/target/deploy/cardinal_certificate.so"
+address = "mgr99QFMYByTqGPWmNqunV7vBLmWWXdSrHUfV8Jf3JM"
+program = "./deps/cardinal-token-manager/target/deploy/cardinal_token_manager.so"
 
 [workspace]
 members = [

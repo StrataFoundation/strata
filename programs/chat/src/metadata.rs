@@ -1,7 +1,4 @@
-use namespaces::{state::{Namespace, ClaimRequest, Entry}, cpi::{update_claim_request, accounts::{UpdateClaimRequestCtx, UpdateEntryMintMetadataCtx}, update_entry_mint_metadata}, program::Namespaces, instructions::{Creator, UpdateEntryMintMetadataIx}};
-use crate::state::NamespacesV0;
 use anchor_lang::{prelude::*, solana_program};
-use crate::error::ErrorCode;
 
 #[derive(Accounts)]
 pub struct SignMetadata<'info> {
@@ -12,7 +9,6 @@ pub struct SignMetadata<'info> {
   #[account(signer)]
   pub signer: AccountInfo<'info>,
 }
-
 
 pub fn sign_metadata<'a, 'b, 'c, 'info>(
   ctx: CpiContext<'a, 'b, 'c, 'info, SignMetadata<'info>>,

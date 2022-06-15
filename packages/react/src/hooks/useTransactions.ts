@@ -58,15 +58,25 @@ export type TransactionResponseWithSig = Partial<TransactionResponse> & {
 
 async function hydrateTransactions(
   connection: Connection | undefined,
-  signatures: ConfirmedSignatureInfo[]
+  signatures: ConfirmedSignatureInfo[],
+  tries: number = 0
 ): Promise<TransactionResponseWithSig[]> {
   if (!connection) {
     return [];
   }
+  
 
-  const txs = (
+  const rawTxs = (
     await connection.getTransactions(signatures.map((sig) => sig.signature))
-  ).map((t, index) => {
+  );
+
+  // Some were null. Try again
+  if (rawTxs.some(t => !t) && tries < 3) {
+    await sleep(500);
+    return hydrateTransactions(connection, signatures, tries + 1)
+  }
+  
+  const txs = rawTxs.map((t, index) => {
     // @ts-ignore
     t.signature = signatures[index].signature;
     // @ts-ignore

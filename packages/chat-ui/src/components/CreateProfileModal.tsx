@@ -60,7 +60,7 @@ async function createProfile(
   if (chatSdk) {
     let imageUrl: string | undefined = args.imageUrl;
     if (args.image) {
-      setProgress("Uploading pfp...");
+      setProgress("Uploading pfp, this can take up to 3 minutes...");
       const delegateWalletKeypair = delegateWalletStorage.getDelegateWallet(
         chatSdk.provider.wallet.publicKey
       );
@@ -124,6 +124,7 @@ export function CreateProfileModal() {
     needsTopOff,
     mnemonic,
     error: delegateError,
+    loadingNeeds,
   } = useLoadDelegate();
 
   const { username, image } = watch();
@@ -146,10 +147,9 @@ export function CreateProfileModal() {
     await execute(chatSdk, args, setStep);
   }
 
-  const needsLoadup = needsInit || needsTopOff;
   useEffect(() => {
-    if (needsLoadup) onOpen();
-  }, [needsLoadup])
+    if (needsTopOff && !loadingNeeds) onOpen();
+  }, [needsTopOff, loadingNeeds]);
 
   const hiddenFileInput = React.useRef<HTMLInputElement>(null);
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -174,7 +174,17 @@ export function CreateProfileModal() {
   }, [image]);
 
   if (loadWalletIsOpen) {
-    return <LoadWalletModal onLoaded={() => onClose()} />;
+    return (
+      <LoadWalletModal
+        onClose={() => {
+          disconnect();
+          onClose();
+        }}
+        onLoaded={() => {
+          onClose();
+        }}
+      />
+    );
   }
 
   return (
@@ -194,7 +204,7 @@ export function CreateProfileModal() {
               <Text fontSize="xl" fontWeight="bold">
                 Save your local seed phrase
               </Text>
-              {!needsLoadup && mnemonic && <SeedPhrase mnemonic={mnemonic!} />}
+              { mnemonic && <SeedPhrase mnemonic={mnemonic!} /> }
             </VStack>
 
             <FormProvider {...formProps}>
@@ -254,7 +264,7 @@ export function CreateProfileModal() {
                     />
                     <FormHelperText color={errors.image?.message && "red.400"}>
                       {errors.image?.message ||
-                        `The image that will be displayed as your pfp`}
+                        `The image that will be displayed as your pfp. Note that your first upload to SHDW can take up to 3 minutes depending on Solana confirmation times.`}
                     </FormHelperText>
                   </FormControl>
                   <Flex align="center" w="full">

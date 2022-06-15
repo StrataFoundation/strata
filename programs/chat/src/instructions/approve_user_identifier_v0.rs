@@ -1,7 +1,18 @@
-use namespaces::{state::{Namespace, ClaimRequest, Entry}, cpi::{update_claim_request, accounts::{UpdateClaimRequestCtx, UpdateEntryMintMetadataCtx}, update_entry_mint_metadata}, program::Namespaces, instructions::{Creator, UpdateEntryMintMetadataIx}};
-use crate::{state::NamespacesV0, metadata::{sign_metadata,SignMetadata}};
-use anchor_lang::{prelude::*, solana_program};
 use crate::error::ErrorCode;
+use crate::{
+  metadata::{sign_metadata, SignMetadata},
+  state::NamespacesV0,
+};
+use anchor_lang::prelude::*;
+use namespaces::{
+  cpi::{
+    accounts::{UpdateClaimRequestCtx, UpdateNameEntryMintMetadataCtx},
+    update_claim_request, update_name_entry_mint_metadata,
+  },
+  instructions::{Creator, UpdateNameEntryMintMetadataIx},
+  program::Namespaces,
+  state::{ClaimRequest, Entry, Namespace},
+};
 
 #[derive(Accounts)]
 pub struct ApproveUserIdentifierV0<'info> {
@@ -32,65 +43,71 @@ pub struct ApproveUserIdentifierV0<'info> {
   pub token_metadata_program: UncheckedAccount<'info>,
 }
 
+const STRATA_KEY: &str = "BoA7rbEV5vgS5wQXwXrmf7j6cSao8pBToiZ45eHvo52L";
+
 pub fn handler(ctx: Context<ApproveUserIdentifierV0>) -> Result<()> {
   let entry_name = &ctx.accounts.claim_request.entry_name;
-  require!(entry_name.chars().all(|c| char::is_alphanumeric(c) || c == '_' || c == '-'), ErrorCode::StringNotAlphanumeric);
-  require!(entry_name.len() >= 6, ErrorCode::InvalidStringLength);
+  require!(
+    entry_name
+      .chars()
+      .all(|c| char::is_alphanumeric(c) || c == '_' || c == '-'),
+    ErrorCode::StringNotAlphanumeric
+  );
+  let requester = ctx.accounts.claim_request.requestor;
+  if requester.to_string() != STRATA_KEY {
+    require!(entry_name.len() >= 6, ErrorCode::InvalidStringLength);
+  }
 
-  let namespace_signer_seeds: &[&[&[u8]]] = &[&[
-    b"namespaces",
-    &[ctx.accounts.namespaces.bump],
-  ]];
+  let namespace_signer_seeds: &[&[&[u8]]] = &[&[b"namespaces", &[ctx.accounts.namespaces.bump]]];
 
   msg!("Approving claim request");
   update_claim_request(
     CpiContext::new_with_signer(
       ctx.accounts.namespaces_program.to_account_info(),
       UpdateClaimRequestCtx {
+        name_entry: ctx.accounts.entry.to_account_info().clone(),
         namespace: ctx.accounts.user_namespace.to_account_info(),
         approve_authority: ctx.accounts.namespaces.to_account_info(),
         rent_request: ctx.accounts.claim_request.to_account_info(),
       },
-      namespace_signer_seeds
+      namespace_signer_seeds,
     ),
-    true
+    true,
   )?;
 
   msg!("Setting royalties");
-  update_entry_mint_metadata(
+  update_name_entry_mint_metadata(
     CpiContext::new_with_signer(
-    ctx.accounts.namespaces_program.to_account_info(),
-      UpdateEntryMintMetadataCtx {
+      ctx.accounts.namespaces_program.to_account_info(),
+      UpdateNameEntryMintMetadataCtx {
         namespace: ctx.accounts.user_namespace.to_account_info(),
-        entry: ctx.accounts.entry.to_account_info(),
+        name_entry: ctx.accounts.entry.to_account_info(),
         update_authority: ctx.accounts.namespaces.to_account_info(),
-        certificate_mint_metadata: ctx.accounts.certificate_mint_metadata.to_account_info(),
+        mint_metadata: ctx.accounts.certificate_mint_metadata.to_account_info(),
         token_metadata_program: ctx.accounts.token_metadata_program.to_account_info(),
       },
-      namespace_signer_seeds
+      namespace_signer_seeds,
     ),
-    UpdateEntryMintMetadataIx {
+    UpdateNameEntryMintMetadataIx {
       seller_fee_basis_points: 500,
-      creators: Some(vec!(Creator {
+      creators: Some(vec![Creator {
         address: ctx.accounts.namespaces.key(),
         verified: false,
-        share: 100
-      })),
-      primary_sale_happened: Some(true)
-    }
+        share: 100,
+      }]),
+      primary_sale_happened: Some(true),
+    },
   )?;
 
   msg!("Signing ourselves as the creator");
-  sign_metadata(
-    CpiContext::new_with_signer(
+  sign_metadata(CpiContext::new_with_signer(
     ctx.accounts.namespaces_program.to_account_info(),
-      SignMetadata {
-        token_metadata: ctx.accounts.certificate_mint_metadata.to_account_info(),
-        signer: ctx.accounts.namespaces.to_account_info(),
-      },
-      namespace_signer_seeds
-    )
-  )?;
-  
+    SignMetadata {
+      token_metadata: ctx.accounts.certificate_mint_metadata.to_account_info(),
+      signer: ctx.accounts.namespaces.to_account_info(),
+    },
+    namespace_signer_seeds,
+  ))?;
+
   Ok(())
 }

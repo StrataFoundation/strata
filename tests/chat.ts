@@ -1,32 +1,29 @@
 import {
   NAMESPACES_IDL,
   NAMESPACES_PROGRAM,
-  NAMESPACES_PROGRAM_ID,
+  NAMESPACES_PROGRAM_ID
 } from "@cardinal/namespaces";
 import * as anchor from "@project-serum/anchor";
 import { AnchorProvider, Program } from "@project-serum/anchor";
 import {
   Keypair,
-  PublicKey,
-  SystemInstruction,
-  SystemProgram,
+  PublicKey, SystemProgram
 } from "@solana/web3.js";
 import {
   ChatSdk,
   IChat,
   IdentifierType,
-  MessageType,
+  MessageType
 } from "@strata-foundation/chat";
 import {
   createMint,
   sendInstructions,
-  sendMultipleInstructions,
+  sendMultipleInstructions
 } from "@strata-foundation/spl-utils";
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
 // @ts-ignore
 import LitJsSdk from "lit-js-sdk";
-import { v4 as uuid } from "uuid";
 import { TokenUtils } from "./utils/token";
 
 use(ChaiAsPromised);

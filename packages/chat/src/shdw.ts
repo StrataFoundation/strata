@@ -125,7 +125,7 @@ export async function uploadFile(
         provider.connection,
         tx.serialize(),
         {},
-        "confirmed"
+        "max"
       );
     }
 

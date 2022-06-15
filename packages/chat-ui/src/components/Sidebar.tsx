@@ -4,7 +4,7 @@ import { IoMoon, IoSunny } from 'react-icons/io5';
 import { ProfileButton } from "./ProfileButton";
 import { ChatSidebarPreview } from './rooms/ChatSidebarPreview';
 
-const VISIBLE_CHATS = ["open_collective"];
+const VISIBLE_CHATS = ["open"];
 
 export const Sidebar = ({ fullWidth }: { fullWidth?: boolean }) => {
   const { colorMode, toggleColorMode } = useColorMode()
@@ -20,7 +20,6 @@ export const Sidebar = ({ fullWidth }: { fullWidth?: boolean }) => {
     >
       <Flex flexWrap="wrap" direction="column" position="sticky" top="0">
         <Flex justify="space-between" height="71px" align="center" p="10px">
-          {/* <Avatar src={profile?.imageUrl} /> */}
           <Stack
             maxWidth="30vw"
             direction="row"

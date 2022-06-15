@@ -4,13 +4,16 @@ import {
   NAMESPACES_PROGRAM,
   NAMESPACES_PROGRAM_ID,
   NAMESPACE_SEED,
-  withClaimEntry,
-  withCreateClaimRequest, withInitEntry
+  withClaimNameEntry,
+  withCreateClaimRequest, withInitNameEntry, withInitNameEntryMint,
 } from "@cardinal/namespaces";
-import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
+import {
+  Metadata,
+  MasterEdition,
+} from "@metaplex-foundation/mpl-token-metadata";
 import { AnchorProvider, BN as AnchorBN, IdlTypes, Program, utils } from "@project-serum/anchor";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { Commitment, ConfirmedTransactionMeta, Finality, Keypair, Message, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+import { Commitment, ConfirmedTransactionMeta, Finality, Keypair, Message, PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, Transaction } from "@solana/web3.js";
 import {
   AnchorSdk,
   BigInstructionResult,
@@ -30,7 +33,7 @@ import { v4 as uuid } from "uuid";
 import { ChatIDL, ChatV0, DelegateWalletV0, NamespacesV0, PostAction, ProfileV0 } from "./generated/chat";
 import { uploadFile } from "./shdw";
 
-const MESSAGE_MAX_CHARACTERS = 288; // TODO: This changes with optional accounts in the future
+const MESSAGE_MAX_CHARACTERS = 352; // TODO: This changes with optional accounts in the future
 
 export * from "./generated/chat";
 export * from "./shdw";
@@ -315,7 +318,7 @@ export interface SendMessageArgs {
 
 export enum IdentifierType {
   Chat = "chat",
-  User = "user"
+  User = "me"
 }
 
 export interface ClaimIdentifierArgs {
@@ -835,6 +838,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
    * @returns
    */
   async claimIdentifierInstructions({
+    payer = this.wallet.publicKey,
     owner = this.wallet.publicKey,
     identifier,
     type,
@@ -843,7 +847,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   > {
     const transaction = new Transaction();
     const certificateMintKeypair = Keypair.generate();
-    let signers = [certificateMintKeypair];
+    console.log("cert", certificateMintKeypair.publicKey.toBase58())
+    let signers = [];
     let certificateMint = certificateMintKeypair.publicKey;
     const namespaces = await this.getNamespaces();
 
@@ -861,14 +866,22 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     const existingEntry =
       await this.namespacesProgram.account.entry.fetchNullable(entryId);
     if (!existingEntry) {
-      await withInitEntry(
+      await withInitNameEntry(
+        transaction,
         this.provider.connection,
         this.provider.wallet,
-        certificateMint,
         namespaceName,
         identifier,
-        transaction
       );
+      signers.push(certificateMintKeypair);
+      await withInitNameEntryMint(
+        transaction,
+        this.provider.connection,
+        this.provider.wallet,
+        namespaceName,
+        identifier,
+        certificateMintKeypair
+      )
     } else {
       certificateMint = existingEntry.mint;
       signers = [];
@@ -899,7 +912,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
     const certificateMintMetadata = await Metadata.getPDA(certificateMint);
 
-    if (type === IdentifierType.Chat && !existingEntry?.isApproved) {
+    if (type === IdentifierType.Chat && !existingEntry?.isClaimed) {
       instructions.push(
         await this.program.instruction.approveChatIdentifierV0({
           accounts: {
@@ -913,7 +926,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
           },
         })
       );
-    } else if (!existingEntry?.isApproved) {
+    } else if (!existingEntry?.isClaimed) {
       instructions.push(
         await this.program.instruction.approveUserIdentifierV0({
           accounts: {
@@ -931,17 +944,19 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
     const tx2 = new Transaction();
     if (!existingEntry?.isClaimed) {
-      await withClaimEntry(
+      await withClaimNameEntry(
+        tx2,
         this.provider.connection,
         {
           ...this.provider.wallet,
-          publicKey: owner,
+          publicKey: owner
         },
         namespaceName,
         identifier,
         certificateMint,
         0,
-        tx2
+        owner,
+        payer
       );
     }
 
@@ -1345,9 +1360,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       metadataKey,
       (await this.provider.connection.getAccountInfo(metadataKey))!
     );
-    const namespaces = await this.getNamespaces();
-    const [entryName] = metadata.data.data.name.split(".");
-    const [entry] = await ChatSdk.entryKey(namespaces.userNamespace, entryName);
 
     const identifierCertificateMintAccount =
       await Token.getAssociatedTokenAddress(
@@ -1413,8 +1425,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
               profile,
               postPermissionAccount,
               postPermissionMint: chatAcc.postPermissionMintOrCollection,
-              namespaces: namespaces.publicKey,
-              entry,
               identifierCertificateMint,
               identifierCertificateMintAccount,
               tokenProgram: TOKEN_PROGRAM_ID,
