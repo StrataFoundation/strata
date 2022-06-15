@@ -176,8 +176,11 @@ export function CreateProfileModal() {
   if (loadWalletIsOpen) {
     return (
       <LoadWalletModal
-        onLoaded={() => {
+        onClose={() => {
           disconnect();
+          onClose();
+        }}
+        onLoaded={() => {
           onClose();
         }}
       />
