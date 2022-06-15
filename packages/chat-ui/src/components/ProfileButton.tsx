@@ -72,8 +72,8 @@ export const ProfileButton: FC<ButtonProps> = ({
         isOpen={loadWalletIsOpen}
         onLoaded={() => onClose()}
         onClose={() => { 
-          onClose();
           disconnect();
+          onClose();
         }} 
       />
       <Button

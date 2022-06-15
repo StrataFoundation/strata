@@ -128,7 +128,6 @@ export function CreateProfileModal() {
   } = useLoadDelegate();
 
   const { username, image } = watch();
-  console.log(image);
 
   const { wallet } = useWalletFromIdentifier(username);
 
@@ -178,8 +177,8 @@ export function CreateProfileModal() {
     return (
       <LoadWalletModal
         onLoaded={() => {
-          onClose();
           disconnect();
+          onClose();
         }}
       />
     );
