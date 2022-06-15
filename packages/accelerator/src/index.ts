@@ -34,6 +34,7 @@ interface TransactionResponse extends Response {
 export class Accelerator {
   ws: WebSocket;
   listeners: Record<string, (resp: Response) => void>;
+  subs: Record<string, any> = {}; // List of current subscriptions
 
   // Map of our id to subId
   transactionListeners: Record<string, string>;
@@ -79,6 +80,7 @@ export class Accelerator {
   }
 
   async unsubscribeTransaction(id: string): Promise<void> {
+    delete this.subs[id];
     const subId = this.transactionListeners[id];
     if (subId) {
       this.send({
@@ -94,16 +96,18 @@ export class Accelerator {
     account: PublicKey,
     callback: (resp: { txid: string; transaction: Transaction, blockTime: number }) => void
   ): Promise<string> {
-    this.send({
+    const sub = {
       type: RequestType.Subscribe,
       cluster,
       account: account.toBase58(),
-    });
+    };
+    this.send(sub);
 
     const response: any = await this.listenOnce(
       (resp) => resp.type === ResponseType.Subscribe
     );
     const subId = response.id;
+    this.subs[subId] = sub;
 
     const listenerId = await this.listen((resp) => {
       if (resp.type === ResponseType.Transaction) {
@@ -159,6 +163,7 @@ export class Accelerator {
   initSocket(ws: WebSocket) {
     this.ws = ws;
     const that = this;
+    Object.values(this.subs).forEach((sub) => this.send(sub));
     ws.onclose = async function () {
       // Try to reconnect
       const newWs = new WebSocket(ws.url);
