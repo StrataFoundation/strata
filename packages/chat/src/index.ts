@@ -7,6 +7,7 @@ import {
   withClaimNameEntry,
   withCreateClaimRequest, withInitNameEntry, withInitNameEntryMint,
 } from "@cardinal/namespaces";
+import { LocalStorageLRU } from "@cocalc/local-storage-lru";
 import {
   Metadata,
   MasterEdition,
@@ -67,19 +68,17 @@ interface ISymKeyStorage {
 }
 
 const storage =
-  typeof localStorage !== "undefined"
-    ? localStorage
-    : require("localstorage-memory");
+  new LocalStorageLRU();
 
 // 3 hours
 const KEY_EXPIRY = 3 * 60 * 60 * 1000;
 
 export class LocalSymKeyStorage implements ISymKeyStorage {
   setSymKey(encrypted: string, unencrypted: string): void {
-    storage.setItem("enc" + encrypted, unencrypted);
+    storage.set("enc" + encrypted, unencrypted);
   }
   getSymKey(encrypted: string): string | null {
-    return storage.getItem("enc" + encrypted);
+    return storage.get("enc" + encrypted) as string | null;
   }
   private getKey(mintOrCollection: PublicKey, amount: number): string {
     return `sym-${mintOrCollection.toBase58()}-${amount}`;
@@ -90,13 +89,13 @@ export class LocalSymKeyStorage implements ISymKeyStorage {
     symKey: SymKeyInfo
   ): void {
     const key = this.getKey(mintOrCollection, amount);
-    storage.setItem(key, JSON.stringify(symKey));
+    storage.set(key, JSON.stringify(symKey));
   }
   getTimeSinceLastSet(
     mintOrCollection: PublicKey,
     amount: number
   ): number | null {
-    const item = storage.getItem(this.getKey(mintOrCollection, amount));
+    const item = storage.get(this.getKey(mintOrCollection, amount)) as string;
 
     if (item) {
       return new Date().valueOf() - JSON.parse(item).timeMillis;
@@ -115,7 +114,7 @@ export class LocalSymKeyStorage implements ISymKeyStorage {
       return null;
     }
 
-    const item = storage.getItem(this.getKey(mintOrCollection, amount));
+    const item = storage.get(this.getKey(mintOrCollection, amount)) as string;
     if (item) {
       return JSON.parse(item);
     }
