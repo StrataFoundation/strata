@@ -6,14 +6,19 @@ export function useLocalStorage<T>(
   defaultState: T
 ): [T, (newValue: T) => void] {
   const isBrowser: boolean = ((): boolean => typeof window !== "undefined")();
+  const [valueRaw, setValueRaw] = useState<string | null>(() => {
+    if (isBrowser) {
+      return localStorage.getItem(key);
+    }
+    return typeof defaultState == "string" ? defaultState as string : JSON.stringify(defaultState);
+  })
   const [value, setValue] = useState<T>(() => {
     if (isBrowser) {
-      const value = localStorage.getItem(key);
-      if (value) {
+      if (valueRaw) {
         // gross, but handling the case where T is a string
-        let ret = value;
+        let ret = valueRaw;
         try {
-          ret = JSON.parse(value);
+          ret = JSON.parse(valueRaw);
         } catch {
           // ignore
         }
@@ -28,6 +33,7 @@ export function useLocalStorage<T>(
     (newValue: T) => {
       if (newValue === value) return;
       setValue(newValue);
+      setValueRaw(typeof newValue == "string" ? newValue : JSON.stringify(newValue));
 
       if (newValue === null) {
         localStorage.removeItem(key);
@@ -39,9 +45,9 @@ export function useLocalStorage<T>(
   );
 
   useInterval(() => {
-    if (isBrowser && localStorage.getItem(key) != JSON.stringify(value)) {
-    const value =
-      typeof localStorage !== "undefined" && localStorage.getItem(key);
+    if (isBrowser && localStorage.getItem(key) != valueRaw) {
+      const value =
+        typeof localStorage !== "undefined" && localStorage.getItem(key);
       if (value) {
         // gross, but handling the case where T is a string
         let ret = value;
@@ -51,6 +57,7 @@ export function useLocalStorage<T>(
           // ignore
         }
 
+        setValueRaw(value);
         // @ts-ignore
         setValue(ret as T);
       }

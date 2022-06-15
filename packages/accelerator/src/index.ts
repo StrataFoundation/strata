@@ -92,7 +92,7 @@ export class Accelerator {
   async onTransaction(
     cluster: Cluster,
     account: PublicKey,
-    callback: (resp: { txid: string; transaction: Transaction }) => void
+    callback: (resp: { txid: string; transaction: Transaction, blockTime: number }) => void
   ): Promise<string> {
     this.send({
       type: RequestType.Subscribe,
@@ -113,7 +113,8 @@ export class Accelerator {
         ) {
           callback({
             transaction: tx,
-            txid: (resp as any).txid
+            txid: (resp as any).txid,
+            blockTime: (resp as any).blockTime,
           });
         }
       }

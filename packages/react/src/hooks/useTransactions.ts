@@ -162,7 +162,6 @@ export const useTransactions = ({
                 err,
               },
             ]);
-            console.log("new", newTxns);
             setTransactions((txns) => removeDups([...newTxns, ...txns]));
           } catch (e: any) {
             console.error("Error while fetching new tx", e);
@@ -185,8 +184,7 @@ export const useTransactions = ({
         subId = await accelerator.onTransaction(
           cluster as Cluster,
           address,
-          ({ transaction, txid }) => {
-            console.log("Accelerated got", txid);
+          ({ transaction, txid, blockTime }) => {
             setTransactions((txns) => {
               try {
                 return removeDups([
@@ -198,6 +196,7 @@ export const useTransactions = ({
                         sig.publicKey.toBase58()
                       ),
                     },
+                    blockTime,
                     pending: true,
                   },
                   ...txns,

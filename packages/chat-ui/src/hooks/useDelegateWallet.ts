@@ -15,6 +15,8 @@ interface IDelegateWalletStorage {
   setDelegateWallet(wallet: PublicKey, mnemonic: string): void;
 }
 
+const mnemonicCache: Record<string, Keypair> = {}
+
 export class LocalDelegateWalletStorage implements IDelegateWalletStorage {
   storageKey(wallet: PublicKey): string {
     return "delegate-wallet-" + wallet?.toBase58();
@@ -23,8 +25,13 @@ export class LocalDelegateWalletStorage implements IDelegateWalletStorage {
   getDelegateWallet(wallet: PublicKey): Keypair | undefined {
     const mnemonic = this.getDelegateWalletMnemonic(wallet);
     if (mnemonic) {
-      const seed = mnemonicToSeedSync(mnemonic, ""); // (mnemonic, password)
-      return Keypair.fromSeed(seed.slice(0, 32));
+      if (!mnemonicCache[mnemonic]) {const seed = mnemonicToSeedSync(mnemonic, ""); // (mnemonic, password)
+        const ret = Keypair.fromSeed(seed.slice(0, 32));
+
+        mnemonicCache[mnemonic] = ret;
+      }
+      
+      return mnemonicCache[mnemonic];
     }
   }
 
@@ -51,8 +58,7 @@ export function useDelegateWallet(): { keypair: Keypair | undefined; mnemonic?: 
     if (delegateData && publicKey) {
       try {
         if (delegateData) {
-          const seed = mnemonicToSeedSync(delegateData, ""); // (mnemonic, password)
-          return Keypair.fromSeed(seed.slice(0, 32));
+          return delegateWalletStorage.getDelegateWallet(publicKey)
         }
       } catch (e: any) {
         // ignore
