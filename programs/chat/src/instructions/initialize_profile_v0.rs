@@ -11,7 +11,7 @@ pub struct InitializeProfileV0<'info> {
   #[account(mut)]
   pub payer: Signer<'info>,
   #[account(
-    init,
+    init_if_needed,
     payer = payer,
     space = PROFILE_SIZE,
     seeds = [b"wallet_profile", owner_wallet.key().as_ref()],
@@ -47,7 +47,6 @@ pub fn handler(ctx: Context<InitializeProfileV0>, args: InitializeProfileArgsV0)
     args.metadata_url.len() <= 200,
     ErrorCode::InvalidStringLength
   );
-  // require!(args.username.chars().all(char::is_alphanumeric), ErrorCode::StringNotAlphanumeric);
 
   ctx.accounts.wallet_profile.identifier_certificate_mint =
     ctx.accounts.identifier_certificate_mint.key();

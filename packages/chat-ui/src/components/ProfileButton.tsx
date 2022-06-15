@@ -34,6 +34,7 @@ export const ProfileButton: FC<ButtonProps> = ({
   const { info: profile, account: profileAccount, loading } = useWalletProfile();
   const { username } = useUsernameFromIdentifierCertificate(profile?.identifierCertificateMint);
   const { isOpen: loadWalletIsOpen, onClose, onOpen } = useDisclosure();
+  const { isOpen: profileIsOpen, onClose: closeProfile, onOpen: openProfile } = useDisclosure();
   
   const { handleErrors } = useErrorHandler();
   const { needsTopOff, error, loadingNeeds } = useLoadDelegate();
@@ -48,12 +49,26 @@ export const ProfileButton: FC<ButtonProps> = ({
     }
   }, [needsTopOff, profile, onOpen, loadingNeeds]);
 
+  useEffect(() => {
+    if (!loading && connected && !profileAccount) {
+      openProfile();
+    } else {
+      closeProfile();
+    }
+  }, [loading, connected, profileAccount, openProfile, closeProfile]);
+
   const handleClick = useCallback(
     (event: MouseEvent<HTMLButtonElement>) => {
       if (onClick) onClick(event);
-      if (!event.defaultPrevented) setVisible(!visible);
+      if (!event.defaultPrevented) {
+        if (connected) {
+          openProfile()
+        } else {
+          setVisible(!visible);
+        }
+      }
     },
-    [onClick, visible, setVisible]
+    [onClick, visible, setVisible, connected, openProfile]
   );
 
   const { cluster, setClusterOrEndpoint } = useEndpoint();
@@ -68,12 +83,12 @@ export const ProfileButton: FC<ButtonProps> = ({
       isAttached
       size={props.size}
     >
-      {!loading && connected && !profileAccount && <CreateProfileModal />}
+      <CreateProfileModal isOpen={profileIsOpen} />
       <LoadWalletModal
         isOpen={loadWalletIsOpen}
         onLoaded={() => onClose()}
         onClose={() => { 
-          disconnect();
+          if (!loading && !profileAccount) disconnect();
           onClose();
         }} 
       />
