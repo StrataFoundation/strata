@@ -11,20 +11,24 @@ import { useRouter } from "next/router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
 export default function Chatroom() {
-  const [isMobile] = useMediaQuery('(max-width: 768px)')
-  const router = useRouter()
-  const { id } = router.query
-  const lastMessage = useRef(null)
-  const { chatKey } = useChatKeyFromIdentifier(id as string | undefined)
-  const [pendingMessages, setPendingMessages] = useState<IMessageWithPending[]>([]);
-  const { messages, error } = useMessages(chatKey);
+  const [isMobile] = useMediaQuery("(max-width: 768px)");
+  const router = useRouter();
+  const { id } = router.query;
+  const scrollRef = useRef(null);
+  const { chatKey } = useChatKeyFromIdentifier(id as string | undefined);
+  const [pendingMessages, setPendingMessages] = useState<IMessageWithPending[]>(
+    []
+  );
+  const { messages, error, loadingInitial, loadingMore, fetchMore } =
+    useMessages(chatKey);
   const { handleErrors } = useErrorHandler();
-  handleErrors(error)
+  handleErrors(error);
 
   const msgWeHave = useMemo(
     () => new Set(Array.from(messages?.map((message) => message.id) || [])),
     [messages]
   );
+
   const messagesWithPending = useMemo(
     () => [
       ...(messages || []),
@@ -46,9 +50,14 @@ export default function Chatroom() {
         <Flex height="71px">
           <RoomsHeader chatKey={chatKey} />
         </Flex>
-        <ChatMessages scrollRef={lastMessage} messages={messagesWithPending} />
+        <ChatMessages
+          isLoading={loadingInitial || loadingMore}
+          scrollRef={scrollRef}
+          messages={messagesWithPending}
+          fetchMore={fetchMore}
+        />
         <Chatbox
-          scrollRef={lastMessage}
+          scrollRef={scrollRef}
           chatKey={chatKey}
           onAddPendingMessage={(pending) =>
             setPendingMessages((msgs) => [...(msgs || []), pending])
