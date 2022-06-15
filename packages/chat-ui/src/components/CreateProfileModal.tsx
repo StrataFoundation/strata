@@ -175,7 +175,14 @@ export function CreateProfileModal() {
   }, [image]);
 
   if (loadWalletIsOpen) {
-    return <LoadWalletModal onLoaded={() => onClose()} />;
+    return (
+      <LoadWalletModal
+        onLoaded={() => {
+          onClose();
+          disconnect();
+        }}
+      />
+    );
   }
 
   return (
