@@ -1,6 +1,6 @@
 import { Flex } from "@chakra-ui/react";
 import { IMessage } from "@strata-foundation/chat";
-import React from "react";
+import React, { useEffect } from "react";
 import throttle from "lodash/throttle";
 import { Message } from "./Message";
 
@@ -9,25 +9,34 @@ const INFINITE_SCROLL_THRESHOLD = 300;
 
 export const ChatMessages = ({
   isLoading,
+  hasMore,
   fetchMore = () => null,
   scrollRef,
   messages = [],
 }: {
   isLoading: boolean;
+  hasMore: boolean;
   fetchMore: (num: number) => void;
   scrollRef: any;
   messages?: IMessage[];
 }) => {
-  const handleOnScroll = throttle((e: any) => {
-    const scrollOffset = e.target.scrollHeight + e.target.scrollTop;
-    if (
-      scrollOffset <= e.target.offsetHeight + INFINITE_SCROLL_THRESHOLD &&
-      !isLoading
-    ) {
-      console.log("Fetching More");
-      // fetchMore(50);
+  useEffect(() => {
+    // fetchMore initialy if hasMore
+    // & no scrollBar height detected
+  }, [scrollRef, hasMore, fetchMore]);
+
+  const handleOnScroll = throttle(() => {
+    if (!isLoading && hasMore) {
+      console.log("fetchMore");
+      // fetchMore(5);
     }
   }, 300);
+
+  const loader = (
+    <div className="loader" key={0}>
+      Loading ...
+    </div>
+  );
 
   return (
     <Flex
@@ -53,6 +62,7 @@ export const ChatMessages = ({
           }
         />
       ))}
+      {isLoading && <div>Loading....</div>}
     </Flex>
   );
 };

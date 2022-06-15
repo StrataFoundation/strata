@@ -303,7 +303,6 @@ export function Message({
                   borderLeftRadius="20px"
                   width="55px"
                   borderRightRadius="20px"
-                  isRounded={false}
                   variant="outline"
                   size="sm"
                   onClick={onToggle}

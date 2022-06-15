@@ -54,6 +54,7 @@ export default function Chatroom() {
           isLoading={loadingInitial || loadingMore}
           scrollRef={scrollRef}
           messages={messagesWithPending}
+          hasMore={hasMore}
           fetchMore={fetchMore}
         />
         <Chatbox
