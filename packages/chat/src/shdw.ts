@@ -56,12 +56,11 @@ async function getOwnedAmount(
   return 0;
 }
 
-
-export async function uploadFile(
+export async function initStorageIfNeeded(
   provider: AnchorProvider | undefined,
-  file: File,
-  delegateWallet: Keypair | undefined
-): Promise<string | undefined> {
+  delegateWallet: Keypair | undefined,
+  sizeBytes: number
+): Promise<void> {
   if (provider) {
     const pubKey = delegateWallet
       ? delegateWallet.publicKey
@@ -86,14 +85,14 @@ export async function uploadFile(
 
     // Double storage size every time there's not enough
     let sizeKB = 0;
-    if (storageAccount && Number(storageAccount.storageAvailable) < file.size) {
+    if (storageAccount && Number(storageAccount.storageAvailable) < sizeBytes) {
       let sizeToAdd = storageAccount.storageAvailable;
-      while (sizeToAdd < file.size) {
+      while (sizeToAdd < sizeBytes) {
         sizeToAdd += sizeToAdd;
       }
       sizeKB = Math.ceil(sizeToAdd / 1024);
     } else if (!storageAccount) {
-      sizeKB = Math.ceil(file.size / 1024);
+      sizeKB = Math.ceil(sizeBytes / 1024);
     }
 
     const shdwNeeded = (sizeKB * 1024) / Math.pow(10, 9);
@@ -136,6 +135,25 @@ export async function uploadFile(
     } else if (!storageAccount) {
       await shdwDrive.createStorageAccount("chat", sizeKB + "KB");
     }
+  }
+}
+
+export async function uploadFile(
+  provider: AnchorProvider | undefined,
+  file: File,
+  delegateWallet: Keypair | undefined
+): Promise<string | undefined> {
+  await initStorageIfNeeded(provider, delegateWallet, file.size);
+  if (provider) {
+    const pubKey = delegateWallet
+      ? delegateWallet.publicKey
+      : provider.wallet.publicKey;
+    const [accountKey] = await getStorageAccount(pubKey, new BN(0));
+    const shdwDrive = new ShdwDrive(
+      // @ts-ignore
+      new Connection(provider.connection._rpcEndpoint, "max"),
+      delegateWallet ? new NodeWallet(delegateWallet) : provider.wallet
+    );
 
     const ext = file.name.split(".").slice(1, -1).join(".");
     const name = randomIdentifier() + (ext ? `.${ext}` : "");

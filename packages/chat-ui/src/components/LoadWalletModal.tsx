@@ -11,25 +11,34 @@ import {
   HStack,
   Button,
   ModalProps,
+  Link,
 } from "@chakra-ui/react";
-import { useErrorHandler } from "@strata-foundation/react";
+import { useErrorHandler, useProvider } from "@strata-foundation/react";
+import { initStorageIfNeeded } from "@strata-foundation/chat";
 import React from "react";
+import { useAsyncCallback } from "react-async-hook";
 import { AiOutlinePlus } from "react-icons/ai";
 import { useLoadDelegate } from "../hooks";
 import { WalletIcon, StrataIcon } from "../svg";
 
 export const LoadWalletModal = (props: Partial<ModalProps> & { onLoaded: () => void}) => {
   const {
+    delegateWallet,
     loading: loadingDelegate,
     loadDelegate,
     error: delegateError,
+    needsInit,
+    needsTopOff
   } = useLoadDelegate();
+  const { provider } = useProvider();
+  const { execute: initShdw, loading: loadingStorage, error: storageError } = useAsyncCallback(initStorageIfNeeded);
 
   const { handleErrors } = useErrorHandler();
-  handleErrors(delegateError);
+  handleErrors(delegateError, storageError);
 
   const exec = async () => {
     await loadDelegate();
+    await initShdw(provider, delegateWallet, 5 * 1024 * 1024); // Start with 5 mB
     props.onLoaded();
   }
 
@@ -75,7 +84,8 @@ export const LoadWalletModal = (props: Partial<ModalProps> & { onLoaded: () => v
               <Text textAlign="center">
                 Strata Chat loads a hot wallet in your local storage with{" "}
                 <b>0.1 Sol</b>, or <b>20,000 messages</b>. This helps us avoid
-                asking for approval for every message.
+                asking for approval for every message. We will also initialize{" "}
+                <Link to="https://shdw.genesysgo.com/">SHDW Drive</Link> storage for all attachments.
               </Text>
             </VStack>
             <Button
@@ -83,9 +93,10 @@ export const LoadWalletModal = (props: Partial<ModalProps> & { onLoaded: () => v
               variant="solid"
               colorScheme="primary"
               onClick={() => exec()}
-              isLoading={loadingDelegate}
+              loadingText={loadingDelegate ? "Loading Hot Wallet..." : "Creating SHDW Storage, this can take a couple minutes..."}
+              isLoading={loadingDelegate || loadingStorage}
             >
-              Load Hot Wallet
+              { needsInit ? "Create Hot Wallet" : needsTopOff ? "Load Hot Wallet" : "Load SHDW" }
             </Button>
           </VStack>
         </ModalBody>

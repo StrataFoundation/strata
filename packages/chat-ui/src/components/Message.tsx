@@ -1,10 +1,21 @@
 import {
   Avatar,
-  Box, Button, HStack,
-  Icon, IconButton, Image, Popover, PopoverBody, PopoverContent, PopoverTrigger, Skeleton,
+  Box,
+  Button,
+  HStack,
+  Icon,
+  IconButton,
+  Image,
+  Popover,
+  PopoverBody,
+  PopoverContent,
+  PopoverTrigger,
+  Skeleton,
   Text,
   useColorMode,
-  useColorModeValue, useDisclosure, VStack
+  useColorModeValue,
+  useDisclosure,
+  VStack,
 } from "@chakra-ui/react";
 import { GiphyFetch } from "@giphy/js-fetch-api";
 import { Gif } from "@giphy/react-components";
@@ -13,7 +24,7 @@ import { MessageType } from "@strata-foundation/chat";
 import {
   roundToDecimals,
   useErrorHandler,
-  useMint
+  useMint,
 } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import moment from "moment";
@@ -30,7 +41,7 @@ import {
   useProfile,
   useProfileKey,
   useSendMessage,
-  useUsernameFromIdentifierCertificate
+  useUsernameFromIdentifierCertificate,
 } from "../hooks";
 import { BuyMoreButton } from "./BuyMoreButton";
 import { EmojiSearch } from "./EmojiSearch";
@@ -133,12 +144,13 @@ export function Message({
 
   const reactsWithCounts = useMemo(() => {
     if (!reacts) {
-      return {}
+      return {};
     }
 
     return reacts.reduce(
       (acc: Record<string, number>, react: IMessageWithPending) => {
-        acc[react.decodedMessage!.emoji!] = (acc[react.decodedMessage!.emoji!] || 0) + 1;
+        acc[react.decodedMessage!.emoji!] =
+          (acc[react.decodedMessage!.emoji!] || 0) + 1;
         return acc;
       },
       {} as Record<string, number>
@@ -194,7 +206,7 @@ export function Message({
           {showUser ? (
             <Avatar mt="6px" size="sm" src={profile?.imageUrl} />
           ) : (
-            <Box w="36px" />
+            <Box w="34px" />
           )}
           <VStack w="full" align="start" spacing={0}>
             {showUser && (
