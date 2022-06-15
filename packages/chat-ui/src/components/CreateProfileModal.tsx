@@ -47,7 +47,7 @@ interface IProfileProps {
 }
 
 const validationSchema = yup.object({
-  username: yup.string().required().max(28),
+  username: yup.string().required().min(6).max(28),
   image: yup.mixed(),
   imageUrl: yup.string(),
 });
