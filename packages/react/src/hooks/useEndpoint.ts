@@ -39,7 +39,7 @@ export function getClusterAndEndpoint(clusterOrEndpoint: string): {
       } else if (clusterOrEndpoint === "devnet") {
         return {
           cluster: "devnet",
-          endpoint: "https://devnet.genesysgo.net/",
+          endpoint: "https://api.devnet.solana.com/",
         };
       } else if (clusterOrEndpoint === "mainnet-beta") {
         return {

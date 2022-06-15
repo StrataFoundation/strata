@@ -79,13 +79,13 @@ export const LoadWalletModal = (props: Partial<ModalProps> & { onLoaded: () => v
           <VStack spacing={6} align="left" p={12}>
             <VStack spacing={2} align="stretch">
               <Text textAlign="center" fontSize="xl" fontWeight="bold">
-                Let&apos;s load up your Chat wallet
+                Let&apos;s load up your Chat Wallet
               </Text>
               <Text textAlign="center">
                 Strata Chat loads a hot wallet in your local storage with{" "}
                 <b>0.1 Sol</b>, or <b>20,000 messages</b>. This helps us avoid
                 asking for approval for every message. We will also initialize{" "}
-                <Link to="https://shdw.genesysgo.com/">SHDW Drive</Link> storage for all attachments.
+                <Link color="primary.500" to="https://shdw.genesysgo.com/">SHDW Drive</Link> storage for all attachments.
               </Text>
             </VStack>
             <Button
@@ -93,7 +93,7 @@ export const LoadWalletModal = (props: Partial<ModalProps> & { onLoaded: () => v
               variant="solid"
               colorScheme="primary"
               onClick={() => exec()}
-              loadingText={loadingDelegate ? "Loading Hot Wallet..." : "Creating SHDW Storage, this can take a couple minutes..."}
+              loadingText={loadingDelegate ? "Loading Hot Wallet..." : "Creating Storage, this takes a minute..."}
               isLoading={loadingDelegate || loadingStorage}
             >
               { needsInit ? "Create Hot Wallet" : needsTopOff ? "Load Hot Wallet" : "Load SHDW" }

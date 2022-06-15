@@ -60,7 +60,7 @@ async function createProfile(
   if (chatSdk) {
     let imageUrl: string | undefined = args.imageUrl;
     if (args.image) {
-      setProgress("Uploading pfp, this can take up to 3 minutes...");
+      setProgress("Uploading pfp, this can take a minute...");
       const delegateWalletKeypair = delegateWalletStorage.getDelegateWallet(
         chatSdk.provider.wallet.publicKey
       );
