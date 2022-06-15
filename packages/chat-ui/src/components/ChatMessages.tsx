@@ -25,7 +25,7 @@ export const ChatMessages = ({
       !isLoading
     ) {
       console.log("Fetching More");
-      fetchMore(50);
+      // fetchMore(50);
     }
   }, 300);
 

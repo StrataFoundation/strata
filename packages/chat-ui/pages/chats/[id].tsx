@@ -19,7 +19,7 @@ export default function Chatroom() {
   const [pendingMessages, setPendingMessages] = useState<IMessageWithPending[]>(
     []
   );
-  const { messages, error, loadingInitial, loadingMore, fetchMore } =
+  const { messages, error, loadingInitial, loadingMore, hasMore, fetchMore } =
     useMessages(chatKey);
   const { handleErrors } = useErrorHandler();
   handleErrors(error);
