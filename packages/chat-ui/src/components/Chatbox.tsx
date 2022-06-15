@@ -9,6 +9,7 @@ import {
   ModalBody,
   ModalContent,
   ModalHeader,
+  useColorModeValue,
   useDisclosure,
 } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
@@ -48,6 +49,7 @@ export function Chatbox({
   const handleChange = (html: string) => {
     setInput(html);
   };
+  const chatBg = useColorModeValue("gray.100", "gray.800");
   const { handleErrors } = useErrorHandler();
   const { info: chat } = useChat(chatKey);
   const balance = useOwnedAmount(chat?.postPermissionMintOrCollection);
@@ -65,18 +67,22 @@ export function Chatbox({
   const { sendMessage: sendMessageImpl, error } = useSendMessage({
     chatKey,
     onAddPendingMessage: (msg) => {
-      setInput("");
       setLoading(false);
-      scrollRef.current.scrollIntoView({ behavior: "smooth" });
+      scrollRef.current.scrollTop = 0;
       if (onAddPendingMessage) {
         onAddPendingMessage(msg);
       }
     },
   });
 
-  const sendMessage = (m: ISendMessageContent) => {
+  const sendMessage = async (m: ISendMessageContent) => {
+    setInput("");
     setLoading(true);
-    sendMessageImpl(m);
+    try {
+      await sendMessageImpl(m);
+    } finally {
+      setLoading(false);
+    }
   };
 
   handleErrors(error);
@@ -89,7 +95,7 @@ export function Chatbox({
           spacing={2}
           w="full"
           align="center"
-          bg="gray.800"
+          bg={chatBg}
           rounded="lg"
         >
           <ChatInput

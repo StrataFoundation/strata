@@ -7,6 +7,7 @@ import {
   withClaimNameEntry,
   withCreateClaimRequest, withInitNameEntry, withInitNameEntryMint,
 } from "@cardinal/namespaces";
+import { LocalStorageLRU } from "@cocalc/local-storage-lru";
 import {
   Metadata,
   MasterEdition,
@@ -33,7 +34,7 @@ import { v4 as uuid } from "uuid";
 import { ChatIDL, ChatV0, DelegateWalletV0, NamespacesV0, PostAction, ProfileV0 } from "./generated/chat";
 import { uploadFile } from "./shdw";
 
-const MESSAGE_MAX_CHARACTERS = 288; // TODO: This changes with optional accounts in the future
+const MESSAGE_MAX_CHARACTERS = 352; // TODO: This changes with optional accounts in the future
 
 export * from "./generated/chat";
 export * from "./shdw";
@@ -67,19 +68,17 @@ interface ISymKeyStorage {
 }
 
 const storage =
-  typeof localStorage !== "undefined"
-    ? localStorage
-    : require("localstorage-memory");
+  new LocalStorageLRU();
 
 // 3 hours
 const KEY_EXPIRY = 3 * 60 * 60 * 1000;
 
 export class LocalSymKeyStorage implements ISymKeyStorage {
   setSymKey(encrypted: string, unencrypted: string): void {
-    storage.setItem("enc" + encrypted, unencrypted);
+    storage.set("enc" + encrypted, unencrypted);
   }
   getSymKey(encrypted: string): string | null {
-    return storage.getItem("enc" + encrypted);
+    return storage.get("enc" + encrypted) as string | null;
   }
   private getKey(mintOrCollection: PublicKey, amount: number): string {
     return `sym-${mintOrCollection.toBase58()}-${amount}`;
@@ -90,13 +89,13 @@ export class LocalSymKeyStorage implements ISymKeyStorage {
     symKey: SymKeyInfo
   ): void {
     const key = this.getKey(mintOrCollection, amount);
-    storage.setItem(key, JSON.stringify(symKey));
+    storage.set(key, JSON.stringify(symKey));
   }
   getTimeSinceLastSet(
     mintOrCollection: PublicKey,
     amount: number
   ): number | null {
-    const item = storage.getItem(this.getKey(mintOrCollection, amount));
+    const item = storage.get(this.getKey(mintOrCollection, amount)) as string;
 
     if (item) {
       return new Date().valueOf() - JSON.parse(item).timeMillis;
@@ -115,7 +114,7 @@ export class LocalSymKeyStorage implements ISymKeyStorage {
       return null;
     }
 
-    const item = storage.getItem(this.getKey(mintOrCollection, amount));
+    const item = storage.get(this.getKey(mintOrCollection, amount)) as string;
     if (item) {
       return JSON.parse(item);
     }
@@ -318,7 +317,7 @@ export interface SendMessageArgs {
 
 export enum IdentifierType {
   Chat = "chat",
-  User = "user"
+  User = "me"
 }
 
 export interface ClaimIdentifierArgs {
@@ -912,7 +911,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
     const certificateMintMetadata = await Metadata.getPDA(certificateMint);
 
-    if (type === IdentifierType.Chat && !existingEntry?.isApproved) {
+    if (type === IdentifierType.Chat && !existingEntry?.isClaimed) {
       instructions.push(
         await this.program.instruction.approveChatIdentifierV0({
           accounts: {
@@ -926,7 +925,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
           },
         })
       );
-    } else if (!existingEntry?.isApproved) {
+    } else if (!existingEntry?.isClaimed) {
       instructions.push(
         await this.program.instruction.approveUserIdentifierV0({
           accounts: {
@@ -1360,9 +1359,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       metadataKey,
       (await this.provider.connection.getAccountInfo(metadataKey))!
     );
-    const namespaces = await this.getNamespaces();
-    const [entryName] = metadata.data.data.name.split(".");
-    const [entry] = await ChatSdk.entryKey(namespaces.userNamespace, entryName);
 
     const identifierCertificateMintAccount =
       await Token.getAssociatedTokenAddress(
@@ -1428,8 +1424,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
               profile,
               postPermissionAccount,
               postPermissionMint: chatAcc.postPermissionMintOrCollection,
-              namespaces: namespaces.publicKey,
-              entry,
               identifierCertificateMint,
               identifierCertificateMintAccount,
               tokenProgram: TOKEN_PROGRAM_ID,

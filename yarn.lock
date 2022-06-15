@@ -2625,6 +2625,11 @@
     ramda "^0.27.1"
     styled-components "^5.3.1"
 
+"@cocalc/local-storage-lru@^2.3.0":
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/@cocalc/local-storage-lru/-/local-storage-lru-2.3.0.tgz#e824c03c2408472fa080d512c3fe36a6a98d035c"
+  integrity sha512-IJGDYxiOjpZJNBBucIituyzUaV2sEpdUm2xHMXJfWwraoApyL6xidV6y0YXL7NG3f9xYwkeXpBYJK0sDyFJA4w==
+
 "@cosmjs/amino@0.27.1":
   version "0.27.1"
   resolved "https://registry.yarnpkg.com/@cosmjs/amino/-/amino-0.27.1.tgz#0910256b5aecd794420bb5f7319d98fc63252fa1"

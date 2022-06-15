@@ -69,7 +69,7 @@ async function sendMessage({
         instructionGroups.map(async (instructions, index) => {
           const tx = new Transaction();
           tx.recentBlockhash = (
-            await chatSdk.provider.connection.getRecentBlockhash()
+            await chatSdk.provider.connection.getLatestBlockhash()
           ).blockhash;
           tx.feePayer = delegateWalletKeypair.publicKey;
           tx.add(...instructions);
@@ -90,7 +90,8 @@ async function sendMessage({
       );
 
       const blockTime = Number((await chatSdk.provider.connection.getAccountInfo(
-        SYSVAR_CLOCK_PUBKEY
+        SYSVAR_CLOCK_PUBKEY,
+        "processed"
       ))!.data.readBigInt64LE(8 * 4));
 
       if (onAddPendingMessage) {

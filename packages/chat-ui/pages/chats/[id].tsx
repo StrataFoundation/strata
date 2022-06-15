@@ -14,12 +14,13 @@ export default function Chatroom() {
   const [isMobile] = useMediaQuery("(max-width: 768px)");
   const router = useRouter();
   const { id } = router.query;
-  const lastMessage = useRef(null);
+  const scrollRef = useRef(null);
   const { chatKey } = useChatKeyFromIdentifier(id as string | undefined);
   const [pendingMessages, setPendingMessages] = useState<IMessageWithPending[]>(
     []
   );
-  const { messages, error } = useMessages(chatKey);
+  const { messages, error, loadingInitial, loadingMore, hasMore, fetchMore } =
+    useMessages(chatKey);
   const { handleErrors } = useErrorHandler();
   handleErrors(error);
 
@@ -27,11 +28,13 @@ export default function Chatroom() {
     () => new Set(Array.from(messages?.map((message) => message.id) || [])),
     [messages]
   );
+
   const messagesWithPending = useMemo(
-    () => [
-      ...(messages || []),
-      ...pendingMessages.filter((p) => !msgWeHave.has(p.id)),
-    ],
+    () =>
+      [
+        ...(messages || []),
+        ...pendingMessages.filter((p) => !msgWeHave.has(p.id)),
+      ].sort((a, b) => b.startBlockTime - a.startBlockTime),
     [msgWeHave, messages, pendingMessages]
   );
 
@@ -44,13 +47,19 @@ export default function Chatroom() {
   return (
     <Container>
       {!isMobile && <Sidebar fullWidth={isMobile} />}
-      <Flex direction="column" grow="1" height="100vh" width="100%">
+      <Flex direction="column" grow="1" height="100vh" width="full">
         <Flex height="71px">
           <RoomsHeader chatKey={chatKey} />
         </Flex>
-        <ChatMessages scrollRef={lastMessage} messages={messagesWithPending} />
+        <ChatMessages
+          isLoading={loadingInitial || loadingMore}
+          scrollRef={scrollRef}
+          messages={messagesWithPending}
+          hasMore={hasMore}
+          fetchMore={fetchMore}
+        />
         <Chatbox
-          scrollRef={lastMessage}
+          scrollRef={scrollRef}
           chatKey={chatKey}
           onAddPendingMessage={(pending) =>
             setPendingMessages((msgs) => [...(msgs || []), pending])

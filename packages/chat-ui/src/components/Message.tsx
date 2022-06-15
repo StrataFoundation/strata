@@ -25,6 +25,7 @@ import {
   roundToDecimals,
   useErrorHandler,
   useMint,
+  useEndpoint,
 } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import moment from "moment";
@@ -78,6 +79,7 @@ export function Message({
   profileKey,
   readPermissionAmount,
   chatKey,
+  txids,
   startBlockTime,
   htmlAllowlist = defaultOptions,
   reacts,
@@ -95,6 +97,7 @@ export function Message({
   const { username } = useUsernameFromIdentifierCertificate(
     profile?.identifierCertificateMint
   );
+  const { cluster } = useEndpoint();
 
   const id = profile?.ownerWallet.toBase58();
   const { info: chat } = useChat(chatKey);
@@ -206,7 +209,7 @@ export function Message({
           {showUser ? (
             <Avatar mt="6px" size="sm" src={profile?.imageUrl} />
           ) : (
-            <Box w="36px" />
+            <Box w="34px" />
           )}
           <VStack w="full" align="start" spacing={0}>
             {showUser && (
@@ -303,7 +306,6 @@ export function Message({
                   borderLeftRadius="20px"
                   width="55px"
                   borderRightRadius="20px"
-                  isRounded={false}
                   variant="outline"
                   size="sm"
                   onClick={onToggle}
@@ -314,6 +316,12 @@ export function Message({
             )}
           </VStack>
           <Icon
+            _hover={{ cursor: "pointer" }}
+            onClick={() => {
+              txids?.forEach(tx => {
+                window.open(`https://explorer.solana.com/tx/${tx}?cluster=${cluster}`)
+              })
+            }}
             alignSelf="center"
             w="12px"
             h="12px"

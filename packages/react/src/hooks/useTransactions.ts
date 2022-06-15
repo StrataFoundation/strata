@@ -58,15 +58,25 @@ export type TransactionResponseWithSig = Partial<TransactionResponse> & {
 
 async function hydrateTransactions(
   connection: Connection | undefined,
-  signatures: ConfirmedSignatureInfo[]
+  signatures: ConfirmedSignatureInfo[],
+  tries: number = 0
 ): Promise<TransactionResponseWithSig[]> {
   if (!connection) {
     return [];
   }
+  
 
-  const txs = (
+  const rawTxs = (
     await connection.getTransactions(signatures.map((sig) => sig.signature))
-  ).map((t, index) => {
+  );
+
+  // Some were null. Try again
+  if (rawTxs.some(t => !t) && tries < 3) {
+    await sleep(500);
+    return hydrateTransactions(connection, signatures, tries + 1)
+  }
+  
+  const txs = rawTxs.map((t, index) => {
     // @ts-ignore
     t.signature = signatures[index].signature;
     // @ts-ignore
@@ -82,6 +92,7 @@ async function hydrateTransactions(
 
 interface ITransactions {
   error: Error | undefined;
+  hasMore: boolean;
   loadingInitial: boolean;
   loadingMore: boolean;
   transactions: TransactionResponseWithSig[];
@@ -95,12 +106,18 @@ function removeDups(
   const notPending = new Set(
     Array.from(txns.filter((tx) => !tx.pending).map((tx) => tx.signature))
   );
+  // Use the block times from pending messages so that there's no weird reording on screen
+  const pendingBlockTimes = txns
+    .filter((tx) => tx.pending)
+    .reduce((acc, tx) => ({ ...acc, [tx.signature]: tx.blockTime }), {} as Record<string, number | null | undefined>);
+    
   const seen = new Set();
 
   return txns
     .map((tx) => {
       const nonPendingAvailable = tx.pending && notPending.has(tx.signature);
       if (!seen.has(tx.signature) && !nonPendingAvailable) {
+        tx.blockTime = pendingBlockTimes[tx.signature] || tx.blockTime;
         seen.add(tx.signature);
         return tx;
       }
@@ -129,6 +146,7 @@ export const useTransactions = ({
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<Error | undefined>();
+  const [hasMore, setHasMore] = useState(false);
   const [transactions, setTransactions] = useState<
     TransactionResponseWithSig[]
   >([]);
@@ -150,7 +168,6 @@ export const useTransactions = ({
                 err,
               },
             ]);
-            console.log("new", newTxns)
             setTransactions((txns) => removeDups([...newTxns, ...txns]));
           } catch (e: any) {
             console.error("Error while fetching new tx", e);
@@ -173,8 +190,7 @@ export const useTransactions = ({
         subId = await accelerator.onTransaction(
           cluster as Cluster,
           address,
-          ({ transaction, txid }) => {
-            console.log("Accelerated got", txid);
+          ({ transaction, txid, blockTime }) => {
             setTransactions((txns) => {
               try {
                 return removeDups([
@@ -186,6 +202,7 @@ export const useTransactions = ({
                         sig.publicKey.toBase58()
                       ),
                     },
+                    blockTime,
                     pending: true,
                   },
                   ...txns,
@@ -220,6 +237,8 @@ export const useTransactions = ({
           numTransactions
         );
 
+        setHasMore(signatures.length === numTransactions);
+
         setTransactions(await hydrateTransactions(connection, signatures));
       } catch (e: any) {
         setError(e);
@@ -240,6 +259,8 @@ export const useTransactions = ({
         lastTx && lastTx.transaction && lastTx.transaction.signatures[0],
         num
       );
+
+      setHasMore(signatures.length === numTransactions);
       const newTxns = await hydrateTransactions(connection, signatures);
 
       setTransactions((txns) => removeDups([...txns, ...newTxns]));
@@ -278,6 +299,7 @@ export const useTransactions = ({
     }
   };
   return {
+    hasMore,
     transactions,
     error,
     loadingInitial,

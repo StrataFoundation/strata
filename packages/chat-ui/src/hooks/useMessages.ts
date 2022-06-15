@@ -1,5 +1,10 @@
 import { ConfirmedTransactionMeta, Message, PublicKey } from "@solana/web3.js";
-import { ChatSdk, IMessage, MessageType, ReactMessage } from "@strata-foundation/chat";
+import {
+  ChatSdk,
+  IMessage,
+  MessageType,
+  ReactMessage,
+} from "@strata-foundation/chat";
 import {
   truthy,
   useTransactions,
@@ -15,10 +20,11 @@ export interface IMessageWithPending extends IMessage {
 
 export interface IMessageWithPendingAndReacts extends IMessage {
   reacts: IMessageWithPending[];
-};
+}
 
 interface IUseMessages {
   error: Error | undefined;
+  hasMore: boolean;
   loadingInitial: boolean;
   loadingMore: boolean;
   messages: IMessageWithPendingAndReacts[] | undefined;
@@ -85,8 +91,8 @@ async function getMessages(
         ...(completedMessages || []),
         ...(await chatSdk.getDecodedMessagesFromParts(newParts)),
       ]
-        .filter((msg) => msg.txids.every(txid => !failedTx.has(txid)))
-        .sort((a, b) => a.startBlockTime - b.startBlockTime)
+        .filter((msg) => msg.txids.every((txid) => !failedTx.has(txid)))
+        .sort((a, b) => b.startBlockTime - a.startBlockTime)
         .map(({ parts, ...rest }) => ({
           ...rest,
           parts,
@@ -101,7 +107,10 @@ async function getMessages(
   return [];
 }
 
-export function useMessages(chat: PublicKey | undefined, accelerated: boolean = true): IUseMessages {
+export function useMessages(
+  chat: PublicKey | undefined,
+  accelerated: boolean = true
+): IUseMessages {
   const { chatSdk } = useChatSdk();
   const { transactions, ...rest } = useTransactions({
     address: chat,
@@ -141,7 +150,9 @@ export function useMessages(chat: PublicKey | undefined, accelerated: boolean = 
           acc[reactMessage.referenceMessageId] = [];
         }
         const seenKey =
-          msg.profileKey?.toBase58() + reactMessage.referenceMessageId + reactMessage.emoji;
+          msg.profileKey?.toBase58() +
+          reactMessage.referenceMessageId +
+          reactMessage.emoji;
         if (!seen.has(seenKey)) {
           seen.add(seenKey);
           acc[reactMessage.referenceMessageId].push(msg);
