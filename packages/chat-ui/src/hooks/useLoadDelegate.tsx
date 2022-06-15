@@ -78,6 +78,7 @@ export function useLoadDelegate() {
   return {
     delegateWallet,
     mnemonic,
+    loadingNeeds: loadingStruct || loadingBalance || loadingKey,
     needsInit: !loadingStruct && !loadingKey && !account,
     needsTopOff: !delegateWallet || (!loadingBalance && balance < 0.01),
     loadDelegate: () => {

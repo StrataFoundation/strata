@@ -124,9 +124,11 @@ export function CreateProfileModal() {
     needsTopOff,
     mnemonic,
     error: delegateError,
+    loadingNeeds,
   } = useLoadDelegate();
 
   const { username, image } = watch();
+  console.log(image);
 
   const { wallet } = useWalletFromIdentifier(username);
 
@@ -146,10 +148,9 @@ export function CreateProfileModal() {
     await execute(chatSdk, args, setStep);
   }
 
-  const needsLoadup = needsInit || needsTopOff;
   useEffect(() => {
-    if (needsLoadup) onOpen();
-  }, [needsLoadup])
+    if (needsTopOff && !loadingNeeds) onOpen();
+  }, [needsTopOff, loadingNeeds]);
 
   const hiddenFileInput = React.useRef<HTMLInputElement>(null);
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -194,7 +195,7 @@ export function CreateProfileModal() {
               <Text fontSize="xl" fontWeight="bold">
                 Save your local seed phrase
               </Text>
-              {!needsLoadup && mnemonic && <SeedPhrase mnemonic={mnemonic!} />}
+              { mnemonic && <SeedPhrase mnemonic={mnemonic!} /> }
             </VStack>
 
             <FormProvider {...formProps}>

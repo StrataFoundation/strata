@@ -42,7 +42,7 @@ export default function Chatroom() {
   return (
     <Container>
       {!isMobile && <Sidebar fullWidth={isMobile} />}
-      <Flex direction="column" grow="1" height="100vh" width="100%">
+      <Flex direction="column" grow="1" height="100vh" width="full">
         <Flex height="71px">
           <RoomsHeader chatKey={chatKey} />
         </Flex>

@@ -58,9 +58,13 @@ export function Chatbox({ scrollRef, chatKey, onAddPendingMessage }: chatProps) 
     },
   });
 
-  const sendMessage = (m: ISendMessageContent) => {
+  const sendMessage = async (m: ISendMessageContent) => {
     setLoading(true);
-    sendMessageImpl(m);
+    try {
+      await sendMessageImpl(m);
+    } finally {
+      setLoading(false);
+    }
   }
 
   handleErrors(error);
