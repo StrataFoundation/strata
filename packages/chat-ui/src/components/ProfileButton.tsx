@@ -7,6 +7,8 @@ import {
   IconButton,
   Menu,
   MenuButton,
+  MenuDivider,
+  MenuItem,
   MenuItemOption,
   MenuList,
   MenuOptionGroup, useColorModeValue,
@@ -87,10 +89,10 @@ export const ProfileButton: FC<ButtonProps> = ({
       <LoadWalletModal
         isOpen={loadWalletIsOpen}
         onLoaded={() => onClose()}
-        onClose={() => { 
+        onClose={() => {
           if (!loading && !profileAccount) disconnect();
           onClose();
-        }} 
+        }}
       />
       <Button
         color={useColorModeValue("black", "white")}
@@ -153,6 +155,14 @@ export const ProfileButton: FC<ButtonProps> = ({
               Localnet
             </MenuItemOption>
           </MenuOptionGroup>
+          <MenuDivider />
+          <MenuItem
+            onClick={disconnect}
+            _focus={{ backgroundColor: "primary.300" }}
+            _hover={{ backgroundColor: "primary.500" }}
+          >
+            Disconnect
+          </MenuItem>
         </MenuList>
       </Menu>
     </ButtonGroup>
