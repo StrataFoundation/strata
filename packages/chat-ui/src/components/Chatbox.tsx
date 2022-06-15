@@ -9,6 +9,7 @@ import {
   ModalBody,
   ModalContent,
   ModalHeader,
+  useColorModeValue,
   useDisclosure,
 } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
@@ -48,6 +49,7 @@ export function Chatbox({
   const handleChange = (html: string) => {
     setInput(html);
   };
+  const chatBg = useColorModeValue("gray.100", "gray.800");
   const { handleErrors } = useErrorHandler();
   const { info: chat } = useChat(chatKey);
   const balance = useOwnedAmount(chat?.postPermissionMintOrCollection);
@@ -93,7 +95,7 @@ export function Chatbox({
           spacing={2}
           w="full"
           align="center"
-          bg="gray.800"
+          bg={chatBg}
           rounded="lg"
         >
           <ChatInput

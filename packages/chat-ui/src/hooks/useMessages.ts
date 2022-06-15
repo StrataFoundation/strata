@@ -24,6 +24,7 @@ export interface IMessageWithPendingAndReacts extends IMessage {
 
 interface IUseMessages {
   error: Error | undefined;
+  hasMore: boolean;
   loadingInitial: boolean;
   loadingMore: boolean;
   messages: IMessageWithPendingAndReacts[] | undefined;

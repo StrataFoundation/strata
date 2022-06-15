@@ -1,5 +1,5 @@
 import { getOrca, OrcaPoolConfig } from "@orca-so/sdk";
-import { AnchorProvider, Provider } from "@project-serum/anchor";
+import { AnchorProvider } from "@project-serum/anchor";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
 import { ShdwDrive, StorageAccount } from "@shadow-drive/sdk";
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
@@ -56,24 +56,38 @@ async function getOwnedAmount(
   return 0;
 }
 
+function getEndpoint(connection: Connection) {
+  // @ts-ignore
+  const endpoint = connection._rpcEndpoint
 
-export async function uploadFile(
+  // Gengo only works on mainnet
+  if (endpoint.includes("dev")) {
+    return "https://ssc-dao.genesysgo.net";
+  }
+
+  return endpoint;
+}
+
+export async function initStorageIfNeeded(
   provider: AnchorProvider | undefined,
-  file: File,
-  delegateWallet: Keypair | undefined
-): Promise<string | undefined> {
+  delegateWallet: Keypair | undefined,
+  sizeBytes: number
+): Promise<void> {
   if (provider) {
+    delegateWallet = maybeUseDevnetWallet(provider?.connection, delegateWallet);
+    const connection = new Connection(getEndpoint(provider.connection), "max");
+    const localProvider = new AnchorProvider(
+      connection,
+      delegateWallet ? new NodeWallet(delegateWallet) : provider.wallet,
+      {}
+    );
     const pubKey = delegateWallet
       ? delegateWallet.publicKey
       : provider.wallet.publicKey;
 
-    const shdwDrive = new ShdwDrive(
-      // @ts-ignore
-      new Connection(provider.connection._rpcEndpoint, "max"),
-      delegateWallet ? new NodeWallet(delegateWallet) : provider.wallet
-    );
+    const shdwDrive = new ShdwDrive(localProvider.connection, localProvider.wallet);
 
-    const orca = getOrca(provider.connection);
+    const orca = getOrca(localProvider.connection);
     const orcaSolPool = orca.getPool(OrcaPoolConfig.SHDW_SOL);
 
     const [accountKey] = await getStorageAccount(pubKey, new BN(0));
@@ -86,20 +100,20 @@ export async function uploadFile(
 
     // Double storage size every time there's not enough
     let sizeKB = 0;
-    if (storageAccount && Number(storageAccount.storageAvailable) < file.size) {
+    if (storageAccount && Number(storageAccount.storageAvailable) < sizeBytes) {
       let sizeToAdd = storageAccount.storageAvailable;
-      while (sizeToAdd < file.size) {
+      while (sizeToAdd < sizeBytes) {
         sizeToAdd += sizeToAdd;
       }
       sizeKB = Math.ceil(sizeToAdd / 1024);
     } else if (!storageAccount) {
-      sizeKB = Math.ceil(file.size / 1024);
+      sizeKB = Math.ceil(sizeBytes / 1024);
     }
 
     const shdwNeeded = (sizeKB * 1024) / Math.pow(10, 9);
     const solToken = orcaSolPool.getTokenB();
     const shdwToken = orcaSolPool.getTokenA();
-    const shdwOwnedAmount = await getOwnedAmount(provider, pubKey, SHDW);
+    const shdwOwnedAmount = await getOwnedAmount(localProvider, pubKey, SHDW);
 
     if (shdwOwnedAmount < shdwNeeded) {
       console.log("Not enough SHDW, buying some...");
@@ -115,14 +129,14 @@ export async function uploadFile(
       );
       const tx = swapPayload.transaction;
       tx.recentBlockhash = (
-        await provider.connection.getRecentBlockhash()
+        await localProvider.connection.getLatestBlockhash()
       ).blockhash;
       tx.feePayer = pubKey;
       const signers = [...swapPayload.signers, delegateWallet].filter(truthy);
       tx.sign(...signers);
 
       await sendAndConfirmWithRetry(
-        provider.connection,
+        localProvider.connection,
         tx.serialize(),
         {},
         "max"
@@ -136,6 +150,27 @@ export async function uploadFile(
     } else if (!storageAccount) {
       await shdwDrive.createStorageAccount("chat", sizeKB + "KB");
     }
+  }
+}
+
+export async function uploadFile(
+  provider: AnchorProvider | undefined,
+  file: File,
+  delegateWallet: Keypair | undefined
+): Promise<string | undefined> {
+  await initStorageIfNeeded(provider, delegateWallet, file.size);
+  if (provider) {
+    delegateWallet = maybeUseDevnetWallet(provider.connection, delegateWallet);
+    const pubKey = delegateWallet
+      ? delegateWallet.publicKey
+      : provider.wallet.publicKey;
+    const [accountKey] = await getStorageAccount(pubKey, new BN(0));
+    const shdwDrive = new ShdwDrive(
+      // @ts-ignore
+      new Connection(getEndpoint(provider.connection), "max"),
+      delegateWallet ? new NodeWallet(delegateWallet) : provider.wallet
+    );
+    await shdwDrive.init();
 
     const ext = file.name.split(".").slice(1, -1).join(".");
     const name = randomIdentifier() + (ext ? `.${ext}` : "");
@@ -152,3 +187,23 @@ export async function uploadFile(
 function randomIdentifier(): string {
   return Math.random().toString(32).slice(2);
 }
+
+// A devnet wallet loaded with 1 SHDW for testing in devnet. Yes, anyone can mess with this wallet.
+// If they do, devnet shdw things will not continue working. That's life. If you find this,
+// please don't be an asshole.
+const DEVNET_WALLET = Keypair.fromSecretKey(
+  new Uint8Array([
+    17, 83, 103, 136, 230, 98, 37, 214, 218, 31, 168, 218, 184, 30, 163, 18,
+    164, 101, 117, 232, 151, 205, 200, 74, 198, 52, 31, 21, 234, 238, 220, 182,
+    9, 99, 203, 242, 226, 192, 165, 246, 188, 184, 61, 204, 50, 228, 30, 89,
+    215, 145, 146, 206, 179, 116, 224, 158, 180, 176, 27, 221, 238, 77, 69, 207,
+  ])
+);
+function maybeUseDevnetWallet(connection: Connection, delegateWallet: Keypair | undefined): Keypair | undefined {
+  // @ts-ignore
+  if (connection._rpcEndpoint.includes("dev")) {
+    return DEVNET_WALLET
+  }
+  return delegateWallet;
+}
+

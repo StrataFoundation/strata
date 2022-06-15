@@ -92,6 +92,7 @@ async function hydrateTransactions(
 
 interface ITransactions {
   error: Error | undefined;
+  hasMore: boolean;
   loadingInitial: boolean;
   loadingMore: boolean;
   transactions: TransactionResponseWithSig[];
@@ -139,6 +140,7 @@ export const useTransactions = ({
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<Error | undefined>();
+  const [hasMore, setHasMore] = useState(false);
   const [transactions, setTransactions] = useState<
     TransactionResponseWithSig[]
   >([]);
@@ -230,6 +232,8 @@ export const useTransactions = ({
           numTransactions
         );
 
+        setHasMore(signatures.length === numTransactions);
+
         setTransactions(await hydrateTransactions(connection, signatures));
       } catch (e: any) {
         setError(e);
@@ -250,6 +254,8 @@ export const useTransactions = ({
         lastTx && lastTx.transaction && lastTx.transaction.signatures[0],
         num
       );
+
+      setHasMore(signatures.length === numTransactions);
       const newTxns = await hydrateTransactions(connection, signatures);
 
       setTransactions((txns) => removeDups([...txns, ...newTxns]));
@@ -288,6 +294,7 @@ export const useTransactions = ({
     }
   };
   return {
+    hasMore,
     transactions,
     error,
     loadingInitial,
