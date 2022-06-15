@@ -36,16 +36,17 @@ export const ProfileButton: FC<ButtonProps> = ({
   const { isOpen: loadWalletIsOpen, onClose, onOpen } = useDisclosure();
   
   const { handleErrors } = useErrorHandler();
-  const {
-    needsTopOff,
-    error,
-  } = useLoadDelegate();
+  const { needsTopOff, error, loadingNeeds } = useLoadDelegate();
   handleErrors(error);
 
   // Open load wallet dialog if we have a profile but wallet is empty
   useEffect(() => {
-    if (needsTopOff && !loading && profileAccount) onOpen();
-  }, [needsTopOff, profile, loading, onOpen]);
+    if (!loadingNeeds && needsTopOff) {
+      onOpen();
+    } else {
+      onClose()
+    }
+  }, [needsTopOff, profile, onOpen, loadingNeeds]);
 
   const handleClick = useCallback(
     (event: MouseEvent<HTMLButtonElement>) => {
