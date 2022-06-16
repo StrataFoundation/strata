@@ -1,12 +1,4 @@
-import {
-  Box,
-  Flex,
-  HStack,
-  Skeleton,
-  SkeletonCircle,
-  SkeletonText,
-  VStack,
-} from "@chakra-ui/react";
+import { Flex, Skeleton, SkeletonCircle } from "@chakra-ui/react";
 import { IMessage } from "@strata-foundation/chat";
 import React, { useEffect } from "react";
 import throttle from "lodash/throttle";
