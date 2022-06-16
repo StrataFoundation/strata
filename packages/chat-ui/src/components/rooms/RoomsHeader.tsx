@@ -113,9 +113,7 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
           accelerator.unsubscribeTransaction(id);
         }
       })()
-
     };
-            console.log("Info", tabHasFocus, profileKey)
   }, [settings, profileKey, accelerator, chatSdk, chatKey]);
 
   return (
