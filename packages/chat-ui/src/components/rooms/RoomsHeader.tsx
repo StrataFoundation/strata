@@ -5,23 +5,43 @@ import {
   Flex,
   Heading,
   HStack,
+  VStack,
   Text,
+  Button,
+  Divider,
+  Popover,
+  PopoverTrigger,
+  Portal,
+  PopoverContent,
+  PopoverBody,
+  Switch,
   useColorMode,
   useMediaQuery,
+  FormControl,
+  FormLabel,
 } from "@chakra-ui/react";
+import { RiSettings3Fill, RiArrowDownSLine } from "react-icons/ri";
 import { PublicKey } from "@solana/web3.js";
 import { useChat } from "../../hooks/useChat";
-import { roundToDecimals, useMint, useTokenMetadata } from "@strata-foundation/react";
+import {
+  roundToDecimals,
+  useMint,
+  useTokenMetadata,
+} from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
+import { BuyMoreButton } from "../BuyMoreButton";
 
-export function RoomsHeader({ chatKey }: { chatKey?: PublicKey }) {
+export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
   const { info: chat } = useChat(chatKey);
+  const readMint = chat?.readPermissionMintOrCollection;
   const [isMobile] = useMediaQuery("(max-width: 680px)");
   const { metadata: readMetadata, image: readImage } = useTokenMetadata(
     chat?.readPermissionMintOrCollection
   );
   const postMint = useMint(chat?.postPermissionMintOrCollection);
-  const { metadata: postMetadata, image: postImage } = useTokenMetadata(chat?.postPermissionMintOrCollection);
+  const { metadata: postMetadata, image: postImage } = useTokenMetadata(
+    chat?.postPermissionMintOrCollection
+  );
   const { colorMode } = useColorMode();
 
   return (
@@ -34,47 +54,114 @@ export function RoomsHeader({ chatKey }: { chatKey?: PublicKey }) {
       borderColor={colorMode === "light" ? "gray.200" : "gray.700"}
       direction="row"
     >
-      <Box maxWidth="70%" pt={1}>
-        <Heading size={isMobile ? "md" : "md"} isTruncated>
-          {chat?.name}
-        </Heading>
-        {!isMobile && (
-          <HStack spacing={4}>
-            {readMetadata && (
-              <HStack spacing={1}>
-                <Text fontWeight={600}>Read:</Text>
-                <Text>hold 1</Text>
-                <Avatar
-                  w="16px"
-                  h="16px"
-                  title={readMetadata?.data.symbol}
-                  src={readImage}
-                />
-              </HStack>
-            )}
-            {postMetadata && (
-              <HStack spacing={1}>
-                <Text fontWeight={600}>Post:</Text>
-                <Text>
-                  {Object.keys(chat?.postPermissionAction || {})[0]}{" "}
-                  {chat?.postPermissionAmount &&
-                    postMint &&
-                    roundToDecimals(
-                      toNumber(chat.postPermissionAmount, postMint),
-                      4
+      <Heading size={isMobile ? "md" : "md"} isTruncated>
+        {chat?.name}
+      </Heading>
+      {chat?.name && (
+        <Popover placement="top-end">
+          <PopoverTrigger>
+            <Button
+              leftIcon={<RiSettings3Fill size={26} />}
+              rightIcon={<RiArrowDownSLine size={24} />}
+              variant="outline"
+              colorScheme="white"
+            >
+              Chat Info
+            </Button>
+          </PopoverTrigger>
+          <Portal>
+            <PopoverContent
+              border={0}
+              bg={colorMode === "light" ? "gray.200" : "gray.800"}
+              borderRadius={14}
+            >
+              <PopoverBody py={6} px={4}>
+                <VStack alignItems="start" spacing={4}>
+                  <Heading size="md">Welcome To {chat.name}</Heading>
+                  <Text
+                    color={colorMode === "light" ? "black.300" : "gray.400"}
+                  >
+                    In order to participate in actions in this chat, you must
+                    hold:
+                  </Text>
+                  <Box w="full" fontSize="sm">
+                    {readMetadata && (
+                      <HStack spacing={1}>
+                        <Text>Read Message</Text>
+                        <Flex grow={1}>
+                          <Divider variant="dashed" />
+                        </Flex>
+                        <Text fontWeight="bold" textTransform="capitalize">
+                          Hold 1
+                        </Text>
+                        <Avatar
+                          w="18px"
+                          h="18px"
+                          title={readMetadata?.data.symbol}
+                          src={readImage}
+                        />
+                      </HStack>
                     )}
-                </Text>
-                <Avatar
-                  w="16px"
-                  h="16px"
-                  title={postMetadata?.data.symbol}
-                  src={postImage}
-                />
-              </HStack>
-            )}
-          </HStack>
-        )}
-      </Box>
+                    {postMetadata && (
+                      <HStack spacing={1}>
+                        <Text>Post Message</Text>
+                        <Flex grow={1}>
+                          <Divider variant="dashed" />
+                        </Flex>
+                        <Text fontWeight="bold" textTransform="capitalize">
+                          {Object.keys(chat?.postPermissionAction || {})[0]}{" "}
+                          {chat?.postPermissionAmount &&
+                            postMint &&
+                            roundToDecimals(
+                              toNumber(chat.postPermissionAmount, postMint),
+                              4
+                            )}
+                        </Text>
+                        <Avatar
+                          w="18px"
+                          h="18px"
+                          title={postMetadata?.data.symbol}
+                          src={postImage}
+                        />
+                      </HStack>
+                    )}
+                  </Box>
+                  <BuyMoreButton
+                    mint={readMint}
+                    btnProps={{ w: "full", size: "md" }}
+                  />
+                  <Box w="full">
+                    <Divider mt={4} mb={2} />
+                  </Box>
+                  <Heading size="md">Settings</Heading>
+                  <Box w="full">
+                    <FormControl
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="space-between"
+                    >
+                      <FormLabel htmlFor="noise-alerts" mb="0">
+                        Sound notifications
+                      </FormLabel>
+                      <Switch id="noise-alerts" colorScheme="primary" />
+                    </FormControl>
+                    <FormControl
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="space-between"
+                    >
+                      <FormLabel htmlFor="visual-alerts" mb="0">
+                        Desktop notifications
+                      </FormLabel>
+                      <Switch id="visual-alerts" colorScheme="primary" />
+                    </FormControl>
+                  </Box>
+                </VStack>
+              </PopoverBody>
+            </PopoverContent>
+          </Portal>
+        </Popover>
+      )}
     </Flex>
   );
-}
+};

@@ -83,7 +83,7 @@ export function Chatbox({
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   handleErrors(error);
 

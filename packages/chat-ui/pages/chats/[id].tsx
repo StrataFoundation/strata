@@ -30,10 +30,11 @@ export default function Chatroom() {
   );
 
   const messagesWithPending = useMemo(
-    () => [
-      ...(messages || []),
-      ...pendingMessages.filter((p) => !msgWeHave.has(p.id)),
-    ].sort((a, b) => b.startBlockTime - a.startBlockTime),
+    () =>
+      [
+        ...(messages || []),
+        ...pendingMessages.filter((p) => !msgWeHave.has(p.id)),
+      ].sort((a, b) => b.startBlockTime - a.startBlockTime),
     [msgWeHave, messages, pendingMessages]
   );
 
