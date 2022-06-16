@@ -15,8 +15,7 @@ import {
 } from "recharts";
 import { numberWithCommas } from "../../utils/numberWithCommas";
 import { gql, useQuery } from "@apollo/client";
-import { fromCurve } from "@strata-foundation/spl-token-bonding";
-
+import { fromCurve, asDecimal } from "@strata-foundation/spl-token-bonding";
 
 const GET_BONDING_CHANGES = gql`
   query GetBondingChanges(
@@ -46,8 +45,10 @@ function now(): number {
 
 export const BondingPlot = ({
   tokenBondingKey,
+  numDataPoints=500,
 }: {
   tokenBondingKey: PublicKey;
+  numDataPoints: number;
 }) => {
   const { info: tokenBonding, loading: loadingBonding } =
     useTokenBonding(tokenBondingKey);
@@ -82,16 +83,17 @@ export const BondingPlot = ({
   const data = useMemo(() => {
     if (enrichedBondingChanges && tokenBonding && baseMint && targetMint && curve) {
       const changes = [...enrichedBondingChanges].sort((a, b) => a.insertTs - b.insertTs);
-      const NUM_DATAPOINTS = 500;
       const startTime = tokenBonding?.goLiveUnixTime?.toNumber();
-      const step = (stopTime - startTime!) / NUM_DATAPOINTS;
+      const step = (stopTime - startTime!) / numDataPoints;
       const result = [];
 
       let pointer = 0;
       let currReserve = tokenBonding.reserveBalanceFromBonding.toNumber() / Math.pow(10, baseMint.decimals);
       let currSupply = tokenBonding.supplyFromBonding.toNumber() / Math.pow(10, targetMint.decimals);
 
-      let royaltyFactor = 1.031; // default royalty charged on strata
+      let buyBaseRoyalty = asDecimal(tokenBonding.buyBaseRoyaltyPercentage);
+
+      let royaltyFactor = 1/(1-buyBaseRoyalty); // default royalty charged on strata
       // calculate the initial reserve and supply of the lbc
       for (let c of changes) {
         let price = Math.abs((Number(c.reserveChange) / Math.pow(10, baseMint.decimals)) / (Number(c.supplyChange) / Math.pow(10, targetMint.decimals)));
