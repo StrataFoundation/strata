@@ -126,7 +126,10 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
                       </HStack>
                     )}
                   </Box>
-                  <BuyMoreButton mint={readMint} w="full" size="md" />
+                  <BuyMoreButton
+                    mint={readMint}
+                    btnProps={{ w: "full", size: "md" }}
+                  />
                   <Box w="full">
                     <Divider mt={4} mb={2} />
                   </Box>
