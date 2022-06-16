@@ -114,7 +114,7 @@ export function useMessages(
   const { chatSdk } = useChatSdk();
   const { transactions, ...rest } = useTransactions({
     address: chat,
-    numTransactions: 25,
+    numTransactions: 50,
     subscribe: true,
     accelerated,
   });
