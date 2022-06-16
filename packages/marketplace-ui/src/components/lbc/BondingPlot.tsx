@@ -80,16 +80,16 @@ export const BondingPlot = ({
     },
   });
   const data = useMemo(() => {
-    if (enrichedBondingChanges && baseMint && targetMint && curve) {
+    if (enrichedBondingChanges && tokenBonding && baseMint && targetMint && curve) {
       const changes = [...enrichedBondingChanges].sort((a, b) => a.insertTs - b.insertTs);
       const NUM_DATAPOINTS = 500;
       const startTime = tokenBonding?.goLiveUnixTime?.toNumber();
-      const step = (stopTime - startTime) / NUM_DATAPOINTS;
+      const step = (stopTime - startTime!) / NUM_DATAPOINTS;
       const result = [];
 
       let pointer = 0;
-      let currReserve = tokenBonding?.reserveBalanceFromBonding?.toNumber() / Math.pow(10, baseMint.decimals);
-      let currSupply = tokenBonding?.supplyFromBonding?.toNumber() / Math.pow(10, targetMint.decimals);
+      let currReserve = tokenBonding.reserveBalanceFromBonding.toNumber() / Math.pow(10, baseMint.decimals);
+      let currSupply = tokenBonding.supplyFromBonding.toNumber() / Math.pow(10, targetMint.decimals);
 
       let royaltyFactor = 1.031; // default royalty charged on strata
       // calculate the initial reserve and supply of the lbc
