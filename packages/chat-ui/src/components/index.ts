@@ -14,5 +14,5 @@ export * from "./EmojiSearch";
 export * from "./CopyBlackBox";
 export * from "./Layout";
 export * from "./Header";
-export * from "./Sidebar";
+export * from "./Sidebar2";
 export * from "./Workspace";
