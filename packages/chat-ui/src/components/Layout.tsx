@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  Box,
-  Flex,
-  Drawer,
-  DrawerOverlay,
-  DrawerContent,
-} from "@chakra-ui/react";
+import { Flex, Drawer, DrawerOverlay, DrawerContent } from "@chakra-ui/react";
 import { Sidebar } from "@/components/Sidebar";
 
 interface ILayoutProps {
