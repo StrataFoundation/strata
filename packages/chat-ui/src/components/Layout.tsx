@@ -1,6 +1,6 @@
 import React from "react";
 import { Flex, Drawer, DrawerOverlay, DrawerContent } from "@chakra-ui/react";
-import { Sidebar } from "@/components/Sidebar";
+import { Sidebar2 } from "@/components/Sidebar2";
 
 interface ILayoutProps {
   isSidebarOpen: boolean;
@@ -22,7 +22,7 @@ export const Layout: React.FC<ILayoutProps> = ({
     h="100vh"
     w="100vw"
   >
-    <Sidebar
+    <Sidebar2
       display={{
         base: "none",
         md: "unset",
@@ -31,7 +31,7 @@ export const Layout: React.FC<ILayoutProps> = ({
     <Drawer isOpen={isSidebarOpen} onClose={onSidebarClose} placement="left">
       <DrawerOverlay />
       <DrawerContent>
-        <Sidebar w="full" borderRight="none" />
+        <Sidebar2 w="full" borderRight="none" />
       </DrawerContent>
     </Drawer>
     <Flex
