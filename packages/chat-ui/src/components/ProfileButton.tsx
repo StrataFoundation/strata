@@ -45,7 +45,7 @@ export const ProfileButton: FC<ButtonProps> = ({
 
   // Open load wallet dialog if we have a profile but wallet is empty
   useEffect(() => {
-    if (delegateWallet && !loadingNeeds && needsTopOff) {
+    if (!profileIsOpen && delegateWallet && !loadingNeeds && needsTopOff) {
       onOpen();
     } else {
       onClose()
@@ -86,7 +86,7 @@ export const ProfileButton: FC<ButtonProps> = ({
       isAttached
       size={props.size}
     >
-      <CreateProfileModal isOpen={profileIsOpen} />
+      <CreateProfileModal isOpen={profileIsOpen} onClose={closeProfile} />
       <LoadWalletModal
         isOpen={loadWalletIsOpen}
         onLoaded={() => onClose()}

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Avatar,
   Box,
@@ -25,11 +25,32 @@ import { PublicKey } from "@solana/web3.js";
 import { useChat } from "../../hooks/useChat";
 import {
   roundToDecimals,
+  useAccelerator,
+  useEndpoint,
+  useLocalStorage,
   useMint,
   useTokenMetadata,
 } from "@strata-foundation/react";
+import { Cluster } from "@strata-foundation/accelerator";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import { BuyMoreButton } from "../BuyMoreButton";
+import { useChatSdk } from "../../contexts/chatSdk";
+import debounce from "lodash/debounce";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useProfileKey } from "../../hooks/useProfileKey";
+
+const playSound = debounce(() => {
+  const audio = new Audio("/notification.mp3");
+  audio.addEventListener("canplaythrough", (event) => {
+    // the audio is now playable; play it if permissions allow
+    audio.play();
+  });
+}, 500);
+
+interface ISettings {
+  soundEnabled: boolean;
+  visualEnabled: boolean;
+}
 
 export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
   const { info: chat } = useChat(chatKey);
@@ -43,6 +64,59 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
     chat?.postPermissionMintOrCollection
   );
   const { colorMode } = useColorMode();
+  const { accelerator } = useAccelerator();
+  const { cluster } = useEndpoint();
+  const { chatSdk } = useChatSdk();
+  const { publicKey } = useWallet();
+  const { key: profileKey } = useProfileKey(publicKey || undefined);
+
+  const [settings, setSettings] = useLocalStorage<ISettings>("settings", {
+    soundEnabled: true,
+    visualEnabled: false,
+  });
+
+  useEffect(() => {
+    const subId = (async () => {
+      if (
+        accelerator &&
+        chatKey &&
+        chatSdk &&
+        profileKey &&
+        (settings.soundEnabled || settings.visualEnabled)
+      ) {
+        const subId = await accelerator.onTransaction(
+          cluster as Cluster,
+          chatKey,
+          async ({ transaction, txid, blockTime }) => {
+            const parts = await chatSdk.getMessagePartsFromInflatedTx({
+              txid,
+              blockTime,
+              transaction: {
+                signatures: [txid],
+                message: transaction.compileMessage(),
+              },
+            });
+            // Only notify for other people sending message
+            if (!document.hasFocus() && parts.some((part) => !part.profileKey.equals(profileKey))) {
+              playSound();
+            }
+          }
+        );
+
+        return subId;
+      }
+    })();
+    return () => {
+      (async () => {
+        const id = await subId;
+        if (id && accelerator) {
+          accelerator.unsubscribeTransaction(id);
+        }
+      })()
+
+    };
+            console.log("Info", tabHasFocus, profileKey)
+  }, [settings, profileKey, accelerator, chatSdk, chatKey]);
 
   return (
     <Flex
@@ -143,9 +217,19 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
                       <FormLabel htmlFor="noise-alerts" mb="0">
                         Sound notifications
                       </FormLabel>
-                      <Switch id="noise-alerts" colorScheme="primary" />
+                      <Switch
+                        isChecked={settings.soundEnabled}
+                        id="noise-alerts"
+                        colorScheme="primary"
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            soundEnabled: e.target.checked,
+                          })
+                        }
+                      />
                     </FormControl>
-                    <FormControl
+                    {/* <FormControl
                       display="flex"
                       alignItems="center"
                       justifyContent="space-between"
@@ -153,8 +237,18 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
                       <FormLabel htmlFor="visual-alerts" mb="0">
                         Desktop notifications
                       </FormLabel>
-                      <Switch id="visual-alerts" colorScheme="primary" />
-                    </FormControl>
+                      <Switch
+                        isChecked={settings.visualEnabled}
+                        id="visual-alerts"
+                        colorScheme="primary"
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            visualEnabled: e.target.checked,
+                          })
+                        }
+                      />
+                    </FormControl> */}
                   </Box>
                 </VStack>
               </PopoverBody>

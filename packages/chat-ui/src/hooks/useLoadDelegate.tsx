@@ -23,14 +23,16 @@ async function runLoadDelegate(chatSdk: ChatSdk | undefined) {
     const instructions = [];
     const signers = [];
     if (!structExists) {
-      const mnemonic = generateMnemonic();
-      delegateWalletStorage.setDelegateWallet(
-        chatSdk.provider.wallet.publicKey,
-        mnemonic!
-      );
-      delegateWalletKeypair = delegateWalletStorage.getDelegateWallet(
-        chatSdk.provider.wallet.publicKey
-      );
+      if (!delegateWalletKeypair) {
+        const mnemonic = generateMnemonic();
+        delegateWalletStorage.setDelegateWallet(
+          chatSdk.provider.wallet.publicKey,
+          mnemonic!
+        );
+        delegateWalletKeypair = delegateWalletStorage.getDelegateWallet(
+          chatSdk.provider.wallet.publicKey
+        );
+      }
 
       const { instructions: delInstructions, signers: delSigners } =
         await chatSdk.initializeDelegateWalletInstructions({
