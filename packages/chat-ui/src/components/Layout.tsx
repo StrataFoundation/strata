@@ -6,7 +6,6 @@ import {
   DrawerOverlay,
   DrawerContent,
 } from "@chakra-ui/react";
-import { FiMenu } from "react-icons/fi";
 import { Sidebar } from "@/components/Sidebar";
 
 interface ILayoutProps {
