@@ -1,7 +1,20 @@
 import React from "react";
-import { Button, Modal, ModalBody, ModalContent, ModalHeader, Spinner, useDisclosure } from "@chakra-ui/react";
+import {
+  Button,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalHeader,
+  Spinner,
+  ButtonProps,
+  useDisclosure,
+} from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
-import { Swap, useTokenBondingKey, useTokenMetadata } from "@strata-foundation/react";
+import {
+  Swap,
+  useTokenBondingKey,
+  useTokenMetadata,
+} from "@strata-foundation/react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useWallet } from "@solana/wallet-adapter-react";
 
@@ -9,13 +22,25 @@ type BuyMoreTrigger = React.FC<{
   onClick: () => void;
   connected: boolean;
   mint?: PublicKey;
+  btnProps?: ButtonProps;
 }>;
 
-const DefaultTrigger: BuyMoreTrigger = ({ onClick, connected, mint }) => {
+const DefaultTrigger: BuyMoreTrigger = ({
+  onClick,
+  connected,
+  mint,
+  btnProps,
+}) => {
   const { metadata } = useTokenMetadata(mint);
 
   return (
-    <Button size="sm" colorScheme="primary" variant="outline" onClick={onClick}>
+    <Button
+      size="sm"
+      colorScheme="primary"
+      variant="outline"
+      onClick={onClick}
+      {...btnProps}
+    >
       {connected ? `Buy More ${metadata?.data.symbol}` : "Connect Wallet"}
     </Button>
   );
@@ -24,9 +49,11 @@ const DefaultTrigger: BuyMoreTrigger = ({ onClick, connected, mint }) => {
 export function BuyMoreButton({
   mint,
   trigger = DefaultTrigger,
+  btnProps,
 }: {
   mint?: PublicKey;
   trigger?: BuyMoreTrigger;
+  btnProps?: ButtonProps;
 }) {
   const { isOpen, onToggle, onClose } = useDisclosure();
   const { connected } = useWallet();
@@ -43,7 +70,7 @@ export function BuyMoreButton({
 
   return (
     <>
-      {trigger({ mint, connected, onClick })}
+      {trigger({ mint, connected, onClick, btnProps })}
       <Modal isOpen={isOpen} onClose={onClose} size="2xl" isCentered trapFocus>
         <ModalContent borderRadius="xl" shadow="xl">
           <ModalHeader>Buy More {metadata?.data.symbol}</ModalHeader>
