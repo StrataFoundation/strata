@@ -33,7 +33,8 @@ async function run(): Promise<void> {
   });
   await chatSdk.initializeNamespaces();
 
-  console.log("Claiming identifier...");
+  console.log("Mint", args[4]);
+  console.log("Claiming identifier...", args[2]);
   const { certificateMint: identifierCertificateMint } = await chatSdk.claimIdentifier({
     type: IdentifierType.Chat,
     identifier: args[2],

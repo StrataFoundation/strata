@@ -1,5 +1,6 @@
 import {
   Alert,
+  ModalProps,
   Box,
   Button,
   FormControl,
@@ -35,10 +36,10 @@ import { useAsyncCallback } from "react-async-hook";
 import { FormProvider, useForm } from "react-hook-form";
 import * as yup from "yup";
 import { useChatSdk } from "../contexts";
-import { delegateWalletStorage, useLoadDelegate } from "../hooks";
+import { delegateWalletStorage, useLoadDelegate, useUsernameFromIdentifierCertificate, useWalletProfile } from "../hooks";
 import { useWalletFromIdentifier } from "../hooks/useWalletFromIdentifier";
 import { FormControlWithError } from "./FormControlWithError";
-import { SeedPhrase } from "./SeedPhrase";
+import { CopyBlackBox } from "./CopyBlackBox";
 
 interface IProfileProps {
   username: string;
@@ -97,7 +98,7 @@ async function createProfile(
   }
 }
 
-export function CreateProfileModal() {
+export function CreateProfileModal(props: Partial<ModalProps>) {
   const formProps = useForm<IProfileProps>({
     resolver: yupResolver(validationSchema),
     defaultValues: {},
@@ -117,10 +118,9 @@ export function CreateProfileModal() {
   const { awaitingApproval } = useProvider();
   const { handleErrors } = useErrorHandler();
   const { isOpen: loadWalletIsOpen, onClose, onOpen } = useDisclosure();
+  
   const {
-    loading: loadingDelegate,
-    loadDelegate,
-    needsInit,
+    delegateWallet,
     needsTopOff,
     mnemonic,
     error: delegateError,
@@ -128,8 +128,25 @@ export function CreateProfileModal() {
   } = useLoadDelegate();
 
   const { username, image } = watch();
-
+  const {
+    account: profileAccount,
+    info: profile,
+    loading: loadingProfile,
+  } = useWalletProfile();
   const { wallet } = useWalletFromIdentifier(username);
+  const { username: existingUsername } = useUsernameFromIdentifierCertificate(
+    profile?.identifierCertificateMint
+  );
+
+  useEffect(() => {
+    if (profile) {
+      setValue("imageUrl", profile.imageUrl)
+    }
+  }, [profile, setValue])
+  useEffect(() => {
+    if (existingUsername)
+      setValue("username", existingUsername);
+  }, [existingUsername, setValue]);
 
   const userError = wallet && publicKey && !wallet.equals(publicKey) && (
     <Box>
@@ -148,8 +165,12 @@ export function CreateProfileModal() {
   }
 
   useEffect(() => {
-    if (needsTopOff && !loadingNeeds) onOpen();
-  }, [needsTopOff, loadingNeeds]);
+    if (!loadingNeeds && needsTopOff) {
+      onOpen();
+    } else {
+      onClose();
+    }
+  }, [needsTopOff, onOpen, onClose, loadingNeeds]);
 
   const hiddenFileInput = React.useRef<HTMLInputElement>(null);
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -176,8 +197,10 @@ export function CreateProfileModal() {
   if (loadWalletIsOpen) {
     return (
       <LoadWalletModal
+        isOpen={true}
         onClose={() => {
-          disconnect();
+          if (!loadingProfile && !profileAccount) disconnect();
+
           onClose();
         }}
         onLoaded={() => {
@@ -191,20 +214,23 @@ export function CreateProfileModal() {
     <Modal
       isOpen={true}
       onClose={() => {
-        disconnect();
+        if (!loading && !profileAccount) disconnect();
+        props.onClose && props.onClose();
       }}
       size="lg"
       isCentered
       trapFocus={true}
+      {...props}
     >
       <ModalContent borderRadius="xl" shadow="xl">
         <ModalBody>
           <VStack pb={4} pt={4} spacing={4} align="left">
             <VStack spacing={2} align="left">
               <Text fontSize="xl" fontWeight="bold">
-                Save your local seed phrase
+                Save your Chat Wallet info
               </Text>
-              { mnemonic && <SeedPhrase mnemonic={mnemonic!} /> }
+              {delegateWallet && <CopyBlackBox pb={1} pt={1} fontSize="sm" text={delegateWallet.publicKey.toBase58()} />}
+              {mnemonic && <CopyBlackBox text={mnemonic} />}
             </VStack>
 
             <FormProvider {...formProps}>

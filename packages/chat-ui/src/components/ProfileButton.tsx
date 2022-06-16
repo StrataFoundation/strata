@@ -7,6 +7,8 @@ import {
   IconButton,
   Menu,
   MenuButton,
+  MenuDivider,
+  MenuItem,
   MenuItemOption,
   MenuList,
   MenuOptionGroup, useColorModeValue,
@@ -34,26 +36,42 @@ export const ProfileButton: FC<ButtonProps> = ({
   const { info: profile, account: profileAccount, loading } = useWalletProfile();
   const { username } = useUsernameFromIdentifierCertificate(profile?.identifierCertificateMint);
   const { isOpen: loadWalletIsOpen, onClose, onOpen } = useDisclosure();
+  const { isOpen: profileIsOpen, onClose: closeProfile, onOpen: openProfile } = useDisclosure();
   
   const { handleErrors } = useErrorHandler();
-  const { needsTopOff, error, loadingNeeds } = useLoadDelegate();
+  const { needsTopOff, error, loadingNeeds, delegateWallet } =
+    useLoadDelegate();
   handleErrors(error);
 
   // Open load wallet dialog if we have a profile but wallet is empty
   useEffect(() => {
-    if (!loadingNeeds && needsTopOff) {
+    if (delegateWallet && !loadingNeeds && needsTopOff) {
       onOpen();
     } else {
       onClose()
     }
   }, [needsTopOff, profile, onOpen, loadingNeeds]);
 
+  useEffect(() => {
+    if (!loading && connected && !profileAccount) {
+      openProfile();
+    } else {
+      closeProfile();
+    }
+  }, [loading, connected, profileAccount, openProfile, closeProfile]);
+
   const handleClick = useCallback(
     (event: MouseEvent<HTMLButtonElement>) => {
       if (onClick) onClick(event);
-      if (!event.defaultPrevented) setVisible(!visible);
+      if (!event.defaultPrevented) {
+        if (connected) {
+          openProfile()
+        } else {
+          setVisible(!visible);
+        }
+      }
     },
-    [onClick, visible, setVisible]
+    [onClick, visible, setVisible, connected, openProfile]
   );
 
   const { cluster, setClusterOrEndpoint } = useEndpoint();
@@ -68,14 +86,14 @@ export const ProfileButton: FC<ButtonProps> = ({
       isAttached
       size={props.size}
     >
-      {!loading && connected && !profileAccount && <CreateProfileModal />}
+      <CreateProfileModal isOpen={profileIsOpen} />
       <LoadWalletModal
         isOpen={loadWalletIsOpen}
         onLoaded={() => onClose()}
-        onClose={() => { 
-          disconnect();
+        onClose={() => {
+          if (!loading && !profileAccount) disconnect();
           onClose();
-        }} 
+        }}
       />
       <Button
         color={useColorModeValue("black", "white")}
@@ -138,6 +156,14 @@ export const ProfileButton: FC<ButtonProps> = ({
               Localnet
             </MenuItemOption>
           </MenuOptionGroup>
+          <MenuDivider />
+          <MenuItem
+            onClick={disconnect}
+            _focus={{ backgroundColor: "primary.300" }}
+            _hover={{ backgroundColor: "primary.500" }}
+          >
+            Disconnect
+          </MenuItem>
         </MenuList>
       </Menu>
     </ButtonGroup>

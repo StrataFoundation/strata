@@ -1,26 +1,40 @@
-import { Text, HStack, Box, Icon, IconButton, useColorModeValue } from "@chakra-ui/react";
+import {
+  Text,
+  HStack,
+  Box,
+  Icon,
+  IconButton,
+  useColorModeValue,
+  TextProps,
+  BoxProps,
+} from "@chakra-ui/react";
 import React from "react";
 import { Notification } from "@strata-foundation/react";
 import toast from "react-hot-toast";
 import { BsClipboard } from "react-icons/bs";
 
-export function SeedPhrase({ mnemonic }: { mnemonic: string }) {
+export function CopyBlackBox({ text, ...rest }: { text: string } & BoxProps ) {
   return (
-    <Box p={4} rounded="lg" bg={useColorModeValue("gray.200", "gray.800")}>
+    <Box
+      p={4}
+      rounded="lg"
+      bg={useColorModeValue("gray.200", "gray.800")}
+      {...rest}
+    >
       <HStack justify="space-between">
-        <Text>{mnemonic}</Text>
+        <Text>{text}</Text>
         <IconButton
           variant="ghost"
           colorScheme="primary"
           aria-label="Copy to Clipboard"
           onClick={() => {
-            navigator.clipboard.writeText(mnemonic);
+            navigator.clipboard.writeText(text);
             toast.custom((t) => (
               <Notification
                 show={t.visible}
                 type="info"
                 heading="Copied to Clipboard"
-                message={mnemonic}
+                message={text}
                 onDismiss={() => toast.dismiss(t.id)}
               />
             ));

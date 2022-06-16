@@ -30,6 +30,7 @@ export function ChatSidebarPreview({ identifier }: chatRoomProps) {
 
   return (
     <Flex
+      overflow="none"
       minW="200px"
       align="center"
       bg={identifier === id ? highlightedBg : undefined}

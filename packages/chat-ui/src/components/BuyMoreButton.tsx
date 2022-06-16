@@ -18,31 +18,45 @@ import {
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useWallet } from "@solana/wallet-adapter-react";
 
-interface IBuyMoreProps extends ButtonProps {
+type BuyMoreTrigger = React.FC<{
+  onClick: () => void;
+  connected: boolean;
   mint?: PublicKey;
-}
+}>;
 
-export const BuyMoreButton: React.FC<IBuyMoreProps> = ({
-  mint,
-  ...btnProps
-}) => {
-  const { isOpen, onToggle, onClose } = useDisclosure();
+const DefaultTrigger: BuyMoreTrigger = ({ onClick, connected, mint }) => {
   const { metadata } = useTokenMetadata(mint);
+
+  return (
+    <Button size="sm" colorScheme="primary" variant="outline" onClick={onClick}>
+      {connected ? `Buy More ${metadata?.data.symbol}` : "Connect Wallet"}
+    </Button>
+  );
+};
+
+export function BuyMoreButton({
+  mint,
+  trigger = DefaultTrigger,
+}: {
+  mint?: PublicKey;
+  trigger?: BuyMoreTrigger;
+}) {
+  const { isOpen, onToggle, onClose } = useDisclosure();
   const { connected } = useWallet();
   const { result: tokenBondingKey, loading } = useTokenBondingKey(mint, 0);
   const { setVisible } = useWalletModal();
+  const { metadata } = useTokenMetadata(mint);
+
+  function onClick() {
+    if (!connected) setVisible(true);
+    else {
+      onToggle();
+    }
+  }
 
   return (
     <>
-      <Button
-        size="sm"
-        colorScheme="primary"
-        variant="outline"
-        onClick={connected ? onToggle : () => setVisible(true)}
-        {...btnProps}
-      >
-        {connected ? `Buy More ${metadata?.data.symbol}` : "Connect Wallet"}
-      </Button>
+      {trigger({ mint, connected, onClick })}
       <Modal isOpen={isOpen} onClose={onClose} size="2xl" isCentered trapFocus>
         <ModalContent borderRadius="xl" shadow="xl">
           <ModalHeader>Buy More {metadata?.data.symbol}</ModalHeader>

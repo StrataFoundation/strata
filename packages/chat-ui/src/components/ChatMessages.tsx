@@ -6,7 +6,7 @@ import { Message } from "./Message";
 
 const INACTIVE_TIME = 60; // After 1 minute, new grouping
 const INFINITE_SCROLL_THRESHOLD = 300;
-const FETCH_COUNT = 25;
+const FETCH_COUNT = 50;
 
 export const ChatMessageSkeleton = () => (
   <Flex padding={2} gap={2}>
