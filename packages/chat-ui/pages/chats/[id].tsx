@@ -1,14 +1,12 @@
 import { Chatbox } from "@/components/Chatbox";
 import { ChatMessages } from "@/components/ChatMessages";
-import { Container } from "@/components/Container";
 import { Header } from "@/components/Header";
 import { Layout } from "@/components/Layout";
 import { RoomsHeader } from "@/components/rooms/RoomsHeader";
-import { Sidebar } from "@/components/Sidebar";
 import { Workspace } from "@/components/Workspace";
 import { useChatKeyFromIdentifier } from "@/hooks/useChatKeyFromIdentifier";
 import { IMessageWithPending, useMessages } from "@/hooks/useMessages";
-import { Flex, useDisclosure, useMediaQuery } from "@chakra-ui/react";
+import { useDisclosure } from "@chakra-ui/react";
 import { useErrorHandler } from "@strata-foundation/react";
 import { useRouter } from "next/router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
