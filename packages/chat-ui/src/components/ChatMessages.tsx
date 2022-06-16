@@ -47,26 +47,26 @@ export const ChatMessages = ({
 }) => {
   // On render if we dont have a scroll bar
   // and we have hasMore then fetch initialMore
-  useEffect(() => {
-    if (
-      scrollRef.current.scrollHeight == scrollRef.current.offsetHeight &&
-      hasMore &&
-      !isLoading
-    ) {
-      fetchMore(FETCH_COUNT);
-    }
-  }, [scrollRef, hasMore, isLoading, fetchMore]);
+  // useEffect(() => {
+  //   if (
+  //     scrollRef.current.scrollHeight == scrollRef.current.offsetHeight &&
+  //     hasMore &&
+  //     !isLoading
+  //   ) {
+  //     fetchMore(FETCH_COUNT);
+  //   }
+  // }, [scrollRef, hasMore, isLoading, fetchMore]);
 
   const handleOnScroll = throttle((e: any) => {
     const scrollOffset = e.target.scrollHeight + e.target.scrollTop;
 
-    if (
+    /*   if (
       scrollOffset <= e.target.offsetHeight + INFINITE_SCROLL_THRESHOLD &&
       !isLoading &&
       hasMore
     ) {
       fetchMore(FETCH_COUNT);
-    }
+    } */
   }, 300);
 
   return (

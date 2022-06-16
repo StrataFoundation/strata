@@ -1,54 +1,57 @@
-import { Flex, Icon, IconButton, Stack, useColorMode } from '@chakra-ui/react';
 import React from "react";
-import { IoMoon, IoSunny } from 'react-icons/io5';
+import { Flex, Box, Icon, IconButton, useColorMode } from "@chakra-ui/react";
+import { IoMoon, IoSunny } from "react-icons/io5";
 import { ProfileButton } from "./ProfileButton";
-import { ChatSidebarPreview } from './rooms/ChatSidebarPreview';
+import { ChatSidebarPreview } from "./rooms/ChatSidebarPreview";
 
 const VISIBLE_CHATS = ["open"];
 
-export const Sidebar = ({ fullWidth }: { fullWidth?: boolean }) => {
-  const { colorMode, toggleColorMode } = useColorMode()
+export const Sidebar = (props: any) => {
+  const { colorMode, toggleColorMode } = useColorMode();
 
   return (
-    <Flex
-      height="100vh"
-      maxWidth={fullWidth ? "100vw" : "30vw"}
-      width={fullWidth ? "100vw" : ""}
-      direction="column"
-      borderRight="1px solid"
-      borderColor={colorMode === "light" ? "gray.200" : "gray.700"}
+    <Box
+      as="nav"
+      pos="fixed"
+      top="0"
+      left="0"
+      zIndex="sticky"
+      h="full"
+      pb="10"
+      overflowX="hidden"
+      overflowY="auto"
+      bg="white"
+      _dark={{
+        bg: "gray.900",
+      }}
+      color="inherit"
+      borderRightWidth="1px"
+      w="80"
+      {...props}
     >
-      <Flex flexWrap="wrap" direction="column" position="sticky" top="0">
-        <Flex justify="space-between" height="71px" align="center" p="10px">
-          <Stack
-            maxWidth="30vw"
-            direction="row"
-            w="full"
-            align="space-between"
-            justifyContent="space-evenly"
-          >
-            <ProfileButton />
-            <IconButton
-              colorScheme="primary"
-              variant="outline"
-              aria-label="Toggle Dark Mode"
-              icon={
-                colorMode === "light" ? (
-                  <Icon as={IoMoon} />
-                ) : (
-                  <Icon as={IoSunny} />
-                )
-              }
-              onClick={toggleColorMode}
-            />
-          </Stack>
-        </Flex>
+      <Flex px="4" py="5" align="center" justifyContent="space-evenly">
+        <ProfileButton />
+        <IconButton
+          colorScheme="primary"
+          variant="outline"
+          aria-label="Toggle Dark Mode"
+          icon={
+            colorMode === "light" ? <Icon as={IoMoon} /> : <Icon as={IoSunny} />
+          }
+          onClick={toggleColorMode}
+        />
       </Flex>
-      <Stack direction="column" overflow="scroll">
+      <Flex
+        direction="column"
+        as="nav"
+        fontSize="sm"
+        color="gray.600"
+        aria-label="Main Navigation"
+      >
         {VISIBLE_CHATS.map((identifier) => (
           <ChatSidebarPreview key={identifier} identifier={identifier} />
         ))}
-      </Stack>
-    </Flex>
+      </Flex>
+    </Box>
   );
-}
+};

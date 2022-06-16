@@ -11,7 +11,11 @@ import {
 } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
 import { useChat } from "../../hooks/useChat";
-import { roundToDecimals, useMint, useTokenMetadata } from "@strata-foundation/react";
+import {
+  roundToDecimals,
+  useMint,
+  useTokenMetadata,
+} from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 
 export function RoomsHeader({ chatKey }: { chatKey?: PublicKey }) {
@@ -21,7 +25,9 @@ export function RoomsHeader({ chatKey }: { chatKey?: PublicKey }) {
     chat?.readPermissionMintOrCollection
   );
   const postMint = useMint(chat?.postPermissionMintOrCollection);
-  const { metadata: postMetadata, image: postImage } = useTokenMetadata(chat?.postPermissionMintOrCollection);
+  const { metadata: postMetadata, image: postImage } = useTokenMetadata(
+    chat?.postPermissionMintOrCollection
+  );
   const { colorMode } = useColorMode();
 
   return (

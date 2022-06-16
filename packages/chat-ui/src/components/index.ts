@@ -13,3 +13,7 @@ export * from "./ChatInput";
 export * from "./FileAttachment";
 export * from "./EmojiSearch";
 export * from "./CopyBlackBox";
+export * from "./Layout";
+export * from "./Header";
+export * from "./Sidebar";
+export * from "./Workspace";

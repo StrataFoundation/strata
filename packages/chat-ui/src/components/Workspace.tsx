@@ -1,3 +1,7 @@
 import React from "react";
 
-export const Workspace = () => <div>Workspace</div>;
+interface IWorkspaceProps {}
+
+export const Workspace: React.FC<IWorkspaceProps> = ({ children }) => (
+  <>{children}</>
+);

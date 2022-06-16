@@ -1,5 +1,14 @@
 import { useChatIdFromIdentifierCertificate } from "../../hooks/useChatIdFromIdentifierCertificate";
-import { Avatar, Flex, SkeletonCircle, SkeletonText, Text, useColorMode, useColorModeValue, VStack } from "@chakra-ui/react";
+import {
+  Avatar,
+  Flex,
+  SkeletonCircle,
+  SkeletonText,
+  Text,
+  useColorMode,
+  useColorModeValue,
+  VStack,
+} from "@chakra-ui/react";
 import { useTokenMetadata } from "@strata-foundation/react";
 import { useRouter } from "next/router";
 import React from "react";
@@ -12,9 +21,7 @@ export type chatRoomProps = {
 };
 
 export function ChatSidebarPreview({ identifier }: chatRoomProps) {
-  const { chatKey, loading: loadingId } = useChatKeyFromIdentifier(
-    identifier
-  );
+  const { chatKey, loading: loadingId } = useChatKeyFromIdentifier(identifier);
   const { info: chat, loading: loadingChat } = useChat(chatKey);
   const loading = loadingId || loadingChat;
   const { colorMode } = useColorMode();
@@ -48,8 +55,10 @@ export function ChatSidebarPreview({ identifier }: chatRoomProps) {
         <SkeletonText width="200px" />
       ) : (
         <VStack spacing={0} align="start">
-          <Text>{chat?.name}</Text>
-          <Text size="sm" color={subtext}>
+          <Text fontSize="md" _dark={{ color: "white" }}>
+            {chat?.name}
+          </Text>
+          <Text fontSize="sm" color={subtext}>
             /{identifier}
           </Text>
         </VStack>

@@ -1,12 +1,22 @@
 import React from "react";
-import { useMediaQuery } from "@chakra-ui/react";
-import { Container } from "@/components/Container";
-import { Sidebar } from "@/components/Sidebar";
+import { useDisclosure } from "@chakra-ui/react";
 import { Layout } from "@/components/Layout";
+import { Header } from "@/components/Header";
+import { Workspace } from "@/components/Workspace";
 
 const Home = () => {
-  const [isMobile] = useMediaQuery("(max-width: 768px)");
-  return <div>test</div>;
+  const sidebar = useDisclosure();
+
+  return (
+    <Layout
+      isSidebarOpen={sidebar.isOpen}
+      onSidebarClose={sidebar.onClose}
+      onSidebarOpen={sidebar.onOpen}
+    >
+      <Header onSidebarOpen={sidebar.onOpen} />
+      <Workspace />
+    </Layout>
+  );
 };
 
 export default Home;
