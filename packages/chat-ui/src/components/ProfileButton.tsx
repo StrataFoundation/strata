@@ -39,12 +39,13 @@ export const ProfileButton: FC<ButtonProps> = ({
   const { isOpen: profileIsOpen, onClose: closeProfile, onOpen: openProfile } = useDisclosure();
   
   const { handleErrors } = useErrorHandler();
-  const { needsTopOff, error, loadingNeeds } = useLoadDelegate();
+  const { needsTopOff, error, loadingNeeds, delegateWallet } =
+    useLoadDelegate();
   handleErrors(error);
 
   // Open load wallet dialog if we have a profile but wallet is empty
   useEffect(() => {
-    if (!loadingNeeds && needsTopOff) {
+    if (delegateWallet && !loadingNeeds && needsTopOff) {
       onOpen();
     } else {
       onClose()
