@@ -1,3 +1,4 @@
+import { BsLockFill } from "react-icons/bs";
 import {
   Avatar,
   Box,
@@ -102,7 +103,6 @@ export function Message({
   const id = profile?.ownerWallet.toBase58();
   const { info: chat } = useChat(chatKey);
   const readMint = chat?.readPermissionMintOrCollection;
-  const readMintAcc = useMint(readMint);
   const muted = useColorModeValue("gray.500", "gray.400");
   const time = useMemo(() => {
     if (startBlockTime) {
@@ -115,7 +115,7 @@ export function Message({
   const uid = publicKey?.toBase58();
 
   const status = pending ? "Pending" : "Confirmed";
-  const redColor = useColorModeValue("red.600", "red.400");
+  const lockedColor = useColorModeValue("gray.400", "gray.600");
   const highlightedBg = useColorModeValue("gray.200", "gray.800");
 
   const message = decodedMessage;
@@ -259,17 +259,26 @@ export function Message({
                   />
                 )
               ) : (
-                <>
-                  <Text color={redColor} fontStyle="italic" mb={2}>
-                    {readPermissionAmount && readMintAcc
-                      ? `You need at least ${roundToDecimals(
-                          toNumber(readPermissionAmount, readMintAcc),
-                          readMintAcc.decimals
-                        )} tokens to read this message.`
-                      : "You do not have enough tokens to read this message."}
-                  </Text>
-                  <BuyMoreButton mint={readMint} />
-                </>
+                <BuyMoreButton
+                  mint={readMint}
+                  trigger={(props) => {
+                    return (
+                      <HStack
+                        onClick={props.onClick}
+                        spacing={2}
+                        _hover={{ cursor: "pointer" }}
+                      >
+                        <Skeleton
+                          startColor={lockedColor}
+                          height="20px"
+                          w="300px"
+                          speed={100000}
+                        />
+                        <Icon color={lockedColor} as={BsLockFill} />
+                      </HStack>
+                    );
+                  }}
+                />
               )}
             </Box>
             {Object.entries(reactsWithCounts).length > 0 && (
@@ -318,9 +327,11 @@ export function Message({
           <Icon
             _hover={{ cursor: "pointer" }}
             onClick={() => {
-              txids?.forEach(tx => {
-                window.open(`https://explorer.solana.com/tx/${tx}?cluster=${cluster}`)
-              })
+              txids?.forEach((tx) => {
+                window.open(
+                  `https://explorer.solana.com/tx/${tx}?cluster=${cluster}`
+                );
+              });
             }}
             alignSelf="center"
             w="12px"
