@@ -48,7 +48,7 @@ export const BondingPlot = ({
   numDataPoints=500,
 }: {
   tokenBondingKey: PublicKey;
-  numDataPoints: number;
+  numDataPoints?: number;
 }) => {
   const { info: tokenBonding, loading: loadingBonding } =
     useTokenBonding(tokenBondingKey);
