@@ -197,6 +197,7 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
   if (loadWalletIsOpen) {
     return (
       <LoadWalletModal
+        isOpen={true}
         onClose={() => {
           if (!loadingProfile && !profileAccount) disconnect();
 
