@@ -6,7 +6,7 @@ import { ChatSidebarPreview } from "./rooms/ChatSidebarPreview";
 
 const VISIBLE_CHATS = ["open"];
 
-export const Sidebar2 = (props: any) => {
+export const Sidebar = (props: any) => {
   const { colorMode, toggleColorMode } = useColorMode();
 
   return (
