@@ -31,6 +31,8 @@ import { Converter } from "showdown";
 import toast from "react-hot-toast";
 import { LongPromiseNotification } from "./LongPromiseNotification";
 import { CreateProfileModal } from "./CreateProfileModal";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 
 const converter = new Converter({
   simpleLineBreaks: true,
@@ -52,6 +54,8 @@ export function Chatbox({
   const handleChange = (html: string) => {
     setInput(html);
   };
+  const { connected } = useWallet();
+  const { setVisible } = useWalletModal();
   const { account: profileAccount } = useWalletProfile();
   const {
     needsTopOff,
@@ -105,7 +109,19 @@ export function Chatbox({
 
   handleErrors(error, delegateError);
 
-  return !profileAccount ? (
+  return !connected ? (
+    <Flex justify="center" mb="6px">
+      <Button
+        size="sm"
+        colorScheme="primary"
+        variant="outline"
+        onClick={() => setVisible(true)}
+      >
+        Connect Wallet
+      </Button>
+      <CreateProfileModal isOpen={profileIsOpen} onClose={closeProfile} />
+    </Flex>
+  ) : !profileAccount ? (
     <Flex justify="center" mb="6px">
       <Button
         size="sm"
