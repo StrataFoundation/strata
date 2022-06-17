@@ -19,6 +19,7 @@ import {
   useMediaQuery,
   FormControl,
   FormLabel,
+  useColorModeValue,
 } from "@chakra-ui/react";
 import { RiSettings3Fill, RiArrowDownSLine } from "react-icons/ri";
 import { PublicKey } from "@solana/web3.js";
@@ -137,7 +138,8 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
               leftIcon={<RiSettings3Fill size={!isMobile ? 26 : 20} />}
               rightIcon={<RiArrowDownSLine size={!isMobile ? 26 : 20} />}
               variant="outline"
-              colorScheme="white"
+              borderColor="primary.500"
+              color={colorMode === "light" ? "black" : "white"}
               size={!isMobile ? "md" : "sm"}
               iconSpacing={!isMobile ? 1 : 0}
             >

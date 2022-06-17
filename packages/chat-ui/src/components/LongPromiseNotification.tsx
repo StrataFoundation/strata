@@ -23,7 +23,6 @@ export function LongPromiseNotification<T>({
   const [time, setTime] = useState(0);
   const { result, error } = useAsync(exec, []);
 
-  console.log(error);
   useEffect(() => {
     if (onComplete && result) {
       onComplete(result);
@@ -42,7 +41,7 @@ export function LongPromiseNotification<T>({
 
   return (
     <Alert
-      w="250px"
+      w="290px"
       bgColor="black.300"
       borderTop="1px"
       borderTopColor="gray.600"

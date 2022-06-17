@@ -197,8 +197,9 @@ export async function uploadFile(
 }
 
 export function randomizeFileName(file: File): void {
-  const ext = file.name.split(".").slice(1, -1).join(".");
+  const ext = file.name.split(".").pop();
   const name = randomIdentifier() + (ext ? `.${ext}` : "");
+
   Object.defineProperty(file, "name", {
     writable: true,
     value: name,

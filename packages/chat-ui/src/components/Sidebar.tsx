@@ -29,7 +29,7 @@ export const Sidebar = (props: any) => {
       w="80"
       {...props}
     >
-      <Flex px="4" py="5" align="center" justifyContent="space-evenly">
+      <Flex px="4" py="3" align="center" justifyContent="space-evenly">
         <ProfileButton />
         <IconButton
           colorScheme="primary"
