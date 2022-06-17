@@ -1,17 +1,18 @@
 import { Chatbox } from "@/components/Chatbox";
 import { ChatMessages } from "@/components/ChatMessages";
-import { Container } from "@/components/Container";
+import { Header } from "@/components/Header";
+import { Layout } from "@/components/Layout";
 import { RoomsHeader } from "@/components/rooms/RoomsHeader";
-import { Sidebar } from "@/components/Sidebar";
+import { Workspace } from "@/components/Workspace";
 import { useChatKeyFromIdentifier } from "@/hooks/useChatKeyFromIdentifier";
 import { IMessageWithPending, useMessages } from "@/hooks/useMessages";
-import { Flex, useMediaQuery } from "@chakra-ui/react";
+import { useDisclosure } from "@chakra-ui/react";
 import { useErrorHandler } from "@strata-foundation/react";
 import { useRouter } from "next/router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
 export default function Chatroom() {
-  const [isMobile] = useMediaQuery("(max-width: 768px)");
+  const sidebar = useDisclosure();
   const router = useRouter();
   const { id } = router.query;
   const scrollRef = useRef(null);
@@ -45,12 +46,15 @@ export default function Chatroom() {
   }, [msgWeHave]);
 
   return (
-    <Container>
-      {!isMobile && <Sidebar fullWidth={isMobile} />}
-      <Flex direction="column" grow="1" height="100vh" width="full">
-        <Flex height="71px">
-          <RoomsHeader chatKey={chatKey} />
-        </Flex>
+    <Layout
+      isSidebarOpen={sidebar.isOpen}
+      onSidebarClose={sidebar.onClose}
+      onSidebarOpen={sidebar.onOpen}
+    >
+      <Header onSidebarOpen={sidebar.onOpen}>
+        <RoomsHeader chatKey={chatKey} />
+      </Header>
+      <Workspace>
         <ChatMessages
           isLoading={loadingInitial || loadingMore}
           scrollRef={scrollRef}
@@ -65,7 +69,7 @@ export default function Chatroom() {
             setPendingMessages((msgs) => [...(msgs || []), pending])
           }
         />
-      </Flex>
-    </Container>
+      </Workspace>
+    </Layout>
   );
 }
