@@ -31,7 +31,7 @@ import * as bs58 from "bs58";
 import LitJsSdk from "lit-js-sdk";
 // @ts-ignore
 import { v4 as uuid } from "uuid";
-import { ChatIDL, ChatV0, DelegateWalletV0, NamespacesV0, PostAction, ProfileV0 } from "./generated/chat";
+import { CaseInsensitiveMarkerV0, ChatIDL, ChatV0, DelegateWalletV0, NamespacesV0, PostAction, ProfileV0 } from "./generated/chat";
 import { uploadFile } from "./shdw";
 
 const MESSAGE_MAX_CHARACTERS = 352; // TODO: This changes with optional accounts in the future
@@ -214,6 +214,10 @@ export interface IEntry extends EntryData {
 }
 
 export interface IProfile extends ProfileV0 {
+  publicKey: PublicKey;
+}
+
+export interface ICaseInsensitiveMarker extends CaseInsensitiveMarkerV0 {
   publicKey: PublicKey;
 }
 
@@ -493,12 +497,36 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     };
   };
 
+  caseInsensitiveMarkerDecoder: TypedAccountParser<ICaseInsensitiveMarker> = (
+    pubkey,
+    account
+  ) => {
+    const coded = this.program.coder.accounts.decode<ICaseInsensitiveMarker>(
+      "CaseInsensitiveMarkerV0",
+      account.data
+    );
+
+    return {
+      ...coded,
+      publicKey: pubkey,
+    };
+  };
+
   getChat(chatKey: PublicKey): Promise<IChat | null> {
     return this.getAccount(chatKey, this.chatDecoder);
   }
 
   getProfile(profileKey: PublicKey): Promise<IProfile | null> {
     return this.getAccount(profileKey, this.profileDecoder);
+  }
+
+  getCaseInsensitiveMarker(
+    caseInsensitiveMarkerKey: PublicKey
+  ): Promise<ICaseInsensitiveMarker | null> {
+    return this.getAccount(
+      caseInsensitiveMarkerKey,
+      this.caseInsensitiveMarkerDecoder
+    );
   }
 
   async getDecodedMessagesFromParts(
@@ -634,7 +662,9 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     }
 
     const instructions = transaction.message.instructions.filter((ix) =>
-      ensurePubkey(transaction.message.accountKeys[ix.programIdIndex]).equals(this.programId)
+      ensurePubkey(transaction.message.accountKeys[ix.programIdIndex]).equals(
+        this.programId
+      )
     );
     const coder = this.program.coder.instruction;
 
@@ -654,9 +684,9 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         profile: ensurePubkey(
           transaction.message.accountKeys[ix.accounts[profileAccountIndex]]
         ),
-        chat: ensurePubkey(transaction.message.accountKeys[
-          ix.accounts[chatAccountIndex]
-        ]),
+        chat: ensurePubkey(
+          transaction.message.accountKeys[ix.accounts[chatAccountIndex]]
+        ),
       }))
       .filter(truthy);
 
@@ -705,6 +735,21 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   ): Promise<[PublicKey, number]> {
     return PublicKey.findProgramAddress(
       [Buffer.from("chat", "utf-8"), identifierCertificateMint.toBuffer()],
+      programId
+    );
+  }
+
+  static caseInsensitiveMarkerKey(
+    namespace: PublicKey,
+    identifier: string,
+    programId: PublicKey = ChatSdk.ID
+  ): Promise<[PublicKey, number]> {
+    return PublicKey.findProgramAddress(
+      [
+        Buffer.from("case_insensitive", "utf-8"),
+        namespace.toBuffer(),
+        utils.bytes.utf8.encode(identifier.toLowerCase()),
+      ],
       programId
     );
   }
@@ -846,7 +891,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   > {
     const transaction = new Transaction();
     const certificateMintKeypair = Keypair.generate();
-    console.log("cert", certificateMintKeypair.publicKey.toBase58())
+    console.log("cert", certificateMintKeypair.publicKey.toBase58());
     let signers = [];
     let certificateMint = certificateMintKeypair.publicKey;
     const namespaces = await this.getNamespaces();
@@ -870,7 +915,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         this.provider.connection,
         this.provider.wallet,
         namespaceName,
-        identifier,
+        identifier
       );
       signers.push(certificateMintKeypair);
       await withInitNameEntryMint(
@@ -880,7 +925,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         namespaceName,
         identifier,
         certificateMintKeypair
-      )
+      );
     } else {
       certificateMint = existingEntry.mint;
       signers = [];
@@ -910,11 +955,20 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     const instructions = transaction.instructions;
 
     const certificateMintMetadata = await Metadata.getPDA(certificateMint);
+    const caseInsensitiveMarker = (
+      await ChatSdk.caseInsensitiveMarkerKey(
+        namespaceId,
+        identifier,
+        this.programId
+      )
+    )[0];
 
     if (type === IdentifierType.Chat && !existingEntry?.isClaimed) {
       instructions.push(
         await this.program.instruction.approveChatIdentifierV0({
           accounts: {
+            payer,
+            caseInsensitiveMarker,
             namespaces: namespaces.publicKey,
             chatNamespace: namespaces.chatNamespace,
             claimRequest: claimRequestId,
@@ -922,6 +976,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
             certificateMintMetadata,
             namespacesProgram: NAMESPACES_PROGRAM_ID,
             tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
           },
         })
       );
@@ -929,6 +984,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       instructions.push(
         await this.program.instruction.approveUserIdentifierV0({
           accounts: {
+            payer,
+            caseInsensitiveMarker,
             namespaces: namespaces.publicKey,
             userNamespace: namespaces.userNamespace,
             claimRequest: claimRequestId,
@@ -936,6 +993,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
             certificateMintMetadata,
             namespacesProgram: NAMESPACES_PROGRAM_ID,
             tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
           },
         })
       );
@@ -948,7 +1006,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         this.provider.connection,
         {
           ...this.provider.wallet,
-          publicKey: owner
+          publicKey: owner,
         },
         namespaceName,
         identifier,

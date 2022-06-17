@@ -1,7 +1,7 @@
 use crate::error::ErrorCode;
 use crate::{
   metadata::{sign_metadata, SignMetadata},
-  state::NamespacesV0,
+  state::{NamespacesV0, CaseInsensitiveMarkerV0, MARKER_SIZE},
 };
 use anchor_lang::prelude::*;
 use namespaces::{
@@ -16,6 +16,8 @@ use namespaces::{
 
 #[derive(Accounts)]
 pub struct ApproveUserIdentifierV0<'info> {
+  #[account(mut)]
+  pub payer: Signer<'info>,
   #[account(
     has_one = user_namespace
   )]
@@ -32,6 +34,14 @@ pub struct ApproveUserIdentifierV0<'info> {
     constraint = entry.name == claim_request.entry_name
   )]
   pub entry: Account<'info, Entry>,
+  #[account(
+    init,
+    space = MARKER_SIZE,
+    seeds = [b"case_insensitive", user_namespace.key().as_ref(), entry.name.to_lowercase().as_bytes()],
+    bump,
+    payer = payer
+  )]
+  pub case_insensitive_marker: Box<Account<'info, CaseInsensitiveMarkerV0>>,
   /// CHECK: Checked via cpi and seeds
   #[account(mut)]
   pub certificate_mint_metadata: UncheckedAccount<'info>,
@@ -41,6 +51,7 @@ pub struct ApproveUserIdentifierV0<'info> {
   )]
   /// CHECK: Checked via constraint
   pub token_metadata_program: UncheckedAccount<'info>,
+  pub system_program: Program<'info, System>,
 }
 
 const STRATA_KEY: &str = "BoA7rbEV5vgS5wQXwXrmf7j6cSao8pBToiZ45eHvo52L";
@@ -57,6 +68,9 @@ pub fn handler(ctx: Context<ApproveUserIdentifierV0>) -> Result<()> {
   if requester.to_string() != STRATA_KEY {
     require!(entry_name.len() >= 6, ErrorCode::InvalidStringLength);
   }
+
+  ctx.accounts.case_insensitive_marker.bump = *ctx.bumps.get("case_insensitive_marker").unwrap();
+  ctx.accounts.case_insensitive_marker.certificate_mint = ctx.accounts.entry.mint;
 
   let namespace_signer_seeds: &[&[&[u8]]] = &[&[b"namespaces", &[ctx.accounts.namespaces.bump]]];
 

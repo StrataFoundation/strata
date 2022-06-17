@@ -64,3 +64,14 @@ pub struct DelegateWalletV0 {
   // wallet is the owner and is delegating this wallet to sign.
   pub delegate_wallet: Pubkey,
 }
+
+
+pub const MARKER_SIZE: usize = 8 + std::mem::size_of::<CaseInsensitiveMarkerV0>() + 80; // padding
+
+// Exists only to mark that a username or domain with that name case insenstive exists
+#[account]
+#[derive(Default)]
+pub struct CaseInsensitiveMarkerV0 {
+  pub bump: u8,
+  pub certificate_mint: Pubkey
+}

@@ -209,7 +209,6 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
             }}
             exec={async () => {
               const loc = await uploadFile(chatSdk!.provider, image, delegateWallet);
-              console.log("FILE WAS", loc, url);
               return true;
             }}
             onComplete={async () => {

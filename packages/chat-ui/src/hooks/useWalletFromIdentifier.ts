@@ -6,6 +6,7 @@ import { ChatSdk } from "@strata-foundation/chat";
 import { useAccount, useTokenAccount } from "@strata-foundation/react";
 import { useAsync } from "react-async-hook";
 import { useChatSdk } from "../contexts";
+import { useCaseInsensitiveMarker } from "./useCaseInsensitiveMarker";
 import { useProfileKey } from "./useProfileKey";
 
 export function useWalletFromIdentifier(identifier?: string): {
@@ -24,35 +25,25 @@ export function useWalletFromIdentifier(identifier?: string): {
     [chatSdk]
   );
   const {
-    result: entryKey,
+    result: markerKey,
     loading: loading2,
     error: error2,
   } = useAsync(
     async (identifier: string | undefined, userNamespace: string | undefined) =>
       identifier && userNamespace
-        ? PublicKey.findProgramAddress(
-            [
-              utils.bytes.utf8.encode(ENTRY_SEED),
-              new PublicKey(userNamespace).toBytes(),
-              utils.bytes.utf8.encode(identifier),
-            ],
-            NAMESPACES_PROGRAM_ID
-          )
+        ? ChatSdk.caseInsensitiveMarkerKey(new PublicKey(userNamespace), identifier)
         : undefined,
     [identifier, namespaces?.userNamespace.toBase58()]
   );
 
-  const { info: entry, loading: loading3 } = useAccount(
-    entryKey ? entryKey[0] : undefined,
-    chatSdk?.entryDecoder
-  );
+  const { info: marker, loading: loading3 } = useCaseInsensitiveMarker(markerKey && markerKey[0])
   const { connection } = useConnection();
   const { result: tokenAccountKey, loading: loading4, error: error3 } = useAsync(async (connection: Connection, mint: PublicKey | undefined) => {
     if (mint) {
       const accounts = await connection.getTokenLargestAccounts(mint);
       return accounts.value[0].address
     }
-  }, [connection, entry?.mint])
+  }, [connection, marker?.certificateMint])
 
   const { info: tokenAccount } = useTokenAccount(tokenAccountKey);
 
