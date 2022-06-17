@@ -37,8 +37,12 @@ export const ProfileButton: FC<ButtonProps> = ({
   const { visible, setVisible } = useWalletModal();
   const { info: profile, account: profileAccount, loading } = useWalletProfile();
   const { username } = useUsernameFromIdentifierCertificate(profile?.identifierCertificateMint);
-  const { isOpen: loadWalletIsOpen, onClose, onOpen } = useDisclosure();
-  const { isOpen: profileIsOpen, onClose: closeProfile, onOpen: openProfile } = useDisclosure();
+  const { isOpen: loadWalletIsOpen, onClose, onOpen } = useDisclosure({
+    isOpen: false
+  });
+  const { isOpen: profileIsOpen, onClose: closeProfile, onOpen: openProfile } = useDisclosure({
+    isOpen: false
+  });
   
   const { handleErrors } = useErrorHandler();
   const { needsTopOff, error, loadingNeeds, delegateWallet } =
@@ -48,7 +52,7 @@ export const ProfileButton: FC<ButtonProps> = ({
   // Open load wallet dialog if we have a profile but wallet is empty
   useEffect(() => {
     if (
-      connected &&
+      publicKey &&
       !profileIsOpen &&
       delegateWallet &&
       !loadingNeeds &&
@@ -58,15 +62,15 @@ export const ProfileButton: FC<ButtonProps> = ({
     } else {
       onClose();
     }
-  }, [connected, needsTopOff, profile, onOpen, loadingNeeds]);
+  }, [publicKey, needsTopOff, profile, onOpen, loadingNeeds]);
 
   useEffect(() => {
-    if (!loading && connected && !profileAccount) {
+    if (!loading && publicKey && !profileAccount) {
       openProfile();
     } else {
       closeProfile();
     }
-  }, [loading, connected, profileAccount, openProfile, closeProfile]);
+  }, [loading, publicKey, profileAccount, openProfile, closeProfile]);
 
   const handleClick = useCallback(
     (event: MouseEvent<HTMLButtonElement>) => {
