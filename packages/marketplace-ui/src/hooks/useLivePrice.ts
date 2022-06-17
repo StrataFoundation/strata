@@ -14,7 +14,7 @@ export function useLivePrice(tokenBondingKey: PublicKey | undefined) {
         pricing.current(pricing.hierarchy.tokenBonding.baseMint, unixTime)
       );
     }
-  }, [unixTime]);
+  }, [unixTime, pricing]);
   
   return {
     loading,

@@ -1,7 +1,5 @@
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
-import {
-  Notification,
-} from "@strata-foundation/react";
+import { Notification } from "@strata-foundation/react";
 import React from "react";
 import toast from "react-hot-toast";
 import { MarketplaceProviders } from "./MarketplaceProviders";
@@ -50,7 +48,9 @@ export const Providers = ({
   return (
     <Wallet cluster={cluster}>
       <WalletModalProvider>
-        <MarketplaceProviders onError={onError} resetCSS>{children}</MarketplaceProviders>
+        <MarketplaceProviders onError={onError} resetCSS>
+          {children}
+        </MarketplaceProviders>
       </WalletModalProvider>
     </Wallet>
   );

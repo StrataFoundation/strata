@@ -1,13 +1,13 @@
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import * as anchor from "@project-serum/anchor";
+import { useSolanaUnixTime } from "@strata-foundation/react";
+import * as anchor from "anchor-17";
+import { useEffect, useState } from "react";
 import {
   getAtaForMint,
-  toDate,
+  toDate
 } from "../components";
-import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { ICandyMachine, useCandyMachine } from "./useCandyMachine";
-import { useSolanaUnixTime } from "@strata-foundation/react";
 
 export interface ICandyMachineState {
   candyMachine: ICandyMachine | undefined;
