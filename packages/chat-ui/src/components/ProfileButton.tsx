@@ -1,5 +1,5 @@
 import {
-  Avatar,
+  Image,
   Button,
   ButtonGroup,
   ButtonProps,
@@ -11,8 +11,10 @@ import {
   MenuItem,
   MenuItemOption,
   MenuList,
-  MenuOptionGroup, useColorModeValue,
-  useDisclosure
+  MenuOptionGroup,
+  useColorModeValue,
+  useDisclosure,
+  Text,
 } from "@chakra-ui/react";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -45,12 +47,18 @@ export const ProfileButton: FC<ButtonProps> = ({
 
   // Open load wallet dialog if we have a profile but wallet is empty
   useEffect(() => {
-    if (!profileIsOpen && delegateWallet && !loadingNeeds && needsTopOff) {
+    if (
+      connected &&
+      !profileIsOpen &&
+      delegateWallet &&
+      !loadingNeeds &&
+      needsTopOff
+    ) {
       onOpen();
     } else {
-      onClose()
+      onClose();
     }
-  }, [needsTopOff, profile, onOpen, loadingNeeds]);
+  }, [connected, needsTopOff, profile, onOpen, loadingNeeds]);
 
   useEffect(() => {
     if (!loading && connected && !profileAccount) {
@@ -99,21 +107,28 @@ export const ProfileButton: FC<ButtonProps> = ({
         color={useColorModeValue("black", "white")}
         borderColor="primary.500"
         {...props}
-        leftIcon={
-          profile ? (
-            <Avatar w="30px" h="30px" src={profile.imageUrl} />
-          ) : (
-            <Icon w="16px" h="16px" as={BsFillPersonFill} />
-          )
-        }
         onClick={handleClick}
         _hover={{ backgroundColor: "orange.500" }}
       >
-        {connected
-          ? profile
-            ? username
-            : truncatePubkey(publicKey!)
-          : children}
+        {profile ? (
+          // Can't use Avatar here because in CreateProfile we change image.src to cause a reload
+          <Image
+            alt="Profile"
+            m={1}
+            borderRadius="full"
+            boxSize="30px"
+            src={profile.imageUrl}
+          />
+        ) : (
+          <Icon m={1} w="16px" h="16px" as={BsFillPersonFill} />
+        )}
+        <Text m={1}>
+          {connected
+            ? profile
+              ? username
+              : truncatePubkey(publicKey!)
+            : children}
+        </Text>
       </Button>
       <Menu isLazy>
         <MenuButton

@@ -9,6 +9,7 @@ import {
   getMintInfo,
   sendAndConfirmWithRetry,
   truthy,
+  sleep,
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
 import Decimal from "decimal.js";
@@ -100,9 +101,9 @@ export async function initStorageIfNeeded(
 
     // Double storage size every time there's not enough
     let sizeKB = 0;
-    const storageAccountBigEnough = storageAccount && (Number(storageAccount.storageAvailable) < sizeBytes);
-    if (storageAccountBigEnough) {
-      let sizeToAdd = storageAccount!.storageAvailable;
+    const storageAccountBigEnough = storageAccount && (Number(storageAccount.storageAvailable) > sizeBytes);
+    if (!storageAccountBigEnough) {
+      let sizeToAdd = Number(storageAccount!.storageAvailable);
       while (sizeToAdd < sizeBytes) {
         sizeToAdd += sizeToAdd;
       }
@@ -110,6 +111,12 @@ export async function initStorageIfNeeded(
     } else if (!storageAccount) {
       sizeKB = Math.ceil(sizeBytes / 1024);
     }
+
+    console.log(
+      `Storage currently has ${Number(
+        storageAccount?.storageAvailable || 0
+      )}, file size is ${sizeBytes}, adding ${sizeKB} KB`
+    );
 
     const shdwNeeded = storageAccountBigEnough ? 0 : (sizeKB * 1024) / Math.pow(10, 9);
     const solToken = orcaSolPool.getTokenB();
@@ -142,11 +149,13 @@ export async function initStorageIfNeeded(
         {},
         "max"
       );
+      // Even with max confirmation, still this sometimes fails
+      await sleep(2000);
     }
 
     await shdwDrive.init();
 
-    if (storageAccount && sizeKB) {
+    if (storageAccount && sizeKB && !storageAccountBigEnough) {
       await shdwDrive.addStorage(accountKey, sizeKB + "KB");
     } else if (!storageAccount) {
       await shdwDrive.createStorageAccount("chat", sizeKB + "KB");
@@ -174,13 +183,7 @@ export async function uploadFile(
     );
     await shdwDrive.init();
 
-    const ext = file.name.split(".").slice(1, -1).join(".");
-    const name = randomIdentifier() + (ext ? `.${ext}` : "");
-    console.log(name);
-    Object.defineProperty(file, "name", {
-      writable: true,
-      value: name,
-    });
+
     try {
       const res = await shdwDrive.uploadFile(accountKey, file);
       return res.finalized_location;
@@ -188,8 +191,18 @@ export async function uploadFile(
       if (e.toString().includes("Blockhash not found") && tries > 0) {
         return uploadFile(provider, file, delegateWallet, tries - 1)
       }
+      throw e;
     }
   }
+}
+
+export function randomizeFileName(file: File): void {
+  const ext = file.name.split(".").slice(1, -1).join(".");
+  const name = randomIdentifier() + (ext ? `.${ext}` : "");
+  Object.defineProperty(file, "name", {
+    writable: true,
+    value: name,
+  });
 }
 
 function randomIdentifier(): string {

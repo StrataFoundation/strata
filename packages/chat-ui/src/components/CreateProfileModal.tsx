@@ -24,7 +24,7 @@ import { LoadWalletModal } from "./LoadWalletModal";
 import { RiCheckFill } from "react-icons/ri";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { ChatSdk, IdentifierType, uploadFile } from "@strata-foundation/chat";
+import { ChatSdk, IdentifierType, randomizeFileName, uploadFile } from "@strata-foundation/chat";
 import {
   truncatePubkey,
   useErrorHandler,
@@ -36,10 +36,12 @@ import { useAsyncCallback } from "react-async-hook";
 import { FormProvider, useForm } from "react-hook-form";
 import * as yup from "yup";
 import { useChatSdk } from "../contexts";
-import { delegateWalletStorage, useLoadDelegate, useUsernameFromIdentifierCertificate, useWalletProfile } from "../hooks";
+import { delegateWalletStorage, useChatStorageAccountKey, useLoadDelegate, useUsernameFromIdentifierCertificate, useWalletProfile } from "../hooks";
 import { useWalletFromIdentifier } from "../hooks/useWalletFromIdentifier";
 import { FormControlWithError } from "./FormControlWithError";
 import { CopyBlackBox } from "./CopyBlackBox";
+import toast from "react-hot-toast";
+import { LongPromiseNotification } from "./LongPromiseNotification";
 
 interface IProfileProps {
   username: string;
@@ -60,17 +62,6 @@ async function createProfile(
 ): Promise<void> {
   if (chatSdk) {
     let imageUrl: string | undefined = args.imageUrl;
-    if (args.image) {
-      setProgress("Uploading pfp, this can take a minute...");
-      const delegateWalletKeypair = delegateWalletStorage.getDelegateWallet(
-        chatSdk.provider.wallet.publicKey
-      );
-      imageUrl = await uploadFile(
-        chatSdk.provider,
-        args.image,
-        delegateWalletKeypair
-      );
-    }
 
     setProgress("Creating your Profile...");
     const {
@@ -172,6 +163,7 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
     }
   }, [needsTopOff, onOpen, onClose, loadingNeeds]);
 
+  const { result: chatStorage } = useChatStorageAccountKey();
   const hiddenFileInput = React.useRef<HTMLInputElement>(null);
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files![0];
@@ -188,7 +180,42 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
         setImgUrl((event.target?.result as string) || "");
       };
 
+      const text = `Uploading ${image.name} to SHDW Drive...`;
       reader.readAsDataURL(image);
+      randomizeFileName(image);
+      const url = `https://shdw-drive.genesysgo.net/${chatStorage}/${image.name}`;
+      setValue(
+        "imageUrl",
+        url
+      );
+      toast.custom(
+        (t) => (
+          <LongPromiseNotification
+            estTimeMillis={2 * 60 * 1000}
+            text={text}
+            onError={(e) => {
+              handleErrors(e);
+              toast.dismiss(t.id);
+            }}
+            exec={async () => {
+              const loc = await uploadFile(chatSdk!.provider, image, delegateWallet);
+              console.log("FILE WAS", loc, url);
+              return true;
+            }}
+            onComplete={async () => {
+              const images = document.querySelectorAll(`img[src*="${url}"]`);
+              images.forEach((image) => {
+                // @ts-ignore
+                image.src = url;
+              });
+              toast.dismiss(t.id);
+            }}
+          />
+        ),
+        {
+          duration: Infinity,
+        }
+      );
     } else {
       setImgUrl(undefined);
     }
