@@ -1,4 +1,5 @@
 import { BsLockFill } from "react-icons/bs";
+import FocusLock from "react-focus-lock";
 import {
   Avatar,
   Box,
@@ -161,188 +162,204 @@ export function Message({
   }, [reacts]);
 
   return (
-    <Popover matchWidth trigger="hover" placement="end-start" onClose={onClose}>
-      <PopoverContent
-        right={isOpen ? "350px" : "180px"}
-        bg={isOpen ? undefined : "transparent"}
-        border={isOpen ? undefined : "none"}
-        width={isOpen ? undefined : "60px"}
+    <Box _hover={{ bg: highlightedBg }}>
+      <Popover
+        matchWidth
+        trigger="hover"
+        placement="right-start"
+        onClose={onClose}
       >
-        <PopoverBody>
-          {!isOpen && (
-            <IconButton
-              icon={<Icon as={MdOutlineAddReaction} />}
-              w="32px"
-              h="32px"
-              variant="outline"
-              size="lg"
-              aria-label="Add Reaction"
-              onClick={onToggle}
-            />
-          )}
-          {isOpen && (
-            <EmojiSearch
-              onSelect={(emoji) => {
-                onClose();
-                sendMessage({
-                  type: MessageType.React,
-                  emoji: emoji.symbol,
-                  referenceMessageId: messageId,
-                });
-              }}
-            />
-          )}
-        </PopoverBody>
-      </PopoverContent>
-      <PopoverTrigger>
-        <HStack
-          pl={2}
-          pr={2}
-          pb={1}
-          pt={1}
-          w="full"
-          align="start"
-          spacing={2}
-          className="strata-message"
-          _hover={{ backgroundColor: highlightedBg }}
+        <PopoverContent
+          right={isOpen ? "350px" : "180px"}
+          bg={isOpen ? undefined : "transparent"}
+          border={isOpen ? undefined : "none"}
+          width={isOpen ? undefined : "60px"}
         >
-          {showUser ? (
-            <Avatar mt="6px" size="sm" src={profile?.imageUrl} />
-          ) : (
-            <Box w="34px" />
-          )}
-          <VStack w="full" align="start" spacing={0}>
-            {showUser && (
-              <HStack>
-                <Text
-                  fontSize="sm"
-                  fontWeight="semibold"
-                  color={uid == id ? "blue.500" : usernameColor[colorMode]}
-                >
-                  {username}
-                </Text>
-                <Text fontSize="xs" color={muted}>
-                  {moment(time).format("LT")}
-                </Text>
-              </HStack>
+          <PopoverBody>
+            {!isOpen && (
+              <IconButton
+                icon={<Icon as={MdOutlineAddReaction} />}
+                w="32px"
+                h="32px"
+                mt="-40px"
+                variant="outline"
+                size="lg"
+                aria-label="Add Reaction"
+                bg="white"
+                _dark={{
+                  bg: "gray.900",
+                  _hover: {
+                    bg: highlightedBg,
+                  },
+                }}
+                onClick={onToggle}
+              />
             )}
-
-            <Box
-              w="fit-content"
-              position="relative"
-              textAlign={"left"}
-              wordBreak="break-word"
-              color={textColor[colorMode]}
-            >
-              {message ? (
-                message.type === MessageType.Gify ? (
-                  <GifyGif gifyId={message.gifyId} />
-                ) : message.type === MessageType.Image ? (
-                  <Image
-                    mt={"4px"}
-                    alt={message.text}
-                    height="300px"
-                    src={
-                      (message.attachments || [])[0] ||
-                      blobToUrl((message.decryptedAttachments || [])[0])
-                    }
-                  />
-                ) : message.type === MessageType.Text ? (
-                  <Text mt={"-4px"}>{message.text}</Text>
-                ) : (
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: message.html
-                        ? sanitizeHtml(message.html, htmlAllowlist)
-                        : "",
-                    }}
-                  />
-                )
-              ) : (
-                <BuyMoreButton
-                  mint={readMint}
-                  trigger={(props) => {
-                    return (
-                      <HStack
-                        onClick={props.onClick}
-                        spacing={2}
-                        _hover={{ cursor: "pointer" }}
-                      >
-                        <Skeleton
-                          startColor={lockedColor}
-                          height="20px"
-                          w="300px"
-                          speed={100000}
-                        />
-                        <Icon color={lockedColor} as={BsLockFill} />
-                      </HStack>
-                    );
+            {isOpen && (
+              <FocusLock returnFocus persistentFocus={false}>
+                <EmojiSearch
+                  onSelect={(emoji) => {
+                    onClose();
+                    sendMessage({
+                      type: MessageType.React,
+                      emoji: emoji.symbol,
+                      referenceMessageId: messageId,
+                    });
                   }}
                 />
+              </FocusLock>
+            )}
+          </PopoverBody>
+        </PopoverContent>
+        <PopoverTrigger>
+          <HStack
+            pl={2}
+            pr={2}
+            pb={1}
+            pt={1}
+            w="full"
+            align="start"
+            spacing={2}
+            className="strata-message"
+          >
+            {showUser ? (
+              <Avatar mt="6px" size="sm" src={profile?.imageUrl} />
+            ) : (
+              <Box w="34px" />
+            )}
+            <VStack w="full" align="start" spacing={0}>
+              {showUser && (
+                <HStack>
+                  <Text
+                    fontSize="sm"
+                    fontWeight="semibold"
+                    color={uid == id ? "blue.500" : usernameColor[colorMode]}
+                  >
+                    {username}
+                  </Text>
+                  <Text fontSize="xs" color={muted}>
+                    {moment(time).format("LT")}
+                  </Text>
+                </HStack>
               )}
-            </Box>
-            {Object.entries(reactsWithCounts).length > 0 && (
-              <HStack mt={2}>
-                {Object.entries(reactsWithCounts).map(([emoji, count]) => (
-                  <Button
-                    onClick={() => {
-                      if (!myReacts.has(emoji))
-                        sendMessage({
-                          type: MessageType.React,
-                          emoji: emoji,
-                          referenceMessageId: messageId,
-                        });
+
+              <Box
+                w="fit-content"
+                position="relative"
+                textAlign={"left"}
+                wordBreak="break-word"
+                color={textColor[colorMode]}
+              >
+                {message ? (
+                  message.type === MessageType.Gify ? (
+                    <GifyGif gifyId={message.gifyId} />
+                  ) : message.type === MessageType.Image ? (
+                    <Image
+                      mt={"4px"}
+                      alt={message.text}
+                      height="300px"
+                      src={
+                        (message.attachments || [])[0] ||
+                        blobToUrl((message.decryptedAttachments || [])[0])
+                      }
+                    />
+                  ) : message.type === MessageType.Text ? (
+                    <Text mt={"-4px"}>{message.text}</Text>
+                  ) : (
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html: message.html
+                          ? sanitizeHtml(message.html, htmlAllowlist)
+                          : "",
+                      }}
+                    />
+                  )
+                ) : (
+                  <BuyMoreButton
+                    mint={readMint}
+                    trigger={(props) => {
+                      return (
+                        <HStack
+                          onClick={props.onClick}
+                          spacing={2}
+                          _hover={{ cursor: "pointer" }}
+                        >
+                          <Skeleton
+                            startColor={lockedColor}
+                            height="20px"
+                            w="300px"
+                            speed={100000}
+                          />
+                          <Icon color={lockedColor} as={BsLockFill} />
+                        </HStack>
+                      );
                     }}
+                  />
+                )}
+              </Box>
+              {Object.entries(reactsWithCounts).length > 0 && (
+                <HStack mt={2}>
+                  {Object.entries(reactsWithCounts).map(([emoji, count]) => (
+                    <Button
+                      onClick={() => {
+                        if (!myReacts.has(emoji))
+                          sendMessage({
+                            type: MessageType.React,
+                            emoji: emoji,
+                            referenceMessageId: messageId,
+                          });
+                      }}
+                      borderLeftRadius="20px"
+                      width="55px"
+                      borderRightRadius="20px"
+                      p={0}
+                      variant={myReacts.has(emoji) ? "solid" : "outline"}
+                      size="sm"
+                      key={emoji}
+                    >
+                      <HStack spacing={1}>
+                        <Text lineHeight={0} fontSize="lg">
+                          {emoji}
+                        </Text>
+                        <Text lineHeight={0} fontSize="sm">
+                          {count}
+                        </Text>
+                      </HStack>
+                    </Button>
+                  ))}
+                  <Button
                     borderLeftRadius="20px"
                     width="55px"
                     borderRightRadius="20px"
-                    p={0}
-                    variant={myReacts.has(emoji) ? "solid" : "outline"}
+                    variant="outline"
                     size="sm"
-                    key={emoji}
+                    onClick={onToggle}
                   >
-                    <HStack spacing={1}>
-                      <Text lineHeight={0} fontSize="lg">
-                        {emoji}
-                      </Text>
-                      <Text lineHeight={0} fontSize="sm">
-                        {count}
-                      </Text>
-                    </HStack>
+                    <Icon as={MdOutlineAddReaction} />
                   </Button>
-                ))}
-                <Button
-                  borderLeftRadius="20px"
-                  width="55px"
-                  borderRightRadius="20px"
-                  variant="outline"
-                  size="sm"
-                  onClick={onToggle}
-                >
-                  <Icon as={MdOutlineAddReaction} />
-                </Button>
-              </HStack>
-            )}
-          </VStack>
-          <Icon
-            _hover={{ cursor: "pointer" }}
-            onClick={() => {
-              txids?.forEach((tx) => {
-                window.open(
-                  `https://explorer.solana.com/tx/${tx}?cluster=${cluster}`
-                );
-              });
-            }}
-            alignSelf="center"
-            w="12px"
-            h="12px"
-            as={pending ? BsCircle : BsCheckCircleFill}
-            color="gray"
-            title={status}
-          />
-        </HStack>
-      </PopoverTrigger>
-    </Popover>
+                </HStack>
+              )}
+            </VStack>
+            <Icon
+              _hover={{ cursor: "pointer" }}
+              onClick={() => {
+                txids?.forEach((tx) => {
+                  window.open(
+                    `https://explorer.solana.com/tx/${tx}?cluster=${cluster}`
+                  );
+                });
+              }}
+              alignSelf="center"
+              w="12px"
+              h="12px"
+              as={pending ? BsCircle : BsCheckCircleFill}
+              color="gray"
+              title={status}
+            />
+          </HStack>
+        </PopoverTrigger>
+      </Popover>
+    </Box>
   );
 }
 function blobToUrl(blob: Blob | undefined): string | undefined {
