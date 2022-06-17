@@ -60,6 +60,7 @@ export const ProfileButton: FC<ButtonProps> = ({
   // Open load wallet dialog if we have a profile but wallet is empty
   useEffect(() => {
     if (
+      connected &&
       publicKey &&
       !profileIsOpen &&
       delegateWallet &&
@@ -70,15 +71,15 @@ export const ProfileButton: FC<ButtonProps> = ({
     } else {
       onClose();
     }
-  }, [publicKey, needsTopOff, profile, onOpen, loadingNeeds]);
+  }, [connected, publicKey, needsTopOff, profile, onOpen, loadingNeeds]);
 
   useEffect(() => {
-    if (!loading && publicKey && !profileAccount) {
+    if (connected && !loading && publicKey && !profileAccount) {
       openProfile();
     } else {
       closeProfile();
     }
-  }, [loading, publicKey, profileAccount, openProfile, closeProfile]);
+  }, [connected, loading, publicKey, profileAccount, openProfile, closeProfile]);
 
   const handleClick = useCallback(
     (event: MouseEvent<HTMLButtonElement>) => {

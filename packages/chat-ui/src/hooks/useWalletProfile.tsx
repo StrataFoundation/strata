@@ -1,4 +1,5 @@
 import { useWallet } from "@solana/wallet-adapter-react";
+import { useMemo } from "react";
 import { useProfile } from "./useProfile";
 import { useProfileKey } from "./useProfileKey";
 
@@ -9,6 +10,6 @@ export function useWalletProfile() {
   const profile = useProfile(profileKey);
   return {
     ...profile,
-    loading: profile.loading || loading
+    loading: useMemo(() => profile.loading || loading, [profile.loading, loading])
   }
 }
