@@ -8,7 +8,7 @@ export const DOCS_URL = process.env.NEXT_PUBLIC_DOCS_URL;
 export const routes: Record<string, IRoute> = {
   chats: { path: "/", params: [] },
   chat: {
-    path: "/chats/:id",
+    path: "/c/:id",
     params: ["id"],
   },
 };
