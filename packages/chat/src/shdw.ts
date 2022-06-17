@@ -103,7 +103,7 @@ export async function initStorageIfNeeded(
     let sizeKB = 0;
     const storageAccountBigEnough = storageAccount && (Number(storageAccount.storageAvailable) > sizeBytes);
     if (!storageAccountBigEnough) {
-      let sizeToAdd = Number(storageAccount!.storageAvailable);
+      let sizeToAdd = Number(storageAccount?.storageAvailable || (2 * sizeBytes));
       while (sizeToAdd < sizeBytes) {
         sizeToAdd += sizeToAdd;
       }

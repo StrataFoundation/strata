@@ -53,7 +53,7 @@ export function LongPromiseNotification<T>({
       p={0}
     >
       <Box w="full">
-        <Progress value={Math.min(time / estTimeMillis, 99) * 100} />
+        <Progress value={Math.min(time / estTimeMillis, 95) * 100} />
       </Box>
       <VStack align="left" w="full" p={2} spacing={1}>
         <Text color="gray.400">{text}</Text>

@@ -122,6 +122,7 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
     mnemonic,
     error: delegateError,
     loadingNeeds,
+    loading: loadingDelegate
   } = useLoadDelegate();
 
   const { username, image } = watch();
@@ -159,15 +160,18 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
 
   async function onSubmit(args: IProfileProps): Promise<void> {
     await execute(chatSdk, args, setStep);
+    if (props.onClose) {
+      props.onClose()
+    }
   }
 
   useEffect(() => {
-    if (props.isOpen && !loadingNeeds && needsTopOff) {
+    if (loadingDelegate || (props.isOpen && !loadingNeeds && needsTopOff)) {
       onOpen();
     } else {
       onClose();
     }
-  }, [props.isOpen, needsTopOff, onOpen, onClose, loadingNeeds]);
+  }, [loadingDelegate, props.isOpen, needsTopOff, onOpen, onClose, loadingNeeds]);
 
   const { result: chatStorage } = useChatStorageAccountKey();
   const hiddenFileInput = React.useRef<HTMLInputElement>(null);
