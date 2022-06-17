@@ -108,8 +108,12 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
   const { chatSdk } = useChatSdk();
   const { awaitingApproval } = useProvider();
   const { handleErrors } = useErrorHandler();
-  const { isOpen: loadWalletIsOpen, onClose, onOpen } = useDisclosure({
-    isOpen: false
+  const {
+    isOpen: loadWalletIsOpen,
+    onClose,
+    onOpen,
+  } = useDisclosure({
+    defaultIsOpen: false,
   });
   
   const {
