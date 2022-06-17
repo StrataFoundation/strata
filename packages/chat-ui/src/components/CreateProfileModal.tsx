@@ -162,12 +162,12 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
   }
 
   useEffect(() => {
-    if (!loadingNeeds && needsTopOff) {
+    if (props.isOpen && !loadingNeeds && needsTopOff) {
       onOpen();
     } else {
       onClose();
     }
-  }, [needsTopOff, onOpen, onClose, loadingNeeds]);
+  }, [props.isOpen, needsTopOff, onOpen, onClose, loadingNeeds]);
 
   const { result: chatStorage } = useChatStorageAccountKey();
   const hiddenFileInput = React.useRef<HTMLInputElement>(null);
@@ -233,6 +233,7 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
         isOpen={true}
         onClose={() => {
           if (!loadingProfile && !profileAccount) disconnect();
+          props.onClose && props.onClose()
 
           onClose();
         }}

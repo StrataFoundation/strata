@@ -22,7 +22,7 @@ import {
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import React, { useState } from "react";
 import { AiOutlineGif, AiOutlineSend } from "react-icons/ai";
-import { IMessageWithPending, useChat, useSendMessage } from "../hooks";
+import { IMessageWithPending, useChat, useLoadDelegate, useSendMessage, useWalletProfile } from "../hooks";
 import { BuyMoreButton } from "./BuyMoreButton";
 import { ChatInput } from "./ChatInput";
 import { FileAttachment } from "./FileAttachment";
@@ -30,6 +30,7 @@ import { GifSearch } from "./GifSearch";
 import { Converter } from "showdown";
 import toast from "react-hot-toast";
 import { LongPromiseNotification } from "./LongPromiseNotification";
+import { CreateProfileModal } from "./CreateProfileModal";
 
 const converter = new Converter({
   simpleLineBreaks: true,
@@ -51,6 +52,21 @@ export function Chatbox({
   const handleChange = (html: string) => {
     setInput(html);
   };
+  const { account: profileAccount } = useWalletProfile();
+  const {
+    needsTopOff,
+    loadDelegate,
+    loading: loadingDelegate,
+    error: delegateError,
+  } = useLoadDelegate();
+  const {
+    isOpen: profileIsOpen,
+    onClose: closeProfile,
+    onOpen: openProfile,
+  } = useDisclosure({
+    defaultIsOpen: false,
+  });
+  
   const chatBg = useColorModeValue("gray.100", "gray.800");
   const { handleErrors } = useErrorHandler();
   const { info: chat } = useChat(chatKey);
@@ -87,9 +103,34 @@ export function Chatbox({
     }
   };
 
-  handleErrors(error);
+  handleErrors(error, delegateError);
 
-  return hasEnough ? (
+  return !profileAccount ? (
+    <Flex justify="center" mb="6px">
+      <Button
+        size="sm"
+        colorScheme="primary"
+        variant="outline"
+        onClick={() => openProfile()}
+      >
+        Create Profile to Chat
+      </Button>
+      <CreateProfileModal isOpen={profileIsOpen} onClose={closeProfile} />
+    </Flex>
+  ) : needsTopOff ? (
+    <Flex justify="center" mb="6px">
+      <Button
+        isLoading={loadingDelegate}
+        size="sm"
+        colorScheme="primary"
+        variant="outline"
+        onClick={() => loadDelegate()}
+      >
+        Top Off Chat Wallet
+      </Button>
+      <CreateProfileModal isOpen={profileIsOpen} onClose={closeProfile} />
+    </Flex>
+  ) : hasEnough ? (
     <>
       <Flex direction="row" position="sticky" bottom={0} p={2}>
         <HStack
@@ -124,8 +165,8 @@ export function Chatbox({
                     estTimeMillis={2 * 60 * 1000}
                     text={text}
                     onError={(e) => {
-                      handleErrors(e)
-                      toast.dismiss(t.id)
+                      handleErrors(e);
+                      toast.dismiss(t.id);
                     }}
                     exec={async () => {
                       randomizeFileName(file);
@@ -141,7 +182,7 @@ export function Chatbox({
                   />
                 ),
                 {
-                  duration: Infinity
+                  duration: Infinity,
                 }
               );
             }}

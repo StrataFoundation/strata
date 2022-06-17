@@ -1,32 +1,29 @@
 import {
-  Image,
   Button,
   ButtonGroup,
   ButtonProps,
   Icon,
-  IconButton,
-  Menu,
+  IconButton, Image, Menu,
   MenuButton,
   MenuDivider,
   MenuItem,
   MenuItemOption,
   MenuList,
-  MenuOptionGroup,
-  useColorModeValue,
-  useDisclosure,
-  Text,
+  MenuOptionGroup, Text, useColorModeValue
 } from "@chakra-ui/react";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { truncatePubkey, useEndpoint, useErrorHandler } from "@strata-foundation/react";
-import React, { FC, MouseEvent, useCallback, useEffect } from "react";
+import {
+  truncatePubkey,
+  useEndpoint
+} from "@strata-foundation/react";
+import React, { FC, MouseEvent, useCallback } from "react";
 import { BsChevronDown, BsFillPersonFill } from "react-icons/bs";
-import { useUsernameFromIdentifierCertificate, useWalletProfile } from "../hooks";
-import { useLoadDelegate } from "../hooks/useLoadDelegate";
-import { CreateProfileModal } from "./CreateProfileModal";
-import { LoadWalletModal } from "./LoadWalletModal";
-
+import {
+  useUsernameFromIdentifierCertificate,
+  useWalletProfile
+} from "../hooks";
 
 export const ProfileButton: FC<ButtonProps> = ({
   children = "Select Wallet",
@@ -35,64 +32,25 @@ export const ProfileButton: FC<ButtonProps> = ({
 }) => {
   const { disconnect, connected, publicKey } = useWallet();
   const { visible, setVisible } = useWalletModal();
-  const { info: profile, account: profileAccount, loading } = useWalletProfile();
-  const { username } = useUsernameFromIdentifierCertificate(profile?.identifierCertificateMint);
   const {
-    isOpen: loadWalletIsOpen,
-    onClose,
-    onOpen,
-  } = useDisclosure({
-    defaultIsOpen: false,
-  });
-  const {
-    isOpen: profileIsOpen,
-    onClose: closeProfile,
-    onOpen: openProfile,
-  } = useDisclosure({
-    defaultIsOpen: false,
-  });
-  
-  const { handleErrors } = useErrorHandler();
-  const { needsTopOff, error, loadingNeeds, delegateWallet } =
-    useLoadDelegate();
-  handleErrors(error);
-
-  // Open load wallet dialog if we have a profile but wallet is empty
-  useEffect(() => {
-    if (
-      connected &&
-      publicKey &&
-      !profileIsOpen &&
-      delegateWallet &&
-      !loadingNeeds &&
-      needsTopOff
-    ) {
-      onOpen();
-    } else {
-      onClose();
-    }
-  }, [connected, publicKey, needsTopOff, profile, onOpen, loadingNeeds]);
-
-  useEffect(() => {
-    if (connected && !loading && publicKey && !profileAccount) {
-      openProfile();
-    } else {
-      closeProfile();
-    }
-  }, [connected, loading, publicKey, profileAccount, openProfile, closeProfile]);
+    info: profile,
+    account: profileAccount,
+    loading,
+  } = useWalletProfile();
+  const { username } = useUsernameFromIdentifierCertificate(
+    profile?.identifierCertificateMint
+  );
 
   const handleClick = useCallback(
     (event: MouseEvent<HTMLButtonElement>) => {
       if (onClick) onClick(event);
       if (!event.defaultPrevented) {
-        if (connected) {
-          openProfile()
-        } else {
+        if (!connected) {
           setVisible(!visible);
         }
       }
     },
-    [onClick, visible, setVisible, connected, openProfile]
+    [onClick, visible, setVisible, connected]
   );
 
   const { cluster, setClusterOrEndpoint } = useEndpoint();
@@ -107,15 +65,6 @@ export const ProfileButton: FC<ButtonProps> = ({
       isAttached
       size={props.size}
     >
-      <CreateProfileModal isOpen={profileIsOpen} onClose={closeProfile} />
-      <LoadWalletModal
-        isOpen={loadWalletIsOpen}
-        onLoaded={() => onClose()}
-        onClose={() => {
-          if (!loading && !profileAccount) disconnect();
-          onClose();
-        }}
-      />
       <Button
         color={useColorModeValue("black", "white")}
         borderColor="primary.500"
