@@ -9,7 +9,7 @@ import {
   MenuItem,
   MenuItemOption,
   MenuList,
-  MenuOptionGroup, Text, useColorModeValue
+  MenuOptionGroup, Text, useColorModeValue, useDisclosure
 } from "@chakra-ui/react";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -24,6 +24,7 @@ import {
   useUsernameFromIdentifierCertificate,
   useWalletProfile
 } from "../hooks";
+import { CreateProfileModal } from "./CreateProfileModal";
 
 export const ProfileButton: FC<ButtonProps> = ({
   children = "Select Wallet",
@@ -34,23 +35,24 @@ export const ProfileButton: FC<ButtonProps> = ({
   const { visible, setVisible } = useWalletModal();
   const {
     info: profile,
-    account: profileAccount,
-    loading,
   } = useWalletProfile();
   const { username } = useUsernameFromIdentifierCertificate(
     profile?.identifierCertificateMint
   );
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const handleClick = useCallback(
     (event: MouseEvent<HTMLButtonElement>) => {
       if (onClick) onClick(event);
       if (!event.defaultPrevented) {
-        if (!connected) {
+        if (connected) {
+          onOpen();
+        } else {
           setVisible(!visible);
         }
       }
     },
-    [onClick, visible, setVisible, connected]
+    [onClick, visible, setVisible, connected, onOpen]
   );
 
   const { cluster, setClusterOrEndpoint } = useEndpoint();
@@ -65,6 +67,7 @@ export const ProfileButton: FC<ButtonProps> = ({
       isAttached
       size={props.size}
     >
+      <CreateProfileModal onClose={onClose} isOpen={isOpen} />
       <Button
         color={useColorModeValue("black", "white")}
         borderColor="primary.500"
