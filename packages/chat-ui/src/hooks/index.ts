@@ -13,3 +13,4 @@ export * from "./useDelegateWalletStructKey";
 export * from "./useDelegateWalletStruct";
 export * from "./useChatIdFromIdentifierCertificate";
 export * from "./useLoadDelegate"
+export * from "./useChatStorageAccountKey";

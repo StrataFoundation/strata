@@ -13,7 +13,7 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
-import { ISendMessageContent, MessageType } from "@strata-foundation/chat";
+import { ISendMessageContent, MessageType, randomizeFileName } from "@strata-foundation/chat";
 import {
   useErrorHandler,
   useMint,
@@ -28,6 +28,8 @@ import { ChatInput } from "./ChatInput";
 import { FileAttachment } from "./FileAttachment";
 import { GifSearch } from "./GifSearch";
 import { Converter } from "showdown";
+import toast from "react-hot-toast";
+import { LongPromiseNotification } from "./LongPromiseNotification";
 
 const converter = new Converter({
   simpleLineBreaks: true,
@@ -115,10 +117,33 @@ export function Chatbox({
           />
           <FileAttachment
             onUpload={async (file) => {
-              await sendMessage({
-                type: MessageType.Image,
-                fileAttachments: [file],
-              });
+              const text = `Uploading ${file.name} to SHDW Drive...`;
+              toast.custom(
+                (t) => (
+                  <LongPromiseNotification
+                    estTimeMillis={2 * 60 * 1000}
+                    text={text}
+                    onError={(e) => {
+                      handleErrors(e)
+                      toast.dismiss(t.id)
+                    }}
+                    exec={async () => {
+                      randomizeFileName(file);
+                      await sendMessageImpl({
+                        type: MessageType.Image,
+                        fileAttachments: [file],
+                      });
+                      return true;
+                    }}
+                    onComplete={async () => {
+                      toast.dismiss(t.id);
+                    }}
+                  />
+                ),
+                {
+                  duration: Infinity
+                }
+              );
             }}
           />
           <IconButton
