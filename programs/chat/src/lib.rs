@@ -16,13 +16,6 @@ declare_id!("chatGL6yNgZT2Z3BeMYGcgdMpcBKdmxko4C5UhEX4To");
 pub mod chat {
   use super::*;
 
-
-  pub fn initialize_marker_temp(
-    ctx: Context<InitializeMarkerTemp>,
-  ) -> Result<()> {
-    instructions::initialize_marker_temp::handler(ctx)
-  }
-
   pub fn initialize_namespaces_v0(
     ctx: Context<InitializeNamespacesV0>,
     args: InitializeNamespacesArgsV0,
