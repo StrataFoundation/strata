@@ -22,6 +22,7 @@ pub struct SendTokenMessageV0<'info> {
   pub post_permission_mint: Box<Account<'info, Mint>>,
   pub identifier_certificate_mint: Box<Account<'info, Mint>>,
   #[account(
+    constraint = identifier_certificate_mint_account.amount >= 1,
     constraint = profile.owner_wallet == identifier_certificate_mint_account.owner,
     constraint = identifier_certificate_mint_account.mint == identifier_certificate_mint.key(),
     constraint = identifier_certificate_mint_account.amount > 0
