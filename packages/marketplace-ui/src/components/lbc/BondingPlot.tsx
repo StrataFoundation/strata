@@ -15,7 +15,7 @@ import {
 } from "recharts";
 import { numberWithCommas } from "../../utils/numberWithCommas";
 import { gql, useQuery } from "@apollo/client";
-import { fromCurve, asDecimal } from "@strata-foundation/spl-token-bonding";
+import { fromCurve, asDecimal, toNumber } from "@strata-foundation/spl-token-bonding";
 
 const GET_BONDING_CHANGES = gql`
   query GetBondingChanges(
@@ -88,8 +88,9 @@ export const BondingPlot = ({
       const result = [];
 
       let pointer = 0;
-      let currReserve = tokenBonding.reserveBalanceFromBonding.toNumber() / Math.pow(10, baseMint.decimals);
-      let currSupply = tokenBonding.supplyFromBonding.toNumber() / Math.pow(10, targetMint.decimals);
+      let currReserve = toNumber(tokenBonding.reserveBalanceFromBonding, baseMint);
+      let currSupply =
+        toNumber(tokenBonding.supplyFromBonding, targetMint);
 
       let buyBaseRoyalty = asDecimal(tokenBonding.buyBaseRoyaltyPercentage);
 

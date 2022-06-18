@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [Unreleased]()
+
+### Fixed
+
+   * Not passing commitment to connection constructor could cause issues with accountFetchCache
+   * BigNumber overflow on BondingPlot
+
+### Changed
+
+  * DEFAULT_COMMITMENT to "confirmed"
+
+
 # [3.8.0](https://github.com/StrataFoundation/strata/compare/v3.7.1...v3.8.0) (2022-06-17)
 
 ### Added
