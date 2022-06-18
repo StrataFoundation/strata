@@ -98,7 +98,7 @@ export class AccountFetchCache {
         publicKey: PublicKey,
         com?: Commitment
       ): Promise<AccountInfo<Buffer> | null> => {
-        if ((com || connection.commitment) == commitment) {
+        if ((com || connection.commitment) == commitment || typeof (com || connection.commitment) == "undefined") {
           const [result, dispose] = await this.searchAndWatch(publicKey);
           setTimeout(dispose, 30 * 1000); // cache for 30s
           return result?.account || null;
