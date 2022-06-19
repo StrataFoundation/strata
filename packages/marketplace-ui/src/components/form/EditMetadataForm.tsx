@@ -112,12 +112,14 @@ export const EditMetadataForm = ({
   const { execute, loading, error } = useAsyncCallback(editMetadata);
   const { tokenMetadataSdk } = useStrataSdks();
   const { visible, setVisible } = useWalletModal();
-  const { connected } = useWallet();
+  const { connected, publicKey } = useWallet();
   const router = useRouter();
   const { mint, name, symbol } = watch();
   const mintKey = usePublicKey(mint as string | undefined);
   const { metadata, image } = useTokenMetadata(mintKey);
-
+  const insufficientAuthority = metadata?.updateAuthority
+    ? metadata.updateAuthority != publicKey?.toBase58()
+    : false;
   useEffect(() => {
     if (mint) {
       setValue("mint", mint as string);
@@ -166,7 +168,7 @@ export const EditMetadataForm = ({
           <VStack spacing={8} w="full">
             <FormControlWithError
               id="mint"
-              help="The mint/token id of the metadata you wish to update."
+              help="The mint/token id of the token whose metadata you wish to update."
               label="Mint"
               errors={errors}
             >
@@ -193,13 +195,14 @@ export const EditMetadataForm = ({
             {error && <Alert status="error">{error.toString()}</Alert>}
 
             <Button
+              isDisabled={insufficientAuthority}
               type="submit"
               alignSelf="flex-end"
               colorScheme="primary"
               isLoading={isSubmitting || loading}
               loadingText={awaitingApproval ? "Awaiting Approval" : "Loading"}
             >
-              Update Metadata
+              { insufficientAuthority ? "You do not hold the update authority" : metadata ? "Update Metadata" : "Create Metadata" }
             </Button>
           </VStack>
         </form>
