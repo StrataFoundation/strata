@@ -53,24 +53,38 @@ async function editMetadata(
 
   const instructions = [];
   const signers = [];
-  const { instructions: metaInstrs, signers: metaSigners } =
-    await tokenMetadataSdk.updateMetadataInstructions({
-      metadata: await Metadata.getPDA(mintKey),
-      data: new DataV2({
-        // Max name len 32
-        name: values.name.substring(0, 32),
-        symbol: values.symbol.substring(0, 10),
-        uri,
-        sellerFeeBasisPoints: 0,
-        creators: null,
-        collection: null,
-        uses: null,
-      }),
-    });
+  const metadata = await Metadata.getPDA(mintKey);
+  const data = new DataV2({
+    // Max name len 32
+    name: values.name.substring(0, 32),
+    symbol: values.symbol.substring(0, 10),
+    uri,
+    sellerFeeBasisPoints: 0,
+    creators: null,
+    collection: null,
+    uses: null,
+  });
 
-  instructions.push(...metaInstrs);
-  signers.push(...metaSigners);
+  if (await tokenMetadataSdk.provider.connection.getAccountInfo(metadata)) {
+    const { instructions: metaInstrs, signers: metaSigners } =
+      await tokenMetadataSdk.updateMetadataInstructions({
+        metadata,
+        data,
+      });
 
+    instructions.push(...metaInstrs);
+    signers.push(...metaSigners);
+  } else {
+    const { instructions: metaInstrs, signers: metaSigners } =
+      await tokenMetadataSdk.createMetadataInstructions({
+        mint: mintKey,
+        data,
+      });
+
+    instructions.push(...metaInstrs);
+    signers.push(...metaSigners);
+  }
+  
   await tokenMetadataSdk.sendInstructions(instructions, signers);
 
   return mintKey;
