@@ -109,10 +109,6 @@ export function useBondingPricing(
     mint: any // Make the pricing be re-fetched whenever the supply change. This doesn't account for
     // collective changes, but will due for now. TODO: Account for collective changes too
   ) => {
-            console.log(
-              "Reserves from bonding",
-              tokenBondingAcct?.reserveBalanceFromBonding.toString()
-            );
     return tokenBondingSdk && key && tokenBondingSdk.getPricing(key)
   }
 
