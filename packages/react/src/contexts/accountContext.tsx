@@ -1,8 +1,8 @@
-import React, { FC, ReactNode, createContext, useMemo, useEffect, useState } from "react";
-import { AccountInfo, Commitment, PublicKey } from "@solana/web3.js";
-import { AccountFetchCache } from "@strata-foundation/spl-utils";
-import { DEFAULT_COMMITMENT } from "../constants";
 import { useConnection } from "@solana/wallet-adapter-react";
+import { Commitment } from "@solana/web3.js";
+import { AccountFetchCache } from "@strata-foundation/spl-utils";
+import React, { createContext, FC, ReactNode, useEffect, useState } from "react";
+import { DEFAULT_COMMITMENT } from "../constants";
 
 export interface IAccountProviderProps {
   children: ReactNode;
@@ -20,17 +20,10 @@ export const AccountProvider: FC<IAccountProviderProps> = ({
   extendConnection = true,
 }) => {
   const { connection } = useConnection();
-  const [cache, setCache] = useState<AccountFetchCache>(
-    connection && new AccountFetchCache({
-      connection,
-      delay: 500,
-      commitment,
-      extendConnection,
-    })
-  );
+  const [cache, setCache] = useState<AccountFetchCache>();
   useEffect(() => {
     if (connection) {
-      cache.close();
+      cache?.close();
 
       setCache(
         new AccountFetchCache({

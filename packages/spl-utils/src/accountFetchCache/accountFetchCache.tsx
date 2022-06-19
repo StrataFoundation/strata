@@ -6,7 +6,7 @@ import {
   SendOptions,
   Signer,
   Transaction,
-  TransactionInstruction,
+  TransactionInstruction
 } from "@solana/web3.js";
 import { EventEmitter } from "./eventEmitter";
 import { getMultipleAccounts } from "./getMultipleAccounts";
@@ -39,6 +39,8 @@ function getWriteableAccounts(
     .map((a) => a.pubkey);
 }
 
+let id = 0;
+
 export class AccountFetchCache {
   connection: Connection;
   chunkSize: number;
@@ -58,6 +60,20 @@ export class AccountFetchCache {
   >();
   pendingCalls = new Map<string, Promise<ParsedAccountBase<unknown>>>();
   emitter = new EventEmitter();
+
+  oldGetAccountinfo?: (
+    publicKey: PublicKey,
+    com?: Commitment
+  ) => Promise<AccountInfo<Buffer> | null>;
+  oldSendTransaction: (
+    transaction: Transaction,
+    signers: Array<Signer>,
+    options?: SendOptions
+  ) => Promise<string>;
+  oldSendRawTransaction: (
+    rawTransaction: Buffer | Uint8Array | Array<number>,
+    options?: SendOptions
+  ) => Promise<string>;
 
   missingInterval: NodeJS.Timeout;
 
@@ -86,25 +102,29 @@ export class AccountFetchCache {
       missingRefetchDelay
     );
 
-    const oldSendTransaction = connection.sendTransaction.bind(connection);
-    const oldSendRawTransaction =
+    this.oldSendTransaction = connection.sendTransaction.bind(connection);
+    this.oldSendRawTransaction =
       connection.sendRawTransaction.bind(connection);
 
     const self = this;
 
     if (extendConnection) {
-      const oldGetAccountinfo = connection.getAccountInfo.bind(connection);
+      this.oldGetAccountinfo = connection.getAccountInfo.bind(connection);
+
       connection.getAccountInfo = async (
         publicKey: PublicKey,
         com?: Commitment
       ): Promise<AccountInfo<Buffer> | null> => {
-        if ((com || connection.commitment) == commitment || typeof (com || connection.commitment) == "undefined") {
+        if (
+          (com || connection.commitment) == commitment ||
+          typeof (com || connection.commitment) == "undefined"
+        ) {
           const [result, dispose] = await this.searchAndWatch(publicKey);
           setTimeout(dispose, 30 * 1000); // cache for 30s
           return result?.account || null;
         }
 
-        return oldGetAccountinfo(publicKey, com);
+        return self.oldGetAccountinfo!(publicKey, com);
       };
     }
     connection.sendTransaction = async function overloadedSendTransaction(
@@ -112,13 +132,13 @@ export class AccountFetchCache {
       signers: Array<Signer>,
       options?: SendOptions
     ) {
-      const result = await oldSendTransaction(transaction, signers, options);
-      
+      const result = await self.oldSendTransaction(transaction, signers, options);
+
       this.confirmTransaction(result, "finalized")
         .then(() => {
-          return self.requeryMissing(transaction.instructions)
+          return self.requeryMissing(transaction.instructions);
         })
-        .catch(console.error)
+        .catch(console.error);
       return result;
     };
 
@@ -126,14 +146,14 @@ export class AccountFetchCache {
       rawTransaction: Buffer | Uint8Array | Array<number>,
       options?: SendOptions
     ) {
-      const result = await oldSendRawTransaction(rawTransaction, options);
+      const result = await self.oldSendRawTransaction(rawTransaction, options);
       const instructions = Transaction.from(rawTransaction).instructions;
 
       this.confirmTransaction(result, "finalized")
         .then(() => {
-          return self.requeryMissing(instructions)
+          return self.requeryMissing(instructions);
         })
-        .catch(console.error)
+        .catch(console.error);
 
       return result;
     };
@@ -180,6 +200,11 @@ export class AccountFetchCache {
   }
 
   close() {
+    if (this.oldGetAccountinfo) {
+      this.connection.getAccountInfo = this.oldGetAccountinfo;
+    }
+    this.connection.sendTransaction = this.oldSendTransaction;
+    this.connection.sendRawTransaction = this.oldSendRawTransaction;
     clearInterval(this.missingInterval);
   }
 
@@ -202,7 +227,7 @@ export class AccountFetchCache {
     } catch (e: any) {
       currentBatch.forEach((key) => {
         const callback = this.pendingCallbacks.get(key);
-        callback && callback(null, e)
+        callback && callback(null, e);
       });
       throw e;
     }
@@ -287,6 +312,7 @@ export class AccountFetchCache {
     } else {
       id = pubKey;
     }
+
     this.registerParser(id, parser);
 
     const address = id.toBase58();
