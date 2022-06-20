@@ -1,17 +1,15 @@
-import React, { FC, useState } from "react";
-import { useRouter } from "next/router";
-import Image from "next/image";
+import { RadioCardWithAffordance } from "@/components/form";
+import { LaunchpadLayout } from "@/components/launchpad";
+import { route, routes } from "@/utils/routes";
 import {
   Box,
   Flex,
   Stack,
-  Text,
-  useRadioGroup,
-  useMediaQuery,
+  Text, useMediaQuery, useRadioGroup
 } from "@chakra-ui/react";
-import { LaunchpadLayout } from "@/components/launchpad";
-import { RadioCardWithAffordance } from "@/components/form";
-import { route, routes } from "@/utils/routes";
+import Image from "next/image";
+import { useRouter } from "next/router";
+import React, { FC, useState } from "react";
 
 export enum LandingOption {
   CreateToken = "CreateToken",
@@ -151,7 +149,13 @@ export const LaunchPad: FC = ({ children }) => {
           }
         )}
       </Stack>
-      <Flex w="full" justifyContent="center">
+      <Stack 
+        w="full"
+        spacing={2} 
+        direction={{ base: "column", md: "row" }}
+        justifyContent={{ base: "stretch", md: "center" }}
+        alignItems={{ base: "center", md: "stretch" }}
+      >
         <Box
           bg="white"
           position="relative"
@@ -196,7 +200,42 @@ export const LaunchPad: FC = ({ children }) => {
             </Stack>
           </Stack>
         </Box>
-      </Flex>
+        <Box
+          bg="white"
+          position="relative"
+          rounded="lg"
+          borderWidth="1px"
+          borderColor="white"
+          _hover={{ borderColor: "orange.500" }}
+          py={4}
+          px={2}
+          w="100%"
+          maxW="492px"
+          cursor="pointer"
+          onClick={() => router.push(route(routes.editMetadata))}
+        >
+          <Stack direction="row">
+            <Flex flexShrink={0} justifyContent="center" alignItems="center">
+              <Image
+                src="/update-metadata.svg"
+                height="50px"
+                width="100%"
+                alt="Update Metadata"
+              />
+            </Flex>
+            <Stack flexGrow={1} spacing={0}>
+              <Text fontWeight="bold" fontSize="sm">
+                Edit my Token&apos;s Name, Symbol, or Image
+              </Text>
+              <Text color="gray.500" fontSize="xs">
+                Update the name, symbol, or image of an existing token using the
+                Metaplex Token Metadata Standard. You can also use this to
+                convert token-list tokens to be Metaplex standard compliant.
+              </Text>
+            </Stack>
+          </Stack>
+        </Box>
+      </Stack>
     </LaunchpadLayout>
   );
 };

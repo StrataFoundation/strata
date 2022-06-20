@@ -43,3 +43,20 @@ export function toBN(
 export function supplyAsNum(mint: MintInfo): number {
   return amountAsNum(mint.supply, mint);
 }
+
+export function numberWithCommas(x: number, decimals: number = 4): string {
+  return roundToDecimals(x, decimals).toLocaleString("en-US", {
+    maximumFractionDigits: decimals,
+  });
+}
+
+export function roundToDecimals(num: number, decimals: number): number {
+  return Math.trunc(num * Math.pow(10, decimals)) / Math.pow(10, decimals);
+}
+
+
+export function humanReadable(bn: BN, mint: MintInfo): string {
+  return numberWithCommas(
+    roundToDecimals(toNumber(bn, mint), mint.decimals)
+  );
+}

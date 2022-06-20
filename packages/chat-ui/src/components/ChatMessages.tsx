@@ -13,7 +13,7 @@ export const ChatMessageSkeleton = () => (
     <Flex>
       <SkeletonCircle size="9" />
     </Flex>
-    <Flex grow="1" direction="column" gap={2}>
+    <Flex grow={1} direction="column" gap={2}>
       <Flex gap={2}>
         <Skeleton height="8px" w="120px" />
         <Skeleton height="8px" w="60px" />
@@ -63,7 +63,7 @@ export const ChatMessages = ({
 
   return (
     <Flex
-      grow="1"
+      grow={1}
       overflowY="auto"
       direction="column-reverse"
       h="full"

@@ -33,7 +33,13 @@ import { useForm } from "react-hook-form";
 import { BsChevronDown } from "react-icons/bs";
 import { RiArrowUpDownFill, RiInformationLine } from "react-icons/ri";
 import * as yup from "yup";
-import { useFtxPayLink, useMint, useProvider, useSolanaUnixTime, useTokenMetadata } from "../../hooks";
+import {
+  useFtxPayLink,
+  useMint,
+  useProvider,
+  useSolanaUnixTime,
+  useTokenMetadata,
+} from "../../hooks";
 import { Royalties } from "./Royalties";
 import { TransactionInfo, TransactionInfoArgs } from "./TransactionInfo";
 import { useTwWrappedSolMint } from "../../hooks/useTwWrappedSolMint";
@@ -101,12 +107,10 @@ function MintMenuItem({
   onClick: () => void;
 }) {
   const { image, metadata } = useTokenMetadata(mint);
-  const dropdownVariant = useColorModeValue("solid", "ghost");
 
   return (
     <MenuItem
       onClick={onClick}
-      variant={dropdownVariant}
       icon={
         <Center w={8} h={8} rounded="full">
           <Avatar w={"100%"} h={"100%"} size="sm" src={image} />
@@ -208,7 +212,7 @@ export const SwapForm = ({
   }
 
   useEffect(() => {
-    updatePrice()
+    updatePrice();
   }, [pricing, bottomAmount, topAmount, targetMintAcc, baseMintAcc, unixTime]);
 
   const handleTopChange = (value: number | undefined = 0) => {
@@ -250,7 +254,13 @@ export const SwapForm = ({
   const handleBottomChange = (value: number | undefined = 0) => {
     if (tokenBonding && pricing && base && target && value && +value >= 0) {
       let amount = Math.abs(
-        pricing.swapTargetAmount(+value, target.publicKey, base.publicKey, true, unixTime)
+        pricing.swapTargetAmount(
+          +value,
+          target.publicKey,
+          base.publicKey,
+          true,
+          unixTime
+        )
       );
       setLastSet("bottom");
 

@@ -26,6 +26,7 @@ pub struct InitializeProfileV0<'info> {
   pub entry: Box<Account<'info, Entry>>,
   pub identifier_certificate_mint: Box<Account<'info, Mint>>,
   #[account(
+    constraint = identifier_certificate_mint_account.amount >= 1,
     constraint = owner_wallet.key() == identifier_certificate_mint_account.owner,
     constraint = identifier_certificate_mint_account.mint == identifier_certificate_mint.key(),
     constraint = identifier_certificate_mint_account.amount > 0

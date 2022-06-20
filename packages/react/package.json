@@ -1,6 +1,6 @@
 {
   "name": "@strata-foundation/react",
-  "version": "3.6.1",
+  "version": "3.8.2",
   "description": "React utils for strata foundation",
   "source": "src/index.ts",
   "main": "dist/lib/index.js",
@@ -21,7 +21,8 @@
     "prepare": "yarn run build"
   },
   "dependencies": {
-    "@chakra-ui/react": "^1.7.2",
+    "@chakra-ui/icons": "^1.1.7",
+    "@chakra-ui/react": "^1.8.1",
     "@emotion/react": "^11.6.0",
     "@emotion/styled": "^11.6.0",
     "@hookform/resolvers": "^2.8.3",
@@ -34,10 +35,10 @@
     "@solana/wallet-adapter-react": "^0.15.4",
     "@solana/wallet-adapter-wallets": "^0.16.1",
     "@solana/web3.js": "^1.43.4",
-    "@strata-foundation/marketplace-sdk": "^3.6.1",
-    "@strata-foundation/spl-token-bonding": "^3.6.1",
-    "@strata-foundation/spl-token-collective": "^3.6.1",
-    "@strata-foundation/spl-utils": "^3.6.1",
+    "@strata-foundation/marketplace-sdk": "^3.8.2",
+    "@strata-foundation/spl-token-bonding": "^3.8.2",
+    "@strata-foundation/spl-token-collective": "^3.8.2",
+    "@strata-foundation/spl-utils": "^3.8.2",
     "@toruslabs/solana-embed": "0.0.9",
     "@types/lru-cache": "^7.6.1",
     "axios": "^0.25.0",

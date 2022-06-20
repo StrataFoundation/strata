@@ -8,16 +8,19 @@ import {
   Icon,
   IconButton,
   Image,
-  Popover,
-  PopoverBody,
-  PopoverContent,
-  PopoverTrigger,
+  TextProps,
   Skeleton,
   Text,
   useColorMode,
   useColorModeValue,
   useDisclosure,
   VStack,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  Tooltip,
+  PopoverArrow,
+  PopoverBody
 } from "@chakra-ui/react";
 import { GiphyFetch } from "@giphy/js-fetch-api";
 import { Gif } from "@giphy/react-components";
@@ -28,7 +31,10 @@ import {
   useErrorHandler,
   useMint,
   useEndpoint,
+  truthy,
+  useTokenMetadata,
 } from "@strata-foundation/react";
+import { humanReadable } from "@strata-foundation/spl-utils";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import moment from "moment";
 import React, { useMemo } from "react";
@@ -48,6 +54,8 @@ import {
 } from "../hooks";
 import { BuyMoreButton } from "./BuyMoreButton";
 import { EmojiSearch } from "./EmojiSearch";
+import { groupCollapsed } from "console";
+import { PublicKey } from "@solana/web3.js";
 
 const gf = new GiphyFetch(GIPHY_API_KEY);
 
@@ -74,6 +82,18 @@ const defaultOptions = {
     a: ["href", "target"],
   },
 };
+
+function ProfileName({ profileKey }: { profileKey: PublicKey } & TextProps) {
+  const { info: profile } = useProfile(profileKey);
+  const { username } = useUsernameFromIdentifierCertificate(
+    profile?.identifierCertificateMint
+  );
+
+  return <Text>{ username } </Text>
+}
+
+const MAX_MENTIONS_DISPLAY = 3;
+
 
 export function Message({
   id: messageId,
@@ -103,7 +123,6 @@ export function Message({
 
   const id = profile?.ownerWallet.toBase58();
   const { info: chat } = useChat(chatKey);
-  const readMint = chat?.readPermissionMintOrCollection;
   const muted = useColorModeValue("gray.500", "gray.400");
   const time = useMemo(() => {
     if (startBlockTime) {
@@ -112,6 +131,14 @@ export function Message({
       return t;
     }
   }, [startBlockTime]);
+
+  const readMint = chat?.readPermissionMintOrCollection;
+  const mintAcc = useMint(readMint);
+  const { metadata } = useTokenMetadata(readMint);
+  const tokenAmount =
+    mintAcc &&
+    readPermissionAmount &&
+    humanReadable(readPermissionAmount, mintAcc);
 
   const uid = publicKey?.toBase58();
 
@@ -146,19 +173,42 @@ export function Message({
     );
   }, [reacts, myProfile]);
 
-  const reactsWithCounts = useMemo(() => {
+  const reactsByEmoji = useMemo(() => {
     if (!reacts) {
       return {};
     }
 
-    return reacts.reduce(
-      (acc: Record<string, number>, react: IMessageWithPending) => {
-        acc[react.decodedMessage!.emoji!] =
-          (acc[react.decodedMessage!.emoji!] || 0) + 1;
+    const grouped =  reacts.reduce(
+      (
+        acc: Record<string, IMessageWithPending[]>,
+        react: IMessageWithPending
+      ) => {
+        acc[react.decodedMessage!.emoji!] = [
+          ...(acc[react.decodedMessage!.emoji!] || []),
+          react,
+        ];
         return acc;
       },
-      {} as Record<string, number>
+      {} as Record<string, IMessageWithPending[]>
     );
+
+    // Dedup by profile
+    return Object.fromEntries(Object.entries(grouped).map(([key, value]) => {
+      const seen = new Set<string>();
+
+      return [
+        key,
+        value
+          .filter((v) => {
+            const k = v.profileKey.toBase58()
+            if (!seen.has(k)) {
+              seen.add(k);
+              return v;
+            }
+          })
+          .filter(truthy),
+      ];
+    }))
   }, [reacts]);
 
   return (
@@ -274,11 +324,14 @@ export function Message({
                       }}
                     />
                   )
-                ) : (
-                  <BuyMoreButton
-                    mint={readMint}
-                    trigger={(props) => {
-                      return (
+              ) : (
+                <BuyMoreButton
+                  mint={readMint}
+                  trigger={(props) => {
+                    return (
+                      <Tooltip
+                        label={`You need ${tokenAmount} ${metadata?.data.symbol} to read this message`}
+                      >
                         <HStack
                           onClick={props.onClick}
                           spacing={2}
@@ -292,74 +345,92 @@ export function Message({
                           />
                           <Icon color={lockedColor} as={BsLockFill} />
                         </HStack>
-                      );
-                    }}
-                  />
-                )}
-              </Box>
-              {Object.entries(reactsWithCounts).length > 0 && (
-                <HStack mt={2}>
-                  {Object.entries(reactsWithCounts).map(([emoji, count]) => (
-                    <Button
-                      onClick={() => {
-                        if (!myReacts.has(emoji))
-                          sendMessage({
-                            type: MessageType.React,
-                            emoji: emoji,
-                            referenceMessageId: messageId,
-                          });
-                      }}
-                      borderLeftRadius="20px"
-                      width="55px"
-                      borderRightRadius="20px"
-                      p={0}
-                      variant={myReacts.has(emoji) ? "solid" : "outline"}
-                      size="sm"
-                      key={emoji}
-                    >
-                      <HStack spacing={1}>
-                        <Text lineHeight={0} fontSize="lg">
-                          {emoji}
-                        </Text>
-                        <Text lineHeight={0} fontSize="sm">
-                          {count}
-                        </Text>
-                      </HStack>
-                    </Button>
-                  ))}
-                  <Button
-                    borderLeftRadius="20px"
-                    width="55px"
-                    borderRightRadius="20px"
-                    variant="outline"
-                    size="sm"
-                    onClick={onToggle}
-                  >
-                    <Icon as={MdOutlineAddReaction} />
-                  </Button>
-                </HStack>
+                      </Tooltip>
+                    );
+                  }}
+                />
               )}
-            </VStack>
-            <Icon
-              _hover={{ cursor: "pointer" }}
-              onClick={() => {
-                txids?.forEach((tx) => {
-                  window.open(
-                    `https://explorer.solana.com/tx/${tx}?cluster=${cluster}`
-                  );
-                });
-              }}
-              alignSelf="center"
-              w="12px"
-              h="12px"
-              as={pending ? BsCircle : BsCheckCircleFill}
-              color="gray"
-              title={status}
-            />
-          </HStack>
-        </PopoverTrigger>
-      </Popover>
-    </Box>
+            </Box>
+            {Object.entries(reactsByEmoji).length > 0 && (
+              <HStack mt={2}>
+                {Object.entries(reactsByEmoji).map(([emoji, messages]) => (
+                  <Popover matchWidth trigger="hover" key={emoji}>
+                    <PopoverTrigger>
+                      <Button
+                        onClick={() => {
+                          if (!myReacts.has(emoji))
+                            sendMessage({
+                              type: MessageType.React,
+                              emoji: emoji,
+                              referenceMessageId: messageId,
+                            });
+                        }}
+                        borderLeftRadius="20px"
+                        width="55px"
+                        borderRightRadius="20px"
+                        p={0}
+                        variant={myReacts.has(emoji) ? "solid" : "outline"}
+                        size="sm"
+                        key={emoji}
+                      >
+                        <HStack spacing={1}>
+                          <Text lineHeight={0} fontSize="lg">
+                            {emoji}
+                          </Text>
+                          <Text lineHeight={0} fontSize="sm">
+                            {messages.length}
+                          </Text>
+                        </HStack>
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent width="fit-content">
+                      <PopoverArrow />
+                      <PopoverBody>
+                        <HStack spacing={1}>
+                          {messages.slice(0, MAX_MENTIONS_DISPLAY).map((message, index) => (
+                            <HStack key={message.id} spacing={0}>
+                              <ProfileName profileKey={message.profileKey} />
+                              {(messages.length - 1) != index && <Text>, </Text>}
+                            </HStack>
+                          ))}
+                          {messages.length > MAX_MENTIONS_DISPLAY && <Text>and {messages.length - MAX_MENTIONS_DISPLAY} others</Text>}
+                        </HStack>
+                      </PopoverBody>
+                    </PopoverContent>
+                  </Popover>
+                ))}
+                <Button
+                  borderLeftRadius="20px"
+                  width="55px"
+                  borderRightRadius="20px"
+                  variant="outline"
+                  size="sm"
+                  onClick={onToggle}
+                >
+                  <Icon as={MdOutlineAddReaction} />
+                </Button>
+              </HStack>
+            )}
+          </VStack>
+          <Icon
+            _hover={{ cursor: "pointer" }}
+            onClick={() => {
+              txids?.forEach((tx) => {
+                window.open(
+                  `https://explorer.solana.com/tx/${tx}?cluster=${cluster}`
+                );
+              });
+            }}
+            alignSelf="center"
+            w="12px"
+            h="12px"
+            as={pending ? BsCircle : BsCheckCircleFill}
+            color="gray"
+            title={status}
+          />
+        </HStack>
+      </PopoverTrigger>
+    </Popover>
   );
 }
 function blobToUrl(blob: Blob | undefined): string | undefined {

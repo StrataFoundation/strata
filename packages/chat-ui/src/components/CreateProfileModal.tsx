@@ -61,7 +61,7 @@ interface IProfileProps {
 }
 
 const validationSchema = yup.object({
-  username: yup.string().required().min(6).max(28),
+  username: yup.string().required().min(6).max(28).matches(/^[a-zA-Z0-9_\-]*$/, "Must only contain alphanumeric characters, underscores, or dashes."),
   image: yup.mixed(),
   imageUrl: yup.string(),
 });
@@ -222,11 +222,7 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
               toast.dismiss(t.id);
             }}
             exec={async () => {
-              const loc = await uploadFile(
-                chatSdk!.provider,
-                image,
-                delegateWallet
-              );
+              await uploadFile(chatSdk!.provider, image, delegateWallet);
               return true;
             }}
             onComplete={async () => {

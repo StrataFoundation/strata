@@ -4,7 +4,7 @@ import {
   Icon, IconButton, Text, useColorModeValue, VStack
 } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
-import { Spinner, useErrorHandler, useMint, useTokenBonding, useTokenBondingKey } from "@strata-foundation/react";
+import { Spinner, useErrorHandler, useMint, useTokenBonding, useCurve } from "@strata-foundation/react";
 import moment from "moment";
 import React, { useMemo, useState } from "react";
 import { BiRefresh } from "react-icons/bi";
@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { numberWithCommas } from "../../utils/numberWithCommas";
 import { gql, useQuery } from "@apollo/client";
+import { fromCurve, asDecimal, toNumber } from "@strata-foundation/spl-token-bonding";
 
 const GET_BONDING_CHANGES = gql`
   query GetBondingChanges(
@@ -44,12 +45,15 @@ function now(): number {
 
 export const BondingPlot = ({
   tokenBondingKey,
+  numDataPoints=500,
 }: {
   tokenBondingKey: PublicKey;
+  numDataPoints?: number;
 }) => {
   const { info: tokenBonding, loading: loadingBonding } =
     useTokenBonding(tokenBondingKey);
 
+  const { info: curve, loading: loadingCurve } = useCurve(tokenBonding?.curve);
   const [stopTime, setStopTime] = useState(now())
 
   const baseMint = useMint(tokenBonding?.baseMint);
@@ -76,17 +80,58 @@ export const BondingPlot = ({
       limit: 1000,
     },
   });
-
   const data = useMemo(() => {
-    if (enrichedBondingChanges && baseMint && targetMint) {
-      return enrichedBondingChanges.map((c) => ({
-        time: c.insertTs * 1000,
-        price: Math.abs((Number(c.reserveChange) / Math.pow(10, baseMint.decimals)) / (Number(c.supplyChange) / Math.pow(10, targetMint.decimals))),
-      })).filter(p => p.price !== NaN && p.price !== Infinity);
-    }
+    if (enrichedBondingChanges && tokenBonding && baseMint && targetMint && curve) {
+      const changes = [...enrichedBondingChanges].sort((a, b) => a.insertTs - b.insertTs);
+      const startTime = tokenBonding?.goLiveUnixTime?.toNumber();
+      const step = (stopTime - startTime!) / numDataPoints;
+      const result = [];
 
+      let pointer = 0;
+      let currReserve = toNumber(tokenBonding.reserveBalanceFromBonding, baseMint);
+      let currSupply =
+        toNumber(tokenBonding.supplyFromBonding, targetMint);
+
+      let buyBaseRoyalty = asDecimal(tokenBonding.buyBaseRoyaltyPercentage);
+
+      let royaltyFactor = 1/(1-buyBaseRoyalty); // default royalty charged on strata
+      // calculate the initial reserve and supply of the lbc
+      for (let c of changes) {
+        let price = Math.abs((Number(c.reserveChange) / Math.pow(10, baseMint.decimals)) / (Number(c.supplyChange) / Math.pow(10, targetMint.decimals)));
+        if (price === NaN || price === Infinity) continue;
+
+        currReserve += (Number(c.reserveChange) / Math.pow(10, baseMint.decimals))*royaltyFactor;
+        currSupply += (Number(c.supplyChange) / Math.pow(10, targetMint.decimals))*royaltyFactor;
+      }
+
+      // calculate the price at each step
+      for (let i = startTime; i < stopTime; i += step) {
+        // account for reserve and supply changes due to transactions
+        while (changes.length > pointer && i > changes[pointer].insertTs) {
+          let c = changes[pointer];
+          currReserve -= (Number(c.reserveChange) / Math.pow(10, baseMint.decimals))*royaltyFactor;
+          currSupply -= (Number(c.supplyChange) / Math.pow(10, targetMint.decimals))*royaltyFactor;
+
+          pointer += 1;
+        }
+        const currPricing = fromCurve(
+          curve,
+          currReserve,
+          currSupply,
+          tokenBonding?.goLiveUnixTime?.toNumber()
+        );
+        
+        const price = currPricing.current(Number(i), 0, 0);
+        result.push({
+          price,
+          time: i * 1000,
+        });
+      }
+      
+      return result.filter(p => p.price !== NaN && p.price !== Infinity);
+    }
     return [];
-  }, [enrichedBondingChanges, baseMint, targetMint]);
+  }, [enrichedBondingChanges, baseMint, targetMint, curve, stopTime, tokenBonding]);
 
   const { handleErrors } = useErrorHandler();
   handleErrors(error);
@@ -105,7 +150,7 @@ export const BondingPlot = ({
     [data, baseMint]
   );
 
-  if (loadingBonding || !baseMint || !targetMint) {
+  if (loadingBonding || loadingCurve || !baseMint || !targetMint) {
     return (
       <Center>
         <Spinner />
