@@ -20,7 +20,7 @@ import {
   PopoverContent,
   Tooltip,
   PopoverArrow,
-  PopoverBody
+  PopoverBody,
 } from "@chakra-ui/react";
 import { GiphyFetch } from "@giphy/js-fetch-api";
 import { Gif } from "@giphy/react-components";
@@ -89,11 +89,10 @@ function ProfileName({ profileKey }: { profileKey: PublicKey } & TextProps) {
     profile?.identifierCertificateMint
   );
 
-  return <Text>{ username } </Text>
+  return <Text>{username} </Text>;
 }
 
 const MAX_MENTIONS_DISPLAY = 3;
-
 
 export function Message({
   id: messageId,
@@ -178,7 +177,7 @@ export function Message({
       return {};
     }
 
-    const grouped =  reacts.reduce(
+    const grouped = reacts.reduce(
       (
         acc: Record<string, IMessageWithPending[]>,
         react: IMessageWithPending
@@ -193,22 +192,24 @@ export function Message({
     );
 
     // Dedup by profile
-    return Object.fromEntries(Object.entries(grouped).map(([key, value]) => {
-      const seen = new Set<string>();
+    return Object.fromEntries(
+      Object.entries(grouped).map(([key, value]) => {
+        const seen = new Set<string>();
 
-      return [
-        key,
-        value
-          .filter((v) => {
-            const k = v.profileKey.toBase58()
-            if (!seen.has(k)) {
-              seen.add(k);
-              return v;
-            }
-          })
-          .filter(truthy),
-      ];
-    }))
+        return [
+          key,
+          value
+            .filter((v) => {
+              const k = v.profileKey.toBase58();
+              if (!seen.has(k)) {
+                seen.add(k);
+                return v;
+              }
+            })
+            .filter(truthy),
+        ];
+      })
+    );
   }, [reacts]);
 
   return (
@@ -324,113 +325,125 @@ export function Message({
                       }}
                     />
                   )
-              ) : (
-                <BuyMoreButton
-                  mint={readMint}
-                  trigger={(props) => {
-                    return (
-                      <Tooltip
-                        label={`You need ${tokenAmount} ${metadata?.data.symbol} to read this message`}
-                      >
-                        <HStack
-                          onClick={props.onClick}
-                          spacing={2}
-                          _hover={{ cursor: "pointer" }}
+                ) : (
+                  <BuyMoreButton
+                    mint={readMint}
+                    trigger={(props) => {
+                      return (
+                        <Tooltip
+                          label={`You need ${tokenAmount} ${metadata?.data.symbol} to read this message`}
                         >
-                          <Skeleton
-                            startColor={lockedColor}
-                            height="20px"
-                            w="300px"
-                            speed={100000}
-                          />
-                          <Icon color={lockedColor} as={BsLockFill} />
-                        </HStack>
-                      </Tooltip>
-                    );
-                  }}
-                />
+                          <HStack
+                            onClick={props.onClick}
+                            spacing={2}
+                            _hover={{ cursor: "pointer" }}
+                          >
+                            <Skeleton
+                              startColor={lockedColor}
+                              height="20px"
+                              w="300px"
+                              speed={100000}
+                            />
+                            <Icon color={lockedColor} as={BsLockFill} />
+                          </HStack>
+                        </Tooltip>
+                      );
+                    }}
+                  />
+                )}
+              </Box>
+              {Object.entries(reactsByEmoji).length > 0 && (
+                <HStack mt={2}>
+                  {Object.entries(reactsByEmoji).map(([emoji, messages]) => (
+                    <Popover matchWidth trigger="hover" key={emoji}>
+                      <PopoverTrigger>
+                        <Button
+                          onClick={() => {
+                            if (!myReacts.has(emoji))
+                              sendMessage({
+                                type: MessageType.React,
+                                emoji: emoji,
+                                referenceMessageId: messageId,
+                              });
+                          }}
+                          borderLeftRadius="20px"
+                          width="55px"
+                          borderRightRadius="20px"
+                          p={0}
+                          variant={myReacts.has(emoji) ? "solid" : "outline"}
+                          size="sm"
+                          key={emoji}
+                        >
+                          <HStack spacing={1}>
+                            <Text lineHeight={0} fontSize="lg">
+                              {emoji}
+                            </Text>
+                            <Text lineHeight={0} fontSize="sm">
+                              {messages.length}
+                            </Text>
+                          </HStack>
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent width="fit-content">
+                        <PopoverArrow />
+                        <PopoverBody>
+                          <HStack spacing={1}>
+                            {messages
+                              .slice(0, MAX_MENTIONS_DISPLAY)
+                              .map((message, index) => (
+                                <HStack key={message.id} spacing={0}>
+                                  <ProfileName
+                                    profileKey={message.profileKey}
+                                  />
+                                  {messages.length - 1 != index && (
+                                    <Text>, </Text>
+                                  )}
+                                </HStack>
+                              ))}
+                            {messages.length > MAX_MENTIONS_DISPLAY && (
+                              <Text>
+                                and {messages.length - MAX_MENTIONS_DISPLAY}{" "}
+                                others
+                              </Text>
+                            )}
+                          </HStack>
+                        </PopoverBody>
+                      </PopoverContent>
+                    </Popover>
+                  ))}
+                  <Button
+                    borderLeftRadius="20px"
+                    width="55px"
+                    borderRightRadius="20px"
+                    variant="outline"
+                    size="sm"
+                    onClick={onToggle}
+                  >
+                    <Icon as={MdOutlineAddReaction} />
+                  </Button>
+                </HStack>
               )}
-            </Box>
-            {Object.entries(reactsByEmoji).length > 0 && (
-              <HStack mt={2}>
-                {Object.entries(reactsByEmoji).map(([emoji, messages]) => (
-                  <Popover matchWidth trigger="hover" key={emoji}>
-                    <PopoverTrigger>
-                      <Button
-                        onClick={() => {
-                          if (!myReacts.has(emoji))
-                            sendMessage({
-                              type: MessageType.React,
-                              emoji: emoji,
-                              referenceMessageId: messageId,
-                            });
-                        }}
-                        borderLeftRadius="20px"
-                        width="55px"
-                        borderRightRadius="20px"
-                        p={0}
-                        variant={myReacts.has(emoji) ? "solid" : "outline"}
-                        size="sm"
-                        key={emoji}
-                      >
-                        <HStack spacing={1}>
-                          <Text lineHeight={0} fontSize="lg">
-                            {emoji}
-                          </Text>
-                          <Text lineHeight={0} fontSize="sm">
-                            {messages.length}
-                          </Text>
-                        </HStack>
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent width="fit-content">
-                      <PopoverArrow />
-                      <PopoverBody>
-                        <HStack spacing={1}>
-                          {messages.slice(0, MAX_MENTIONS_DISPLAY).map((message, index) => (
-                            <HStack key={message.id} spacing={0}>
-                              <ProfileName profileKey={message.profileKey} />
-                              {(messages.length - 1) != index && <Text>, </Text>}
-                            </HStack>
-                          ))}
-                          {messages.length > MAX_MENTIONS_DISPLAY && <Text>and {messages.length - MAX_MENTIONS_DISPLAY} others</Text>}
-                        </HStack>
-                      </PopoverBody>
-                    </PopoverContent>
-                  </Popover>
-                ))}
-                <Button
-                  borderLeftRadius="20px"
-                  width="55px"
-                  borderRightRadius="20px"
-                  variant="outline"
-                  size="sm"
-                  onClick={onToggle}
-                >
-                  <Icon as={MdOutlineAddReaction} />
-                </Button>
-              </HStack>
-            )}
-          </VStack>
-          <Icon
-            _hover={{ cursor: "pointer" }}
-            onClick={() => {
-              txids?.forEach((tx) => {
-                window.open(
-                  `https://explorer.solana.com/tx/${tx}?cluster=${cluster}`
-                );
-              });
-            }}
-            alignSelf="center"
-            w="12px"
-            h="12px"
-            as={pending ? BsCircle : BsCheckCircleFill}
-            color="gray"
-            title={status}
-          />
-        </HStack>
-      </PopoverTrigger>
-    </Popover>
+            </VStack>
+            <Icon
+              _hover={{ cursor: "pointer" }}
+              onClick={() => {
+                txids?.forEach((tx) => {
+                  window.open(
+                    `https://explorer.solana.com/tx/${tx}?cluster=${cluster}`
+                  );
+                });
+              }}
+              alignSelf="center"
+              w="12px"
+              h="12px"
+              as={pending ? BsCircle : BsCheckCircleFill}
+              color="gray"
+              title={status}
+            />
+          </HStack>
+        </PopoverTrigger>
+      </Popover>
+    </Box>
   );
 }
 function blobToUrl(blob: Blob | undefined): string | undefined {
