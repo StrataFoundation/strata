@@ -187,7 +187,7 @@ export async function uploadFile(
     );
     await shdwDrive.init();
 
-    const res = await withRetries(() => shdwDrive.uploadFile(accountKey, file));
+    const res = await withRetries(() => shdwDrive.uploadFile(accountKey, file), tries);
     return res.finalized_location;
   }
 }

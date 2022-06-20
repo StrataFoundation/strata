@@ -17,6 +17,7 @@ import {
   Popover,
   PopoverTrigger,
   PopoverContent,
+  Tooltip,
   PopoverArrow,
   PopoverBody
 } from "@chakra-ui/react";
@@ -30,7 +31,9 @@ import {
   useMint,
   useEndpoint,
   truthy,
+  useTokenMetadata,
 } from "@strata-foundation/react";
+import { humanReadable } from "@strata-foundation/spl-utils";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import moment from "moment";
 import React, { useMemo } from "react";
@@ -90,6 +93,7 @@ function ProfileName({ profileKey }: { profileKey: PublicKey } & TextProps) {
 
 const MAX_MENTIONS_DISPLAY = 3;
 
+
 export function Message({
   id: messageId,
   decodedMessage,
@@ -118,7 +122,6 @@ export function Message({
 
   const id = profile?.ownerWallet.toBase58();
   const { info: chat } = useChat(chatKey);
-  const readMint = chat?.readPermissionMintOrCollection;
   const muted = useColorModeValue("gray.500", "gray.400");
   const time = useMemo(() => {
     if (startBlockTime) {
@@ -127,6 +130,14 @@ export function Message({
       return t;
     }
   }, [startBlockTime]);
+
+  const readMint = chat?.readPermissionMintOrCollection;
+  const mintAcc = useMint(readMint);
+  const { metadata } = useTokenMetadata(readMint);
+  const tokenAmount =
+    mintAcc &&
+    readPermissionAmount &&
+    humanReadable(readPermissionAmount, mintAcc);
 
   const uid = publicKey?.toBase58();
 
@@ -302,19 +313,23 @@ export function Message({
                   mint={readMint}
                   trigger={(props) => {
                     return (
-                      <HStack
-                        onClick={props.onClick}
-                        spacing={2}
-                        _hover={{ cursor: "pointer" }}
+                      <Tooltip
+                        label={`You need ${tokenAmount} ${metadata?.data.symbol} to read this message`}
                       >
-                        <Skeleton
-                          startColor={lockedColor}
-                          height="20px"
-                          w="300px"
-                          speed={100000}
-                        />
-                        <Icon color={lockedColor} as={BsLockFill} />
-                      </HStack>
+                        <HStack
+                          onClick={props.onClick}
+                          spacing={2}
+                          _hover={{ cursor: "pointer" }}
+                        >
+                          <Skeleton
+                            startColor={lockedColor}
+                            height="20px"
+                            w="300px"
+                            speed={100000}
+                          />
+                          <Icon color={lockedColor} as={BsLockFill} />
+                        </HStack>
+                      </Tooltip>
                     );
                   }}
                 />
