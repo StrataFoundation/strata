@@ -15,7 +15,6 @@ export const Sidebar = (props: any) => {
       pos="fixed"
       top="0"
       left="0"
-      zIndex="sticky"
       h="full"
       pb="10"
       overflowX="hidden"

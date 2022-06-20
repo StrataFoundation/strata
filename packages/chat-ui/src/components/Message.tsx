@@ -7,16 +7,18 @@ import {
   Icon,
   IconButton,
   Image,
-  Popover,
-  PopoverBody,
-  PopoverContent,
-  PopoverTrigger,
+  TextProps,
   Skeleton,
   Text,
   useColorMode,
   useColorModeValue,
   useDisclosure,
   VStack,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverArrow,
+  PopoverBody
 } from "@chakra-ui/react";
 import { GiphyFetch } from "@giphy/js-fetch-api";
 import { Gif } from "@giphy/react-components";
@@ -27,6 +29,7 @@ import {
   useErrorHandler,
   useMint,
   useEndpoint,
+  truthy,
 } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import moment from "moment";
@@ -47,6 +50,8 @@ import {
 } from "../hooks";
 import { BuyMoreButton } from "./BuyMoreButton";
 import { EmojiSearch } from "./EmojiSearch";
+import { groupCollapsed } from "console";
+import { PublicKey } from "@solana/web3.js";
 
 const gf = new GiphyFetch(GIPHY_API_KEY);
 
@@ -73,6 +78,17 @@ const defaultOptions = {
     a: ["href", "target"],
   },
 };
+
+function ProfileName({ profileKey }: { profileKey: PublicKey } & TextProps) {
+  const { info: profile } = useProfile(profileKey);
+  const { username } = useUsernameFromIdentifierCertificate(
+    profile?.identifierCertificateMint
+  );
+
+  return <Text>{ username } </Text>
+}
+
+const MAX_MENTIONS_DISPLAY = 3;
 
 export function Message({
   id: messageId,
@@ -145,19 +161,42 @@ export function Message({
     );
   }, [reacts, myProfile]);
 
-  const reactsWithCounts = useMemo(() => {
+  const reactsByEmoji = useMemo(() => {
     if (!reacts) {
       return {};
     }
 
-    return reacts.reduce(
-      (acc: Record<string, number>, react: IMessageWithPending) => {
-        acc[react.decodedMessage!.emoji!] =
-          (acc[react.decodedMessage!.emoji!] || 0) + 1;
+    const grouped =  reacts.reduce(
+      (
+        acc: Record<string, IMessageWithPending[]>,
+        react: IMessageWithPending
+      ) => {
+        acc[react.decodedMessage!.emoji!] = [
+          ...(acc[react.decodedMessage!.emoji!] || []),
+          react,
+        ];
         return acc;
       },
-      {} as Record<string, number>
+      {} as Record<string, IMessageWithPending[]>
     );
+
+    // Dedup by profile
+    return Object.fromEntries(Object.entries(grouped).map(([key, value]) => {
+      const seen = new Set<string>();
+
+      return [
+        key,
+        value
+          .filter((v) => {
+            const k = v.profileKey.toBase58()
+            if (!seen.has(k)) {
+              seen.add(k);
+              return v;
+            }
+          })
+          .filter(truthy),
+      ];
+    }))
   }, [reacts]);
 
   return (
@@ -281,35 +320,53 @@ export function Message({
                 />
               )}
             </Box>
-            {Object.entries(reactsWithCounts).length > 0 && (
+            {Object.entries(reactsByEmoji).length > 0 && (
               <HStack mt={2}>
-                {Object.entries(reactsWithCounts).map(([emoji, count]) => (
-                  <Button
-                    onClick={() => {
-                      if (!myReacts.has(emoji))
-                        sendMessage({
-                          type: MessageType.React,
-                          emoji: emoji,
-                          referenceMessageId: messageId,
-                        });
-                    }}
-                    borderLeftRadius="20px"
-                    width="55px"
-                    borderRightRadius="20px"
-                    p={0}
-                    variant={myReacts.has(emoji) ? "solid" : "outline"}
-                    size="sm"
-                    key={emoji}
-                  >
-                    <HStack spacing={1}>
-                      <Text lineHeight={0} fontSize="lg">
-                        {emoji}
-                      </Text>
-                      <Text lineHeight={0} fontSize="sm">
-                        {count}
-                      </Text>
-                    </HStack>
-                  </Button>
+                {Object.entries(reactsByEmoji).map(([emoji, messages]) => (
+                  <Popover matchWidth trigger="hover" key={emoji}>
+                    <PopoverTrigger>
+                      <Button
+                        onClick={() => {
+                          if (!myReacts.has(emoji))
+                            sendMessage({
+                              type: MessageType.React,
+                              emoji: emoji,
+                              referenceMessageId: messageId,
+                            });
+                        }}
+                        borderLeftRadius="20px"
+                        width="55px"
+                        borderRightRadius="20px"
+                        p={0}
+                        variant={myReacts.has(emoji) ? "solid" : "outline"}
+                        size="sm"
+                        key={emoji}
+                      >
+                        <HStack spacing={1}>
+                          <Text lineHeight={0} fontSize="lg">
+                            {emoji}
+                          </Text>
+                          <Text lineHeight={0} fontSize="sm">
+                            {messages.length}
+                          </Text>
+                        </HStack>
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent width="fit-content">
+                      <PopoverArrow />
+                      <PopoverBody>
+                        <HStack spacing={1}>
+                          {messages.slice(0, MAX_MENTIONS_DISPLAY).map((message, index) => (
+                            <HStack key={message.id} spacing={0}>
+                              <ProfileName profileKey={message.profileKey} />
+                              {(messages.length - 1) != index && <Text>, </Text>}
+                            </HStack>
+                          ))}
+                          {messages.length > MAX_MENTIONS_DISPLAY && <Text>and {messages.length - MAX_MENTIONS_DISPLAY} others</Text>}
+                        </HStack>
+                      </PopoverBody>
+                    </PopoverContent>
+                  </Popover>
                 ))}
                 <Button
                   borderLeftRadius="20px"
