@@ -5,6 +5,14 @@ import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
 import { percent } from "@strata-foundation/spl-utils";
 import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import fs from "fs";
+import {
+  NAMESPACES_IDL,
+  NAMESPACES_PROGRAM,
+  NAMESPACES_PROGRAM_ID
+} from "@cardinal/namespaces";
+import { ChatSdk, ChatIDL } from "@strata-foundation/chat";
+//@ts-ignore
+import LitJsSdk from "lit-js-sdk";
 
 function timeIncrease(curve: TimeCurveConfig, c: number = 1): TimeCurveConfig {
   return curve
@@ -166,6 +174,26 @@ async function run() {
   });
 
   console.log(`Open Collective: ${collective}, bonding: ${tokenBonding}, open: ${openMintKeypair.publicKey}, openMetadata: ${await Metadata.getPDA(openMintKeypair.publicKey.toBase58())}`);
+  const litClient = new LitJsSdk.LitNodeClient();
+  const namespacesProgram = new anchor.Program<NAMESPACES_PROGRAM>(
+    NAMESPACES_IDL,
+    NAMESPACES_PROGRAM_ID,
+    provider
+  );
+  const ChatIDLJson = await anchor.Program.fetchIdl(ChatSdk.ID, provider);
+  const chatProgram = new anchor.Program<ChatIDL>(
+    ChatIDLJson as ChatIDL,
+    ChatSdk.ID,
+    provider
+  ) as anchor.Program<ChatIDL>;
+  const chatSdk = new ChatSdk({
+    provider,
+    program:  chatProgram,
+    litClient,
+    namespacesProgram,
+  });
+  
+  await chatSdk.initializeNamespaces();
 }
 
 run().catch(e => {
