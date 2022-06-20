@@ -36,6 +36,7 @@ async function getSdks(
   provider: Provider | undefined | null
 ): Promise<IStrataSdks> {
   if (!provider) {
+    console.warn("No provider passed via ProviderContext to StrataSdkContext. Please provide a provider")
     return {};
   }
 

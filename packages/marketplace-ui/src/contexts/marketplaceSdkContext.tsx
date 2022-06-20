@@ -28,6 +28,9 @@ async function getSdk(
   provider: Provider | undefined | null
 ): Promise<MarketplaceSdk | undefined> {
   if (!provider) {
+    console.warn(
+      "No provider passed via ProviderContext to StrataSdkContext. Please provide a provider"
+    );
     return undefined;
   }
 
