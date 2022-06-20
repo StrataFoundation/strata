@@ -24,7 +24,12 @@ import { LoadWalletModal } from "./LoadWalletModal";
 import { RiCheckFill } from "react-icons/ri";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { ChatSdk, IdentifierType, randomizeFileName, uploadFile } from "@strata-foundation/chat";
+import {
+  ChatSdk,
+  IdentifierType,
+  randomizeFileName,
+  uploadFile,
+} from "@strata-foundation/chat";
 import {
   truncatePubkey,
   useErrorHandler,
@@ -36,7 +41,13 @@ import { useAsyncCallback } from "react-async-hook";
 import { FormProvider, useForm } from "react-hook-form";
 import * as yup from "yup";
 import { useChatSdk } from "../contexts";
-import { delegateWalletStorage, useChatStorageAccountKey, useLoadDelegate, useUsernameFromIdentifierCertificate, useWalletProfile } from "../hooks";
+import {
+  delegateWalletStorage,
+  useChatStorageAccountKey,
+  useLoadDelegate,
+  useUsernameFromIdentifierCertificate,
+  useWalletProfile,
+} from "../hooks";
 import { useWalletFromIdentifier } from "../hooks/useWalletFromIdentifier";
 import { FormControlWithError } from "./FormControlWithError";
 import { CopyBlackBox } from "./CopyBlackBox";
@@ -115,14 +126,14 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
   } = useDisclosure({
     defaultIsOpen: false,
   });
-  
+
   const {
     delegateWallet,
     needsTopOff,
     mnemonic,
     error: delegateError,
     loadingNeeds,
-    loading: loadingDelegate
+    loading: loadingDelegate,
   } = useLoadDelegate();
 
   const { username, image } = watch();
@@ -138,12 +149,11 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
 
   useEffect(() => {
     if (profile) {
-      setValue("imageUrl", profile.imageUrl)
+      setValue("imageUrl", profile.imageUrl);
     }
-  }, [profile, setValue])
+  }, [profile, setValue]);
   useEffect(() => {
-    if (existingUsername)
-      setValue("username", existingUsername);
+    if (existingUsername) setValue("username", existingUsername);
   }, [existingUsername, setValue]);
 
   const userError = wallet && publicKey && !wallet.equals(publicKey) && (
@@ -161,7 +171,7 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
   async function onSubmit(args: IProfileProps): Promise<void> {
     await execute(chatSdk, args, setStep);
     if (props.onClose) {
-      props.onClose()
+      props.onClose();
     }
   }
 
@@ -171,7 +181,14 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
     } else {
       onClose();
     }
-  }, [loadingDelegate, props.isOpen, needsTopOff, onOpen, onClose, loadingNeeds]);
+  }, [
+    loadingDelegate,
+    props.isOpen,
+    needsTopOff,
+    onOpen,
+    onClose,
+    loadingNeeds,
+  ]);
 
   const { result: chatStorage } = useChatStorageAccountKey();
   const hiddenFileInput = React.useRef<HTMLInputElement>(null);
@@ -194,10 +211,7 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
       reader.readAsDataURL(image);
       randomizeFileName(image);
       const url = `https://shdw-drive.genesysgo.net/${chatStorage}/${image.name}`;
-      setValue(
-        "imageUrl",
-        url
-      );
+      setValue("imageUrl", url);
       toast.custom(
         (t) => (
           <LongPromiseNotification
@@ -236,7 +250,7 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
         isOpen={true}
         onClose={() => {
           if (!loadingProfile && !profileAccount) disconnect();
-          props.onClose && props.onClose()
+          props.onClose && props.onClose();
 
           onClose();
         }}
@@ -266,7 +280,14 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
               <Text fontSize="xl" fontWeight="bold">
                 Save your Chat Wallet info
               </Text>
-              {delegateWallet && <CopyBlackBox pb={1} pt={1} fontSize="sm" text={delegateWallet.publicKey.toBase58()} />}
+              {delegateWallet && (
+                <CopyBlackBox
+                  pb={1}
+                  pt={1}
+                  fontSize="sm"
+                  text={delegateWallet.publicKey.toBase58()}
+                />
+              )}
               {mnemonic && <CopyBlackBox text={mnemonic} />}
             </VStack>
 

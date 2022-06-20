@@ -1,4 +1,5 @@
 import { BsLockFill } from "react-icons/bs";
+import FocusLock from "react-focus-lock";
 import {
   Avatar,
   Box,
@@ -211,103 +212,118 @@ export function Message({
   }, [reacts]);
 
   return (
-    <Popover matchWidth trigger="hover" placement="end-start" onClose={onClose}>
-      <PopoverContent
-        right={isOpen ? "350px" : "180px"}
-        bg={isOpen ? undefined : "transparent"}
-        border={isOpen ? undefined : "none"}
-        width={isOpen ? undefined : "60px"}
+    <Box _hover={{ bg: highlightedBg }}>
+      <Popover
+        matchWidth
+        trigger="hover"
+        placement="right-start"
+        onClose={onClose}
       >
-        <PopoverBody>
-          {!isOpen && (
-            <IconButton
-              icon={<Icon as={MdOutlineAddReaction} />}
-              w="32px"
-              h="32px"
-              variant="outline"
-              size="lg"
-              aria-label="Add Reaction"
-              onClick={onToggle}
-            />
-          )}
-          {isOpen && (
-            <EmojiSearch
-              onSelect={(emoji) => {
-                onClose();
-                sendMessage({
-                  type: MessageType.React,
-                  emoji: emoji.symbol,
-                  referenceMessageId: messageId,
-                });
-              }}
-            />
-          )}
-        </PopoverBody>
-      </PopoverContent>
-      <PopoverTrigger>
-        <HStack
-          pl={2}
-          pr={2}
-          pb={1}
-          pt={1}
-          w="full"
-          align="start"
-          spacing={2}
-          className="strata-message"
-          _hover={{ backgroundColor: highlightedBg }}
+        <PopoverContent
+          right={isOpen ? "350px" : "180px"}
+          bg={isOpen ? undefined : "transparent"}
+          border={isOpen ? undefined : "none"}
+          width={isOpen ? undefined : "60px"}
         >
-          {showUser ? (
-            <Avatar mt="6px" size="sm" src={profile?.imageUrl} />
-          ) : (
-            <Box w="34px" />
-          )}
-          <VStack w="full" align="start" spacing={0}>
-            {showUser && (
-              <HStack>
-                <Text
-                  fontSize="sm"
-                  fontWeight="semibold"
-                  color={uid == id ? "blue.500" : usernameColor[colorMode]}
-                >
-                  {username}
-                </Text>
-                <Text fontSize="xs" color={muted}>
-                  {moment(time).format("LT")}
-                </Text>
-              </HStack>
+          <PopoverBody>
+            {!isOpen && (
+              <IconButton
+                icon={<Icon as={MdOutlineAddReaction} />}
+                w="32px"
+                h="32px"
+                mt="-40px"
+                variant="outline"
+                size="lg"
+                aria-label="Add Reaction"
+                bg="white"
+                _dark={{
+                  bg: "gray.900",
+                  _hover: {
+                    bg: highlightedBg,
+                  },
+                }}
+                onClick={onToggle}
+              />
             )}
+            {isOpen && (
+              <FocusLock returnFocus persistentFocus={false}>
+                <EmojiSearch
+                  onSelect={(emoji) => {
+                    onClose();
+                    sendMessage({
+                      type: MessageType.React,
+                      emoji: emoji.symbol,
+                      referenceMessageId: messageId,
+                    });
+                  }}
+                />
+              </FocusLock>
+            )}
+          </PopoverBody>
+        </PopoverContent>
+        <PopoverTrigger>
+          <HStack
+            pl={2}
+            pr={2}
+            pb={1}
+            pt={1}
+            w="full"
+            align="start"
+            spacing={2}
+            className="strata-message"
+          >
+            {showUser ? (
+              <Avatar mt="6px" size="sm" src={profile?.imageUrl} />
+            ) : (
+              <Box w="34px" />
+            )}
+            <VStack w="full" align="start" spacing={0}>
+              {showUser && (
+                <HStack>
+                  <Text
+                    fontSize="sm"
+                    fontWeight="semibold"
+                    color={uid == id ? "blue.500" : usernameColor[colorMode]}
+                  >
+                    {username}
+                  </Text>
+                  <Text fontSize="xs" color={muted}>
+                    {moment(time).format("LT")}
+                  </Text>
+                </HStack>
+              )}
 
-            <Box
-              w="fit-content"
-              position="relative"
-              textAlign={"left"}
-              wordBreak="break-word"
-              color={textColor[colorMode]}
-            >
-              {message ? (
-                message.type === MessageType.Gify ? (
-                  <GifyGif gifyId={message.gifyId} />
-                ) : message.type === MessageType.Image ? (
-                  <Image
-                    mt={"4px"}
-                    alt={message.text}
-                    height="300px"
-                    src={
-                      (message.attachments || [])[0] ||
-                      blobToUrl((message.decryptedAttachments || [])[0])
-                    }
-                  />
-                ) : message.type === MessageType.Text ? (
-                  <Text mt={"-4px"}>{message.text}</Text>
-                ) : (
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: message.html
-                        ? sanitizeHtml(message.html, htmlAllowlist)
-                        : "",
-                    }}
-                  />
-                )
+              <Box
+                w="fit-content"
+                position="relative"
+                textAlign={"left"}
+                wordBreak="break-word"
+                color={textColor[colorMode]}
+              >
+                {message ? (
+                  message.type === MessageType.Gify ? (
+                    <GifyGif gifyId={message.gifyId} />
+                  ) : message.type === MessageType.Image ? (
+                    <Image
+                      mt={"4px"}
+                      alt={message.text}
+                      height="300px"
+                      src={
+                        (message.attachments || [])[0] ||
+                        blobToUrl((message.decryptedAttachments || [])[0])
+                      }
+                    />
+                  ) : message.type === MessageType.Text ? (
+                    <Text mt={"-4px"}>{message.text}</Text>
+                  ) : (
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html: message.html
+                          ? sanitizeHtml(message.html, htmlAllowlist)
+                          : "",
+                      }}
+                    />
+                  )
               ) : (
                 <BuyMoreButton
                   mint={readMint}
