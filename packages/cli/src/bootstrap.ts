@@ -10,7 +10,7 @@ import {
   NAMESPACES_PROGRAM,
   NAMESPACES_PROGRAM_ID
 } from "@cardinal/namespaces";
-import { ChatSdk, ChatIDL } from "@strata-foundation/chat";
+import { ChatSdk, ChatIDL, IdentifierType } from "@strata-foundation/chat";
 //@ts-ignore
 import LitJsSdk from "lit-js-sdk";
 
@@ -194,6 +194,17 @@ async function run() {
   });
   
   await chatSdk.initializeNamespaces();
+  const { certificateMint: identifierCertificateMint } = await chatSdk.claimIdentifier({
+    type: IdentifierType.Chat,
+    identifier: "openchat",
+  });
+  await chatSdk.initializeChat({
+    identifierCertificateMint,
+    name: "Open Collective Chat",
+    readPermissionMintOrCollection: new PublicKey(openMintKeypair.publicKey),
+    postPermissionMintOrCollection: new PublicKey(openMintKeypair.publicKey),
+    imageUrl: "https://strata-token-metadata.s3.us-east-2.amazonaws.com/open.png",
+  });
 }
 
 run().catch(e => {
