@@ -118,17 +118,19 @@ export async function initStorageIfNeeded(
       )}, file size is ${sizeBytes}, adding ${sizeKB} KB`
     );
 
-    const shdwNeeded = storageAccountBigEnough ? 0 : (sizeKB * 1024) / Math.pow(10, 9);
+    const shadesNeeded = storageAccountBigEnough ? 0 : Math.max((sizeKB * 1024), 1);
+    const shdwNeeded = shadesNeeded / Math.pow(10, 9);
     const solToken = orcaSolPool.getTokenB();
     const shdwToken = orcaSolPool.getTokenA();
     const shdwOwnedAmount = await getOwnedAmount(localProvider, pubKey, SHDW);
 
-    if (shdwOwnedAmount < shdwNeeded) {
-      console.log("Not enough SHDW, buying some...");
+    if (shdwOwnedAmount < shadesNeeded) {
       const quote = await orcaSolPool.getQuote(
         shdwToken,
-        new Decimal(Math.max(shdwNeeded * 1.1, Math.pow(10, -9))) // Add 5% more than we need
+        // Add 5% more than we need, at least need 1 shade
+        new Decimal(shdwNeeded * 1.05)
       );
+      console.log(`Not enough SHDW, buying ${shdwNeeded} SHDW for ~${quote.getExpectedOutputAmount().toNumber()} SOL`);
       const swapPayload = await orcaSolPool.swap(
         pubKey,
         solToken,
@@ -146,7 +148,9 @@ export async function initStorageIfNeeded(
       await sendAndConfirmWithRetry(
         localProvider.connection,
         tx.serialize(),
-        {},
+        {
+          skipPreflight: true,
+        },
         "max"
       );
       // Even with max confirmation, still this sometimes fails
@@ -156,9 +160,9 @@ export async function initStorageIfNeeded(
     await shdwDrive.init();
 
     if (storageAccount && sizeKB && !storageAccountBigEnough) {
-      await shdwDrive.addStorage(accountKey, sizeKB + "KB");
+      await withRetries(() => shdwDrive.addStorage(accountKey, sizeKB + "KB"), 3);
     } else if (!storageAccount) {
-      await shdwDrive.createStorageAccount("chat", sizeKB + "KB");
+      await withRetries(() => shdwDrive.createStorageAccount("chat", sizeKB + "KB"), 3);
     }
   }
 }
@@ -183,16 +187,8 @@ export async function uploadFile(
     );
     await shdwDrive.init();
 
-
-    try {
-      const res = await shdwDrive.uploadFile(accountKey, file);
-      return res.finalized_location;
-    } catch (e: any) {
-      if (e.toString().includes("Blockhash not found") && tries > 0) {
-        return uploadFile(provider, file, delegateWallet, tries - 1)
-      }
-      throw e;
-    }
+    const res = await withRetries(() => shdwDrive.uploadFile(accountKey, file));
+    return res.finalized_location;
   }
 }
 
@@ -227,5 +223,17 @@ function maybeUseDevnetWallet(connection: Connection, delegateWallet: Keypair | 
     return DEVNET_WALLET
   }
   return delegateWallet;
+}
+
+async function withRetries<T>(arg0: () => Promise<T>, tries: number = 3): Promise<T> {
+  try {
+    return await arg0()
+  } catch (e: any) {
+    if (tries > 0) {
+      console.warn(`Failed tx, retrying up to ${tries} more times.`, e);
+      return withRetries(arg0, tries - 1)
+    }
+    throw e;
+  }
 }
 

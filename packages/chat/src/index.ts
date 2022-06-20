@@ -401,6 +401,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     ) as Program<ChatIDL>;
     const client = new LitJsSdk.LitNodeClient({
       alertWhenUnauthorized: false,
+      debug: false
     });
     await client.connect();
 
