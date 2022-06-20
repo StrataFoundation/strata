@@ -208,7 +208,7 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
               toast.dismiss(t.id);
             }}
             exec={async () => {
-              const loc = await uploadFile(chatSdk!.provider, image, delegateWallet);
+              await uploadFile(chatSdk!.provider, image, delegateWallet);
               return true;
             }}
             onComplete={async () => {
