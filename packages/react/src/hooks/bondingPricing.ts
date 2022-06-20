@@ -100,10 +100,13 @@ export function useBondingPricing(
   const getPricing = async (
     tokenBondingSdk: SplTokenBonding | undefined,
     key: PublicKey | null | undefined,
+    tokenBondingAcct: any, // Make the pricing be re-fetched whenever the bonding changes.
     reserves: any, // Make the pricing be re-fetched whenever the reserves change.
     mint: any // Make the pricing be re-fetched whenever the supply change. This doesn't account for
     // collective changes, but will due for now. TODO: Account for collective changes too
-  ) => tokenBondingSdk && key && tokenBondingSdk.getPricing(key);
+  ) => {
+    return tokenBondingSdk && key && tokenBondingSdk.getPricing(key)
+  }
 
   const {
     result: pricing,
@@ -112,6 +115,7 @@ export function useBondingPricing(
   } = useAsync(getPricing, [
     tokenBondingSdk,
     tokenBonding,
+    tokenBondingAcct,
     reserves,
     targetMint,
   ]);

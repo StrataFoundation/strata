@@ -8,3 +8,4 @@ export * from "./ManualForm";
 export * from "./FullyManagedForm";
 export * from "./TokenMetadataInputs";
 export * from "./RadioCard";
+export * from "./EditMetadataForm";

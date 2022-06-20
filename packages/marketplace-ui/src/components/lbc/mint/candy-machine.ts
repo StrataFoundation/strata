@@ -1,4 +1,4 @@
-import * as anchor from "@project-serum/anchor";
+import * as anchor from "anchor-17";
 
 import {
   MintLayout,

@@ -54,7 +54,7 @@ export function UseExistingMintInputs() {
         <Switch isChecked={useExistingMint} {...register("useExistingMint")} />
       </FormControlWithError>
       <Box w="full" p={0}>
-        <Collapse in={useExistingMint} animateOpacity>
+        <Collapse in={useExistingMint} animateOpacity style={{ overflow: "visible"}}>
           <FormControlWithError
             id="existingMint"
             help="The mint id of the existing token to use for this sale"

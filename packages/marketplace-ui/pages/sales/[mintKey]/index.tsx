@@ -40,7 +40,7 @@ export const MarketDisplay: NextPage = ({
         url={`${SITE_URL}/item/${mintKey}/`}
       />
       <Box padding="54px" backgroundColor="black.500" />
-      <Container mt={"-50px"} justify="stretch" maxW="960px">
+      <Container mt={"-50px"} justifyContent="stretch" maxW="960px">
         <Box zIndex={1} bg="white" shadow="xl" rounded="lg">
           <SaleItem
             name={name}

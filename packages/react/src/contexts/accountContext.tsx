@@ -20,17 +20,10 @@ export const AccountProvider: FC<IAccountProviderProps> = ({
   extendConnection = true,
 }) => {
   const { connection } = useConnection();
-  const [cache, setCache] = useState<AccountFetchCache>(
-    connection && new AccountFetchCache({
-      connection,
-      delay: 500,
-      commitment,
-      extendConnection,
-    })
-  );
+  const [cache, setCache] = useState<AccountFetchCache>();
   useEffect(() => {
     if (connection) {
-      cache.close();
+      cache?.close();
 
       setCache(
         new AccountFetchCache({

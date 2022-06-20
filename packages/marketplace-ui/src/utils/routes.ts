@@ -16,6 +16,10 @@ export const routes: Record<string, IRoute> = {
     path: "/bounties/:mintKey/edit",
     params: ["mintKey"],
   },
+  editMetadata: {
+    path: "/edit-metadata",
+    params: []
+  },
   sales: { path: "/sales", params: [] },
   newSale: { path: "/launchpad/sales/new", params: [] },
   sale: { path: "/sales/:mintKey", params: ["mintKey"] },
