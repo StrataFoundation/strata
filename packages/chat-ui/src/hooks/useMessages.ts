@@ -1,18 +1,18 @@
-import { ConfirmedTransactionMeta, Message, PublicKey } from "@solana/web3.js";
+import { usePrevious } from "@chakra-ui/react";
+import { PublicKey } from "@solana/web3.js";
 import {
   ChatSdk,
   IMessage,
   MessageType,
-  ReactMessage,
+  ReactMessage
 } from "@strata-foundation/chat";
 import {
-  truthy,
-  useTransactions,
-  TransactionResponseWithSig,
+  TransactionResponseWithSig, truthy, useMint, useOwnedAmount, useTransactions
 } from "@strata-foundation/react";
+import { toNumber } from "@strata-foundation/spl-utils";
 import { useEffect, useMemo, useState } from "react";
-import { useAsync } from "react-async-hook";
 import { useChatSdk } from "../contexts";
+import { useChat } from "./useChat";
 
 export interface IMessageWithPending extends IMessage {
   pending?: boolean;
@@ -121,6 +121,29 @@ export function useMessages(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
   const [messages, setMessages] = useState<IMessageWithPending[]>();
+
+  const { info: chatAcc } = useChat(chat);
+  const ownedAmount = useOwnedAmount(chatAcc?.readPermissionMintOrCollection);
+  const mint = useMint(chatAcc?.readPermissionMintOrCollection);
+  const readAmountNum = chatAcc && mint && toNumber(chatAcc.defaultReadPermissionAmount, mint)
+  const previousOwnedAmount = usePrevious(ownedAmount)
+
+  useEffect(() => {
+    if (
+      typeof previousOwnedAmount !== "undefined" &&
+      typeof readAmountNum !== "undefined" &&
+      typeof ownedAmount !== "undefined"
+    ) {
+      if (previousOwnedAmount < readAmountNum && ownedAmount >= readAmountNum) {
+        console.log("Ownership changed, attempting to unlock messages");
+        setLoading(true);
+        (async () => {
+          const newMessages = await getMessages(chatSdk, transactions);
+          setMessages(newMessages);
+        })();
+      }
+    }
+  }, [previousOwnedAmount, readAmountNum, ownedAmount, previousOwnedAmount]);
 
   useEffect(() => {
     (async () => {
