@@ -30,6 +30,7 @@ import {
   useEndpoint,
   useLocalStorage,
   useMint,
+  useOwnedAmount,
   useTokenMetadata,
 } from "@strata-foundation/react";
 import { Cluster } from "@strata-foundation/accelerator";
@@ -70,6 +71,7 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
   const { chatSdk } = useChatSdk();
   const { publicKey } = useWallet();
   const { key: profileKey } = useProfileKey(publicKey || undefined);
+  const ownedAmount = useOwnedAmount(chat?.readPermissionMintOrCollection);
 
   const [settings, setSettings] = useLocalStorage<ISettings>("settings", {
     soundEnabled: true,
@@ -199,6 +201,25 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
                           h="18px"
                           title={postMetadata?.data.symbol}
                           src={postImage}
+                        />
+                      </HStack>
+                    )}
+                  </Box>
+                  <Box w="full" fontSize="sm">
+                    {readMetadata && (
+                      <HStack spacing={1}>
+                        <Text>You currently have</Text>
+                        <Flex grow={1}>
+                          <Divider variant="dashed" />
+                        </Flex>
+                        <Text fontWeight="bold" textTransform="capitalize">
+                          {ownedAmount ? roundToDecimals(ownedAmount, 4) : 0}
+                        </Text>
+                        <Avatar
+                          w="18px"
+                          h="18px"
+                          title={readMetadata?.data.symbol}
+                          src={readImage}
                         />
                       </HStack>
                     )}
