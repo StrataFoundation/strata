@@ -1,4 +1,3 @@
-import { useChatIdFromIdentifierCertificate } from "../../hooks/useChatIdFromIdentifierCertificate";
 import {
   Avatar,
   Flex,
@@ -7,9 +6,8 @@ import {
   Text,
   useColorMode,
   useColorModeValue,
-  VStack,
+  VStack
 } from "@chakra-ui/react";
-import { useTokenMetadata } from "@strata-foundation/react";
 import { useRouter } from "next/router";
 import React from "react";
 import { useChat } from "../../hooks/useChat";

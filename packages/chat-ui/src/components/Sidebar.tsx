@@ -1,13 +1,26 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Flex, Box, Icon, IconButton, useColorMode } from "@chakra-ui/react";
 import { IoMoon, IoSunny } from "react-icons/io5";
 import { ProfileButton } from "./ProfileButton";
 import { ChatSidebarPreview } from "./rooms/ChatSidebarPreview";
-
-const VISIBLE_CHATS = ["open"];
+import { useLocalStorage } from "@strata-foundation/react";
+import { VISIBLE_CHATS } from "../constants";
+import { useRouter } from "next/router";
+import { useChat, useChatKeyFromIdentifier } from "../hooks";
 
 export const Sidebar = (props: any) => {
   const { colorMode, toggleColorMode } = useColorMode();
+  const [chats, setChats] = useLocalStorage("chats", VISIBLE_CHATS);
+  const router = useRouter();
+  const { id } = router.query;
+  const { chatKey, loading: loadingId } = useChatKeyFromIdentifier(id);
+  const { info: chat } = useChat(chatKey);
+  
+  useEffect(() => {
+    if (chat && id) {
+      setChats([...new Set([...chats, id as string])]);
+    }
+  }, [chat, id]);
 
   return (
     <Box
@@ -47,7 +60,7 @@ export const Sidebar = (props: any) => {
         color="gray.600"
         aria-label="Main Navigation"
       >
-        {VISIBLE_CHATS.map((identifier) => (
+        {chats.map((identifier) => (
           <ChatSidebarPreview key={identifier} identifier={identifier} />
         ))}
       </Flex>
