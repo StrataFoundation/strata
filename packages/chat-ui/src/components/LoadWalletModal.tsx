@@ -23,7 +23,7 @@ export const LoadWalletModal = (
   } = useLoadDelegate();
   const [sliderValue, setSliderValue] = React.useState(50);
   const { publicKey } = useWallet();
-  const { amount: solAmount } = useSolOwnedAmount(publicKey);
+  const { amount: solAmount } = useSolOwnedAmount(publicKey || undefined);
 
   const sol = useMemo(() => {
     return (sliderValue / 100) * 0.1;

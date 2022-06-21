@@ -105,7 +105,7 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
     resolver: yupResolver(validationSchema),
     defaultValues: {},
   });
-  const { disconnect, publicKey } = useWallet();
+  const { publicKey } = useWallet();
   const {
     register,
     handleSubmit,
@@ -249,7 +249,6 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
       <LoadWalletModal
         isOpen={true}
         onClose={() => {
-          if (!loadingProfile && !profileAccount) disconnect();
           props.onClose && props.onClose();
 
           onClose();
@@ -265,7 +264,6 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
     <Modal
       isOpen={true}
       onClose={() => {
-        if (!loading && !profileAccount) disconnect();
         props.onClose && props.onClose();
       }}
       size="lg"
