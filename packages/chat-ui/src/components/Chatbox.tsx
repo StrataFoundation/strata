@@ -33,6 +33,7 @@ import { LongPromiseNotification } from "./LongPromiseNotification";
 import { CreateProfileModal } from "./CreateProfileModal";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { LoadWalletModal } from "./LoadWalletModal";
 
 const converter = new Converter({
   simpleLineBreaks: true,
@@ -51,6 +52,7 @@ export function Chatbox({
 }: chatProps) {
   const [input, setInput] = useState("");
   const { isOpen, onToggle, onClose } = useDisclosure();
+  const { isOpen: loadWalletIsOpen, onOpen: onOpenLoadWallet, onClose: onCloseLoadWallet }= useDisclosure();
   const handleChange = (html: string) => {
     setInput(html);
   };
@@ -134,18 +136,21 @@ export function Chatbox({
       <CreateProfileModal isOpen={profileIsOpen} onClose={closeProfile} />
     </Flex>
   ) : needsTopOff ? (
-    <Flex justify="center" mb="6px">
-      <Button
-        isLoading={loadingDelegate}
-        size="sm"
-        colorScheme="primary"
-        variant="outline"
-        onClick={() => loadDelegate()}
-      >
-        Top Off Chat Wallet
-      </Button>
-      <CreateProfileModal isOpen={profileIsOpen} onClose={closeProfile} />
-    </Flex>
+    <>
+      <LoadWalletModal isOpen={loadWalletIsOpen} onClose={onCloseLoadWallet} onLoaded={() => onCloseLoadWallet()} />
+      <Flex justify="center" mb="6px">
+        <Button
+          isLoading={loadingDelegate}
+          size="sm"
+          colorScheme="primary"
+          variant="outline"
+          onClick={() => onOpenLoadWallet()}
+        >
+          Top Off Chat Wallet
+        </Button>
+        <CreateProfileModal isOpen={profileIsOpen} onClose={closeProfile} />
+      </Flex>
+    </>
   ) : hasEnough ? (
     <>
       <Flex direction="row" position="sticky" bottom={0} p={2}>
