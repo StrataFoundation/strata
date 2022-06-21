@@ -1,32 +1,14 @@
 import {
-  Text,
-  ModalContent,
-  Modal,
-  ModalBody,
-  useColorModeValue,
-  Box,
-  Icon,
-  Center,
-  VStack,
-  HStack,
-  Button,
-  ModalProps,
-  Link,
-  Input,
-  Slider,
-  SliderMark,
-  SliderTrack,
-  SliderThumb,
-  SliderFilledTrack,
+  Box, Button, Center, HStack, Icon, Modal,
+  ModalBody, ModalContent, ModalProps, Slider, SliderFilledTrack, SliderMark, SliderThumb, SliderTrack, Text, useColorModeValue, VStack
 } from "@chakra-ui/react";
-import { useErrorHandler, useProvider } from "@strata-foundation/react";
-import { initStorageIfNeeded } from "@strata-foundation/chat";
-import React, { useMemo, useState } from "react";
-import { useAsyncCallback } from "react-async-hook";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useErrorHandler, useSolOwnedAmount } from "@strata-foundation/react";
+import { numberWithCommas } from "@strata-foundation/spl-utils";
+import React, { useMemo } from "react";
 import { AiOutlinePlus } from "react-icons/ai";
 import { useLoadDelegate } from "../hooks";
-import { WalletIcon, StrataIcon } from "../svg";
-import { numberWithCommas } from "@strata-foundation/spl-utils";
+import { StrataIcon, WalletIcon } from "../svg";
 
 export const LoadWalletModal = (
   props: Partial<ModalProps> & { onLoaded: () => void }
@@ -40,6 +22,8 @@ export const LoadWalletModal = (
     needsTopOff,
   } = useLoadDelegate();
   const [sliderValue, setSliderValue] = React.useState(50);
+  const { publicKey } = useWallet();
+  const { amount: solAmount } = useSolOwnedAmount(publicKey);
 
   const sol = useMemo(() => {
     return (sliderValue / 100) * 0.1;
@@ -103,19 +87,18 @@ export const LoadWalletModal = (
               </Text>
               <Text textAlign="center">
                 Strata Chat loads a hot wallet in your local storage. This helps
-                us avoid asking for approval for every message. Load it up with as many messages as you want 
-                now, you can always top it off later!
+                us avoid asking for approval for every message. Load it up with
+                as many messages as you want now, you can always top it off
+                later!
               </Text>
               <Center>
-                <Text fontWeight="bold">◎{numberWithCommas(sol, 3)} ({numberWithCommas(messages, 0)} messages)</Text>
+                <Text fontWeight="bold">
+                  ◎{numberWithCommas(sol, 3)} ({numberWithCommas(messages, 0)}{" "}
+                  messages)
+                </Text>
               </Center>
               <Box pt={0} pb={2}>
-                <Slider
-                  min={1}
-                  onChange={(val) =>
-                    setSliderValue(val)
-                  }
-                >
+                <Slider min={1} onChange={(val) => setSliderValue(val)}>
                   <SliderMark value={1} {...labelStyles}>
                     0
                   </SliderMark>
@@ -133,6 +116,7 @@ export const LoadWalletModal = (
               </Box>
             </VStack>
             <Button
+              isDisabled={solAmount < sol}
               mt={4}
               variant="solid"
               colorScheme="primary"
@@ -140,7 +124,7 @@ export const LoadWalletModal = (
               loadingText={"Loading Hot Wallet..."}
               isLoading={loadingDelegate}
             >
-              {needsInit ? "Create Hot Wallet" : "Load Hot Wallet"}
+              {solAmount < sol ? "Not enough SOL" : needsInit ? "Create Hot Wallet" : "Load Hot Wallet"}
             </Button>
           </VStack>
         </ModalBody>
