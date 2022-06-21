@@ -284,7 +284,7 @@ export function Message({
                   <Text
                     fontSize="sm"
                     fontWeight="semibold"
-                    color={uid == id ? "blue.500" : usernameColor[colorMode]}
+                    color={usernameColor[colorMode]}
                   >
                     {username}
                   </Text>

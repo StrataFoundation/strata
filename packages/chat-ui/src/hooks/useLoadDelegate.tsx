@@ -10,7 +10,7 @@ import { useDelegateWalletStruct } from "./useDelegateWalletStruct";
 import { useDelegateWalletStructKey } from "./useDelegateWalletStructKey";
 import { generateMnemonic } from "bip39";
 
-async function runLoadDelegate(chatSdk: ChatSdk | undefined) {
+async function runLoadDelegate(chatSdk: ChatSdk | undefined, sol: number) {
   if (chatSdk) {
     let delegateWalletKeypair = delegateWalletStorage.getDelegateWallet(
       chatSdk.wallet.publicKey!
@@ -46,12 +46,13 @@ async function runLoadDelegate(chatSdk: ChatSdk | undefined) {
         delegateWalletKeypair!.publicKey
       )
     )?.lamports;
-    if (balance || 0 < 10000000) {
+    const solLamports = sol * Math.pow(10, 9);
+    if (balance || 0 < solLamports) {
       instructions.push(
         SystemProgram.transfer({
           fromPubkey: chatSdk.wallet.publicKey,
           toPubkey: delegateWalletKeypair!.publicKey,
-          lamports: 100000000, // 20000 messages
+          lamports: solLamports,
         })
       );
     }
@@ -82,9 +83,9 @@ export function useLoadDelegate() {
     mnemonic,
     loadingNeeds: loadingStruct || loadingBalance || loadingKey,
     needsInit: !loadingStruct && !loadingKey && !account,
-    needsTopOff: !delegateWallet || (!loadingBalance && balance < 0.01),
-    loadDelegate: () => {
-      return loadDelegate(chatSdk)
+    needsTopOff: !delegateWallet || (!loadingBalance && balance < 0.00001),
+    loadDelegate: (sol: number) => {
+      return loadDelegate(chatSdk, sol)
     },
     loading,
     error,
