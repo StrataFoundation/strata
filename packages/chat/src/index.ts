@@ -33,6 +33,7 @@ import LitJsSdk from "lit-js-sdk";
 import { v4 as uuid } from "uuid";
 import { CaseInsensitiveMarkerV0, ChatIDL, ChatV0, DelegateWalletV0, NamespacesV0, PostAction, ProfileV0 } from "./generated/chat";
 import { uploadFile } from "./shdw";
+const crypto = require('crypto').webcrypto;
 
 const MESSAGE_MAX_CHARACTERS = 352; // TODO: This changes with optional accounts in the future
 
@@ -346,6 +347,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   chain: string;
   authingLit: Promise<void> | null;
   symKeyStorage: ISymKeyStorage;
+  litJsSdk: LitJsSdk; // to use in nodejs, manually set this to the nodejs lit client. see tests for example
 
   namespacesProgram: Program<NAMESPACES_PROGRAM>;
 
@@ -422,7 +424,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   }: {
     provider: AnchorProvider;
     program: Program<ChatIDL>;
-    litClient: LitJsSdk;
+    litClient: typeof LitJsSdk;
     namespacesProgram: Program<NAMESPACES_PROGRAM>;
     symKeyStorage?: ISymKeyStorage;
   }) {
@@ -433,13 +435,16 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     this.authingLit = null;
 
     // @ts-ignore
-    if (provider.connection._rpcEndpoint.includes("dev")) {
+    const endpoint = provider.connection._rpcEndpoint;
+    if (endpoint.includes("dev") || endpoint.includes("local") || endpoint.includes("127.0.0.1")) {
       this.chain = "solanaDevnet";
     } else {
       this.chain = "solana";
     }
     this.litClient = litClient;
     this.symKeyStorage = symKeyStorage;
+
+    this.litJsSdk = LitJsSdk;
   }
 
   entryDecoder: TypedAccountParser<IEntry> = (pubkey, account) => {
@@ -1294,7 +1299,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       }
     }
     let { fileAttachments, ...normalMessage } = message;
-
     const chatAcc = (await this.getChat(chat))!;
     const readMint = await getMintInfo(
       this.provider,
@@ -1514,6 +1518,27 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       args.payer,
       commitment
     );
+  }
+}
+
+function getAccessConditions(readKey: PublicKey, threshold: BN, chain: string) {
+  return [
+    collectionAccessPermissions(readKey, threshold, chain),
+    {"operator": "or"},
+    tokenAccessPermissions(readKey, threshold, chain),
+  ]
+}
+
+function collectionAccessPermissions(permittedCollection: PublicKey, threshold: BN, chain: string) {
+  return {
+    method: "balanceOfMetaplexCollection",
+    params: [permittedCollection.toBase58()],
+    chain,
+    returnValueTest: {
+      key: "",
+      comparator: ">=",
+      value: threshold.toString(10),
+    },
   }
 }
 

@@ -6,7 +6,9 @@ import {
 import * as anchor from "@project-serum/anchor";
 import { AnchorProvider, Program } from "@project-serum/anchor";
 import {
+  Connection,
   Keypair,
+  LAMPORTS_PER_SOL,
   PublicKey, SystemProgram
 } from "@solana/web3.js";
 import {
@@ -23,8 +25,9 @@ import {
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
 // @ts-ignore
-import LitJsSdk from "lit-js-sdk";
+import LitNodeJsSdk from "lit-js-sdk/build/index.node.js";
 import { TokenUtils } from "./utils/token";
+import { initializeUser, initializeChat, getAuthSig } from "./utils/chat";
 
 use(ChaiAsPromised);
 
@@ -47,7 +50,7 @@ describe("chat", () => {
 
   const program = anchor.workspace.Chat;
   const tokenUtils = new TokenUtils(provider);
-  const litClient = new LitJsSdk.LitNodeClient();
+  const litClient = new LitNodeJsSdk.LitNodeClient();
   const namespacesProgram = new Program<NAMESPACES_PROGRAM>(
     NAMESPACES_IDL,
     NAMESPACES_PROGRAM_ID,
@@ -59,10 +62,12 @@ describe("chat", () => {
     litClient,
     namespacesProgram,
   });
+  chatSdk.litJsSdk = LitNodeJsSdk;
   const me = chatSdk.wallet.publicKey;
 
   before(async () => {
     await chatSdk.initializeNamespaces();
+    await litClient.connect();
   });
 
   describe("initialize chat", () => {
@@ -146,77 +151,141 @@ describe("chat", () => {
         10,
         profileKeypair.publicKey
       );
-
-      const { certificateMint: chatIdentifierCertificateMint } =
-        await chatSdk.claimIdentifier({
-          identifier,
-          type: IdentifierType.Chat,
-        });
-      ({ chat } = await chatSdk.initializeChat({
-        identifierCertificateMint: chatIdentifierCertificateMint,
-        name,
-        readPermissionMintOrCollection: readPermissionMint,
-        postPermissionMintOrCollection: postPermissionMint,
-      }));
+      chat = await initializeChat(chatSdk, identifier, name, readPermissionMint, postPermissionMint);
       chatAcc = (await chatSdk.getChat(chat))!;
 
-      const {
-        instructions: claimInstructions,
-        signers: claimSigners,
-        output: { certificateMint: userIdentifierCertificateMint },
-      } = await chatSdk.claimIdentifierInstructions({
-        identifier: username,
-        type: IdentifierType.User,
-        owner: profileKeypair.publicKey,
-      });
-      const {
-        output: { walletProfile: outWalletProfile },
-        signers,
-        instructions,
-      } = await chatSdk.initializeProfileInstructions({
-        identifier: username,
-        ownerWallet: profileKeypair.publicKey,
-        identifierCertificateMint: userIdentifierCertificateMint,
-        imageUrl: "hey",
-      });
+      const {walletProfile: outWalletProfile} = await initializeUser(provider, chatSdk, username, profileKeypair, delegateWalletKeypair);
+      walletProfile = outWalletProfile;
+    });
 
-      const { instructions: dInstructions, signers: dSigners } =
-        await chatSdk.initializeDelegateWalletInstructions({
-          delegateWalletKeypair,
+    describe("permissions tests", () => {
+      let devnetProvider;
+      let tokenHolder = Keypair.generate();
+      let nftHolder = Keypair.generate();
+      let unauthorisedUser = Keypair.generate();
+      let tokenChat: PublicKey;
+      let nftChat: PublicKey;
+      before(async() => {
+        // init token holder
+        const tokenHolderUsername = randomIdentifier();
+        await initializeUser(provider, chatSdk, tokenHolderUsername, tokenHolder);
+
+        // init nft holder
+        const nftHolderUsername = randomIdentifier();
+        await initializeUser(provider, chatSdk, nftHolderUsername, nftHolder);
+
+        // init unauthorised user
+        const unauthUsername = randomIdentifier();
+        await initializeUser(provider, chatSdk, unauthUsername, unauthorisedUser);
+
+        // devnet provider is required because lit protocol reads from devnet, not localhost
+        const devnetConnection = new Connection("https://api.devnet.solana.com");
+        devnetProvider = new AnchorProvider(devnetConnection, provider.wallet, AnchorProvider.defaultOptions());
+        await devnetConnection.requestAirdrop(devnetProvider.wallet.publicKey, 1 * LAMPORTS_PER_SOL);
+
+        // create permitted token on localnet and devnet
+        const tokenMintKeypair = Keypair.generate();
+        await createMint(provider, me, 2, tokenMintKeypair);
+        await tokenUtils.createAtaAndMint(
+          provider,
+          tokenMintKeypair.publicKey,
+          1000,
+          tokenHolder.publicKey
+        );
+        await createMint(devnetProvider, me, 2, tokenMintKeypair);
+        await tokenUtils.createAtaAndMint(
+          devnetProvider,
+          tokenMintKeypair.publicKey,
+          1000,
+          tokenHolder.publicKey,
+          provider.wallet.publicKey,
+          provider.wallet.publicKey,
+          {
+            commitment: 'finalized',
+          }
+        );
+
+        // create chat where only token holders are auth
+        tokenChat = await initializeChat(chatSdk, identifier, name, tokenMintKeypair.publicKey, tokenMintKeypair.publicKey);
+
+        // create nft from permitted collection on localnet and devnet
+        const nftMintKeypair = Keypair.generate();
+        const nftCollectionKeypair = Keypair.generate();
+        await tokenUtils.createTestNft(provider, nftHolder.publicKey, nftMintKeypair, provider.wallet.publicKey, nftCollectionKeypair.publicKey);
+        // await tokenUtils.createTestNft(devnetProvider, nftHolder.publicKey, nftMintKeypair, provider.wallet.publicKey, nftCollectionKeypair.publicKey);
+
+        // create chat where nft holders of a collection are auth
+        // nftChat = await initializeChat(chatSdk, identifier, name, nftCollectionKeypair.publicKey, nftCollectionKeypair.publicKey);
+        
+      })
+
+      it("allows token holders", async() => {
+        // manually authenticate lit protocol
+        //@ts-ignore
+        let authSig = await getAuthSig(tokenHolder.publicKey, tokenHolder.secretKey)
+        chatSdk.litAuthSig = authSig;
+        const { instructions, signers } = await chatSdk.sendMessageInstructions({
+          sender: tokenHolder.publicKey,
+          chat: tokenChat,
+          message: { type: MessageType.Text, text: "hello" },
+          encrypted: true,
+        });
+        const txid = await sendInstructions(
+          chatSdk.errors || new Map(),
+          provider,
+          instructions[0],
+          [...signers[0], tokenHolder]
+        );
+        
+        const parts = await chatSdk.getMessagePartsFromTx(txid);
+        const { decodedMessage } = (await chatSdk.getDecodedMessageFromParts(parts))!;
+        expect(decodedMessage?.text).to.eq("hello");
+      })
+
+      xit("allows nft holders", async() => {
+        // manually authenticate lit protocol
+        //@ts-ignore
+        let authSig = await getAuthSig(tokenHolder.publicKey, tokenHolder.secretKey)
+        chatSdk.litAuthSig = authSig;
+
+        const { instructions, signers } = await chatSdk.sendMessageInstructions({
+          sender: nftHolder.publicKey,
+          chat: nftChat,
+          message: { type: MessageType.Text, text: "hello" },
+          encrypted: false,
+        });
+        const txid = await sendInstructions(
+          chatSdk.errors || new Map(),
+          provider,
+          instructions[0],
+          [...signers[0], nftHolder]
+        );
+        const parts = await chatSdk.getMessagePartsFromTx(txid);
+        const { decodedMessage } = (await chatSdk.getDecodedMessageFromParts(parts))!;
+        expect(decodedMessage?.text).to.eq("hello");
+      })
+
+      it("doesn't allow other users", async() => {
+        // manually authenticate lit protocol
+        //@ts-ignore
+        let authSig = await getAuthSig(unauthorisedUser.publicKey, unauthorisedUser.secretKey)
+        chatSdk.litAuthSig = authSig;
+        const { instructions, signers } = await chatSdk.sendMessageInstructions({
+          sender: unauthorisedUser.publicKey,
+          chat: tokenChat,
+          message: { type: MessageType.Text, text: "hello" },
+          encrypted: true,
         });
 
-      walletProfile = outWalletProfile;
-
-      try {
-        await sendMultipleInstructions(
-          new Map(),
-          provider,
-          [
-            [
-              SystemProgram.transfer({
-                fromPubkey: provider.wallet.publicKey,
-                toPubkey: profileKeypair.publicKey,
-                lamports: 10000000000,
-              }),
-            ],
-            ...claimInstructions,
-            instructions,
-            dInstructions,
-          ],
-          [
-            [],
-            [...claimSigners[0]],
-            [...claimSigners[1], profileKeypair],
-            [...signers, profileKeypair],
-            dSigners,
-          ],
-          me
-        );
-      } catch (e: any) {
-        console.error(e);
-        throw e;
-      }
-    });
+        expect(
+          sendInstructions(
+            chatSdk.errors || new Map(),
+            provider,
+            instructions[0],
+            [...signers[0], unauthorisedUser]
+        )).to.be.rejectedWith(Error);
+      })
+    })
 
     it("allows sending a basic message with delegate", async () => {
       const { txids } = await chatSdk.sendMessage({
