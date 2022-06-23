@@ -9,25 +9,28 @@ import { Keypair, PublicKey, SystemProgram, Transaction, TransactionInstruction 
 export async function createMint(
   provider: AnchorProvider,
   authority?: PublicKey,
-  decimals?: number
+  decimals?: number,
+  mintKeypair?: Keypair,
 ): Promise<PublicKey> {
   if (authority === undefined) {
     authority = provider.wallet.publicKey;
   }
-  const mint = Keypair.generate();
+  if (mintKeypair === undefined) {
+    mintKeypair = Keypair.generate();
+  }
   const instructions = await createMintInstructions(
     provider,
     authority,
-    mint.publicKey,
+    mintKeypair.publicKey,
     decimals
   );
 
   const tx = new Transaction();
   tx.add(...instructions);
 
-  await provider.sendAndConfirm(tx, [mint], {});
+  await provider.sendAndConfirm(tx, [mintKeypair], {});
 
-  return mint.publicKey;
+  return mintKeypair.publicKey;
 }
 
 export async function createMintInstructions(

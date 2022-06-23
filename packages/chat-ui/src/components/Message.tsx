@@ -134,7 +134,7 @@ export function Message({
     }
   }, [startBlockTime]);
 
-  const readMint = chat?.readPermissionMintOrCollection;
+  const readMint = chat?.readPermissionKey;
   const mintAcc = useMint(readMint);
   const { metadata } = useTokenMetadata(readMint);
   const tokenAmount =

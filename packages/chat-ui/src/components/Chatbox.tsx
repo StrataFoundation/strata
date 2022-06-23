@@ -107,7 +107,6 @@ export function Chatbox({
 
   const ownedAmount = useOwnedAmount(chat?.postPermissionMintOrCollection);
   const mint = useMint(chat?.postPermissionMintOrCollection);
-
   const postAmount =
     chat?.postPermissionAmount &&
     mint &&

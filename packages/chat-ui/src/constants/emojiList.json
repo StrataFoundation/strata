@@ -1,13 +1,18 @@
 [
+    {
+    "title": "Thumbsup",
+    "symbol": "👍",
+    "keywords": "thumbs up sign body hands hi luck thank you diversity diversity perfect perfect good good beautiful beautiful"
+  },
+  {
+    "title": "Thumbsdown",
+    "symbol": "👎",
+    "keywords": "thumbs down sign body hands diversity diversity"
+  },
   {
     "title": "100",
     "symbol": "💯",
     "keywords": "hundred points symbol symbol wow wow win win perfect perfect parties parties"
-  },
-  {
-    "title": "1234",
-    "symbol": "🔢",
-    "keywords": "input symbol for numbers symbol"
   },
   {
     "title": "Grinning",
@@ -455,19 +460,14 @@
     "keywords": "clapping hands sign body hands win win diversity diversity good good beautiful beautiful"
   },
   {
+    "title": "1234",
+    "symbol": "🔢",
+    "keywords": "input symbol for numbers symbol"
+  },
+  {
     "title": "Wave",
     "symbol": "👋",
     "keywords": "waving hand sign body hands hi diversity diversity"
-  },
-  {
-    "title": "Thumbsup",
-    "symbol": "👍",
-    "keywords": "thumbs up sign body hands hi luck thank you diversity diversity perfect perfect good good beautiful beautiful"
-  },
-  {
-    "title": "Thumbsdown",
-    "symbol": "👎",
-    "keywords": "thumbs down sign body hands diversity diversity"
   },
   {
     "title": "Punch",

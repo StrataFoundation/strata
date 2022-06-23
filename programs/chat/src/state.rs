@@ -29,8 +29,8 @@ pub const CHAT_SIZE: usize = 8 + std::mem::size_of::<ChatV0>() + 80 + 100 + 200 
 #[derive(Default)]
 pub struct ChatV0 {
   pub bump: u8,
-  pub post_permission_mint_or_collection: Pubkey,
-  pub read_permission_mint_or_collection: Pubkey,
+  pub post_permission_key: Pubkey,         // Permission keys can be a token mint or an nft collection
+  pub read_permission_key: Pubkey,
   pub post_permission_amount: u64,
   pub default_read_permission_amount: u64,
   pub post_permission_action: PostAction,

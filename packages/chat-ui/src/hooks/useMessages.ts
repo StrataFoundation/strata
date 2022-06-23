@@ -123,8 +123,8 @@ export function useMessages(
   const [messages, setMessages] = useState<IMessageWithPending[]>();
 
   const { info: chatAcc } = useChat(chat);
-  const ownedAmount = useOwnedAmount(chatAcc?.readPermissionMintOrCollection);
-  const mint = useMint(chatAcc?.readPermissionMintOrCollection);
+  const ownedAmount = useOwnedAmount(chatAcc?.readPermissionKey);
+  const mint = useMint(chatAcc?.readPermissionKey);
   const readAmountNum = chatAcc && mint && toNumber(chatAcc.defaultReadPermissionAmount, mint)
   const previousOwnedAmount = usePrevious(ownedAmount)
 

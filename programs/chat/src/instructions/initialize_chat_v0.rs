@@ -38,8 +38,8 @@ pub struct InitializeChatV0<'info> {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct InitializeChatArgsV0 {
-  pub post_permission_mint_or_collection: Pubkey,
-  pub read_permission_mint_or_collection: Pubkey,
+  pub post_permission_key: Pubkey,
+  pub read_permission_key: Pubkey,
   pub post_permission_amount: u64,
   pub default_read_permission_amount: u64,
   pub post_permission_action: PostAction,
@@ -58,11 +58,11 @@ pub fn handler(ctx: Context<InitializeChatV0>, args: InitializeChatArgsV0) -> Re
   );
   // require!(args.identifier.chars().all(char::is_alphanumeric), ErrorCode::StringNotAlphanumeric);
 
-  ctx.accounts.chat.post_permission_mint_or_collection = args.post_permission_mint_or_collection;
+  ctx.accounts.chat.post_permission_key = args.post_permission_key;
   ctx.accounts.chat.post_permission_amount = args.post_permission_amount;
   ctx.accounts.chat.post_permission_action = args.post_permission_action;
   ctx.accounts.chat.post_pay_destination = args.post_pay_destination;
-  ctx.accounts.chat.read_permission_mint_or_collection = args.read_permission_mint_or_collection;
+  ctx.accounts.chat.read_permission_key = args.read_permission_key;
   ctx.accounts.chat.default_read_permission_amount = args.default_read_permission_amount;
   ctx.accounts.chat.name = puffed_out_string(&args.name, 100);
   ctx.accounts.chat.identifier_certificate_mint = ctx.accounts.identifier_certificate_mint.key();
