@@ -10,7 +10,7 @@ import BN from "bn.js";
 import { useAsync } from "react-async-hook";
 
 export const CANDY_MACHINE_PROGRAM = new PublicKey(
-  "cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ"
+  "DsRmdpRZJwagptu4MMN7GJWaPuwPgStWPUSbfAinYCg9"
 );
 
 /**
