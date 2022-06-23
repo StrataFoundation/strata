@@ -56,14 +56,14 @@ interface ISettings {
 
 export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
   const { info: chat } = useChat(chatKey);
-  const readMint = chat?.readPermissionMintOrCollection;
+  const readMint = chat?.readPermissionKey;
   const [isMobile] = useMediaQuery("(max-width: 680px)");
   const { metadata: readMetadata, image: readImage } = useTokenMetadata(
-    chat?.readPermissionMintOrCollection
+    chat?.readPermissionKey
   );
-  const postMint = useMint(chat?.postPermissionMintOrCollection);
+  const postMint = useMint(chat?.postPermissionKey);
   const { metadata: postMetadata, image: postImage } = useTokenMetadata(
-    chat?.postPermissionMintOrCollection
+    chat?.postPermissionKey
   );
   const { colorMode } = useColorMode();
   const { accelerator } = useAccelerator();
@@ -71,7 +71,7 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
   const { chatSdk } = useChatSdk();
   const { publicKey } = useWallet();
   const { key: profileKey } = useProfileKey(publicKey || undefined);
-  const ownedAmount = useOwnedAmount(chat?.readPermissionMintOrCollection);
+  const ownedAmount = useOwnedAmount(chat?.readPermissionKey);
 
   const [settings, setSettings] = useLocalStorage<ISettings>("settings", {
     soundEnabled: true,

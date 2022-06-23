@@ -43,8 +43,8 @@ async function run(): Promise<void> {
   await chatSdk.initializeChat({
     identifierCertificateMint,
     name: args[3],
-    readPermissionMintOrCollection: new PublicKey(args[4]),
-    postPermissionMintOrCollection: new PublicKey(args[4]),
+    readPermissionKey: new PublicKey(args[4]),
+    postPermissionKey: new PublicKey(args[4]),
     imageUrl: args[5]
   });
 }

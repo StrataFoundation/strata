@@ -76,8 +76,8 @@ export function Chatbox({
   const chatBg = useColorModeValue("gray.100", "gray.800");
   const { handleErrors } = useErrorHandler();
   const { info: chat } = useChat(chatKey);
-  const balance = useOwnedAmount(chat?.postPermissionMintOrCollection);
-  const mint = useMint(chat?.postPermissionMintOrCollection);
+  const balance = useOwnedAmount(chat?.postPermissionKey);
+  const mint = useMint(chat?.postPermissionKey);
   const postAmount =
     chat?.postPermissionAmount &&
     mint &&
@@ -252,7 +252,7 @@ export function Chatbox({
     </>
   ) : (
     <Flex justify="center" mb="6px">
-      <BuyMoreButton mint={chat?.postPermissionMintOrCollection} />
+      <BuyMoreButton mint={chat?.postPermissionKey} />
     </Flex>
   );
 }

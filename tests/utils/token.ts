@@ -1,7 +1,21 @@
 import { AnchorProvider } from "@project-serum/anchor";
-import { PublicKey, Transaction, SystemProgram } from "@solana/web3.js";
+import { PublicKey, Transaction, SystemProgram, Keypair } from "@solana/web3.js";
 import { NATIVE_MINT, AccountLayout, TOKEN_PROGRAM_ID, Token, ASSOCIATED_TOKEN_PROGRAM_ID, AccountInfo as TokenAccountInfo, u64 } from '@solana/spl-token';
 import { expect } from "chai";
+import {
+  Metadata,
+  Creator,
+  DataV2,
+  CreateMetadataV2,
+  Collection,
+} from "@metaplex-foundation/mpl-token-metadata";
+import {
+  createMint,
+  sendInstructions,
+  sendMultipleInstructions,
+  SplTokenMetadata,
+} from "@strata-foundation/spl-utils";
+
 export class TokenUtils {
   provider: AnchorProvider;
 
@@ -107,7 +121,8 @@ export class TokenUtils {
     amount: number,
     to: PublicKey = provider.wallet.publicKey,
     authority: PublicKey = provider.wallet.publicKey,
-    payer: PublicKey = provider.wallet.publicKey
+    payer: PublicKey = provider.wallet.publicKey,
+    confirmOptions: any = undefined,
   ): Promise<PublicKey> {
     const ata = await Token.getAssociatedTokenAddress(
       ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -138,8 +153,60 @@ export class TokenUtils {
         amount
       )
     );
-    await provider.sendAndConfirm(mintTx);
+    await provider.sendAndConfirm(mintTx, undefined, confirmOptions);
 
     return ata;
+  }
+
+  async createTestNft(
+    provider: AnchorProvider,
+    recipient: PublicKey,
+    mintKeypair: Keypair=Keypair.generate(),
+    holderKey: PublicKey=provider.wallet.publicKey,
+    collectionKey?: PublicKey,
+  ): Promise<{mintKey: PublicKey, collectionKey: PublicKey | undefined}> {
+    const splTokenMetadata = await SplTokenMetadata.init(provider);
+    const mintKey = await createMint(provider, this.provider.wallet.publicKey, 0, mintKeypair);
+    await splTokenMetadata.createMetadata({
+      data: new DataV2({
+        name: "test",
+        symbol: "TST",
+        uri: "http://test/",
+        sellerFeeBasisPoints: 10,
+        creators: [
+          new Creator({
+            address: holderKey.toBase58(),
+            verified: true,
+            share: 100,
+          }),
+        ],
+        collection: collectionKey ? new Collection({ key: collectionKey.toBase58(), verified: false }): null,
+        uses: null,
+      }),
+      mint: mintKey,
+    });
+
+    await this.createAtaAndMint(
+      provider,
+      mintKeypair.publicKey,
+      1,
+      recipient
+    );
+
+    if (collectionKey) {
+      await splTokenMetadata.verifyCollection({
+        collectionMint: collectionKey,
+        nftMint: mintKeypair.publicKey,
+      })
+    } else {
+      await splTokenMetadata.createMasterEdition({
+        mint: mintKeypair.publicKey,
+      })
+    }
+
+    return {
+      mintKey,
+      collectionKey,
+    };
   }
 }
