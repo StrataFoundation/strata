@@ -13,8 +13,7 @@ export const Sidebar = (props: any) => {
   const [chats, setChats] = useLocalStorage("chats", VISIBLE_CHATS);
   const router = useRouter();
   const { id } = router.query;
-  const { chatKey, loading: loadingId } = useChatKeyFromIdentifier(id as string | undefined);
-  const { info: chat } = useChat(chatKey);
+  const { chatKey, loading: loadingId } = useChatKeyFromIdentifier(id as string);
   
   useEffect(() => {
     if (chat && id) {
