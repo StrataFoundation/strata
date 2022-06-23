@@ -98,15 +98,15 @@ export function Chatbox({
   const { handleErrors } = useErrorHandler();
   const { info: chat } = useChat(chatKey);
   const { metadata: readMetadata, image: readImage } = useTokenMetadata(
-    chat?.readPermissionMintOrCollection
+    chat?.readPermissionKey
   );
 
   const { metadata: postMetadata, image: postImage } = useTokenMetadata(
-    chat?.postPermissionMintOrCollection
+    chat?.postPermissionKey
   );
 
-  const ownedAmount = useOwnedAmount(chat?.postPermissionMintOrCollection);
-  const mint = useMint(chat?.postPermissionMintOrCollection);
+  const ownedAmount = useOwnedAmount(chat?.postPermissionKey);
+  const mint = useMint(chat?.postPermissionKey);
   const postAmount =
     chat?.postPermissionAmount &&
     mint &&
@@ -259,7 +259,7 @@ export function Chatbox({
                 </Box>
                 <Box pt={4}>
                   <BuyMoreButton
-                    mint={chat?.postPermissionMintOrCollection}
+                    mint={chat?.postPermissionKey}
                     btnProps={{ px: 16, size: "md", variant: "solid" }}
                   />
                 </Box>
