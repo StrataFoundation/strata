@@ -276,7 +276,7 @@ export function Message({
             {showUser ? (
               <Avatar mt="6px" size="sm" src={profile?.imageUrl} />
             ) : (
-              <Box w="34px" />
+              <Box w="36px" />
             )}
             <VStack w="full" align="start" spacing={0}>
               {showUser && (
@@ -341,9 +341,13 @@ export function Message({
                             <Skeleton
                               startColor={lockedColor}
                               height="20px"
-                              w="300px"
                               speed={100000}
-                            />
+                            >
+                              {Array.from(
+                                { length: 10 + Math.random() * 100 },
+                                () => "."
+                              ).join()}
+                            </Skeleton>
                             <Icon color={lockedColor} as={BsLockFill} />
                           </HStack>
                         </Tooltip>

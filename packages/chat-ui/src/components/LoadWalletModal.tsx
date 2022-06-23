@@ -1,14 +1,51 @@
 import {
-  Box, Button, Center, HStack, Icon, Modal,
-  ModalBody, ModalContent, ModalProps, Slider, SliderFilledTrack, SliderMark, SliderThumb, SliderTrack, Text, useColorModeValue, VStack
+  Box,
+  Button,
+  Center,
+  HStack,
+  Icon,
+  Modal,
+  ModalBody,
+  ModalOverlay,
+  ModalContent,
+  ModalProps,
+  Text,
+  useColorModeValue,
+  VStack,
+  useRadioGroup,
+  Stack,
+  Flex,
+  Divider,
 } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useErrorHandler, useSolOwnedAmount } from "@strata-foundation/react";
-import { numberWithCommas } from "@strata-foundation/spl-utils";
-import React, { useMemo } from "react";
+import React, { useState } from "react";
 import { AiOutlinePlus } from "react-icons/ai";
 import { useLoadDelegate } from "../hooks";
+import { RadioCardWithAffordance } from "./RadioCard";
 import { StrataIcon, WalletIcon } from "../svg";
+
+const options: {
+  value: string;
+  heading: string;
+  subHeading: string;
+}[] = [
+  {
+    value: "0.01",
+    heading: "200",
+    subHeading: "Messages",
+  },
+  {
+    value: "0.05",
+    heading: "10,000",
+    subHeading: "Messages",
+  },
+  {
+    value: "0.1",
+    heading: "20,000",
+    subHeading: "Messages",
+  },
+];
 
 export const LoadWalletModal = (
   props: Partial<ModalProps> & { onLoaded: () => void }
@@ -21,22 +58,24 @@ export const LoadWalletModal = (
     needsInit,
     needsTopOff,
   } = useLoadDelegate();
-  const [sliderValue, setSliderValue] = React.useState(50);
+  const [selectedOption, setSelectedOption] = useState<string>(
+    options[0].value
+  );
   const { publicKey } = useWallet();
   const { amount: solAmount } = useSolOwnedAmount(publicKey || undefined);
+  const { getRootProps, getRadioProps } = useRadioGroup({
+    name: "options",
+    defaultValue: options[0].value,
+    onChange: setSelectedOption,
+  });
 
-  const sol = useMemo(() => {
-    return (sliderValue / 100) * 0.1;
-  }, [sliderValue]);
-  const messages = useMemo(() => {
-    return sol / 0.000005;
-  }, [sol]);
+  const group = getRootProps();
 
   const { handleErrors } = useErrorHandler();
   handleErrors(delegateError);
 
   const exec = async () => {
-    await loadDelegate(sol);
+    await loadDelegate(+selectedOption);
     props.onLoaded();
   };
 
@@ -47,14 +86,8 @@ export const LoadWalletModal = (
   };
 
   return (
-    <Modal
-      isOpen={true}
-      size="lg"
-      onClose={() => {}}
-      isCentered
-      trapFocus={true}
-      {...props}
-    >
+    <Modal isOpen={true} size="xl" onClose={() => {}} isCentered {...props}>
+      <ModalOverlay />
       <ModalContent borderRadius="xl" shadow="xl">
         <ModalBody p={0}>
           <Box
@@ -85,38 +118,66 @@ export const LoadWalletModal = (
               <Text textAlign="center" fontSize="xl" fontWeight="bold">
                 Let&apos;s load up your Chat Wallet
               </Text>
-              <Text textAlign="center">
+              <Text textAlign="center" fontSize="sm">
                 Strata Chat loads a hot wallet in your local storage. This helps
                 us avoid asking for approval for every message. Load it up with
                 as many messages as you want now, you can always top it off
                 later!
               </Text>
-              <Center>
-                <Text fontWeight="bold">
-                  ◎{numberWithCommas(sol, 3)} ({numberWithCommas(messages, 0)}{" "}
-                  messages)
-                </Text>
-              </Center>
-              <Box pt={0} pb={2}>
-                <Slider min={1} onChange={(val) => setSliderValue(val)}>
-                  <SliderMark value={1} {...labelStyles}>
-                    0
-                  </SliderMark>
-                  <SliderMark value={50} {...labelStyles}>
-                    0.05
-                  </SliderMark>
-                  <SliderMark value={100} {...labelStyles}>
-                    0.1
-                  </SliderMark>
-                  <SliderTrack>
-                    <SliderFilledTrack />
-                  </SliderTrack>
-                  <SliderThumb />
-                </Slider>
-              </Box>
+              <Stack
+                {...group}
+                direction={{ base: "column", md: "row" }}
+                justifyContent="center"
+                alignItems={{ base: "center", md: "normal" }}
+              >
+                {options.map(({ value, heading, subHeading }) => {
+                  const radio = getRadioProps({
+                    value,
+                  });
+
+                  return (
+                    <RadioCardWithAffordance key={value} {...radio}>
+                      <Flex
+                        h="full"
+                        direction={{ base: "row", md: "column" }}
+                        px={4}
+                        py={{ base: 2, md: 0 }}
+                      >
+                        <Flex
+                          flexGrow={1}
+                          h="full"
+                          w="full"
+                          direction="column"
+                          textAlign="left"
+                          position="relative"
+                          top={{
+                            base: 0,
+                            md: -3,
+                          }}
+                        >
+                          <Text
+                            fontWeight="bold"
+                            fontSize="lg"
+                            pt={{ base: 0, md: 4 }}
+                          >
+                            {heading}
+                          </Text>
+                          <Text fontSize="xs" color="gray.500">
+                            {subHeading}
+                          </Text>
+                          <Box py={2}>
+                            <Divider />
+                          </Box>
+                          <Text fontSize="md">◎ {value} SOL</Text>
+                        </Flex>
+                      </Flex>
+                    </RadioCardWithAffordance>
+                  );
+                })}
+              </Stack>
             </VStack>
             <Button
-              isDisabled={solAmount < sol}
+              isDisabled={solAmount < +selectedOption}
               mt={4}
               variant="solid"
               colorScheme="primary"
@@ -124,7 +185,11 @@ export const LoadWalletModal = (
               loadingText={"Loading Hot Wallet..."}
               isLoading={loadingDelegate}
             >
-              {solAmount < sol ? "Not enough SOL" : needsInit ? "Create Hot Wallet" : "Load Hot Wallet"}
+              {solAmount < +selectedOption
+                ? "Not enough SOL"
+                : needsInit
+                ? "Create Hot Wallet"
+                : "Load Hot Wallet"}
             </Button>
           </VStack>
         </ModalBody>

@@ -160,8 +160,7 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
                   <Text
                     color={colorMode === "light" ? "black.300" : "gray.400"}
                   >
-                    In order to participate in actions in this chat, you must
-                    hold:
+                    In order to participate in actions in this chat:
                   </Text>
                   <Box w="full" fontSize="sm">
                     {readMetadata && (
