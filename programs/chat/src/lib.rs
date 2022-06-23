@@ -30,6 +30,13 @@ pub mod chat {
     instructions::initialize_chat_v0::handler(ctx, args)
   }
 
+  pub fn initialize_settings_v0(
+    ctx: Context<InitializeSettingsV0>,
+    args: InitializeSettingsArgsV0,
+  ) -> Result<()> {
+    instructions::initialize_settings_v0::handler(ctx, args)
+  }
+
   pub fn initialize_profile_v0(
     ctx: Context<InitializeProfileV0>,
     args: InitializeProfileArgsV0,

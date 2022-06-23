@@ -68,6 +68,14 @@ describe("chat", () => {
   before(async () => {
     await chatSdk.initializeNamespaces();
     await litClient.connect();
+    // manually authenticate lit protocol
+    //@ts-ignore
+    let authSig = await getAuthSig(
+      provider.wallet.publicKey,
+      provider.wallet.secretKey,
+      tokenHolder.secretKey
+    );
+    chatSdk.litAuthSig = authSig;
   });
 
   describe("initialize chat", () => {
@@ -129,6 +137,29 @@ describe("chat", () => {
       expect(profileAcc?.imageUrl).to.eq("hey");
     });
   });
+
+  describe("initialize settings", () => {
+    it("intializes settings", async () => {
+      const { settings } = await chatSdk.initializeSettings({
+        settings: {
+          delegateWalletSeed: "hello",
+          chatSettings: [
+            {
+              identifier: "foo",
+              audioNotifications: true,
+              desktopNotifications: false,
+              mobileNotifications: false,
+            },
+          ],
+        },
+      });
+
+      const settingsAcc = await chatSdk.getSettings(settings);
+      const seed = await settingsAcc?.getDelegateWalletSeed();
+      expect(seed).to.eq("hello")
+    });
+  });
+
 
   describe("messaging", () => {
     let readPermissionMint: PublicKey;

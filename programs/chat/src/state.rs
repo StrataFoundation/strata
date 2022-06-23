@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use anchor_lang::prelude::*;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
@@ -51,6 +53,35 @@ pub struct ProfileV0 {
   pub identifier_certificate_mint: Pubkey, // The certificate of the primary identifier for this profile
   pub image_url: String,                   // limit 200 characters (puffed). Can just be empty.
   pub metadata_url: String,                // limit 200 characters (puffed)
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub struct ChatSettingsV0 {
+  pub identifier: String,
+  pub audio_notifications: bool,
+  pub desktop_notifications: bool,
+  pub mobile_notifications: bool,
+}
+
+impl Default for ChatSettingsV0 {
+  fn default() -> Self {
+    ChatSettingsV0 {
+      identifier: "".to_string(),
+      audio_notifications: true,
+      desktop_notifications: false,
+      mobile_notifications: false
+    }
+  }
+}
+
+#[account]
+#[derive(Default)]
+pub struct SettingsV0 {
+  pub bump: u8,
+  pub owner_wallet: Pubkey,
+  pub chat_settings: Vec<ChatSettingsV0>,
+  pub encrypted_delegate_wallet: String,
+  pub encrypted_symmetric_key: String,
 }
 
 pub const DELEGATE_WALLET_SIZE: usize = 8 + std::mem::size_of::<DelegateWalletV0>() + 80; // padding

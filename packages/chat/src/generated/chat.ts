@@ -100,6 +100,44 @@ export const ChatIDLJson: Idl & { metadata?: { address: string } } = {
       ]
     },
     {
+      "name": "initializeSettingsV0",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "settings",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "ownerWallet",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
+          "type": {
+            "defined": "InitializeSettingsArgsV0"
+          }
+        }
+      ]
+    },
+    {
       "name": "initializeProfileV0",
       "accounts": [
         {
@@ -455,6 +493,38 @@ export const ChatIDLJson: Idl & { metadata?: { address: string } } = {
       }
     },
     {
+      "name": "SettingsV0",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "ownerWallet",
+            "type": "publicKey"
+          },
+          {
+            "name": "chatSettings",
+            "type": {
+              "vec": {
+                "defined": "ChatSettingsV0"
+              }
+            }
+          },
+          {
+            "name": "encryptedDelegateWallet",
+            "type": "string"
+          },
+          {
+            "name": "encryptedSymmetricKey",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
       "name": "DelegateWalletV0",
       "type": {
         "kind": "struct",
@@ -577,6 +647,34 @@ export const ChatIDLJson: Idl & { metadata?: { address: string } } = {
       }
     },
     {
+      "name": "InitializeSettingsArgsV0",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "space",
+            "type": "u32"
+          },
+          {
+            "name": "chatSettings",
+            "type": {
+              "vec": {
+                "defined": "ChatSettingsV0"
+              }
+            }
+          },
+          {
+            "name": "encryptedDelegateWallet",
+            "type": "string"
+          },
+          {
+            "name": "encryptedSymmetricKey",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
       "name": "MessagePartV0",
       "type": {
         "kind": "struct",
@@ -604,6 +702,30 @@ export const ChatIDLJson: Idl & { metadata?: { address: string } } = {
           {
             "name": "content",
             "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ChatSettingsV0",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "identifier",
+            "type": "string"
+          },
+          {
+            "name": "audioNotifications",
+            "type": "bool"
+          },
+          {
+            "name": "desktopNotifications",
+            "type": "bool"
+          },
+          {
+            "name": "mobileNotifications",
+            "type": "bool"
           }
         ]
       }
@@ -669,6 +791,8 @@ export type NamespacesV0 = IdlAccounts<ChatIDL>["namespacesV0"]
 export type ChatV0 = IdlAccounts<ChatIDL>["chatV0"]
 
 export type ProfileV0 = IdlAccounts<ChatIDL>["profileV0"]
+
+export type SettingsV0 = IdlAccounts<ChatIDL>["settingsV0"]
 
 export type DelegateWalletV0 = IdlAccounts<ChatIDL>["delegateWalletV0"]
 
