@@ -4,6 +4,7 @@ import {
   Modal,
   ModalBody,
   ModalContent,
+  ModalOverlay,
   ModalHeader,
   Spinner,
   ButtonProps,
@@ -72,6 +73,7 @@ export function BuyMoreButton({
     <>
       {trigger({ mint, connected, onClick, btnProps })}
       <Modal isOpen={isOpen} onClose={onClose} size="2xl" isCentered trapFocus>
+        <ModalOverlay />
         <ModalContent borderRadius="xl" shadow="xl">
           <ModalHeader>Buy More {metadata?.data.symbol}</ModalHeader>
           <ModalBody minH="500px">

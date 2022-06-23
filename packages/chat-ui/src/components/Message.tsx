@@ -21,6 +21,8 @@ import {
   Tooltip,
   PopoverArrow,
   PopoverBody,
+  useMediaQuery,
+  Flex,
 } from "@chakra-ui/react";
 import { GiphyFetch } from "@giphy/js-fetch-api";
 import { Gif } from "@giphy/react-components";
@@ -111,6 +113,7 @@ export function Message({
   pending?: boolean;
   showUser: boolean;
 }) {
+  const [isMobile] = useMediaQuery("(max-width: 680px)");
   const { colorMode } = useColorMode();
   const { publicKey } = useWallet();
   const { key: myProfile } = useProfileKey(publicKey || undefined);
@@ -213,52 +216,68 @@ export function Message({
   }, [reacts]);
 
   return (
-    <Box _hover={{ bg: highlightedBg }}>
+    <Box position="relative" _hover={{ bg: highlightedBg }}>
       <Popover
         matchWidth
         trigger="hover"
-        placement="right-start"
+        placement="top-end"
         onClose={onClose}
+        isLazy
       >
-        <PopoverContent
-          right={isOpen ? "350px" : "180px"}
-          bg={isOpen ? undefined : "transparent"}
-          border={isOpen ? undefined : "none"}
-          width={isOpen ? undefined : "60px"}
-        >
+        <PopoverContent w="full" bg="transparent" border="none">
           <PopoverBody>
             {!isOpen && (
-              <IconButton
-                icon={<Icon as={MdOutlineAddReaction} />}
-                w="32px"
-                h="32px"
-                mt="-40px"
-                variant="outline"
-                size="lg"
-                aria-label="Add Reaction"
-                bg="white"
-                _dark={{
-                  bg: "gray.900",
-                  _hover: {
-                    bg: highlightedBg,
-                  },
-                }}
-                onClick={onToggle}
-              />
+              <Flex
+                direction="row"
+                top={2}
+                right={20}
+                justifyContent="end"
+                position="absolute"
+              >
+                <IconButton
+                  icon={<Icon as={MdOutlineAddReaction} />}
+                  w="32px"
+                  h="32px"
+                  variant="outline"
+                  size="lg"
+                  aria-label="Add Reaction"
+                  bg="white"
+                  _dark={{
+                    bg: "gray.900",
+                    _hover: {
+                      bg: highlightedBg,
+                    },
+                  }}
+                  onClick={onToggle}
+                />
+              </Flex>
             )}
             {isOpen && (
-              <FocusLock returnFocus persistentFocus={false}>
-                <EmojiSearch
-                  onSelect={(emoji) => {
-                    onClose();
-                    sendMessage({
-                      type: MessageType.React,
-                      emoji: emoji.symbol,
-                      referenceMessageId: messageId,
-                    });
-                  }}
-                />
-              </FocusLock>
+              <Flex
+                direction="row"
+                top={6}
+                right={{
+                  base: 0,
+                  md: 8,
+                }}
+                justifyContent="end"
+                position="absolute"
+              >
+                <Box maxW="360px" bg={highlightedBg} borderRadius="10px" p={4}>
+                  <FocusLock returnFocus persistentFocus={false}>
+                    <EmojiSearch
+                      onSelect={(emoji) => {
+                        onClose();
+                        sendMessage({
+                          type: MessageType.React,
+                          emoji: emoji.symbol,
+                          referenceMessageId: messageId,
+                        });
+                      }}
+                    />
+                  </FocusLock>
+                </Box>
+              </Flex>
             )}
           </PopoverBody>
         </PopoverContent>
@@ -276,7 +295,7 @@ export function Message({
             {showUser ? (
               <Avatar mt="6px" size="sm" src={profile?.imageUrl} />
             ) : (
-              <Box w="34px" />
+              <Box w="36px" />
             )}
             <VStack w="full" align="start" spacing={0}>
               {showUser && (
@@ -341,9 +360,13 @@ export function Message({
                             <Skeleton
                               startColor={lockedColor}
                               height="20px"
-                              w="300px"
                               speed={100000}
-                            />
+                            >
+                              {Array.from(
+                                { length: 10 + Math.random() * 100 },
+                                () => "."
+                              ).join()}
+                            </Skeleton>
                             <Icon color={lockedColor} as={BsLockFill} />
                           </HStack>
                         </Tooltip>

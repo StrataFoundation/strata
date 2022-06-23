@@ -6,7 +6,7 @@ import { RoomsHeader } from "@/components/rooms/RoomsHeader";
 import { Workspace } from "@/components/Workspace";
 import { useChatKeyFromIdentifier } from "@/hooks/useChatKeyFromIdentifier";
 import { IMessageWithPending, useMessages } from "@/hooks/useMessages";
-import { useDisclosure } from "@chakra-ui/react";
+import { useDisclosure, Flex } from "@chakra-ui/react";
 import { useErrorHandler } from "@strata-foundation/react";
 import { useRouter } from "next/router";
 import React, { useEffect, useMemo, useRef, useState } from "react";

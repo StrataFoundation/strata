@@ -4,25 +4,42 @@ import {
   HStack,
   Icon,
   IconButton,
-  Input,
+  Text,
   Modal,
   ModalBody,
   ModalContent,
   ModalHeader,
+  VStack,
   useColorModeValue,
   useDisclosure,
+  Divider,
+  Avatar,
+  Box,
+  ModalOverlay,
 } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
-import { ISendMessageContent, MessageType, randomizeFileName } from "@strata-foundation/chat";
 import {
+  ISendMessageContent,
+  MessageType,
+  randomizeFileName,
+} from "@strata-foundation/chat";
+import {
+  roundToDecimals,
   useErrorHandler,
   useMint,
   useOwnedAmount,
+  useTokenMetadata,
 } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import React, { useState } from "react";
 import { AiOutlineGif, AiOutlineSend } from "react-icons/ai";
-import { IMessageWithPending, useChat, useLoadDelegate, useSendMessage, useWalletProfile } from "../hooks";
+import {
+  IMessageWithPending,
+  useChat,
+  useLoadDelegate,
+  useSendMessage,
+  useWalletProfile,
+} from "../hooks";
 import { BuyMoreButton } from "./BuyMoreButton";
 import { ChatInput } from "./ChatInput";
 import { FileAttachment } from "./FileAttachment";
@@ -52,7 +69,11 @@ export function Chatbox({
 }: chatProps) {
   const [input, setInput] = useState("");
   const { isOpen, onToggle, onClose } = useDisclosure();
-  const { isOpen: loadWalletIsOpen, onOpen: onOpenLoadWallet, onClose: onCloseLoadWallet }= useDisclosure();
+  const {
+    isOpen: loadWalletIsOpen,
+    onOpen: onOpenLoadWallet,
+    onClose: onCloseLoadWallet,
+  } = useDisclosure();
   const handleChange = (html: string) => {
     setInput(html);
   };
@@ -72,20 +93,29 @@ export function Chatbox({
   } = useDisclosure({
     defaultIsOpen: false,
   });
-  
+
   const chatBg = useColorModeValue("gray.100", "gray.800");
   const { handleErrors } = useErrorHandler();
   const { info: chat } = useChat(chatKey);
-  const balance = useOwnedAmount(chat?.postPermissionKey);
-  const mint = useMint(chat?.postPermissionKey);
+  const { metadata: readMetadata, image: readImage } = useTokenMetadata(
+    chat?.readPermissionMintOrCollection
+  );
+
+  const { metadata: postMetadata, image: postImage } = useTokenMetadata(
+    chat?.postPermissionMintOrCollection
+  );
+
+  const ownedAmount = useOwnedAmount(chat?.postPermissionMintOrCollection);
+  const mint = useMint(chat?.postPermissionMintOrCollection);
   const postAmount =
     chat?.postPermissionAmount &&
     mint &&
     toNumber(chat?.postPermissionAmount, mint);
+
   const hasEnough =
     typeof postAmount == "undefined" ||
-    typeof balance == "undefined" ||
-    balance >= postAmount;
+    typeof ownedAmount == "undefined" ||
+    ownedAmount >= postAmount;
 
   const [loading, setLoading] = useState(false);
   const { sendMessage: sendMessageImpl, error } = useSendMessage({
@@ -111,148 +141,263 @@ export function Chatbox({
 
   handleErrors(error, delegateError);
 
-  return !connected ? (
-    <Flex justify="center" mb="6px">
-      <Button
-        size="sm"
-        colorScheme="primary"
-        variant="outline"
-        onClick={() => setVisible(true)}
-      >
-        Connect Wallet
-      </Button>
-      <CreateProfileModal isOpen={profileIsOpen} onClose={closeProfile} />
-    </Flex>
-  ) : !profileAccount ? (
-    <Flex justify="center" mb="6px">
-      <Button
-        size="sm"
-        colorScheme="primary"
-        variant="outline"
-        onClick={() => openProfile()}
-      >
-        Create Profile to Chat
-      </Button>
-      <CreateProfileModal isOpen={profileIsOpen} onClose={closeProfile} />
-    </Flex>
-  ) : needsTopOff ? (
-    <>
-      <LoadWalletModal isOpen={loadWalletIsOpen} onClose={onCloseLoadWallet} onLoaded={() => onCloseLoadWallet()} />
-      <Flex justify="center" mb="6px">
-        <Button
-          isLoading={loadingDelegate}
-          size="sm"
-          colorScheme="primary"
-          variant="outline"
-          onClick={() => onOpenLoadWallet()}
-        >
-          Top Off Chat Wallet
-        </Button>
-        <CreateProfileModal isOpen={profileIsOpen} onClose={closeProfile} />
-      </Flex>
-    </>
-  ) : hasEnough ? (
-    <>
-      <Flex direction="row" position="sticky" bottom={0} p={2}>
-        <HStack
-          p="10px"
-          spacing={2}
+  return (
+    <Flex w="full" position="relative">
+      {!connected || !profileAccount || !hasEnough || needsTopOff ? (
+        <Flex
+          position="absolute"
+          bottom="0"
+          pb={12}
+          pt={40}
           w="full"
-          align="center"
-          bg={chatBg}
-          rounded="lg"
+          justify="center"
+          bg="linear-gradient(0deg, rgba(255,255,255) 40%, rgba(255,255,255,0) 100%)"
+          _dark={{
+            bg: "linear-gradient(0deg, rgba(17,24,39) 40%, rgba(21,24,38,0) 100%)",
+          }}
         >
-          <ChatInput
-            onChange={(e) => handleChange(e.target.value)}
-            value={input}
-            onKeyDown={(ev) => {
-              if (ev.key === "Enter") {
-                if (!ev.shiftKey) {
-                  ev.preventDefault();
+          <VStack
+            w="full"
+            h="full"
+            justify="center"
+            align="center"
+            maxW="360px"
+          >
+            {!connected ? (
+              <>
+                <Button
+                  size="md"
+                  colorScheme="primary"
+                  onClick={() => setVisible(true)}
+                  px={16}
+                >
+                  Connect Wallet
+                </Button>
+                <CreateProfileModal
+                  isOpen={profileIsOpen}
+                  onClose={closeProfile}
+                />
+              </>
+            ) : !profileAccount ? (
+              <>
+                <Text fontWeight="bold">
+                  A profile is required to send messages
+                </Text>
+                <Button
+                  size="md"
+                  colorScheme="primary"
+                  onClick={() => openProfile()}
+                  px={16}
+                >
+                  Create Profile to Chat
+                </Button>
+                <CreateProfileModal
+                  isOpen={profileIsOpen}
+                  onClose={closeProfile}
+                />
+              </>
+            ) : !hasEnough ? (
+              <>
+                <Text fontWeight="bold" align="center">
+                  In order to participate in this chat:
+                </Text>
+                <Box w="full" fontSize="sm">
+                  {readMetadata && (
+                    <HStack spacing={1}>
+                      <Text>Read Message</Text>
+                      <Flex grow={1}>
+                        <Divider variant="dashed" />
+                      </Flex>
+                      <Text fontWeight="bold" textTransform="capitalize">
+                        Hold 1
+                      </Text>
+                      <Avatar
+                        w="18px"
+                        h="18px"
+                        title={readMetadata?.data.symbol}
+                        src={readImage}
+                      />
+                    </HStack>
+                  )}
+                  {postMetadata && (
+                    <HStack spacing={1}>
+                      <Text>Post Message</Text>
+                      <Flex grow={1}>
+                        <Divider variant="dashed" />
+                      </Flex>
+                      <Text fontWeight="bold" textTransform="capitalize">
+                        {Object.keys(chat?.postPermissionAction || {})[0]}{" "}
+                        {postAmount}
+                      </Text>
+                      <Avatar
+                        w="18px"
+                        h="18px"
+                        title={postMetadata?.data.symbol}
+                        src={postImage}
+                      />
+                    </HStack>
+                  )}
+                </Box>
+                <Box w="full" fontSize="sm">
+                  {readMetadata && (
+                    <HStack spacing={1}>
+                      <Text>You currently have</Text>
+                      <Flex grow={1}>
+                        <Divider variant="dashed" />
+                      </Flex>
+                      <Text fontWeight="bold" textTransform="capitalize">
+                        {ownedAmount ? roundToDecimals(ownedAmount, 4) : 0}
+                      </Text>
+                      <Avatar
+                        w="18px"
+                        h="18px"
+                        title={readMetadata?.data.symbol}
+                        src={readImage}
+                      />
+                    </HStack>
+                  )}
+                </Box>
+                <Box pt={4}>
+                  <BuyMoreButton
+                    mint={chat?.postPermissionMintOrCollection}
+                    btnProps={{ px: 16, size: "md", variant: "solid" }}
+                  />
+                </Box>
+              </>
+            ) : needsTopOff ? (
+              <>
+                <LoadWalletModal
+                  isOpen={loadWalletIsOpen}
+                  onClose={onCloseLoadWallet}
+                  onLoaded={() => onCloseLoadWallet()}
+                />
+                <Flex justify="center" mb="6px">
+                  <Button
+                    isLoading={loadingDelegate}
+                    size="md"
+                    colorScheme="primary"
+                    onClick={() => onOpenLoadWallet()}
+                    px={16}
+                  >
+                    Top Off Chat Wallet
+                  </Button>
+                  <CreateProfileModal
+                    isOpen={profileIsOpen}
+                    onClose={closeProfile}
+                  />
+                </Flex>
+              </>
+            ) : null}
+          </VStack>
+        </Flex>
+      ) : (
+        <>
+          <Flex
+            direction="row"
+            position="sticky"
+            bottom={0}
+            p={2}
+            w="full"
+            minH="76px"
+          >
+            <HStack
+              p="10px"
+              spacing={2}
+              w="full"
+              align="center"
+              bg={chatBg}
+              rounded="lg"
+            >
+              <ChatInput
+                onChange={(e) => handleChange(e.target.value)}
+                value={input}
+                onKeyDown={(ev) => {
+                  if (ev.key === "Enter") {
+                    if (!ev.shiftKey) {
+                      ev.preventDefault();
+                      sendMessage({
+                        type: MessageType.Html,
+                        html: converter.makeHtml(input.replace("\n", "\n\n")),
+                      });
+                    }
+                  }
+                }}
+              />
+              <FileAttachment
+                onUpload={async (file) => {
+                  const text = `Uploading ${file.name} to SHDW Drive...`;
+                  toast.custom(
+                    (t) => (
+                      <LongPromiseNotification
+                        estTimeMillis={2 * 60 * 1000}
+                        text={text}
+                        onError={(e) => {
+                          handleErrors(e);
+                          toast.dismiss(t.id);
+                        }}
+                        exec={async () => {
+                          randomizeFileName(file);
+                          await sendMessageImpl({
+                            type: MessageType.Image,
+                            fileAttachments: [file],
+                          });
+                          return true;
+                        }}
+                        onComplete={async () => {
+                          toast.dismiss(t.id);
+                        }}
+                      />
+                    ),
+                    {
+                      duration: Infinity,
+                    }
+                  );
+                }}
+              />
+              <IconButton
+                aria-label="Select GIF"
+                variant="outline"
+                onClick={onToggle}
+                icon={<Icon w="24px" h="24px" as={AiOutlineGif} />}
+              />
+              <Button
+                isLoading={loading}
+                colorScheme="primary"
+                variant="outline"
+                isDisabled={!hasEnough || !input}
+                onClick={() =>
                   sendMessage({
                     type: MessageType.Html,
-                    html: converter.makeHtml(input.replace("\n", "\n\n")),
-                  });
+                    html: converter.makeHtml(input),
+                  })
                 }
-              }
-            }}
-          />
-          <FileAttachment
-            onUpload={async (file) => {
-              const text = `Uploading ${file.name} to SHDW Drive...`;
-              toast.custom(
-                (t) => (
-                  <LongPromiseNotification
-                    estTimeMillis={2 * 60 * 1000}
-                    text={text}
-                    onError={(e) => {
-                      handleErrors(e);
-                      toast.dismiss(t.id);
-                    }}
-                    exec={async () => {
-                      randomizeFileName(file);
-                      await sendMessageImpl({
-                        type: MessageType.Image,
-                        fileAttachments: [file],
-                      });
-                      return true;
-                    }}
-                    onComplete={async () => {
-                      toast.dismiss(t.id);
-                    }}
-                  />
-                ),
-                {
-                  duration: Infinity,
-                }
-              );
-            }}
-          />
-          <IconButton
-            aria-label="Select GIF"
-            variant="outline"
-            onClick={onToggle}
-            icon={<Icon w="24px" h="24px" as={AiOutlineGif} />}
-          />
-          <Button
-            isLoading={loading}
-            colorScheme="primary"
-            variant="outline"
-            isDisabled={!hasEnough || !input}
-            onClick={() =>
-              sendMessage({
-                type: MessageType.Html,
-                html: converter.makeHtml(input),
-              })
-            }
+              >
+                <Icon as={AiOutlineSend} />
+              </Button>
+            </HStack>
+          </Flex>
+          <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            size="2xl"
+            isCentered
+            trapFocus={true}
           >
-            <Icon as={AiOutlineSend} />
-          </Button>
-        </HStack>
-      </Flex>
-      <Modal
-        isOpen={isOpen}
-        onClose={onClose}
-        size="2xl"
-        isCentered
-        trapFocus={true}
-      >
-        <ModalContent borderRadius="xl" shadow="xl">
-          <ModalHeader>Select GIF</ModalHeader>
-          <ModalBody>
-            <GifSearch
-              onSelect={(gifyId) => {
-                onClose();
-                sendMessage({ type: MessageType.Gify, gifyId });
-              }}
-            />
-          </ModalBody>
-        </ModalContent>
-      </Modal>
-    </>
-  ) : (
-    <Flex justify="center" mb="6px">
-      <BuyMoreButton mint={chat?.postPermissionKey} />
+            <ModalOverlay />
+            <ModalContent borderRadius="xl" shadow="xl">
+              <ModalHeader>Select GIF</ModalHeader>
+              <ModalBody>
+                <GifSearch
+                  onSelect={(gifyId) => {
+                    onClose();
+                    sendMessage({ type: MessageType.Gify, gifyId });
+                  }}
+                />
+              </ModalBody>
+            </ModalContent>
+          </Modal>
+        </>
+      )}
     </Flex>
   );
 }

@@ -66,7 +66,6 @@ export const ChatMessages = ({
       grow={1}
       overflowY="auto"
       direction="column-reverse"
-      h="full"
       ref={scrollRef}
       onScroll={handleOnScroll}
     >

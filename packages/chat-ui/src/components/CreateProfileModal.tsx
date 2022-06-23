@@ -12,6 +12,7 @@ import {
   Modal,
   ModalBody,
   ModalContent,
+  ModalOverlay,
   Text,
   VStack,
   Icon,
@@ -61,7 +62,15 @@ interface IProfileProps {
 }
 
 const validationSchema = yup.object({
-  username: yup.string().required().min(6).max(28).matches(/^[a-zA-Z0-9_\-]*$/, "Must only contain alphanumeric characters, underscores, or dashes."),
+  username: yup
+    .string()
+    .required()
+    .min(6)
+    .max(28)
+    .matches(
+      /^[a-zA-Z0-9_\-]*$/,
+      "Must only contain alphanumeric characters, underscores, or dashes."
+    ),
   image: yup.mixed(),
   imageUrl: yup.string(),
 });
@@ -271,6 +280,7 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
       trapFocus={true}
       {...props}
     >
+      <ModalOverlay />
       <ModalContent borderRadius="xl" shadow="xl">
         <ModalBody>
           <VStack pb={4} pt={4} spacing={4} align="left">
