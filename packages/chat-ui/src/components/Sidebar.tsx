@@ -14,6 +14,7 @@ export const Sidebar = (props: any) => {
   const router = useRouter();
   const { id } = router.query;
   const { chatKey, loading: loadingId } = useChatKeyFromIdentifier(id as string);
+  const { info: chat } = useChat(chatKey);
   
   useEffect(() => {
     if (chat && id) {
