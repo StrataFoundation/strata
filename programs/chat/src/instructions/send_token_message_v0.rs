@@ -7,7 +7,7 @@ use std::convert::*;
 #[derive(Accounts)]
 pub struct SendTokenMessageV0<'info> {
   #[account(
-    constraint = chat.post_permission_mint_or_collection == post_permission_mint.key()
+    constraint = chat.post_permission_key == post_permission_mint.key()
   )]
   pub chat: Box<Account<'info, ChatV0>>,
   pub sender: Signer<'info>,

@@ -258,9 +258,9 @@ export interface InitializeChatArgs {
   /** Human readable name for the chat */
   name: string;
   /** The mint you need to read this chat */
-  readPermissionMintOrCollection: PublicKey;
+  readPermissionKey: PublicKey;
   /** The mint you need to post to this chat */
-  postPermissionMintOrCollection: PublicKey;
+  postPermissionKey: PublicKey;
   /** The number of tokens needed to post to this chat. **Default:** 1 */
   postPermissionAmount?: number | BN;
   /** The action to take when posting. **Default:** hold */
@@ -573,14 +573,14 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     const chatAcc = await this.getChat(chatKey);
     const readMint = await getMintInfo(
       this.provider,
-      chatAcc!.readPermissionMintOrCollection
+      chatAcc!.readPermissionKey
     );
 
     let decodedMessage;
     if (encryptedSymmetricKey) {
       const accessControlConditions = [
         tokenAccessPermissions(
-          chatAcc!.readPermissionMintOrCollection,
+          chatAcc!.readPermissionKey,
           toBN(readPermissionAmount, readMint),
           this.chain
         ),
@@ -1045,8 +1045,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     payer = this.wallet.publicKey,
     identifierCertificateMint,
     name,
-    readPermissionMintOrCollection,
-    postPermissionMintOrCollection,
+    readPermissionKey,
+    postPermissionKey,
     postPermissionAction = PostAction.Hold,
     postPayDestination,
     postPermissionAmount = 1,
@@ -1059,11 +1059,11 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     )[0];
     const postMint = await getMintInfo(
       this.provider,
-      postPermissionMintOrCollection
+      postPermissionKey
     );
     const readMint = await getMintInfo(
       this.provider,
-      readPermissionMintOrCollection
+      readPermissionKey
     );
 
     const metadataKey = await Metadata.getPDA(identifierCertificateMint);
@@ -1096,8 +1096,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
           defaultReadPermissionAmount,
           readMint
         ) as AnchorBN,
-        postPermissionMintOrCollection,
-        readPermissionMintOrCollection,
+        postPermissionKey,
+        readPermissionKey,
         postPermissionAction: postPermissionAction as never,
         postPermissionAmount: toBN(postPermissionAmount, postMint) as AnchorBN,
         postPayDestination: postPayDestination || null,
@@ -1302,7 +1302,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     const chatAcc = (await this.getChat(chat))!;
     const readMint = await getMintInfo(
       this.provider,
-      chatAcc.readPermissionMintOrCollection
+      chatAcc.readPermissionKey
     );
 
     const readAmount = toBN(
@@ -1311,14 +1311,14 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     );
     const accessControlConditionsToUse = [
       tokenAccessPermissions(
-        chatAcc.readPermissionMintOrCollection,
+        chatAcc.readPermissionKey,
         readAmount,
         this.chain
       ),
     ];
 
     const storedSymKey = this.symKeyStorage.getSymKeyToUse(
-      chatAcc.readPermissionMintOrCollection,
+      chatAcc.readPermissionKey,
       readAmount.toNumber()
     );
     let symmKey: any;
@@ -1397,7 +1397,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
           "base16"
         );
         this.symKeyStorage.setSymKeyToUse(
-          chatAcc.readPermissionMintOrCollection,
+          chatAcc.readPermissionKey,
           readAmount.toNumber(),
           {
             symKey: Buffer.from(await exportSymmetricKey(symmKey)).toString(
@@ -1435,7 +1435,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     const postPermissionAccount = await Token.getAssociatedTokenAddress(
       ASSOCIATED_TOKEN_PROGRAM_ID,
       TOKEN_PROGRAM_ID,
-      chatAcc.postPermissionMintOrCollection,
+      chatAcc.postPermissionKey,
       profileAcc.ownerWallet,
       true
     );
@@ -1486,7 +1486,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
               sender: senderToUse,
               profile,
               postPermissionAccount,
-              postPermissionMint: chatAcc.postPermissionMintOrCollection,
+              postPermissionMint: chatAcc.postPermissionKey,
               identifierCertificateMint,
               identifierCertificateMintAccount,
               tokenProgram: TOKEN_PROGRAM_ID,

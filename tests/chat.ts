@@ -92,18 +92,18 @@ describe("chat", () => {
       const { chat } = await chatSdk.initializeChat({
         identifierCertificateMint: chatIdentifierCertificateMint,
         name,
-        readPermissionMintOrCollection: readPermissionMint,
-        postPermissionMintOrCollection: postPermissionMint,
+        readPermissionKey: readPermissionMint,
+        postPermissionKey: postPermissionMint,
       });
       const chatAcc = await chatSdk.getChat(chat);
       expect(chatAcc?.identifierCertificateMint.toBase58()).to.eq(
         chatIdentifierCertificateMint.toBase58()
       );
       expect(chatAcc?.name).to.eq(name);
-      expect(chatAcc?.readPermissionMintOrCollection?.toBase58()).to.eq(
+      expect(chatAcc?.readPermissionKey?.toBase58()).to.eq(
         readPermissionMint.toBase58()
       );
-      expect(chatAcc?.postPermissionMintOrCollection?.toBase58()).to.eq(
+      expect(chatAcc?.postPermissionKey?.toBase58()).to.eq(
         postPermissionMint.toBase58()
       );
     });

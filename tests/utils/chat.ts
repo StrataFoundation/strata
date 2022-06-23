@@ -96,8 +96,8 @@ export async function initializeChat(
   const { chat } = await chatSdk.initializeChat({
     identifierCertificateMint: chatIdentifierCertificateMint,
     name,
-    readPermissionMintOrCollection: readPermissionKey,
-    postPermissionMintOrCollection: postPermissionKey,
+    readPermissionKey,
+    postPermissionKey,
   });
   return chat;
 }
@@ -106,12 +106,10 @@ export const AUTH_SIGNATURE_BODY =
   "I am creating an account to use Lit Protocol at {{timestamp}}";
 
 export async function getAuthSig(publicKey: PublicKey, secretKey: Uint8Array) {
-  console.log(secretKey);
   const now = new Date().toISOString();
   const body = AUTH_SIGNATURE_BODY.replace("{{timestamp}}", now);
 
   const data = new TextEncoder().encode(body);
-  console.log(data);
   const signed = nacl.sign.detached(data, secretKey);
   // const signed = await provider.signMessage(data, "utf8");
 
@@ -124,6 +122,5 @@ export async function getAuthSig(publicKey: PublicKey, secretKey: Uint8Array) {
     address: publicKey.toBase58(),
   };
 
-  console.log(authSig);
   return authSig;
 }

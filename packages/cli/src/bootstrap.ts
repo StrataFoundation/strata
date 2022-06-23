@@ -201,8 +201,8 @@ async function run() {
   await chatSdk.initializeChat({
     identifierCertificateMint,
     name: "Open Collective Chat",
-    readPermissionMintOrCollection: new PublicKey(openMintKeypair.publicKey),
-    postPermissionMintOrCollection: new PublicKey(openMintKeypair.publicKey),
+    readPermissionKey: new PublicKey(openMintKeypair.publicKey),
+    postPermissionKey: new PublicKey(openMintKeypair.publicKey),
     imageUrl: "https://strata-token-metadata.s3.us-east-2.amazonaws.com/open.png",
   });
 }
