@@ -3,12 +3,11 @@ use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 use std::convert::*;
+use std::str::FromStr;
+use mpl_token_metadata::state::Metadata;
 
 #[derive(Accounts)]
 pub struct SendTokenMessageV0<'info> {
-  #[account(
-    constraint = chat.post_permission_key == post_permission_mint.key()
-  )]
   pub chat: Box<Account<'info, ChatV0>>,
   pub sender: Signer<'info>,
   pub profile: Box<Account<'info, ProfileV0>>,
@@ -42,14 +41,52 @@ pub struct MessagePartV0 {
   pub content: String,
 }
 
+pub fn assert_valid_metadata(metadata_info: &AccountInfo, mint: Pubkey) -> core::result::Result<Metadata, ProgramError> {
+  let metadata_program = Pubkey::from_str("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s").unwrap();
+
+  // 1 verify the owner of the account is metaplex's metadata program
+  assert_eq!(metadata_info.owner, &metadata_program);
+
+  // 2 verify the PDA seeds match
+  let seed = &[
+      b"metadata".as_ref(),
+      metadata_program.as_ref(),
+      mint.as_ref(),
+  ];
+
+  let (metadata_addr, _bump) = Pubkey::find_program_address(seed, &metadata_program);
+  assert_eq!(metadata_addr, metadata_info.key());
+
+  return Metadata::from_account_info(metadata_info);
+}
+
+pub fn assert_meets_permissions(ctx: &Context<SendTokenMessageV0>) -> Result<()> {
+  let remaining_accs = &mut ctx.remaining_accounts.iter();
+
+  // attempt to verify the token holding
+  if ctx.accounts.chat.post_permission_key == ctx.accounts.post_permission_mint.key() &&
+    ctx.accounts.post_permission_account.amount >= ctx.accounts.chat.post_permission_amount {
+      return Ok(());
+  }
+
+  // 1 optional account is expected, a metadata account
+  let metadata_info = next_account_info(remaining_accs)?;
+
+  let metadata = assert_valid_metadata(metadata_info, ctx.accounts.post_permission_mint.key())?;
+  let collection = metadata.collection.unwrap();
+  if ctx.accounts.chat.post_permission_key == collection.key && collection.verified {
+    return Ok(());
+  }
+
+  return Err(error!(ErrorCode::PermissionDenied));
+}
+
 pub fn handler(ctx: Context<SendTokenMessageV0>, _args: MessagePartV0) -> Result<()> {
-  require!(
-    ctx.accounts.post_permission_account.amount >= ctx.accounts.chat.post_permission_amount,
-    ErrorCode::PermissionDenied
-  );
+  assert_meets_permissions(&ctx)?;
 
   if ctx.accounts.profile.owner_wallet != ctx.accounts.sender.key() {
-    let delegate_acc = &ctx.remaining_accounts[0];
+    let rm_acc_length = &ctx.remaining_accounts.iter().count();
+    let delegate_acc = &ctx.remaining_accounts[rm_acc_length - 1]; // delegate wallet is always the last optional account
     let delegate: Account<DelegateWalletV0> = Account::try_from(delegate_acc)?;
     if delegate.delegate_wallet != ctx.accounts.sender.key() {
       return Err(error!(ErrorCode::IncorrectSender));

@@ -163,11 +163,10 @@ export class TokenUtils {
     recipient: PublicKey,
     mintKeypair: Keypair=Keypair.generate(),
     holderKey: PublicKey=provider.wallet.publicKey,
-    collectionKey=Keypair.generate().publicKey,
-  ): Promise<{mintKey: PublicKey, collectionKey: PublicKey}> {
+    collectionKey?: PublicKey,
+  ): Promise<{mintKey: PublicKey, collectionKey: PublicKey | undefined}> {
     const splTokenMetadata = await SplTokenMetadata.init(provider);
     const mintKey = await createMint(provider, this.provider.wallet.publicKey, 0, mintKeypair);
-    console.log(splTokenMetadata);
     await splTokenMetadata.createMetadata({
       data: new DataV2({
         name: "test",
@@ -181,11 +180,11 @@ export class TokenUtils {
             share: 100,
           }),
         ],
-        collection: new Collection({ key: collectionKey.toBase58(), verified: false }),
+        collection: collectionKey ? new Collection({ key: collectionKey.toBase58(), verified: false }): null,
         uses: null,
       }),
       mint: mintKey,
-    })
+    });
 
     await this.createAtaAndMint(
       provider,
@@ -193,6 +192,17 @@ export class TokenUtils {
       1,
       recipient
     );
+
+    if (collectionKey) {
+      await splTokenMetadata.verifyCollection({
+        collectionMint: collectionKey,
+        nftMint: mintKeypair.publicKey,
+      })
+    } else {
+      await splTokenMetadata.createMasterEdition({
+        mint: mintKeypair.publicKey,
+      })
+    }
 
     return {
       mintKey,

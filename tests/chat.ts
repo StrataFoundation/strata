@@ -165,6 +165,7 @@ describe("chat", () => {
       let unauthorisedUser = Keypair.generate();
       let tokenChat: PublicKey;
       let nftChat: PublicKey;
+      const nftMintKeypair = Keypair.generate();
       before(async() => {
         // init token holder
         const tokenHolderUsername = randomIdentifier();
@@ -206,17 +207,19 @@ describe("chat", () => {
         );
 
         // create chat where only token holders are auth
-        tokenChat = await initializeChat(chatSdk, identifier, name, tokenMintKeypair.publicKey, tokenMintKeypair.publicKey);
+        const tokenChatId = randomIdentifier();
+        tokenChat = await initializeChat(chatSdk, tokenChatId, name, tokenMintKeypair.publicKey, tokenMintKeypair.publicKey);
 
         // create nft from permitted collection on localnet and devnet
-        const nftMintKeypair = Keypair.generate();
         const nftCollectionKeypair = Keypair.generate();
+        // await createMint(provider, me, 0, nftCollectionKeypair);
+        await tokenUtils.createTestNft(provider, nftHolder.publicKey, nftCollectionKeypair, provider.wallet.publicKey);
         await tokenUtils.createTestNft(provider, nftHolder.publicKey, nftMintKeypair, provider.wallet.publicKey, nftCollectionKeypair.publicKey);
         // await tokenUtils.createTestNft(devnetProvider, nftHolder.publicKey, nftMintKeypair, provider.wallet.publicKey, nftCollectionKeypair.publicKey);
 
         // create chat where nft holders of a collection are auth
-        // nftChat = await initializeChat(chatSdk, identifier, name, nftCollectionKeypair.publicKey, nftCollectionKeypair.publicKey);
-        
+        const nftChatId = randomIdentifier();
+        nftChat = await initializeChat(chatSdk, nftChatId, name, nftCollectionKeypair.publicKey, nftCollectionKeypair.publicKey);
       })
 
       it("allows token holders", async() => {
@@ -242,10 +245,10 @@ describe("chat", () => {
         expect(decodedMessage?.text).to.eq("hello");
       })
 
-      xit("allows nft holders", async() => {
+      it("allows nft holders", async() => {
         // manually authenticate lit protocol
         //@ts-ignore
-        let authSig = await getAuthSig(tokenHolder.publicKey, tokenHolder.secretKey)
+        let authSig = await getAuthSig(nftHolder.publicKey, nftHolder.secretKey)
         chatSdk.litAuthSig = authSig;
 
         const { instructions, signers } = await chatSdk.sendMessageInstructions({
@@ -253,6 +256,7 @@ describe("chat", () => {
           chat: nftChat,
           message: { type: MessageType.Text, text: "hello" },
           encrypted: false,
+          nftMint: nftMintKeypair.publicKey,
         });
         const txid = await sendInstructions(
           chatSdk.errors || new Map(),
@@ -266,15 +270,11 @@ describe("chat", () => {
       })
 
       it("doesn't allow other users", async() => {
-        // manually authenticate lit protocol
-        //@ts-ignore
-        let authSig = await getAuthSig(unauthorisedUser.publicKey, unauthorisedUser.secretKey)
-        chatSdk.litAuthSig = authSig;
         const { instructions, signers } = await chatSdk.sendMessageInstructions({
           sender: unauthorisedUser.publicKey,
           chat: tokenChat,
           message: { type: MessageType.Text, text: "hello" },
-          encrypted: true,
+          encrypted: false,
         });
 
         expect(
