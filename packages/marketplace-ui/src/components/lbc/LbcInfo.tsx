@@ -184,7 +184,7 @@ export const LbcInfo = ({
                 <Spinner size="lg" />
               ) : (
                 <BigText>
-                  {isNaN(priceToUse)
+                  {(isNaN(priceToUse) || !isLive)
                     ? "Not Started"
                     : `${numberWithCommas(priceToUse, 4)} ${
                         metadata?.data.symbol
