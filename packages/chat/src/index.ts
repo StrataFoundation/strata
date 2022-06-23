@@ -538,7 +538,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       async getDelegateWalletSeed() {
         const symmetricKey = await that.getSymmetricKey(
           coded.encryptedSymmetricKey,
-          myWalletPermissions(coded.ownerWallet)
+          [myWalletPermissions(coded.ownerWallet)]
         );
         return that.litJsSdk.decryptString(
           new Blob([
@@ -1345,7 +1345,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     await this.litAuth();
     const encryptedSymmetricKey = this.litJsSdk.uint8arrayToString(
       await this.litClient.saveEncryptionKey({
-        solRpcConditions: myWalletPermissions(ownerWallet),
+        solRpcConditions: [myWalletPermissions(ownerWallet)],
         symmetricKey: new Uint8Array(
           await crypto.subtle.exportKey("raw", symmKey)
         ),
@@ -1362,10 +1362,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
     instructions.push(
       await this.instruction.initializeSettingsV0(
-        {
-          space: calculateSettingsSpace(encryptedSettings),
-          ...encryptedSettings,
-        },
+        encryptedSettings,
         {
           accounts: {
             payer,
@@ -1770,26 +1767,3 @@ function ensurePubkey(arg0: PublicKey | string) {
   }
   return arg0;
 }
-
-function calculateSettingsSpace(settings: {
-  chatSettings: {
-    identifier: string;
-    audioNotifications: boolean;
-    desktopNotifications: boolean;
-    mobileNotifications: boolean;
-  }[];
-  encryptedDelegateWallet: string;
-  encryptedSymmetricKey: string;
-}): number {
-  const numChats = Object.keys(settings.chatSettings).length;
-  return (
-    1 + // bump
-    32 + // owner_wallet
-    4 + // chat settings len
-    numChats * 32 + // identifier length
-    numChats * 3 + // Notification settings length
-    Buffer.from(settings.encryptedDelegateWallet, "utf8").length +
-    Buffer.from(settings.encryptedSymmetricKey, "utf8").length
-  );
-}
-

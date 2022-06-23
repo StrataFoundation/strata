@@ -50,7 +50,10 @@ describe("chat", () => {
 
   const program = anchor.workspace.Chat;
   const tokenUtils = new TokenUtils(provider);
-  const litClient = new LitNodeJsSdk.LitNodeClient();
+  const litClient = new LitNodeJsSdk.LitNodeClient({
+    debug: false,
+    alerts: false
+  });
   const namespacesProgram = new Program<NAMESPACES_PROGRAM>(
     NAMESPACES_IDL,
     NAMESPACES_PROGRAM_ID,
@@ -68,14 +71,6 @@ describe("chat", () => {
   before(async () => {
     await chatSdk.initializeNamespaces();
     await litClient.connect();
-    // manually authenticate lit protocol
-    //@ts-ignore
-    let authSig = await getAuthSig(
-      provider.wallet.publicKey,
-      provider.wallet.secretKey,
-      tokenHolder.secretKey
-    );
-    chatSdk.litAuthSig = authSig;
   });
 
   describe("initialize chat", () => {
@@ -139,8 +134,19 @@ describe("chat", () => {
   });
 
   describe("initialize settings", () => {
+    let tokenHolder = Keypair.generate();
+
     it("intializes settings", async () => {
-      const { settings } = await chatSdk.initializeSettings({
+      // manually authenticate lit protocol
+      //@ts-ignore
+      let authSig = await getAuthSig(
+        tokenHolder.publicKey,
+        tokenHolder.secretKey
+      );
+      chatSdk.litAuthSig = authSig;
+      
+      const { output: { settings }, instructions, signers } = await chatSdk.initializeSettingsInstructions({
+        ownerWallet: tokenHolder.publicKey,
         settings: {
           delegateWalletSeed: "hello",
           chatSettings: [
@@ -153,10 +159,50 @@ describe("chat", () => {
           ],
         },
       });
+      await chatSdk.sendInstructions(instructions, [...signers, tokenHolder]);
 
       const settingsAcc = await chatSdk.getSettings(settings);
       const seed = await settingsAcc?.getDelegateWalletSeed();
-      expect(seed).to.eq("hello")
+      expect(seed).to.eq("hello");
+
+      //Try resize
+      const {
+        output: { settings: setting2 },
+        instructions: instructions2,
+        signers: signers2,
+      } = await chatSdk.initializeSettingsInstructions({
+        ownerWallet: tokenHolder.publicKey,
+        settings: {
+          delegateWalletSeed: "hello",
+          chatSettings: [
+            {
+              identifier: "foo",
+              audioNotifications: true,
+              desktopNotifications: false,
+              mobileNotifications: false,
+            },
+            {
+              identifier: "bar",
+              audioNotifications: true,
+              desktopNotifications: false,
+              mobileNotifications: false,
+            },
+            {
+              identifier: "baz",
+              audioNotifications: true,
+              desktopNotifications: false,
+              mobileNotifications: false,
+            },
+            {
+              identifier: "hey",
+              audioNotifications: true,
+              desktopNotifications: false,
+              mobileNotifications: false,
+            },
+          ],
+        },
+      });
+      await chatSdk.sendInstructions(instructions2, [...signers2, tokenHolder]);
     });
   });
 
