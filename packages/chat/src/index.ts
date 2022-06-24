@@ -73,9 +73,11 @@ const storage =
 // 3 hours
 const KEY_EXPIRY = 3 * 60 * 60 * 1000;
 
+const CONDITION_VERSION = 1;
+
 export class LocalSymKeyStorage implements ISymKeyStorage {
   setSymKey(encrypted: string, unencrypted: string): void {
-    storage.set("enc" + encrypted, unencrypted);
+    storage.set("enc" + CONDITION_VERSION + encrypted, unencrypted);
   }
   getSymKey(encrypted: string): string | null {
     return storage.get("enc" + encrypted) as string | null;
@@ -364,7 +366,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   symKeyStorage: ISymKeyStorage;
   litJsSdk: LitJsSdk; // to use in nodejs, manually set this to the nodejs lit client. see tests for example
   namespacesProgram: Program<NAMESPACES_PROGRAM>;
-  conditionVersion = 1;
+  conditionVersion = CONDITION_VERSION;
   
   static ID = new PublicKey("chatGL6yNgZT2Z3BeMYGcgdMpcBKdmxko4C5UhEX4To");
 
