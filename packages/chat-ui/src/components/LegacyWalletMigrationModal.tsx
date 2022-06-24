@@ -49,7 +49,7 @@ export const LegacyWalletMigrationModal = () => {
 
   if (legacyMnemonic) {
     return (
-      <Modal size="xl" isOpen={true} onClose={() => {}}>
+      <Modal size="xl" isOpen={isOpen} onClose={() => {}}>
         <ModalOverlay />
         <ModalContent borderRadius="xl" shadow="xl">
           <ModalBody p={0}>
@@ -85,7 +85,7 @@ export const LegacyWalletMigrationModal = () => {
                 variant="solid"
                 colorScheme="primary"
                 onClick={async () => {
-                  await exec(legacyMnemonic, chatSdk)
+                  await exec(legacyMnemonic, chatSdk);
                   setIsOpen(false);
                 }}
                 loadingText={"Migrating..."}
