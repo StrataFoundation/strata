@@ -1,11 +1,12 @@
 import { Wallet } from "@/components/Wallet";
 import { ChatSdkProvider } from "@/contexts/chatSdk";
+import { EmojisProvider } from "@/contexts/emojis";
 import { useMediaQuery } from "@chakra-ui/react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import {
   AcceleratorProvider,
   Notification,
-  StrataProviders
+  StrataProviders,
 } from "@strata-foundation/react";
 import { AppProps } from "next/app";
 import React from "react";
@@ -54,24 +55,26 @@ function MyApp({ Component, pageProps }: AppProps) {
         <StrataProviders resetCSS onError={onError}>
           <AcceleratorProvider url="wss://prod-api.teamwumbo.com/accelerator">
             <ChatSdkProvider>
-              <Component {...pageProps} />
-              {isMobile ? (
-                <Toaster
-                  position="top-center"
-                  containerStyle={{
-                    margin: "60px auto",
-                    width: "90%",
-                    maxWidth: "420px",
-                  }}
-                />
-              ) : (
-                <Toaster
-                  position="bottom-left"
-                  containerStyle={{
-                    width: "420px",
-                  }}
-                />
-              )}
+              <EmojisProvider>
+                {isMobile ? (
+                  <Toaster
+                    position="top-center"
+                    containerStyle={{
+                      margin: "60px auto",
+                      width: "90%",
+                      maxWidth: "420px",
+                    }}
+                  />
+                ) : (
+                  <Toaster
+                    position="bottom-left"
+                    containerStyle={{
+                      width: "420px",
+                    }}
+                  />
+                )}
+                <Component {...pageProps} />
+              </EmojisProvider>
             </ChatSdkProvider>
           </AcceleratorProvider>
         </StrataProviders>

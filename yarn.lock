@@ -2781,6 +2781,11 @@
     resolve-pathname "^3.0.0"
     tslib "^2.3.1"
 
+"@emoji-mart/data@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@emoji-mart/data/-/data-1.0.2.tgz#2b94c5b5f2c79611c12238438dad9516576a09ab"
+  integrity sha512-+ZdzBM4llDJJvjuCEsdOYVoSlNA16MMmxKG3oF5LARkwhx6N5clr6phzneWV1qIwJsywqwG7NaBjH8DV6yzjcA==
+
 "@emotion/babel-plugin@^11.3.0":
   version "11.3.0"
   resolved "https://registry.yarnpkg.com/@emotion/babel-plugin/-/babel-plugin-11.3.0.tgz#3a16850ba04d8d9651f07f3fb674b3436a4fb9d7"
@@ -6669,6 +6674,13 @@
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/@types/d3-time/-/d3-time-2.1.1.tgz#743fdc821c81f86537cbfece07093ac39b4bc342"
   integrity sha512-9MVYlmIgmRR31C5b4FVSWtuMmBHh2mOWQYfl7XAYOa8dsnb7iEmUmRSWSFgXFtkjxO65d7hTUHQC+RhR/9IWFg==
+
+"@types/emoji-mart@^3.0.9":
+  version "3.0.9"
+  resolved "https://registry.yarnpkg.com/@types/emoji-mart/-/emoji-mart-3.0.9.tgz#2f7ef5d9ec194f28029c46c81a5fc1e5b0efa73c"
+  integrity sha512-qdBo/2Y8MXaJ/2spKjDZocuq79GpnOhkwMHnK2GnVFa8WYFgfA+ei6sil3aeWQPCreOKIx9ogPpR5+7MaOqYAA==
+  dependencies:
+    "@types/react" "*"
 
 "@types/escape-html@^1.0.2":
   version "1.0.2"
@@ -11751,6 +11763,11 @@ elliptic@6.5.4, elliptic@^6.4.0, elliptic@^6.5.2, elliptic@^6.5.3, elliptic@^6.5
     inherits "^2.0.4"
     minimalistic-assert "^1.0.1"
     minimalistic-crypto-utils "^1.0.1"
+
+emoji-mart@^5.1.0:
+  version "5.1.0"
+  resolved "https://registry.yarnpkg.com/emoji-mart/-/emoji-mart-5.1.0.tgz#8a36a872e1297747342d1385bd7b7141ac2f4365"
+  integrity sha512-ytXgeemyw4FormPQqWd35Vh06ZSnQFhVUqW51kASZzzjhQOPSGtiN3VCC7vDq94Pkxmsbet+Gps/qj5N90mEnw==
 
 emoji-regex@^7.0.1:
   version "7.0.3"

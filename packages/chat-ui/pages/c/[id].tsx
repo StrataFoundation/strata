@@ -1,3 +1,7 @@
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useDisclosure, Flex } from "@chakra-ui/react";
+import { useErrorHandler } from "@strata-foundation/react";
+import { useRouter } from "next/router";
 import { Chatbox } from "@/components/Chatbox";
 import { ChatMessages } from "@/components/ChatMessages";
 import { Header } from "@/components/Header";
@@ -5,12 +9,9 @@ import { Layout } from "@/components/Layout";
 import { LegacyWalletMigrationModal } from "@/components/LegacyWalletMigrationModal";
 import { RoomsHeader } from "@/components/rooms/RoomsHeader";
 import { Workspace } from "@/components/Workspace";
+import { EmojiPicker } from "@/components/EmojiPicker";
 import { useChatKeyFromIdentifier } from "@/hooks/useChatKeyFromIdentifier";
 import { IMessageWithPending, useMessages } from "@/hooks/useMessages";
-import { useDisclosure, Flex } from "@chakra-ui/react";
-import { useErrorHandler } from "@strata-foundation/react";
-import { useRouter } from "next/router";
-import React, { useEffect, useMemo, useRef, useState } from "react";
 
 export default function Chatroom() {
   const sidebar = useDisclosure();
@@ -21,8 +22,10 @@ export default function Chatroom() {
   const [pendingMessages, setPendingMessages] = useState<IMessageWithPending[]>(
     []
   );
+
   const { messages, error, loadingInitial, loadingMore, hasMore, fetchMore } =
     useMessages(chatKey);
+
   const { handleErrors } = useErrorHandler();
   handleErrors(error);
 
@@ -57,6 +60,7 @@ export default function Chatroom() {
         <RoomsHeader chatKey={chatKey} />
       </Header>
       <Workspace>
+        <EmojiPicker />
         <ChatMessages
           isLoading={loadingInitial || loadingMore}
           scrollRef={scrollRef}
