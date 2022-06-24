@@ -13,7 +13,7 @@ export * from "./WalletModalButton";
 export * from "./AsyncButton";
 export * from "./lbc";
 export * from "./DisburseFunds";
-export * from "./HolaplexGraphqlProvider";
+export * from "@strata-foundation/react/src/contexts/HolaplexGraphqlProvider";
 export * from "./MarketplaceProviders";
 export * from "./svgs";
 export * from "./Disclaimer";

@@ -1,6 +1,5 @@
 import { Keypair, PublicKey, SYSVAR_CLOCK_PUBKEY, Transaction } from "@solana/web3.js";
-import { Cluster } from "@strata-foundation/accelerator";
-import { Accelerator } from "@strata-foundation/accelerator";
+import { Accelerator, Cluster } from "@strata-foundation/accelerator";
 import {
   ChatSdk,
   IChat,
@@ -8,11 +7,9 @@ import {
   ISendMessageContent
 } from "@strata-foundation/chat";
 import {
-  useAccelerator, useEndpoint,
-  useErrorHandler, useSolanaUnixTime
+  useAccelerator, useCollectionOwnedAmount, useEndpoint
 } from "@strata-foundation/react";
 import { sendAndConfirmWithRetry } from "@strata-foundation/spl-utils";
-import { useState } from "react";
 import { useAsyncCallback } from "react-async-hook";
 import { useChatSdk } from "../contexts";
 import { IMessageWithPending, useChat, useWalletProfile } from "../hooks";
@@ -40,7 +37,8 @@ async function sendMessage({
   delegateWalletKeypair,
   cluster,
   onAddPendingMessage,
-  message
+  message,
+  nftMint
 }: {
   chat: IChat | undefined,
   profile: IProfile | undefined,
@@ -49,7 +47,8 @@ async function sendMessage({
   delegateWalletKeypair: Keypair | undefined,
   cluster: string,
   onAddPendingMessage: ((message: IMessageWithPending) => void) | undefined,
-  message: ISendMessageContent
+  message: ISendMessageContent,
+  nftMint?: PublicKey
 }) {
   const chatKey = chat?.publicKey;
   if (delegateWalletKeypair) {
@@ -59,6 +58,7 @@ async function sendMessage({
         signers: signerGroups,
         output: { messageId },
       } = await chatSdk.sendMessageInstructions({
+        nftMint,
         delegateWalletKeypair,
         payer: delegateWalletKeypair.publicKey,
         chat: chatKey,
@@ -136,6 +136,9 @@ export function useSendMessage({ chatKey, onAddPendingMessage }: IUseSendMessage
   const { info: chat } = useChat(chatKey);
   const { info: profile } = useWalletProfile();
   const { cluster } = useEndpoint();
+  const { matches } = useCollectionOwnedAmount(
+    chat?.postPermissionKey
+  );
 
   const {
     error,
@@ -145,8 +148,8 @@ export function useSendMessage({ chatKey, onAddPendingMessage }: IUseSendMessage
 
   return {
     error,
-    sendMessage: (message: ISendMessageContent) =>
-      execute({
+    sendMessage: (message: ISendMessageContent) => {
+      return execute({
         chat,
         chatSdk,
         profile,
@@ -155,7 +158,9 @@ export function useSendMessage({ chatKey, onAddPendingMessage }: IUseSendMessage
         cluster,
         onAddPendingMessage,
         message,
-      }),
+        nftMint: matches && matches[0]
+      });
+    },
     loading,
   };
 }

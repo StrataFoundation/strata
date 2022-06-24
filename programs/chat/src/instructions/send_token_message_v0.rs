@@ -39,6 +39,7 @@ pub struct MessagePartV0 {
   pub read_permission_amount: u64,
   pub encrypted_symmetric_key: String,
   pub content: String,
+  pub condition_version: u8
 }
 
 pub fn assert_valid_metadata(metadata_info: &AccountInfo, mint: Pubkey) -> core::result::Result<Metadata, ProgramError> {

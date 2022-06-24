@@ -7,6 +7,7 @@ import {
   AcceleratorProvider,
   Notification,
   StrataProviders,
+  HolaplexGraphqlProvider,
 } from "@strata-foundation/react";
 import { AppProps } from "next/app";
 import React from "react";
@@ -55,26 +56,28 @@ function MyApp({ Component, pageProps }: AppProps) {
         <StrataProviders resetCSS onError={onError}>
           <AcceleratorProvider url="wss://prod-api.teamwumbo.com/accelerator">
             <ChatSdkProvider>
-              <EmojisProvider>
-                {isMobile ? (
-                  <Toaster
-                    position="top-center"
-                    containerStyle={{
-                      margin: "60px auto",
-                      width: "90%",
-                      maxWidth: "420px",
-                    }}
-                  />
-                ) : (
-                  <Toaster
-                    position="bottom-left"
-                    containerStyle={{
-                      width: "420px",
-                    }}
-                  />
-                )}
-                <Component {...pageProps} />
-              </EmojisProvider>
+              <HolaplexGraphqlProvider>
+                <EmojisProvider>
+                  <Component {...pageProps} />
+                  {isMobile ? (
+                    <Toaster
+                      position="top-center"
+                      containerStyle={{
+                        margin: "60px auto",
+                        width: "90%",
+                        maxWidth: "420px",
+                      }}
+                    />
+                  ) : (
+                    <Toaster
+                      position="bottom-left"
+                      containerStyle={{
+                        width: "420px",
+                      }}
+                    />
+                  )}
+                </EmojisProvider>
+              </HolaplexGraphqlProvider>
             </ChatSdkProvider>
           </AcceleratorProvider>
         </StrataProviders>

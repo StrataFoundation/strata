@@ -49,3 +49,4 @@ export * from "./useManyToOneSwapDriver";
 export * from "./useEndpoint";
 export * from "./useTransactions";
 export * from "./useSolanaUnixTime";
+export * from "./useCollectionOwnedAmount";
