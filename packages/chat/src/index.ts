@@ -364,7 +364,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   symKeyStorage: ISymKeyStorage;
   litJsSdk: LitJsSdk; // to use in nodejs, manually set this to the nodejs lit client. see tests for example
   namespacesProgram: Program<NAMESPACES_PROGRAM>;
-
+  conditionVersion = 1;
+  
   static ID = new PublicKey("chatGL6yNgZT2Z3BeMYGcgdMpcBKdmxko4C5UhEX4To");
 
   get isLitAuthed() {
@@ -450,7 +451,11 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
     // @ts-ignore
     const endpoint = provider.connection._rpcEndpoint;
-    if (endpoint.includes("dev") || endpoint.includes("local") || endpoint.includes("127.0.0.1")) {
+    if (
+      endpoint.includes("dev") ||
+      endpoint.includes("local") ||
+      endpoint.includes("127.0.0.1")
+    ) {
       this.chain = "solanaDevnet";
     } else {
       this.chain = "solana";
@@ -658,13 +663,13 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
     let decodedMessage;
     if (encryptedSymmetricKey) {
-      const accessControlConditions = [
-        tokenAccessPermissions(
+      const accessControlConditions = 
+        getAccessConditions(
+          parts[0].conditionVersion,
           chatAcc!.readPermissionKey,
           readAmount,
           this.chain
-        ),
-      ];
+        );
 
       try {
         const blob = new Blob([
@@ -1135,25 +1140,16 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     // find the permission amounts
     let postAmount;
     try {
-      const postMint = await getMintInfo(
-        this.provider,
-        postPermissionKey
-      );
-      postAmount = toBN(postPermissionAmount, postMint)
+      const postMint = await getMintInfo(this.provider, postPermissionKey);
+      postAmount = toBN(postPermissionAmount, postMint);
     } catch {
       // permission key isn't a mint account
       postAmount = new BN(postPermissionAmount);
     }
     let readAmount;
     try {
-      const readMint = await getMintInfo(
-        this.provider,
-        readPermissionKey
-      );
-      readAmount = toBN(
-        defaultReadPermissionAmount,
-        readMint
-      )
+      const readMint = await getMintInfo(this.provider, readPermissionKey);
+      readAmount = toBN(defaultReadPermissionAmount, readMint);
     } catch {
       // permission key isn't a mint account
       readAmount = new BN(defaultReadPermissionAmount);
@@ -1353,18 +1349,15 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     };
 
     instructions.push(
-      await this.instruction.initializeSettingsV0(
-        encryptedSettings,
-        {
-          accounts: {
-            payer,
-            settings: settingsKey,
-            ownerWallet,
-            rent: SYSVAR_RENT_PUBKEY,
-            systemProgram: SystemProgram.programId,
-          },
-        }
-      )
+      await this.instruction.initializeSettingsV0(encryptedSettings, {
+        accounts: {
+          payer,
+          settings: settingsKey,
+          ownerWallet,
+          rent: SYSVAR_RENT_PUBKEY,
+          systemProgram: SystemProgram.programId,
+        },
+      })
     );
 
     return {
@@ -1479,15 +1472,17 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         readMint
       );
     } catch {
-      readAmount = new BN(readPermissionAmount || chatAcc.defaultReadPermissionAmount);
+      readAmount = new BN(
+        readPermissionAmount || chatAcc.defaultReadPermissionAmount
+      );
     }
-    const accessControlConditionsToUse = [
-      tokenAccessPermissions(
+    const accessControlConditionsToUse = 
+      getAccessConditions(
+        this.conditionVersion,
         chatAcc.readPermissionKey,
         readAmount,
         this.chain
-      ),
-    ];
+      );
 
     const storedSymKey = this.symKeyStorage.getSymKeyToUse(
       chatAcc.readPermissionKey,
@@ -1618,7 +1613,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         pubkey: await Metadata.getPDA(nftMint),
         isWritable: false,
         isSigner: false,
-      })
+      });
     }
     if (delegateWallet || delegateWalletKeypair) {
       if (!delegateWallet) {
@@ -1646,6 +1641,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       instructions.push(
         await this.instruction.sendTokenMessageV0(
           {
+            conditionVersion: this.conditionVersion,
             id: messageId,
             content: encryptedString.slice(
               i * MESSAGE_MAX_CHARACTERS,
@@ -1697,7 +1693,11 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   }
 }
 
-function getAccessConditions(readKey: PublicKey, threshold: BN, chain: string) {
+function getAccessConditions(conditionVersion: number, readKey: PublicKey, threshold: BN, chain: string) {
+  if (conditionVersion === 0) {
+    return [tokenAccessPermissions(readKey, threshold, chain)];
+  }
+
   return [
     collectionAccessPermissions(readKey, threshold, chain),
     {"operator": "or"},

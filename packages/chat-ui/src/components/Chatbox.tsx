@@ -28,6 +28,7 @@ import {
   useErrorHandler,
   useMint,
   useOwnedAmount,
+  useCollectionOwnedAmount,
   useTokenMetadata,
 } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
@@ -51,6 +52,7 @@ import { CreateProfileModal } from "./CreateProfileModal";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { LoadWalletModal } from "./LoadWalletModal";
+import { useChatOwnedAmount } from "../hooks/useChatOwnedAmount";
 
 const converter = new Converter({
   simpleLineBreaks: true,
@@ -61,6 +63,7 @@ export type chatProps = {
   chatKey?: PublicKey;
   scrollRef?: any;
 };
+
 
 export function Chatbox({
   scrollRef,
@@ -104,8 +107,7 @@ export function Chatbox({
   const { metadata: postMetadata, image: postImage } = useTokenMetadata(
     chat?.postPermissionKey
   );
-
-  const ownedAmount = useOwnedAmount(chat?.postPermissionKey);
+  const { amount: ownedAmount } = useChatOwnedAmount(chatKey)
   const mint = useMint(chat?.postPermissionKey);
   const postAmount =
     chat?.postPermissionAmount &&

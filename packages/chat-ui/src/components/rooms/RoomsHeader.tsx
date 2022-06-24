@@ -1,45 +1,30 @@
-import React, { useEffect, useState } from "react";
 import {
   Avatar,
-  Box,
-  Flex,
-  Heading,
-  HStack,
-  VStack,
-  Text,
-  Button,
-  Divider,
-  Popover,
-  PopoverTrigger,
-  Portal,
-  PopoverContent,
-  PopoverBody,
-  Switch,
-  useColorMode,
-  useMediaQuery,
-  FormControl,
-  FormLabel,
-  useColorModeValue,
+  Box, Button,
+  Divider, Flex, FormControl,
+  FormLabel, Heading,
+  HStack, Popover, PopoverBody, PopoverContent, PopoverTrigger,
+  Portal, Switch, Text, useColorMode,
+  useMediaQuery, VStack
 } from "@chakra-ui/react";
-import { RiSettings3Fill, RiArrowDownSLine } from "react-icons/ri";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
-import { useChat } from "../../hooks/useChat";
+import { Cluster } from "@strata-foundation/accelerator";
 import {
   roundToDecimals,
   useAccelerator,
   useEndpoint,
   useLocalStorage,
-  useMint,
-  useOwnedAmount,
-  useTokenMetadata,
+  useMint, useTokenMetadata
 } from "@strata-foundation/react";
-import { Cluster } from "@strata-foundation/accelerator";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
-import { BuyMoreButton } from "../BuyMoreButton";
-import { useChatSdk } from "../../contexts/chatSdk";
 import debounce from "lodash/debounce";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { useProfileKey } from "../../hooks/useProfileKey";
+import React, { useEffect } from "react";
+import { RiArrowDownSLine, RiSettings3Fill } from "react-icons/ri";
+import { useChatSdk } from "../../contexts/chatSdk";
+import { useChatOwnedAmount, useProfileKey } from "../../hooks";
+import { useChat } from "../../hooks/useChat";
+import { BuyMoreButton } from "../BuyMoreButton";
 
 const playSound = debounce(() => {
   const audio = new Audio("/notification.mp3");
@@ -71,7 +56,7 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
   const { chatSdk } = useChatSdk();
   const { publicKey } = useWallet();
   const { key: profileKey } = useProfileKey(publicKey || undefined);
-  const ownedAmount = useOwnedAmount(chat?.readPermissionKey);
+  const { amount: ownedAmount } = useChatOwnedAmount(chatKey);
 
   const [settings, setSettings] = useLocalStorage<ISettings>("settings", {
     soundEnabled: true,

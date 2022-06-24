@@ -365,7 +365,7 @@ export function Message({
                               speed={100000}
                             >
                               {Array.from(
-                                { length: 10 + Math.random() * 100 },
+                                { length: genLength(messageId || "") },
                                 () => "."
                               ).join()}
                             </Skeleton>
@@ -476,4 +476,14 @@ function blobToUrl(blob: Blob | undefined): string | undefined {
     const urlCreator = window.URL || window.webkitURL;
     return urlCreator.createObjectURL(blob);
   }
+}
+
+const lengths: Record<string, number> = {};
+
+function genLength(id: string): number {
+  if (!lengths[id]) {
+    lengths[id] = 10 + Math.random() * 100;
+  }
+
+  return lengths[id]
 }
