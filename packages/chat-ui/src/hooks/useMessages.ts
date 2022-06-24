@@ -129,6 +129,11 @@ export function useMessages(
   const previousOwnedAmount = usePrevious(ownedAmount)
 
   useEffect(() => {
+    setMessages([]);
+    setLoading(true);
+  }, [chat?.toBase58(), setMessages, setLoading]);
+
+  useEffect(() => {
     if (
       typeof previousOwnedAmount !== "undefined" &&
       typeof readAmountNum !== "undefined" &&
@@ -138,12 +143,22 @@ export function useMessages(
         console.log("Ownership changed, attempting to unlock messages");
         setLoading(true);
         (async () => {
-          const newMessages = await getMessages(chatSdk, transactions);
-          setMessages(newMessages);
+          try {
+            const newMessages = await getMessages(chatSdk, transactions);
+            setMessages(newMessages);
+          } catch (e: any) {
+            setError(e);
+          }
         })();
       }
     }
-  }, [previousOwnedAmount, readAmountNum, ownedAmount, previousOwnedAmount]);
+  }, [
+    previousOwnedAmount,
+    readAmountNum,
+    ownedAmount,
+    previousOwnedAmount,
+    transactions,
+  ]);
 
   useEffect(() => {
     (async () => {

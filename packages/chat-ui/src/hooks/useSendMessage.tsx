@@ -158,7 +158,7 @@ export function useSendMessage({ chatKey, onAddPendingMessage }: IUseSendMessage
         cluster,
         onAddPendingMessage,
         message,
-        nftMint: matches && matches[0].account?.mint,
+        nftMint: matches && matches[0]
       });
     },
     loading,

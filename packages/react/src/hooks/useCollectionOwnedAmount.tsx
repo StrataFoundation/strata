@@ -3,31 +3,54 @@ import { PublicKey } from "@solana/web3.js";
 import { ITokenWithMetaAndAccount } from "@strata-foundation/spl-token-collective";
 import { useMemo } from "react";
 import { useUserTokensWithMeta } from "./useUserTokensWithMeta";
+import { gql, useQuery } from "@apollo/client";
+
+const GET_MINTS_IN_COLLECTION = gql`
+  query GetMintsInCollection(
+    $collection: PublicKey!
+    $wallet: PublicKey!
+    $limit: Int!
+    $offset: Int!
+  ) {
+    nfts(
+      owners: [$wallet]
+      collection: $collection
+      limit: $limit
+      offset: $offset
+    ) {
+      mintAddress
+    }
+  }
+`;
 
 export function useCollectionOwnedAmount(collection: PublicKey | undefined): {
-  matches: ITokenWithMetaAndAccount[] | undefined;
+  matches: PublicKey[] | undefined;
   amount?: number;
   loading: boolean;
   error?: Error;
 } {
   const { publicKey } = useWallet();
   const {
-    data: tokens,
-    loading,
+    data: { nfts } = {},
     error,
-  } = useUserTokensWithMeta(publicKey || undefined);
+    loading,
+  } = useQuery<{
+    nfts: {
+      mintAddress: PublicKey;
+    }[];
+  }>(GET_MINTS_IN_COLLECTION, {
+    variables: {
+      collection: collection?.toBase58(),
+      wallet: publicKey?.toBase58(),
+      offset: 0,
+      limit: 1000,
+    },
+  });
   const matches = useMemo(() => {
-    if (tokens) {
-      return tokens.filter((token) => {
-        const nftCollection = token.metadata?.collection;
-        return (
-          collection &&
-          nftCollection &&
-          nftCollection.key == collection.toBase58()
-        );
-      }, 0);
+    if (nfts) {
+      return nfts.map((nft) => nft.mintAddress);
     }
-  }, [tokens, collection?.toBase58()]);
+  }, [nfts, collection?.toBase58()]);
 
   const amount = useMemo(() => {
     if (matches) {

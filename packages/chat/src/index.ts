@@ -752,17 +752,22 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     const chatAccountIndex = sendMessageIdl.accounts.findIndex(
       (account: any) => account.name === "chat"
     );
+
     const decoded = instructions
-      .map((ix) => ({
-        // @ts-ignore
-        data: coder.decode(bs58.decode(ix.data)),
-        profile: ensurePubkey(
-          transaction.message.accountKeys[ix.accounts[profileAccountIndex]]
-        ),
-        chat: ensurePubkey(
-          transaction.message.accountKeys[ix.accounts[chatAccountIndex]]
-        ),
-      }))
+      .map((ix) => {
+        // Just make the buff bigger so we can add stuff later
+        const buf = Buffer.concat([bs58.decode(ix.data), Buffer.alloc(1000)]);
+        return {
+          // @ts-ignore
+          data: coder.decode(buf),
+          profile: ensurePubkey(
+            transaction.message.accountKeys[ix.accounts[profileAccountIndex]]
+          ),
+          chat: ensurePubkey(
+            transaction.message.accountKeys[ix.accounts[chatAccountIndex]]
+          ),
+        };
+      })
       .filter(truthy);
 
     return Promise.all(
