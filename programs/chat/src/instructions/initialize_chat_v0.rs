@@ -1,4 +1,4 @@
-use crate::error::ErrorCode;
+use crate::{error::ErrorCode, utils::resize_to_fit};
 use crate::state::*;
 use crate::utils::puffed_out_string;
 use anchor_lang::prelude::*;
@@ -13,7 +13,7 @@ pub struct InitializeChatV0<'info> {
   #[account(
     init_if_needed,
     payer = payer,
-    space = CHAT_SIZE,
+    space = std::cmp::max(8 + std::mem::size_of::<ChatV0>(), chat.data.borrow_mut().len()),
     seeds = ["chat".as_bytes(), identifier_certificate_mint.key().as_ref()],
     bump,
   )]
@@ -69,6 +69,12 @@ pub fn handler(ctx: Context<InitializeChatV0>, args: InitializeChatArgsV0) -> Re
   ctx.accounts.chat.metadata_url = puffed_out_string(&args.metadata_url, 200);
   ctx.accounts.chat.image_url = puffed_out_string(&args.image_url, 200);
   ctx.accounts.chat.bump = *ctx.bumps.get("chat").unwrap();
+
+  resize_to_fit(
+    &ctx.accounts.payer.to_account_info(),
+    &ctx.accounts.system_program.to_account_info(),
+    &ctx.accounts.chat
+  )?;
 
   Ok(())
 }

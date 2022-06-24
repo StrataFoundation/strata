@@ -149,14 +149,6 @@ describe("chat", () => {
         ownerWallet: tokenHolder.publicKey,
         settings: {
           delegateWalletSeed: "hello",
-          chatSettings: [
-            {
-              identifier: "foo",
-              audioNotifications: true,
-              desktopNotifications: false,
-              mobileNotifications: false,
-            },
-          ],
         },
       });
       await chatSdk.sendInstructions(instructions, [...signers, tokenHolder]);
@@ -164,45 +156,6 @@ describe("chat", () => {
       const settingsAcc = await chatSdk.getSettings(settings);
       const seed = await settingsAcc?.getDelegateWalletSeed();
       expect(seed).to.eq("hello");
-
-      //Try resize
-      const {
-        output: { settings: setting2 },
-        instructions: instructions2,
-        signers: signers2,
-      } = await chatSdk.initializeSettingsInstructions({
-        ownerWallet: tokenHolder.publicKey,
-        settings: {
-          delegateWalletSeed: "hello",
-          chatSettings: [
-            {
-              identifier: "foo",
-              audioNotifications: true,
-              desktopNotifications: false,
-              mobileNotifications: false,
-            },
-            {
-              identifier: "bar",
-              audioNotifications: true,
-              desktopNotifications: false,
-              mobileNotifications: false,
-            },
-            {
-              identifier: "baz",
-              audioNotifications: true,
-              desktopNotifications: false,
-              mobileNotifications: false,
-            },
-            {
-              identifier: "hey",
-              audioNotifications: true,
-              desktopNotifications: false,
-              mobileNotifications: false,
-            },
-          ],
-        },
-      });
-      await chatSdk.sendInstructions(instructions2, [...signers2, tokenHolder]);
     });
   });
 

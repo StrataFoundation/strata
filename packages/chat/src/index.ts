@@ -294,12 +294,6 @@ export interface InitializeSettingsArgs {
   /** The owner of this settings. **Default:** the current wallet */
   ownerWallet?: PublicKey;
   settings: {
-    chatSettings: {
-      identifier: string;
-      audioNotifications: boolean;
-      desktopNotifications: boolean;
-      mobileNotifications: boolean;
-    }[];
     delegateWalletSeed: string;
   };
 }
@@ -1355,7 +1349,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       "base16"
     );
     const encryptedSettings = {
-      chatSettings: settings.chatSettings as never,
       encryptedDelegateWallet,
       encryptedSymmetricKey,
     };

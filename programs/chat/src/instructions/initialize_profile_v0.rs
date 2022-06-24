@@ -1,4 +1,4 @@
-use crate::error::ErrorCode;
+use crate::{error::ErrorCode, utils::resize_to_fit};
 use crate::state::*;
 use crate::utils::puffed_out_string;
 use anchor_lang::prelude::*;
@@ -13,7 +13,7 @@ pub struct InitializeProfileV0<'info> {
   #[account(
     init_if_needed,
     payer = payer,
-    space = PROFILE_SIZE,
+    space = std::cmp::max(8 + std::mem::size_of::<ProfileV0>(), wallet_profile.data.borrow_mut().len()),
     seeds = [b"wallet_profile", owner_wallet.key().as_ref()],
     bump,
   )]
@@ -50,11 +50,17 @@ pub fn handler(ctx: Context<InitializeProfileV0>, args: InitializeProfileArgsV0)
   );
 
   ctx.accounts.wallet_profile.identifier_certificate_mint =
-    ctx.accounts.identifier_certificate_mint.key();
+  ctx.accounts.identifier_certificate_mint.key();
   ctx.accounts.wallet_profile.owner_wallet = ctx.accounts.owner_wallet.key();
   ctx.accounts.wallet_profile.bump = *ctx.bumps.get("wallet_profile").unwrap();
   ctx.accounts.wallet_profile.metadata_url = puffed_out_string(&args.metadata_url, 200);
   ctx.accounts.wallet_profile.image_url = puffed_out_string(&args.image_url, 200);
+
+  resize_to_fit(
+    &ctx.accounts.payer.to_account_info(),
+    &ctx.accounts.system_program.to_account_info(),
+    &ctx.accounts.wallet_profile
+  )?;
 
   Ok(())
 }
