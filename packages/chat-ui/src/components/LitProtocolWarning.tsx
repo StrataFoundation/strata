@@ -5,7 +5,7 @@ export const LitProtocolWarning = () => {
   return (
     <Alert status="warning">
       <AlertIcon />
-      <Text>
+      <Text fontSize="sm">
         Do not approve any{" "}
         <Link color="primary.500" href="https://litprotocol.com/">
           Lit Protocol
