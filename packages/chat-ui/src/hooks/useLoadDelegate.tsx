@@ -73,7 +73,7 @@ async function runLoadDelegate(
 }
 
 export function useLoadDelegate() {
-  const { keypair: delegateWallet, mnemonic } = useDelegateWallet();
+  const { keypair: delegateWallet, mnemonic, loading: loadingDelegate, error: delError } = useDelegateWallet();
   const { key: structKey, loading: loadingKey } = useDelegateWalletStructKey(delegateWallet?.publicKey);
   const { account, loading: loadingStruct } = useDelegateWalletStruct(structKey);
   const { amount: balance, loading: loadingBalance } = useSolOwnedAmount(delegateWallet?.publicKey)
@@ -88,13 +88,16 @@ export function useLoadDelegate() {
   return {
     delegateWallet,
     mnemonic,
-    loadingNeeds: loadingStruct || loadingBalance || loadingKey,
-    needsInit: !loadingStruct && !loadingKey && !account,
-    needsTopOff: !delegateWallet || (!loadingBalance && balance < 0.00001),
+    loadingNeeds:
+      loadingDelegate || loadingStruct || loadingBalance || loadingKey,
+    needsInit: !loadingDelegate && !loadingStruct && !loadingKey && !account,
+    needsTopOff:
+      !loadingDelegate &&
+      (!delegateWallet || (!loadingBalance && balance < 0.00001)),
     loadDelegate: (sol: number) => {
       return loadDelegate(delegateWallet, chatSdk, sol);
     },
     loading,
-    error,
+    error: error || delError,
   };
 }
