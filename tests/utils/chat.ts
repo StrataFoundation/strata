@@ -59,10 +59,6 @@ export async function initializeUser(
     finalInstructions = [...finalInstructions, dInstructions];
     finalSigners = [...finalSigners, dSigners];
   }
-
-  const lamports1 = (
-    await provider.connection.getAccountInfo(provider.wallet.publicKey)
-  )!.lamports;
   
   try {
     await sendMultipleInstructions(
@@ -85,11 +81,6 @@ export async function initializeUser(
     console.error(e);
     throw e;
   }
-    const lamports2 = (
-      await provider.connection.getAccountInfo(provider.wallet.publicKey)
-    )!.lamports;
-
-  console.log("TOTAL RENT: ", (lamports1 - lamports2) / Math.pow(10, 9))
   return {
     walletProfile: outWalletProfile,
   }
