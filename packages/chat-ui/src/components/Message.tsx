@@ -108,7 +108,7 @@ export function Message({
   showUser: boolean;
 }) {
   const { publicKey } = useWallet();
-  const { showPicker } = useEmojis();
+  const { hidePicker, showPicker } = useEmojis();
   const { key: myProfile } = useProfileKey(publicKey || undefined);
   const { info: profile } = useProfile(profileKey);
   const { username } = useUsernameFromIdentifierCertificate(
@@ -201,8 +201,9 @@ export function Message({
     );
   }, [reacts]);
 
-  const handleOnReaction = () => {
-    showPicker(messageId);
+  const handleOnReaction = async () => {
+    await hidePicker();
+    await showPicker(messageId);
   };
 
   return (
@@ -451,5 +452,5 @@ function genLength(id: string): number {
     lengths[id] = 10 + Math.random() * 100;
   }
 
-  return lengths[id]
+  return lengths[id];
 }

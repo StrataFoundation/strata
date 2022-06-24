@@ -17,4 +17,4 @@ export * from "./Header";
 export * from "./Sidebar";
 export * from "./Workspace";
 export * from "./LongPromiseNotification";
-export * from "./EmojisPopout";
+export * from "./EmojiPicker";

@@ -60,7 +60,7 @@ export default function Chatroom() {
         <RoomsHeader chatKey={chatKey} />
       </Header>
       <Workspace>
-        <EmojiPicker />
+        <EmojiPicker chatKey={chatKey} />
         <ChatMessages
           isLoading={loadingInitial || loadingMore}
           scrollRef={scrollRef}
