@@ -59,6 +59,7 @@ export async function initializeUser(
     finalInstructions = [...finalInstructions, dInstructions];
     finalSigners = [...finalSigners, dSigners];
   }
+  
   try {
     await sendMultipleInstructions(
       new Map(),

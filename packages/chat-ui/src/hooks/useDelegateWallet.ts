@@ -1,8 +1,11 @@
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Keypair, PublicKey } from "@solana/web3.js";
+import { ISettings } from "@strata-foundation/chat";
 import { useLocalStorage } from "@strata-foundation/react";
-import { useMemo } from "react";
 import { mnemonicToSeedSync } from "bip39";
+import { useMemo } from "react";
+import { useAsync } from "react-async-hook";
+import { useWalletSettings } from "./useWalletSettings";
 
 const storage =
   typeof localStorage !== "undefined"
@@ -15,7 +18,18 @@ interface IDelegateWalletStorage {
   setDelegateWallet(wallet: PublicKey, mnemonic: string): void;
 }
 
-const mnemonicCache: Record<string, Keypair> = {}
+const mnemonicCache: Record<string, Keypair> = {};
+
+export function getKeypairFromMnemonic(mnemonic: string): Keypair {
+  if (!mnemonicCache[mnemonic]) {
+    const seed = mnemonicToSeedSync(mnemonic, ""); // (mnemonic, password)
+    const ret = Keypair.fromSeed(seed.slice(0, 32));
+
+    mnemonicCache[mnemonic] = ret;
+  }
+
+  return mnemonicCache[mnemonic];
+}
 
 export class LocalDelegateWalletStorage implements IDelegateWalletStorage {
   storageKey(wallet: PublicKey): string {
@@ -25,13 +39,7 @@ export class LocalDelegateWalletStorage implements IDelegateWalletStorage {
   getDelegateWallet(wallet: PublicKey): Keypair | undefined {
     const mnemonic = this.getDelegateWalletMnemonic(wallet);
     if (mnemonic) {
-      if (!mnemonicCache[mnemonic]) {const seed = mnemonicToSeedSync(mnemonic, ""); // (mnemonic, password)
-        const ret = Keypair.fromSeed(seed.slice(0, 32));
-
-        mnemonicCache[mnemonic] = ret;
-      }
-      
-      return mnemonicCache[mnemonic];
+      return getKeypairFromMnemonic(mnemonic);
     }
   }
 
@@ -48,27 +56,54 @@ export class LocalDelegateWalletStorage implements IDelegateWalletStorage {
 
 export const delegateWalletStorage = new LocalDelegateWalletStorage();
 
-export function useDelegateWallet(): { keypair: Keypair | undefined; mnemonic?: string } {
+interface DelegateWalletReturn {
+  loading: boolean;
+  error?: Error;
+  legacyKeypair?: Keypair;
+  keypair: Keypair | undefined;
+  legacyMnemonic?: string;
+  mnemonic?: string;
+}
+export function useDelegateWallet(): DelegateWalletReturn {
   const { publicKey } = useWallet();
-  const [delegateData] = useLocalStorage(
+  const [legacyDelegateData] = useLocalStorage(
     publicKey ? delegateWalletStorage.storageKey(publicKey) : "",
     undefined
   );
-  const delegateWallet = useMemo(() => {
-    if (delegateData && publicKey) {
+  const delegateWalletLegacy = useMemo(() => {
+    if (legacyDelegateData && publicKey) {
       try {
-        if (delegateData) {
-          return delegateWalletStorage.getDelegateWallet(publicKey)
+        if (legacyDelegateData) {
+          return delegateWalletStorage.getDelegateWallet(publicKey);
         }
       } catch (e: any) {
         // ignore
         console.error(e);
       }
     }
-  }, [delegateData, publicKey?.toBase58()]);
-
+  }, [legacyDelegateData, publicKey?.toBase58()]);
+  const { info: settings, account, loading } = useWalletSettings();
+  const {
+    loading: loadingMnemonic,
+    result: mnemonic,
+    error,
+  } = useAsync(async (settings: ISettings | undefined) => {
+    if (settings) {
+      return settings?.getDelegateWalletSeed()
+    }
+    return undefined;
+  }, [settings]);
+  const keypair = useMemo(
+    () => (mnemonic ? getKeypairFromMnemonic(mnemonic) : undefined),
+    [mnemonic]
+  );
+  
   return {
-    keypair: delegateWallet,
-    mnemonic: delegateData
-  }
+    error,
+    loading: loadingMnemonic || loading || Boolean(!settings && account),
+    legacyKeypair: delegateWalletLegacy,
+    mnemonic: mnemonic,
+    keypair,
+    legacyMnemonic: legacyDelegateData,
+  };
 }

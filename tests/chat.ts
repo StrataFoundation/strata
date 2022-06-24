@@ -50,7 +50,10 @@ describe("chat", () => {
 
   const program = anchor.workspace.Chat;
   const tokenUtils = new TokenUtils(provider);
-  const litClient = new LitNodeJsSdk.LitNodeClient();
+  const litClient = new LitNodeJsSdk.LitNodeClient({
+    debug: false,
+    alerts: false
+  });
   const namespacesProgram = new Program<NAMESPACES_PROGRAM>(
     NAMESPACES_IDL,
     NAMESPACES_PROGRAM_ID,
@@ -129,6 +132,33 @@ describe("chat", () => {
       expect(profileAcc?.imageUrl).to.eq("hey");
     });
   });
+
+  describe("initialize settings", () => {
+    let tokenHolder = Keypair.generate();
+
+    it("intializes settings", async () => {
+      // manually authenticate lit protocol
+      //@ts-ignore
+      let authSig = await getAuthSig(
+        tokenHolder.publicKey,
+        tokenHolder.secretKey
+      );
+      chatSdk.litAuthSig = authSig;
+      
+      const { output: { settings }, instructions, signers } = await chatSdk.initializeSettingsInstructions({
+        ownerWallet: tokenHolder.publicKey,
+        settings: {
+          delegateWalletSeed: "hello",
+        },
+      });
+      await chatSdk.sendInstructions(instructions, [...signers, tokenHolder]);
+
+      const settingsAcc = await chatSdk.getSettings(settings);
+      const seed = await settingsAcc?.getDelegateWalletSeed();
+      expect(seed).to.eq("hello");
+    });
+  });
+
 
   describe("messaging", () => {
     let readPermissionMint: PublicKey;

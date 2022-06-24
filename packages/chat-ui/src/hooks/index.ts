@@ -15,3 +15,6 @@ export * from "./useChatIdFromIdentifierCertificate";
 export * from "./useLoadDelegate"
 export * from "./useChatStorageAccountKey";
 export * from "./useCaseInsensitiveMarker";
+export * from "./useSettings";
+export * from "./useSettingsKey";
+export * from "./useWalletSettings";

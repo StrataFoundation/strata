@@ -31,7 +31,7 @@ import * as bs58 from "bs58";
 import LitJsSdk from "lit-js-sdk";
 // @ts-ignore
 import { v4 as uuid } from "uuid";
-import { CaseInsensitiveMarkerV0, ChatIDL, ChatV0, DelegateWalletV0, NamespacesV0, PostAction, ProfileV0 } from "./generated/chat";
+import { CaseInsensitiveMarkerV0, ChatIDL, ChatV0, DelegateWalletV0, NamespacesV0, PostAction, ProfileV0, SettingsV0 } from "./generated/chat";
 import { uploadFile } from "./shdw";
 
 const MESSAGE_MAX_CHARACTERS = 352; // TODO: This changes with optional accounts in the future
@@ -217,6 +217,10 @@ export interface IProfile extends ProfileV0 {
   publicKey: PublicKey;
 }
 
+export interface ISettings extends SettingsV0 {
+  getDelegateWalletSeed(): Promise<string>
+}
+
 export interface ICaseInsensitiveMarker extends CaseInsensitiveMarkerV0 {
   publicKey: PublicKey;
 }
@@ -282,6 +286,15 @@ export interface InitializeProfileArgs {
   identifier?: string;
   imageUrl?: string;
   metadataUrl?: string;
+}
+
+export interface InitializeSettingsArgs {
+  payer?: PublicKey;
+  /** The owner of this settings. **Default:** the current wallet */
+  ownerWallet?: PublicKey;
+  settings: {
+    delegateWalletSeed: string;
+  };
 }
 
 export interface InitializeDelegateWalletArgs {
@@ -350,7 +363,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   authingLit: Promise<void> | null;
   symKeyStorage: ISymKeyStorage;
   litJsSdk: LitJsSdk; // to use in nodejs, manually set this to the nodejs lit client. see tests for example
-
   namespacesProgram: Program<NAMESPACES_PROGRAM>;
 
   static ID = new PublicKey("chatGL6yNgZT2Z3BeMYGcgdMpcBKdmxko4C5UhEX4To");
@@ -361,7 +373,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
   async _litAuth() {
     try {
-      this.litAuthSig = await LitJsSdk.checkAndSignAuthMessage({
+      this.litAuthSig = await this.litJsSdk.checkAndSignAuthMessage({
         chain: this.chain,
         alertWhenUnauthorized: false,
       });
@@ -405,7 +417,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     ) as Program<ChatIDL>;
     const client = new LitJsSdk.LitNodeClient({
       alertWhenUnauthorized: false,
-      debug: false
+      debug: false,
     });
     await client.connect();
 
@@ -505,6 +517,35 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     };
   };
 
+  settingsDecoder: TypedAccountParser<ISettings> = (pubkey, account) => {
+    const coded = this.program.coder.accounts.decode<ISettings>(
+      "SettingsV0",
+      account.data
+    );
+
+    const that = this;
+
+    return {
+      ...coded,
+      publicKey: pubkey,
+      async getDelegateWalletSeed() {
+        const symmetricKey = await that.getSymmetricKey(
+          coded.encryptedSymmetricKey,
+          [myWalletPermissions(coded.ownerWallet)]
+        );
+        return that.litJsSdk.decryptString(
+          new Blob([
+            that.litJsSdk.uint8arrayFromString(
+              coded.encryptedDelegateWallet,
+              "base16"
+            ),
+          ]),
+          symmetricKey
+        );
+      },
+    };
+  };
+
   caseInsensitiveMarkerDecoder: TypedAccountParser<ICaseInsensitiveMarker> = (
     pubkey,
     account
@@ -526,6 +567,10 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
   getProfile(profileKey: PublicKey): Promise<IProfile | null> {
     return this.getAccount(profileKey, this.profileDecoder);
+  }
+
+  getSettings(settingsKey: PublicKey): Promise<ISettings | null> {
+    return this.getAccount(settingsKey, this.settingsDecoder);
   }
 
   getCaseInsensitiveMarker(
@@ -556,6 +601,33 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     return messages
       .filter(truthy)
       .sort((a, b) => a.startBlockTime - b.startBlockTime);
+  }
+
+  async getSymmetricKey(
+    encryptedSymmetricKey: string,
+    accessControlConditions: any
+  ): Promise<Uint8Array | undefined> {
+    const storedKey = this.symKeyStorage.getSymKey(encryptedSymmetricKey);
+    let symmetricKey: Uint8Array | undefined = storedKey
+      ? Buffer.from(storedKey, "hex")
+      : undefined;
+    if (!symmetricKey) {
+      await this.authingLit;
+      if (!this.isLitAuthed && this.wallet && this.wallet.publicKey) {
+        await this.litAuth();
+      }
+      symmetricKey = await this.litClient.getEncryptionKey({
+        solRpcConditions: accessControlConditions,
+        // Note, below we convert the encryptedSymmetricKey from a UInt8Array to a hex string.  This is because we obtained the encryptedSymmetricKey from "saveEncryptionKey" which returns a UInt8Array.  But the getEncryptionKey method expects a hex string.
+        toDecrypt: encryptedSymmetricKey,
+        chain: this.chain,
+        authSig: this.litAuthSig,
+      });
+      const symKeyStr = Buffer.from(symmetricKey!).toString("hex");
+      this.symKeyStorage.setSymKey(encryptedSymmetricKey, symKeyStr);
+    }
+
+    return symmetricKey;
   }
 
   async getDecodedMessageFromParts(
@@ -595,31 +667,15 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       ];
 
       try {
-        const storedKey = this.symKeyStorage.getSymKey(encryptedSymmetricKey);
-        let symmetricKey: Uint8Array | undefined = storedKey
-          ? Buffer.from(storedKey, "hex")
-          : undefined;
-        if (!symmetricKey) {
-          await this.authingLit;
-          if (!this.isLitAuthed && this.wallet && this.wallet.publicKey) {
-            await this.litAuth();
-          }
-          symmetricKey = await this.litClient.getEncryptionKey({
-            solRpcConditions: accessControlConditions,
-            // Note, below we convert the encryptedSymmetricKey from a UInt8Array to a hex string.  This is because we obtained the encryptedSymmetricKey from "saveEncryptionKey" which returns a UInt8Array.  But the getEncryptionKey method expects a hex string.
-            toDecrypt: encryptedSymmetricKey,
-            chain: this.chain,
-            authSig: this.litAuthSig,
-          });
-          const symKeyStr = Buffer.from(symmetricKey!).toString("hex");
-          this.symKeyStorage.setSymKey(encryptedSymmetricKey, symKeyStr);
-        }
-
         const blob = new Blob([
-          LitJsSdk.uint8arrayFromString(content, "base16"),
+          this.litJsSdk.uint8arrayFromString(content, "base16"),
         ]);
+        const symmetricKey = await this.getSymmetricKey(
+          encryptedSymmetricKey,
+          accessControlConditions
+        );
         decodedMessage = JSON.parse(
-          await LitJsSdk.decryptString(blob, symmetricKey)
+          await this.litJsSdk.decryptString(blob, symmetricKey)
         );
 
         decodedMessage.decryptedAttachments = [];
@@ -630,7 +686,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
                 const blob = await fetch(encryptedAttachment).then((r) =>
                   r.blob()
                 );
-                const arrBuffer = await LitJsSdk.decryptFile({
+                const arrBuffer = await this.litJsSdk.decryptFile({
                   symmetricKey,
                   file: blob,
                 });
@@ -798,6 +854,16 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   ): Promise<[PublicKey, number]> {
     return PublicKey.findProgramAddress(
       [Buffer.from("wallet_profile", "utf-8"), wallet.toBuffer()],
+      programId
+    );
+  }
+
+  static settingsKey(
+    wallet: PublicKey,
+    programId: PublicKey = ChatSdk.ID
+  ): Promise<[PublicKey, number]> {
+    return PublicKey.findProgramAddress(
+      [Buffer.from("settings", "utf-8"), wallet.toBuffer()],
       programId
     );
   }
@@ -1246,6 +1312,83 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     );
   }
 
+  async initializeSettingsInstructions({
+    payer = this.wallet.publicKey,
+    ownerWallet = this.wallet.publicKey,
+    settings,
+  }: InitializeSettingsArgs): Promise<
+    InstructionResult<{
+      settings: PublicKey;
+    }>
+  > {
+    const instructions = [];
+
+    const settingsKey = (
+      await ChatSdk.settingsKey(ownerWallet, this.programId)
+    )[0];
+
+    const symmKey = await generateSymmetricKey();
+    const bufEncryptedSeed = await this.litJsSdk.encryptWithSymmetricKey(
+      symmKey,
+      this.litJsSdk.uint8arrayFromString(settings.delegateWalletSeed)
+    );
+    const encryptedDelegateWallet = buf2hex(
+      await (bufEncryptedSeed as Blob).arrayBuffer()
+    );
+    await this.litAuth();
+    const encryptedSymmetricKey = this.litJsSdk.uint8arrayToString(
+      await this.litClient.saveEncryptionKey({
+        solRpcConditions: [myWalletPermissions(ownerWallet)],
+        symmetricKey: new Uint8Array(
+          await crypto.subtle.exportKey("raw", symmKey)
+        ),
+        authSig: this.litAuthSig,
+        chain: this.chain,
+      }),
+      "base16"
+    );
+    const encryptedSettings = {
+      encryptedDelegateWallet,
+      encryptedSymmetricKey,
+    };
+
+    instructions.push(
+      await this.instruction.initializeSettingsV0(
+        encryptedSettings,
+        {
+          accounts: {
+            payer,
+            settings: settingsKey,
+            ownerWallet,
+            rent: SYSVAR_RENT_PUBKEY,
+            systemProgram: SystemProgram.programId,
+          },
+        }
+      )
+    );
+
+    return {
+      output: {
+        settings: settingsKey,
+      },
+      instructions,
+      signers: [],
+    };
+  }
+
+  async initializeSettings(
+    args: InitializeSettingsArgs,
+    commitment: Commitment = "confirmed"
+  ): Promise<{
+    settings: PublicKey;
+  }> {
+    return this.execute(
+      this.initializeSettingsInstructions(args),
+      args.payer,
+      commitment
+    );
+  }
+
   async initializeDelegateWalletInstructions({
     payer = this.wallet.publicKey,
     ownerWallet = this.wallet.publicKey,
@@ -1364,7 +1507,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     if (fileAttachments && encrypted) {
       fileAttachments = await Promise.all(
         fileAttachments.map(async (fileAttachment) => {
-          const encrypted = await LitJsSdk.encryptWithSymmetricKey(
+          const encrypted = await this.litJsSdk.encryptWithSymmetricKey(
             symmKey,
             await fileAttachment.arrayBuffer()
           );
@@ -1403,9 +1546,9 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     // Encrypt the actual json structure
     let encryptedSymmetricKey, encryptedString;
     if (encrypted) {
-      const encryptedStringOut = await LitJsSdk.encryptWithSymmetricKey(
+      const encryptedStringOut = await this.litJsSdk.encryptWithSymmetricKey(
         symmKey,
-        LitJsSdk.uint8arrayFromString(JSON.stringify(normalMessage))
+        this.litJsSdk.uint8arrayFromString(JSON.stringify(normalMessage))
       );
       encryptedString = buf2hex(
         await (encryptedStringOut as Blob).arrayBuffer()
@@ -1414,7 +1557,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         encryptedSymmetricKey = storedSymKey.encryptedSymKey;
       } else {
         // Cache the sym key we're using
-        encryptedSymmetricKey = LitJsSdk.uint8arrayToString(
+        encryptedSymmetricKey = this.litJsSdk.uint8arrayToString(
           await this.litClient.saveEncryptionKey({
             solRpcConditions: accessControlConditionsToUse,
             symmetricKey: new Uint8Array(
@@ -1590,6 +1733,19 @@ function tokenAccessPermissions(readPermissionMint: PublicKey, threshold: BN, ch
   };
 }
 
+function myWalletPermissions(wallet: PublicKey) {
+  return {
+    method: "",
+    params: [":userAddress"],
+    chain: 'solana',
+    returnValueTest: {
+      key: "",
+      comparator: "=",
+      value: wallet.toBase58()
+    },
+  }
+}
+
 function buf2hex(buffer: ArrayBuffer): string {
   // buffer is an ArrayBuffer
   return [...new Uint8Array(buffer)]
@@ -1599,8 +1755,7 @@ function buf2hex(buffer: ArrayBuffer): string {
 
 function ensurePubkey(arg0: PublicKey | string) {
   if (typeof arg0 === "string") {
-    return new PublicKey(arg0)
+    return new PublicKey(arg0);
   }
-  return arg0
+  return arg0;
 }
-

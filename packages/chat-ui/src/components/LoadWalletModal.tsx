@@ -24,6 +24,7 @@ import { AiOutlinePlus } from "react-icons/ai";
 import { useLoadDelegate } from "../hooks";
 import { RadioCardWithAffordance } from "./RadioCard";
 import { StrataIcon, WalletIcon } from "../svg";
+import { LitProtocolWarning } from "./LitProtocolWarning";
 
 const options: {
   value: string;
@@ -176,6 +177,8 @@ export const LoadWalletModal = (
                 })}
               </Stack>
             </VStack>
+            <LitProtocolWarning />
+
             <Button
               isDisabled={solAmount < +selectedOption}
               mt={4}
