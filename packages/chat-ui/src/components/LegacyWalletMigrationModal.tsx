@@ -31,7 +31,6 @@ async function migrate(
 
 export const LegacyWalletMigrationModal = () => {
   const { legacyMnemonic } = useDelegateWallet();
-  const bg = useColorModeValue("gray.200", "gray.800");
   const { chatSdk } = useChatSdk();
   const { handleErrors } = useErrorHandler();
   const [isOpen, setIsOpen] = useState(false);
@@ -59,7 +58,8 @@ export const LegacyWalletMigrationModal = () => {
               pt={10}
               pb={14}
               borderTopRadius="lg"
-              bg={bg}
+              bg={"gray.200"}
+              _dark={{ bg: "gray.800" }}
             >
               <Center>
                 <HStack spacing={8}>
