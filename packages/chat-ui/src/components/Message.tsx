@@ -233,6 +233,7 @@ export function Message({
                 right={20}
                 justifyContent="end"
                 position="absolute"
+                zIndex="2"
               >
                 <IconButton
                   icon={<Icon as={MdOutlineAddReaction} />}
@@ -262,6 +263,7 @@ export function Message({
                 }}
                 justifyContent="end"
                 position="absolute"
+                zIndex="2"
               >
                 <Box maxW="360px" bg={highlightedBg} borderRadius="10px" p={4}>
                   <FocusLock returnFocus persistentFocus={false}>

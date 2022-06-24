@@ -1,9 +1,16 @@
 import {
-  Box, Button, Center, HStack, Icon, Modal,
+  Box,
+  Button,
+  Center,
+  HStack,
+  Icon,
+  Modal,
   ModalBody,
-  ModalContent, ModalOverlay,
-  Text, useColorModeValue,
-  VStack
+  ModalContent,
+  ModalOverlay,
+  Text,
+  useColorModeValue,
+  VStack,
 } from "@chakra-ui/react";
 import { ChatSdk } from "@strata-foundation/chat";
 import { useErrorHandler } from "@strata-foundation/react";
@@ -25,7 +32,9 @@ async function migrate(
         delegateWalletSeed: mnemonic,
       },
     });
-    localStorage.removeItem(delegateWalletStorage.storageKey(chatSdk.provider.wallet.publicKey))
+    localStorage.removeItem(
+      delegateWalletStorage.storageKey(chatSdk.provider.wallet.publicKey)
+    );
   }
 }
 
@@ -44,11 +53,11 @@ export const LegacyWalletMigrationModal = () => {
     if (legacyMnemonic) {
       setIsOpen(true);
     }
-  }, [legacyMnemonic])
+  }, [legacyMnemonic]);
 
   if (legacyMnemonic) {
     return (
-      <Modal size="xl" isOpen={isOpen} onClose={() => {}}>
+      <Modal size="xl" isOpen={isOpen} onClose={() => {}} isCentered>
         <ModalOverlay />
         <ModalContent borderRadius="xl" shadow="xl">
           <ModalBody p={0}>
