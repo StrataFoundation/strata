@@ -1,6 +1,5 @@
 use crate::{error::ErrorCode, utils::resize_to_fit};
 use crate::state::*;
-use crate::utils::puffed_out_string;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, TokenAccount};
 use namespaces::state::Entry;
@@ -53,8 +52,8 @@ pub fn handler(ctx: Context<InitializeProfileV0>, args: InitializeProfileArgsV0)
   ctx.accounts.identifier_certificate_mint.key();
   ctx.accounts.wallet_profile.owner_wallet = ctx.accounts.owner_wallet.key();
   ctx.accounts.wallet_profile.bump = *ctx.bumps.get("wallet_profile").unwrap();
-  ctx.accounts.wallet_profile.metadata_url = puffed_out_string(&args.metadata_url, 200);
-  ctx.accounts.wallet_profile.image_url = puffed_out_string(&args.image_url, 200);
+  ctx.accounts.wallet_profile.metadata_url = args.metadata_url;
+  ctx.accounts.wallet_profile.image_url = args.image_url;
 
   resize_to_fit(
     &ctx.accounts.payer.to_account_info(),

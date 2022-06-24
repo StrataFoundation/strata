@@ -1,6 +1,5 @@
 use crate::{error::ErrorCode, utils::resize_to_fit};
 use crate::state::*;
-use crate::utils::puffed_out_string;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, TokenAccount};
 use namespaces::state::Entry;
@@ -64,10 +63,10 @@ pub fn handler(ctx: Context<InitializeChatV0>, args: InitializeChatArgsV0) -> Re
   ctx.accounts.chat.post_pay_destination = args.post_pay_destination;
   ctx.accounts.chat.read_permission_key = args.read_permission_key;
   ctx.accounts.chat.default_read_permission_amount = args.default_read_permission_amount;
-  ctx.accounts.chat.name = puffed_out_string(&args.name, 100);
+  ctx.accounts.chat.name = args.name;
   ctx.accounts.chat.identifier_certificate_mint = ctx.accounts.identifier_certificate_mint.key();
-  ctx.accounts.chat.metadata_url = puffed_out_string(&args.metadata_url, 200);
-  ctx.accounts.chat.image_url = puffed_out_string(&args.image_url, 200);
+  ctx.accounts.chat.metadata_url = args.metadata_url;
+  ctx.accounts.chat.image_url = args.image_url;
   ctx.accounts.chat.bump = *ctx.bumps.get("chat").unwrap();
 
   resize_to_fit(

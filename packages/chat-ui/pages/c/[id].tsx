@@ -2,6 +2,7 @@ import { Chatbox } from "@/components/Chatbox";
 import { ChatMessages } from "@/components/ChatMessages";
 import { Header } from "@/components/Header";
 import { Layout } from "@/components/Layout";
+import { LegacyWalletMigrationModal } from "@/components/LegacyWalletMigrationModal";
 import { RoomsHeader } from "@/components/rooms/RoomsHeader";
 import { Workspace } from "@/components/Workspace";
 import { useChatKeyFromIdentifier } from "@/hooks/useChatKeyFromIdentifier";
@@ -51,6 +52,7 @@ export default function Chatroom() {
       onSidebarClose={sidebar.onClose}
       onSidebarOpen={sidebar.onOpen}
     >
+      <LegacyWalletMigrationModal />
       <Header onSidebarOpen={sidebar.onOpen}>
         <RoomsHeader chatKey={chatKey} />
       </Header>

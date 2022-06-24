@@ -49,25 +49,6 @@ pub struct ProfileV0 {
   pub metadata_url: String,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
-pub struct ChatSettingsV0 {
-  pub identifier: String,
-  pub audio_notifications: bool,
-  pub desktop_notifications: bool,
-  pub mobile_notifications: bool,
-}
-
-impl Default for ChatSettingsV0 {
-  fn default() -> Self {
-    ChatSettingsV0 {
-      identifier: "".to_string(),
-      audio_notifications: true,
-      desktop_notifications: false,
-      mobile_notifications: false
-    }
-  }
-}
-
 #[account]
 #[derive(Default)]
 pub struct SettingsV0 {

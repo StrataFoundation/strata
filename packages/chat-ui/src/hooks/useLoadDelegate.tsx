@@ -5,17 +5,20 @@ import { useSolOwnedAmount } from "@strata-foundation/react";
 import { sendInstructions } from "@strata-foundation/spl-utils";
 import { useAsyncCallback } from "react-async-hook";
 import { useChatSdk } from "../contexts";
-import { delegateWalletStorage, useDelegateWallet } from "./useDelegateWallet";
+import { getKeypairFromMnemonic, useDelegateWallet } from "./useDelegateWallet";
 import { useDelegateWalletStruct } from "./useDelegateWalletStruct";
 import { useDelegateWalletStructKey } from "./useDelegateWalletStructKey";
 import { generateMnemonic } from "bip39";
 
-async function runLoadDelegate(chatSdk: ChatSdk | undefined, sol: number) {
+async function runLoadDelegate(
+  delegateWalletKeypair: Keypair | undefined,
+  chatSdk: ChatSdk | undefined,
+  sol: number
+) {
   if (chatSdk) {
-    let delegateWalletKeypair = delegateWalletStorage.getDelegateWallet(
-      chatSdk.wallet.publicKey!
-    );
-    const structKey = delegateWalletKeypair && (await ChatSdk.delegateWalletKey(delegateWalletKeypair.publicKey))[0]
+    const structKey =
+      delegateWalletKeypair &&
+      (await ChatSdk.delegateWalletKey(delegateWalletKeypair.publicKey))[0];
     const structExists =
       structKey &&
       (await chatSdk.provider.connection.getAccountInfo(structKey));
@@ -25,13 +28,16 @@ async function runLoadDelegate(chatSdk: ChatSdk | undefined, sol: number) {
     if (!structExists) {
       if (!delegateWalletKeypair) {
         const mnemonic = generateMnemonic();
-        delegateWalletStorage.setDelegateWallet(
-          chatSdk.provider.wallet.publicKey,
-          mnemonic!
-        );
-        delegateWalletKeypair = delegateWalletStorage.getDelegateWallet(
-          chatSdk.provider.wallet.publicKey
-        );
+
+        delegateWalletKeypair = getKeypairFromMnemonic(mnemonic);
+        const { instructions: settingsInstructions, signers: settingsSigners } =
+          await chatSdk.initializeSettingsInstructions({
+            settings: {
+              delegateWalletSeed: mnemonic,
+            },
+          });
+        instructions.push(...settingsInstructions);
+        signers.push(...settingsSigners);
       }
 
       const { instructions: delInstructions, signers: delSigners } =
@@ -78,6 +84,7 @@ export function useLoadDelegate() {
   } = useAsyncCallback(runLoadDelegate);
   const { chatSdk } = useChatSdk();
 
+
   return {
     delegateWallet,
     mnemonic,
@@ -85,7 +92,7 @@ export function useLoadDelegate() {
     needsInit: !loadingStruct && !loadingKey && !account,
     needsTopOff: !delegateWallet || (!loadingBalance && balance < 0.00001),
     loadDelegate: (sol: number) => {
-      return loadDelegate(chatSdk, sol)
+      return loadDelegate(delegateWallet, chatSdk, sol);
     },
     loading,
     error,

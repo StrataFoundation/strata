@@ -33,7 +33,6 @@ import LitJsSdk from "lit-js-sdk";
 import { v4 as uuid } from "uuid";
 import { CaseInsensitiveMarkerV0, ChatIDL, ChatV0, DelegateWalletV0, NamespacesV0, PostAction, ProfileV0, SettingsV0 } from "./generated/chat";
 import { uploadFile } from "./shdw";
-const crypto = require("crypto").webcrypto;
 
 const MESSAGE_MAX_CHARACTERS = 352; // TODO: This changes with optional accounts in the future
 
