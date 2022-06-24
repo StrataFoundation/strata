@@ -3,19 +3,18 @@ import { Flex, useColorModeValue } from "@chakra-ui/react";
 
 interface IWorkspaceProps {}
 
-export const Workspace: React.FC<IWorkspaceProps> = ({ children }) => {
-  const bg = useColorModeValue("white", "gray.900");
-
-  return (
-    <Flex
-      direction="column"
-      w="full"
-      h="full"
-      grow={1}
-      bg={bg}
-      overflow="hidden"
-    >
-      {children}
-    </Flex>
-  );
-};
+export const Workspace: React.FC<IWorkspaceProps> = ({ children }) => (
+  <Flex
+    direction="column"
+    w="full"
+    h="full"
+    grow={1}
+    bg="white"
+    _dark={{
+      bg: "gray.900",
+    }}
+    overflow="hidden"
+  >
+    {children}
+  </Flex>
+);
