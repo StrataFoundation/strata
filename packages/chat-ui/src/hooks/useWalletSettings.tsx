@@ -1,6 +1,6 @@
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useSettingsKey } from "./useSettings";
-import { useSettings } from "./useSettingsKey";
+import { useSettingsKey } from "./useSettingsKey";
+import { useSettings } from "./useSettings";
 
 export function useWalletSettings() {
   const { publicKey } = useWallet();

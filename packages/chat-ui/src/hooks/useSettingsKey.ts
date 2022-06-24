@@ -1,12 +1,19 @@
 import { PublicKey } from "@solana/web3.js";
-import { ISettings } from "@strata-foundation/chat";
-import { useAccount, UseAccountState } from "@strata-foundation/react";
-import { useChatSdk } from "../contexts/chatSdk";
+import { ChatSdk } from "@strata-foundation/chat";
+import { useAsync } from "react-async-hook";
 
-export const useSettings = (
-  settings: PublicKey | undefined | null
-): UseAccountState<ISettings> => {
-  const { chatSdk } = useChatSdk();
+export function useSettingsKey(wallet?: PublicKey): {
+  loading: boolean;
+  key: PublicKey | undefined;
+} {
+  const { result, loading } = useAsync(
+    async (wallet?: string) =>
+      wallet ? ChatSdk.settingsKey(new PublicKey(wallet)) : undefined,
+    [wallet?.toBase58()]
+  );
 
-  return useAccount(settings, chatSdk?.settingsDecoder);
-};
+  return {
+    loading: loading,
+    key: result ? result[0] : undefined,
+  };
+}
