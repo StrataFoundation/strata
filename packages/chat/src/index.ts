@@ -31,7 +31,7 @@ import * as bs58 from "bs58";
 import LitJsSdk from "lit-js-sdk";
 // @ts-ignore
 import { v4 as uuid } from "uuid";
-import { CaseInsensitiveMarkerV0, ChatIDL, ChatV0, DelegateWalletV0, NamespacesV0, PostAction, ProfileV0, SettingsV0 } from "./generated/chat";
+import { CaseInsensitiveMarkerV0, ChatIDL, ChatV0, DelegateWalletV0, NamespacesV0, PermissionType, PostAction, ProfileV0, SettingsV0 } from "./generated/chat";
 import { uploadFile } from "./shdw";
 
 const MESSAGE_MAX_CHARACTERS = 352; // TODO: This changes with optional accounts in the future
@@ -73,7 +73,7 @@ const storage =
 // 3 hours
 const KEY_EXPIRY = 3 * 60 * 60 * 1000;
 
-const CONDITION_VERSION = 1;
+const CONDITION_VERSION = 2;
 
 export class LocalSymKeyStorage implements ISymKeyStorage {
   setSymKey(encrypted: string, unencrypted: string): void {
@@ -266,6 +266,10 @@ export interface InitializeChatArgs {
   readPermissionKey: PublicKey;
   /** The mint you need to post to this chat */
   postPermissionKey: PublicKey;
+  /** The gating mechanism, part of an NFT collection or just holds the token. **Default:** Token */
+  readPermissionType?: PermissionType;
+  /** The gating mechanism, part of an NFT collection or just holds the token **Default:** Token */
+  postPermissionType?: PermissionType;
   /** The number of tokens needed to post to this chat. **Default:** 1 */
   postPermissionAmount?: number | BN;
   /** The action to take when posting. **Default:** hold */
@@ -367,7 +371,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   litJsSdk: LitJsSdk; // to use in nodejs, manually set this to the nodejs lit client. see tests for example
   namespacesProgram: Program<NAMESPACES_PROGRAM>;
   conditionVersion = CONDITION_VERSION;
-  
+
   static ID = new PublicKey("chatGL6yNgZT2Z3BeMYGcgdMpcBKdmxko4C5UhEX4To");
 
   get isLitAuthed() {
@@ -665,13 +669,13 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
     let decodedMessage;
     if (encryptedSymmetricKey) {
-      const accessControlConditions = 
-        getAccessConditions(
-          parts[0].conditionVersion,
-          chatAcc!.readPermissionKey,
-          readAmount,
-          this.chain
-        );
+      const accessControlConditions = getAccessConditions(
+        parts[0].conditionVersion,
+        chatAcc!.readPermissionKey,
+        readAmount,
+        this.chain,
+        chatAcc!.readPermissionType
+      );
 
       try {
         const blob = new Blob([
@@ -1139,6 +1143,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     defaultReadPermissionAmount = 1,
     imageUrl = "",
     metadataUrl = "",
+    readPermissionType = PermissionType.Token,
+    postPermissionType = PermissionType.Token,
   }: InitializeChatArgs): Promise<InstructionResult<{ chat: PublicKey }>> {
     const chat = (
       await ChatSdk.chatKey(identifierCertificateMint, this.programId)
@@ -1194,6 +1200,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         postPermissionAction: postPermissionAction as never,
         postPermissionAmount: postAmount as AnchorBN,
         postPayDestination: postPayDestination || null,
+        readPermissionType: readPermissionType as never,
+        postPermissionType: postPermissionType as never,
       },
       {
         accounts: {
@@ -1483,13 +1491,13 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         readPermissionAmount || chatAcc.defaultReadPermissionAmount
       );
     }
-    const accessControlConditionsToUse = 
-      getAccessConditions(
-        this.conditionVersion,
-        chatAcc.readPermissionKey,
-        readAmount,
-        this.chain
-      );
+    const accessControlConditionsToUse = getAccessConditions(
+      this.conditionVersion,
+      chatAcc.readPermissionKey,
+      readAmount,
+      this.chain,
+      chatAcc!.readPermissionType
+    );
 
     const storedSymKey = this.symKeyStorage.getSymKeyToUse(
       chatAcc.readPermissionKey,
@@ -1700,16 +1708,24 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   }
 }
 
-function getAccessConditions(conditionVersion: number, readKey: PublicKey, threshold: BN, chain: string) {
+function getAccessConditions(conditionVersion: number, readKey: PublicKey, threshold: BN, chain: string, permissionType: PermissionType) {
   if (conditionVersion === 0) {
     return [tokenAccessPermissions(readKey, threshold, chain)];
   }
 
-  return [
-    collectionAccessPermissions(readKey, threshold, chain),
-    {"operator": "or"},
-    tokenAccessPermissions(readKey, threshold, chain),
-  ]
+  if (conditionVersion === 1) {
+    return [
+      collectionAccessPermissions(readKey, threshold, chain),
+      { operator: "or" },
+      tokenAccessPermissions(readKey, threshold, chain),
+    ];
+  }
+
+  if (Object.keys(permissionType)[0] === "token") {
+    return [tokenAccessPermissions(readKey, threshold, chain)]
+  }
+
+  return [collectionAccessPermissions(readKey, threshold, chain)]
 }
 
 function collectionAccessPermissions(permittedCollection: PublicKey, threshold: BN, chain: string) {

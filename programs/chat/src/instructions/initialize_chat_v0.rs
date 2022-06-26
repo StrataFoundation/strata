@@ -46,6 +46,8 @@ pub struct InitializeChatArgsV0 {
   pub name: String,
   pub image_url: String,
   pub metadata_url: String,
+  pub post_permission_type: PermissionType,
+  pub read_permission_type: PermissionType,
 }
 
 pub fn handler(ctx: Context<InitializeChatV0>, args: InitializeChatArgsV0) -> Result<()> {
