@@ -1,4 +1,4 @@
-import { ChatSdk, IdentifierType } from "@strata-foundation/chat";
+import { ChatSdk, IdentifierType, PermissionType } from "@strata-foundation/chat";
 import * as anchor from "@project-serum/anchor";
 import { PublicKey } from "@solana/web3.js";
 // @ts-ignore
@@ -45,7 +45,9 @@ async function run(): Promise<void> {
     name: args[3],
     readPermissionKey: new PublicKey(args[4]),
     postPermissionKey: new PublicKey(args[4]),
-    imageUrl: args[5]
+    imageUrl: args[5],
+    readPermissionType: PermissionType.NFT,
+    postPermissionType: PermissionType.NFT,
   });
 }
 

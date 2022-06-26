@@ -70,6 +70,8 @@ pub fn handler(ctx: Context<InitializeChatV0>, args: InitializeChatArgsV0) -> Re
   ctx.accounts.chat.metadata_url = args.metadata_url;
   ctx.accounts.chat.image_url = args.image_url;
   ctx.accounts.chat.bump = *ctx.bumps.get("chat").unwrap();
+  ctx.accounts.chat.post_permission_type = args.post_permission_type;
+  ctx.accounts.chat.read_permission_type = args.read_permission_type;
 
   resize_to_fit(
     &ctx.accounts.payer.to_account_info(),
