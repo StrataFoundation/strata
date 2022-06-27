@@ -4,7 +4,7 @@ import { PickerProps, BaseEmoji } from "emoji-mart";
 import data from "@emoji-mart/data";
 import { PublicKey } from "@solana/web3.js";
 import { useErrorHandler } from "@strata-foundation/react";
-import { MessageType } from "@strata-foundation/Chat";
+import { MessageType } from "@strata-foundation/chat";
 import { useEmojis } from "../contexts";
 import { useSendMessage } from "../hooks";
 
