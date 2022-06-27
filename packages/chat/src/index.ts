@@ -80,10 +80,10 @@ export class LocalSymKeyStorage implements ISymKeyStorage {
     storage.set("enc" + CONDITION_VERSION + encrypted, unencrypted);
   }
   getSymKey(encrypted: string): string | null {
-    return storage.get("enc" + encrypted) as string | null;
+    return storage.get("enc" + CONDITION_VERSION + encrypted) as string | null;
   }
   private getKey(mintOrCollection: PublicKey, amount: number): string {
-    return `sym-${mintOrCollection.toBase58()}-${amount}`;
+    return `sym-${CONDITION_VERSION}-${mintOrCollection.toBase58()}-${amount}`;
   }
   setSymKeyToUse(
     mintOrCollection: PublicKey,
