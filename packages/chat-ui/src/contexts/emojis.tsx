@@ -26,13 +26,15 @@ const EmojisProvider: FC<IEmojisProviderProps> = ({ children }) => {
     string | undefined
   >();
 
-  const hidePicker = useCallback(async () => {
-    setReferenceMessageId(undefined);
-  }, [setReferenceMessageId]);
+  const hidePicker = useCallback(
+    () => setReferenceMessageId(undefined),
+    [setReferenceMessageId]
+  );
 
   const showPicker = useCallback(
-    async (messageId: string | undefined) => {
-      await setReferenceMessageId(messageId);
+    (messageId: string | undefined) => {
+      console.log(messageId);
+      setReferenceMessageId(messageId);
     },
     [setReferenceMessageId]
   );

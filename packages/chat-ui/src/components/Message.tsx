@@ -11,7 +11,6 @@ import {
   Skeleton,
   Text,
   useColorModeValue,
-  useDisclosure,
   VStack,
   Popover,
   PopoverTrigger,
@@ -108,7 +107,7 @@ export function Message({
   showUser: boolean;
 }) {
   const { publicKey } = useWallet();
-  const { hidePicker, showPicker } = useEmojis();
+  const { referenceMessageId, showPicker } = useEmojis();
   const { key: myProfile } = useProfileKey(publicKey || undefined);
   const { info: profile } = useProfile(profileKey);
   const { username } = useUsernameFromIdentifierCertificate(
@@ -139,7 +138,6 @@ export function Message({
   const highlightedBg = useColorModeValue("gray.200", "gray.800");
   const message = decodedMessage;
 
-  const { isOpen, onToggle, onClose } = useDisclosure();
   const { handleErrors } = useErrorHandler();
   const { sendMessage, error } = useSendMessage({
     chatKey,
@@ -201,20 +199,15 @@ export function Message({
     );
   }, [reacts]);
 
-  const handleOnReaction = async () => {
-    await hidePicker();
-    await showPicker(messageId);
-  };
+  const handleOnReaction = () => showPicker(messageId);
 
   return (
-    <Box position="relative" _hover={{ bg: highlightedBg }}>
-      <Popover
-        matchWidth
-        trigger="hover"
-        placement="top-end"
-        onClose={onClose}
-        isLazy
-      >
+    <Box
+      position="relative"
+      _hover={{ bg: highlightedBg }}
+      bg={messageId === referenceMessageId ? highlightedBg : "initial"}
+    >
+      <Popover matchWidth trigger="hover" placement="top-end" isLazy>
         <PopoverContent w="full" bg="transparent" border="none">
           <PopoverBody>
             <Flex
@@ -223,7 +216,6 @@ export function Message({
               right={20}
               justifyContent="end"
               position="absolute"
-              zIndex="2"
             >
               <IconButton
                 icon={<Icon as={MdOutlineAddReaction} />}
@@ -409,7 +401,7 @@ export function Message({
                     borderRightRadius="20px"
                     variant="outline"
                     size="sm"
-                    onClick={onToggle}
+                    onClick={handleOnReaction}
                   >
                     <Icon as={MdOutlineAddReaction} />
                   </Button>

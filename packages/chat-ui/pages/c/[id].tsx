@@ -9,7 +9,7 @@ import { Layout } from "@/components/Layout";
 import { LegacyWalletMigrationModal } from "@/components/LegacyWalletMigrationModal";
 import { RoomsHeader } from "@/components/rooms/RoomsHeader";
 import { Workspace } from "@/components/Workspace";
-import { EmojiPicker } from "@/components/EmojiPicker";
+import { EmojiPickerPopover } from "@/components/EmojiPicker";
 import { useChatKeyFromIdentifier } from "@/hooks/useChatKeyFromIdentifier";
 import { IMessageWithPending, useMessages } from "@/hooks/useMessages";
 
@@ -60,7 +60,7 @@ export default function Chatroom() {
         <RoomsHeader chatKey={chatKey} />
       </Header>
       <Workspace>
-        <EmojiPicker chatKey={chatKey} />
+        <EmojiPickerPopover chatKey={chatKey} />
         <ChatMessages
           isLoading={loadingInitial || loadingMore}
           scrollRef={scrollRef}
