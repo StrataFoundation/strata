@@ -21,6 +21,8 @@ export function useTokenSwapFromId(
   // try and load the fungible entangler
   const entanglerTokenSwap = useTokenSwapFromFungibleEntangler(id);
 
+  // try and load a second bonding curve (legacy support)
+  const { info: sellOnlyTokenBonding, loading: sellBondingLoading } = useTokenBondingFromMint(id, 1);
 
   if (tokenBonding) {
     const targetMintSupply = targetMintAcct && toNumber(targetMintAcct.supply, targetMintAcct);
@@ -32,8 +34,9 @@ export function useTokenSwapFromId(
         : undefined;
     return {
       tokenBonding,
+      retrievalTokenBonding: sellOnlyTokenBonding,
       numRemaining,
-      loading: bondingLoading,
+      loading: bondingLoading || sellBondingLoading,
     }
   }
 

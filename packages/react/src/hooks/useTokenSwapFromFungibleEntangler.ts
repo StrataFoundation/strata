@@ -16,6 +16,7 @@ import {
 export interface ITokenSwap {
   tokenBonding: ITokenBonding | undefined;
   numRemaining: number | undefined;
+  retrievalTokenBonding?: ITokenBonding;
 
   childEntangler?: IFungibleChildEntangler;
   parentEntangler?: IFungibleParentEntangler;

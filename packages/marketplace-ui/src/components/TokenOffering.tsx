@@ -8,7 +8,9 @@ import {
   useSwapDriver,
   ISwapFormValues,
   useStrataSdks,
+  useMint,
   useTokenSwapFromId,
+  roundToDecimals,
 } from "@strata-foundation/react";
 import { useAsyncCallback } from "react-async-hook";
 
@@ -26,10 +28,12 @@ export const TokenOffering = ({
 
   const { 
     tokenBonding, 
+    retrievalTokenBonding,
     numRemaining, 
     childEntangler, 
     parentEntangler 
   } = useTokenSwapFromId(id);
+  const supplyMint = useMint(retrievalTokenBonding?.baseMint);
   const {
     execute: onSubmit,
     loading: submitting,
@@ -56,6 +60,19 @@ export const TokenOffering = ({
           childEntangler: childEntangler.publicKey,
           amount: +values.bottomAmount,
       })
+      instructions.push(...i2);
+      signers.push(...s2);
+    } else if (retrievalTokenBonding) {
+      const { instructions: i2, signers: s2 } =
+        await tokenBondingSdk!.sellInstructions({
+          targetAmount: roundToDecimals(
+            +values.bottomAmount,
+            supplyMint.decimals
+          ),
+          slippage: +values.slippage / 100,
+          tokenBonding: retrievalTokenBonding.publicKey!,
+        });
+
       instructions.push(...i2);
       signers.push(...s2);
     }
