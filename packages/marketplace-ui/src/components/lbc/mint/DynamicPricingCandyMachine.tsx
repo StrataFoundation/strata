@@ -198,11 +198,16 @@ export const DynamicPricingCandyMachine = (
                           onMint={onMint}
                           tokenBondingKey={tokenBonding?.publicKey}
                           isDisabled={
-                            !isActive && (!isPresale || !isWhitelistUser)
+                            (!isActive && (!isPresale || !isWhitelistUser)) ||
+                            (candyMachine.isWhitelistOnly && !isWhitelistUser)
                           }
-                          disabledText={`Mint launches ${getCountdownDate(
-                            candyMachine
-                          )?.toLocaleTimeString()}`}
+                          disabledText={
+                            candyMachine.isWhitelistOnly && !isWhitelistUser
+                              ? "No Whitelist Token"
+                              : `Mint launches ${getCountdownDate(
+                                  candyMachine
+                                )?.toLocaleTimeString()}`
+                          }
                         />
                       </GatewayProvider>
                     ) : (
@@ -211,13 +216,15 @@ export const DynamicPricingCandyMachine = (
                         onMint={onMint}
                         tokenBondingKey={tokenBonding?.publicKey}
                         isDisabled={
-                          !isActive && (!isPresale || !isWhitelistUser)
+                          (!isActive && (!isPresale || !isWhitelistUser)) ||
+                          (candyMachine.isWhitelistOnly && !isWhitelistUser)
                         }
                         disabledText={
-                          candyMachine &&
-                          `Mint launches ${getCountdownDate(
-                            candyMachine
-                          )?.toLocaleTimeString()}`
+                          candyMachine.isWhitelistOnly && !isWhitelistUser
+                            ? "No Whitelist Token"
+                            : `Mint launches ${getCountdownDate(
+                                candyMachine
+                              )?.toLocaleTimeString()}`
                         }
                       />
                     )}
