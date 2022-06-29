@@ -1,5 +1,4 @@
 import { BsLockFill } from "react-icons/bs";
-import FocusLock from "react-focus-lock";
 import {
   Avatar,
   Box,
@@ -11,9 +10,7 @@ import {
   TextProps,
   Skeleton,
   Text,
-  useColorMode,
   useColorModeValue,
-  useDisclosure,
   VStack,
   Popover,
   PopoverTrigger,
@@ -21,7 +18,6 @@ import {
   Tooltip,
   PopoverArrow,
   PopoverBody,
-  useMediaQuery,
   Flex,
 } from "@chakra-ui/react";
 import { GiphyFetch } from "@giphy/js-fetch-api";
@@ -29,7 +25,6 @@ import { Gif } from "@giphy/react-components";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { MessageType } from "@strata-foundation/chat";
 import {
-  roundToDecimals,
   useErrorHandler,
   useMint,
   useEndpoint,
@@ -37,7 +32,6 @@ import {
   useTokenMetadata,
 } from "@strata-foundation/react";
 import { humanReadable } from "@strata-foundation/spl-utils";
-import { toNumber } from "@strata-foundation/spl-token-bonding";
 import moment from "moment";
 import React, { useMemo } from "react";
 import { useAsync } from "react-async-hook";
@@ -55,9 +49,8 @@ import {
   useUsernameFromIdentifierCertificate,
 } from "../hooks";
 import { BuyMoreButton } from "./BuyMoreButton";
-import { EmojiSearch } from "./EmojiSearch";
-import { groupCollapsed } from "console";
 import { PublicKey } from "@solana/web3.js";
+import { useEmojis } from "../contexts";
 
 const gf = new GiphyFetch(GIPHY_API_KEY);
 
@@ -113,19 +106,16 @@ export function Message({
   pending?: boolean;
   showUser: boolean;
 }) {
-  const [isMobile] = useMediaQuery("(max-width: 680px)");
-  const { colorMode } = useColorMode();
   const { publicKey } = useWallet();
+  const { referenceMessageId, showPicker } = useEmojis();
   const { key: myProfile } = useProfileKey(publicKey || undefined);
   const { info: profile } = useProfile(profileKey);
   const { username } = useUsernameFromIdentifierCertificate(
     profile?.identifierCertificateMint
   );
   const { cluster } = useEndpoint();
-
   const id = profile?.ownerWallet.toBase58();
   const { info: chat } = useChat(chatKey);
-  const muted = useColorModeValue("gray.500", "gray.400");
   const time = useMemo(() => {
     if (startBlockTime) {
       const t = new Date(0);
@@ -143,17 +133,11 @@ export function Message({
     humanReadable(readPermissionAmount, mintAcc);
 
   const uid = publicKey?.toBase58();
-
   const status = pending ? "Pending" : "Confirmed";
   const lockedColor = useColorModeValue("gray.400", "gray.600");
   const highlightedBg = useColorModeValue("gray.200", "gray.800");
-
   const message = decodedMessage;
 
-  const usernameColor = { light: "green.500", dark: "green.200" };
-  const textColor = { light: "black", dark: "white" };
-
-  const { isOpen, onToggle, onClose } = useDisclosure();
   const { handleErrors } = useErrorHandler();
   const { sendMessage, error } = useSendMessage({
     chatKey,
@@ -215,72 +199,41 @@ export function Message({
     );
   }, [reacts]);
 
+  const handleOnReaction = () => showPicker(messageId);
+
   return (
-    <Box position="relative" _hover={{ bg: highlightedBg }}>
-      <Popover
-        matchWidth
-        trigger="hover"
-        placement="top-end"
-        onClose={onClose}
-        isLazy
-      >
+    <Box
+      position="relative"
+      _hover={{ bg: highlightedBg }}
+      bg={messageId === referenceMessageId ? highlightedBg : "initial"}
+    >
+      <Popover matchWidth trigger="hover" placement="top-end" isLazy>
         <PopoverContent w="full" bg="transparent" border="none">
           <PopoverBody>
-            {!isOpen && (
-              <Flex
-                direction="row"
-                top={2}
-                right={20}
-                justifyContent="end"
-                position="absolute"
-                zIndex="2"
-              >
-                <IconButton
-                  icon={<Icon as={MdOutlineAddReaction} />}
-                  w="32px"
-                  h="32px"
-                  variant="outline"
-                  size="lg"
-                  aria-label="Add Reaction"
-                  bg="white"
-                  _dark={{
-                    bg: "gray.900",
-                    _hover: {
-                      bg: highlightedBg,
-                    },
-                  }}
-                  onClick={onToggle}
-                />
-              </Flex>
-            )}
-            {isOpen && (
-              <Flex
-                direction="row"
-                top={6}
-                right={{
-                  base: 0,
-                  md: 8,
+            <Flex
+              direction="row"
+              top={2}
+              right={20}
+              justifyContent="end"
+              position="absolute"
+            >
+              <IconButton
+                icon={<Icon as={MdOutlineAddReaction} />}
+                w="32px"
+                h="32px"
+                variant="outline"
+                size="lg"
+                aria-label="Add Reaction"
+                bg="white"
+                _dark={{
+                  bg: "gray.900",
+                  _hover: {
+                    bg: highlightedBg,
+                  },
                 }}
-                justifyContent="end"
-                position="absolute"
-                zIndex="2"
-              >
-                <Box maxW="360px" bg={highlightedBg} borderRadius="10px" p={4}>
-                  <FocusLock returnFocus persistentFocus={false}>
-                    <EmojiSearch
-                      onSelect={(emoji) => {
-                        onClose();
-                        sendMessage({
-                          type: MessageType.React,
-                          emoji: emoji.symbol,
-                          referenceMessageId: messageId,
-                        });
-                      }}
-                    />
-                  </FocusLock>
-                </Box>
-              </Flex>
-            )}
+                onClick={handleOnReaction}
+              />
+            </Flex>
           </PopoverBody>
         </PopoverContent>
         <PopoverTrigger>
@@ -305,11 +258,16 @@ export function Message({
                   <Text
                     fontSize="sm"
                     fontWeight="semibold"
-                    color={usernameColor[colorMode]}
+                    color="green.500"
+                    _dark={{ color: "green.200" }}
                   >
                     {username}
                   </Text>
-                  <Text fontSize="xs" color={muted}>
+                  <Text
+                    fontSize="xs"
+                    color="gray.500"
+                    _dark={{ color: "gray.400" }}
+                  >
                     {moment(time).format("LT")}
                   </Text>
                 </HStack>
@@ -320,7 +278,8 @@ export function Message({
                 position="relative"
                 textAlign={"left"}
                 wordBreak="break-word"
-                color={textColor[colorMode]}
+                color="black"
+                _dark={{ color: "white" }}
               >
                 {message ? (
                   message.type === MessageType.Gify ? (
@@ -442,7 +401,7 @@ export function Message({
                     borderRightRadius="20px"
                     variant="outline"
                     size="sm"
-                    onClick={onToggle}
+                    onClick={handleOnReaction}
                   >
                     <Icon as={MdOutlineAddReaction} />
                   </Button>
@@ -485,5 +444,5 @@ function genLength(id: string): number {
     lengths[id] = 10 + Math.random() * 100;
   }
 
-  return lengths[id]
+  return lengths[id];
 }
