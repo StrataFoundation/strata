@@ -37,7 +37,7 @@ export const EmojiPickerPopover: FC<IEmojiPickerPopover> = ({ chatKey }) => {
   const [emoji, setEmoji] = useState<BaseEmoji | undefined>();
   const { referenceMessageId, hidePicker } = useEmojis();
   const rgbBackground = useColorModeValue("243 244 246", "32 41 55");
-  const rgbColor = useColorModeValue("0 0 0", "");
+  const rgbColor = useColorModeValue("white", "black");
   const rgbInput = useColorModeValue("255 255 255", "56 63 75");
   const colorBorder = useColorModeValue("#e4e7eb", "");
   const { handleErrors } = useErrorHandler();
