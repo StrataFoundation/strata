@@ -240,7 +240,7 @@ export const FullyManagedForm: React.FC = () => {
     const mintKey = await execute(marketplaceSdk!, values);
     router.push(
       route(routes.swap, {
-        mintKey: mintKey.toBase58(),
+        id: mintKey.toBase58(),
       }),
       undefined,
       { shallow: true }
