@@ -30,6 +30,21 @@ pub struct SendTokenMessageV0<'info> {
   pub token_program: Program<'info, Token>,
 }
 
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub enum MessageType {
+  Text,
+  Html,
+  Gify,
+  Image,
+  React // An emoji react to another message
+}
+
+impl Default for MessageType {
+  fn default() -> Self {
+    MessageType::Text
+  }
+}
+
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct MessagePartV0 {
   pub id: String, // uuid v4
@@ -39,7 +54,9 @@ pub struct MessagePartV0 {
   pub read_permission_amount: u64,
   pub encrypted_symmetric_key: String,
   pub content: String,
-  pub condition_version: u8
+  pub condition_version: u8,
+  pub message_type: MessageType,
+  pub reference_message_id: Option<String>
 }
 
 pub fn assert_valid_metadata(metadata_info: &AccountInfo, mint: Pubkey) -> core::result::Result<Metadata, ProgramError> {

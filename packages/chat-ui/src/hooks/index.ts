@@ -19,3 +19,4 @@ export * from "./useSettings";
 export * from "./useSettingsKey";
 export * from "./useWalletSettings";
 export * from "./useChatOwnedAmount";
+export * from "./useInflatedReacts";

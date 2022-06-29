@@ -43,6 +43,7 @@ import {
   IMessageWithPending,
   IMessageWithPendingAndReacts,
   useChat,
+  useInflatedReacts,
   useProfile,
   useProfileKey,
   useSendMessage,
@@ -91,7 +92,7 @@ const MAX_MENTIONS_DISPLAY = 3;
 
 export function Message({
   id: messageId,
-  decodedMessage,
+  getDecodedMessage,
   profileKey,
   readPermissionAmount,
   chatKey,
@@ -99,6 +100,7 @@ export function Message({
   startBlockTime,
   htmlAllowlist = defaultOptions,
   reacts,
+  type: messageType,
   showUser = true,
   pending = false,
 }: Partial<IMessageWithPendingAndReacts> & {
@@ -113,8 +115,14 @@ export function Message({
   const { username } = useUsernameFromIdentifierCertificate(
     profile?.identifierCertificateMint
   );
+  const getDecodedMessageOrIdentity =
+    getDecodedMessage || (() => Promise.resolve(undefined));
+  const {
+    result: message,
+    loading: decoding,
+    error: decodeError,
+  } = useAsync(getDecodedMessageOrIdentity, []);
   const { cluster } = useEndpoint();
-  const id = profile?.ownerWallet.toBase58();
   const { info: chat } = useChat(chatKey);
   const time = useMemo(() => {
     if (startBlockTime) {
@@ -136,70 +144,25 @@ export function Message({
   const status = pending ? "Pending" : "Confirmed";
   const lockedColor = useColorModeValue("gray.400", "gray.600");
   const highlightedBg = useColorModeValue("gray.200", "gray.800");
-  const message = decodedMessage;
+
+  const {
+    reacts: inflatedReacts,
+    error: reactError,
+    loading: reactsLoading,
+  } = useInflatedReacts(reacts);
 
   const { handleErrors } = useErrorHandler();
   const { sendMessage, error } = useSendMessage({
     chatKey,
   });
-  handleErrors(error);
-
-  const myReacts = useMemo(() => {
-    if (!reacts) {
-      return new Set();
-    }
-
-    return new Set(
-      reacts
-        .filter(
-          (react: IMessageWithPending) =>
-            myProfile && react.profileKey?.equals(myProfile)
-        )
-        .map((react) => react.decodedMessage!.emoji!)
-    );
-  }, [reacts, myProfile]);
-
-  const reactsByEmoji = useMemo(() => {
-    if (!reacts) {
-      return {};
-    }
-
-    const grouped = reacts.reduce(
-      (
-        acc: Record<string, IMessageWithPending[]>,
-        react: IMessageWithPending
-      ) => {
-        acc[react.decodedMessage!.emoji!] = [
-          ...(acc[react.decodedMessage!.emoji!] || []),
-          react,
-        ];
-        return acc;
-      },
-      {} as Record<string, IMessageWithPending[]>
-    );
-
-    // Dedup by profile
-    return Object.fromEntries(
-      Object.entries(grouped).map(([key, value]) => {
-        const seen = new Set<string>();
-
-        return [
-          key,
-          value
-            .filter((v) => {
-              const k = v.profileKey.toBase58();
-              if (!seen.has(k)) {
-                seen.add(k);
-                return v;
-              }
-            })
-            .filter(truthy),
-        ];
-      })
-    );
-  }, [reacts]);
+  handleErrors(error, decodeError, reactError);
 
   const handleOnReaction = () => showPicker(messageId);
+
+  // LEGACY: If this is a reaction before message types were stored on the top level instead of json
+  if (message?.type === MessageType.React) {
+    return null;
+  }
 
   return (
     <Box
@@ -282,7 +245,7 @@ export function Message({
                 _dark={{ color: "white" }}
               >
                 {message ? (
-                  message.type === MessageType.Gify ? (
+                  messageType === MessageType.Gify ? (
                     <GifyGif gifyId={message.gifyId} />
                   ) : message.type === MessageType.Image ? (
                     <Image
@@ -305,6 +268,8 @@ export function Message({
                       }}
                     />
                   )
+                ) : decoding ? (
+                  <Skeleton w="300px" h="16px" />
                 ) : (
                   <BuyMoreButton
                     mint={readMint}
@@ -336,14 +301,14 @@ export function Message({
                   />
                 )}
               </Box>
-              {Object.entries(reactsByEmoji).length > 0 && (
+              {inflatedReacts && inflatedReacts.length > 0 && (
                 <HStack mt={2}>
-                  {Object.entries(reactsByEmoji).map(([emoji, messages]) => (
+                  {inflatedReacts.map(({ emoji, messages, mine }) => (
                     <Popover matchWidth trigger="hover" key={emoji}>
                       <PopoverTrigger>
                         <Button
                           onClick={() => {
-                            if (!myReacts.has(emoji))
+                            if (!mine)
                               sendMessage({
                                 type: MessageType.React,
                                 emoji: emoji,
@@ -354,7 +319,7 @@ export function Message({
                           width="55px"
                           borderRightRadius="20px"
                           p={0}
-                          variant={myReacts.has(emoji) ? "solid" : "outline"}
+                          variant={mine ? "solid" : "outline"}
                           size="sm"
                           key={emoji}
                         >
