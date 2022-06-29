@@ -55,27 +55,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { LoadWalletModal } from "./LoadWalletModal";
 import { useChatOwnedAmount } from "../hooks/useChatOwnedAmount";
-import data from "@emoji-mart/data";
-
-const getCurrentlyTypedEmoji = (e: React.FormEvent<HTMLTextAreaElement>) => {
-  let match, text;
-
-  if (
-    !(match = e.currentTarget.value
-      .substring(0, e.currentTarget.selectionStart)
-      .match(/(^|\W):((:?\w|\+|\-)[^:]*)?$/))
-  ) {
-    return null;
-  }
-
-  // @ts-ignore
-  text = match[0].match(/:(.*)/)[1];
-  if ((text.match(RegExp(" ", "g")) || []).length > 1) {
-    return null;
-  }
-
-  return text;
-};
+import { useEmojiSearch } from "../hooks/useEmojiSearch";
 
 const converter = new Converter({
   simpleLineBreaks: true,
@@ -92,9 +72,9 @@ export function Chatbox({
   chatKey,
   onAddPendingMessage,
 }: chatProps) {
-  let emojiSearch = useRef<any>();
-  const [contextualPanelOpen, setContextualPanelOpen] = useState(false);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const [input, setInput] = useState("");
+  const { emojis, search, searchMatch, reset } = useEmojiSearch();
   const { isOpen, onToggle, onClose } = useDisclosure();
   const {
     isOpen: loadWalletIsOpen,
@@ -152,17 +132,6 @@ export function Chatbox({
     },
   });
 
-  useEffect(() => {
-    if (!emojiSearch.current) {
-      // no typscript types for v5 yet
-      // @ts-ignore
-      import("emoji-mart").then(async (EmojiMart) => {
-        await EmojiMart.init({ data });
-        emojiSearch.current = EmojiMart.SearchIndex.search;
-      });
-    }
-  }, []);
-
   const sendMessage = async (m: ISendMessageContent) => {
     setInput("");
     setLoading(true);
@@ -175,18 +144,19 @@ export function Chatbox({
 
   const handleChange = async (e: React.FormEvent<HTMLTextAreaElement>) => {
     const content = e.currentTarget.value;
-    let parsedEmojiContent = getCurrentlyTypedEmoji(e),
-      emojiSearchResults;
-
-    if (parsedEmojiContent && parsedEmojiContent.length >= 2) {
-      setContextualPanelOpen(true);
-      emojiSearchResults = await emojiSearch.current(parsedEmojiContent);
-      console.log(emojiSearchResults);
-    } else {
-      setContextualPanelOpen(false);
-    }
-
+    search(e);
     setInput(content);
+  };
+
+  const handleEmojiClick = (native: string) => {
+    setInput(
+      [`:${searchMatch}`, `:${searchMatch}:`].reduce(
+        (acc, string) => acc.replace(string, native),
+        input
+      )
+    );
+    inputRef.current?.focus();
+    reset();
   };
 
   handleErrors(error, delegateError);
@@ -350,16 +320,56 @@ export function Chatbox({
             w="full"
             minH="76px"
           >
-            <Popover matchWidth autoFocus={false} isOpen={contextualPanelOpen}>
+            <Popover
+              matchWidth
+              autoFocus={false}
+              isOpen={emojis.length > 0}
+              placement="top"
+            >
               <PopoverTrigger>
                 <Flex w="full" />
               </PopoverTrigger>
-              <PopoverContent w="full" bg={chatBg} border="none">
-                <PopoverBody>
-                  <VStack spacing={2} w="full" align="start" rounded="lg">
-                    <div>:test:</div>
-                    <div>:test:</div>
-                    <div>:test:</div>
+              <PopoverContent
+                bg={chatBg}
+                border="none"
+                w={{
+                  base: "full",
+                  md: "50%",
+                }}
+              >
+                <PopoverBody px={0} pt={0}>
+                  <VStack spacing={0} w="full" align="start">
+                    <Text
+                      p={2}
+                      fontSize="xs"
+                      fontWeight="bold"
+                      textTransform="uppercase"
+                      lineHeight="normal"
+                    >
+                      Emojis Matching :
+                      <Text as="span" textTransform="none">
+                        {searchMatch}
+                      </Text>
+                    </Text>
+                    <Divider />
+                    {emojis.map((e: any) => (
+                      <HStack
+                        w="full"
+                        p={2}
+                        key={e.name}
+                        onClick={() => handleEmojiClick(e.skins[0].native)}
+                        _hover={{
+                          cursor: "pointer",
+                          bg: "gray.200",
+                          _dark: {
+                            bg: "gray.700",
+                          },
+                        }}
+                      >
+                        <Text fontSize="xl">{e.skins[0].native}</Text>
+                        <Text fontSize="sm">{e.name}</Text>
+                      </HStack>
+                    ))}
                   </VStack>
                 </PopoverBody>
               </PopoverContent>
@@ -373,6 +383,7 @@ export function Chatbox({
               rounded="lg"
             >
               <ChatInput
+                inputRef={inputRef}
                 onChange={handleChange}
                 value={input}
                 onKeyDown={(ev) => {

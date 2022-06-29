@@ -1,11 +1,10 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import data from "@emoji-mart/data";
 
-export const useEmojiSearch = (
-  arg0: React.FormEvent<HTMLTextAreaElement> | undefined
-) => {
+export const useEmojiSearch = () => {
   const searchRef = useRef();
-  const [emojis, setEmojis] = useState();
+  const [emojis, setEmojis] = useState([]);
+  const [searchMatch, setSearchMatch] = useState<string | null>();
 
   const getCurrentlyTypedEmoji = useCallback(
     (e: React.FormEvent<HTMLTextAreaElement>) => {
@@ -30,20 +29,26 @@ export const useEmojiSearch = (
     []
   );
 
+  const reset = useCallback(() => {
+    setEmojis([]);
+    setSearchMatch(null);
+  }, [setEmojis]);
+
   const search = useCallback(
     async (e: React.FormEvent<HTMLTextAreaElement>) => {
-      let searchMatch;
-      if ((searchMatch = getCurrentlyTypedEmoji(e))) {
+      let searchMatch = getCurrentlyTypedEmoji(e);
+      if (searchMatch && searchMatch.length >= 2) {
+        setSearchMatch(searchMatch);
         setEmojis(await (searchRef.current as any)(searchMatch as string));
+      } else {
+        reset();
       }
     },
-    [searchRef, setEmojis, getCurrentlyTypedEmoji]
+    [searchRef, setEmojis, getCurrentlyTypedEmoji, reset]
   );
 
   useEffect(() => {
     (async () => {
-      let searchMatch;
-
       if (!searchRef.current) {
         // @ts-ignore
         const EmojiMart = await import("emoji-mart");
@@ -53,5 +58,5 @@ export const useEmojiSearch = (
     })();
   });
 
-  return { emojis, getCurrentlyTypedEmoji, search };
+  return { emojis, searchMatch, getCurrentlyTypedEmoji, search, reset };
 };

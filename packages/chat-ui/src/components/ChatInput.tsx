@@ -1,34 +1,30 @@
 import React, { useEffect, useRef } from "react";
+import { Textarea, TextareaProps } from "@chakra-ui/react";
 
-const defaultStyle = {
-    display: "block",
-    overflow: "hidden",
-    resize: "none",
-    width: "100%",
-    backgroundColor: "transparent",
-    border: "none",
-    outline: "none",
-    boxShadow: "none"
-};
-
-export function ChatInput(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "0px";
-      const scrollHeight = textareaRef.current.scrollHeight;
-      textareaRef.current.style.height = scrollHeight + "px";
-    }
-  }, [props.value]);
-
-  return (
-    <textarea
-      placeholder="Say something. gm..."
-      ref={textareaRef}
-      // @ts-ignore
-      style={{ ...defaultStyle, ...props.style }}
-      {...props}
-    />
-  );
+export interface IChatInputProps extends TextareaProps {
+  inputRef: React.RefObject<HTMLTextAreaElement>;
 }
+
+export const ChatInput: React.FC<IChatInputProps> = ({
+  onChange,
+  inputRef,
+  ...rest
+}) => (
+  <Textarea
+    ref={inputRef}
+    onChange={onChange}
+    resize="none"
+    overflow="hidden"
+    rows={1}
+    px={0}
+    w="full"
+    h="full"
+    backgroundColor="transparent"
+    outline="none"
+    boxShadow="none !important"
+    border="none !imporatnt"
+    borderColor="transparent !important"
+    placeholder="GM, Say Something....."
+    {...rest}
+  />
+);
