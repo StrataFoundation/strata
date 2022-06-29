@@ -269,7 +269,15 @@ export function Message({
                     />
                   )
                 ) : decoding ? (
-                  <Skeleton w="300px" h="16px" />
+                  <Skeleton
+                    startColor={lockedColor}
+                    height="20px"
+                  >
+                    {Array.from(
+                      { length: genLength(messageId || "") },
+                      () => "."
+                    ).join()}
+                  </Skeleton>
                 ) : (
                   <BuyMoreButton
                     mint={readMint}
