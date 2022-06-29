@@ -28,7 +28,7 @@ export const AccountProvider: FC<IAccountProviderProps> = ({
       setCache(
         new AccountFetchCache({
           connection,
-          delay: 500,
+          delay: 50,
           commitment,
           extendConnection,
         })
