@@ -1,5 +1,7 @@
 import React, { useState, useCallback, useEffect, FC, useRef } from "react";
 import { Flex, Fade, useColorModeValue } from "@chakra-ui/react";
+// no typscript types for v5 yet
+// @ts-ignore
 import { PickerProps, BaseEmoji } from "emoji-mart";
 import data from "@emoji-mart/data";
 import { PublicKey } from "@solana/web3.js";
@@ -15,6 +17,8 @@ export const EmojiPicker: FC<PickerProps> = (props) => {
   useEffect(() => {
     if (showEmojis.current) {
       showEmojis.current = false;
+      // no typscript types for v5 yet
+      // @ts-ignore
       import("emoji-mart").then((EmojiMart) => {
         new EmojiMart.Picker({
           ...props,

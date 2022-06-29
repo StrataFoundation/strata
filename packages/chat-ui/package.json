@@ -43,7 +43,6 @@
     "@strata-foundation/chat": "^3.6.1",
     "@strata-foundation/react": "^3.6.1",
     "@strata-foundation/spl-token-bonding": "^3.6.1",
-    "@types/emoji-mart": "^3.0.9",
     "@types/request-promise": "^4.1.48",
     "@types/showdown": "^2.0.0",
     "add": "^2.0.6",

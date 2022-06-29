@@ -16,6 +16,10 @@ import {
   Avatar,
   Box,
   ModalOverlay,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverBody,
 } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
 import {
@@ -27,12 +31,10 @@ import {
   roundToDecimals,
   useErrorHandler,
   useMint,
-  useOwnedAmount,
-  useCollectionOwnedAmount,
   useTokenMetadata,
 } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
-import React, { useState } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { AiOutlineGif, AiOutlineSend } from "react-icons/ai";
 import {
   IMessageWithPending,
@@ -53,6 +55,27 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { LoadWalletModal } from "./LoadWalletModal";
 import { useChatOwnedAmount } from "../hooks/useChatOwnedAmount";
+import data from "@emoji-mart/data";
+
+const getCurrentlyTypedEmoji = (e: React.FormEvent<HTMLTextAreaElement>) => {
+  let match, text;
+
+  if (
+    !(match = e.currentTarget.value
+      .substring(0, e.currentTarget.selectionStart)
+      .match(/(^|\W):((:?\w|\+|\-)[^:]*)?$/))
+  ) {
+    return null;
+  }
+
+  // @ts-ignore
+  text = match[0].match(/:(.*)/)[1];
+  if ((text.match(RegExp(" ", "g")) || []).length > 1) {
+    return null;
+  }
+
+  return text;
+};
 
 const converter = new Converter({
   simpleLineBreaks: true,
@@ -64,12 +87,13 @@ export type chatProps = {
   scrollRef?: any;
 };
 
-
 export function Chatbox({
   scrollRef,
   chatKey,
   onAddPendingMessage,
 }: chatProps) {
+  let emojiSearch = useRef<any>();
+  const [contextualPanelOpen, setContextualPanelOpen] = useState(false);
   const [input, setInput] = useState("");
   const { isOpen, onToggle, onClose } = useDisclosure();
   const {
@@ -77,9 +101,6 @@ export function Chatbox({
     onOpen: onOpenLoadWallet,
     onClose: onCloseLoadWallet,
   } = useDisclosure();
-  const handleChange = (html: string) => {
-    setInput(html);
-  };
   const { connected } = useWallet();
   const { setVisible } = useWalletModal();
   const { account: profileAccount } = useWalletProfile();
@@ -107,7 +128,7 @@ export function Chatbox({
   const { metadata: postMetadata, image: postImage } = useTokenMetadata(
     chat?.postPermissionKey
   );
-  const { amount: ownedAmount } = useChatOwnedAmount(chatKey)
+  const { amount: ownedAmount } = useChatOwnedAmount(chatKey);
   const mint = useMint(chat?.postPermissionKey);
   const postAmount =
     chat?.postPermissionAmount &&
@@ -131,6 +152,17 @@ export function Chatbox({
     },
   });
 
+  useEffect(() => {
+    if (!emojiSearch.current) {
+      // no typscript types for v5 yet
+      // @ts-ignore
+      import("emoji-mart").then(async (EmojiMart) => {
+        await EmojiMart.init({ data });
+        emojiSearch.current = EmojiMart.SearchIndex.search;
+      });
+    }
+  }, []);
+
   const sendMessage = async (m: ISendMessageContent) => {
     setInput("");
     setLoading(true);
@@ -139,6 +171,22 @@ export function Chatbox({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleChange = async (e: React.FormEvent<HTMLTextAreaElement>) => {
+    const content = e.currentTarget.value;
+    let parsedEmojiContent = getCurrentlyTypedEmoji(e),
+      emojiSearchResults;
+
+    if (parsedEmojiContent && parsedEmojiContent.length >= 2) {
+      setContextualPanelOpen(true);
+      emojiSearchResults = await emojiSearch.current(parsedEmojiContent);
+      console.log(emojiSearchResults);
+    } else {
+      setContextualPanelOpen(false);
+    }
+
+    setInput(content);
   };
 
   handleErrors(error, delegateError);
@@ -295,13 +343,27 @@ export function Chatbox({
       ) : (
         <>
           <Flex
-            direction="row"
+            direction="column"
             position="sticky"
             bottom={0}
             p={2}
             w="full"
             minH="76px"
           >
+            <Popover matchWidth autoFocus={false} isOpen={contextualPanelOpen}>
+              <PopoverTrigger>
+                <Flex w="full" />
+              </PopoverTrigger>
+              <PopoverContent w="full" bg={chatBg} border="none">
+                <PopoverBody>
+                  <VStack spacing={2} w="full" align="start" rounded="lg">
+                    <div>:test:</div>
+                    <div>:test:</div>
+                    <div>:test:</div>
+                  </VStack>
+                </PopoverBody>
+              </PopoverContent>
+            </Popover>
             <HStack
               p="10px"
               spacing={2}
@@ -311,7 +373,7 @@ export function Chatbox({
               rounded="lg"
             >
               <ChatInput
-                onChange={(e) => handleChange(e.target.value)}
+                onChange={handleChange}
                 value={input}
                 onKeyDown={(ev) => {
                   if (ev.key === "Enter") {

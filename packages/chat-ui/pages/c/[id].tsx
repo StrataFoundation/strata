@@ -61,13 +61,14 @@ export default function Chatroom() {
       </Header>
       <Workspace>
         <EmojiPickerPopover chatKey={chatKey} />
-        <ChatMessages
+        {/* <ChatMessages
           isLoading={loadingInitial || loadingMore}
           scrollRef={scrollRef}
           messages={messagesWithPending}
           hasMore={hasMore}
           fetchMore={fetchMore}
-        />
+        /> */}
+        <Flex grow={1}>Text</Flex>
         <Chatbox
           scrollRef={scrollRef}
           chatKey={chatKey}
