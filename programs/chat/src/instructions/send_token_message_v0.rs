@@ -78,7 +78,7 @@ pub fn assert_valid_metadata(
   let (metadata_addr, _bump) = Pubkey::find_program_address(seed, &metadata_program);
   assert_eq!(metadata_addr, metadata_info.key());
 
-  return Metadata::from_account_info(metadata_info);
+  Metadata::from_account_info(metadata_info)
 }
 
 pub fn assert_meets_permissions(ctx: &Context<SendTokenMessageV0>) -> Result<()> {
@@ -100,14 +100,14 @@ pub fn assert_meets_permissions(ctx: &Context<SendTokenMessageV0>) -> Result<()>
     return Ok(());
   }
 
-  return Err(error!(ErrorCode::PermissionDenied));
+  Err(error!(ErrorCode::PermissionDenied))
 }
 
 pub fn handler(ctx: Context<SendTokenMessageV0>, _args: MessagePartV0) -> Result<()> {
   assert_meets_permissions(&ctx)?;
 
   if ctx.accounts.profile.owner_wallet != ctx.accounts.sender.key() {
-    let rm_acc_length = &ctx.remaining_accounts.iter().count();
+    let rm_acc_length = &ctx.remaining_accounts.len();
     let delegate_acc = &ctx.remaining_accounts[rm_acc_length - 1]; // delegate wallet is always the last optional account
     let delegate: Account<DelegateWalletV0> = Account::try_from(delegate_acc)?;
     if delegate.delegate_wallet != ctx.accounts.sender.key() {
