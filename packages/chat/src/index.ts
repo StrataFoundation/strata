@@ -32,7 +32,7 @@ import LitJsSdk from "lit-js-sdk";
 // @ts-ignore
 import { v4 as uuid } from "uuid";
 import { CaseInsensitiveMarkerV0, ChatIDL, ChatV0, DelegateWalletV0, NamespacesV0, PermissionType, PostAction, ProfileV0, SettingsV0, MessageType as RawMessageType } from "./generated/chat";
-import { uploadFile } from "./shdw";
+import { uploadFiles } from "./shdw";
 
 const MESSAGE_MAX_CHARACTERS = 352; // TODO: This changes with optional accounts in the future
 
@@ -76,14 +76,18 @@ const KEY_EXPIRY = 3 * 60 * 60 * 1000;
 const CONDITION_VERSION = 2;
 
 export class LocalSymKeyStorage implements ISymKeyStorage {
+  constructor(readonly url: string) {
+  }
+  
   setSymKey(encrypted: string, unencrypted: string): void {
     storage.set("enc" + CONDITION_VERSION + encrypted, unencrypted);
   }
+
   getSymKey(encrypted: string): string | null {
     return storage.get("enc" + CONDITION_VERSION + encrypted) as string | null;
   }
   private getKey(mintOrCollection: PublicKey, amount: number): string {
-    return `sym-${CONDITION_VERSION}-${mintOrCollection.toBase58()}-${amount}`;
+    return `sym-${CONDITION_VERSION}-${this.url}-${mintOrCollection.toBase58()}-${amount}`;
   }
   setSymKeyToUse(
     mintOrCollection: PublicKey,
@@ -179,6 +183,7 @@ export interface TextMessage {
 
 export interface HtmlMessage {
   html: string;
+  encryptedAttachments: string[];
 }
 
 export interface ImageMessage {
@@ -444,7 +449,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     program,
     litClient,
     namespacesProgram,
-    symKeyStorage = new LocalSymKeyStorage(),
+    // @ts-ignore
+    symKeyStorage = new LocalSymKeyStorage(provider.connection._rpcEndpoint),
   }: {
     provider: AnchorProvider;
     program: Program<ChatIDL>;
@@ -1567,19 +1573,17 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         attachments = normalMessage.attachments;
       }
 
-      attachments.push(
-        ...(
-          await Promise.all(
-            fileAttachments.map(async (fileAttachment) => {
-              return await uploadFile(
-                this.provider,
-                fileAttachment,
-                delegateWalletKeypair
-              );
-            })
-          )
-        ).filter(truthy)
-      );
+      const uploaded = (
+          (await uploadFiles(
+            this.provider,
+            fileAttachments,
+            delegateWalletKeypair
+          )) || []
+        ).filter(truthy);
+      if (uploaded.length != fileAttachments.length) {
+        throw new Error("Failed to upload all files");
+      }
+      attachments.push(...uploaded);
     }
 
     // Encrypt the actual json structure

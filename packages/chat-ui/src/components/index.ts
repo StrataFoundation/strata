@@ -18,3 +18,4 @@ export * from "./Sidebar";
 export * from "./Workspace";
 export * from "./LongPromiseNotification";
 export * from "./EmojiPicker";
+export * from "./Files";

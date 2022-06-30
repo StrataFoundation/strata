@@ -65,15 +65,6 @@ async function hydrateTransactions(
     return [];
   }
 
-  // Speed up transaction fetching by using the index
-  // @ts-ignore
-  if (!connection._rpcEndpoint.includes("dev")) {
-    connection = new Connection(
-      "https://rpc.theindex.io/mainnet-beta/299c4e70-c54f-4383-87f2-3e633405fd8d"
-    );
-  }
-
-
   const rawTxs = (
     await connection.getTransactions(signatures.map((sig) => sig.signature))
   );

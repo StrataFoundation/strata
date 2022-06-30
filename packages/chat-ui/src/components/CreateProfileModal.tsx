@@ -29,7 +29,7 @@ import {
   ChatSdk,
   IdentifierType,
   randomizeFileName,
-  uploadFile,
+  uploadFiles,
 } from "@strata-foundation/chat";
 import {
   truncatePubkey,
@@ -236,7 +236,7 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
               toast.dismiss(t.id);
             }}
             exec={async () => {
-              await uploadFile(chatSdk!.provider, image, delegateWallet);
+              await uploadFiles(chatSdk!.provider, [image], delegateWallet);
               return true;
             }}
             onComplete={async () => {
