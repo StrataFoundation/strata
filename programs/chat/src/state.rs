@@ -23,6 +23,18 @@ pub struct NamespacesV0 {
   pub user_namespace: Pubkey,
 }
 
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub enum PermissionType {
+  Token,
+  NFT,
+}
+
+impl Default for PermissionType {
+  fn default() -> Self {
+    PermissionType::Token
+  }
+}
+
 #[account]
 #[derive(Default)]
 pub struct ChatV0 {
@@ -37,6 +49,8 @@ pub struct ChatV0 {
   pub image_url: String,
   pub metadata_url: String,
   pub post_pay_destination: Option<Pubkey>,
+  pub post_permission_type: PermissionType,
+  pub read_permission_type: PermissionType,
 }
 
 #[account]

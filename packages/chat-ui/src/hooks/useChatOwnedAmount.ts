@@ -27,7 +27,10 @@ export function useChatOwnedAmount(chatKey?: PublicKey): { loading: boolean; amo
   const ownedAmountToken = useOwnedAmount(chat?.postPermissionKey);
 
   return {
-    amount: max(ownedAmountNft, ownedAmountToken),
-    loading: loading
+    amount:
+      Object.keys(chat?.readPermissionType || {})[0] == "token"
+        ? ownedAmountToken
+        : ownedAmountNft,
+    loading: loading,
   };
 }

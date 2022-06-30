@@ -39,7 +39,7 @@ pub fn resize_to_fit<'info, T: AccountSerialize + AccountDeserialize + Owner + C
     total: 0
   };
   account.try_serialize(writer)?;
-  let new_size = writer.total;
+  let new_size = writer.total + 64; // Pad enough for two pubkeys so deserialize doesn't fail
   let new_minimum_balance = rent.minimum_balance(new_size);
   let lamports_diff = new_minimum_balance.saturating_sub(account.to_account_info().lamports());
   msg!("Resizing to {} with lamports {}", new_size, lamports_diff);

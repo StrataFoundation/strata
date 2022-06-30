@@ -89,7 +89,7 @@ async function getMessages(
         .filter(truthy);
       return [
         ...(completedMessages || []),
-        ...(await chatSdk.getDecodedMessagesFromParts(newParts)),
+        ...(await chatSdk.getMessagesFromParts(newParts)),
       ]
         .filter((msg) => msg.txids.every((txid) => !failedTx.has(txid)))
         .sort((a, b) => b.startBlockTime - a.startBlockTime)
@@ -180,28 +180,27 @@ export function useMessages(
       return undefined;
     }
     // Don't allow the same react from one person more than once
-    const seen = new Set<string>();
+    // const seen = new Set<string>();
     const reacts = messages.reduce((acc, msg) => {
-      if (msg?.decodedMessage?.type === MessageType.React) {
-        const reactMessage = msg.decodedMessage as ReactMessage;
-        if (!acc[reactMessage.referenceMessageId]) {
-          acc[reactMessage.referenceMessageId] = [];
+      if (msg && msg.type === MessageType.React && msg.referenceMessageId) {
+        if (!acc[msg.referenceMessageId]) {
+          acc[msg.referenceMessageId] = [];
         }
-        const seenKey =
-          msg.profileKey?.toBase58() +
-          reactMessage.referenceMessageId +
-          reactMessage.emoji;
-        if (!seen.has(seenKey)) {
-          seen.add(seenKey);
-          acc[reactMessage.referenceMessageId].push(msg);
-        }
+        // const seenKey =
+        //   msg.profileKey?.toBase58() +
+        //   (msg.referenceMessageId || "") +
+        //   reactMessage.emoji;
+        // if (!seen.has(seenKey)) {
+          // seen.add(seenKey);
+        acc[msg.referenceMessageId].push(msg);
+        // }
       }
 
       return acc;
     }, {} as Record<string, IMessageWithPending[]>);
 
     return messages
-      .filter((msg) => msg?.decodedMessage?.type !== MessageType.React)
+      .filter((msg) => msg?.type !== MessageType.React)
       .map((message) => ({
         ...message,
         reacts: reacts[message.id] || [],

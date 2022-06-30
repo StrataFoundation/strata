@@ -6,7 +6,7 @@
 	url = https://github.com/solana-labs/solana-program-library.git
 [submodule "deps/cardinal-namespaces"]
 	path = deps/cardinal-namespaces
-	url = git@github.com:cardinal-labs/cardinal-namespaces.git
+	url = https://github.com/cardinal-labs/cardinal-namespaces.git
 [submodule "deps/cardinal-token-manager"]
 	path = deps/cardinal-token-manager
-	url = git@github.com:cardinal-labs/cardinal-token-manager.git
+	url = https://github.com/cardinal-labs/cardinal-token-manager.git

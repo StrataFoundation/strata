@@ -48,7 +48,7 @@ export function useCollectionOwnedAmount(collection: PublicKey | undefined): {
   });
   const matches = useMemo(() => {
     if (nfts) {
-      return nfts.map((nft) => nft.mintAddress);
+      return nfts.map((nft) => new PublicKey(nft.mintAddress));
     }
   }, [nfts, collection?.toBase58()]);
 

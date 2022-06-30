@@ -31,7 +31,7 @@ import * as bs58 from "bs58";
 import LitJsSdk from "lit-js-sdk";
 // @ts-ignore
 import { v4 as uuid } from "uuid";
-import { CaseInsensitiveMarkerV0, ChatIDL, ChatV0, DelegateWalletV0, NamespacesV0, PostAction, ProfileV0, SettingsV0 } from "./generated/chat";
+import { CaseInsensitiveMarkerV0, ChatIDL, ChatV0, DelegateWalletV0, NamespacesV0, PermissionType, PostAction, ProfileV0, SettingsV0, MessageType as RawMessageType } from "./generated/chat";
 import { uploadFile } from "./shdw";
 
 const MESSAGE_MAX_CHARACTERS = 352; // TODO: This changes with optional accounts in the future
@@ -73,15 +73,17 @@ const storage =
 // 3 hours
 const KEY_EXPIRY = 3 * 60 * 60 * 1000;
 
+const CONDITION_VERSION = 2;
+
 export class LocalSymKeyStorage implements ISymKeyStorage {
   setSymKey(encrypted: string, unencrypted: string): void {
-    storage.set("enc" + encrypted, unencrypted);
+    storage.set("enc" + CONDITION_VERSION + encrypted, unencrypted);
   }
   getSymKey(encrypted: string): string | null {
-    return storage.get("enc" + encrypted) as string | null;
+    return storage.get("enc" + CONDITION_VERSION + encrypted) as string | null;
   }
   private getKey(mintOrCollection: PublicKey, amount: number): string {
-    return `sym-${mintOrCollection.toBase58()}-${amount}`;
+    return `sym-${CONDITION_VERSION}-${mintOrCollection.toBase58()}-${amount}`;
   }
   setSymKeyToUse(
     mintOrCollection: PublicKey,
@@ -234,22 +236,24 @@ export interface IMessagePart extends MessagePartV0 {
 }
 
 export interface IMessage {
+  type: MessageType;
   id: string;
   txids: string[];
   startBlockTime: number;
   endBlockTime: number;
   readPermissionAmount: BN;
+  referenceMessageId: string | null;
 
   encryptedSymmetricKey: string;
 
   content: string;
-  /** Decoded message, if permissions were enough to decode it */
-  decodedMessage?: IDecryptedMessageContent;
+
+  getDecodedMessage(): Promise<IDecryptedMessageContent | undefined>;
 
   profileKey: PublicKey;
   chatKey: PublicKey;
 
-  parts: IMessagePart[]
+  parts: IMessagePart[];
 }
 
 export interface InitializeChatArgs {
@@ -264,6 +268,10 @@ export interface InitializeChatArgs {
   readPermissionKey: PublicKey;
   /** The mint you need to post to this chat */
   postPermissionKey: PublicKey;
+  /** The gating mechanism, part of an NFT collection or just holds the token. **Default:** Token */
+  readPermissionType?: PermissionType;
+  /** The gating mechanism, part of an NFT collection or just holds the token **Default:** Token */
+  postPermissionType?: PermissionType;
   /** The number of tokens needed to post to this chat. **Default:** 1 */
   postPermissionAmount?: number | BN;
   /** The action to take when posting. **Default:** hold */
@@ -362,10 +370,11 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   chain: string;
   authingLit: Promise<void> | null;
   symKeyStorage: ISymKeyStorage;
+  symKeyFetchCache: Record<string, Promise<Uint8Array | undefined>>;
   litJsSdk: LitJsSdk; // to use in nodejs, manually set this to the nodejs lit client. see tests for example
   namespacesProgram: Program<NAMESPACES_PROGRAM>;
-  conditionVersion = 1;
-  
+  conditionVersion = CONDITION_VERSION;
+
   static ID = new PublicKey("chatGL6yNgZT2Z3BeMYGcgdMpcBKdmxko4C5UhEX4To");
 
   get isLitAuthed() {
@@ -444,6 +453,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     symKeyStorage?: ISymKeyStorage;
   }) {
     super({ provider, program });
+
+    this.symKeyFetchCache = {};
 
     this.namespacesProgram = namespacesProgram;
 
@@ -587,7 +598,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     );
   }
 
-  async getDecodedMessagesFromParts(
+  async getMessagesFromParts(
     parts: IMessagePart[],
     ignorePartial: boolean = true
   ): Promise<IMessage[]> {
@@ -599,7 +610,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
     const messages = await Promise.all(
       Object.values(partsById).map((parts) =>
-        this.getDecodedMessageFromParts(parts, ignorePartial)
+        this.getMessageFromParts(parts, ignorePartial)
       )
     );
 
@@ -608,7 +619,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       .sort((a, b) => a.startBlockTime - b.startBlockTime);
   }
 
-  async getSymmetricKey(
+  async _getSymmetricKey(
     encryptedSymmetricKey: string,
     accessControlConditions: any
   ): Promise<Uint8Array | undefined> {
@@ -632,10 +643,24 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       this.symKeyStorage.setSymKey(encryptedSymmetricKey, symKeyStr);
     }
 
+    delete this.symKeyFetchCache[encryptedSymmetricKey];
+
     return symmetricKey;
   }
 
-  async getDecodedMessageFromParts(
+  async getSymmetricKey(
+    encryptedSymmetricKey: string,
+    accessControlConditions: any
+  ): Promise<Uint8Array | undefined> {
+    // Cache promises so we don't fetch the same thing from lit multiple times
+    if (!this.symKeyFetchCache[encryptedSymmetricKey]) {
+      this.symKeyFetchCache[encryptedSymmetricKey] = this._getSymmetricKey(encryptedSymmetricKey, accessControlConditions);
+    }
+
+    return this.symKeyFetchCache[encryptedSymmetricKey];
+  }
+
+  async getMessageFromParts(
     parts: IMessagePart[],
     ignorePartial: boolean = true
   ): Promise<IMessage | undefined> {
@@ -647,68 +672,15 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       .sort((a, b) => a.currentPart - b.currentPart)
       .map((part) => part.content)
       .join("");
-    const { readPermissionAmount, chatKey, encryptedSymmetricKey, ...rest } =
+
+    const { messageType, readPermissionAmount, chatKey, encryptedSymmetricKey, referenceMessageId, ...rest } =
       parts[0];
-    const chatAcc = await this.getChat(chatKey);
-    let readAmount;
-    try {
-      const readMint = await getMintInfo(
-        this.provider,
-        chatAcc!.readPermissionKey
-      );
-      readAmount = toBN(readPermissionAmount, readMint);
-    } catch {
-      readAmount = new BN(readPermissionAmount);
-    }
 
-    let decodedMessage;
-    if (encryptedSymmetricKey) {
-      const accessControlConditions = 
-        getAccessConditions(
-          parts[0].conditionVersion,
-          chatAcc!.readPermissionKey,
-          readAmount,
-          this.chain
-        );
-
-      try {
-        const blob = new Blob([
-          this.litJsSdk.uint8arrayFromString(content, "base16"),
-        ]);
-        const symmetricKey = await this.getSymmetricKey(
-          encryptedSymmetricKey,
-          accessControlConditions
-        );
-        decodedMessage = JSON.parse(
-          await this.litJsSdk.decryptString(blob, symmetricKey)
-        );
-
-        decodedMessage.decryptedAttachments = [];
-        decodedMessage.decryptedAttachments.push(
-          ...(await Promise.all(
-            (decodedMessage.encryptedAttachments || []).map(
-              async (encryptedAttachment: string) => {
-                const blob = await fetch(encryptedAttachment).then((r) =>
-                  r.blob()
-                );
-                const arrBuffer = await this.litJsSdk.decryptFile({
-                  symmetricKey,
-                  file: blob,
-                });
-                return new Blob([arrBuffer]);
-              }
-            )
-          ))
-        );
-      } catch (e: any) {
-        console.error("Failed to decode message", e);
-      }
-    } else {
-      decodedMessage = JSON.parse(content);
-    }
-
+    let decodedMessage: any;
     return {
       ...rest,
+      referenceMessageId,
+      type: messageType && Object.keys(messageType as any)[0] as MessageType,
       encryptedSymmetricKey,
       startBlockTime: parts[0].blockTime,
       endBlockTime: parts[parts.length - 1].blockTime,
@@ -716,7 +688,69 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       readPermissionAmount,
       content,
       chatKey,
-      decodedMessage,
+      getDecodedMessage: async () => {
+        if (decodedMessage) {
+          return decodedMessage;
+        }
+        const chatAcc = await this.getChat(chatKey);
+        let readAmount: BN;
+        try {
+          const readMint = await getMintInfo(
+            this.provider,
+            chatAcc!.readPermissionKey
+          );
+          readAmount = toBN(readPermissionAmount, readMint);
+        } catch {
+          readAmount = new BN(readPermissionAmount);
+        }
+
+        if (encryptedSymmetricKey) {
+          const accessControlConditions = getAccessConditions(
+            parts[0].conditionVersion,
+            chatAcc!.readPermissionKey,
+            readAmount,
+            this.chain,
+            chatAcc!.readPermissionType
+          );
+
+          try {
+            const blob = new Blob([
+              this.litJsSdk.uint8arrayFromString(content, "base16"),
+            ]);
+            const symmetricKey = await this.getSymmetricKey(
+              encryptedSymmetricKey,
+              accessControlConditions
+            );
+            decodedMessage = JSON.parse(
+              await this.litJsSdk.decryptString(blob, symmetricKey)
+            );
+
+            decodedMessage.decryptedAttachments = [];
+            decodedMessage.decryptedAttachments.push(
+              ...(await Promise.all(
+                (decodedMessage.encryptedAttachments || []).map(
+                  async (encryptedAttachment: string) => {
+                    const blob = await fetch(encryptedAttachment).then((r) =>
+                      r.blob()
+                    );
+                    const arrBuffer = await this.litJsSdk.decryptFile({
+                      symmetricKey,
+                      file: blob,
+                    });
+                    return new Blob([arrBuffer]);
+                  }
+                )
+              ))
+            );
+          } catch (e: any) {
+            console.error("Failed to decode message", e);
+          }
+        } else {
+          decodedMessage = JSON.parse(content);
+        }
+
+        return decodedMessage;
+      },
       parts,
     };
   }
@@ -1137,6 +1171,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     defaultReadPermissionAmount = 1,
     imageUrl = "",
     metadataUrl = "",
+    readPermissionType = PermissionType.Token,
+    postPermissionType = PermissionType.Token,
   }: InitializeChatArgs): Promise<InstructionResult<{ chat: PublicKey }>> {
     const chat = (
       await ChatSdk.chatKey(identifierCertificateMint, this.programId)
@@ -1192,6 +1228,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         postPermissionAction: postPermissionAction as never,
         postPermissionAmount: postAmount as AnchorBN,
         postPayDestination: postPayDestination || null,
+        readPermissionType: readPermissionType as never,
+        postPermissionType: postPermissionType as never,
       },
       {
         accounts: {
@@ -1451,13 +1489,14 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     payer = this.wallet.publicKey,
     sender = this.wallet.publicKey,
     chat,
-    message,
+    message: rawMessage,
     readPermissionAmount,
     delegateWallet,
     delegateWalletKeypair,
     encrypted = true,
     nftMint,
   }: SendMessageArgs): Promise<BigInstructionResult<{ messageId: string }>> {
+    const { referenceMessageId, type, ...message } = rawMessage
     if (encrypted) {
       await this.authingLit;
       if (!this.isLitAuthed && this.wallet && this.wallet.publicKey) {
@@ -1481,13 +1520,13 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         readPermissionAmount || chatAcc.defaultReadPermissionAmount
       );
     }
-    const accessControlConditionsToUse = 
-      getAccessConditions(
-        this.conditionVersion,
-        chatAcc.readPermissionKey,
-        readAmount,
-        this.chain
-      );
+    const accessControlConditionsToUse = getAccessConditions(
+      this.conditionVersion,
+      chatAcc.readPermissionKey,
+      readAmount,
+      this.chain,
+      chatAcc!.readPermissionType
+    );
 
     const storedSymKey = this.symKeyStorage.getSymKeyToUse(
       chatAcc.readPermissionKey,
@@ -1656,6 +1695,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
             readPermissionAmount: readAmount,
             totalParts: numGroups,
             currentPart: i,
+            messageType: (RawMessageType as any)[capitalizeFirstLetter(type)] as never,
+            referenceMessageId: referenceMessageId || null,
           },
           {
             accounts: {
@@ -1698,16 +1739,24 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   }
 }
 
-function getAccessConditions(conditionVersion: number, readKey: PublicKey, threshold: BN, chain: string) {
+function getAccessConditions(conditionVersion: number, readKey: PublicKey, threshold: BN, chain: string, permissionType: PermissionType) {
   if (conditionVersion === 0) {
     return [tokenAccessPermissions(readKey, threshold, chain)];
   }
 
-  return [
-    collectionAccessPermissions(readKey, threshold, chain),
-    {"operator": "or"},
-    tokenAccessPermissions(readKey, threshold, chain),
-  ]
+  if (conditionVersion === 1) {
+    return [
+      collectionAccessPermissions(readKey, threshold, chain),
+      { operator: "or" },
+      tokenAccessPermissions(readKey, threshold, chain),
+    ];
+  }
+
+  if (Object.keys(permissionType)[0] === "token") {
+    return [tokenAccessPermissions(readKey, threshold, chain)]
+  }
+
+  return [collectionAccessPermissions(readKey, threshold, chain)]
 }
 
 function collectionAccessPermissions(permittedCollection: PublicKey, threshold: BN, chain: string) {
@@ -1763,4 +1812,8 @@ function ensurePubkey(arg0: PublicKey | string) {
     return new PublicKey(arg0);
   }
   return arg0;
+}
+
+function capitalizeFirstLetter(string: string): string {
+  return string.charAt(0).toUpperCase() + string.slice(1);
 }
