@@ -52,6 +52,7 @@ export const useEmojiSearch = () => {
       if (!searchRef.current) {
         // @ts-ignore
         const EmojiMart = await import("emoji-mart");
+        // @ts-ignore
         await EmojiMart.init({ data });
         searchRef.current = EmojiMart.SearchIndex.search;
       }
