@@ -5,6 +5,7 @@ interface IWorkspaceProps {}
 
 export const Workspace: React.FC<IWorkspaceProps> = ({ children }) => (
   <Flex
+    position="relative"
     direction="column"
     w="full"
     h="full"

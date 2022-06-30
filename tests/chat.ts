@@ -271,7 +271,8 @@ describe("chat", () => {
         );
         
         const parts = await chatSdk.getMessagePartsFromTx(txid);
-        const { decodedMessage } = (await chatSdk.getDecodedMessageFromParts(parts))!;
+        const { getDecodedMessage } = (await chatSdk.getMessageFromParts(parts))!;
+        const decodedMessage = await getDecodedMessage();
         expect(decodedMessage?.text).to.eq("hello");
       })
 
@@ -295,7 +296,8 @@ describe("chat", () => {
           [...signers[0], nftHolder]
         );
         const parts = await chatSdk.getMessagePartsFromTx(txid);
-        const { decodedMessage } = (await chatSdk.getDecodedMessageFromParts(parts))!;
+        const { getDecodedMessage } = (await chatSdk.getMessageFromParts(parts))!;
+        const decodedMessage = await getDecodedMessage();
         expect(decodedMessage?.text).to.eq("hello");
       })
 
@@ -326,7 +328,8 @@ describe("chat", () => {
         encrypted: false,
       });
       const parts = await chatSdk.getMessagePartsFromTx((txids || [])[0]!);
-      const { decodedMessage } = (await chatSdk.getDecodedMessageFromParts(parts))!;
+      const { getDecodedMessage } = (await chatSdk.getMessageFromParts(parts))!;
+      const decodedMessage = await getDecodedMessage();
       expect(decodedMessage?.text).to.eq("hello");
     });
 
@@ -344,9 +347,10 @@ describe("chat", () => {
         [...signers[0], profileKeypair]
       );
       const parts = await chatSdk.getMessagePartsFromTx(txid);
-      const { decodedMessage } = (await chatSdk.getDecodedMessageFromParts(
+      const { getDecodedMessage } = (await chatSdk.getMessageFromParts(
         parts
       ))!;
+      const decodedMessage = await getDecodedMessage();
       expect(decodedMessage?.text).to.eq("hey");
     });
 
@@ -368,9 +372,10 @@ describe("chat", () => {
           )
         )
       ).flat();
-      const { decodedMessage } = (await chatSdk.getDecodedMessageFromParts(
+      const { getDecodedMessage } = (await chatSdk.getMessageFromParts(
         parts
       ))!;
+      const decodedMessage = await getDecodedMessage();
       expect(decodedMessage?.text).to.eq(GETTYSBURG_ADDRESS);
     });
   });

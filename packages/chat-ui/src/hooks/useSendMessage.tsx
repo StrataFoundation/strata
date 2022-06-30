@@ -99,18 +99,20 @@ async function sendMessage({
         const content = { ...rest, decryptedAttachments: fileAttachments };
 
         onAddPendingMessage({
+          type: content.type,
           profileKey: profile!.publicKey,
           id: messageId,
           content: JSON.stringify(content),
           txids: txsAndIds.map(({ txid }) => txid),
           chatKey,
-          decodedMessage: content,
+          getDecodedMessage: () => Promise.resolve(content),
           encryptedSymmetricKey: "",
           readPermissionAmount: chat!.defaultReadPermissionAmount,
           startBlockTime: blockTime!,
           endBlockTime: blockTime!,
           parts: [],
           pending: true,
+          referenceMessageId: content.referenceMessageId || null
         });
       }
 
