@@ -39,7 +39,7 @@ impl Default for PermissionType {
 #[derive(Default)]
 pub struct ChatV0 {
   pub bump: u8,
-  pub post_permission_key: Pubkey,         // Permission keys can be a token mint or an nft collection
+  pub post_permission_key: Pubkey, // Permission keys can be a token mint or an nft collection
   pub read_permission_key: Pubkey,
   pub post_permission_amount: u64,
   pub default_read_permission_amount: u64,
@@ -84,7 +84,6 @@ pub struct DelegateWalletV0 {
   pub delegate_wallet: Pubkey,
 }
 
-
 pub const MARKER_SIZE: usize = 8 + std::mem::size_of::<CaseInsensitiveMarkerV0>();
 
 // Exists only to mark that a username or domain with that name case insenstive exists
@@ -92,5 +91,5 @@ pub const MARKER_SIZE: usize = 8 + std::mem::size_of::<CaseInsensitiveMarkerV0>(
 #[derive(Default)]
 pub struct CaseInsensitiveMarkerV0 {
   pub bump: u8,
-  pub certificate_mint: Pubkey
+  pub certificate_mint: Pubkey,
 }

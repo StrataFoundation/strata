@@ -1,5 +1,5 @@
-use crate::{error::ErrorCode, utils::resize_to_fit};
 use crate::state::*;
+use crate::{error::ErrorCode, utils::resize_to_fit};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, TokenAccount};
 use namespaces::state::Entry;
@@ -76,7 +76,7 @@ pub fn handler(ctx: Context<InitializeChatV0>, args: InitializeChatArgsV0) -> Re
   resize_to_fit(
     &ctx.accounts.payer.to_account_info(),
     &ctx.accounts.system_program.to_account_info(),
-    &ctx.accounts.chat
+    &ctx.accounts.chat,
   )?;
 
   Ok(())

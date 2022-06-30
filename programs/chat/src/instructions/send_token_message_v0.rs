@@ -2,9 +2,9 @@ use crate::error::ErrorCode;
 use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
+use mpl_token_metadata::state::Metadata;
 use std::convert::*;
 use std::str::FromStr;
-use mpl_token_metadata::state::Metadata;
 
 #[derive(Accounts)]
 pub struct SendTokenMessageV0<'info> {
@@ -36,7 +36,7 @@ pub enum MessageType {
   Html,
   Gify,
   Image,
-  React // An emoji react to another message
+  React, // An emoji react to another message
 }
 
 impl Default for MessageType {
@@ -56,10 +56,13 @@ pub struct MessagePartV0 {
   pub content: String,
   pub condition_version: u8,
   pub message_type: MessageType,
-  pub reference_message_id: Option<String>
+  pub reference_message_id: Option<String>,
 }
 
-pub fn assert_valid_metadata(metadata_info: &AccountInfo, mint: Pubkey) -> core::result::Result<Metadata, ProgramError> {
+pub fn assert_valid_metadata(
+  metadata_info: &AccountInfo,
+  mint: Pubkey,
+) -> core::result::Result<Metadata, ProgramError> {
   let metadata_program = Pubkey::from_str("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s").unwrap();
 
   // 1 verify the owner of the account is metaplex's metadata program
@@ -67,9 +70,9 @@ pub fn assert_valid_metadata(metadata_info: &AccountInfo, mint: Pubkey) -> core:
 
   // 2 verify the PDA seeds match
   let seed = &[
-      b"metadata".as_ref(),
-      metadata_program.as_ref(),
-      mint.as_ref(),
+    b"metadata".as_ref(),
+    metadata_program.as_ref(),
+    mint.as_ref(),
   ];
 
   let (metadata_addr, _bump) = Pubkey::find_program_address(seed, &metadata_program);
@@ -82,9 +85,10 @@ pub fn assert_meets_permissions(ctx: &Context<SendTokenMessageV0>) -> Result<()>
   let remaining_accs = &mut ctx.remaining_accounts.iter();
 
   // attempt to verify the token holding
-  if ctx.accounts.chat.post_permission_key == ctx.accounts.post_permission_mint.key() &&
-    ctx.accounts.post_permission_account.amount >= ctx.accounts.chat.post_permission_amount {
-      return Ok(());
+  if ctx.accounts.chat.post_permission_key == ctx.accounts.post_permission_mint.key()
+    && ctx.accounts.post_permission_account.amount >= ctx.accounts.chat.post_permission_amount
+  {
+    return Ok(());
   }
 
   // 1 optional account is expected, a metadata account

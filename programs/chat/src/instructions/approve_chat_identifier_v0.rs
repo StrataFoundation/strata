@@ -1,7 +1,7 @@
 use crate::error::ErrorCode;
 use crate::{
   metadata::{sign_metadata, SignMetadata},
-  state::{NamespacesV0, CaseInsensitiveMarkerV0, MARKER_SIZE},
+  state::{CaseInsensitiveMarkerV0, NamespacesV0, MARKER_SIZE},
 };
 use anchor_lang::prelude::*;
 use namespaces::{
