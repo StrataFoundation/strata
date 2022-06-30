@@ -12,6 +12,12 @@ import {
 import { AppProps } from "next/app";
 import React from "react";
 import toast, { Toaster } from "react-hot-toast";
+import ReactGA from 'react-ga';
+import { GA_TRACKING_ID, IS_PRODUCTION } from "@/constants";
+
+if (IS_PRODUCTION) {
+  ReactGA.initialize(GA_TRACKING_ID);
+}
 
 require("@solana/wallet-adapter-react-ui/styles.css");
 

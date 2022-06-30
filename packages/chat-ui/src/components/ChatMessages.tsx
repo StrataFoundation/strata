@@ -3,7 +3,6 @@ import { IMessage } from "@strata-foundation/chat";
 import React, { useEffect } from "react";
 import throttle from "lodash/throttle";
 import { Message } from "./Message";
-import { useEmojis } from "../contexts/emojis";
 
 const INACTIVE_TIME = 60; // After 1 minute, new grouping
 const INFINITE_SCROLL_THRESHOLD = 300;

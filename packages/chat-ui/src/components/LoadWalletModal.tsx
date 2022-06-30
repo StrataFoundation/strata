@@ -21,7 +21,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useErrorHandler, useSolOwnedAmount } from "@strata-foundation/react";
 import React, { useState } from "react";
 import { AiOutlinePlus } from "react-icons/ai";
-import { useLoadDelegate } from "../hooks";
+import { useLoadDelegate, useAnalyticsEventTracker } from "../hooks";
 import { RadioCardWithAffordance } from "./RadioCard";
 import { StrataIcon, WalletIcon } from "../svg";
 import { LitProtocolWarning } from "./LitProtocolWarning";
@@ -72,12 +72,17 @@ export const LoadWalletModal = (
 
   const group = getRootProps();
 
+  const gaEventTracker = useAnalyticsEventTracker();
   const { handleErrors } = useErrorHandler();
   handleErrors(delegateError);
 
   const exec = async () => {
     await loadDelegate(+selectedOption);
     props.onLoaded();
+    gaEventTracker({
+      action: "Load Delegate Wallet",
+      value: +selectedOption,
+    })
   };
 
   const labelStyles = {

@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useEffect, FC, useRef } from "react";
 import { Flex, Fade, useColorModeValue } from "@chakra-ui/react";
-import { PickerProps, BaseEmoji } from "emoji-mart";
 import data from "@emoji-mart/data";
 import { PublicKey } from "@solana/web3.js";
 import { useErrorHandler } from "@strata-foundation/react";
@@ -8,13 +7,14 @@ import { MessageType } from "@strata-foundation/chat";
 import { useEmojis } from "../contexts";
 import { useSendMessage } from "../hooks";
 
-export const EmojiPicker: FC<PickerProps> = (props) => {
+export const EmojiPicker: FC<any> = (props) => {
   const ref = useRef<any>();
   const showEmojis = useRef(true);
 
   useEffect(() => {
     if (showEmojis.current) {
       showEmojis.current = false;
+      // @ts-ignore
       import("emoji-mart").then((EmojiMart) => {
         new EmojiMart.Picker({
           ...props,
@@ -34,7 +34,7 @@ interface IEmojiPickerPopover {
 }
 
 export const EmojiPickerPopover: FC<IEmojiPickerPopover> = ({ chatKey }) => {
-  const [emoji, setEmoji] = useState<BaseEmoji | undefined>();
+  const [emoji, setEmoji] = useState<any | undefined>();
   const { referenceMessageId, hidePicker } = useEmojis();
   const rgbBackground = useColorModeValue("243 244 246", "32 41 55");
   const rgbColor = useColorModeValue("white", "black");
