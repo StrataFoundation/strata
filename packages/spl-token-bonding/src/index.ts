@@ -4,7 +4,7 @@ import {
   Metadata,
 } from "@metaplex-foundation/mpl-token-metadata";
 import * as anchor from "@project-serum/anchor";
-import { IdlTypes, Program, Provider } from "@project-serum/anchor";
+import { IdlTypes, Program, AnchorProvider } from "@project-serum/anchor";
 import {
   AccountLayout,
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -593,7 +593,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
   static ID = new PublicKey("TBondmkCYxaPCKG4CHYfVTcwQ8on31xnJrPzk8F8WsS");
 
   static async init(
-    provider: Provider,
+    provider: AnchorProvider,
     splTokenBondingProgramId: PublicKey = SplTokenBonding.ID
   ): Promise<SplTokenBonding> {
     const SplTokenBondingIDLJson = await anchor.Program.fetchIdl(
@@ -609,7 +609,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     return new this(provider, splTokenBonding);
   }
 
-  constructor(provider: Provider, program: Program<SplTokenBondingIDL>) {
+  constructor(provider: AnchorProvider, program: Program<SplTokenBondingIDL>) {
     super({ provider, program });
   }
 
@@ -916,7 +916,6 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
   }: ICreateTokenBondingArgs): Promise<
     InstructionResult<ICreateTokenBondingOutput>
   > {
-
     if (!targetMint) {
       if (sellTargetRoyalties || buyTargetRoyalties) {
         throw new Error(
@@ -1252,8 +1251,10 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
   }
 
   async getUnixTime(): Promise<number> {
-    const acc = await this.provider.connection.getAccountInfo(SYSVAR_CLOCK_PUBKEY);
-    return Number(acc!.data.readBigInt64LE(8 * 4))
+    const acc = await this.provider.connection.getAccountInfo(
+      SYSVAR_CLOCK_PUBKEY
+    );
+    return Number(acc!.data.readBigInt64LE(8 * 4));
   }
 
   /**

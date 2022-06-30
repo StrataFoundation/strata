@@ -1,4 +1,5 @@
 import { Program, Provider } from "anchor-17";
+import { AnchorProvider } from "@project-serum/anchor";
 import { AccountInfo, PublicKey } from "@solana/web3.js";
 import {
   useAccount,
@@ -54,11 +55,20 @@ export interface ICandyMachine {
 }
 
 async function getCoder(
-  provider: Provider | undefined
+  provider: AnchorProvider | undefined
 ): Promise<TypedAccountParser<ICandyMachine> | undefined> {
   if (provider) {
-    const idl = await Program.fetchIdl(CANDY_MACHINE_PROGRAM, provider);
-    const program = new Program(idl!, CANDY_MACHINE_PROGRAM, provider);
+    const idl = await Program.fetchIdl(
+      CANDY_MACHINE_PROGRAM,
+      // @ts-ignore
+      provider as Provider
+    );
+    const program = new Program(
+      idl!,
+      CANDY_MACHINE_PROGRAM,
+      // @ts-ignore
+      provider as Provider
+    );
 
     return (pubkey: PublicKey, account: AccountInfo<Buffer>) => {
       const coded = program.coder.accounts.decode<any>(

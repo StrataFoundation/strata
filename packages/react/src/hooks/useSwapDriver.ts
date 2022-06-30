@@ -1,4 +1,4 @@
-import { BN, Provider } from "@project-serum/anchor";
+import { BN, AnchorProvider } from "@project-serum/anchor";
 import {
   AccountLayout,
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -47,12 +47,19 @@ function getMints(hierarchy: BondingHierarchy | undefined): PublicKey[] {
 }
 
 export async function getMissingSpace(
-  provider: Provider | undefined,
+  provider: AnchorProvider | undefined,
   hierarchy: BondingHierarchy | undefined,
   baseMint: PublicKey | undefined,
   targetMint: PublicKey | undefined
 ): Promise<number> {
-  if (!provider || !provider.wallet || !provider.wallet.publicKey || !baseMint || !targetMint || !hierarchy) {
+  if (
+    !provider ||
+    !provider.wallet ||
+    !provider.wallet.publicKey ||
+    !baseMint ||
+    !targetMint ||
+    !hierarchy
+  ) {
     return 0;
   }
 
@@ -79,7 +86,9 @@ export async function getMissingSpace(
       })
     )
   ).flat();
-  const distinctAccounts = Array.from(new Set(accounts.map((a) => a.toBase58())));
+  const distinctAccounts = Array.from(
+    new Set(accounts.map((a) => a.toBase58()))
+  );
   const totalSpace = (
     await Promise.all(
       distinctAccounts.map(async (acct) => {

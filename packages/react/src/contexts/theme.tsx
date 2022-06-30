@@ -37,6 +37,39 @@ export const theme: any = extendTheme({
   shadows: {
     outline: "none",
   },
+  styles: {
+    // CSS reset gets rid of some things we do want
+    global: {
+      li: {
+        display: "list-item",
+        textAlign: "-webkit-match-parent",
+      },
+      ul: {
+        paddingInlineStart: "20px",
+      },
+      ol: {
+        display: "block",
+        listStyleType: "decimal",
+        marginBlockStart: "1em",
+        marginBlockEnd: "1em",
+        marginInlineStart: "0px",
+        marginInlineEnd: "0px",
+        paddingInlineStart: "40px",
+      },
+      blockquote: {
+        display: "block",
+        marginBlockStart: "1em",
+        marginBlockEnd: "1em",
+        marginInlineStart: "40px",
+        marginInlineEnd: "40px",
+
+        borderLeft: "5px solid #ccc",
+        margin: "1.5em 10px",
+        padding: "0.5em 10px 0.5em 10px",
+      },
+      code: { fontFamily: "monospace" },
+    },
+  },
   initialColorMode: "light",
   useSystemColorMode: false,
   fonts: {
@@ -46,13 +79,13 @@ export const theme: any = extendTheme({
   },
   components: {
     Button: primaryAlwaysLightMode(
-    mergeWith(
-      {
-        baseStyle: { _focus: { boxShadow: "none" } },
-      },
-      chakraTheme.components.Button
-    )
-  ),
+      mergeWith(
+        {
+          baseStyle: { _focus: { boxShadow: "none" } },
+        },
+        chakraTheme.components.Button
+      )
+    ),
     Progress: primaryAlwaysLightMode(chakraTheme.components.Progress),
     Input: {
       variants: {

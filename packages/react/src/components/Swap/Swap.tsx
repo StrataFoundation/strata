@@ -7,7 +7,14 @@ import { Notification } from "../Notification";
 import { SwapForm } from "./SwapForm";
 
 const identity = () => {};
-export const Swap = ({ tokenBondingKey }: { tokenBondingKey: PublicKey }) => {
+  
+export const Swap = ({
+  tokenBondingKey,
+  onConnectWallet,
+}: {
+  tokenBondingKey: PublicKey;
+  onConnectWallet?: () => void;
+}) => {
   const { loading, error, execute } = useSwap();
   const { handleErrors } = useErrorHandler();
   handleErrors(error);
@@ -31,22 +38,24 @@ export const Swap = ({ tokenBondingKey }: { tokenBondingKey: PublicKey }) => {
 
   const { loading: driverLoading, ...swapProps } = useSwapDriver({
     tradingMints,
+    onConnectWallet: onConnectWallet || identity,
     onTradingMintsChange: setTradingMints,
     swap: (args) =>
-      execute(args).then(({ targetAmount }) => {
-        toast.custom((t) => (
-          <Notification
-            show={t.visible}
-            type="success"
-            heading="Transaction Successful"
-            message={`Succesfully purchased ${Number(targetAmount).toFixed(
-              9
-            )} ${args.ticker}!`}
-            onDismiss={() => toast.dismiss(t.id)}
-          />
-        ));
-      }).catch(console.error),
-    onConnectWallet: identity,
+      execute(args)
+        .then(({ targetAmount }) => {
+          toast.custom((t) => (
+            <Notification
+              show={t.visible}
+              type="success"
+              heading="Transaction Successful"
+              message={`Succesfully purchased ${Number(targetAmount).toFixed(
+                9
+              )} ${args.ticker}!`}
+              onDismiss={() => toast.dismiss(t.id)}
+            />
+          ));
+        })
+        .catch(console.error),
     tokenBondingKey: tokenBondingKey,
   });
 

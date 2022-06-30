@@ -2,40 +2,43 @@
 // This package hasn't had it's dependencies updated in a year and so explodes with newer versions of web3js
 // Better to just cut the dependency
 
-import { Provider } from "@project-serum/anchor";
+import { AnchorProvider } from "@project-serum/anchor";
 import { AccountInfo, AccountLayout, MintInfo, MintLayout, Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
 import { Keypair, PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
 
 export async function createMint(
-  provider: Provider,
+  provider: AnchorProvider,
   authority?: PublicKey,
   decimals?: number,
+  mintKeypair?: Keypair,
 ): Promise<PublicKey> {
   if (authority === undefined) {
     authority = provider.wallet.publicKey;
   }
-  const mint = Keypair.generate();
+  if (mintKeypair === undefined) {
+    mintKeypair = Keypair.generate();
+  }
   const instructions = await createMintInstructions(
     provider,
     authority,
-    mint.publicKey,
-    decimals,
+    mintKeypair.publicKey,
+    decimals
   );
 
   const tx = new Transaction();
   tx.add(...instructions);
 
-  await provider.send(tx, [mint]);
+  await provider.sendAndConfirm(tx, [mintKeypair], {});
 
-  return mint.publicKey;
+  return mintKeypair.publicKey;
 }
 
 export async function createMintInstructions(
-  provider: Provider,
+  provider: AnchorProvider,
   authority: PublicKey,
   mint: PublicKey,
   decimals?: number,
-  freezeAuthority?: PublicKey,
+  freezeAuthority?: PublicKey
 ): Promise<TransactionInstruction[]> {
   let instructions = [
     SystemProgram.createAccount({
@@ -57,12 +60,12 @@ export async function createMintInstructions(
 }
 
 export async function getMintInfo(
-  provider: Provider,
-  addr: PublicKey,
+  provider: AnchorProvider,
+  addr: PublicKey
 ): Promise<MintInfo> {
   let depositorAccInfo = await provider.connection.getAccountInfo(addr);
   if (depositorAccInfo === null) {
-    throw new Error('Failed to find token account');
+    throw new Error("Failed to find token account");
   }
   return parseMintAccount(depositorAccInfo.data);
 }
@@ -76,12 +79,12 @@ export function parseMintAccount(data: Buffer): MintInfo {
 }
 
 export async function getTokenAccount(
-  provider: Provider,
-  addr: PublicKey,
+  provider: AnchorProvider,
+  addr: PublicKey
 ): Promise<AccountInfo> {
   let depositorAccInfo = await provider.connection.getAccountInfo(addr);
   if (depositorAccInfo === null) {
-    throw new Error('Failed to find token account');
+    throw new Error("Failed to find token account");
   }
   return parseTokenAccount(depositorAccInfo.data);
 }

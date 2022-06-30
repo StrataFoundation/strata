@@ -10,13 +10,14 @@ import {
 } from "../packages/fungible-entangler/src";
 import { TokenUtils } from "./utils/token";
 import { waitForUnixTime } from "./utils/clock";
+import { AnchorProvider } from "@project-serum/anchor";
 use(ChaiAsPromised);
 const tB58 = (p: PublicKey | null) => p?.toBase58();
 
 describe("fungible-entangler", () => {
   // Configure the client to use the local cluster.
-  anchor.setProvider(anchor.Provider.local());
-  const provider = anchor.getProvider();
+  anchor.setProvider(anchor.AnchorProvider.local("http://127.0.0.1:8899"));
+  const provider = anchor.getProvider() as AnchorProvider;
 
   const program = anchor.workspace.FungibleEntangler;
   const tokenUtils = new TokenUtils(provider);

@@ -28,6 +28,10 @@ export const mintMetadataServerSideProps: GetServerSideProps = async (
       address,
     },
   });
+
+  const {
+    data: { nft: { name, description, image } },
+  } = result;
   const { name, description, image } = (result.data?.nft || {});
 
   return {

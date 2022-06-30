@@ -1,7 +1,6 @@
-import { StrataProviders } from "@strata-foundation/react";
+import { HolaplexGraphqlProvider, StrataProviders } from "@strata-foundation/react";
 import React, { FC } from "react";
 import { MarketplaceSdkProvider } from "../contexts";
-import { HolaplexGraphqlProvider } from "./HolaplexGraphqlProvider";
 
 const defaultOnError = (error: Error) => console.log(error);
 export const MarketplaceProviders: FC<{

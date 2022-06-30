@@ -5,8 +5,8 @@ import { Keypair } from "@solana/web3.js";
 
 async function run() {
   console.log(process.env.ANCHOR_PROVIDER_URL);
-  anchor.setProvider(anchor.Provider.env());
-  const provider = anchor.getProvider();
+  anchor.setProvider(anchor.AnchorProvider.env());
+  const provider = anchor.getProvider() as anchor.AnchorProvider;
   const curveKeypair = Keypair.fromSecretKey(new Uint8Array(JSON.parse(fs.readFileSync(process.env.CURVE_PATH!).toString())));
 
   const marketplaceSdk = await MarketplaceSdk.init(provider);

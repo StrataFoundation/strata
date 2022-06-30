@@ -124,7 +124,7 @@ pub fn burn_and_pay_sell_royalties(
       token_program.clone(),
       Burn {
         mint: target_mint.to_account_info().clone(),
-        to: source.clone(),
+        from: source.clone(),
         authority: source_authority.clone(),
       },
     ),

@@ -1,10 +1,10 @@
-import { Provider } from "@project-serum/anchor";
+import { AnchorProvider } from "@project-serum/anchor";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { sendAndConfirmRawTransaction } from "@solana/web3.js";
+import { ConfirmOptions, sendAndConfirmRawTransaction, Signer, Transaction } from "@solana/web3.js";
 import React from "react";
 
 export const ProviderContext = React.createContext<{
-  provider?: Provider;
+  provider?: AnchorProvider;
   awaitingApproval: boolean;
 }>({
   awaitingApproval: false,
@@ -19,10 +19,14 @@ export const ProviderContextProvider: React.FC = ({ children }) => {
     if (connection) {
       // Let adapter be null, it'll fail if anyone issues transaction commands but will let fetch go through
       // @ts-ignore
-      const provider = new Provider(connection, wallet?.adapter, {});
+      const provider = new AnchorProvider(connection, wallet?.adapter, {});
 
       // The default impl of send does not use the transaction resuling from wallet.signTransaciton. So we need to fix it.
-      provider.send = async function FixedSend(tx, signers, opts) {
+      provider.sendAndConfirm = async function FixedSend(
+        tx: Transaction,
+        signers?: Signer[],
+        opts?: ConfirmOptions
+      ) {
         if (signers === undefined) {
           signers = [];
         }
@@ -31,7 +35,7 @@ export const ProviderContextProvider: React.FC = ({ children }) => {
         }
         tx.feePayer = this.wallet.publicKey;
         tx.recentBlockhash = (
-          await this.connection.getRecentBlockhash(opts.preflightCommitment)
+          await this.connection.getRecentBlockhash(opts?.preflightCommitment)
         ).blockhash;
         setAwaitingApproval(true);
         try {

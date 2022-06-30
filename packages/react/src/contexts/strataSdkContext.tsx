@@ -1,4 +1,4 @@
-import { Provider } from "@project-serum/anchor";
+import { AnchorProvider } from "@project-serum/anchor";
 import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
 import { SplTokenMetadata } from "@strata-foundation/spl-utils";
@@ -33,22 +33,21 @@ async function tryProm<A>(prom: Promise<A>): Promise<A | undefined> {
 }
 
 async function getSdks(
-  provider: Provider | undefined | null
+  provider: AnchorProvider | undefined | null
 ): Promise<IStrataSdks> {
   if (!provider) {
     console.warn("No provider passed via ProviderContext to StrataSdkContext. Please provide a provider")
     return {};
   }
 
-  const [
-    tokenCollective,
-    tokenBonding,
-    splTokenMetadataSdk
-  ] = (await tryProm(Promise.all([
-    SplTokenCollective.init(provider),
-    SplTokenBonding.init(provider),
-    SplTokenMetadata.init(provider)
-  ])) || []);
+  const [tokenCollective, tokenBonding, splTokenMetadataSdk] =
+    (await tryProm(
+      Promise.all([
+        SplTokenCollective.init(provider),
+        SplTokenBonding.init(provider),
+        SplTokenMetadata.init(provider),
+      ])
+    )) || [];
   return {
     tokenCollectiveSdk: tokenCollective,
     tokenBondingSdk: tokenBonding,
