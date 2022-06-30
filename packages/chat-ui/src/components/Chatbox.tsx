@@ -27,8 +27,6 @@ import {
   roundToDecimals,
   useErrorHandler,
   useMint,
-  useOwnedAmount,
-  useCollectionOwnedAmount,
   useTokenMetadata,
 } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
@@ -40,6 +38,7 @@ import {
   useLoadDelegate,
   useSendMessage,
   useWalletProfile,
+  useAnalyticsEventTracker,
 } from "../hooks";
 import { BuyMoreButton } from "./BuyMoreButton";
 import { ChatInput } from "./ChatInput";
@@ -97,6 +96,8 @@ export function Chatbox({
     defaultIsOpen: false,
   });
 
+  const gaEventTracker = useAnalyticsEventTracker();
+
   const chatBg = useColorModeValue("gray.100", "gray.800");
   const { handleErrors } = useErrorHandler();
   const { info: chat } = useChat(chatKey);
@@ -139,6 +140,9 @@ export function Chatbox({
     } finally {
       setLoading(false);
     }
+    gaEventTracker({
+      action: "Send Message",
+    });
   };
 
   handleErrors(error, delegateError);

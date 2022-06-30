@@ -43,11 +43,11 @@ import { FormProvider, useForm } from "react-hook-form";
 import * as yup from "yup";
 import { useChatSdk } from "../contexts";
 import {
-  delegateWalletStorage,
   useChatStorageAccountKey,
   useLoadDelegate,
   useUsernameFromIdentifierCertificate,
   useWalletProfile,
+  useAnalyticsEventTracker,
 } from "../hooks";
 import { useWalletFromIdentifier } from "../hooks/useWalletFromIdentifier";
 import { FormControlWithError } from "./FormControlWithError";
@@ -145,6 +145,8 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
     loading: loadingDelegate,
   } = useLoadDelegate();
 
+  const gaEventTracker = useAnalyticsEventTracker();
+  
   const { username, image } = watch();
   const {
     account: profileAccount,
@@ -182,6 +184,9 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
     if (props.onClose) {
       props.onClose();
     }
+    gaEventTracker({
+      action: "Create Profile",
+    });
   }
 
   useEffect(() => {
