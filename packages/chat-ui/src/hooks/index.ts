@@ -12,7 +12,7 @@ export * from "./useUsernameFromIdentifierCertificate";
 export * from "./useDelegateWalletStructKey";
 export * from "./useDelegateWalletStruct";
 export * from "./useChatIdFromIdentifierCertificate";
-export * from "./useLoadDelegate"
+export * from "./useLoadDelegate";
 export * from "./useChatStorageAccountKey";
 export * from "./useCaseInsensitiveMarker";
 export * from "./useSettings";
@@ -21,3 +21,4 @@ export * from "./useWalletSettings";
 export * from "./useChatOwnedAmount";
 export * from "./useAnalyticsEventTracker";
 export * from "./useInflatedReacts";
+export * from "./useEmojiSearch";

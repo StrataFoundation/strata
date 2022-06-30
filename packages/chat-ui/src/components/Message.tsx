@@ -269,10 +269,7 @@ export function Message({
                     />
                   )
                 ) : decoding ? (
-                  <Skeleton
-                    startColor={lockedColor}
-                    height="20px"
-                  >
+                  <Skeleton startColor={lockedColor} height="20px">
                     {Array.from(
                       { length: genLength(messageId || "") },
                       () => "."
