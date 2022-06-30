@@ -1,47 +1,43 @@
-import { AnchorProvider } from "@project-serum/anchor";
-import { Connection, Keypair, PublicKey } from "@solana/web3.js";
-import { GetServerSideProps } from "next";
-import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
-import { DEFAULT_ENDPOINT } from "../components/Wallet";
-import { SplTokenMetadata } from "@strata-foundation/spl-utils";
+import { ApolloClient, gql, InMemoryCache } from "@apollo/client";
 import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
-import { getClusterAndEndpoint } from "../hooks";
+import { PublicKey } from "@solana/web3.js";
+import { GetServerSideProps } from "next";
 
 export const mintMetadataServerSideProps: GetServerSideProps = async (
   context
 ) => {
-  const { endpoint } = getClusterAndEndpoint(
-    (context.query.cluster || DEFAULT_ENDPOINT) as string
-  );
+  const apollo = new ApolloClient({
+    uri: "https://graph.holaplex.com/v1",
+    cache: new InMemoryCache(),
+  });
 
-  const connection = new Connection(endpoint, {});
-  const provider = new AnchorProvider(
-    connection,
-    new NodeWallet(Keypair.generate()),
-    {}
-  );
-  const mint = new PublicKey(context.params?.mintKey as string);
-  const tokenMetadataSdk = await SplTokenMetadata.init(provider);
-  const metadataAcc = await tokenMetadataSdk.getMetadata(
-    await Metadata.getPDA(mint)
-  );
-  let metadata = null;
-  try {
-    metadata = await SplTokenMetadata.getArweaveMetadata(metadataAcc?.data.uri);
-  } catch (e: any) {
-    console.error(e);
-  }
-
-  const name =
-    metadataAcc?.data?.name.length == 32
-      ? metadata?.name
-      : metadataAcc?.data?.name;
+  const address = (
+    await Metadata.getPDA(new PublicKey(context.params?.mintKey as string))
+  ).toBase58();
+  const result = await apollo.query<{ nft: { name: string, description: string, image: string} }>({
+    query: gql`
+      query GetUrl($address: String!) {
+        nft(address: $address) {
+          name
+          description
+          image
+        }
+      }
+    `,
+    variables: {
+      address,
+    },
+  });
+  
+  const {
+    data: { nft: { name, description, image } },
+  } = result;
 
   return {
     props: {
       name: name || null,
-      description: metadata?.description || null,
-      image: (await SplTokenMetadata.getImage(metadataAcc?.data.uri)) || null,
+      description: description || null,
+      image: image || null,
     },
   };
 };

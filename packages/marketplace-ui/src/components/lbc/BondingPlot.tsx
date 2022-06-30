@@ -77,13 +77,13 @@ export const BondingPlot = ({
       ), // 24 hours
       stopUnixTime: stopTime,
       offset: 0,
-      limit: 1000,
+      limit: 100000,
     },
   });
   const data = useMemo(() => {
     if (enrichedBondingChanges && tokenBonding && baseMint && targetMint && curve) {
       const changes = [...enrichedBondingChanges].sort((a, b) => a.insertTs - b.insertTs);
-      const startTime = tokenBonding?.goLiveUnixTime?.toNumber();
+      const startTime = tokenBonding?.goLiveUnixTime?.toNumber() + 1; // shake off huge drops
       const step = (stopTime - startTime!) / numDataPoints;
       const result = [];
 

@@ -204,10 +204,6 @@ export const mintOneToken = async (
     throw new Error("No bonding sdk")
   }
 
-  if (isNaN(maxPrice)) {
-    throw new Error("Invalid slippage")
-  }
-
   const mint = anchor.web3.Keypair.generate()
 
   const userTokenAccountAddress = (
@@ -230,6 +226,9 @@ export const mintOneToken = async (
   let bondingSigners: Signer[] = []
   if (tokenBonding && ataBalance < 1) {
     console.log("Buying bonding curve...", ataBalance)
+    if (isNaN(maxPrice)) {
+      throw new Error("Invalid slippage");
+    }
     const { instructions: bondInstrs, signers: bondSigners } = await tokenBondingSdk.buyInstructions({
       tokenBonding,
       desiredTargetAmount: 1,
