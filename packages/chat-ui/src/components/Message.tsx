@@ -123,8 +123,6 @@ export function Message({
     error: decodeError,
   } = useAsync(getDecodedMessageOrIdentity, []);
   const { cluster } = useEndpoint();
-  const id = profile?.ownerWallet.toBase58();
-
   const { info: chat } = useChat(chatKey);
   const time = useMemo(() => {
     if (startBlockTime) {
@@ -146,7 +144,6 @@ export function Message({
   const status = pending ? "Pending" : "Confirmed";
   const lockedColor = useColorModeValue("gray.400", "gray.600");
   const highlightedBg = useColorModeValue("gray.200", "gray.800");
-  const message = decodedMessage;
 
   const {
     reacts: inflatedReacts,
