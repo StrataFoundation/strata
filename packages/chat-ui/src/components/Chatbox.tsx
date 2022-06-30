@@ -74,7 +74,7 @@ export function Chatbox({
 }: chatProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [input, setInput] = useState("");
-  const { emojis, search, searchMatch, reset } = useEmojiSearch();
+  const { emojis, search, searchMatch, reset: resetEmoji } = useEmojiSearch();
   const { isOpen, onToggle, onClose } = useDisclosure();
   const {
     isOpen: loadWalletIsOpen,
@@ -134,6 +134,7 @@ export function Chatbox({
 
   const sendMessage = async (m: ISendMessageContent) => {
     setInput("");
+    resetEmoji();
     setLoading(true);
     try {
       await sendMessageImpl(m);
@@ -156,7 +157,7 @@ export function Chatbox({
       )
     );
     inputRef.current?.focus();
-    reset();
+    resetEmoji();
   };
 
   handleErrors(error, delegateError);
@@ -322,9 +323,10 @@ export function Chatbox({
           >
             <Popover
               matchWidth
-              autoFocus={false}
               isOpen={emojis.length > 0}
               placement="top"
+              autoFocus={false}
+              closeOnBlur={false}
             >
               <PopoverTrigger>
                 <Flex w="full" />
@@ -352,7 +354,7 @@ export function Chatbox({
                       </Text>
                     </Text>
                     <Divider />
-                    {emojis.map((e: any) => (
+                    {emojis.map((e: any, indx) => (
                       <HStack
                         w="full"
                         p={2}
