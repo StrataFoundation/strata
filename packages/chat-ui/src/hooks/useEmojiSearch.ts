@@ -54,6 +54,7 @@ export const useEmojiSearch = () => {
         const EmojiMart = await import("emoji-mart");
         // @ts-ignore
         await EmojiMart.init({ data });
+        // @ts-ignore
         searchRef.current = EmojiMart.SearchIndex.search;
       }
     })();
