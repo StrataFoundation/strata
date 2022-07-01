@@ -258,7 +258,7 @@ export const useTransactions = ({
           num
         );
 
-        setHasMore(signatures.length === numTransactions);
+        setHasMore(signatures.length === num);
         const newTxns = await hydrateTransactions(connection, signatures);
 
         setTransactions((txns) => removeDups([...txns, ...newTxns]));

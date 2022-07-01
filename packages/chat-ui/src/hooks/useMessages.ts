@@ -109,12 +109,13 @@ async function getMessages(
 
 export function useMessages(
   chat: PublicKey | undefined,
-  accelerated: boolean = true
+  accelerated: boolean = true,
+  numTransactions: number = 50
 ): IUseMessages {
   const { chatSdk } = useChatSdk();
   const { transactions, ...rest } = useTransactions({
     address: chat,
-    numTransactions: 50,
+    numTransactions,
     subscribe: true,
     accelerated,
   });

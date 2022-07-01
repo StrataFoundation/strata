@@ -25,7 +25,7 @@ export default function Chatroom() {
   );
 
   const { messages, error, loadingInitial, loadingMore, hasMore, fetchMore, fetchNew } =
-    useMessages(chatKey);
+    useMessages(chatKey, true, 25);
 
   const { handleErrors } = useErrorHandler();
   handleErrors(error);
