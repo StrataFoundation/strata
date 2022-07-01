@@ -48,6 +48,10 @@ export const BlackBox = ({ children, ...other }: BoxProps) => {
   );
 };
 
+const DUMPSTER_KEY = new PublicKey(
+  "AafiUJDGrD44KcqMFrHzzReYpcXJMJnyDybyZxbw23MA"
+);
+
 export const BigText = ({ children, ...other }: TextProps) => {
   return (
     <Text fontWeight="semibold" fontSize="xl" {...other}>
@@ -102,6 +106,8 @@ export const LbcInfo = ({
 
   const { metadata } = useTokenMetadata(tokenBonding?.baseMint);
   const { metadata: targetMeta } = useTokenMetadata(tokenBonding?.targetMint);
+
+  const pitThePanda = tokenBondingKey.equals(DUMPSTER_KEY);
 
   const renderer = ({
     days,
@@ -200,20 +206,26 @@ export const LbcInfo = ({
                 <Spinner />
               ) : (
                 <BigText>
-                  {numRemaining ? numberWithCommas(numRemaining, 4) : "0"}{" "}
-                  {targetMeta?.data.symbol}
+                  {numRemaining
+                    ? pitThePanda
+                      ? "Pit says not to tell you"
+                      : numberWithCommas(numRemaining, 4)
+                    : "0"}{" "}
+                  {!pitThePanda && targetMeta?.data.symbol}
                 </BigText>
               )}
-              <Progress
-                w="88%"
-                size="xs"
-                h="2px"
-                position="absolute"
-                bottom="8px"
-                colorScheme="primary"
-                background="rgba(196, 196, 196, 0.4)"
-                value={((numRemaining || 0) / (mintCap || 0)) * 100}
-              />
+              {!pitThePanda && (
+                <Progress
+                  w="88%"
+                  size="xs"
+                  h="2px"
+                  position="absolute"
+                  bottom="8px"
+                  colorScheme="primary"
+                  background="rgba(196, 196, 196, 0.4)"
+                  value={((numRemaining || 0) / (mintCap || 0)) * 100}
+                />
+              )}
             </VStack>
           </BlackBox>
         </Stack>
