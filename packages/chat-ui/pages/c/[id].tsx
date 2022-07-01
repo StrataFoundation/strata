@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDisclosure, Flex } from "@chakra-ui/react";
 import { useErrorHandler } from "@strata-foundation/react";
 import { useRouter } from "next/router";
@@ -25,7 +25,7 @@ export default function Chatroom() {
   );
 
   const { messages, error, loadingInitial, loadingMore, hasMore, fetchMore, fetchNew } =
-    useMessages(chatKey);
+    useMessages(chatKey, true, 25);
 
   const { handleErrors } = useErrorHandler();
   handleErrors(error);
@@ -49,6 +49,12 @@ export default function Chatroom() {
   const msgWeHave = useMemo(
     () => new Set(Array.from(messages?.map((message) => message.id) || [])),
     [messages]
+  );
+
+  const onAddPendingMessage = useCallback(
+    (pending: IMessageWithPending) =>
+      setPendingMessages((msgs) => [...(msgs || []), pending]),
+    [setPendingMessages]
   );
 
   const messagesWithPending = useMemo(
@@ -88,9 +94,7 @@ export default function Chatroom() {
         <Chatbox
           scrollRef={scrollRef}
           chatKey={chatKey}
-          onAddPendingMessage={(pending) =>
-            setPendingMessages((msgs) => [...(msgs || []), pending])
-          }
+          onAddPendingMessage={onAddPendingMessage}
         />
       </Workspace>
     </Layout>

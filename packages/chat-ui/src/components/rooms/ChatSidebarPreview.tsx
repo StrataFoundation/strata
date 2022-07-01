@@ -1,6 +1,5 @@
 import {
   Avatar,
-  Flex,
   SkeletonCircle,
   SkeletonText,
   Text,
@@ -13,6 +12,7 @@ import React from "react";
 import { useChat } from "../../hooks/useChat";
 import { useChatKeyFromIdentifier } from "../../hooks/useChatKeyFromIdentifier";
 import { route, routes } from "../../routes";
+import { Flex } from "../MyFlex";
 
 export type chatRoomProps = {
   identifier?: string;

@@ -1,8 +1,9 @@
-import { Flex, Skeleton, SkeletonCircle } from "@chakra-ui/react";
+import { Skeleton, SkeletonCircle } from "@chakra-ui/react";
 import { IMessage } from "@strata-foundation/chat";
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import throttle from "lodash/throttle";
 import { Message } from "./Message";
+import { Flex } from "./MyFlex";
 
 const INACTIVE_TIME = 60; // After 1 minute, new grouping
 const INFINITE_SCROLL_THRESHOLD = 300;
@@ -49,17 +50,33 @@ export const ChatMessages = ({
     }
   }, [scrollRef, hasMore, isLoading, fetchMore]);
 
-  const handleOnScroll = throttle((e: any) => {
-    const scrollOffset = e.target.scrollHeight + e.target.scrollTop;
+  const handleOnScroll = useMemo(
+    () =>
+      throttle((e: any) => {
+        const scrollOffset = e.target.scrollHeight + e.target.scrollTop;
 
-    if (
-      scrollOffset <= e.target.offsetHeight + INFINITE_SCROLL_THRESHOLD &&
-      !isLoading &&
-      hasMore
-    ) {
-      fetchMore(FETCH_COUNT);
-    }
-  }, 300);
+        if (
+          scrollOffset <= e.target.offsetHeight + INFINITE_SCROLL_THRESHOLD &&
+          !isLoading &&
+          hasMore
+        ) {
+          fetchMore(FETCH_COUNT);
+        }
+      }, 300),
+    [isLoading, fetchMore, hasMore]
+  );
+
+  const loaders = useMemo(() => {
+    return isLoading || !messages.length ? (
+      !messages.length ? (
+        Array.from(Array(FETCH_COUNT).keys()).map((x, index) => (
+          <ChatMessageSkeleton key={`skeleton-${index}`} />
+        ))
+      ) : (
+        <ChatMessageSkeleton />
+      )
+    ) : null;
+  }, [messages.length, isLoading])
 
   return (
     <Flex
@@ -84,15 +101,7 @@ export const ChatMessages = ({
           }
         />
       ))}
-      {isLoading || !messages.length ? (
-        !messages.length ? (
-          Array.from(Array(FETCH_COUNT).keys()).map((x, index) => (
-            <ChatMessageSkeleton key={`skeleton-${index}`} />
-          ))
-        ) : (
-          <ChatMessageSkeleton />
-        )
-      ) : null}
+      {loaders}
     </Flex>
   );
 };

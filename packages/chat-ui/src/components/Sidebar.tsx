@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Flex, Box, Icon, IconButton, useColorMode } from "@chakra-ui/react";
+import { Box, Icon, IconButton, useColorMode } from "@chakra-ui/react";
 import { IoMoon, IoSunny } from "react-icons/io5";
 import { ProfileButton } from "./ProfileButton";
 import { ChatSidebarPreview } from "./rooms/ChatSidebarPreview";
@@ -7,6 +7,11 @@ import { useLocalStorage } from "@strata-foundation/react";
 import { VISIBLE_CHATS } from "../constants";
 import { useRouter } from "next/router";
 import { useChat, useChatKeyFromIdentifier } from "../hooks";
+import { Flex } from "./MyFlex";
+
+const DARK_BG = {
+  bg: "gray.900",
+};
 
 export const Sidebar = (props: any) => {
   const { colorMode, toggleColorMode } = useColorMode();
@@ -33,9 +38,7 @@ export const Sidebar = (props: any) => {
       overflowX="hidden"
       overflowY="auto"
       bg="white"
-      _dark={{
-        bg: "gray.900",
-      }}
+      _dark={DARK_BG}
       color="inherit"
       borderRightWidth="1px"
       w="80"

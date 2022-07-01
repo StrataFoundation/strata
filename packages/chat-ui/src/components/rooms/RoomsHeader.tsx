@@ -1,12 +1,13 @@
 import {
   Avatar,
   Box, Button,
-  Divider, Flex, FormControl,
+  Divider, FormControl,
   FormLabel, Heading,
   HStack, Popover, PopoverBody, PopoverContent, PopoverTrigger,
   Portal, Switch, Text, useColorMode,
   useMediaQuery, VStack
 } from "@chakra-ui/react";
+import { Flex } from "../MyFlex";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { Cluster } from "@strata-foundation/accelerator";

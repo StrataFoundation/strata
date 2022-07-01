@@ -1,6 +1,5 @@
 import {
   Button,
-  Flex,
   HStack,
   Icon,
   IconButton,
@@ -21,6 +20,7 @@ import {
   PopoverContent,
   PopoverBody,
 } from "@chakra-ui/react";
+import { Flex } from "./MyFlex";
 import { PublicKey } from "@solana/web3.js";
 import {
   ISendMessageContent,
@@ -69,6 +69,9 @@ export type chatProps = {
   scrollRef?: any;
 };
 
+const DARK_BG = {
+  bg: "linear-gradient(0deg, rgba(17,24,39) 40%, rgba(21,24,38,0) 100%)",
+};
 export function Chatbox({
   scrollRef,
   chatKey,
@@ -215,9 +218,7 @@ export function Chatbox({
           w="full"
           justify="center"
           bg="linear-gradient(0deg, rgba(255,255,255) 40%, rgba(255,255,255,0) 100%)"
-          _dark={{
-            bg: "linear-gradient(0deg, rgba(17,24,39) 40%, rgba(21,24,38,0) 100%)",
-          }}
+          _dark={DARK_BG}
         >
           <VStack
             w="full"

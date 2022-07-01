@@ -1,12 +1,12 @@
 import React, { FC } from "react";
 import {
   Box,
-  Flex,
   Stack,
   useColorModeValue,
   useRadio,
   UseRadioProps,
 } from "@chakra-ui/react";
+import { Flex } from "./MyFlex";
 
 export type RadioCardProps = {
   helpText?: string;

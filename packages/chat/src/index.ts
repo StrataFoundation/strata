@@ -379,6 +379,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   litJsSdk: LitJsSdk; // to use in nodejs, manually set this to the nodejs lit client. see tests for example
   namespacesProgram: Program<NAMESPACES_PROGRAM>;
   conditionVersion = CONDITION_VERSION;
+  _namespaces: INamespaces | null = null;
 
   static ID = new PublicKey("chatGL6yNgZT2Z3BeMYGcgdMpcBKdmxko4C5UhEX4To");
 
@@ -660,7 +661,10 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   ): Promise<Uint8Array | undefined> {
     // Cache promises so we don't fetch the same thing from lit multiple times
     if (!this.symKeyFetchCache[encryptedSymmetricKey]) {
-      this.symKeyFetchCache[encryptedSymmetricKey] = this._getSymmetricKey(encryptedSymmetricKey, accessControlConditions);
+      this.symKeyFetchCache[encryptedSymmetricKey] = this._getSymmetricKey(
+        encryptedSymmetricKey,
+        accessControlConditions
+      );
     }
 
     return this.symKeyFetchCache[encryptedSymmetricKey];
@@ -679,14 +683,20 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       .map((part) => part.content)
       .join("");
 
-    const { messageType, readPermissionAmount, chatKey, encryptedSymmetricKey, referenceMessageId, ...rest } =
-      parts[0];
+    const {
+      messageType,
+      readPermissionAmount,
+      chatKey,
+      encryptedSymmetricKey,
+      referenceMessageId,
+      ...rest
+    } = parts[0];
 
     let decodedMessage: any;
     return {
       ...rest,
       referenceMessageId,
-      type: messageType && Object.keys(messageType as any)[0] as MessageType,
+      type: messageType && (Object.keys(messageType as any)[0] as MessageType),
       encryptedSymmetricKey,
       startBlockTime: parts[0].blockTime,
       endBlockTime: parts[parts.length - 1].blockTime,
@@ -735,7 +745,9 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
             decodedMessage.decryptedAttachments.push(
               ...(await Promise.all(
                 (decodedMessage.encryptedAttachments || []).map(
-                  async (encryptedAttachment: { name: string; file: string } | string) => {
+                  async (
+                    encryptedAttachment: { name: string; file: string } | string
+                  ) => {
                     const blob = await fetch(
                       // @ts-ignore this is some legacy stuff where it could just be a url
                       encryptedAttachment.file || encryptedAttachment
@@ -747,8 +759,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
                     return {
                       file: new Blob([arrBuffer]),
                       // @ts-ignore this is some legacy stuff where it could just be a url
-                      name: encryptedAttachment.name || "Attachment"
-                    }
+                      name: encryptedAttachment.name || "Attachment",
+                    };
                   }
                 )
               ))
@@ -999,7 +1011,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     );
   }
 
-  async getNamespaces(): Promise<INamespaces> {
+  async _getNamespaces(): Promise<INamespaces> {
     const key = (await ChatSdk.namespacesKey(this.programId))[0];
     const namespaces = await this.program.account.namespacesV0.fetch(key);
 
@@ -1009,6 +1021,11 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       chat: await this.getNamespace(namespaces.chatNamespace),
       user: await this.getNamespace(namespaces.userNamespace),
     };
+  }
+
+  async getNamespaces(): Promise<INamespaces> {
+    this._namespaces = this._namespaces || (await this._getNamespaces());
+    return this._namespaces;
   }
 
   /**
@@ -1507,7 +1524,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     encrypted = true,
     nftMint,
   }: SendMessageArgs): Promise<BigInstructionResult<{ messageId: string }>> {
-    const { referenceMessageId, type, ...message } = rawMessage
+    const { referenceMessageId, type, ...message } = rawMessage;
     if (encrypted) {
       await this.authingLit;
       if (!this.isLitAuthed && this.wallet && this.wallet.publicKey) {
@@ -1562,9 +1579,12 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
             await fileAttachment.file.arrayBuffer()
           );
           return {
-            file: new File([encrypted], fileAttachment.file.name + ".encrypted"),
+            file: new File(
+              [encrypted],
+              fileAttachment.file.name + ".encrypted"
+            ),
             name: fileAttachment.name,
-          }
+          };
         })
       );
     }
@@ -1712,7 +1732,9 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
             readPermissionAmount: readAmount,
             totalParts: numGroups,
             currentPart: i,
-            messageType: (RawMessageType as any)[capitalizeFirstLetter(type)] as never,
+            messageType: (RawMessageType as any)[
+              capitalizeFirstLetter(type)
+            ] as never,
             referenceMessageId: referenceMessageId || null,
           },
           {
