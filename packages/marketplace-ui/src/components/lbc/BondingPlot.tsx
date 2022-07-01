@@ -72,7 +72,7 @@ export const BondingPlot = ({
     variables: {
       address: tokenBondingKey,
       startUnixTime: Math.max(
-        stopTime - 60 * 60 * 24,
+        stopTime - 3 * 60 * 60 * 24,
         tokenBonding?.goLiveUnixTime?.toNumber() || 0
       ), // 24 hours
       stopUnixTime: stopTime,
