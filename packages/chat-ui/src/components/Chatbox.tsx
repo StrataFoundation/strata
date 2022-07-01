@@ -86,7 +86,7 @@ export function Chatbox({
     onOpen: onOpenLoadWallet,
     onClose: onCloseLoadWallet,
   } = useDisclosure();
-  const { connected } = useWallet();
+  const { connected, publicKey } = useWallet();
   const { setVisible } = useWalletModal();
   const { account: profileAccount } = useWalletProfile();
   const {
@@ -120,7 +120,7 @@ export function Chatbox({
   const { metadata: postMetadata, image: postImage } = useTokenMetadata(
     chat?.postPermissionKey
   );
-  const { amount: ownedAmount } = useChatOwnedAmount(chatKey);
+  const { amount: ownedAmount } = useChatOwnedAmount(publicKey || undefined, chatKey);
   const mint = useMint(chat?.postPermissionKey);
   const postAmount =
     chat?.postPermissionAmount &&

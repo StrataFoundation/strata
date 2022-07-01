@@ -53,6 +53,7 @@ import { BuyMoreButton } from "./BuyMoreButton";
 import { PublicKey } from "@solana/web3.js";
 import { useEmojis } from "../contexts";
 import { Files } from "./Files";
+import { TokenFlare } from "./TokenFlare";
 
 const gf = new GiphyFetch(GIPHY_API_KEY);
 
@@ -111,7 +112,6 @@ export function Message({
 }) {
   const { publicKey } = useWallet();
   const { referenceMessageId, showPicker } = useEmojis();
-  const { key: myProfile } = useProfileKey(publicKey || undefined);
   const { info: profile } = useProfile(profileKey);
   const { username } = useUsernameFromIdentifierCertificate(
     profile?.identifierCertificateMint
@@ -222,7 +222,7 @@ export function Message({
             )}
             <VStack w="full" align="start" spacing={0}>
               {showUser && (
-                <HStack>
+                <HStack alignItems="flex-end">
                   <Text
                     fontSize="sm"
                     fontWeight="semibold"
@@ -238,6 +238,14 @@ export function Message({
                   >
                     {moment(time).format("LT")}
                   </Text>
+                  <TokenFlare
+                    chat={chatKey}
+                    wallet={profile?.ownerWallet}
+                    tokens={[
+                      chat?.readPermissionKey,
+                      chat?.postPermissionKey,
+                    ].filter(truthy)}
+                  />
                 </HStack>
               )}
 
@@ -253,16 +261,12 @@ export function Message({
                   messageType === MessageType.Gify ? (
                     <GifyGif gifyId={message.gifyId} />
                   ) : message.type === MessageType.Image ? (
-                    <Files
-                      files={files}
-                    />
+                    <Files files={files} />
                   ) : message.type === MessageType.Text ? (
                     <Text mt={"-4px"}>{message.text}</Text>
                   ) : (
                     <>
-                      <Files
-                        files={files}
-                      />
+                      <Files files={files} />
                       <div
                         dangerouslySetInnerHTML={{
                           __html: message.html

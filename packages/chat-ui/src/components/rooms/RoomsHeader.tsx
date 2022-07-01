@@ -57,7 +57,7 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
   const { chatSdk } = useChatSdk();
   const { publicKey } = useWallet();
   const { key: profileKey } = useProfileKey(publicKey || undefined);
-  const { amount: ownedAmount } = useChatOwnedAmount(chatKey);
+  const { amount: ownedAmount } = useChatOwnedAmount(publicKey || undefined, chatKey);
 
   const [settings, setSettings] = useLocalStorage<ISettings>("settings", {
     soundEnabled: true,

@@ -1,5 +1,5 @@
 import { PublicKey } from "@solana/web3.js";
-import { useCollectionOwnedAmount, useOwnedAmount } from "@strata-foundation/react";
+import { useCollectionOwnedAmount, useUserOwnedAmount } from "@strata-foundation/react";
 import { useChat } from "./useChat";
 
 function max(
@@ -19,12 +19,12 @@ function max(
   }
 }
 
-export function useChatOwnedAmount(chatKey?: PublicKey): { loading: boolean; amount?: number } {
+export function useChatOwnedAmount(wallet: PublicKey | undefined, chatKey?: PublicKey | undefined): { loading: boolean; amount?: number } {
   const { info: chat } = useChat(chatKey);
   const { amount: ownedAmountNft, loading } = useCollectionOwnedAmount(
     chat?.postPermissionKey
   );
-  const ownedAmountToken = useOwnedAmount(chat?.postPermissionKey);
+  const ownedAmountToken = useUserOwnedAmount(wallet, chat?.postPermissionKey);
 
   return {
     amount:
