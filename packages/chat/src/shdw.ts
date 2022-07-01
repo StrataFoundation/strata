@@ -126,6 +126,10 @@ export async function initStorageIfNeeded(
     const solToken = orcaSolPool.getTokenB();
     const shdwToken = orcaSolPool.getTokenA();
     const shdwOwnedAmount = await getOwnedAmount(localProvider, pubKey, SHDW);
+    const solOwnedAmount = (await connection.getAccountInfo(pubKey))?.lamports;
+    if (!solOwnedAmount) {
+      throw new Error("Not enough sol")
+    }
 
     if (shdwOwnedAmount < shadesNeeded) {
       const quote = await orcaSolPool.getQuote(
@@ -133,7 +137,14 @@ export async function initStorageIfNeeded(
         // Add 5% more than we need, at least need 1 shade
         new Decimal(shdwNeeded * 1.05)
       );
-      console.log(`Not enough SHDW, buying ${shdwNeeded} SHDW for ~${quote.getExpectedOutputAmount().toNumber()} SOL`);
+      console.log(
+        `Not enough SHDW, buying ${shdwNeeded} SHDW for ~${quote
+          .getExpectedOutputAmount()
+          .toNumber()} SOL`
+      );
+      if (quote.getExpectedOutputAmount().toU64().gte(new BN(solOwnedAmount))) {
+        throw new Error("Not enough sol");
+      }
       const swapPayload = await orcaSolPool.swap(
         pubKey,
         solToken,
@@ -195,9 +206,19 @@ export async function uploadFiles(
     );
     await shdwDrive.init();
 
-    // @ts-ignore
-    const res = await withRetries(() => shdwDrive.uploadMultipleFiles(accountKey, files as FileList), tries);
-    return res.map(r => r.location);
+    const res = await withRetries(async () => {
+      const uploaded = (await shdwDrive.uploadMultipleFiles(
+        accountKey,
+        // @ts-ignore
+        files as FileList
+      )).map((r) => r.location);
+      if (uploaded.length !== files.length) {
+        throw new Error("Upload failed");
+      }
+      return uploaded;
+    }, tries);
+
+    return res;
   }
 }
 
@@ -240,6 +261,7 @@ async function withRetries<T>(arg0: () => Promise<T>, tries: number = 3): Promis
   } catch (e: any) {
     if (tries > 0) {
       console.warn(`Failed tx, retrying up to ${tries} more times.`, e);
+      await sleep(1000)
       return withRetries(arg0, tries - 1)
     }
     throw e;

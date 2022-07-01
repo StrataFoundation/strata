@@ -735,17 +735,19 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
             decodedMessage.decryptedAttachments.push(
               ...(await Promise.all(
                 (decodedMessage.encryptedAttachments || []).map(
-                  async (encryptedAttachment: { name: string; file: string }) => {
-                    const blob = await fetch(encryptedAttachment.file).then((r) =>
-                      r.blob()
-                    );
+                  async (encryptedAttachment: { name: string; file: string } | string) => {
+                    const blob = await fetch(
+                      // @ts-ignore this is some legacy stuff where it could just be a url
+                      encryptedAttachment.file || encryptedAttachment
+                    ).then((r) => r.blob());
                     const arrBuffer = await this.litJsSdk.decryptFile({
                       symmetricKey,
                       file: blob,
                     });
                     return {
                       file: new Blob([arrBuffer]),
-                      name: encryptedAttachment.name
+                      // @ts-ignore this is some legacy stuff where it could just be a url
+                      name: encryptedAttachment.name || "Attachment"
                     }
                   }
                 )
