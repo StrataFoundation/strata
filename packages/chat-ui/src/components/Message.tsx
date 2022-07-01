@@ -285,7 +285,10 @@ export function Message({
                       () => "."
                     ).join()}
                   </Skeleton>
-                ) : readPermissionAmount && (ownedAmount || 0) < toNumber(readPermissionAmount, mintAcc) ? (
+                ) : readPermissionAmount &&
+                  mintAcc &&
+                  (ownedAmount || 0) <
+                    toNumber(readPermissionAmount, mintAcc) ? (
                   <BuyMoreButton
                     mint={readMint}
                     trigger={(props) => {
