@@ -5,23 +5,11 @@ const IMAGES = new Set("png,jpg,jpeg,gif,mp4,svg".split(","));
 
 type NamedFile = { name: string; file: string | Blob };
 
-type FileOrNamedFile = string | Blob | NamedFile;
-
-// LEGACY: Older versions did not send named files
-function ensureNamed(file: FileOrNamedFile): NamedFile {
-  // @ts-ignore
-  if (!file.name || !file.file) {
-    return { name: "Attachment", file: file as string | Blob };
-  }
-
-  return file as NamedFile;
-}
-
 export function Files({
   files,
   onCancelFile,
 }: {
-  files: FileOrNamedFile[];
+  files: NamedFile[];
   onCancelFile?: (file: string | Blob) => void;
 }) {
   const linkStyle = {
@@ -31,7 +19,6 @@ export function Files({
   // Use memo here so we don't convert blobs to urls each time
   const components = useMemo(() => {
     return files
-      .map(ensureNamed)
       .map(({ file, name }) => {
         const extension = name.split(".").pop();
         if (extension && IMAGES.has(extension)) {
@@ -82,7 +69,7 @@ export function Files({
           );
         }
 
-        return <WrapItem key={el.key}>{el}</WrapItem>;
+        return <WrapItem key={key}>{el}</WrapItem>;
       });
   }, [onCancelFile, files]);
 
