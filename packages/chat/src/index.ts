@@ -32,7 +32,7 @@ import LitJsSdk from "lit-js-sdk";
 // @ts-ignore
 import { v4 as uuid } from "uuid";
 import { CaseInsensitiveMarkerV0, ChatIDL, ChatV0, DelegateWalletV0, NamespacesV0, PermissionType, PostAction, ProfileV0, SettingsV0, MessageType as RawMessageType } from "./generated/chat";
-import { uploadFile } from "./shdw";
+import { uploadFiles } from "./shdw";
 
 const MESSAGE_MAX_CHARACTERS = 352; // TODO: This changes with optional accounts in the future
 
@@ -76,14 +76,18 @@ const KEY_EXPIRY = 3 * 60 * 60 * 1000;
 const CONDITION_VERSION = 2;
 
 export class LocalSymKeyStorage implements ISymKeyStorage {
+  constructor(readonly url: string) {
+  }
+  
   setSymKey(encrypted: string, unencrypted: string): void {
     storage.set("enc" + CONDITION_VERSION + encrypted, unencrypted);
   }
+
   getSymKey(encrypted: string): string | null {
     return storage.get("enc" + CONDITION_VERSION + encrypted) as string | null;
   }
   private getKey(mintOrCollection: PublicKey, amount: number): string {
-    return `sym-${CONDITION_VERSION}-${mintOrCollection.toBase58()}-${amount}`;
+    return `sym-${CONDITION_VERSION}-${this.url}-${mintOrCollection.toBase58()}-${amount}`;
   }
   setSymKeyToUse(
     mintOrCollection: PublicKey,
@@ -179,11 +183,12 @@ export interface TextMessage {
 
 export interface HtmlMessage {
   html: string;
+  encryptedAttachments: { name: string; file: string }[];
 }
 
 export interface ImageMessage {
-  attachments: string[];
-  encryptedAttachments: string[];
+  attachments: { name: string; file: string }[];
+  encryptedAttachments: { name: string; file: string }[];
 }
 
 export interface GifyMessage {
@@ -195,11 +200,11 @@ export interface IMessageContent extends Partial<ReactMessage>, Partial<TextMess
 }
 
 export interface IDecryptedMessageContent extends IMessageContent {
-  decryptedAttachments?: Blob[];
+  decryptedAttachments?: { name: string; file: Blob }[];
 }
 
 export interface ISendMessageContent extends IMessageContent {
-  fileAttachments?: File[];
+  fileAttachments?: { name: string; file: File }[];
 }
 
 export interface IDelegateWallet extends DelegateWalletV0 {
@@ -444,7 +449,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     program,
     litClient,
     namespacesProgram,
-    symKeyStorage = new LocalSymKeyStorage(),
+    // @ts-ignore
+    symKeyStorage = new LocalSymKeyStorage(provider.connection._rpcEndpoint),
   }: {
     provider: AnchorProvider;
     program: Program<ChatIDL>;
@@ -729,15 +735,18 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
             decodedMessage.decryptedAttachments.push(
               ...(await Promise.all(
                 (decodedMessage.encryptedAttachments || []).map(
-                  async (encryptedAttachment: string) => {
-                    const blob = await fetch(encryptedAttachment).then((r) =>
+                  async (encryptedAttachment: { name: string; file: string }) => {
+                    const blob = await fetch(encryptedAttachment.file).then((r) =>
                       r.blob()
                     );
                     const arrBuffer = await this.litJsSdk.decryptFile({
                       symmetricKey,
                       file: blob,
                     });
-                    return new Blob([arrBuffer]);
+                    return {
+                      file: new Blob([arrBuffer]),
+                      name: encryptedAttachment.name
+                    }
                   }
                 )
               ))
@@ -1548,16 +1557,19 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         fileAttachments.map(async (fileAttachment) => {
           const encrypted = await this.litJsSdk.encryptWithSymmetricKey(
             symmKey,
-            await fileAttachment.arrayBuffer()
+            await fileAttachment.file.arrayBuffer()
           );
-          return new File([encrypted], fileAttachment.name + ".encrypted");
+          return {
+            file: new File([encrypted], fileAttachment.file.name + ".encrypted"),
+            name: fileAttachment.name,
+          }
         })
       );
     }
 
     // Attach files to either attachments or encryptedAttachments based on whether they were encrypted
     if (fileAttachments) {
-      let attachments: string[];
+      let attachments: { name: string; file: string }[];
       if (encrypted) {
         normalMessage.encryptedAttachments =
           normalMessage.encryptedAttachments || [];
@@ -1567,18 +1579,21 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         attachments = normalMessage.attachments;
       }
 
+      const uploaded = (
+        (await uploadFiles(
+          this.provider,
+          fileAttachments.map((f) => f.file),
+          delegateWalletKeypair
+        )) || []
+      ).filter(truthy);
+      if (uploaded.length != fileAttachments.length) {
+        throw new Error("Failed to upload all files");
+      }
       attachments.push(
-        ...(
-          await Promise.all(
-            fileAttachments.map(async (fileAttachment) => {
-              return await uploadFile(
-                this.provider,
-                fileAttachment,
-                delegateWalletKeypair
-              );
-            })
-          )
-        ).filter(truthy)
+        ...uploaded.map((uploaded, i) => ({
+          file: uploaded,
+          name: fileAttachments![i].name,
+        }))
       );
     }
 

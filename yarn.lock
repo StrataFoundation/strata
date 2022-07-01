@@ -5633,14 +5633,13 @@
   dependencies:
     lodash.debounce "^4.0.8"
 
-"@shadow-drive/sdk@^2.0.3":
-  version "2.0.3"
-  resolved "https://registry.yarnpkg.com/@shadow-drive/sdk/-/sdk-2.0.3.tgz#aa27eac745b82416ac64166de421a5075964ea43"
-  integrity sha512-3Pa+7hdLQdeCGeCfAYXWoFc/su2J7khJl8FAgrb45yzofpFji7Y9dRu5cwPyok/NeF/ysHtRag09VNcqfoGGhA==
+"@shadow-drive/sdk@^2.0.4":
+  version "2.0.5"
+  resolved "https://registry.yarnpkg.com/@shadow-drive/sdk/-/sdk-2.0.5.tgz#d35f07fbc222e272f91cc5155cf65fbe4b0f5b8c"
+  integrity sha512-TpREH4mQut01WuvBQB8V0bygcjoqLcvHpC6nLxkUBc3nRQDOyNkUq6ZTxxZo2Xr7ZJnNILbCs02ZGf3WDouiCw==
   dependencies:
     "@project-serum/anchor" "^0.24.2"
     "@solana/spl-token" "^0.2.0"
-    "@solana/wallet-adapter-react" "^0.15.4"
     cross-fetch "^3.1.5"
     form-data "^4.0.0"
 

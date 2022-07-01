@@ -52,6 +52,7 @@ import {
 import { BuyMoreButton } from "./BuyMoreButton";
 import { PublicKey } from "@solana/web3.js";
 import { useEmojis } from "../contexts";
+import { Files } from "./Files";
 
 const gf = new GiphyFetch(GIPHY_API_KEY);
 
@@ -144,6 +145,10 @@ export function Message({
   const status = pending ? "Pending" : "Confirmed";
   const lockedColor = useColorModeValue("gray.400", "gray.600");
   const highlightedBg = useColorModeValue("gray.200", "gray.800");
+  const files = useMemo(() => [
+    ...(message?.attachments || []),
+    ...(message?.decryptedAttachments || []),
+  ], [message]);
 
   const {
     reacts: inflatedReacts,
@@ -248,25 +253,24 @@ export function Message({
                   messageType === MessageType.Gify ? (
                     <GifyGif gifyId={message.gifyId} />
                   ) : message.type === MessageType.Image ? (
-                    <Image
-                      mt={"4px"}
-                      alt={message.text}
-                      height="300px"
-                      src={
-                        (message.attachments || [])[0] ||
-                        blobToUrl((message.decryptedAttachments || [])[0])
-                      }
+                    <Files
+                      files={files}
                     />
                   ) : message.type === MessageType.Text ? (
                     <Text mt={"-4px"}>{message.text}</Text>
                   ) : (
-                    <div
-                      dangerouslySetInnerHTML={{
-                        __html: message.html
-                          ? sanitizeHtml(message.html, htmlAllowlist)
-                          : "",
-                      }}
-                    />
+                    <>
+                      <Files
+                        files={files}
+                      />
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: message.html
+                            ? sanitizeHtml(message.html, htmlAllowlist)
+                            : "",
+                        }}
+                      />
+                    </>
                   )
                 ) : decoding ? (
                   <Skeleton startColor={lockedColor} height="20px">
@@ -399,12 +403,6 @@ export function Message({
       </Popover>
     </Box>
   );
-}
-function blobToUrl(blob: Blob | undefined): string | undefined {
-  if (blob) {
-    const urlCreator = window.URL || window.webkitURL;
-    return urlCreator.createObjectURL(blob);
-  }
 }
 
 const lengths: Record<string, number> = {};

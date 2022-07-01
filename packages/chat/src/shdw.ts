@@ -74,6 +74,9 @@ export async function initStorageIfNeeded(
   delegateWallet: Keypair | undefined,
   sizeBytes: number
 ): Promise<void> {
+  if (sizeBytes == 0) {
+    return;
+  }
   if (provider) {
     delegateWallet = maybeUseDevnetWallet(provider?.connection, delegateWallet);
     const connection = new Connection(getEndpoint(provider.connection), "max");
@@ -167,13 +170,18 @@ export async function initStorageIfNeeded(
   }
 }
 
-export async function uploadFile(
+export async function uploadFiles(
   provider: AnchorProvider | undefined,
-  file: File,
+  files: File[],
   delegateWallet: Keypair | undefined,
   tries: number = 5
-): Promise<string | undefined> {
-  await initStorageIfNeeded(provider, delegateWallet, file.size);
+): Promise<string[] | undefined> {
+  if (files.length == 0) {
+    return []
+  }
+  
+  const size = files.reduce((acc, f) => acc + f.size, 0);
+  await initStorageIfNeeded(provider, delegateWallet, size);
   if (provider) {
     delegateWallet = maybeUseDevnetWallet(provider.connection, delegateWallet);
     const pubKey = delegateWallet
@@ -187,8 +195,9 @@ export async function uploadFile(
     );
     await shdwDrive.init();
 
-    const res = await withRetries(() => shdwDrive.uploadFile(accountKey, file), tries);
-    return res.finalized_location;
+    // @ts-ignore
+    const res = await withRetries(() => shdwDrive.uploadMultipleFiles(accountKey, files as FileList), tries);
+    return res.map(r => r.location);
   }
 }
 

@@ -34,7 +34,7 @@ import {
   useTokenMetadata,
 } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useMemo } from "react";
 import { AiOutlineGif, AiOutlineSend } from "react-icons/ai";
 import {
   IMessageWithPending,
@@ -57,6 +57,7 @@ import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { LoadWalletModal } from "./LoadWalletModal";
 import { useChatOwnedAmount } from "../hooks/useChatOwnedAmount";
 import { useEmojiSearch } from "../hooks/useEmojiSearch";
+import { Files } from "./Files";
 
 const converter = new Converter({
   simpleLineBreaks: true,
@@ -101,6 +102,11 @@ export function Chatbox({
 
   const gaEventTracker = useAnalyticsEventTracker();
 
+  const [files, setFiles] = useState<{ name: string; file: File }[]>([]);
+  const onCancelFile = useMemo(
+    () => (file: any) => setFiles((files) => files.filter((f) => f.file != file)),
+    [setFiles]
+  );
   const chatBg = useColorModeValue("gray.100", "gray.800");
   const { handleErrors } = useErrorHandler();
   const { info: chat } = useChat(chatKey);
@@ -140,7 +146,37 @@ export function Chatbox({
     resetEmoji();
     setLoading(true);
     try {
-      await sendMessageImpl(m);
+      // Show toast if uploading files
+      if (m.fileAttachments && m.fileAttachments.length > 0) {
+        const text = `Uploading ${m.fileAttachments.map(
+          (f) => f.name
+        )} to SHDW Drive...`;
+        toast.custom(
+          (t) => (
+            <LongPromiseNotification
+              estTimeMillis={2 * 60 * 1000}
+              text={text}
+              onError={(e) => {
+                handleErrors(e);
+                toast.dismiss(t.id);
+              }}
+              exec={async () => {
+                await sendMessageImpl(m);
+                return true;
+              }}
+              onComplete={async () => {
+                toast.dismiss(t.id);
+              }}
+            />
+          ),
+          {
+            duration: Infinity,
+          }
+        );
+        setFiles([]);
+      } else {
+        await sendMessageImpl(m);
+      }
     } finally {
       setLoading(false);
     }
@@ -382,82 +418,74 @@ export function Chatbox({
                 </PopoverBody>
               </PopoverContent>
             </Popover>
-            <HStack
+            <VStack
               p="10px"
               spacing={2}
               w="full"
-              align="center"
+              align="left"
               bg={chatBg}
               rounded="lg"
             >
-              <ChatInput
-                inputRef={inputRef}
-                onChange={handleChange}
-                value={input}
-                onKeyDown={(ev) => {
-                  if (ev.key === "Enter") {
-                    if (!ev.shiftKey) {
-                      ev.preventDefault();
-                      sendMessage({
-                        type: MessageType.Html,
-                        html: converter.makeHtml(input.replace("\n", "\n\n")),
-                      });
+              <Files
+                files={files}
+                onCancelFile={onCancelFile}
+              />
+              <HStack w="full">
+                <ChatInput
+                  inputRef={inputRef}
+                  onChange={handleChange}
+                  value={input}
+                  onKeyDown={(ev) => {
+                    if (ev.key === "Enter") {
+                      if (!ev.shiftKey) {
+                        ev.preventDefault();
+                        sendMessage({
+                          type: MessageType.Html,
+                          html: converter.makeHtml(input.replace("\n", "\n\n")),
+                          fileAttachments: files,
+                        });
+                      }
                     }
+                  }}
+                />
+                <FileAttachment
+                  onUpload={async (newFiles) => {
+                    setFiles((files) => [
+                      ...files,
+                      ...[...newFiles].map((file) => {
+                        const ret = {
+                          name: file.name,
+                          file,
+                        };
+                        randomizeFileName(file); // so no conflicts with gengo
+                        return ret;
+                      }),
+                    ]);
+                  }}
+                />
+                <IconButton
+                  aria-label="Select GIF"
+                  variant="outline"
+                  onClick={onToggle}
+                  icon={<Icon w="24px" h="24px" as={AiOutlineGif} />}
+                />
+                <Button
+                  isLoading={loading}
+                  colorScheme="primary"
+                  variant="outline"
+                  isDisabled={!hasEnough || (!input && files.length == 0)}
+                  onClick={() =>
+                    sendMessage({
+                      type: MessageType.Html,
+                      html: converter.makeHtml(input),
+                      fileAttachments: files,
+                    })
                   }
-                }}
-              />
-              <FileAttachment
-                onUpload={async (file) => {
-                  const text = `Uploading ${file.name} to SHDW Drive...`;
-                  toast.custom(
-                    (t) => (
-                      <LongPromiseNotification
-                        estTimeMillis={2 * 60 * 1000}
-                        text={text}
-                        onError={(e) => {
-                          handleErrors(e);
-                          toast.dismiss(t.id);
-                        }}
-                        exec={async () => {
-                          randomizeFileName(file);
-                          await sendMessageImpl({
-                            type: MessageType.Image,
-                            fileAttachments: [file],
-                          });
-                          return true;
-                        }}
-                        onComplete={async () => {
-                          toast.dismiss(t.id);
-                        }}
-                      />
-                    ),
-                    {
-                      duration: Infinity,
-                    }
-                  );
-                }}
-              />
-              <IconButton
-                aria-label="Select GIF"
-                variant="outline"
-                onClick={onToggle}
-                icon={<Icon w="24px" h="24px" as={AiOutlineGif} />}
-              />
-              <Button
-                isLoading={loading}
-                colorScheme="primary"
-                variant="outline"
-                isDisabled={!hasEnough || !input}
-                onClick={() =>
-                  sendMessage({
-                    type: MessageType.Html,
-                    html: converter.makeHtml(input),
-                  })
-                }
-              >
-                <Icon as={AiOutlineSend} />
-              </Button>
-            </HStack>
+                >
+                  <Icon as={AiOutlineSend} />
+                </Button>
+              </HStack>
+            </VStack>
           </Flex>
           <Modal
             isOpen={isOpen}

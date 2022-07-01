@@ -7,16 +7,16 @@ import { IoMdAttach } from "react-icons/io";
 export function FileAttachment({
   onUpload,
 }: {
-  onUpload: (file: File) => Promise<void>;
+  onUpload: (files: FileList) => Promise<void>;
 }) {
   const hiddenFileInput = React.useRef<HTMLInputElement>(null);
   const { execute, loading, error } = useAsyncCallback(onUpload);
   const { handleErrors } = useErrorHandler();
   handleErrors(error);
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files![0];
+    const files = e.target.files!;
     try {
-      await execute(file);
+      await execute(files);
     } finally {
       if (hiddenFileInput.current) {
         hiddenFileInput.current.value = ""
@@ -27,10 +27,9 @@ export function FileAttachment({
   return (
     <>
       <input
+        multiple
         id="image"
         type="file"
-        accept=".png,.jpg,.gif,.mp4,.svg"
-        multiple={false}
         onChange={handleImageChange}
         ref={hiddenFileInput}
         style={{ display: "none" }}
