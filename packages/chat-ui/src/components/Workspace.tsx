@@ -1,7 +1,11 @@
 import React from "react";
-import { Flex, useColorModeValue } from "@chakra-ui/react";
+import { Flex } from "./MyFlex";
 
 interface IWorkspaceProps {}
+
+const DARK_BG = {
+  bg: "gray.900",
+};
 
 export const Workspace: React.FC<IWorkspaceProps> = ({ children }) => (
   <Flex
@@ -11,9 +15,7 @@ export const Workspace: React.FC<IWorkspaceProps> = ({ children }) => (
     h="full"
     grow={1}
     bg="white"
-    _dark={{
-      bg: "gray.900",
-    }}
+    _dark={DARK_BG}
     overflow="hidden"
   >
     {children}

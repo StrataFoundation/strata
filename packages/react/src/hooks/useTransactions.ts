@@ -2,16 +2,14 @@ import { useConnection } from "@solana/wallet-adapter-react";
 import {
   ConfirmedSignatureInfo,
   Connection,
-  PublicKey,
-  Transaction,
-  TransactionResponse,
+  PublicKey, TransactionResponse
 } from "@solana/web3.js";
-import { truthy } from "../utils";
-import { useEffect, useMemo, useState } from "react";
-import { sleep } from "@strata-foundation/spl-utils";
-import { useAccelerator } from "../contexts/acceleratorContext";
-import { useEndpoint } from "./useEndpoint";
 import { Cluster } from "@strata-foundation/accelerator";
+import { sleep } from "@strata-foundation/spl-utils";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useAccelerator } from "../contexts/acceleratorContext";
+import { truthy } from "../utils";
+import { useEndpoint } from "./useEndpoint";
 
 async function getSignatures(
   connection: Connection | undefined,
@@ -247,56 +245,79 @@ export const useTransactions = ({
     })();
   }, [connection, addrStr, until, setTransactions, numTransactions]);
 
-  const fetchMore = async (num: number) => {
-    setLoadingMore(true);
-    try {
-      const lastTx = transactions[transactions.length - 1];
-      const signatures = await getSignatures(
-        connection,
-        address,
-        until,
-        lastTx && lastTx.transaction && lastTx.transaction.signatures[0],
-        num
-      );
+  const fetchMore = useCallback(
+    async (num: number) => {
+      setLoadingMore(true);
+      try {
+        const lastTx = transactions[transactions.length - 1];
+        const signatures = await getSignatures(
+          connection,
+          address,
+          until,
+          lastTx && lastTx.transaction && lastTx.transaction.signatures[0],
+          num
+        );
 
-      setHasMore(signatures.length === numTransactions);
-      const newTxns = await hydrateTransactions(connection, signatures);
+        setHasMore(signatures.length === numTransactions);
+        const newTxns = await hydrateTransactions(connection, signatures);
 
-      setTransactions((txns) => removeDups([...txns, ...newTxns]));
-    } catch (e: any) {
-      setError(e);
-    } finally {
-      setLoadingMore(false);
-    }
-  };
-
-  const fetchNew = async (num: number) => {
-    setLoadingMore(true);
-    try {
-      const earlyTx = transactions[0];
-      const earlyBlockTime = earlyTx && earlyTx.blockTime;
-      let lastDate = until;
-      if (earlyBlockTime) {
-        const date = new Date(0);
-        date.setUTCSeconds(earlyBlockTime);
-        lastDate = date;
+        setTransactions((txns) => removeDups([...txns, ...newTxns]));
+      } catch (e: any) {
+        setError(e);
+      } finally {
+        setLoadingMore(false);
       }
-      const signatures = await getSignatures(
-        connection,
-        address,
-        lastDate,
-        undefined,
-        num
-      );
-      const newTxns = await hydrateTransactions(connection, signatures);
+    },
+    [
+      transactions[transactions.length - 1],
+      connection,
+      address,
+      until,
+      setHasMore,
+      setTransactions,
+      setError,
+      setLoadingMore,
+    ]
+  );
 
-      setTransactions((txns) => removeDups([...newTxns, ...txns]));
-    } catch (e: any) {
-      setError(e);
-    } finally {
-      setLoadingMore(false);
-    }
-  };
+  const fetchNew = useCallback(
+    async (num: number) => {
+      setLoadingMore(true);
+      try {
+        const earlyTx = transactions[0];
+        const earlyBlockTime = earlyTx && earlyTx.blockTime;
+        let lastDate = until;
+        if (earlyBlockTime) {
+          const date = new Date(0);
+          date.setUTCSeconds(earlyBlockTime);
+          lastDate = date;
+        }
+        const signatures = await getSignatures(
+          connection,
+          address,
+          lastDate,
+          undefined,
+          num
+        );
+        const newTxns = await hydrateTransactions(connection, signatures);
+
+        setTransactions((txns) => removeDups([...newTxns, ...txns]));
+      } catch (e: any) {
+        setError(e);
+      } finally {
+        setLoadingMore(false);
+      }
+    },
+    [
+      setLoadingMore,
+      setError,
+      setTransactions,
+      until,
+      address,
+      transactions[0],
+      connection,
+    ]
+  );
   return {
     hasMore,
     transactions,

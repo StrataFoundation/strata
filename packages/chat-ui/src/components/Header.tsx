@@ -1,6 +1,7 @@
 import React from "react";
-import { Flex, IconButton } from "@chakra-ui/react";
+import { IconButton } from "@chakra-ui/react";
 import { FiMenu } from "react-icons/fi";
+import { Flex } from "./MyFlex";
 
 interface IHeaderProps {
   onSidebarOpen(): void;

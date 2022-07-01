@@ -18,12 +18,12 @@ import {
   Tooltip,
   PopoverArrow,
   PopoverBody,
-  Flex,
 } from "@chakra-ui/react";
 import { GiphyFetch } from "@giphy/js-fetch-api";
 import { Gif } from "@giphy/react-components";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { MessageType } from "@strata-foundation/chat";
+import { Flex } from "./MyFlex";
 import {
   useErrorHandler,
   useMint,

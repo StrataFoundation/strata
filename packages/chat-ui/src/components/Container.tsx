@@ -1,5 +1,6 @@
 import React from "react";
-import { Flex, useColorMode, FlexProps } from "@chakra-ui/react";
+import { useColorMode, FlexProps } from "@chakra-ui/react";
+import { Flex } from "./MyFlex";
 
 export const Container = (props: FlexProps) => {
   const { colorMode } = useColorMode();

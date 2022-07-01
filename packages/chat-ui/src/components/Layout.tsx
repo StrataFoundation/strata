@@ -1,6 +1,7 @@
 import React from "react";
-import { Flex, Drawer, DrawerOverlay, DrawerContent } from "@chakra-ui/react";
+import { Drawer, DrawerOverlay, DrawerContent, useBreakpointValue } from "@chakra-ui/react";
 import { Sidebar } from "./Sidebar";
+import { Flex } from "./MyFlex";
 
 interface ILayoutProps {
   isSidebarOpen: boolean;
@@ -8,43 +9,48 @@ interface ILayoutProps {
   onSidebarOpen(): void;
 }
 
+const DARK_BG = {
+  bg: "gray.900",
+};
+
+const ML = {
+  base: 0,
+  md: 80,
+};
 export const Layout: React.FC<ILayoutProps> = ({
   children,
   isSidebarOpen,
   onSidebarClose,
-}) => (
-  <Flex
-    as="section"
-    bg="gray.50"
-    _dark={{
-      bg: "gray.900",
-    }}
-    h="100vh"
-    w="100vw"
-  >
-    <Sidebar
-      display={{
-        base: "none",
-        md: "unset",
-      }}
-    />
-    <Drawer isOpen={isSidebarOpen} onClose={onSidebarClose} placement="left">
-      <DrawerOverlay />
-      <DrawerContent>
-        <Sidebar w="full" borderRight="none" />
-      </DrawerContent>
-    </Drawer>
+}) => {
+  const breakpointDisplay = useBreakpointValue({
+    base: "none",
+    md: "unset",
+  });
+  return (
     <Flex
-      ml={{
-        base: 0,
-        md: 80,
-      }}
-      transition=".3s ease"
-      direction="column"
-      h="full"
-      w="full"
+      as="section"
+      bg="gray.50"
+      _dark={DARK_BG}
+      h="100vh"
+      w="100vw"
     >
-      {children}
+      {breakpointDisplay === "unset" && <Sidebar />}
+      <Drawer isOpen={isSidebarOpen} onClose={onSidebarClose} placement="left">
+        <DrawerOverlay />
+        <DrawerContent>
+          {/* Lazy load this sidebar */}
+          {isSidebarOpen && <Sidebar w="full" borderRight="none" />}
+        </DrawerContent>
+      </Drawer>
+      <Flex
+        ml={ML}
+        transition=".3s ease"
+        direction="column"
+        h="full"
+        w="full"
+      >
+        {children}
+      </Flex>
     </Flex>
-  </Flex>
-);
+  );
+};
