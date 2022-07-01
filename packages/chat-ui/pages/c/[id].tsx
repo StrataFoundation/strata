@@ -12,6 +12,7 @@ import { Workspace } from "@/components/Workspace";
 import { EmojiPickerPopover } from "@/components/EmojiPicker";
 import { useChatKeyFromIdentifier } from "@/hooks/useChatKeyFromIdentifier";
 import { IMessageWithPending, useMessages } from "@/hooks/useMessages";
+import { useAsyncCallback } from "react-async-hook";
 
 export default function Chatroom() {
   const sidebar = useDisclosure();
@@ -23,11 +24,27 @@ export default function Chatroom() {
     []
   );
 
-  const { messages, error, loadingInitial, loadingMore, hasMore, fetchMore } =
+  const { messages, error, loadingInitial, loadingMore, hasMore, fetchMore, fetchNew } =
     useMessages(chatKey);
 
   const { handleErrors } = useErrorHandler();
   handleErrors(error);
+
+  const { execute: onFocus } = useAsyncCallback(async function() {
+    let oldCount = messages!.length;
+    while (true) {
+      await fetchNew(50);
+      let newCount = messages!.length;
+      if (newCount - oldCount < 50) break;
+    }
+  });
+
+  useEffect(() => {
+    window.addEventListener("focus", onFocus);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+    };
+  }, []);
 
   const msgWeHave = useMemo(
     () => new Set(Array.from(messages?.map((message) => message.id) || [])),
