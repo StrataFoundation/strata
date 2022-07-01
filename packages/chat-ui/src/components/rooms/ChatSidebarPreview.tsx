@@ -57,7 +57,7 @@ export function ChatSidebarPreview({ identifier }: chatRoomProps) {
             {chat?.name}
           </Text>
           <Text fontSize="sm" color={subtext}>
-            /{identifier}
+            {identifier}.chat
           </Text>
         </VStack>
       )}
