@@ -31,7 +31,7 @@ import {
   truthy,
   useTokenMetadata,
 } from "@strata-foundation/react";
-import { humanReadable } from "@strata-foundation/spl-utils";
+import { humanReadable, toNumber } from "@strata-foundation/spl-utils";
 import moment from "moment";
 import React, { useMemo } from "react";
 import { useAsync } from "react-async-hook";
@@ -43,6 +43,7 @@ import {
   IMessageWithPending,
   IMessageWithPendingAndReacts,
   useChat,
+  useChatOwnedAmount,
   useInflatedReacts,
   useProfile,
   useProfileKey,
@@ -141,7 +142,8 @@ export function Message({
     readPermissionAmount &&
     humanReadable(readPermissionAmount, mintAcc);
 
-  const uid = publicKey?.toBase58();
+  const { amount: ownedAmount } = useChatOwnedAmount(publicKey || undefined, chatKey);
+
   const status = pending ? "Pending" : "Confirmed";
   const lockedColor = useColorModeValue("gray.400", "gray.600");
   const highlightedBg = useColorModeValue("gray.200", "gray.800");
@@ -283,7 +285,7 @@ export function Message({
                       () => "."
                     ).join()}
                   </Skeleton>
-                ) : (
+                ) : readPermissionAmount && (ownedAmount || 0) < toNumber(readPermissionAmount, mintAcc) ? (
                   <BuyMoreButton
                     mint={readMint}
                     trigger={(props) => {
@@ -312,6 +314,19 @@ export function Message({
                       );
                     }}
                   />
+                ) : (
+                  <Tooltip label={`Failed to decode message`}>
+                    <Skeleton
+                      startColor={lockedColor}
+                      height="20px"
+                      speed={100000}
+                    >
+                      {Array.from(
+                        { length: genLength(messageId || "") },
+                        () => "."
+                      ).join()}
+                    </Skeleton>
+                  </Tooltip>
                 )}
               </Box>
               {inflatedReacts && inflatedReacts.length > 0 && (

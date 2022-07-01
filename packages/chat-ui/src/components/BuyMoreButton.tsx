@@ -9,10 +9,12 @@ import {
   Spinner,
   ButtonProps,
   useDisclosure,
+  Alert,
 } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
 import {
   Swap,
+  useTokenBonding,
   useTokenBondingKey,
   useTokenMetadata,
 } from "@strata-foundation/react";
@@ -61,6 +63,7 @@ export function BuyMoreButton({
   const { result: tokenBondingKey, loading } = useTokenBondingKey(mint, 0);
   const { setVisible } = useWalletModal();
   const { metadata } = useTokenMetadata(mint);
+  const { account, loading: loadingBonding } = useTokenBonding(tokenBondingKey);
 
   function onClick() {
     if (!connected) setVisible(true);
@@ -77,7 +80,10 @@ export function BuyMoreButton({
         <ModalContent borderRadius="xl" shadow="xl">
           <ModalHeader>Buy More {metadata?.data.symbol}</ModalHeader>
           <ModalBody minH="500px">
-            {tokenBondingKey && (
+            {!account && !loadingBonding && (
+              <Alert status="info">Buy is not yet supported for this token</Alert>
+            )}
+            {account && !loadingBonding && tokenBondingKey && (
               <Swap
                 tokenBondingKey={tokenBondingKey}
                 onConnectWallet={() => {

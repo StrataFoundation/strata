@@ -78,7 +78,7 @@ export const ProfileButton: FC<ButtonProps> = ({
         {profile ? (
           // Can't use Avatar here because in CreateProfile we change image.src to cause a reload
           <Image
-            alt="Profile"
+            alt=""
             m={1}
             borderRadius="full"
             boxSize="30px"
