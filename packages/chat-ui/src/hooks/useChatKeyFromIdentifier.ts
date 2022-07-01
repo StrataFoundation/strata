@@ -41,16 +41,6 @@ export function useChatKeyFromIdentifier(identifier?: string): { loading: boolea
   const { info: entry, loading: loading3 } = useAccount(entryKey ? entryKey[0] : undefined, chatSdk?.entryDecoder)
   const { key: chatKey, loading: loading4 } = useChatKey(entry?.mint)
 
-  useEffect(() => {
-    console.log("Start: ", new Date().valueOf());
-  }, []);
-
-  useEffect(() => {
-    if (chatKey) {
-      console.log("End: ", new Date().valueOf());
-    }
-  }, [chatKey]);
-
   return {
     loading: loading1 || loading2 || loading3 || loading4,
     chatKey,

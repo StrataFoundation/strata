@@ -380,6 +380,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   namespacesProgram: Program<NAMESPACES_PROGRAM>;
   conditionVersion = CONDITION_VERSION;
   _namespaces: INamespaces | null = null;
+  _namespacesPromise: Promise<INamespaces> | null = null;
 
   static ID = new PublicKey("chatGL6yNgZT2Z3BeMYGcgdMpcBKdmxko4C5UhEX4To");
 
@@ -1024,8 +1025,14 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   }
 
   async getNamespaces(): Promise<INamespaces> {
-    this._namespaces = this._namespaces || (await this._getNamespaces());
-    return this._namespaces;
+    if (this._namespaces) {
+      return this._namespaces;
+    }
+
+    this._namespacesPromise =
+      this._namespacesPromise || this._getNamespaces();
+    this._namespaces = await this._namespacesPromise;
+    return this._namespaces!;
   }
 
   /**
