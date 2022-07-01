@@ -458,7 +458,6 @@ export function Chatbox({
                           file,
                         };
                         randomizeFileName(file); // so no conflicts with gengo
-                        console.log(file.name)
                         return ret;
                       }),
                     ]);
