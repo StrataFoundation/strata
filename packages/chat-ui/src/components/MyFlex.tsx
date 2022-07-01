@@ -1,3 +1,7 @@
+/** 
+ * The chakra UI flex uses styles = {...} which creates a new object and causes rerenders every time the parent rerenders.
+ * This is more performant
+*/
 import {
   chakra,
   forwardRef,
