@@ -183,12 +183,12 @@ export interface TextMessage {
 
 export interface HtmlMessage {
   html: string;
-  encryptedAttachments: string[];
+  encryptedAttachments: { name: string; file: string }[];
 }
 
 export interface ImageMessage {
-  attachments: string[];
-  encryptedAttachments: string[];
+  attachments: { name: string; file: string }[];
+  encryptedAttachments: { name: string; file: string }[];
 }
 
 export interface GifyMessage {
@@ -200,11 +200,11 @@ export interface IMessageContent extends Partial<ReactMessage>, Partial<TextMess
 }
 
 export interface IDecryptedMessageContent extends IMessageContent {
-  decryptedAttachments?: Blob[];
+  decryptedAttachments?: { name: string; file: Blob }[];
 }
 
 export interface ISendMessageContent extends IMessageContent {
-  fileAttachments?: File[];
+  fileAttachments?: { name: string; file: File }[];
 }
 
 export interface IDelegateWallet extends DelegateWalletV0 {
@@ -735,15 +735,18 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
             decodedMessage.decryptedAttachments.push(
               ...(await Promise.all(
                 (decodedMessage.encryptedAttachments || []).map(
-                  async (encryptedAttachment: string) => {
-                    const blob = await fetch(encryptedAttachment).then((r) =>
+                  async (encryptedAttachment: { name: string; file: string }) => {
+                    const blob = await fetch(encryptedAttachment.file).then((r) =>
                       r.blob()
                     );
                     const arrBuffer = await this.litJsSdk.decryptFile({
                       symmetricKey,
                       file: blob,
                     });
-                    return new Blob([arrBuffer]);
+                    return {
+                      file: new Blob([arrBuffer]),
+                      name: encryptedAttachment.name
+                    }
                   }
                 )
               ))
@@ -1554,16 +1557,19 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         fileAttachments.map(async (fileAttachment) => {
           const encrypted = await this.litJsSdk.encryptWithSymmetricKey(
             symmKey,
-            await fileAttachment.arrayBuffer()
+            await fileAttachment.file.arrayBuffer()
           );
-          return new File([encrypted], fileAttachment.name + ".encrypted");
+          return {
+            file: new File([encrypted], fileAttachment.file.name + ".encrypted"),
+            name: fileAttachment.name,
+          }
         })
       );
     }
 
     // Attach files to either attachments or encryptedAttachments based on whether they were encrypted
     if (fileAttachments) {
-      let attachments: string[];
+      let attachments: { name: string; file: string }[];
       if (encrypted) {
         normalMessage.encryptedAttachments =
           normalMessage.encryptedAttachments || [];
@@ -1574,16 +1580,21 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       }
 
       const uploaded = (
-          (await uploadFiles(
-            this.provider,
-            fileAttachments,
-            delegateWalletKeypair
-          )) || []
-        ).filter(truthy);
+        (await uploadFiles(
+          this.provider,
+          fileAttachments.map((f) => f.file),
+          delegateWalletKeypair
+        )) || []
+      ).filter(truthy);
       if (uploaded.length != fileAttachments.length) {
         throw new Error("Failed to upload all files");
       }
-      attachments.push(...uploaded);
+      attachments.push(
+        ...uploaded.map((uploaded, i) => ({
+          file: uploaded,
+          name: fileAttachments![i].name,
+        }))
+      );
     }
 
     // Encrypt the actual json structure

@@ -102,9 +102,9 @@ export function Chatbox({
 
   const gaEventTracker = useAnalyticsEventTracker();
 
-  const [files, setFiles] = useState<File[]>([]);
-  const onCancelFile = useMemo(() =>
-    (file: any) => setFiles((files) => files.filter((f) => f != file)),
+  const [files, setFiles] = useState<{ name: string; file: File }[]>([]);
+  const onCancelFile = useMemo(
+    () => (file: any) => setFiles((files) => files.filter((f) => f.file != file)),
     [setFiles]
   );
   const chatBg = useColorModeValue("gray.100", "gray.800");
@@ -148,7 +148,9 @@ export function Chatbox({
     try {
       // Show toast if uploading files
       if (m.fileAttachments && m.fileAttachments.length > 0) {
-        const text = `Uploading ${m.fileAttachments.map(f => f.name)} to SHDW Drive...`;
+        const text = `Uploading ${m.fileAttachments.map(
+          (f) => f.name
+        )} to SHDW Drive...`;
         toast.custom(
           (t) => (
             <LongPromiseNotification
@@ -171,7 +173,7 @@ export function Chatbox({
             duration: Infinity,
           }
         );
-        setFiles([])
+        setFiles([]);
       } else {
         await sendMessageImpl(m);
       }
@@ -425,7 +427,7 @@ export function Chatbox({
               rounded="lg"
             >
               <Files
-                files={files.map(file => ({ file, name: file.name }))}
+                files={files}
                 onCancelFile={onCancelFile}
               />
               <HStack w="full">
@@ -448,7 +450,18 @@ export function Chatbox({
                 />
                 <FileAttachment
                   onUpload={async (newFiles) => {
-                    setFiles((files) => [...files, ...newFiles]);
+                    setFiles((files) => [
+                      ...files,
+                      ...[...newFiles].map((file) => {
+                        const ret = {
+                          name: file.name,
+                          file,
+                        };
+                        randomizeFileName(file); // so no conflicts with gengo
+                        console.log(file.name)
+                        return ret;
+                      }),
+                    ]);
                   }}
                 />
                 <IconButton

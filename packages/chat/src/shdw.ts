@@ -207,7 +207,7 @@ export function randomizeFileName(file: File): void {
 
   Object.defineProperty(file, "name", {
     writable: true,
-    value: name + "." + ext,
+    value: name,
   });
 }
 
