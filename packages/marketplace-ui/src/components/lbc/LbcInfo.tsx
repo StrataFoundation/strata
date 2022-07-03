@@ -17,14 +17,15 @@ import {
   useColorModeValue,
   useDisclosure,
   useInterval,
-  VStack
+  VStack,
 } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
 import {
-  useCapInfo, useCurve,
+  useCapInfo,
+  useCurve,
   useSolanaUnixTime,
   useTokenBonding,
-  useTokenMetadata
+  useTokenMetadata,
 } from "@strata-foundation/react";
 import moment from "moment";
 import React, { useEffect, useState } from "react";
@@ -47,10 +48,6 @@ export const BlackBox = ({ children, ...other }: BoxProps) => {
     </Box>
   );
 };
-
-const DUMPSTER_KEY = new PublicKey(
-  "AafiUJDGrD44KcqMFrHzzReYpcXJMJnyDybyZxbw23MA"
-);
 
 export const BigText = ({ children, ...other }: TextProps) => {
   return (
@@ -92,7 +89,8 @@ export const LbcInfo = ({
   useEffect(() => {
     setElapsedTime(
       tokenBonding
-        ? (unixTime || (new Date().valueOf() / 1000)) - tokenBonding.goLiveUnixTime.toNumber()
+        ? (unixTime || new Date().valueOf() / 1000) -
+            tokenBonding.goLiveUnixTime.toNumber()
         : undefined
     );
   }, [unixTime]);
@@ -102,12 +100,13 @@ export const LbcInfo = ({
     (tokenBonding?.goLiveUnixTime.toNumber() || 0) + (maxTime || 0)
   );
 
-  const isLive = (tokenBonding && unixTime) ? tokenBonding.goLiveUnixTime.toNumber() < unixTime : false;
+  const isLive =
+    tokenBonding && unixTime
+      ? tokenBonding.goLiveUnixTime.toNumber() < unixTime
+      : false;
 
   const { metadata } = useTokenMetadata(tokenBonding?.baseMint);
   const { metadata: targetMeta } = useTokenMetadata(tokenBonding?.targetMint);
-
-  const pitThePanda = tokenBondingKey.equals(DUMPSTER_KEY);
 
   const renderer = ({
     days,
@@ -206,26 +205,20 @@ export const LbcInfo = ({
                 <Spinner />
               ) : (
                 <BigText>
-                  {numRemaining
-                    ? pitThePanda
-                      ? "Pit says not to tell you"
-                      : numberWithCommas(numRemaining, 4)
-                    : "0"}{" "}
-                  {!pitThePanda && targetMeta?.data.symbol}
+                  {numRemaining ? numberWithCommas(numRemaining, 4) : "0"}{" "}
+                  {targetMeta?.data.symbol}
                 </BigText>
               )}
-              {!pitThePanda && (
-                <Progress
-                  w="88%"
-                  size="xs"
-                  h="2px"
-                  position="absolute"
-                  bottom="8px"
-                  colorScheme="primary"
-                  background="rgba(196, 196, 196, 0.4)"
-                  value={((numRemaining || 0) / (mintCap || 0)) * 100}
-                />
-              )}
+              <Progress
+                w="88%"
+                size="xs"
+                h="2px"
+                position="absolute"
+                bottom="8px"
+                colorScheme="primary"
+                background="rgba(196, 196, 196, 0.4)"
+                value={((numRemaining || 0) / (mintCap || 0)) * 100}
+              />
             </VStack>
           </BlackBox>
         </Stack>
