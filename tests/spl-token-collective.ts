@@ -18,6 +18,7 @@ import {
   SplTokenMetadata,
   percent,
   createMint,
+  createAtaAndMint,
 } from "@strata-foundation/spl-utils";
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
@@ -222,7 +223,7 @@ describe("spl-token-collective", () => {
       const tokenBonding = (await splTokenBondingProgram.getTokenBonding(
         ownerTokenRef.tokenBonding!
       ))!;
-      await tokenUtils.createAtaAndMint(provider, wumMint, 2000000);
+      await createAtaAndMint(provider, wumMint, 2000000);
       await splTokenBondingProgram.buy({
         tokenBonding: ownerTokenRef.tokenBonding!,
         desiredTargetAmount: new BN(100_000000000),

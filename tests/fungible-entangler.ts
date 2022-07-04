@@ -2,7 +2,7 @@ import * as anchor from "@project-serum/anchor";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
-import { createMint } from "@strata-foundation/spl-utils";
+import { createMint, createAtaAndMint } from "@strata-foundation/spl-utils";
 import {
   FungibleEntangler,
   IFungibleParentEntangler,
@@ -27,7 +27,7 @@ describe("fungible-entangler", () => {
   it("allows creation of a parent entangler", async () => {
     const dynamicSeed = Keypair.generate().publicKey;
     const parentMint = await createMint(provider, me, 0);
-    await tokenUtils.createAtaAndMint(provider, parentMint, 100);
+    await createAtaAndMint(provider, parentMint, 100);
 
     const { entangler: parentEntanglerOut } =
       await fungibleEntanglerProgram.createFungibleParentEntangler({
@@ -51,7 +51,7 @@ describe("fungible-entangler", () => {
     const dynamicSeed = Keypair.generate().publicKey;
     const parentMint = await createMint(provider, me, 0);
     const childMint = await createMint(provider, me);
-    await tokenUtils.createAtaAndMint(provider, parentMint, 100);
+    await createAtaAndMint(provider, parentMint, 100);
 
     const { entangler: parentEntanglerOut } =
       await fungibleEntanglerProgram.createFungibleParentEntangler({
@@ -81,7 +81,7 @@ describe("fungible-entangler", () => {
     const dynamicSeed = Keypair.generate().publicKey;
     const parentMint = await createMint(provider, me, 0);
     const childMint = await createMint(provider, me, 0);
-    await tokenUtils.createAtaAndMint(provider, parentMint, 100);
+    await createAtaAndMint(provider, parentMint, 100);
 
     const {
       parentEntangler: parentEntanglerOut,
@@ -121,8 +121,8 @@ describe("fungible-entangler", () => {
       const dynamicSeed = Keypair.generate().publicKey;
       parentMint = await createMint(provider, me, 0);
       childMint = await createMint(provider, me, 0);
-      await tokenUtils.createAtaAndMint(provider, parentMint, 100);
-      await tokenUtils.createAtaAndMint(provider, childMint, 50);
+      await createAtaAndMint(provider, parentMint, 100);
+      await createAtaAndMint(provider, childMint, 50);
 
       const {
         parentEntangler: parentEntanglerOut,
@@ -202,8 +202,8 @@ describe("fungible-entangler", () => {
       const dynamicSeed = Keypair.generate().publicKey;
       parentMint = await createMint(provider, me, 0);
       childMint = await createMint(provider, me, 0);
-      await tokenUtils.createAtaAndMint(provider, parentMint, 100);
-      await tokenUtils.createAtaAndMint(provider, childMint, 50);
+      await createAtaAndMint(provider, parentMint, 100);
+      await createAtaAndMint(provider, childMint, 50);
 
       const {
         parentEntangler: parentEntanglerOut,
@@ -286,8 +286,8 @@ describe("fungible-entangler", () => {
       const dynamicSeed = Keypair.generate().publicKey;
       parentMint = await createMint(provider, me, 0);
       childMint = await createMint(provider, me, 0);
-      await tokenUtils.createAtaAndMint(provider, parentMint, 100);
-      await tokenUtils.createAtaAndMint(provider, childMint, 100);
+      await createAtaAndMint(provider, parentMint, 100);
+      await createAtaAndMint(provider, childMint, 100);
 
       const {
         parentEntangler: parentEntanglerOut,

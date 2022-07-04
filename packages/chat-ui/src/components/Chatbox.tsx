@@ -44,6 +44,7 @@ import {
   useWalletProfile,
   useAnalyticsEventTracker,
 } from "../hooks";
+import { useReply } from "../contexts/reply";
 import { BuyMoreButton } from "./BuyMoreButton";
 import { ChatInput } from "./ChatInput";
 import { FileAttachment } from "./FileAttachment";
@@ -59,6 +60,7 @@ import { useChatOwnedAmount } from "../hooks/useChatOwnedAmount";
 import { useEmojiSearch } from "../hooks/useEmojiSearch";
 import { Files } from "./Files";
 import { ReplyBar } from "./ReplyBar";
+import { useAsyncCallback } from "react-async-hook";
 
 const converter = new Converter({
   simpleLineBreaks: true,
@@ -145,11 +147,13 @@ export function Chatbox({
     },
   });
 
-  const sendMessage = async (m: ISendMessageContent) => {
+  const { replyToMessageId, hideReply } = useReply();
+  const { execute: sendMessage } = useAsyncCallback(async (m: ISendMessageContent) => {
     setInput("");
     resetEmoji();
     setLoading(true);
     try {
+      if (replyToMessageId) m.replyToMessageId = replyToMessageId
       // Show toast if uploading files
       if (m.fileAttachments && m.fileAttachments.length > 0) {
         const text = `Uploading ${m.fileAttachments.map(
@@ -180,6 +184,7 @@ export function Chatbox({
         setFiles([]);
       } else {
         await sendMessageImpl(m);
+        hideReply();
       }
     } finally {
       setLoading(false);
@@ -187,7 +192,7 @@ export function Chatbox({
     gaEventTracker({
       action: "Send Message",
     });
-  };
+  })
 
   const handleChange = async (e: React.FormEvent<HTMLTextAreaElement>) => {
     const content = e.currentTarget.value;

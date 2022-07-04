@@ -5,7 +5,7 @@ import ChaiAsPromised from "chai-as-promised";
 import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
 import { ExponentialCurveConfig, SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import { TokenUtils } from "./utils/token";
-import { createMint, SplTokenMetadata } from "@strata-foundation/spl-utils";
+import { createMint, SplTokenMetadata, createAtaAndMint } from "@strata-foundation/spl-utils";
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
 import { NATIVE_MINT } from "@solana/spl-token";
 import { waitForUnixTime } from "./utils/clock";
@@ -138,7 +138,7 @@ describe("marketplace-sdk", () => {
       })
     })
     const mint = await createMint(provider, me, 0);
-    await tokenUtils.createAtaAndMint(provider, mint, 50);
+    await createAtaAndMint(provider, mint, 50);
     const { offer, retrieval } = await marketplaceSdk.createTokenBondingForSetSupply({
       fixedCurve: curve,
       curve,
