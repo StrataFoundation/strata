@@ -58,6 +58,7 @@ import { LoadWalletModal } from "./LoadWalletModal";
 import { useChatOwnedAmount } from "../hooks/useChatOwnedAmount";
 import { useEmojiSearch } from "../hooks/useEmojiSearch";
 import { Files } from "./Files";
+import { ReplyBar } from "./ReplyBar";
 
 const converter = new Converter({
   simpleLineBreaks: true,
@@ -431,6 +432,7 @@ export function Chatbox({
                 files={files}
                 onCancelFile={onCancelFile}
               />
+              <ReplyBar />
               <HStack w="full">
                 <ChatInput
                   inputRef={inputRef}

@@ -33,10 +33,10 @@ import {
 } from "@strata-foundation/react";
 import { humanReadable, toNumber } from "@strata-foundation/spl-utils";
 import moment from "moment";
-import React, { useMemo } from "react";
+import React, { useMemo, useCallback } from "react";
 import { useAsync } from "react-async-hook";
 import { BsCheckCircleFill, BsCircle } from "react-icons/bs";
-import { MdOutlineAddReaction } from "react-icons/md";
+import { MdOutlineAddReaction, MdReply } from "react-icons/md";
 import sanitizeHtml from "sanitize-html";
 import { GIPHY_API_KEY } from "../constants";
 import {
@@ -52,7 +52,7 @@ import {
 } from "../hooks";
 import { BuyMoreButton } from "./BuyMoreButton";
 import { PublicKey } from "@solana/web3.js";
-import { useEmojis } from "../contexts";
+import { useEmojis, useReply } from "../contexts";
 import { Files } from "./Files";
 import { TokenFlare } from "./TokenFlare";
 
@@ -113,6 +113,7 @@ export function Message({
 }) {
   const { publicKey } = useWallet();
   const { referenceMessageId, showPicker } = useEmojis();
+  const { replyToMessageId, showReply } = useReply();
   const { info: profile } = useProfile(profileKey);
   const { username } = useUsernameFromIdentifierCertificate(
     profile?.identifierCertificateMint
@@ -164,7 +165,13 @@ export function Message({
   });
   handleErrors(error, decodeError, reactError);
 
-  const handleOnReaction = () => showPicker(messageId);
+  const handleOnReaction = useCallback(() => {
+    showPicker(messageId);
+  }, [showPicker, messageId]);
+
+  const handleOnReply = useCallback(() => {
+    showReply(messageId);
+  }, [showReply, messageId]);
 
   // LEGACY: If this is a reaction before message types were stored on the top level instead of json
   if (message?.type === MessageType.React) {
@@ -175,7 +182,7 @@ export function Message({
     <Box
       position="relative"
       _hover={{ bg: highlightedBg }}
-      bg={messageId === referenceMessageId ? highlightedBg : "initial"}
+      bg={messageId === referenceMessageId || messageId === replyToMessageId ? highlightedBg : "initial"}
     >
       <Popover matchWidth trigger="hover" placement="top-end" isLazy>
         <PopoverContent w="full" bg="transparent" border="none">
@@ -202,6 +209,22 @@ export function Message({
                   },
                 }}
                 onClick={handleOnReaction}
+              />
+              <IconButton
+                icon={<Icon as={MdReply} />}
+                w="32px"
+                h="32px"
+                variant="outline"
+                size="lg"
+                aria-label="Reply"
+                bg="white"
+                _dark={{
+                  bg: "gray.900",
+                  _hover: {
+                    bg: highlightedBg,
+                  },
+                }}
+                onClick={handleOnReply}
               />
             </Flex>
           </PopoverBody>
