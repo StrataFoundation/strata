@@ -148,6 +148,10 @@ export function Chatbox({
   });
 
   const { replyToMessageId, hideReply } = useReply();
+  useEffect(() => {
+    if (replyToMessageId) inputRef.current?.focus();
+  }, [replyToMessageId])
+  
   const { execute: sendMessage } = useAsyncCallback(async (m: ISendMessageContent) => {
     setInput("");
     resetEmoji();
