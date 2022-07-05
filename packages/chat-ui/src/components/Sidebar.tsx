@@ -22,10 +22,11 @@ export const Sidebar = (props: any) => {
   const { info: chat } = useChat(chatKey);
   
   useEffect(() => {
-    if (chat && id) {
+    if (chat && id && chats.indexOf(id as string) === -1) {
       setChats([...new Set([...chats, id as string])]);
     }
-  }, [chat, id]);
+  }, [chats, chat, id]);
+
 
   return (
     <Box

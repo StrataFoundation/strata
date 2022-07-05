@@ -11,13 +11,17 @@ import {
   TorusWalletAdapter,
   ExodusWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useEndpoint } from "@strata-foundation/react";
 
 export const getToken = async () => {
   const req = await fetch("/api/get-token");
   const { access_token }: { access_token: string } = await req.json();
   return access_token;
+};
+
+const config: any = {
+  commitment: "confirmed",
 };
 
 export const Wallet = ({
@@ -49,9 +53,7 @@ export const Wallet = ({
   return (
     <ConnectionProvider
       endpoint={cluster || endpoint}
-      config={{
-        commitment: "confirmed",
-      }}
+      config={config}
     >
       <WalletProvider wallets={wallets} autoConnect>
         {children}

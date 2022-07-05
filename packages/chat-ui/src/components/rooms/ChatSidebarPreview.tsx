@@ -30,7 +30,7 @@ export function ChatSidebarPreview({ identifier }: chatRoomProps) {
 
   //push to url for specific chat
   const handleClick = () => {
-    router.push(route(routes.chat, { id: identifier }));
+    router.push(route(routes.chat, { id: identifier }), undefined, { shallow: true });
   };
 
   return (
