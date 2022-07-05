@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDisclosure, Flex } from "@chakra-ui/react";
-import { useErrorHandler } from "@strata-foundation/react";
+import { getClusterAndEndpoint, useErrorHandler } from "@strata-foundation/react";
 import { useRouter } from "next/router";
 import { Chatbox } from "@/components/Chatbox";
 import { ChatMessages } from "@/components/ChatMessages";
@@ -13,8 +13,106 @@ import { EmojiPickerPopover } from "@/components/EmojiPicker";
 import { useChatKeyFromIdentifier } from "@/hooks/useChatKeyFromIdentifier";
 import { IMessageWithPending, useMessages } from "@/hooks/useMessages";
 import { useAsyncCallback } from "react-async-hook";
+import {
+  GetServerSideProps,
+  InferGetServerSidePropsType,
+  NextPage,
+} from "next";
+import { ApolloClient, gql, InMemoryCache } from "@apollo/client";
+import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
+import { ChatSdk, ChatIDLJson, ChatIDL } from "@strata-foundation/chat";
+import { Connection, Keypair, PublicKey } from "@solana/web3.js";
+import { AnchorProvider, Program } from "@project-serum/anchor";
+import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
+// @ts-ignore
+import LitNodeJsSdk from "lit-js-sdk/build/index.node.js";
+import { NAMESPACES_IDL, NAMESPACES_PROGRAM, NAMESPACES_PROGRAM_ID } from "@cardinal/namespaces";
+import { NextSeo } from "next-seo";
 
-export default function Chatroom() {
+const SOLANA_URL =
+  process.env.NEXT_PUBLIC_SOLANA_URL || "https://ssc-dao.genesysgo.net/";
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const { endpoint } = getClusterAndEndpoint(
+    (context.query.cluster || SOLANA_URL) as string
+  );
+  const connection = new Connection(endpoint, {});
+  const provider = new AnchorProvider(
+    connection,
+    new NodeWallet(Keypair.generate()),
+    {}
+  );
+  const apollo = new ApolloClient({
+    uri: "https://graph.holaplex.com/v1",
+    cache: new InMemoryCache(),
+  });
+
+
+  const chat = new Program<ChatIDL>(
+    ChatIDLJson as ChatIDL,
+    ChatSdk.ID,
+    provider
+  ) as Program<ChatIDL>;
+ const client = new LitNodeJsSdk.LitNodeClient({
+    debug: false,
+    alerts: false
+  });  
+  const namespacesProgram = new Program<NAMESPACES_PROGRAM>(
+    NAMESPACES_IDL,
+    NAMESPACES_PROGRAM_ID,
+    provider
+  );
+  const chatSdk = new ChatSdk({
+    provider,
+    program: chat,
+    litClient: client,
+    namespacesProgram,
+  });
+
+  const entryKey = (
+    await ChatSdk.entryKey(
+      new PublicKey("36u2NChTRLo53UrfEFMV6Pgug6YKbKAmw3M4Mi1JfFdn"),
+      context.params?.id as string
+    )
+  )[0];
+  const entryAcc = (await connection.getAccountInfo(entryKey))!;
+  const entry = await chatSdk.entryDecoder(entryKey, entryAcc);
+
+  const address = (
+    await Metadata.getPDA(entry.mint)
+  ).toBase58();
+  const result = await apollo.query<{
+    nft: { name: string; description: string; image: string };
+  }>({
+    query: gql`
+      query GetUrl($address: String!) {
+        nft(address: $address) {
+          name
+          description
+          image
+        }
+      }
+    `,
+    variables: {
+      address,
+    },
+  });
+
+  const { name, description, image } = result.data?.nft || {};
+
+  return {
+    props: {
+      name: name || null,
+      description: description || null,
+      image: image || null,
+    },
+  };
+};
+
+export default function Chatroom({
+  name,
+  image,
+}: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const sidebar = useDisclosure();
   const router = useRouter();
   const { id } = router.query;
@@ -24,13 +122,20 @@ export default function Chatroom() {
     []
   );
 
-  const { messages, error, loadingInitial, loadingMore, hasMore, fetchMore, fetchNew } =
-    useMessages(chatKey, true, 25);
+  const {
+    messages,
+    error,
+    loadingInitial,
+    loadingMore,
+    hasMore,
+    fetchMore,
+    fetchNew,
+  } = useMessages(chatKey, true, 25);
 
   const { handleErrors } = useErrorHandler();
   handleErrors(error);
 
-  const { execute: onFocus } = useAsyncCallback(async function() {
+  const { execute: onFocus } = useAsyncCallback(async function () {
     let oldCount = messages!.length;
     while (true) {
       await fetchNew(50);
@@ -78,6 +183,22 @@ export default function Chatroom() {
       onSidebarClose={sidebar.onClose}
       onSidebarOpen={sidebar.onOpen}
     >
+      <NextSeo
+        title={name}
+        description={`${name} - A decentralized chatroom powered by Strata Protocol on Solana`}
+        openGraph={{
+          url: `chat.strataprotocol.com/c/${id as string}`,
+          title: name,
+          description: `${name} - A decentralized chatroom powered by Strata Protocol on Solana`,
+          images: [{ url: image }],
+          site_name: "StrataChat",
+        }}
+        twitter={{
+          handle: "@StrataProtocol",
+          site: "http://chat.strataprotocol.com",
+          cardType: "summary",
+        }}
+      />
       <LegacyWalletMigrationModal />
       <Header onSidebarOpen={sidebar.onOpen}>
         <RoomsHeader chatKey={chatKey} />
