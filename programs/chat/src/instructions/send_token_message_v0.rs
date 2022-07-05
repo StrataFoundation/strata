@@ -108,7 +108,9 @@ pub fn handler(ctx: Context<SendTokenMessageV0>, _args: MessagePartV0) -> Result
     let rm_acc_length = &ctx.remaining_accounts.len();
     let delegate_acc = &ctx.remaining_accounts[rm_acc_length - 1]; // delegate wallet is always the last optional account
     let delegate: Account<DelegateWalletV0> = Account::try_from(delegate_acc)?;
-    if delegate.delegate_wallet != ctx.accounts.signer.key() || delegate.owner_wallet != ctx.accounts.sender.key() {
+    if delegate.delegate_wallet != ctx.accounts.signer.key()
+      || delegate.owner_wallet != ctx.accounts.sender.key()
+    {
       return Err(error!(ErrorCode::IncorrectSender));
     }
   } else {
