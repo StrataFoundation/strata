@@ -4,10 +4,18 @@ import {
   Button,
   HStack,
   Icon,
-  IconButton, Popover, PopoverArrow,
-  PopoverBody, PopoverContent, PopoverTrigger, Skeleton,
-  Text, TextProps, Tooltip, useColorModeValue,
-  VStack
+  IconButton,
+  Popover,
+  PopoverArrow,
+  PopoverBody,
+  PopoverContent,
+  PopoverTrigger,
+  Skeleton,
+  Text,
+  TextProps,
+  Tooltip,
+  useColorModeValue,
+  VStack,
 } from "@chakra-ui/react";
 import { GiphyFetch } from "@giphy/js-fetch-api";
 import { Gif } from "@giphy/react-components";
@@ -16,8 +24,11 @@ import { PublicKey } from "@solana/web3.js";
 import { MessageType } from "@strata-foundation/chat";
 import {
   truncatePubkey,
-  truthy, useEndpoint, useErrorHandler,
-  useMint, useTokenMetadata
+  truthy,
+  useEndpoint,
+  useErrorHandler,
+  useMint,
+  useTokenMetadata,
 } from "@strata-foundation/react";
 import { humanReadable, toNumber } from "@strata-foundation/spl-utils";
 import moment from "moment";
@@ -32,9 +43,10 @@ import {
   IMessageWithPendingAndReacts,
   useChat,
   useChatOwnedAmount,
-  useInflatedReacts, useSendMessage,
+  useInflatedReacts,
+  useSendMessage,
   useUsernameFromIdentifierCertificate,
-  useWalletProfile
+  useWalletProfile,
 } from "../hooks";
 import { BuyMoreButton } from "./BuyMoreButton";
 import { Files } from "./Files";
@@ -105,7 +117,11 @@ export function Message({
     profile?.identifierCertificateMint,
     profile?.ownerWallet
   );
-  const name = useMemo(() => username || (profile?.ownerWallet && truncatePubkey(profile.ownerWallet)), [username, profile?.ownerWallet.toBase58()];
+  const name = useMemo(
+    () =>
+      username || (profile?.ownerWallet && truncatePubkey(profile.ownerWallet)),
+    [username, profile?.ownerWallet.toBase58()]
+  );
 
   const getDecodedMessageOrIdentity =
     getDecodedMessage || (() => Promise.resolve(undefined));
@@ -132,15 +148,21 @@ export function Message({
     readPermissionAmount &&
     humanReadable(readPermissionAmount, mintAcc);
 
-  const { amount: ownedAmount } = useChatOwnedAmount(publicKey || undefined, chatKey);
+  const { amount: ownedAmount } = useChatOwnedAmount(
+    publicKey || undefined,
+    chatKey
+  );
 
   const status = pending ? "Pending" : "Confirmed";
   const lockedColor = useColorModeValue("gray.400", "gray.600");
   const highlightedBg = useColorModeValue("gray.200", "gray.800");
-  const files = useMemo(() => [
-    ...(message?.attachments || []),
-    ...(message?.decryptedAttachments || []),
-  ], [message]);
+  const files = useMemo(
+    () => [
+      ...(message?.attachments || []),
+      ...(message?.decryptedAttachments || []),
+    ],
+    [message]
+  );
 
   const {
     reacts: inflatedReacts,
@@ -362,9 +384,7 @@ export function Message({
                               .slice(0, MAX_MENTIONS_DISPLAY)
                               .map((message, index) => (
                                 <HStack key={message.id} spacing={0}>
-                                  <ProfileName
-                                    sender={message.sender}
-                                  />
+                                  <ProfileName sender={message.sender} />
                                   {messages.length - 1 != index && (
                                     <Text>, </Text>
                                   )}
