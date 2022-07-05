@@ -18,7 +18,7 @@
     "typecheck": "tsc",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
     "precommit": "git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' .",
-    "vercel-install": "pushd ../../ && yarn install && npx lerna run build --ignore @strata-foundation/site --ignore @strata-foundation/marketplace-ui --ignore @strata-foundation/docs && npx lerna run build-lib --scope @strata-foundation/marketplace-ui && popd"
+    "vercel-install": "pushd ../../ && yarn install && npx lerna run build --ignore @strata-foundation/chat-ui --ignore @strata-foundation/site --ignore @strata-foundation/marketplace-ui --ignore @strata-foundation/docs && npx lerna run build-lib --scope @strata-foundation/marketplace-ui && popd"
   },
   "dependencies": {
     "@akebifiky/remark-simple-plantuml": "^1.0.2",
