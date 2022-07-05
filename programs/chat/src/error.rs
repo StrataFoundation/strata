@@ -15,5 +15,5 @@ pub enum ErrorCode {
   IncorrectSender,
 
   #[msg("The permission type was invalid")]
-  InvalidPermissionType
+  InvalidPermissionType,
 }

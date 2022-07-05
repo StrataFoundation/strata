@@ -15,4 +15,3 @@ pub use initialize_namespaces_v0::*;
 pub use initialize_profile_v0::*;
 pub use initialize_settings_v0::*;
 pub use send_message::*;
-

@@ -28,9 +28,9 @@ export function useChatOwnedAmount(wallet: PublicKey | undefined, chatKey?: Publ
 
   return {
     amount:
-      Object.keys(chat?.readPermissionType || {})[0] == "token"
-        ? ownedAmountToken
-        : ownedAmountNft,
+      Object.keys(chat?.readPermissionType || {})[0] == "nft"
+        ? ownedAmountNft
+        : ownedAmountToken,
     loading: loading,
   };
 }

@@ -1,6 +1,6 @@
 use crate::error::ErrorCode;
-use crate::state::*;
 use crate::instructions::send_message::message::*;
+use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 use mpl_token_metadata::state::Metadata;
@@ -75,13 +75,15 @@ pub fn handler(ctx: Context<SendTokenMessageV0>, _args: MessagePartV0) -> Result
   let has_delegate = match ctx.accounts.chat.post_permission_type {
     PermissionType::Token => rm_acc_length == 1,
     PermissionType::NFT => rm_acc_length == 2,
-    _ => return Err(error!(ErrorCode::InvalidPermissionType))
+    _ => return Err(error!(ErrorCode::InvalidPermissionType)),
   };
   if has_delegate {
     let rm_acc_length = &ctx.remaining_accounts.len();
     let delegate_acc = &ctx.remaining_accounts[rm_acc_length - 1]; // delegate wallet is always the last optional account
     let delegate: Account<DelegateWalletV0> = Account::try_from(delegate_acc)?;
-    if delegate.delegate_wallet != ctx.accounts.signer.key() || delegate.owner_wallet != ctx.accounts.sender.key() {
+    if delegate.delegate_wallet != ctx.accounts.signer.key()
+      || delegate.owner_wallet != ctx.accounts.sender.key()
+    {
       return Err(error!(ErrorCode::IncorrectSender));
     }
   } else {
