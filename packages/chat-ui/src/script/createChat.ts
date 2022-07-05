@@ -46,8 +46,10 @@ async function run(): Promise<void> {
     readPermissionKey: new PublicKey(args[4]),
     postPermissionKey: new PublicKey(args[4]),
     imageUrl: args[5],
-    readPermissionType: PermissionType.Token,
-    postPermissionType: PermissionType.Token,
+    readPermissionType: PermissionType.Native,
+    postPermissionType: PermissionType.Native,
+    defaultReadPermissionAmount: 0.1,
+    postPermissionAmount: 0.1,
   });
 }
 
