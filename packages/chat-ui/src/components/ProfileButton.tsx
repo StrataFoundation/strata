@@ -32,6 +32,10 @@ export const ProfileButton: FC<ButtonProps> = ({
   ...props
 }) => {
   const { disconnect, connected, publicKey } = useWallet();
+  const disconnectAndClear = useCallback(() => {
+    disconnect();
+    localStorage.removeItem("lit-auth-sol-signature");
+  }, [disconnect])
   const { visible, setVisible } = useWalletModal();
   const {
     info: profile,
@@ -89,11 +93,7 @@ export const ProfileButton: FC<ButtonProps> = ({
           <Icon m={1} w="16px" h="16px" as={BsFillPersonFill} />
         )}
         <Text m={1}>
-          {connected
-            ? profile
-              ? username
-              : "Create Profile"
-            : children}
+          {connected ? (profile ? username : "Create Profile") : children}
         </Text>
       </Button>
       <Menu isLazy>
@@ -139,7 +139,7 @@ export const ProfileButton: FC<ButtonProps> = ({
           </MenuOptionGroup>
           <MenuDivider />
           <MenuItem
-            onClick={disconnect}
+            onClick={disconnectAndClear}
             _focus={{ backgroundColor: "primary.300" }}
             _hover={{ backgroundColor: "primary.500" }}
           >
