@@ -197,7 +197,7 @@ export interface GifyMessage {
 
 export interface IMessageContent extends Partial<ReactMessage>, Partial<TextMessage>, Partial<HtmlMessage>, Partial<ImageMessage>, Partial<GifyMessage> {
   type: MessageType;
-  replyToMessageId?: string;
+  referenceMessageId?: string;
 }
 
 export interface IDecryptedMessageContent extends IMessageContent {
@@ -249,7 +249,6 @@ export interface IMessage {
   endBlockTime: number;
   readPermissionAmount: BN;
   referenceMessageId: string | null;
-  replyToMessageId: string | null;
 
   encryptedSymmetricKey: string;
 
@@ -692,7 +691,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       chatKey,
       encryptedSymmetricKey,
       referenceMessageId,
-      replyToMessageId,
       ...rest
     } = parts[0];
 
@@ -700,7 +698,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     return {
       ...rest,
       referenceMessageId,
-      replyToMessageId,
       type: messageType && (Object.keys(messageType as any)[0] as MessageType),
       encryptedSymmetricKey,
       startBlockTime: parts[0].blockTime,
@@ -1535,7 +1532,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     encrypted = true,
     nftMint,
   }: SendMessageArgs): Promise<BigInstructionResult<{ messageId: string }>> {
-    const { referenceMessageId, replyToMessageId, type, ...message } = rawMessage;
+    const { referenceMessageId, type, ...message } = rawMessage;
     if (encrypted) {
       await this.authingLit;
       if (!this.isLitAuthed && this.wallet && this.wallet.publicKey) {
@@ -1747,7 +1744,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
               capitalizeFirstLetter(type)
             ] as never,
             referenceMessageId: referenceMessageId || null,
-            replyToMessageId: replyToMessageId || null,
           },
           {
             accounts: {

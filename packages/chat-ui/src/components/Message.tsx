@@ -1,59 +1,41 @@
-import { BsLockFill } from "react-icons/bs";
 import {
   Avatar,
   Box,
-  Button,
-  HStack,
+  Button, ButtonGroup, HStack,
   Icon,
-  IconButton,
-  Image,
-  TextProps,
-  Skeleton,
-  Text,
-  useColorModeValue,
-  VStack,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  Tooltip,
-  PopoverArrow,
-  PopoverBody,
+  IconButton, Popover, PopoverArrow,
+  PopoverBody, PopoverContent, PopoverTrigger, Skeleton,
+  Text, TextProps, Tooltip, useColorModeValue,
+  VStack
 } from "@chakra-ui/react";
 import { GiphyFetch } from "@giphy/js-fetch-api";
 import { Gif } from "@giphy/react-components";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { MessageType, IMessage } from "@strata-foundation/chat";
+import { PublicKey } from "@solana/web3.js";
+import { MessageType } from "@strata-foundation/chat";
 import {
-  useErrorHandler,
-  useMint,
-  useEndpoint,
-  truthy,
-  useTokenMetadata,
+  truthy, useEndpoint, useErrorHandler,
+  useMint, useTokenMetadata
 } from "@strata-foundation/react";
 import { humanReadable, toNumber } from "@strata-foundation/spl-utils";
 import moment from "moment";
-import React, { useMemo, useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import { useAsync } from "react-async-hook";
-import { BsCheckCircleFill, BsCircle } from "react-icons/bs";
+import { BsCheckCircleFill, BsCircle, BsLockFill } from "react-icons/bs";
 import { MdOutlineAddReaction, MdReply } from "react-icons/md";
 import sanitizeHtml from "sanitize-html";
 import { GIPHY_API_KEY } from "../constants";
+import { useEmojis, useReply } from "../contexts";
 import {
-  IMessageWithPending,
   IMessageWithPendingAndReacts,
   useChat,
   useChatOwnedAmount,
   useInflatedReacts,
-  useProfile,
-  useProfileKey,
-  useSendMessage,
-  useUsernameFromIdentifierCertificate,
-  useMessages,
+  useProfile, useSendMessage,
+  useUsernameFromIdentifierCertificate
 } from "../hooks";
+import { DisplayReply, Files, Flex, TokenFlare } from "./";
 import { BuyMoreButton } from "./BuyMoreButton";
-import { PublicKey } from "@solana/web3.js";
-import { useEmojis, useReply } from "../contexts";
-import { TokenFlare, DisplayReply, Files, Flex } from "./";
 
 const gf = new GiphyFetch(GIPHY_API_KEY);
 
@@ -100,35 +82,27 @@ export function Message({
   chatKey,
   txids,
   startBlockTime,
-  replyToMessageId,
   htmlAllowlist = defaultOptions,
   reacts,
   type: messageType,
   showUser = true,
   pending = false,
-  scrollRef,
-  messages,
+  reply,
+  scrollToMessage,
 }: Partial<IMessageWithPendingAndReacts> & {
   htmlAllowlist?: any;
   pending?: boolean;
   showUser: boolean;
-  scrollRef: any;
-  messages: IMessage[];
+  scrollToMessage: (id: string) => void;
 }) {
   const { publicKey } = useWallet();
-  const { referenceMessageId, showPicker } = useEmojis();
+  const { referenceMessageId: emojiReferenceMessageId, showPicker } =
+    useEmojis();
   const { replyToMessageId: currentlyReplyingToId, showReply } = useReply();
   const { info: profile } = useProfile(profileKey);
   const { username } = useUsernameFromIdentifierCertificate(
     profile?.identifierCertificateMint
   );
-  const getDecodedMessageOrIdentity =
-    getDecodedMessage || (() => Promise.resolve(undefined));
-  const {
-    result: message,
-    loading: decoding,
-    error: decodeError,
-  } = useAsync(getDecodedMessageOrIdentity, []);
   const { cluster } = useEndpoint();
   const { info: chat } = useChat(chatKey);
   const time = useMemo(() => {
@@ -147,15 +121,38 @@ export function Message({
     readPermissionAmount &&
     humanReadable(readPermissionAmount, mintAcc);
 
-  const { amount: ownedAmount } = useChatOwnedAmount(publicKey || undefined, chatKey);
+  const { amount: ownedAmount } = useChatOwnedAmount(
+    publicKey || undefined,
+    chatKey
+  );
+
+  const notEnoughTokens = useMemo(() => {
+    return (
+      readPermissionAmount &&
+      mintAcc &&
+      (ownedAmount || 0) < toNumber(readPermissionAmount, mintAcc)
+    );
+  }, [readPermissionAmount, mintAcc, ownedAmount]);
+
+  // Re decode if not enough tokens changes
+  const getDecodedMessageOrIdentity = (_: boolean) =>
+    getDecodedMessage ? getDecodedMessage() : Promise.resolve(undefined);
+  const {
+    result: message,
+    loading: decoding,
+    error: decodeError,
+  } = useAsync(getDecodedMessageOrIdentity, [notEnoughTokens]);
 
   const status = pending ? "Pending" : "Confirmed";
   const lockedColor = useColorModeValue("gray.400", "gray.600");
   const highlightedBg = useColorModeValue("gray.200", "gray.800");
-  const files = useMemo(() => [
-    ...(message?.attachments || []),
-    ...(message?.decryptedAttachments || []),
-  ], [message]);
+  const files = useMemo(
+    () => [
+      ...(message?.attachments || []),
+      ...(message?.decryptedAttachments || []),
+    ],
+    [message]
+  );
 
   const {
     reacts: inflatedReacts,
@@ -177,17 +174,79 @@ export function Message({
     showReply(messageId);
   }, [showReply, messageId]);
 
+  const bg = useMemo(
+    () =>
+      messageId === emojiReferenceMessageId ||
+      messageId === currentlyReplyingToId
+        ? highlightedBg
+        : "initial",
+    [highlightedBg, emojiReferenceMessageId, messageId, currentlyReplyingToId]
+  );
+  const hover = useMemo(() => ({ bg: highlightedBg }), [highlightedBg]);
+  const iconButtonDark = useMemo(
+    () => ({
+      bg: "gray.900",
+      _hover: {
+        bg: highlightedBg,
+      },
+    }),
+    [highlightedBg]
+  );
+  const textColor = useColorModeValue("black", "white");
+  const loadingSkeleton = useMemo(() => {
+    return (
+      <Skeleton startColor={lockedColor} height="20px">
+        {Array.from({ length: genLength(messageId || "") }, () => ".").join()}
+      </Skeleton>
+    );
+  }, [messageId, lockedColor]);
+
+  const buyMoreTrigger = useCallback(
+    (props) => {
+      return (
+        <Tooltip
+          label={`You need ${tokenAmount} ${metadata?.data.symbol} to read this message`}
+        >
+          <HStack
+            onClick={props.onClick}
+            spacing={2}
+            _hover={{ cursor: "pointer" }}
+          >
+            <Skeleton startColor={lockedColor} height="20px" speed={100000}>
+              {Array.from(
+                { length: genLength(messageId || "") },
+                () => "."
+              ).join()}
+            </Skeleton>
+            <Icon color={lockedColor} as={BsLockFill} />
+          </HStack>
+        </Tooltip>
+      );
+    },
+    [tokenAmount, metadata, lockedColor, messageId]
+  );
+
+  const tokens = useMemo(
+    () => [chat?.readPermissionKey, chat?.postPermissionKey].filter(truthy),
+    [
+      chat?.readPermissionKey,
+      chat?.postPermissionKey,
+    ]
+  );
+
+  const handleConfirmationClick = useCallback(() => {
+    txids?.forEach((tx) => {
+      window.open(`https://explorer.solana.com/tx/${tx}?cluster=${cluster}`);
+    });
+  }, [txids, cluster]);
+
   // LEGACY: If this is a reaction before message types were stored on the top level instead of json
   if (message?.type === MessageType.React) {
     return null;
   }
 
   return (
-    <Box
-      position="relative"
-      _hover={{ bg: highlightedBg }}
-      bg={messageId === referenceMessageId || messageId === currentlyReplyingToId ? highlightedBg : "initial"}
-    >
+    <Box position="relative" _hover={hover} bg={bg}>
       <Popover matchWidth trigger="hover" placement="top-end" isLazy>
         <PopoverContent w="full" bg="transparent" border="none">
           <PopoverBody>
@@ -198,38 +257,31 @@ export function Message({
               justifyContent="end"
               position="absolute"
             >
-              <IconButton
-                icon={<Icon as={MdOutlineAddReaction} />}
-                w="32px"
-                h="32px"
-                variant="outline"
-                size="lg"
-                aria-label="Add Reaction"
-                bg="white"
-                _dark={{
-                  bg: "gray.900",
-                  _hover: {
-                    bg: highlightedBg,
-                  },
-                }}
-                onClick={handleOnReaction}
-              />
-              <IconButton
-                icon={<Icon as={MdReply} />}
-                w="32px"
-                h="32px"
-                variant="outline"
-                size="lg"
-                aria-label="Reply"
-                bg="white"
-                _dark={{
-                  bg: "gray.900",
-                  _hover: {
-                    bg: highlightedBg,
-                  },
-                }}
-                onClick={handleOnReply}
-              />
+              <ButtonGroup size="lg" isAttached variant="outline">
+                <IconButton
+                  borderRight="none"
+                  icon={<Icon as={MdOutlineAddReaction} />}
+                  w="32px"
+                  h="32px"
+                  variant="outline"
+                  size="lg"
+                  aria-label="Add Reaction"
+                  bg="white"
+                  _dark={iconButtonDark}
+                  onClick={handleOnReaction}
+                />
+                <IconButton
+                  icon={<Icon as={MdReply} />}
+                  w="32px"
+                  h="32px"
+                  variant="outline"
+                  size="lg"
+                  aria-label="Reply"
+                  bg="white"
+                  _dark={iconButtonDark}
+                  onClick={handleOnReply}
+                />
+              </ButtonGroup>
             </Flex>
           </PopoverBody>
         </PopoverContent>
@@ -270,10 +322,7 @@ export function Message({
                   <TokenFlare
                     chat={chatKey}
                     wallet={profile?.ownerWallet}
-                    tokens={[
-                      chat?.readPermissionKey,
-                      chat?.postPermissionKey,
-                    ].filter(truthy)}
+                    tokens={tokens}
                   />
                 </HStack>
               )}
@@ -283,16 +332,16 @@ export function Message({
                 position="relative"
                 textAlign={"left"}
                 wordBreak="break-word"
-                color="black"
-                _dark={{ color: "white" }}
+                color={textColor}
                 id={messageId}
               >
-                <DisplayReply chatKey={chatKey} 
-                  replyToMessageId={replyToMessageId} 
-                  htmlAllowList={htmlAllowlist} 
-                  scrollRef={scrollRef}
-                  messages={messages}
-                />
+                {reply && (
+                  <DisplayReply
+                    reply={reply}
+                    htmlAllowList={htmlAllowlist}
+                    scrollToMessage={scrollToMessage}
+                  />
+                )}
                 {message ? (
                   messageType === MessageType.Gify ? (
                     <GifyGif gifyId={message.gifyId} />
@@ -313,44 +362,9 @@ export function Message({
                     </>
                   )
                 ) : decoding ? (
-                  <Skeleton startColor={lockedColor} height="20px">
-                    {Array.from(
-                      { length: genLength(messageId || "") },
-                      () => "."
-                    ).join()}
-                  </Skeleton>
-                ) : readPermissionAmount &&
-                  mintAcc &&
-                  (ownedAmount || 0) <
-                    toNumber(readPermissionAmount, mintAcc) ? (
-                  <BuyMoreButton
-                    mint={readMint}
-                    trigger={(props) => {
-                      return (
-                        <Tooltip
-                          label={`You need ${tokenAmount} ${metadata?.data.symbol} to read this message`}
-                        >
-                          <HStack
-                            onClick={props.onClick}
-                            spacing={2}
-                            _hover={{ cursor: "pointer" }}
-                          >
-                            <Skeleton
-                              startColor={lockedColor}
-                              height="20px"
-                              speed={100000}
-                            >
-                              {Array.from(
-                                { length: genLength(messageId || "") },
-                                () => "."
-                              ).join()}
-                            </Skeleton>
-                            <Icon color={lockedColor} as={BsLockFill} />
-                          </HStack>
-                        </Tooltip>
-                      );
-                    }}
-                  />
+                  loadingSkeleton
+                ) : notEnoughTokens ? (
+                  <BuyMoreButton mint={readMint} trigger={buyMoreTrigger} />
                 ) : (
                   <Tooltip label={`Failed to decode message`}>
                     <Skeleton
@@ -440,13 +454,7 @@ export function Message({
             </VStack>
             <Icon
               _hover={{ cursor: "pointer" }}
-              onClick={() => {
-                txids?.forEach((tx) => {
-                  window.open(
-                    `https://explorer.solana.com/tx/${tx}?cluster=${cluster}`
-                  );
-                });
-              }}
+              onClick={handleConfirmationClick}
               alignSelf="center"
               w="12px"
               h="12px"

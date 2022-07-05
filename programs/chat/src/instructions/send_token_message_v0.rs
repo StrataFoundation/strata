@@ -57,7 +57,6 @@ pub struct MessagePartV0 {
   pub condition_version: u8,
   pub message_type: MessageType,
   pub reference_message_id: Option<String>,
-  pub reply_to_message_id: Option<String>,
 }
 
 pub fn assert_valid_metadata(

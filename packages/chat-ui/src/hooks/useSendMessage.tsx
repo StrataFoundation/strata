@@ -113,7 +113,6 @@ async function sendMessage({
           parts: [],
           pending: true,
           referenceMessageId: content.referenceMessageId || null,
-          replyToMessageId: content.replyToMessageId || null,
         });
       }
 

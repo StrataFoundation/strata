@@ -156,8 +156,10 @@ export function Chatbox({
     setInput("");
     resetEmoji();
     setLoading(true);
+    hideReply();
+
     try {
-      if (replyToMessageId) m.replyToMessageId = replyToMessageId
+      if (replyToMessageId) m.referenceMessageId = replyToMessageId
       // Show toast if uploading files
       if (m.fileAttachments && m.fileAttachments.length > 0) {
         const text = `Uploading ${m.fileAttachments.map(
@@ -191,7 +193,6 @@ export function Chatbox({
       }
     } finally {
       setLoading(false);
-      hideReply();
     }
     gaEventTracker({
       action: "Send Message",

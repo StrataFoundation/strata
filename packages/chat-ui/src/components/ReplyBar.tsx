@@ -35,23 +35,6 @@ function ReplyBarWithProfile({ profileKey }: { profileKey: PublicKey | null | un
 export function ReplyBar() {
   const { replyToMessageId } = useReply();
 
-  const router = useRouter();
-  const { id } = router.query;
-  const { chatKey } = useChatKeyFromIdentifier(id as string | undefined);
-  const { messages, error } =
-    useMessages(chatKey, true, 25);
-
-  const { handleErrors } = useErrorHandler();
-  handleErrors(error);
-
-  const profileKey = useMemo(() => {
-    if (!messages || !replyToMessageId) return
-    for (let message of messages) {
-      if (message.id == replyToMessageId) {
-        return message.profileKey
-      }
-    }
-    return null;
-  }, [replyToMessageId, messages])
-  return <ReplyBarWithProfile profileKey={profileKey} />
+  return <div />
+  // return <ReplyBarWithProfile profileKey={profileKey} />
 }
