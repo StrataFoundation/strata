@@ -3,26 +3,39 @@ import {
   Box,
   Button, ButtonGroup, HStack,
   Icon,
-  IconButton, Popover, PopoverArrow,
-  PopoverBody, PopoverContent, PopoverTrigger, Skeleton,
-  Text, TextProps, Tooltip, useColorModeValue,
-  VStack
+  IconButton,
+  Popover,
+  PopoverArrow,
+  PopoverBody,
+  PopoverContent,
+  PopoverTrigger,
+  Skeleton,
+  Text,
+  TextProps,
+  Tooltip,
+  useColorModeValue,
+  VStack,
 } from "@chakra-ui/react";
+import { MdReply } from "react-icons/md";
 import { GiphyFetch } from "@giphy/js-fetch-api";
 import { Gif } from "@giphy/react-components";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { MessageType } from "@strata-foundation/chat";
 import {
-  truthy, useEndpoint, useErrorHandler,
-  useMint, useTokenMetadata
+  truncatePubkey,
+  truthy,
+  useEndpoint,
+  useErrorHandler,
+  useMint,
+  useTokenMetadata,
 } from "@strata-foundation/react";
 import { humanReadable, toNumber } from "@strata-foundation/spl-utils";
 import moment from "moment";
 import React, { useCallback, useMemo } from "react";
 import { useAsync } from "react-async-hook";
 import { BsCheckCircleFill, BsCircle, BsLockFill } from "react-icons/bs";
-import { MdOutlineAddReaction, MdReply } from "react-icons/md";
+import { MdOutlineAddReaction } from "react-icons/md";
 import sanitizeHtml from "sanitize-html";
 import { GIPHY_API_KEY } from "../constants";
 import { useEmojis, useReply } from "../contexts";
@@ -31,8 +44,9 @@ import {
   useChat,
   useChatOwnedAmount,
   useInflatedReacts,
-  useProfile, useSendMessage,
-  useUsernameFromIdentifierCertificate
+  useSendMessage,
+  useUsernameFromIdentifierCertificate,
+  useWalletProfile,
 } from "../hooks";
 import { DisplayReply, Files, Flex, TokenFlare } from "./";
 import { BuyMoreButton } from "./BuyMoreButton";
@@ -63,46 +77,55 @@ const defaultOptions = {
   },
 };
 
-function ProfileName({ profileKey }: { profileKey: PublicKey } & TextProps) {
-  const { info: profile } = useProfile(profileKey);
+function ProfileName({ sender }: { sender: PublicKey } & TextProps) {
+  const { info: profile } = useWalletProfile(sender);
   const { username } = useUsernameFromIdentifierCertificate(
-    profile?.identifierCertificateMint
+    profile?.identifierCertificateMint,
+    sender
   );
+  const name = username || (sender && truncatePubkey(sender));
 
-  return <Text>{username} </Text>;
+  return <Text>{name} </Text>;
 }
 
 const MAX_MENTIONS_DISPLAY = 3;
 
-export function Message({
-  id: messageId,
-  getDecodedMessage,
-  profileKey,
-  readPermissionAmount,
-  chatKey,
-  txids,
-  startBlockTime,
-  htmlAllowlist = defaultOptions,
-  reacts,
-  type: messageType,
-  showUser = true,
-  pending = false,
-  reply,
-  scrollToMessage,
-}: Partial<IMessageWithPendingAndReacts> & {
+export function Message(props: Partial<IMessageWithPendingAndReacts> & {
   htmlAllowlist?: any;
   pending?: boolean;
   showUser: boolean;
   scrollToMessage: (id: string) => void;
 }) {
+  const {
+    id: messageId,
+    getDecodedMessage,
+    sender,
+    readPermissionAmount,
+    chatKey,
+    txids,
+    startBlockTime,
+    htmlAllowlist = defaultOptions,
+    reacts,
+    type: messageType,
+    showUser = true,
+    pending = false,
+    reply,
+    scrollToMessage,
+  } = props;
+
   const { publicKey } = useWallet();
   const { referenceMessageId: emojiReferenceMessageId, showPicker } =
     useEmojis();
-  const { replyToMessageId: currentlyReplyingToId, showReply } = useReply();
-  const { info: profile } = useProfile(profileKey);
-  const { username } = useUsernameFromIdentifierCertificate(
-    profile?.identifierCertificateMint
+  const { info: profile } = useWalletProfile(sender);
+  const { username, loading: loadingUsername } = useUsernameFromIdentifierCertificate(
+    profile?.identifierCertificateMint,
+    sender
   );
+  const name = useMemo(
+    () => username || (sender && truncatePubkey(sender)),
+    [username, sender?.toBase58()]
+  );
+
   const { cluster } = useEndpoint();
   const { info: chat } = useChat(chatKey);
   const time = useMemo(() => {
@@ -170,17 +193,18 @@ export function Message({
     showPicker(messageId);
   }, [showPicker, messageId]);
 
+  const { showReply, replyMessage } = useReply();
+
   const handleOnReply = useCallback(() => {
-    showReply(messageId);
+    showReply(props);
   }, [showReply, messageId]);
 
   const bg = useMemo(
     () =>
-      messageId === emojiReferenceMessageId ||
-      messageId === currentlyReplyingToId
+      messageId === emojiReferenceMessageId || messageId === replyMessage?.id
         ? highlightedBg
         : "initial",
-    [highlightedBg, emojiReferenceMessageId, messageId, currentlyReplyingToId]
+    [highlightedBg, emojiReferenceMessageId, messageId, replyMessage?.id]
   );
   const hover = useMemo(() => ({ bg: highlightedBg }), [highlightedBg]);
   const iconButtonDark = useMemo(
@@ -310,8 +334,9 @@ export function Message({
                     color="green.500"
                     _dark={{ color: "green.200" }}
                   >
-                    {username}
+                    {name}
                   </Text>
+
                   <Text
                     fontSize="xs"
                     color="gray.500"
@@ -420,9 +445,7 @@ export function Message({
                               .slice(0, MAX_MENTIONS_DISPLAY)
                               .map((message, index) => (
                                 <HStack key={message.id} spacing={0}>
-                                  <ProfileName
-                                    profileKey={message.profileKey}
-                                  />
+                                  <ProfileName sender={message.sender} />
                                   {messages.length - 1 != index && (
                                     <Text>, </Text>
                                   )}

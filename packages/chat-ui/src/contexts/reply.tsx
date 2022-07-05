@@ -6,14 +6,15 @@ import React, {
   useState,
   useCallback,
 } from "react";
+import { IMessageWithPendingAndReacts } from "../hooks";
 
 export interface IReplyProviderProps {
   children: ReactNode;
 }
 
 export interface IReplyContextState {
-  replyToMessageId: string | undefined;
-  showReply: (messageId: string | undefined) => void;
+  replyMessage: Partial<IMessageWithPendingAndReacts> | undefined;
+  showReply: (reply: Partial<IMessageWithPendingAndReacts> | undefined) => void;
   hideReply: () => void;
 }
 
@@ -22,26 +23,26 @@ const ReplyContext = createContext<IReplyContextState>(
 );
 
 export const ReplyProvider: FC<IReplyProviderProps> = ({ children }) => {
-  const [replyToMessageId, setReplyToMessageId] = useState<
-    string | undefined
+  const [replyMessage, setReplyMessage] = useState<
+    Partial<IMessageWithPendingAndReacts> | undefined
   >();
 
   const hideReply = useCallback(
-    () => setReplyToMessageId(undefined),
-    [setReplyToMessageId]
+    () => setReplyMessage(undefined),
+    [setReplyMessage]
   );
 
   const showReply = useCallback(
-    (messageId: string | undefined) => {
-      setReplyToMessageId(messageId);
+    (reply: Partial<IMessageWithPendingAndReacts> | undefined) => {
+      setReplyMessage(reply);
     },
-    [setReplyToMessageId]
+    [setReplyMessage]
   );
 
   return (
     <ReplyContext.Provider
       value={{
-        replyToMessageId,
+        replyMessage,
         showReply,
         hideReply,
       }}

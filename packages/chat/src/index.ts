@@ -237,7 +237,7 @@ type MessagePartV0 = IdlTypes<ChatIDL>["MessagePartV0"];
 export interface IMessagePart extends MessagePartV0 {
   txid: string;
   blockTime: number;
-  profileKey: PublicKey;
+  sender: PublicKey;
   chatKey: PublicKey;
 }
 
@@ -256,7 +256,7 @@ export interface IMessage {
 
   getDecodedMessage(): Promise<IDecryptedMessageContent | undefined>;
 
-  profileKey: PublicKey;
+  sender: PublicKey;
   chatKey: PublicKey;
 
   parts: IMessagePart[];
@@ -805,9 +805,11 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     const sendMessageIdl = this.program.idl.instructions.find(
       (i: any) => i.name === "sendTokenMessageV0"
     )!;
-    const profileAccountIndex = sendMessageIdl.accounts.findIndex(
-      (account: any) => account.name === "profile"
+    const senderAccountIndex = sendMessageIdl.accounts.findIndex(
+      (account: any) => account.name === "sender"
     );
+    // LEGACY: This only exists on old messages
+    const profileAccountIndex = 2;
     const chatAccountIndex = sendMessageIdl.accounts.findIndex(
       (account: any) => account.name === "chat"
     );
@@ -819,11 +821,14 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         return {
           // @ts-ignore
           data: coder.decode(buf),
-          profile: ensurePubkey(
-            transaction.message.accountKeys[ix.accounts[profileAccountIndex]]
+          sender: ensurePubkey(
+            transaction.message.accountKeys[ix.accounts[senderAccountIndex]]
           ),
           chat: ensurePubkey(
             transaction.message.accountKeys[ix.accounts[chatAccountIndex]]
+          ),
+          profile: ensurePubkey(
+            transaction.message.accountKeys[ix.accounts[profileAccountIndex]]
           ),
         };
       })
@@ -835,12 +840,19 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         .map(async (decoded) => {
           const args = decoded.data.data.args;
 
+          let sender = decoded.sender;
+          // Time of the switchover. Didn't feel like this was worthy of a major version bump so early on
+          if (blockTime && blockTime < 1657043710) {
+            const profileAcc = await this.getProfile(decoded.profile);
+            sender = profileAcc!.ownerWallet;
+          }
+
           return {
             ...args,
             blockTime,
             txid,
             chatKey: decoded.chat,
-            profileKey: decoded.profile,
+            sender,
           };
         })
     );
@@ -1669,30 +1681,11 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       encryptedString = JSON.stringify(message);
     }
 
-    const profile = (await ChatSdk.profileKey(sender, this.programId))[0];
-    const profileAcc = (await this.getProfile(profile))!;
-
-    const identifierCertificateMint = profileAcc.identifierCertificateMint;
-    const metadataKey = await Metadata.getPDA(identifierCertificateMint);
-    const metadata = await new Metadata(
-      metadataKey,
-      (await this.provider.connection.getAccountInfo(metadataKey))!
-    );
-
-    const identifierCertificateMintAccount =
-      await Token.getAssociatedTokenAddress(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        identifierCertificateMint,
-        profileAcc.ownerWallet,
-        true
-      );
-
     const postPermissionAccount = await Token.getAssociatedTokenAddress(
       ASSOCIATED_TOKEN_PROGRAM_ID,
       TOKEN_PROGRAM_ID,
       nftMint ? nftMint : chatAcc.postPermissionKey,
-      profileAcc.ownerWallet,
+      sender,
       true
     );
 
@@ -1717,8 +1710,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         isSigner: false,
       });
     }
-
-    const senderToUse = delegateWallet || sender;
 
     const contentLength = encryptedString.length;
     const numGroups = Math.ceil(contentLength / MESSAGE_MAX_CHARACTERS);
@@ -1748,12 +1739,10 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
           {
             accounts: {
               chat,
-              sender: senderToUse,
-              profile,
+              sender,
+              signer: delegateWallet || sender,
               postPermissionAccount,
               postPermissionMint: nftMint ? nftMint : chatAcc.postPermissionKey,
-              identifierCertificateMint,
-              identifierCertificateMintAccount,
               tokenProgram: TOKEN_PROGRAM_ID,
             },
             remainingAccounts,

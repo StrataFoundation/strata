@@ -1,24 +1,28 @@
-import { CloseButton, Text, TextProps } from "@chakra-ui/react";
+import { CloseButton, Text } from "@chakra-ui/react";
+import { truncatePubkey } from "@strata-foundation/react";
 import React, { useMemo } from "react";
 import { useReply } from "../contexts";
-import { useMessages, useChatKeyFromIdentifier, useProfile, useUsernameFromIdentifierCertificate } from "../hooks";
-import { useRouter } from "next/router";
-import { useErrorHandler } from "@strata-foundation/react";
-import { PublicKey } from "@solana/web3.js";
+import { useUsernameFromIdentifierCertificate, useWalletProfile } from "../hooks";
 
 
-function ReplyBarWithProfile({ profileKey }: { profileKey: PublicKey | null | undefined } & TextProps) {
-  const { replyToMessageId, hideReply } = useReply();
-  const { info: profile } = useProfile(profileKey);
+export function ReplyBar() {
+  const { replyMessage, hideReply } = useReply();
+  const { info: profile } = useWalletProfile(replyMessage?.sender);
   const { username } = useUsernameFromIdentifierCertificate(
-    profile?.identifierCertificateMint
+    profile?.identifierCertificateMint,
+    replyMessage?.sender
+  );
+  const name = useMemo(
+    () =>
+      username || (replyMessage?.sender && truncatePubkey(replyMessage.sender)),
+    [username, profile]
   );
 
   return (
     <div>
-      {replyToMessageId? (
+      {replyMessage ? (
         <div>
-        <Text display="flex" alignItems="center">Replying to {username}
+        <Text display="flex" alignItems="center">Replying to {name}
           <CloseButton
             color="gray.400"
             _hover={{ color: "gray.600", cursor: "pointer" }}
@@ -30,11 +34,4 @@ function ReplyBarWithProfile({ profileKey }: { profileKey: PublicKey | null | un
       ) : null}
     </div>
   );
-}
-
-export function ReplyBar() {
-  const { replyToMessageId } = useReply();
-
-  return <div />
-  // return <ReplyBarWithProfile profileKey={profileKey} />
 }

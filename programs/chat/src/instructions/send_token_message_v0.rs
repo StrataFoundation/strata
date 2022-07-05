@@ -9,24 +9,17 @@ use std::str::FromStr;
 #[derive(Accounts)]
 pub struct SendTokenMessageV0<'info> {
   pub chat: Box<Account<'info, ChatV0>>,
-  pub sender: Signer<'info>,
-  pub profile: Box<Account<'info, ProfileV0>>,
+  /// CHECK: Either delegate wallet passed into additional accounts or this is a signer
+  pub sender: UncheckedAccount<'info>,
+  pub signer: Signer<'info>, // Wallet signing for this transaction, may be the same as sender. May be a delegate
   #[account(
     mut,
     constraint = post_permission_account.mint == post_permission_mint.key(),
-    constraint = post_permission_account.owner == profile.owner_wallet
+    // constraint = post_permission_account.owner == profile.owner_wallet
   )]
   pub post_permission_account: Account<'info, TokenAccount>,
   #[account(mut)]
   pub post_permission_mint: Box<Account<'info, Mint>>,
-  pub identifier_certificate_mint: Box<Account<'info, Mint>>,
-  #[account(
-    constraint = identifier_certificate_mint_account.amount >= 1,
-    constraint = profile.owner_wallet == identifier_certificate_mint_account.owner,
-    constraint = identifier_certificate_mint_account.mint == identifier_certificate_mint.key(),
-    constraint = identifier_certificate_mint_account.amount > 0
-  )]
-  pub identifier_certificate_mint_account: Box<Account<'info, TokenAccount>>,
   pub token_program: Program<'info, Token>,
 }
 
@@ -106,11 +99,22 @@ pub fn assert_meets_permissions(ctx: &Context<SendTokenMessageV0>) -> Result<()>
 pub fn handler(ctx: Context<SendTokenMessageV0>, _args: MessagePartV0) -> Result<()> {
   assert_meets_permissions(&ctx)?;
 
-  if ctx.accounts.profile.owner_wallet != ctx.accounts.sender.key() {
+  let rm_acc_length = ctx.remaining_accounts.len();
+  let has_delegate = match ctx.accounts.chat.post_permission_type {
+    PermissionType::Token => rm_acc_length == 1,
+    PermissionType::NFT => rm_acc_length == 2,
+  };
+  if has_delegate {
     let rm_acc_length = &ctx.remaining_accounts.len();
     let delegate_acc = &ctx.remaining_accounts[rm_acc_length - 1]; // delegate wallet is always the last optional account
     let delegate: Account<DelegateWalletV0> = Account::try_from(delegate_acc)?;
-    if delegate.delegate_wallet != ctx.accounts.sender.key() {
+    if delegate.delegate_wallet != ctx.accounts.signer.key()
+      || delegate.owner_wallet != ctx.accounts.sender.key()
+    {
+      return Err(error!(ErrorCode::IncorrectSender));
+    }
+  } else {
+    if ctx.accounts.signer.key() != ctx.accounts.sender.key() {
       return Err(error!(ErrorCode::IncorrectSender));
     }
   }

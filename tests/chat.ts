@@ -181,6 +181,12 @@ describe("chat", () => {
         10,
         profileKeypair.publicKey
       );
+      await tokenUtils.createAtaAndMint(
+        provider,
+        readPermissionMint,
+        10,
+        me
+      );
       chat = await initializeChat(chatSdk, identifier, name, readPermissionMint, postPermissionMint);
       chatAcc = (await chatSdk.getChat(chat))!;
 
@@ -331,6 +337,20 @@ describe("chat", () => {
       const { getDecodedMessage } = (await chatSdk.getMessageFromParts(parts))!;
       const decodedMessage = await getDecodedMessage();
       expect(decodedMessage?.text).to.eq("hello");
+    });
+
+    it("allows sending an anon message", async () => {
+      const { txids } = await chatSdk.sendMessage({
+        chat,
+        message: { type: MessageType.Text, text: "anon" },
+        encrypted: false,
+      });
+      const parts = await chatSdk.getMessagePartsFromTx((txids || [])[0]!);
+      const { getDecodedMessage } = (await chatSdk.getMessageFromParts(
+        parts
+      ))!;
+      const decodedMessage = await getDecodedMessage();
+      expect(decodedMessage?.text).to.eq("anon");
     });
 
     it("allows sending a basic message without delegate", async () => {

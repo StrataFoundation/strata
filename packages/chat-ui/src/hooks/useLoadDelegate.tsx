@@ -93,7 +93,7 @@ export function useLoadDelegate() {
     needsInit: !loadingDelegate && !loadingStruct && !loadingKey && !account,
     needsTopOff:
       !loadingDelegate &&
-      (!delegateWallet || (!loadingBalance && balance < 0.00001)),
+      (delegateWallet && (!loadingBalance && balance < 0.00001)),
     loadDelegate: (sol: number) => {
       return loadDelegate(delegateWallet, chatSdk, sol);
     },
