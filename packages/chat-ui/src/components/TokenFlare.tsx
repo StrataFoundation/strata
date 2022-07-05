@@ -1,4 +1,4 @@
-import { Avatar, HStack, Text } from "@chakra-ui/react";
+import { Avatar, HStack, Text, useColorModeValue } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
 import { roundToDecimals, useTokenMetadata } from "@strata-foundation/react";
 import { numberWithCommas } from "@strata-foundation/spl-utils";
@@ -16,6 +16,7 @@ function IndividualTokenFlare({
 }) {
   const { amount, loading } = useChatOwnedAmount(wallet, chat);
   const { image, metadata } = useTokenMetadata(token);
+  const color = useColorModeValue("gray.500", "gray.400")
 
   if (loading || !amount) {
     return null;
@@ -31,7 +32,7 @@ function IndividualTokenFlare({
         title={metadata?.data.symbol}
         src={image}
       />
-      <Text fontSize="xs" color="gray.500" _dark={{ color: "gray.400" }}>
+      <Text fontSize="xs" color={color}>
         {numberWithCommas(roundToDecimals(amount, 2))}
       </Text>
     </HStack>

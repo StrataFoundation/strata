@@ -21,7 +21,7 @@ import {
 import {
   createMint,
   sendInstructions,
-  sendMultipleInstructions
+  createAtaAndMint,
 } from "@strata-foundation/spl-utils";
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
@@ -83,7 +83,7 @@ describe("chat", () => {
       await chatSdk.initializeNamespaces();
       readPermissionMint = await createMint(provider, me, 9);
       postPermissionMint = readPermissionMint;
-      await tokenUtils.createAtaAndMint(provider, readPermissionMint, 10);
+      await createAtaAndMint(provider, readPermissionMint, 10);
     });
 
     it("intializes a chat", async () => {
@@ -209,7 +209,7 @@ describe("chat", () => {
     before(async () => {
       readPermissionMint = await createMint(provider, me, 1);
       postPermissionMint = readPermissionMint;
-      await tokenUtils.createAtaAndMint(
+      await createAtaAndMint(
         provider,
         readPermissionMint,
         10,
@@ -265,14 +265,14 @@ describe("chat", () => {
         // create permitted token on localnet and devnet
         const tokenMintKeypair = Keypair.generate();
         await createMint(provider, me, 2, tokenMintKeypair);
-        await tokenUtils.createAtaAndMint(
+        await createAtaAndMint(
           provider,
           tokenMintKeypair.publicKey,
           1000,
           tokenHolder.publicKey
         );
         await createMint(devnetProvider, me, 2, tokenMintKeypair);
-        await tokenUtils.createAtaAndMint(
+        await createAtaAndMint(
           devnetProvider,
           tokenMintKeypair.publicKey,
           1000,

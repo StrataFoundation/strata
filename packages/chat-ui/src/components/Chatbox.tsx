@@ -44,6 +44,7 @@ import {
   useWalletProfile,
   useAnalyticsEventTracker,
 } from "../hooks";
+import { useReply } from "../contexts/reply";
 import { BuyMoreButton } from "./BuyMoreButton";
 import { ChatInput } from "./ChatInput";
 import { FileAttachment } from "./FileAttachment";
@@ -58,6 +59,8 @@ import { LoadWalletModal } from "./LoadWalletModal";
 import { useChatOwnedAmount } from "../hooks/useChatOwnedAmount";
 import { useEmojiSearch } from "../hooks/useEmojiSearch";
 import { Files } from "./Files";
+import { ReplyBar } from "./ReplyBar";
+import { useAsyncCallback } from "react-async-hook";
 
 const converter = new Converter({
   simpleLineBreaks: true,
@@ -152,11 +155,19 @@ export function Chatbox({
     },
   });
 
-  const sendMessage = async (m: ISendMessageContent) => {
+  const { replyMessage, hideReply } = useReply();
+  useEffect(() => {
+    if (replyMessage) inputRef.current?.focus();
+  }, [replyMessage]);
+  
+  const { execute: sendMessage } = useAsyncCallback(async (m: ISendMessageContent) => {
     setInput("");
     resetEmoji();
     setLoading(true);
+    hideReply();
+
     try {
+      if (replyMessage?.id) m.referenceMessageId = replyMessage?.id;
       // Show toast if uploading files
       if (m.fileAttachments && m.fileAttachments.length > 0) {
         const text = `Uploading ${m.fileAttachments.map(
@@ -194,7 +205,7 @@ export function Chatbox({
     gaEventTracker({
       action: "Send Message",
     });
-  };
+  })
 
   const handleChange = async (e: React.FormEvent<HTMLTextAreaElement>) => {
     const content = e.currentTarget.value;
@@ -342,19 +353,21 @@ export function Chatbox({
         </Flex>
       ) : (
         <VStack w="full">
-          { !delegateWallet && <HStack mb={-3} mt={1} fontSize="sm">
-            <Text fontWeight="bold">Tired of approving transactions?</Text>
-            <Button
-              fontSize="sm"
-              variant="link"
-              size="md"
-              colorScheme="primary"
-              onClick={() => openDelegate()}
-              px={16}
-            >
-              Load Delegate Wallet
-            </Button>
-          </HStack> }
+          {!delegateWallet && (
+            <HStack mb={-3} mt={1} fontSize="sm">
+              <Text fontWeight="bold">Tired of approving transactions?</Text>
+              <Button
+                fontSize="sm"
+                variant="link"
+                size="md"
+                colorScheme="primary"
+                onClick={() => openDelegate()}
+                px={16}
+              >
+                Load Delegate Wallet
+              </Button>
+            </HStack>
+          )}
 
           <LoadWalletModal
             isOpen={delegateIsOpen}
@@ -433,6 +446,7 @@ export function Chatbox({
               rounded="lg"
             >
               <Files files={files} onCancelFile={onCancelFile} />
+              <ReplyBar />
               <HStack w="full">
                 <ChatInput
                   inputRef={inputRef}

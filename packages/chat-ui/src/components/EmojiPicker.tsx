@@ -25,7 +25,11 @@ export const EmojiPicker: FC<any> = (props) => {
         });
       });
     }
-  }, [props]);
+
+    ref.current.children[0].shadowRoot
+      .querySelector('input[type="search"]')
+      .focus();
+  }, [props, ref]);
 
   return <div ref={ref} />;
 };

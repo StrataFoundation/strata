@@ -202,6 +202,7 @@ export interface GifyMessage {
 
 export interface IMessageContent extends Partial<ReactMessage>, Partial<TextMessage>, Partial<HtmlMessage>, Partial<ImageMessage>, Partial<GifyMessage> {
   type: MessageType;
+  referenceMessageId?: string;
 }
 
 export interface IDecryptedMessageContent extends IMessageContent {
