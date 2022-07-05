@@ -46,8 +46,8 @@ async function run(): Promise<void> {
     readPermissionKey: new PublicKey(args[4]),
     postPermissionKey: new PublicKey(args[4]),
     imageUrl: args[5],
-    readPermissionType: PermissionType.NFT,
-    postPermissionType: PermissionType.NFT,
+    readPermissionType: PermissionType.Token,
+    postPermissionType: PermissionType.Token,
   });
 }
 

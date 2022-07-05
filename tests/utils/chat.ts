@@ -55,9 +55,10 @@ export async function initializeUser(
     const { instructions: dInstructions, signers: dSigners } =
       await chatSdk.initializeDelegateWalletInstructions({
         delegateWalletKeypair,
+        ownerWallet: profileKeypair.publicKey
       });
     finalInstructions = [...finalInstructions, dInstructions];
-    finalSigners = [...finalSigners, dSigners];
+    finalSigners = [...finalSigners, [...dSigners, profileKeypair]];
   }
   
   try {

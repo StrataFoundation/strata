@@ -67,7 +67,7 @@ export const ChatMessages = ({
   );
 
   const loaders = useMemo(() => {
-    return isLoading || !messages.length ? (
+    return isLoading ? (
       !messages.length ? (
         Array.from(Array(FETCH_COUNT).keys()).map((x, index) => (
           <ChatMessageSkeleton key={`skeleton-${index}`} />
@@ -93,7 +93,7 @@ export const ChatMessages = ({
           showUser={
             !(
               messages[index + 1] &&
-              messages[index + 1].profileKey.equals(msg.profileKey) &&
+              messages[index + 1].sender.equals(msg.sender) &&
               messages[index + 1].endBlockTime >=
                 (msg.startBlockTime || new Date().valueOf() / 1000) -
                   INACTIVE_TIME

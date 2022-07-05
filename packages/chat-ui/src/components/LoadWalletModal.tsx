@@ -125,7 +125,7 @@ export const LoadWalletModal = (
                 Let&apos;s load up your Chat Wallet
               </Text>
               <Text textAlign="center" fontSize="sm">
-                Strata Chat loads a hot wallet in your local storage. This helps
+                Strata Chat loads a hot wallet that acts as a delegate for your main wallet. This helps
                 us avoid asking for approval for every message. Load it up with
                 as many messages as you want now, you can always top it off
                 later!

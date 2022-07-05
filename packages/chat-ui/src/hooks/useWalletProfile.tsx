@@ -1,11 +1,11 @@
 import { useWallet } from "@solana/wallet-adapter-react";
+import { PublicKey } from "@solana/web3.js";
 import { useMemo } from "react";
 import { useProfile } from "./useProfile";
 import { useProfileKey } from "./useProfileKey";
 
-export function useWalletProfile() {
-  const { publicKey } = useWallet();
-  const { key: profileKey, loading } = useProfileKey(publicKey || undefined);
+export function useWalletProfile(wallet: PublicKey | undefined) {
+  const { key: profileKey, loading } = useProfileKey(wallet || undefined);
 
   const profile = useProfile(profileKey);
   return {

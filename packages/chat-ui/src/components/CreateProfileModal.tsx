@@ -138,8 +138,7 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
 
   const {
     delegateWallet,
-    needsTopOff,
-    mnemonic,
+    needsInit,
     error: delegateError,
     loadingNeeds,
     loading: loadingDelegate,
@@ -152,10 +151,11 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
     account: profileAccount,
     info: profile,
     loading: loadingProfile,
-  } = useWalletProfile();
+  } = useWalletProfile(publicKey || undefined);
   const { wallet } = useWalletFromIdentifier(username);
   const { username: existingUsername } = useUsernameFromIdentifierCertificate(
-    profile?.identifierCertificateMint
+    profile?.identifierCertificateMint,
+    profile?.ownerWallet
   );
 
   useEffect(() => {
@@ -190,19 +190,12 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
   }
 
   useEffect(() => {
-    if (loadingDelegate || (props.isOpen && !loadingNeeds && needsTopOff)) {
+    if (loadingDelegate || (props.isOpen && !loadingNeeds && needsInit)) {
       onOpen();
     } else {
       onClose();
     }
-  }, [
-    loadingDelegate,
-    props.isOpen,
-    needsTopOff,
-    onOpen,
-    onClose,
-    loadingNeeds,
-  ]);
+  }, [loadingDelegate, props.isOpen, needsInit, onOpen, onClose, loadingNeeds]);
 
   const { result: chatStorage } = useChatStorageAccountKey();
   const hiddenFileInput = React.useRef<HTMLInputElement>(null);
@@ -289,24 +282,9 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
       <ModalContent borderRadius="xl" shadow="xl">
         <ModalBody>
           <VStack pb={4} pt={4} spacing={4} align="left">
-            <VStack spacing={2} align="left">
-              <Text fontSize="xl" fontWeight="bold">
-                Save your Chat Wallet info
-              </Text>
-              {delegateWallet && (
-                <CopyBlackBox
-                  pb={1}
-                  pt={1}
-                  fontSize="sm"
-                  text={delegateWallet.publicKey.toBase58()}
-                />
-              )}
-              {mnemonic && <CopyBlackBox text={mnemonic} />}
-            </VStack>
-
             <FormProvider {...formProps}>
               <form onSubmit={handleSubmit(onSubmit)}>
-                <Text fontSize="xl" fontWeight="bold">
+                <Text fontSize="xl" fontWeight="bold" mb={2}>
                   Setup your Profile
                 </Text>
                 <VStack>

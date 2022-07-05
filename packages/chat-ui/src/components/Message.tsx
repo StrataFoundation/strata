@@ -1,4 +1,3 @@
-import { BsLockFill } from "react-icons/bs";
 import {
   Avatar,
   Box,
@@ -6,54 +5,52 @@ import {
   HStack,
   Icon,
   IconButton,
-  Image,
-  TextProps,
-  Skeleton,
-  Text,
-  useColorModeValue,
-  VStack,
   Popover,
-  PopoverTrigger,
-  PopoverContent,
-  Tooltip,
   PopoverArrow,
   PopoverBody,
+  PopoverContent,
+  PopoverTrigger,
+  Skeleton,
+  Text,
+  TextProps,
+  Tooltip,
+  useColorModeValue,
+  VStack,
 } from "@chakra-ui/react";
 import { GiphyFetch } from "@giphy/js-fetch-api";
 import { Gif } from "@giphy/react-components";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { PublicKey } from "@solana/web3.js";
 import { MessageType } from "@strata-foundation/chat";
-import { Flex } from "./MyFlex";
 import {
+  truncatePubkey,
+  truthy,
+  useEndpoint,
   useErrorHandler,
   useMint,
-  useEndpoint,
-  truthy,
   useTokenMetadata,
 } from "@strata-foundation/react";
 import { humanReadable, toNumber } from "@strata-foundation/spl-utils";
 import moment from "moment";
 import React, { useMemo } from "react";
 import { useAsync } from "react-async-hook";
-import { BsCheckCircleFill, BsCircle } from "react-icons/bs";
+import { BsCheckCircleFill, BsCircle, BsLockFill } from "react-icons/bs";
 import { MdOutlineAddReaction } from "react-icons/md";
 import sanitizeHtml from "sanitize-html";
 import { GIPHY_API_KEY } from "../constants";
+import { useEmojis } from "../contexts";
 import {
-  IMessageWithPending,
   IMessageWithPendingAndReacts,
   useChat,
   useChatOwnedAmount,
   useInflatedReacts,
-  useProfile,
-  useProfileKey,
   useSendMessage,
   useUsernameFromIdentifierCertificate,
+  useWalletProfile,
 } from "../hooks";
 import { BuyMoreButton } from "./BuyMoreButton";
-import { PublicKey } from "@solana/web3.js";
-import { useEmojis } from "../contexts";
 import { Files } from "./Files";
+import { Flex } from "./MyFlex";
 import { TokenFlare } from "./TokenFlare";
 
 const gf = new GiphyFetch(GIPHY_API_KEY);
@@ -82,13 +79,15 @@ const defaultOptions = {
   },
 };
 
-function ProfileName({ profileKey }: { profileKey: PublicKey } & TextProps) {
-  const { info: profile } = useProfile(profileKey);
+function ProfileName({ sender }: { sender: PublicKey } & TextProps) {
+  const { info: profile } = useWalletProfile(sender);
   const { username } = useUsernameFromIdentifierCertificate(
-    profile?.identifierCertificateMint
+    profile?.identifierCertificateMint,
+    sender
   );
+  const name = username || (sender && truncatePubkey(sender));
 
-  return <Text>{username} </Text>;
+  return <Text>{name} </Text>;
 }
 
 const MAX_MENTIONS_DISPLAY = 3;
@@ -96,7 +95,7 @@ const MAX_MENTIONS_DISPLAY = 3;
 export function Message({
   id: messageId,
   getDecodedMessage,
-  profileKey,
+  sender,
   readPermissionAmount,
   chatKey,
   txids,
@@ -111,12 +110,17 @@ export function Message({
   pending?: boolean;
   showUser: boolean;
 }) {
-  const { publicKey } = useWallet();
   const { referenceMessageId, showPicker } = useEmojis();
-  const { info: profile } = useProfile(profileKey);
-  const { username } = useUsernameFromIdentifierCertificate(
-    profile?.identifierCertificateMint
+  const { info: profile } = useWalletProfile(sender);
+  const { username, loading: loadingUsername } = useUsernameFromIdentifierCertificate(
+    profile?.identifierCertificateMint,
+    profile?.ownerWallet
   );
+  const name = useMemo(
+    () => username || (sender && truncatePubkey(sender)),
+    [username, sender?.toBase58()]
+  );
+
   const getDecodedMessageOrIdentity =
     getDecodedMessage || (() => Promise.resolve(undefined));
   const {
@@ -142,15 +146,21 @@ export function Message({
     readPermissionAmount &&
     humanReadable(readPermissionAmount, mintAcc);
 
-  const { amount: ownedAmount } = useChatOwnedAmount(publicKey || undefined, chatKey);
+  const { amount: ownedAmount } = useChatOwnedAmount(
+    sender,
+    chatKey
+  );
 
   const status = pending ? "Pending" : "Confirmed";
   const lockedColor = useColorModeValue("gray.400", "gray.600");
   const highlightedBg = useColorModeValue("gray.200", "gray.800");
-  const files = useMemo(() => [
-    ...(message?.attachments || []),
-    ...(message?.decryptedAttachments || []),
-  ], [message]);
+  const files = useMemo(
+    () => [
+      ...(message?.attachments || []),
+      ...(message?.decryptedAttachments || []),
+    ],
+    [message]
+  );
 
   const {
     reacts: inflatedReacts,
@@ -231,8 +241,9 @@ export function Message({
                     color="green.500"
                     _dark={{ color: "green.200" }}
                   >
-                    {username}
+                    {name}
                   </Text>
+
                   <Text
                     fontSize="xs"
                     color="gray.500"
@@ -242,7 +253,7 @@ export function Message({
                   </Text>
                   <TokenFlare
                     chat={chatKey}
-                    wallet={profile?.ownerWallet}
+                    wallet={sender}
                     tokens={[
                       chat?.readPermissionKey,
                       chat?.postPermissionKey,
@@ -372,9 +383,7 @@ export function Message({
                               .slice(0, MAX_MENTIONS_DISPLAY)
                               .map((message, index) => (
                                 <HStack key={message.id} spacing={0}>
-                                  <ProfileName
-                                    profileKey={message.profileKey}
-                                  />
+                                  <ProfileName sender={message.sender} />
                                   {messages.length - 1 != index && (
                                     <Text>, </Text>
                                   )}
