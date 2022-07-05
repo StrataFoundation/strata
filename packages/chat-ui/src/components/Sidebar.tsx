@@ -21,11 +21,18 @@ export const Sidebar = (props: any) => {
   const { chatKey, loading: loadingId } = useChatKeyFromIdentifier(id as string);
   const { info: chat } = useChat(chatKey);
   
+  // Make sure all VISIBLE_CHATS are in the chats list
+  useEffect(() => {
+    if (VISIBLE_CHATS.some(c => chats.indexOf(c) === -1)) {
+      setChats([...new Set([...chats, ...VISIBLE_CHATS])]);
+    }
+  }, [chats, setChats]);
+
   useEffect(() => {
     if (chat && id && chats.indexOf(id as string) === -1) {
       setChats([...new Set([...chats, id as string])]);
     }
-  }, [chats, chat, id]);
+  }, [setChats, chats, chat, id]);
 
 
   return (
