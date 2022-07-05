@@ -17482,6 +17482,11 @@ next-seo@^5.2.0:
   resolved "https://registry.yarnpkg.com/next-seo/-/next-seo-5.2.0.tgz#d847fadc637b4b2778d46822357a3682bbdf3221"
   integrity sha512-IJNKzYH4ARKHxN6YTN7AYj3CEpZLpL/o6FlDZqWJ/HaOnpjpvLHpQlI57be/N92iafmYwYE+jOU0SQ6T9DIo/Q==
 
+next-seo@^5.4.0:
+  version "5.4.0"
+  resolved "https://registry.yarnpkg.com/next-seo/-/next-seo-5.4.0.tgz#37a7784b30b3f70cec3fa0d77f9dde5990822d24"
+  integrity sha512-R9DhajPwJnR/lsF2hZ8cN8uqr5CVITsRrCG1AF5+ufcaybKYOvnH8sH9MaH4/hpkps3PQ9H71S7J7SPYixAYzQ==
+
 next@12.0.7:
   version "12.0.7"
   resolved "https://registry.yarnpkg.com/next/-/next-12.0.7.tgz#33ebf229b81b06e583ab5ae7613cffe1ca2103fc"
