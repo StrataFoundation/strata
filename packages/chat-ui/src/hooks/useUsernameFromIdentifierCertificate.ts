@@ -9,6 +9,7 @@ export function useUsernameFromIdentifierCertificate(identifierCertificateMint: 
   const { associatedAccount: account } = useAssociatedAccount(owner, identifierCertificateMint);
 
   const username = useMemo(() => {
+    console.log(account, owner?.toBase58(), account?.owner.toBase58(), account?.amount.toNumber())
     if (
       account &&
       owner &&

@@ -808,9 +808,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       (account: any) => account.name === "sender"
     );
     // LEGACY: This only exists on old messages
-    const profileAccountIndex = sendMessageIdl.accounts.findIndex(
-      (account: any) => account.name === "profile"
-    );
+    const profileAccountIndex = 2;
     const chatAccountIndex = sendMessageIdl.accounts.findIndex(
       (account: any) => account.name === "chat"
     );
@@ -842,8 +840,9 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
           const args = decoded.data.data.args;
 
           let sender = decoded.sender;
-          if (decoded.profile) {
-            const profileAcc = await this.getProfile(decoded.profile)
+          // Time of the switchover. Didn't feel like this was worthy of a major version bump so early on
+          if (blockTime && blockTime < 1657043710) {
+            const profileAcc = await this.getProfile(decoded.profile);
             sender = profileAcc!.ownerWallet;
           }
 
@@ -852,7 +851,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
             blockTime,
             txid,
             chatKey: decoded.chat,
-            sender
+            sender,
           };
         })
     );
