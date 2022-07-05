@@ -152,10 +152,11 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
     account: profileAccount,
     info: profile,
     loading: loadingProfile,
-  } = useWalletProfile();
+  } = useWalletProfile(publicKey || undefined);
   const { wallet } = useWalletFromIdentifier(username);
   const { username: existingUsername } = useUsernameFromIdentifierCertificate(
-    profile?.identifierCertificateMint
+    profile?.identifierCertificateMint,
+    profile?.ownerWallet
   );
 
   useEffect(() => {

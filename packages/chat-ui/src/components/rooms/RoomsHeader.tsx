@@ -88,7 +88,7 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
             // Only notify for other people sending message
             if (
               !document.hasFocus() &&
-              parts.some((part) => !part.profileKey.equals(profileKey))
+              parts.some((part) => !part.sender.equals(profileKey))
             ) {
               playSound();
             }

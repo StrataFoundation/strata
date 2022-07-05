@@ -88,7 +88,7 @@ export function Chatbox({
   } = useDisclosure();
   const { connected, publicKey } = useWallet();
   const { setVisible } = useWalletModal();
-  const { account: profileAccount } = useWalletProfile();
+  const { account: profileAccount } = useWalletProfile(publicKey || undefined);
   const {
     needsTopOff,
     loadDelegate,

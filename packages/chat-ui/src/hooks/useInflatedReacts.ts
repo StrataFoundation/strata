@@ -16,7 +16,7 @@ function dedupeByProfile(
 ): { decoded: any; message: IMessageWithPending }[] {
   const seen = new Set<string>();
   return reacts.filter((value) => {
-    const k = value.message.profileKey.toBase58();
+    const k = value.message.sender.toBase58();
     if (!seen.has(k)) {
       seen.add(k);
       return value;
@@ -24,7 +24,7 @@ function dedupeByProfile(
   });
 }
 
-async function getReacts(myProfileKey: PublicKey | undefined, messages: IMessageWithPending[] | undefined): Promise<IReact[] | undefined> {
+async function getReacts(myWallet: PublicKey | undefined, messages: IMessageWithPending[] | undefined): Promise<IReact[] | undefined> {
   if (!messages) {
     return undefined
   }
@@ -51,8 +51,7 @@ async function getReacts(myProfileKey: PublicKey | undefined, messages: IMessage
     const deduped = dedupeByProfile(reacts);
     const count = reacts.length;
     const mine =
-      myProfileKey &&
-      reacts.some(({ message }) => message.profileKey.equals(myProfileKey));
+      myWallet && reacts.some(({ message }) => message.sender.equals(myWallet));
     return {
       emoji,
       count,
@@ -73,12 +72,11 @@ export function useInflatedReacts(reacts: IMessageWithPending[] | undefined): {
   reacts: IReact[] | undefined;
 } {
   const { publicKey } = useWallet();
-  const { key: profileKey, loading } = useProfileKey(publicKey || undefined);
-  const { result, error, loading: loadingResult } = useAsync(getReacts, [profileKey, reacts]);
+  const { result, error, loading: loadingResult } = useAsync(getReacts, [publicKey || undefined, reacts]);
 
   return {
     reacts: result,
     error,
-    loading: loadingResult || loading
+    loading: loadingResult
   };
 }

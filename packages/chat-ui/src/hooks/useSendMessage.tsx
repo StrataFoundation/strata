@@ -1,3 +1,4 @@
+import { useWallet } from "@solana/wallet-adapter-react";
 import { Keypair, PublicKey, SYSVAR_CLOCK_PUBKEY, Transaction } from "@solana/web3.js";
 import { Accelerator, Cluster } from "@strata-foundation/accelerator";
 import {
@@ -31,7 +32,6 @@ export interface IUseSendMessageReturn {
 
 async function sendMessage({
   chat,
-  profile,
   chatSdk,
   accelerator,
   delegateWalletKeypair,
@@ -41,7 +41,6 @@ async function sendMessage({
   nftMint
 }: {
   chat: IChat | undefined,
-  profile: IProfile | undefined,
   chatSdk: ChatSdk | undefined,
   accelerator: Accelerator | undefined,
   delegateWalletKeypair: Keypair | undefined,
@@ -100,7 +99,7 @@ async function sendMessage({
 
         onAddPendingMessage({
           type: content.type,
-          profileKey: profile!.publicKey,
+          sender: chatSdk.wallet.publicKey,
           id: messageId,
           content: JSON.stringify(content),
           txids: txsAndIds.map(({ txid }) => txid),
@@ -136,7 +135,6 @@ export function useSendMessage({ chatKey, onAddPendingMessage }: IUseSendMessage
   const { accelerator } = useAccelerator();
   const { keypair: delegateWalletKeypair } = useDelegateWallet();
   const { info: chat } = useChat(chatKey);
-  const { info: profile } = useWalletProfile();
   const { cluster } = useEndpoint();
   const { matches } = useCollectionOwnedAmount(
     chat?.postPermissionKey
@@ -154,7 +152,6 @@ export function useSendMessage({ chatKey, onAddPendingMessage }: IUseSendMessage
       return execute({
         chat,
         chatSdk,
-        profile,
         accelerator,
         delegateWalletKeypair,
         cluster,

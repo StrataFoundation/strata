@@ -93,7 +93,7 @@ export const ChatMessages = ({
           showUser={
             !(
               messages[index + 1] &&
-              messages[index + 1].profileKey.equals(msg.profileKey) &&
+              messages[index + 1].sender.equals(msg.sender) &&
               messages[index + 1].endBlockTime >=
                 (msg.startBlockTime || new Date().valueOf() / 1000) -
                   INACTIVE_TIME

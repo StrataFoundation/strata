@@ -35,9 +35,10 @@ export const ProfileButton: FC<ButtonProps> = ({
   const { visible, setVisible } = useWalletModal();
   const {
     info: profile,
-  } = useWalletProfile();
+  } = useWalletProfile(publicKey || undefined);
   const { username } = useUsernameFromIdentifierCertificate(
-    profile?.identifierCertificateMint
+    profile?.identifierCertificateMint,
+    profile?.ownerWallet
   );
   const { isOpen, onOpen, onClose } = useDisclosure();
 
