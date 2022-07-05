@@ -56,7 +56,6 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
   const { cluster } = useEndpoint();
   const { chatSdk } = useChatSdk();
   const { publicKey } = useWallet();
-  const { key: profileKey } = useProfileKey(publicKey || undefined);
   const { amount: ownedAmount } = useChatOwnedAmount(publicKey || undefined, chatKey);
 
   const [settings, setSettings] = useLocalStorage<ISettings>("settings", {
@@ -70,7 +69,7 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
         accelerator &&
         chatKey &&
         chatSdk &&
-        profileKey &&
+        publicKey &&
         (settings.soundEnabled || settings.visualEnabled)
       ) {
         const subId = await accelerator.onTransaction(
@@ -88,7 +87,7 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
             // Only notify for other people sending message
             if (
               !document.hasFocus() &&
-              parts.some((part) => !part.sender.equals(profileKey))
+              parts.some((part) => !part.sender.equals(publicKey))
             ) {
               playSound();
             }
@@ -106,7 +105,7 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
         }
       })();
     };
-  }, [settings, profileKey, accelerator, chatSdk, chatKey]);
+  }, [settings, publicKey, accelerator, chatSdk, chatKey]);
 
   return (
     <Flex
