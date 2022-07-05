@@ -1,6 +1,6 @@
 import { CloseButton, Text, TextProps } from "@chakra-ui/react";
 import React, { useMemo } from "react";
-import { useReply } from "@/contexts/reply";
+import { useReply } from "../contexts";
 import { useMessages, useChatKeyFromIdentifier, useProfile, useUsernameFromIdentifierCertificate } from "../hooks";
 import { useRouter } from "next/router";
 import { useErrorHandler } from "@strata-foundation/react";
