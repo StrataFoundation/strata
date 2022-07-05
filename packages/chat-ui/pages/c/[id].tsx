@@ -1,33 +1,32 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useDisclosure, Flex } from "@chakra-ui/react";
-import { getClusterAndEndpoint, useErrorHandler } from "@strata-foundation/react";
-import { useRouter } from "next/router";
 import { Chatbox } from "@/components/Chatbox";
 import { ChatMessages } from "@/components/ChatMessages";
+import { EmojiPickerPopover } from "@/components/EmojiPicker";
 import { Header } from "@/components/Header";
 import { Layout } from "@/components/Layout";
 import { LegacyWalletMigrationModal } from "@/components/LegacyWalletMigrationModal";
 import { RoomsHeader } from "@/components/rooms/RoomsHeader";
 import { Workspace } from "@/components/Workspace";
-import { EmojiPickerPopover } from "@/components/EmojiPicker";
 import { useChatKeyFromIdentifier } from "@/hooks/useChatKeyFromIdentifier";
 import { IMessageWithPending, useMessages } from "@/hooks/useMessages";
-import { useAsyncCallback } from "react-async-hook";
-import {
-  GetServerSideProps,
-  InferGetServerSidePropsType,
-  NextPage,
-} from "next";
 import { ApolloClient, gql, InMemoryCache } from "@apollo/client";
+import { NAMESPACES_IDL, NAMESPACES_PROGRAM, NAMESPACES_PROGRAM_ID } from "@cardinal/namespaces";
+import { useDisclosure } from "@chakra-ui/react";
 import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
-import { ChatSdk, ChatIDLJson, ChatIDL } from "@strata-foundation/chat";
-import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import { AnchorProvider, Program } from "@project-serum/anchor";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
+import { Connection, Keypair, PublicKey } from "@solana/web3.js";
+import { ChatIDL, ChatIDLJson, ChatSdk } from "@strata-foundation/chat";
+import { getClusterAndEndpoint, useErrorHandler } from "@strata-foundation/react";
 // @ts-ignore
 import LitNodeJsSdk from "lit-js-sdk/build/index.node.js";
-import { NAMESPACES_IDL, NAMESPACES_PROGRAM, NAMESPACES_PROGRAM_ID } from "@cardinal/namespaces";
+import {
+  GetServerSideProps,
+  InferGetServerSidePropsType
+} from "next";
 import { NextSeo } from "next-seo";
+import { useRouter } from "next/router";
+import { default as React, default as React, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useAsyncCallback } from "react-async-hook";
 
 const SOLANA_URL =
   process.env.NEXT_PUBLIC_SOLANA_URL || "https://ssc-dao.genesysgo.net/";
@@ -122,15 +121,8 @@ export default function Chatroom({
     []
   );
 
-  const {
-    messages,
-    error,
-    loadingInitial,
-    loadingMore,
-    hasMore,
-    fetchMore,
-    fetchNew,
-  } = useMessages(chatKey, true, 25);
+  const { messages, error, loadingInitial, loadingMore, hasMore, fetchMore, fetchNew } =
+    useMessages(chatKey, true, 50);
 
   const { handleErrors } = useErrorHandler();
   handleErrors(error);
@@ -206,7 +198,8 @@ export default function Chatroom({
       <Workspace>
         <EmojiPickerPopover chatKey={chatKey} />
         <ChatMessages
-          isLoading={loadingInitial || loadingMore}
+          isLoading={loadingInitial}
+          isLoadingMore={loadingMore}
           scrollRef={scrollRef}
           messages={messagesWithPending}
           hasMore={hasMore}

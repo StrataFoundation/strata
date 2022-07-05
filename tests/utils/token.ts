@@ -115,49 +115,6 @@ export class TokenUtils {
     await this.provider.sendAndConfirm(mintTx);
   }
 
-  async createAtaAndMint(
-    provider: AnchorProvider,
-    mint: PublicKey,
-    amount: number,
-    to: PublicKey = provider.wallet.publicKey,
-    authority: PublicKey = provider.wallet.publicKey,
-    payer: PublicKey = provider.wallet.publicKey,
-    confirmOptions: any = undefined,
-  ): Promise<PublicKey> {
-    const ata = await Token.getAssociatedTokenAddress(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
-      mint,
-      to
-    );
-    const mintTx = new Transaction({ feePayer: payer });
-    if (!(await provider.connection.getAccountInfo(ata))) {
-      mintTx.add(
-        Token.createAssociatedTokenAccountInstruction(
-          ASSOCIATED_TOKEN_PROGRAM_ID,
-          TOKEN_PROGRAM_ID,
-          mint,
-          ata,
-          to,
-          payer
-        )
-      );
-    }
-    mintTx.add(
-      Token.createMintToInstruction(
-        TOKEN_PROGRAM_ID,
-        mint,
-        ata,
-        authority,
-        [],
-        amount
-      )
-    );
-    await provider.sendAndConfirm(mintTx, undefined, confirmOptions);
-
-    return ata;
-  }
-
   async createTestNft(
     provider: AnchorProvider,
     recipient: PublicKey,
