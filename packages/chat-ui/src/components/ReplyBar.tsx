@@ -17,7 +17,7 @@ export function ReplyBar() {
   const name = useMemo(
     () =>
       username || (replyMessage?.sender && truncatePubkey(replyMessage.sender)),
-    [username, profile]
+    [username, profile, replyMessage]
   );
 
   if (!replyMessage) {
