@@ -22,8 +22,7 @@ import {
 import { GiphyFetch } from "@giphy/js-fetch-api";
 import { Gif } from "@giphy/react-components";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { MessageType } from "@strata-foundation/chat";
-import { Flex } from "./MyFlex";
+import { MessageType, IMessage } from "@strata-foundation/chat";
 import {
   useErrorHandler,
   useMint,
@@ -49,12 +48,12 @@ import {
   useProfileKey,
   useSendMessage,
   useUsernameFromIdentifierCertificate,
+  useMessages,
 } from "../hooks";
 import { BuyMoreButton } from "./BuyMoreButton";
 import { PublicKey } from "@solana/web3.js";
 import { useEmojis, useReply } from "../contexts";
-import { Files } from "./Files";
-import { TokenFlare } from "./TokenFlare";
+import { TokenFlare, DisplayReply, Files, Flex } from "./";
 
 const gf = new GiphyFetch(GIPHY_API_KEY);
 
@@ -101,19 +100,24 @@ export function Message({
   chatKey,
   txids,
   startBlockTime,
+  replyToMessageId,
   htmlAllowlist = defaultOptions,
   reacts,
   type: messageType,
   showUser = true,
   pending = false,
+  scrollRef,
+  messages,
 }: Partial<IMessageWithPendingAndReacts> & {
   htmlAllowlist?: any;
   pending?: boolean;
   showUser: boolean;
+  scrollRef: any;
+  messages: IMessage[];
 }) {
   const { publicKey } = useWallet();
   const { referenceMessageId, showPicker } = useEmojis();
-  const { replyToMessageId, showReply } = useReply();
+  const { replyToMessageId: currentlyReplyingToId, showReply } = useReply();
   const { info: profile } = useProfile(profileKey);
   const { username } = useUsernameFromIdentifierCertificate(
     profile?.identifierCertificateMint
@@ -182,7 +186,7 @@ export function Message({
     <Box
       position="relative"
       _hover={{ bg: highlightedBg }}
-      bg={messageId === referenceMessageId || messageId === replyToMessageId ? highlightedBg : "initial"}
+      bg={messageId === referenceMessageId || messageId === currentlyReplyingToId ? highlightedBg : "initial"}
     >
       <Popover matchWidth trigger="hover" placement="top-end" isLazy>
         <PopoverContent w="full" bg="transparent" border="none">
@@ -281,7 +285,14 @@ export function Message({
                 wordBreak="break-word"
                 color="black"
                 _dark={{ color: "white" }}
+                id={messageId}
               >
+                <DisplayReply chatKey={chatKey} 
+                  replyToMessageId={replyToMessageId} 
+                  htmlAllowList={htmlAllowlist} 
+                  scrollRef={scrollRef}
+                  messages={messages}
+                />
                 {message ? (
                   messageType === MessageType.Gify ? (
                     <GifyGif gifyId={message.gifyId} />

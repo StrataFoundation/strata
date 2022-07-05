@@ -184,10 +184,10 @@ export function Chatbox({
         setFiles([]);
       } else {
         await sendMessageImpl(m);
-        hideReply();
       }
     } finally {
       setLoading(false);
+      hideReply();
     }
     gaEventTracker({
       action: "Send Message",

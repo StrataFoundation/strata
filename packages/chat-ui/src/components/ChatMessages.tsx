@@ -99,6 +99,8 @@ export const ChatMessages = ({
                   INACTIVE_TIME
             )
           }
+          scrollRef={scrollRef}
+          messages={messages}
         />
       ))}
       {loaders}

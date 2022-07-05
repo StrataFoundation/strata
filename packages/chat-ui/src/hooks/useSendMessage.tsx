@@ -112,7 +112,8 @@ async function sendMessage({
           endBlockTime: blockTime!,
           parts: [],
           pending: true,
-          referenceMessageId: content.referenceMessageId || null
+          referenceMessageId: content.referenceMessageId || null,
+          replyToMessageId: content.replyToMessageId || null,
         });
       }
 
