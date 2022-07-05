@@ -25,7 +25,13 @@ import {
 } from "next";
 import { NextSeo } from "next-seo";
 import { useRouter } from "next/router";
-import { default as React, default as React, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useAsyncCallback } from "react-async-hook";
 
 const SOLANA_URL =
