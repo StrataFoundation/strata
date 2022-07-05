@@ -83,7 +83,7 @@ function ProfileName({ sender }: { sender: PublicKey } & TextProps) {
   const { info: profile } = useWalletProfile(sender);
   const { username } = useUsernameFromIdentifierCertificate(
     profile?.identifierCertificateMint,
-    profile?.ownerWallet
+    sender
   );
   const name = username || (sender && truncatePubkey(sender));
 
