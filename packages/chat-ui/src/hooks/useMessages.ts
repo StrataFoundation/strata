@@ -20,9 +20,10 @@ export interface IMessageWithPending extends IMessage {
 
 export interface IMessageWithPendingAndReacts extends IMessage {
   reacts: IMessageWithPending[];
+  reply: IMessageWithPending | null;
 }
 
-interface IUseMessages {
+export interface IUseMessages {
   error: Error | undefined;
   hasMore: boolean;
   loadingInitial: boolean;
@@ -119,92 +120,81 @@ export function useMessages(
     subscribe: true,
     accelerated,
   });
-  const [loading, setLoading] = useState(false);
+  const [{ loading, messages }, setState] = useState<{
+    messages: IMessageWithPending[] | undefined,
+    loading: boolean
+  }>({
+    messages: undefined,
+    loading: false
+  });
   const [error, setError] = useState<Error>();
-  const [messages, setMessages] = useState<IMessageWithPending[]>();
-
-  const { info: chatAcc } = useChat(chat);
-  const ownedAmount = useOwnedAmount(chatAcc?.readPermissionKey);
-  const mint = useMint(chatAcc?.readPermissionKey);
-  const readAmountNum = chatAcc && mint && toNumber(chatAcc.defaultReadPermissionAmount, mint)
-  const previousOwnedAmount = usePrevious(ownedAmount)
 
   useEffect(() => {
-    setMessages([]);
-    setLoading(true);
-  }, [chat?.toBase58(), setMessages, setLoading]);
-
-  useEffect(() => {
-    if (
-      typeof previousOwnedAmount !== "undefined" &&
-      typeof readAmountNum !== "undefined" &&
-      typeof ownedAmount !== "undefined"
-    ) {
-      if (previousOwnedAmount < readAmountNum && ownedAmount >= readAmountNum) {
-        console.log("Ownership changed, attempting to unlock messages");
-        setLoading(true);
-        (async () => {
-          try {
-            const newMessages = await getMessages(chatSdk, transactions);
-            setMessages(newMessages);
-          } catch (e: any) {
-            setError(e);
-          }
-        })();
-      }
-    }
-  }, [
-    previousOwnedAmount,
-    readAmountNum,
-    ownedAmount,
-    previousOwnedAmount,
-    transactions,
-  ]);
+    setState({
+      loading: true,
+      messages: []
+    });
+  }, [chat?.toBase58(), setState]);
 
   useEffect(() => {
     (async () => {
-      try {
-        setLoading(true);
-        const newMessages = await getMessages(chatSdk, transactions, messages);
-        setMessages(newMessages);
-      } catch (e: any) {
-        setError(e);
-      } finally {
-        setLoading(false);
+      if (!rest.loadingInitial) {
+        try {
+          const newMessages = await getMessages(
+            chatSdk,
+            transactions,
+            messages
+          );
+          setState({
+            loading: false,
+            messages: newMessages,
+          });
+        } catch (e: any) {
+          setError(e);
+          setState({
+            loading: false,
+            messages: [],
+          });
+        }
       }
     })();
-  }, [chatSdk, transactions, setMessages]);
+  }, [chatSdk, transactions, setState, rest.loadingInitial]);
 
-  // Group by and pull off reaction messages
-  const messagesWithReacts = useMemo(() => {
+  // Group by and pull off reaction and reply messages
+  const messagesWithReactsAndReplies = useMemo(() => {
     if (!messages) {
       return undefined;
     }
-    // Don't allow the same react from one person more than once
-    // const seen = new Set<string>();
+
     const reacts = messages.reduce((acc, msg) => {
       if (msg && msg.type === MessageType.React && msg.referenceMessageId) {
         if (!acc[msg.referenceMessageId]) {
           acc[msg.referenceMessageId] = [];
         }
-        // const seenKey =
-        //   msg.profileKey?.toBase58() +
-        //   (msg.referenceMessageId || "") +
-        //   reactMessage.emoji;
-        // if (!seen.has(seenKey)) {
-          // seen.add(seenKey);
+
         acc[msg.referenceMessageId].push(msg);
-        // }
       }
 
       return acc;
     }, {} as Record<string, IMessageWithPending[]>);
+    const messagesById = messages.reduce((acc, msg) => {
+      if (msg && msg.type !== MessageType.React) {
+        if (!acc[msg.id]) {
+          acc[msg.id] = msg;
+        }
+      }
+
+      return acc;
+    }, {} as Record<string, IMessageWithPending>);
 
     return messages
-      .filter((msg) => msg?.type !== MessageType.React)
+      .filter((msg) => msg.type !== MessageType.React)
       .map((message) => ({
         ...message,
         reacts: reacts[message.id] || [],
+        reply: message.referenceMessageId
+          ? messagesById[message.referenceMessageId]
+          : null,
       }));
   }, [messages]);
 
@@ -212,6 +202,6 @@ export function useMessages(
     ...rest,
     loadingInitial: rest.loadingInitial || loading,
     error: rest.error || error,
-    messages: messagesWithReacts,
+    messages: messagesWithReactsAndReplies,
   };
 }

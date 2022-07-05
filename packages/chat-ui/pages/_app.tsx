@@ -1,6 +1,7 @@
 import { Wallet } from "@/components/Wallet";
 import { ChatSdkProvider } from "@/contexts/chatSdk";
 import { EmojisProvider } from "@/contexts/emojis";
+import { ReplyProvider }  from "@/contexts/reply";
 import { useMediaQuery } from "@chakra-ui/react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import {
@@ -64,24 +65,26 @@ function MyApp({ Component, pageProps }: AppProps) {
             <ChatSdkProvider>
               <HolaplexGraphqlProvider>
                 <EmojisProvider>
-                  <Component {...pageProps} />
-                  {isMobile ? (
-                    <Toaster
-                      position="top-center"
-                      containerStyle={{
-                        margin: "60px auto",
-                        width: "90%",
-                        maxWidth: "420px",
-                      }}
-                    />
-                  ) : (
-                    <Toaster
-                      position="bottom-left"
-                      containerStyle={{
-                        width: "420px",
-                      }}
-                    />
-                  )}
+                  <ReplyProvider>
+                    <Component {...pageProps} />
+                    {isMobile ? (
+                      <Toaster
+                        position="top-center"
+                        containerStyle={{
+                          margin: "60px auto",
+                          width: "90%",
+                          maxWidth: "420px",
+                        }}
+                      />
+                    ) : (
+                      <Toaster
+                        position="bottom-left"
+                        containerStyle={{
+                          width: "420px",
+                        }}
+                      />
+                    )}
+                  </ReplyProvider>
                 </EmojisProvider>
               </HolaplexGraphqlProvider>
             </ChatSdkProvider>
