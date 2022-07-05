@@ -15,7 +15,8 @@ import {
   ChatSdk,
   IChat,
   IdentifierType,
-  MessageType
+  MessageType,
+  PermissionType
 } from "@strata-foundation/chat";
 import {
   createMint,
@@ -28,6 +29,7 @@ import ChaiAsPromised from "chai-as-promised";
 import LitNodeJsSdk from "lit-js-sdk/build/index.node.js";
 import { TokenUtils } from "./utils/token";
 import { initializeUser, initializeChat, getAuthSig } from "./utils/chat";
+import { NATIVE_MINT } from "@solana/spl-token";
 
 use(ChaiAsPromised);
 
@@ -159,6 +161,38 @@ describe("chat", () => {
     });
   });
 
+  describe("native messages", () => {
+    let chat: PublicKey;
+    const identifier = randomIdentifier();
+    const name = "Test Test";
+
+    before(async () => {
+      chat = await initializeChat(
+        chatSdk,
+        identifier,
+        name,
+        NATIVE_MINT,
+        NATIVE_MINT,
+        PermissionType.Native,
+        PermissionType.Native
+      );
+    });
+
+    it("allows sending an anon message", async () => {
+      const { txids } = await chatSdk.sendMessage({
+        chat,
+        message: { type: MessageType.Text, text: "anon" },
+        encrypted: false,
+      });
+      const parts = await chatSdk.getMessagePartsFromTx((txids || [])[0]!);
+      const { getDecodedMessage } = (await chatSdk.getMessageFromParts(
+        parts
+      ))!;
+      const decodedMessage = await getDecodedMessage();
+      expect(decodedMessage?.text).to.eq("anon");
+    });
+  });
+
 
   describe("messaging", () => {
     let readPermissionMint: PublicKey;
@@ -187,7 +221,15 @@ describe("chat", () => {
         10,
         me
       );
-      chat = await initializeChat(chatSdk, identifier, name, readPermissionMint, postPermissionMint);
+      chat = await initializeChat(
+        chatSdk,
+        identifier,
+        name,
+        readPermissionMint,
+        postPermissionMint,
+        PermissionType.Token,
+        PermissionType.Token
+      );
       chatAcc = (await chatSdk.getChat(chat))!;
 
       const {walletProfile: outWalletProfile} = await initializeUser(provider, chatSdk, username, profileKeypair, delegateWalletKeypair);
@@ -244,7 +286,15 @@ describe("chat", () => {
 
         // create chat where only token holders are auth
         const tokenChatId = randomIdentifier();
-        tokenChat = await initializeChat(chatSdk, tokenChatId, name, tokenMintKeypair.publicKey, tokenMintKeypair.publicKey);
+        tokenChat = await initializeChat(
+          chatSdk,
+          tokenChatId,
+          name,
+          tokenMintKeypair.publicKey,
+          tokenMintKeypair.publicKey,
+          PermissionType.Token,
+          PermissionType.Token
+        );
 
         // create nft from permitted collection on localnet and devnet
         const nftCollectionKeypair = Keypair.generate();
@@ -255,7 +305,15 @@ describe("chat", () => {
 
         // create chat where nft holders of a collection are auth
         const nftChatId = randomIdentifier();
-        nftChat = await initializeChat(chatSdk, nftChatId, name, nftCollectionKeypair.publicKey, nftCollectionKeypair.publicKey);
+        nftChat = await initializeChat(
+          chatSdk,
+          nftChatId,
+          name,
+          nftCollectionKeypair.publicKey,
+          nftCollectionKeypair.publicKey,
+          PermissionType.NFT,
+          PermissionType.NFT
+        );
       })
 
       it("allows token holders", async() => {

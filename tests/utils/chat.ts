@@ -8,6 +8,7 @@ import {
 import {
   ChatSdk,
   IdentifierType,
+  PermissionType,
 } from "@strata-foundation/chat";
 import {
   sendMultipleInstructions
@@ -88,7 +89,7 @@ export async function initializeUser(
 }
 
 export async function initializeChat(
-  chatSdk: ChatSdk, identifier: string, name: string, readPermissionKey: PublicKey, postPermissionKey: PublicKey
+  chatSdk: ChatSdk, identifier: string, name: string, readPermissionKey: PublicKey, postPermissionKey: PublicKey, readPermissionType: PermissionType, postPermissionType: PermissionType
 ) {
   const { certificateMint: chatIdentifierCertificateMint } =
     await chatSdk.claimIdentifier({
@@ -100,6 +101,8 @@ export async function initializeChat(
     name,
     readPermissionKey,
     postPermissionKey,
+    readPermissionType,
+    postPermissionType
   });
   return chat;
 }

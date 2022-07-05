@@ -346,7 +346,7 @@ export function Message(props: Partial<IMessageWithPendingAndReacts> & {
                   </Text>
                   <TokenFlare
                     chat={chatKey}
-                    wallet={profile?.ownerWallet}
+                    wallet={sender}
                     tokens={tokens}
                   />
                 </HStack>

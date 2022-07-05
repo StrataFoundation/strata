@@ -1,4 +1,5 @@
 use crate::error::ErrorCode;
+use crate::instructions::send_message::message::*;
 use crate::state::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
@@ -21,35 +22,6 @@ pub struct SendTokenMessageV0<'info> {
   #[account(mut)]
   pub post_permission_mint: Box<Account<'info, Mint>>,
   pub token_program: Program<'info, Token>,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
-pub enum MessageType {
-  Text,
-  Html,
-  Gify,
-  Image,
-  React, // An emoji react to another message
-}
-
-impl Default for MessageType {
-  fn default() -> Self {
-    MessageType::Text
-  }
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct MessagePartV0 {
-  pub id: String, // uuid v4
-  // Content can be too large for a single tx... Indicate the total parts and the current part.
-  pub total_parts: u16,
-  pub current_part: u16,
-  pub read_permission_amount: u64,
-  pub encrypted_symmetric_key: String,
-  pub content: String,
-  pub condition_version: u8,
-  pub message_type: MessageType,
-  pub reference_message_id: Option<String>,
 }
 
 pub fn assert_valid_metadata(
@@ -103,6 +75,7 @@ pub fn handler(ctx: Context<SendTokenMessageV0>, _args: MessagePartV0) -> Result
   let has_delegate = match ctx.accounts.chat.post_permission_type {
     PermissionType::Token => rm_acc_length == 1,
     PermissionType::NFT => rm_acc_length == 2,
+    _ => return Err(error!(ErrorCode::InvalidPermissionType)),
   };
   if has_delegate {
     let rm_acc_length = &ctx.remaining_accounts.len();

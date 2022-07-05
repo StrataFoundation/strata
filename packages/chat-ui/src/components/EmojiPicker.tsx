@@ -26,9 +26,10 @@ export const EmojiPicker: FC<any> = (props) => {
       });
     }
 
-    ref.current.children[0].shadowRoot
-      .querySelector('input[type="search"]')
-      .focus();
+    ref.current.children[0] &&
+      ref.current.children[0].shadowRoot
+        .querySelector('input[type="search"]')
+        .focus();
   }, [props, ref]);
 
   return <div ref={ref} />;

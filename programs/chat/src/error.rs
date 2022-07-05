@@ -13,4 +13,7 @@ pub enum ErrorCode {
 
   #[msg("The sender must either be a delegate or owner wallet")]
   IncorrectSender,
+
+  #[msg("The permission type was invalid")]
+  InvalidPermissionType,
 }

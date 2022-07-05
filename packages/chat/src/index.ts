@@ -13,7 +13,7 @@ import {
   MasterEdition,
 } from "@metaplex-foundation/mpl-token-metadata";
 import { AnchorProvider, BN as AnchorBN, IdlTypes, Program, utils } from "@project-serum/anchor";
-import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, NATIVE_MINT, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { Commitment, ConfirmedTransactionMeta, Finality, Keypair, Message, PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, Transaction } from "@solana/web3.js";
 import {
   AnchorSdk,
@@ -42,6 +42,11 @@ export * from "./shdw";
 const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
   "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
 );
+
+const WHITELIST_INSTRUCTIONS = new Set([
+  "sendTokenMessageV0",
+  "sendNativeMessageV0",
+]);
 
 interface SymKeyInfo {
   encryptedSymKey: string;
@@ -802,8 +807,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     );
     const coder = this.program.coder.instruction;
 
-    const sendMessageIdl = this.program.idl.instructions.find(
-      (i: any) => i.name === "sendTokenMessageV0"
+    const sendMessageIdl = this.program.idl.instructions.find((i: any) =>
+      WHITELIST_INSTRUCTIONS.has(i.name)
     )!;
     const senderAccountIndex = sendMessageIdl.accounts.findIndex(
       (account: any) => account.name === "sender"
@@ -836,7 +841,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
     return Promise.all(
       decoded
-        .filter((decoded) => decoded.data.name === "sendTokenMessageV0")
+        .filter((decoded) => WHITELIST_INSTRUCTIONS.has(decoded.data.name))
         .map(async (decoded) => {
           const args = decoded.data.data.args;
 
@@ -1042,8 +1047,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       return this._namespaces;
     }
 
-    this._namespacesPromise =
-      this._namespacesPromise || this._getNamespaces();
+    this._namespacesPromise = this._namespacesPromise || this._getNamespaces();
     this._namespaces = await this._namespacesPromise;
     return this._namespaces!;
   }
@@ -1225,6 +1229,14 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     const chat = (
       await ChatSdk.chatKey(identifierCertificateMint, this.programId)
     )[0];
+
+    if (readPermissionKey.equals(NATIVE_MINT)) {
+      readPermissionType = PermissionType.Native;
+    }
+
+    if (postPermissionKey.equals(NATIVE_MINT)) {
+      postPermissionType = PermissionType.Native;
+    }
 
     // find the permission amounts
     let postAmount;
@@ -1716,10 +1728,13 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     const instructionGroups = [];
     const signerGroups = [];
     const messageId = uuid();
+    const ix = chatAcc?.postPermissionKey.equals(NATIVE_MINT)
+      ? this.instruction.sendNativeMessageV0
+      : this.instruction.sendTokenMessageV0;
     for (let i = 0; i < numGroups; i++) {
       const instructions = [];
       instructions.push(
-        await this.instruction.sendTokenMessageV0(
+        await ix(
           {
             conditionVersion: this.conditionVersion,
             id: messageId,
@@ -1788,11 +1803,13 @@ function getAccessConditions(conditionVersion: number, readKey: PublicKey, thres
     ];
   }
 
-  if (Object.keys(permissionType)[0] === "token") {
-    return [tokenAccessPermissions(readKey, threshold, chain)]
+  const permissionTypeStr = Object.keys(permissionType)[0];
+  if (permissionTypeStr === "token") {
+    return [tokenAccessPermissions(readKey, threshold, chain)];
+  } else if (permissionTypeStr == "native") {
+    return [nativePermissions(readKey, threshold, chain)];
   }
-
-  return [collectionAccessPermissions(readKey, threshold, chain)]
+    return [collectionAccessPermissions(readKey, threshold, chain)];
 }
 
 function collectionAccessPermissions(permittedCollection: PublicKey, threshold: BN, chain: string) {
@@ -1833,6 +1850,19 @@ function myWalletPermissions(wallet: PublicKey) {
       comparator: "=",
       value: wallet.toBase58()
     },
+  }
+}
+
+function nativePermissions(wallet: PublicKey, threshold: BN, chain: string) {
+  return {
+    method: "getBalance",
+    params: [wallet.toBase58()],
+    chain,
+    returnValueTest: {
+      key: "",
+      comparator: ">=",
+      value: threshold.toString(10)
+    }
   }
 }
 
