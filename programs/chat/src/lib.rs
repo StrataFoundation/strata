@@ -55,6 +55,13 @@ pub mod chat {
     instructions::send_token_message_v0::handler(ctx, args)
   }
 
+  pub fn send_native_message_v0(
+    ctx: Context<SendNativeMessageV0>,
+    args: MessagePartV0,
+  ) -> Result<()> {
+    instructions::send_native_message_v0::handler(ctx, args)
+  }
+
   pub fn approve_chat_identifier_v0(ctx: Context<ApproveChatIdentifierV0>) -> Result<()> {
     instructions::approve_chat_identifier_v0::handler(ctx)
   }

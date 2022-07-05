@@ -27,6 +27,7 @@ pub struct NamespacesV0 {
 pub enum PermissionType {
   Token,
   NFT,
+  Native,
 }
 
 impl Default for PermissionType {
