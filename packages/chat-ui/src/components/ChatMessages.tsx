@@ -67,7 +67,7 @@ export const ChatMessages = ({
   );
 
   const loaders = useMemo(() => {
-    return isLoading || !messages.length ? (
+    return isLoading ? (
       !messages.length ? (
         Array.from(Array(FETCH_COUNT).keys()).map((x, index) => (
           <ChatMessageSkeleton key={`skeleton-${index}`} />

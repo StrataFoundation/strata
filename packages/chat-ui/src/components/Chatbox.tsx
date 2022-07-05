@@ -90,6 +90,7 @@ export function Chatbox({
   const { setVisible } = useWalletModal();
   const { account: profileAccount } = useWalletProfile(publicKey || undefined);
   const {
+    delegateWallet,
     needsTopOff,
     loadDelegate,
     loading: loadingDelegate,
@@ -99,6 +100,13 @@ export function Chatbox({
     isOpen: profileIsOpen,
     onClose: closeProfile,
     onOpen: openProfile,
+  } = useDisclosure({
+    defaultIsOpen: false,
+  });
+  const {
+    isOpen: delegateIsOpen,
+    onClose: closeDelegate,
+    onOpen: openDelegate,
   } = useDisclosure({
     defaultIsOpen: false,
   });
@@ -209,7 +217,7 @@ export function Chatbox({
 
   return (
     <Flex w="full" position="relative">
-      {!connected || !profileAccount || !hasEnough || needsTopOff ? (
+      {!connected || !hasEnough || needsTopOff ? (
         <Flex
           position="absolute"
           bottom="0"
@@ -237,28 +245,6 @@ export function Chatbox({
                 >
                   Connect Wallet
                 </Button>
-                <CreateProfileModal
-                  isOpen={profileIsOpen}
-                  onClose={closeProfile}
-                />
-              </>
-            ) : !profileAccount ? (
-              <>
-                <Text fontWeight="bold">
-                  A profile is required to send messages
-                </Text>
-                <Button
-                  size="md"
-                  colorScheme="primary"
-                  onClick={() => openProfile()}
-                  px={16}
-                >
-                  Create Profile to Chat
-                </Button>
-                <CreateProfileModal
-                  isOpen={profileIsOpen}
-                  onClose={closeProfile}
-                />
               </>
             ) : !hasEnough ? (
               <>
@@ -355,7 +341,26 @@ export function Chatbox({
           </VStack>
         </Flex>
       ) : (
-        <>
+        <VStack w="full">
+          { !delegateWallet && <HStack mb={-3} mt={1} fontSize="sm">
+            <Text fontWeight="bold">Tired of approving transactions?</Text>
+            <Button
+              fontSize="sm"
+              variant="link"
+              size="md"
+              colorScheme="primary"
+              onClick={() => openDelegate()}
+              px={16}
+            >
+              Load Delegate Wallet
+            </Button>
+          </HStack> }
+
+          <LoadWalletModal
+            isOpen={delegateIsOpen}
+            onClose={closeDelegate}
+            onLoaded={closeDelegate}
+          />
           <Flex
             direction="column"
             position="sticky"
@@ -427,10 +432,7 @@ export function Chatbox({
               bg={chatBg}
               rounded="lg"
             >
-              <Files
-                files={files}
-                onCancelFile={onCancelFile}
-              />
+              <Files files={files} onCancelFile={onCancelFile} />
               <HStack w="full">
                 <ChatInput
                   inputRef={inputRef}
@@ -508,7 +510,7 @@ export function Chatbox({
               </ModalBody>
             </ModalContent>
           </Modal>
-        </>
+        </VStack>
       )}
     </Flex>
   );

@@ -15,6 +15,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { MessageType } from "@strata-foundation/chat";
 import {
+  truncatePubkey,
   truthy, useEndpoint, useErrorHandler,
   useMint, useTokenMetadata
 } from "@strata-foundation/react";
@@ -72,8 +73,9 @@ function ProfileName({ sender }: { sender: PublicKey } & TextProps) {
     profile?.identifierCertificateMint,
     profile?.ownerWallet
   );
+  const name = username || (sender && truncatePubkey(sender));
 
-  return <Text>{username} </Text>;
+  return <Text>{name} </Text>;
 }
 
 const MAX_MENTIONS_DISPLAY = 3;
@@ -103,6 +105,8 @@ export function Message({
     profile?.identifierCertificateMint,
     profile?.ownerWallet
   );
+  const name = useMemo(() => username || (profile?.ownerWallet && truncatePubkey(profile.ownerWallet)), [username, profile?.ownerWallet.toBase58()];
+
   const getDecodedMessageOrIdentity =
     getDecodedMessage || (() => Promise.resolve(undefined));
   const {
@@ -217,7 +221,7 @@ export function Message({
                     color="green.500"
                     _dark={{ color: "green.200" }}
                   >
-                    {username}
+                    {name}
                   </Text>
                   <Text
                     fontSize="xs"
