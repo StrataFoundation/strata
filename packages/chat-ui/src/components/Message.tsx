@@ -110,17 +110,15 @@ export function Message({
   pending?: boolean;
   showUser: boolean;
 }) {
-  const { publicKey } = useWallet();
   const { referenceMessageId, showPicker } = useEmojis();
   const { info: profile } = useWalletProfile(sender);
-  const { username } = useUsernameFromIdentifierCertificate(
+  const { username, loading: loadingUsername } = useUsernameFromIdentifierCertificate(
     profile?.identifierCertificateMint,
     profile?.ownerWallet
   );
   const name = useMemo(
-    () =>
-      username || (profile?.ownerWallet && truncatePubkey(profile.ownerWallet)),
-    [username, profile?.ownerWallet.toBase58()]
+    () => username || (sender && truncatePubkey(sender)),
+    [username, sender?.toBase58()]
   );
 
   const getDecodedMessageOrIdentity =
@@ -149,7 +147,7 @@ export function Message({
     humanReadable(readPermissionAmount, mintAcc);
 
   const { amount: ownedAmount } = useChatOwnedAmount(
-    publicKey || undefined,
+    sender,
     chatKey
   );
 
@@ -245,6 +243,7 @@ export function Message({
                   >
                     {name}
                   </Text>
+
                   <Text
                     fontSize="xs"
                     color="gray.500"
@@ -254,7 +253,7 @@ export function Message({
                   </Text>
                   <TokenFlare
                     chat={chatKey}
-                    wallet={profile?.ownerWallet}
+                    wallet={sender}
                     tokens={[
                       chat?.readPermissionKey,
                       chat?.postPermissionKey,

@@ -92,7 +92,7 @@ export const ProfileButton: FC<ButtonProps> = ({
           {connected
             ? profile
               ? username
-              : truncatePubkey(publicKey!)
+              : "Create Profile"
             : children}
         </Text>
       </Button>
