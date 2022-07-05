@@ -34,7 +34,7 @@ pub fn handler(ctx: Context<SendNativeMessageV0>, _args: MessagePartV0) -> Resul
     {
       return Err(error!(ErrorCode::IncorrectSender));
     }
-  } else  if ctx.accounts.signer.key() != ctx.accounts.sender.key() {
+  } else if ctx.accounts.signer.key() != ctx.accounts.sender.key() {
     return Err(error!(ErrorCode::IncorrectSender));
   }
 
