@@ -15,7 +15,6 @@ export const Header: React.FC<IHeaderProps> = ({ children, onSidebarOpen }) => (
     w="full"
     zIndex="sticky"
     px={4}
-    py={6}
     bg="white"
     _dark={{
       bg: "gray.900",
