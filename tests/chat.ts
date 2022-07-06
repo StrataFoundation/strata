@@ -215,7 +215,7 @@ describe("chat", () => {
         10,
         profileKeypair.publicKey
       );
-      await tokenUtils.createAtaAndMint(
+      await createAtaAndMint(
         provider,
         readPermissionMint,
         10,

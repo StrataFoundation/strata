@@ -1,8 +1,7 @@
-import { Provider } from "@project-serum/anchor";
+import { AnchorProvider } from "@project-serum/anchor";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
 import { DEFAULT_ENDPOINT } from "../components/Wallet";
-import { SplTokenMetadata } from "@strata-foundation/spl-utils";
 import { FungibleEntangler } from "@strata-foundation/fungible-entangler";
 import { ApolloClient, gql, InMemoryCache } from "@apollo/client";
 import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
@@ -22,7 +21,7 @@ export const mintMetadataServerSideProps: GetServerSideProps = async (
   });
 
   const connection = new Connection(endpoint, {});
-  const provider = new Provider(
+  const provider = new AnchorProvider(
     connection,
     new NodeWallet(Keypair.generate()),
     {}
