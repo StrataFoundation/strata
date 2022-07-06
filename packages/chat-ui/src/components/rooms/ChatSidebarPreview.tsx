@@ -16,9 +16,10 @@ import { Flex } from "../MyFlex";
 
 export type chatRoomProps = {
   identifier?: string;
+  onClick?: () => void;
 };
 
-export function ChatSidebarPreview({ identifier }: chatRoomProps) {
+export function ChatSidebarPreview({ identifier, onClick }: chatRoomProps) {
   const { chatKey, loading: loadingId } = useChatKeyFromIdentifier(identifier);
   const { info: chat, loading: loadingChat } = useChat(chatKey);
   const loading = loadingId || loadingChat;
@@ -30,6 +31,7 @@ export function ChatSidebarPreview({ identifier }: chatRoomProps) {
 
   //push to url for specific chat
   const handleClick = () => {
+    onClick && onClick();
     router.push(route(routes.chat, { id: identifier }), undefined, {
       shallow: true,
     });

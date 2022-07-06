@@ -88,7 +88,6 @@ export const Sidebar = (props: any) => {
             placeholder="Search"
             value={input}
             onChange={handleSearch}
-            onBlur={() => setInput("")}
           />
         </InputGroup>
 
@@ -115,7 +114,11 @@ export const Sidebar = (props: any) => {
         {chats
           .filter((identifier) => identifier.includes(input))
           .map((identifier) => (
-            <ChatSidebarPreview key={identifier} identifier={identifier} />
+            <ChatSidebarPreview
+              key={identifier}
+              identifier={identifier}
+              onClick={() => setInput("")}
+            />
           ))}
       </Flex>
       <VStack gap={2} w="full" px={4}>
