@@ -3,6 +3,47 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+
+## Unreleased
+
+## Breaking
+
+  * Move `HolaplexGraphqlProvider` to `react` package
+
+
+## [3.8.2](https://github.com/StrataFoundation/strata/compare/v3.8.1...v3.8.2) (2022-06-19)
+
+### Fixed
+
+  * Multiple account fetch caches floating around causing updates not to propegate
+
+## [3.8.1](https://github.com/StrataFoundation/strata/compare/v3.8.0...v3.8.1) (2022-06-18)
+
+### Fixed
+
+   * Not passing commitment to connection constructor could cause issues with accountFetchCache
+   * BigNumber overflow on BondingPlot
+
+### Changed
+
+  * DEFAULT_COMMITMENT to "confirmed"
+
+
+# [3.8.0](https://github.com/StrataFoundation/strata/compare/v3.7.1...v3.8.0) (2022-06-17)
+
+### Added
+
+   * marketplace-ui bonding plots now show price changes over time that weren't from buys, but rather the curve characteristics.
+
+
+## [3.7.1](https://github.com/StrataFoundation/strata/compare/v3.7.0...v3.7.1) (2022-06-14)
+
+**Note:** Version bump only for package @strata-foundation/strata
+
+### Fixed
+
+  * Pricing updates on `useLivePrive` were not reactive to pricing changes, only `unixTime`
+
 # [3.7.0](https://github.com/StrataFoundation/strata/compare/v3.5.5...v3.7.0) (2022-06-02)
 
 ### Changed
@@ -26,6 +67,8 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 
 
+## Breaking
+  * Stop defaulting to my wallet in `useSolOwnedAmount`, causes issues with params that were not originally passed but are passed later
 
 
 # [3.6.0](https://github.com/StrataFoundation/strata/compare/v3.5.7...v3.6.0) (2022-05-13)

@@ -17,6 +17,10 @@ import { useEndpoint } from "../hooks";
 
 export const DEFAULT_ENDPOINT = SOLANA_URL;
 
+const config: any = {
+  commitment: "confirmed",
+};
+
 export const Wallet = ({
   children,
   cluster,
@@ -46,9 +50,7 @@ export const Wallet = ({
   return (
     <ConnectionProvider
       endpoint={cluster || endpoint}
-      config={{
-        commitment: "confirmed",
-      }}
+      config={config}
     >
       <WalletProvider wallets={wallets} autoConnect>
         {children}

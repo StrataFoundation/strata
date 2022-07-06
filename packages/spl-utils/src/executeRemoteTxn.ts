@@ -1,4 +1,4 @@
-import { Provider } from "@project-serum/anchor";
+import { Provider, AnchorProvider } from "@project-serum/anchor";
 import { Transaction } from "@solana/web3.js";
 import { ProgramError } from "./anchorError";
 import axios from "axios";
@@ -24,7 +24,7 @@ async function promiseAllInOrder<T>(
  * @returns
  */
 export async function executeRemoteTxn(
-  provider: Provider,
+  provider: AnchorProvider,
   url: string,
   body: any,
   errors: Map<number, string> = new Map()
@@ -35,7 +35,7 @@ export async function executeRemoteTxn(
 }
 
 export async function signOnlyNeeded(
-  provider: Provider,
+  provider: AnchorProvider,
   rawTxns: Buffer[]
 ): Promise<Buffer[]> {
   const txns = rawTxns.map((t) => Transaction.from(t));
@@ -90,7 +90,7 @@ export async function executeTxnsInOrder(
  * @returns
  */
 export async function getAndSignRemoteTxns(
-  provider: Provider,
+  provider: AnchorProvider,
   url: string,
   body: any
 ): Promise<Buffer[]> {

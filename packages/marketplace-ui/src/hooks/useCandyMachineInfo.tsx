@@ -1,7 +1,8 @@
+import * as anchor from "@project-serum/anchor";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { useSolanaUnixTime } from "@strata-foundation/react";
-import * as anchor from "anchor-17";
+import BN from "bn.js";
 import { useEffect, useState } from "react";
 import {
   getAtaForMint,
@@ -16,7 +17,7 @@ export interface ICandyMachineState {
   itemsRemaining: number | undefined;
   isWhitelistUser: boolean;
   isPresale: boolean;
-  discountPrice: anchor.BN | undefined;
+  discountPrice: BN | undefined;
 }
 
 export function useCandyMachineInfo(
@@ -28,7 +29,7 @@ export function useCandyMachineInfo(
   const [itemsRemaining, setItemsRemaining] = useState<number>();
   const [isWhitelistUser, setIsWhitelistUser] = useState(false);
   const [isPresale, setIsPresale] = useState(false);
-  const [discountPrice, setDiscountPrice] = useState<anchor.BN>();
+  const [discountPrice, setDiscountPrice] = useState<BN>();
   const { connection } = useConnection();
 
   const { publicKey } = useWallet();

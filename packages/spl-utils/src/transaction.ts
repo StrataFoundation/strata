@@ -1,4 +1,4 @@
-import { Provider } from "@project-serum/anchor";
+import { AnchorProvider } from "@project-serum/anchor";
 import {
   Commitment,
   Connection,
@@ -42,7 +42,7 @@ export interface BigInstructionResult<A> {
 
 export async function sendInstructions(
   idlErrors: Map<number, string>,
-  provider: Provider,
+  provider: AnchorProvider,
   instructions: TransactionInstruction[],
   signers: Signer[],
   payer: PublicKey = provider.wallet.publicKey,
@@ -84,7 +84,7 @@ function truthy<T>(value: T): value is Truthy<T> {
 
 export async function sendMultipleInstructions(
   idlErrors: Map<number, string>,
-  provider: Provider,
+  provider: AnchorProvider,
   instructionGroups: TransactionInstruction[][],
   signerGroups: Signer[][],
   payer?: PublicKey,

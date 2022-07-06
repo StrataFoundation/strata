@@ -204,10 +204,6 @@ export const mintOneToken = async (
     throw new Error("No bonding sdk")
   }
 
-  if (isNaN(maxPrice)) {
-    throw new Error("Invalid slippage")
-  }
-
   const mint = anchor.web3.Keypair.generate()
 
   const userTokenAccountAddress = (
@@ -230,6 +226,9 @@ export const mintOneToken = async (
   let bondingSigners: Signer[] = []
   if (tokenBonding && ataBalance < 1) {
     console.log("Buying bonding curve...", ataBalance)
+    if (isNaN(maxPrice)) {
+      throw new Error("Invalid slippage");
+    }
     const { instructions: bondInstrs, signers: bondSigners } = await tokenBondingSdk.buyInstructions({
       tokenBonding,
       desiredTargetAmount: 1,
@@ -383,9 +382,10 @@ export const mintOneToken = async (
   if (collectionPDAAccount && candyMachine.retainAuthority) {
     try {
       const collectionData =
+        // @ts-ignore
         (await candyMachine.program.account.collectionPda.fetch(
           collectionPDA
-        )) as CollectionData
+        )) as CollectionData;
       console.log(collectionData)
       const collectionMint = collectionData.mint
       const collectionAuthorityRecord = await getCollectionAuthorityRecordPDA(

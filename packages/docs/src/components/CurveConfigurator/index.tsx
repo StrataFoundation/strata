@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from "react";
-import { fromCurve, ICurveConfig } from "@strata-foundation/spl-token-bonding";
+import { CurveV0, fromCurve, ICurveConfig } from "@strata-foundation/spl-token-bonding";
 import { useQueryString } from "@strata-foundation/react";
 import { Box, SimpleGrid, VStack, Input } from "@chakra-ui/react";
 import {
@@ -18,7 +18,7 @@ import { useVariables } from "../../theme/Root/variables";
 const NUM_DATAPOINTS = 40;
 
 export const PriceVsSupplyDisplay = ({
-  curve,
+  curveConfig,
   timeOffset,
   setTimeOffset,
   reserves,
@@ -31,7 +31,7 @@ export const PriceVsSupplyDisplay = ({
   supply,
   supplyOffset,
 }: {
-  curve: ICurveConfig;
+  curveConfig: CurveV0;
   timeOffset: string;
   setTimeOffset(args: string): void;
   reserves: string;
@@ -47,7 +47,6 @@ export const PriceVsSupplyDisplay = ({
   const startSupplyNum = Number(startSupply) + supplyOffset;
   const endSupplyNum = Number(endSupply) + supplyOffset;
   const supplyNum = Number(supply);
-  const curveConfig = useMemo(() => curve.toRawConfig(), [curve]);
   const data = useMemo(() => {
     const beforeCurrPoint: { supply: number; price: number; total: number }[] =
       [];
@@ -168,7 +167,7 @@ export const PriceVsSupplyDisplay = ({
 };
 
 export const RateVsTimeDisplay = ({
-  curve,
+  curveConfig,
   reserves,
   supply,
   setTimeOffset,
@@ -176,7 +175,7 @@ export const RateVsTimeDisplay = ({
   timeOffset,
   setMaxTime,
 }: {
-  curve: ICurveConfig;
+  curveConfig: CurveV0;
   maxTime: string;
   timeOffset: string;
   setMaxTime(args: string): void;
@@ -184,7 +183,6 @@ export const RateVsTimeDisplay = ({
   reserves: string;
   supply: string;
 }) => {
-  const curveConfig = useMemo(() => curve.toRawConfig(), [curve]);
   const data = useMemo(() => {
     const step = Number(maxTime) / NUM_DATAPOINTS;
     const ret: { timeOffset: number; rate: number }[] = [];
@@ -273,16 +271,16 @@ export const RateVsTimeDisplay = ({
 };
 
 export const EstimatedSalesVsTime = ({
-  curve,
+  curveConfig,
   reserves,
   supply,
   setTimeOffset,
   maxTime,
   timeOffset,
   setMaxTime,
-  endSupply
+  endSupply,
 }: {
-  curve: ICurveConfig;
+  curveConfig: CurveV0;
   maxTime: string;
   timeOffset: string;
   setMaxTime(args: string): void;
@@ -291,7 +289,6 @@ export const EstimatedSalesVsTime = ({
   supply: string;
   endSupply: string;
 }) => {
-  const curveConfig = useMemo(() => curve.toRawConfig(), [curve]);
   const data = useMemo(() => {
     const step = Number(maxTime) / NUM_DATAPOINTS;
     const ret: { timeOffset: number; total: number }[] = [];
@@ -385,7 +382,7 @@ export const EstimatedSalesVsTime = ({
 };
 
 export const PriceVsTimeDisplay = ({
-  curve,
+  curveConfig,
   reserves,
   supply,
   setTimeOffset,
@@ -393,7 +390,7 @@ export const PriceVsTimeDisplay = ({
   timeOffset,
   setMaxTime,
 }: {
-  curve: ICurveConfig;
+  curveConfig: CurveV0;
   maxTime: string;
   timeOffset: string;
   setMaxTime(args: string): void;
@@ -401,7 +398,6 @@ export const PriceVsTimeDisplay = ({
   reserves: string;
   supply: string;
 }) => {
-  const curveConfig = useMemo(() => curve.toRawConfig(), [curve]);
   const data = useMemo(() => {
     const step = Number(maxTime) / NUM_DATAPOINTS;
     const ret: { timeOffset: number; price: number }[] = [];
@@ -510,17 +506,19 @@ function formatTime(time: number, maxTime: number): number {
   }
 }
 
+export type CurveConfiguratorFromVariablesProps = {
+  priceVsSupply: boolean;
+  priceVsTime: boolean;
+  rateVsTime: boolean;
+  salesVsTime: boolean;
+};
+
 export const CurveConfiguratorFromVariables = ({ 
   priceVsSupply = true,
   priceVsTime = true,
   rateVsTime = false,
   salesVsTime = false
-}: {
-  priceVsSupply: boolean;
-  priceVsTime: boolean;
-  rateVsTime: boolean;
-  salesVsTime: boolean;
-}) => {
+}: CurveConfiguratorFromVariablesProps) => {
   const {
     curveConfig,
     startSupply: passedStartSupply,
@@ -569,6 +567,8 @@ export const CurveConfiguratorFromVariables = ({
   useEffect(() => {
     passedMaxTime && setMaxTime(passedMaxTime);
   }, [passedMaxTime]);
+
+  const rawCurve = curveConfig?.toRawConfig();
 
   if (!curveConfig) {
     return <Box padding={4} mb={4} rounded="lg" backgroundColor="gray.200" >Run the above code block to show curve</Box>
@@ -637,13 +637,15 @@ export const CurveConfiguratorFromVariables = ({
         {priceVsSupply && (
           <PriceVsSupplyDisplay
             supplyOffset={supplyOffset || 0}
-            curve={curveConfig}
+            curveConfig={rawCurve}
             {...args}
           />
         )}
-        {priceVsTime && <PriceVsTimeDisplay curve={curveConfig} {...args} />}
-        {rateVsTime && <RateVsTimeDisplay curve={curveConfig} {...args} />}
-        {salesVsTime && <EstimatedSalesVsTime curve={curveConfig} {...args} />}
+        {priceVsTime && <PriceVsTimeDisplay curveConfig={rawCurve} {...args} />}
+        {rateVsTime && <RateVsTimeDisplay curveConfig={rawCurve} {...args} />}
+        {salesVsTime && (
+          <EstimatedSalesVsTime curveConfig={rawCurve} {...args} />
+        )}
       </SimpleGrid>
     </VStack>
   );

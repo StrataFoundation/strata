@@ -189,7 +189,7 @@ async function createLbcCandyMachine(
       new PublicKey("cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ"),
       marketplaceSdk.provider
     );
-    const candymachine = await candymachineProgram.account.candyMachine.fetch(
+    const candymachine: any = await candymachineProgram.account.candyMachine.fetch(
       candyMachineId
     );
     const ix = await candymachineProgram.instruction.updateCandyMachine(

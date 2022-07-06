@@ -16,9 +16,9 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = { version = "0.22.0", features = ["init-if-needed"] }
-anchor-spl = "0.22.0"
-uint = "0.9"
+anchor-lang = { version = "0.24.2", features = ["init-if-needed"] }
+anchor-spl = "0.24.2"
+uint = "0.9.2"
 spl-token = "3.2.0"
 spl-associated-token-account = { version = "1.0.3",  features = [ "no-entrypoint" ] }
 spl-name-service = { version = "0.2.0", features = ["no-entrypoint"] }

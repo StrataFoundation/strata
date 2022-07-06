@@ -17,14 +17,16 @@ import {
   useColorModeValue,
   useDisclosure,
   useInterval,
-  VStack
+  VStack,
 } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
 import {
-  useCapInfo, useCurve,
+  useCapInfo,
+  useCurve,
   useSolanaUnixTime,
   useTokenSwapFromId,
   useTokenMetadata
+  useTokenBonding,
 } from "@strata-foundation/react";
 import moment from "moment";
 import React, { useEffect, useState } from "react";
@@ -91,7 +93,8 @@ export const LbcInfo = ({
   useEffect(() => {
     setElapsedTime(
       tokenBonding
-        ? (unixTime || (new Date().valueOf() / 1000)) - tokenBonding.goLiveUnixTime.toNumber()
+        ? (unixTime || new Date().valueOf() / 1000) -
+            tokenBonding.goLiveUnixTime.toNumber()
         : undefined
     );
   }, [unixTime]);
@@ -101,7 +104,10 @@ export const LbcInfo = ({
     (tokenBonding?.goLiveUnixTime.toNumber() || 0) + (maxTime || 0)
   );
 
-  const isLive = (tokenBonding && unixTime) ? tokenBonding.goLiveUnixTime.toNumber() < unixTime : false;
+  const isLive =
+    tokenBonding && unixTime
+      ? tokenBonding.goLiveUnixTime.toNumber() < unixTime
+      : false;
 
   const { metadata } = useTokenMetadata(tokenBonding?.baseMint);
   const { metadata: targetMeta } = useTokenMetadata(tokenBonding?.targetMint);

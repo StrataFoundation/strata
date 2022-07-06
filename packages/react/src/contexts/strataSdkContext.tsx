@@ -1,4 +1,4 @@
-import { Provider } from "@project-serum/anchor";
+import { AnchorProvider } from "@project-serum/anchor";
 import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
 import { FungibleEntangler } from "@strata-foundation/fungible-entangler"
@@ -35,9 +35,10 @@ async function tryProm<A>(prom: Promise<A>): Promise<A | undefined> {
 }
 
 async function getSdks(
-  provider: Provider | undefined | null
+  provider: AnchorProvider | undefined | null
 ): Promise<IStrataSdks> {
   if (!provider) {
+    console.warn("No provider passed via ProviderContext to StrataSdkContext. Please provide a provider")
     return {};
   }
 
@@ -60,7 +61,7 @@ async function getSdks(
   };
 }
 
-export const StrataSdksProviderRaw: React.FC = ({ children }) => {
+export const StrataSdksProvider: React.FC = ({ children }) => {
   const { provider } = useProvider();
   const { result, loading, error } = useAsync(getSdks, [provider]);
   const sdks = useMemo(
@@ -79,13 +80,5 @@ export const StrataSdksProviderRaw: React.FC = ({ children }) => {
     <StrataSdksContext.Provider value={sdks}>
       {children}
     </StrataSdksContext.Provider>
-  );
-};
-
-export const StrataSdksProvider: React.FC = ({ children }) => {
-  return (
-    <ProviderContextProvider>
-      <StrataSdksProviderRaw>{children}</StrataSdksProviderRaw>
-    </ProviderContextProvider>
   );
 };

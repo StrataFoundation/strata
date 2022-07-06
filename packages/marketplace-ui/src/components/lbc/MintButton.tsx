@@ -105,6 +105,7 @@ export const MintButton = ({
     tokenBonding &&
     tokenBonding.goLiveUnixTime.toNumber() > new Date().valueOf() / 1000;
 
+  const canFinishPrevious = (targetBalance || 0) > 0;
   return (
     <VStack spacing={8} align="stretch">
       <VStack
@@ -178,7 +179,7 @@ export const MintButton = ({
             (numRemaining == 0 && !targetBalance) ||
             ((targetBalance || 0) === 0 && insufficientBalance) ||
             notLive ||
-            isDisabled
+            (!canFinishPrevious && isDisabled)
           }
           loadingText={
             awaitingApproval
@@ -188,7 +189,7 @@ export const MintButton = ({
               : "Loading"
           }
         >
-          {(targetBalance || 0) > 0
+          {canFinishPrevious
             ? "Finish previous Mint Transaction"
             : numRemaining == 0
             ? "Sold Out"

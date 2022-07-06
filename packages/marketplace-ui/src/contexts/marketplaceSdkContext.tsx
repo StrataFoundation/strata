@@ -1,4 +1,4 @@
-import { Provider } from "@project-serum/anchor";
+import { AnchorProvider } from "@project-serum/anchor";
 import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
 import { useProvider } from "@strata-foundation/react";
 import React, { useContext, useMemo } from "react";
@@ -25,9 +25,12 @@ async function tryProm<A>(prom: Promise<A>): Promise<A | undefined> {
 }
 
 async function getSdk(
-  provider: Provider | undefined | null
+  provider: AnchorProvider | undefined | null
 ): Promise<MarketplaceSdk | undefined> {
   if (!provider) {
+    console.warn(
+      "No provider passed via ProviderContext to StrataSdkContext. Please provide a provider"
+    );
     return undefined;
   }
 

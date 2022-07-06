@@ -17,6 +17,10 @@ import { useEndpoint } from "@strata-foundation/marketplace-ui";
 // Default styles that can be overridden by your app
 require("@solana/wallet-adapter-react-ui/styles.css");
 
+const config: any = {
+  commitment: "confirmed",
+};
+
 export const Wallet: FC = ({ children }) => {
   // You can also provide a custom RPC endpoint
   const { endpoint, cluster } = useEndpoint();
@@ -41,9 +45,7 @@ export const Wallet: FC = ({ children }) => {
   return (
     <ConnectionProvider
       endpoint={endpoint}
-      config={{
-        commitment: "confirmed",
-      }}
+      config={config}
     >
       <WalletProvider wallets={wallets} autoConnect>
         {children}

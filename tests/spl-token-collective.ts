@@ -6,7 +6,7 @@ import {
 } from "@bonfida/spl-name-service";
 import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import * as anchor from "@project-serum/anchor";
-import { BN } from "@project-serum/anchor";
+import { AnchorProvider, BN } from "@project-serum/anchor";
 import { NATIVE_MINT } from "@solana/spl-token";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import {
@@ -18,6 +18,7 @@ import {
   SplTokenMetadata,
   percent,
   createMint,
+  createAtaAndMint,
 } from "@strata-foundation/spl-utils";
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
@@ -28,9 +29,9 @@ use(ChaiAsPromised);
 
 describe("spl-token-collective", () => {
   // Configure the client to use the local cluster.
-  anchor.setProvider(anchor.Provider.local());
+  anchor.setProvider(anchor.AnchorProvider.local("http://127.0.0.1:8899"));
+  const provider = anchor.getProvider() as AnchorProvider;
   const program = anchor.workspace.SplTokenCollective;
-  const provider = anchor.getProvider();
 
   const tokenUtils = new TokenUtils(provider);
   const splTokenBondingProgram = new SplTokenBonding(
@@ -143,7 +144,7 @@ describe("spl-token-collective", () => {
       nameTx.partialSign(nameClass);
       const goLiveDate = new Date(0)
       goLiveDate.setUTCSeconds(1642690800);
-      await provider.send(nameTx);
+      await provider.sendAndConfirm(nameTx);
       const { ownerTokenRef, mintTokenRef } =
         await tokenCollectiveProgram.createSocialToken({
           collective,
@@ -222,7 +223,7 @@ describe("spl-token-collective", () => {
       const tokenBonding = (await splTokenBondingProgram.getTokenBonding(
         ownerTokenRef.tokenBonding!
       ))!;
-      await tokenUtils.createAtaAndMint(provider, wumMint, 2000000);
+      await createAtaAndMint(provider, wumMint, 2000000);
       await splTokenBondingProgram.buy({
         tokenBonding: ownerTokenRef.tokenBonding!,
         desiredTargetAmount: new BN(100_000000000),

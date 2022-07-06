@@ -1,1 +1,1 @@
-export const DEFAULT_COMMITMENT = "processed";
+export const DEFAULT_COMMITMENT = "confirmed";

@@ -6,6 +6,7 @@ import {
   StrataSdksProvider,
   Notification,
   ErrorHandlerProvider,
+  ProviderContextProvider,
   ThemeProvider,
 } from "@strata-foundation/react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
@@ -57,24 +58,26 @@ export default ({ children }) => {
       <ThemeProvider>
         <ErrorHandlerProvider onError={onError}>
           <Wallet>
-            <WalletModalProvider>
-              <StrataSdksProvider>
-                <MarketplaceSdkProvider>
-                  <AccountProvider commitment="confirmed">
-                    <VariablesProvider>
-                      {children}
-                      <Toaster
-                        position="bottom-center"
-                        containerStyle={{
-                          margin: "auto",
-                          width: "420px",
-                        }}
-                      />
-                    </VariablesProvider>
-                  </AccountProvider>
-                </MarketplaceSdkProvider>
-              </StrataSdksProvider>
-            </WalletModalProvider>
+            <ProviderContextProvider>
+              <WalletModalProvider>
+                <AccountProvider commitment="confirmed">
+                  <StrataSdksProvider>
+                    <MarketplaceSdkProvider>
+                      <VariablesProvider>
+                        {children}
+                        <Toaster
+                          position="bottom-center"
+                          containerStyle={{
+                            margin: "auto",
+                            width: "420px",
+                          }}
+                        />
+                      </VariablesProvider>
+                    </MarketplaceSdkProvider>
+                  </StrataSdksProvider>
+                </AccountProvider>
+              </WalletModalProvider>
+            </ProviderContextProvider>
           </Wallet>
         </ErrorHandlerProvider>
       </ThemeProvider>

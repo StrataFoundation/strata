@@ -8,7 +8,10 @@ import { SwapForm } from "./SwapForm";
 
 
 const identity = () => {};
-export const Swap = ({ id }: { id: PublicKey }) => {
+export const Swap = ({ id, onConnectWallet }: { 
+  id: PublicKey;
+  onConnectWallet?: () => void;
+}) => {
 
   const { loading, error, execute } = useSwap();
   const { handleErrors } = useErrorHandler();
@@ -47,6 +50,7 @@ export const Swap = ({ id }: { id: PublicKey }) => {
 
   const { loading: driverLoading, ...swapProps } = useSwapDriver({
     tradingMints,
+    onConnectWallet: onConnectWallet || identity,
     onTradingMintsChange: setTradingMints,
     swap: (args) =>
       execute({
@@ -65,7 +69,6 @@ export const Swap = ({ id }: { id: PublicKey }) => {
           />
         ));
       }).catch(console.error),
-    onConnectWallet: identity,
     id,
   });
 

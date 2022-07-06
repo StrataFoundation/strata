@@ -2,7 +2,7 @@ import * as anchor from "@project-serum/anchor";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
-import { createMint } from "@strata-foundation/spl-utils";
+import { createMint, createAtaAndMint } from "@strata-foundation/spl-utils";
 import {
   FungibleEntangler,
   IFungibleParentEntangler,
@@ -10,13 +10,14 @@ import {
 } from "../packages/fungible-entangler/src";
 import { TokenUtils } from "./utils/token";
 import { waitForUnixTime } from "./utils/clock";
+import { AnchorProvider } from "@project-serum/anchor";
 use(ChaiAsPromised);
 const tB58 = (p: PublicKey | null) => p?.toBase58();
 
 describe("fungible-entangler", () => {
   // Configure the client to use the local cluster.
-  anchor.setProvider(anchor.Provider.local());
-  const provider = anchor.getProvider();
+  anchor.setProvider(anchor.AnchorProvider.local("http://127.0.0.1:8899"));
+  const provider = anchor.getProvider() as AnchorProvider;
 
   const program = anchor.workspace.FungibleEntangler;
   const tokenUtils = new TokenUtils(provider);
@@ -26,7 +27,7 @@ describe("fungible-entangler", () => {
   it("allows creation of a parent entangler", async () => {
     const dynamicSeed = Keypair.generate().publicKey;
     const parentMint = await createMint(provider, me, 0);
-    await tokenUtils.createAtaAndMint(provider, parentMint, 100);
+    await createAtaAndMint(provider, parentMint, 100);
 
     const { entangler: parentEntanglerOut } =
       await fungibleEntanglerProgram.createFungibleParentEntangler({
@@ -50,7 +51,7 @@ describe("fungible-entangler", () => {
     const dynamicSeed = Keypair.generate().publicKey;
     const parentMint = await createMint(provider, me, 0);
     const childMint = await createMint(provider, me);
-    await tokenUtils.createAtaAndMint(provider, parentMint, 100);
+    await createAtaAndMint(provider, parentMint, 100);
 
     const { entangler: parentEntanglerOut } =
       await fungibleEntanglerProgram.createFungibleParentEntangler({
@@ -80,7 +81,7 @@ describe("fungible-entangler", () => {
     const dynamicSeed = Keypair.generate().publicKey;
     const parentMint = await createMint(provider, me, 0);
     const childMint = await createMint(provider, me, 0);
-    await tokenUtils.createAtaAndMint(provider, parentMint, 100);
+    await createAtaAndMint(provider, parentMint, 100);
 
     const {
       parentEntangler: parentEntanglerOut,
@@ -120,8 +121,8 @@ describe("fungible-entangler", () => {
       const dynamicSeed = Keypair.generate().publicKey;
       parentMint = await createMint(provider, me, 0);
       childMint = await createMint(provider, me, 0);
-      await tokenUtils.createAtaAndMint(provider, parentMint, 100);
-      await tokenUtils.createAtaAndMint(provider, childMint, 50);
+      await createAtaAndMint(provider, parentMint, 100);
+      await createAtaAndMint(provider, childMint, 50);
 
       const {
         parentEntangler: parentEntanglerOut,
@@ -202,8 +203,8 @@ describe("fungible-entangler", () => {
       const dynamicSeed = Keypair.generate().publicKey;
       parentMint = await createMint(provider, me, 0);
       childMint = await createMint(provider, me, 0);
-      await tokenUtils.createAtaAndMint(provider, parentMint, 100);
-      await tokenUtils.createAtaAndMint(provider, childMint, 50);
+      await createAtaAndMint(provider, parentMint, 100);
+      await createAtaAndMint(provider, childMint, 50);
 
       const {
         parentEntangler: parentEntanglerOut,
@@ -286,8 +287,8 @@ describe("fungible-entangler", () => {
       const dynamicSeed = Keypair.generate().publicKey;
       parentMint = await createMint(provider, me, 0);
       childMint = await createMint(provider, me, 0);
-      await tokenUtils.createAtaAndMint(provider, parentMint, 100);
-      await tokenUtils.createAtaAndMint(provider, childMint, 100);
+      await createAtaAndMint(provider, parentMint, 100);
+      await createAtaAndMint(provider, childMint, 100);
 
       const {
         parentEntangler: parentEntanglerOut,

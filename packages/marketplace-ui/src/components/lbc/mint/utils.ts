@@ -6,6 +6,7 @@ import {
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
 } from "@solana/web3.js";
+import BN from "bn.js";
 
 export interface AlertState {
   open: boolean;
@@ -13,7 +14,7 @@ export interface AlertState {
   severity: "success" | "info" | "warning" | "error" | undefined;
 }
 
-export const toDate = (value?: anchor.BN) => {
+export const toDate = (value?: BN) => {
   if (!value) {
     return;
   }
@@ -35,7 +36,7 @@ export const formatNumber = {
 
     return numberFormater.format(val);
   },
-  asNumber: (val?: anchor.BN) => {
+  asNumber: (val?: BN) => {
     if (!val) {
       return undefined;
     }

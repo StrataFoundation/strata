@@ -1,4 +1,4 @@
-import { Provider } from "@project-serum/anchor";
+import { AnchorProvider } from "@project-serum/anchor";
 import { useContext } from "react";
 import { ProviderContext } from "../contexts/providerContext";
 
@@ -8,7 +8,7 @@ import { ProviderContext } from "../contexts/providerContext";
  * @returns
  */
 export function useProvider(): {
-  provider?: Provider;
+  provider?: AnchorProvider;
   awaitingApproval: boolean;
 } {
   return useContext(ProviderContext);
