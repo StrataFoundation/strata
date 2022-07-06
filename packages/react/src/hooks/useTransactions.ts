@@ -215,12 +215,12 @@ export const useTransactions = ({
     })();
 
     return () => {
-      if (subId && accelerator) {
         (async () => {
           await promise;
-          accelerator.unsubscribeTransaction(subId);
-        })()        
-      }
+          if (subId && accelerator) {
+            accelerator.unsubscribeTransaction(subId);
+          }
+        })();        
     };
   }, [subscribe, accelerated, accelerator, addrStr, setTransactions]);
 
