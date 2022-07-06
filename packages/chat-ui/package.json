@@ -13,7 +13,7 @@
   "main": "dist/lib/index.js",
   "types": "dist/lib/index.d.ts",
   "scripts": {
-    "clean": "shx rm -rf .next",
+    "clean": "npx shx rm -rf .next",
     "dev": "NODE_OPTIONS='--inspect' next dev",
     "watch": "tsc --watch --project tsconfig-build.json",
     "build-lib": "tsc --project tsconfig-build.json",
