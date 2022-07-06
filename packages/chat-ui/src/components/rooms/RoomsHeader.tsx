@@ -127,7 +127,7 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
       align="center"
       justify="space-between"
       width="100%"
-      p="10px"
+      p={4}
       direction="row"
     >
       <Heading size={isMobile ? "md" : "md"} isTruncated>
@@ -136,13 +136,12 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
       {chat?.name && (
         <Popover placement="top-end">
           <PopoverTrigger>
-            <Button
-              leftIcon={<RiQuestionLine size={!isMobile ? 26 : 20} />}
-              variant="ghost"
+            <Box
               color={colorMode === "light" ? "black" : "white"}
-              size={!isMobile ? "md" : "sm"}
-              iconSpacing={!isMobile ? 1 : 0}
-            />
+              _hover={{ cursor: "pointer" }}
+            >
+              <RiQuestionLine size={!isMobile ? 26 : 20} />
+            </Box>
           </PopoverTrigger>
           <Portal>
             <PopoverContent
