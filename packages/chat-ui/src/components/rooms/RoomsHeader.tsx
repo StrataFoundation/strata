@@ -54,11 +54,12 @@ interface ISettings {
 
 export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
   const { info: chat } = useChat(chatKey);
-  const readMint = chat?.readPermissionKey;
+  const readMintKey = chat?.readPermissionKey;
   const [isMobile] = useMediaQuery("(max-width: 680px)");
   const { metadata: readMetadata, image: readImage } = useTokenMetadata(
     chat?.readPermissionKey
   );
+  const readMint = useMint(readMintKey);
   const postMint = useMint(chat?.postPermissionKey);
   const { metadata: postMetadata, image: postImage } = useTokenMetadata(
     chat?.postPermissionKey
@@ -159,7 +160,16 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
                           <Divider variant="dashed" />
                         </Flex>
                         <Text fontWeight="bold" textTransform="capitalize">
-                          Hold 1
+                          Hold{" "}
+                          {chat?.defaultReadPermissionAmount &&
+                            readMint &&
+                            roundToDecimals(
+                              toNumber(
+                                chat.defaultReadPermissionAmount,
+                                readMint
+                              ),
+                              4
+                            )}
                         </Text>
                         <Avatar
                           w="18px"
@@ -213,7 +223,7 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
                     )}
                   </Box>
                   <BuyMoreButton
-                    mint={readMint}
+                    mint={readMintKey}
                     btnProps={{ w: "full", size: "md" }}
                   />
                   <Box w="full">
