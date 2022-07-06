@@ -48,16 +48,7 @@ export function DisplayReply({
   const { result: decodedMessage } = useAsync(reply.getDecodedMessage, []);
 
   return (
-    <HStack
-      p={1}
-      pb={0}
-      w="full"
-      align="start"
-      spacing={2}
-      onClick={() => scrollToMessage(reply.id)}
-      fontSize="xs"
-      {...STYLE}
-    >
+    <HStack p={1} pb={0} w="full" align="start" spacing={2} fontSize="xs">
       <Box
         w="36px"
         h="100%"
@@ -73,7 +64,12 @@ export function DisplayReply({
           },
         }}
       />
-      <HStack gap={0} spacing={1}>
+      <HStack
+        gap={0}
+        spacing={1}
+        onClick={() => scrollToMessage(reply.id)}
+        {...STYLE}
+      >
         {decodedMessage ? (
           // successfully decoded
           <>
