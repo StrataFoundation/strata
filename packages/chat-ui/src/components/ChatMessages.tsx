@@ -133,7 +133,7 @@ export const ChatMessages = ({
           }
         />
       ))}
-      {isLoading && loaders}
+      {(isLoading || isLoadingMore) && loaders}
     </Flex>
   );
 };
