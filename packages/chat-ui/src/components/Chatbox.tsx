@@ -34,7 +34,7 @@ import {
   useTokenMetadata,
 } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
-import React, { useRef, useEffect, useState, useMemo } from "react";
+import React, { useRef, useEffect, useState, useMemo, useCallback, KeyboardEventHandler } from "react";
 import { AiOutlineGif, AiOutlineSend } from "react-icons/ai";
 import {
   IMessageWithPending,
@@ -72,6 +72,11 @@ export type chatProps = {
   scrollRef?: any;
 };
 
+const popoverWidth = {
+  base: "full",
+  md: "50%",
+};
+
 const DARK_BG = {
   bg: "linear-gradient(0deg, rgba(17,24,39) 40%, rgba(21,24,38,0) 100%)",
 };
@@ -95,6 +100,7 @@ export function Chatbox({
   const {
     delegateWallet,
     needsTopOff,
+    needsInit,
     loadDelegate,
     loading: loadingDelegate,
     error: delegateError,
@@ -117,8 +123,8 @@ export function Chatbox({
   const gaEventTracker = useAnalyticsEventTracker();
 
   const [files, setFiles] = useState<{ name: string; file: File }[]>([]);
-  const onCancelFile = useMemo(
-    () => (file: any) => setFiles((files) => files.filter((f) => f.file != file)),
+  const onCancelFile = useCallback(
+    (file: any) => setFiles((files) => files.filter((f) => f.file != file)),
     [setFiles]
   );
   const chatBg = useColorModeValue("gray.100", "gray.800");
@@ -207,11 +213,50 @@ export function Chatbox({
     });
   })
 
-  const handleChange = async (e: React.FormEvent<HTMLTextAreaElement>) => {
+  const handleChange = useCallback(async (e: React.FormEvent<HTMLTextAreaElement>) => {
     const content = e.currentTarget.value;
     search(e);
     setInput(content);
-  };
+  }, [setInput, search]);
+
+  const handleKeyDown: KeyboardEventHandler<HTMLTextAreaElement> = useCallback(
+    (ev) => {
+      if (ev.key === "Enter") {
+        if (!ev.shiftKey) {
+          ev.preventDefault();
+          sendMessage({
+            type: MessageType.Html,
+            html: converter.makeHtml(input.replace("\n", "\n\n")),
+            fileAttachments: files,
+          });
+        }
+      }
+    },
+    [sendMessage, files, input]
+  );
+
+  const handleSendClick = useCallback(() =>
+    sendMessage({
+      type: MessageType.Html,
+      html: converter.makeHtml(input),
+      fileAttachments: files,
+    }),
+    [sendMessage, input, files]
+  );
+
+  const onUpload = useCallback(async (newFiles: FileList) => {
+    setFiles((files) => [
+      ...files,
+      ...[...newFiles].map((file) => {
+        const ret = {
+          name: file.name,
+          file,
+        };
+        randomizeFileName(file); // so no conflicts with gengo
+        return ret;
+      }),
+    ]);
+  }, [setFiles]);
 
   const handleEmojiClick = (native: string) => {
     setInput(
@@ -342,10 +387,6 @@ export function Chatbox({
                   >
                     Top Off Chat Wallet
                   </Button>
-                  <CreateProfileModal
-                    isOpen={profileIsOpen}
-                    onClose={closeProfile}
-                  />
                 </Flex>
               </>
             ) : null}
@@ -369,11 +410,11 @@ export function Chatbox({
             </HStack>
           )}
 
-          <LoadWalletModal
+          { (needsTopOff || needsInit) && <LoadWalletModal
             isOpen={delegateIsOpen}
             onClose={closeDelegate}
             onLoaded={closeDelegate}
-          />
+          /> }
           <Flex
             direction="column"
             position="sticky"
@@ -395,10 +436,7 @@ export function Chatbox({
               <PopoverContent
                 bg={chatBg}
                 border="none"
-                w={{
-                  base: "full",
-                  md: "50%",
-                }}
+                w={popoverWidth}
               >
                 <PopoverBody px={0} pt={0}>
                   <VStack spacing={0} w="full" align="start">
@@ -452,33 +490,10 @@ export function Chatbox({
                   inputRef={inputRef}
                   onChange={handleChange}
                   value={input}
-                  onKeyDown={(ev) => {
-                    if (ev.key === "Enter") {
-                      if (!ev.shiftKey) {
-                        ev.preventDefault();
-                        sendMessage({
-                          type: MessageType.Html,
-                          html: converter.makeHtml(input.replace("\n", "\n\n")),
-                          fileAttachments: files,
-                        });
-                      }
-                    }
-                  }}
+                  onKeyDown={handleKeyDown}
                 />
                 <FileAttachment
-                  onUpload={async (newFiles) => {
-                    setFiles((files) => [
-                      ...files,
-                      ...[...newFiles].map((file) => {
-                        const ret = {
-                          name: file.name,
-                          file,
-                        };
-                        randomizeFileName(file); // so no conflicts with gengo
-                        return ret;
-                      }),
-                    ]);
-                  }}
+                  onUpload={onUpload}
                 />
                 <IconButton
                   aria-label="Select GIF"
@@ -491,13 +506,7 @@ export function Chatbox({
                   colorScheme="primary"
                   variant="outline"
                   isDisabled={!hasEnough || (!input && files.length == 0)}
-                  onClick={() =>
-                    sendMessage({
-                      type: MessageType.Html,
-                      html: converter.makeHtml(input),
-                      fileAttachments: files,
-                    })
-                  }
+                  onClick={handleSendClick}
                 >
                   <Icon as={AiOutlineSend} />
                 </Button>
