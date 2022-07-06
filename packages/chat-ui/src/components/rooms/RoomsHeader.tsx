@@ -1,11 +1,22 @@
 import {
   Avatar,
-  Box, Button,
-  Divider, FormControl,
-  FormLabel, Heading,
-  HStack, Popover, PopoverBody, PopoverContent, PopoverTrigger,
-  Portal, Switch, Text, useColorMode,
-  useMediaQuery, VStack
+  Box,
+  Button,
+  Divider,
+  FormControl,
+  FormLabel,
+  Heading,
+  HStack,
+  Popover,
+  PopoverBody,
+  PopoverContent,
+  PopoverTrigger,
+  Portal,
+  Switch,
+  Text,
+  useColorMode,
+  useMediaQuery,
+  VStack,
 } from "@chakra-ui/react";
 import { Flex } from "../MyFlex";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -16,14 +27,15 @@ import {
   useAccelerator,
   useEndpoint,
   useLocalStorage,
-  useMint, useTokenMetadata
+  useMint,
+  useTokenMetadata,
 } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import debounce from "lodash/debounce";
 import React, { useEffect } from "react";
-import { RiArrowDownSLine, RiSettings3Fill } from "react-icons/ri";
+import { RiQuestionLine } from "react-icons/ri";
 import { useChatSdk } from "../../contexts/chatSdk";
-import { useChatOwnedAmount, useProfileKey } from "../../hooks";
+import { useChatOwnedAmount } from "../../hooks";
 import { useChat } from "../../hooks/useChat";
 import { BuyMoreButton } from "../BuyMoreButton";
 
@@ -56,7 +68,10 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
   const { cluster } = useEndpoint();
   const { chatSdk } = useChatSdk();
   const { publicKey } = useWallet();
-  const { amount: ownedAmount } = useChatOwnedAmount(publicKey || undefined, chatKey);
+  const { amount: ownedAmount } = useChatOwnedAmount(
+    publicKey || undefined,
+    chatKey
+  );
 
   const [settings, setSettings] = useLocalStorage<ISettings>("settings", {
     soundEnabled: true,
@@ -122,16 +137,12 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
         <Popover placement="top-end">
           <PopoverTrigger>
             <Button
-              leftIcon={<RiSettings3Fill size={!isMobile ? 26 : 20} />}
-              rightIcon={<RiArrowDownSLine size={!isMobile ? 26 : 20} />}
-              variant="outline"
-              borderColor="primary.500"
+              leftIcon={<RiQuestionLine size={!isMobile ? 26 : 20} />}
+              variant="ghost"
               color={colorMode === "light" ? "black" : "white"}
               size={!isMobile ? "md" : "sm"}
               iconSpacing={!isMobile ? 1 : 0}
-            >
-              {!isMobile ? "Chat Info" : ""}
-            </Button>
+            />
           </PopoverTrigger>
           <Portal>
             <PopoverContent

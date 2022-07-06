@@ -3,26 +3,28 @@ import {
   ButtonGroup,
   ButtonProps,
   Icon,
-  IconButton, Image, Menu,
+  IconButton,
+  Image,
+  Menu,
   MenuButton,
   MenuDivider,
   MenuItem,
   MenuItemOption,
   MenuList,
-  MenuOptionGroup, Text, useColorModeValue, useDisclosure
+  MenuOptionGroup,
+  Text,
+  useColorModeValue,
+  useDisclosure,
 } from "@chakra-ui/react";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import {
-  truncatePubkey,
-  useEndpoint
-} from "@strata-foundation/react";
+import { truncatePubkey, useEndpoint } from "@strata-foundation/react";
 import React, { FC, MouseEvent, useCallback } from "react";
 import { BsChevronDown, BsFillPersonFill } from "react-icons/bs";
 import {
   useUsernameFromIdentifierCertificate,
-  useWalletProfile
+  useWalletProfile,
 } from "../hooks";
 import { CreateProfileModal } from "./CreateProfileModal";
 
@@ -35,11 +37,9 @@ export const ProfileButton: FC<ButtonProps> = ({
   const disconnectAndClear = useCallback(() => {
     disconnect();
     localStorage.removeItem("lit-auth-sol-signature");
-  }, [disconnect])
+  }, [disconnect]);
   const { visible, setVisible } = useWalletModal();
-  const {
-    info: profile,
-  } = useWalletProfile(publicKey || undefined);
+  const { info: profile } = useWalletProfile(publicKey || undefined);
   const { username } = useUsernameFromIdentifierCertificate(
     profile?.identifierCertificateMint,
     profile?.ownerWallet
@@ -70,10 +70,13 @@ export const ProfileButton: FC<ButtonProps> = ({
       variant="outline"
       spacing="6"
       isAttached
+      w="full"
       size={props.size}
     >
       <CreateProfileModal onClose={onClose} isOpen={isOpen} />
       <Button
+        w="full"
+        justifyContent="start"
         color={useColorModeValue("black", "white")}
         borderColor="primary.500"
         {...props}

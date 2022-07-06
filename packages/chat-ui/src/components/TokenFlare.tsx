@@ -16,7 +16,7 @@ function IndividualTokenFlare({
 }) {
   const { amount, loading } = useChatOwnedAmount(wallet, chat);
   const { image, metadata } = useTokenMetadata(token);
-  const color = useColorModeValue("gray.500", "gray.400")
+  const color = useColorModeValue("gray.500", "gray.400");
 
   if (loading || !amount) {
     return null;
@@ -24,6 +24,9 @@ function IndividualTokenFlare({
 
   return (
     <HStack paddingLeft="2px" spacing={1} alignItems="flex-end">
+      <Text fontSize="xs" color={color}>
+        {numberWithCommas(roundToDecimals(amount, 2))}
+      </Text>
       <Avatar
         alignSelf="center"
         w="12px"
@@ -32,9 +35,6 @@ function IndividualTokenFlare({
         title={metadata?.data.symbol}
         src={image}
       />
-      <Text fontSize="xs" color={color}>
-        {numberWithCommas(roundToDecimals(amount, 2))}
-      </Text>
     </HStack>
   );
 }
