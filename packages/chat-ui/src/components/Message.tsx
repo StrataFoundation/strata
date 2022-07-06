@@ -337,7 +337,7 @@ export function Message(
               )}
               <VStack w="full" align="start" spacing={0}>
                 {showUser && (
-                  <HStack alignItems="flex-end">
+                  <HStack alignItems="center">
                     <Text
                       fontSize="sm"
                       fontWeight="semibold"
@@ -347,13 +347,11 @@ export function Message(
                       {name}
                     </Text>
 
-                    <Text
-                      fontSize="xs"
-                      color="gray.500"
-                      _dark={{ color: "gray.400" }}
-                    >
-                      {moment(time).format("LT")}
-                    </Text>
+                    <TokenFlare
+                      chat={chatKey}
+                      wallet={sender}
+                      tokens={tokens}
+                    />
                   </HStack>
                 )}
 
@@ -473,9 +471,15 @@ export function Message(
                   </HStack>
                 )}
               </VStack>
-              <HStack alignItems="center">
+              <HStack alignItems="center" flexShrink={0}>
                 {showUser && (
-                  <TokenFlare chat={chatKey} wallet={sender} tokens={tokens} />
+                  <Text
+                    fontSize="xs"
+                    color="gray.500"
+                    _dark={{ color: "gray.400" }}
+                  >
+                    {moment(time).format("LT")}
+                  </Text>
                 )}
                 <Icon
                   _hover={{ cursor: "pointer" }}

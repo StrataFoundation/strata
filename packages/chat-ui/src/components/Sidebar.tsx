@@ -58,9 +58,8 @@ export const Sidebar = (props: any) => {
   };
 
   return (
-    <Flex
+    <VStack
       position="relative"
-      direction="column"
       h="full"
       grow={1}
       as="nav"
@@ -74,11 +73,11 @@ export const Sidebar = (props: any) => {
       color="inherit"
       borderRightWidth="1px"
       w="80"
-      p={4}
-      pt={2}
+      py={4}
+      gap={1}
       {...props}
     >
-      <Flex pt={1} pb={3} gap={2}>
+      <Flex gap={2} px={4} pb={2} w="full">
         <InputGroup>
           <InputLeftElement pointerEvents="none">
             <Icon as={RiSearch2Line} />
@@ -105,6 +104,8 @@ export const Sidebar = (props: any) => {
       <Flex
         direction="column"
         as="nav"
+        w="full"
+        px={4}
         fontSize="sm"
         color="gray.600"
         aria-label="Main Navigation"
@@ -116,9 +117,8 @@ export const Sidebar = (props: any) => {
           .map((identifier) => (
             <ChatSidebarPreview key={identifier} identifier={identifier} />
           ))}
-        <Divider />
       </Flex>
-      <VStack gap={2}>
+      <VStack gap={2} w="full" px={4}>
         <Divider />
         <Flex align="center" justifyContent="space-evenly" w="full" gap={2}>
           <ProfileButton />
@@ -137,6 +137,6 @@ export const Sidebar = (props: any) => {
           />
         </Flex>
       </VStack>
-    </Flex>
+    </VStack>
   );
 };
