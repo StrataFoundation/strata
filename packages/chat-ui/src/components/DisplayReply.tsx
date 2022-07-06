@@ -74,14 +74,6 @@ export function DisplayReply({
         }}
       />
       <HStack gap={0} spacing={1}>
-        <Text
-          fontSize="xs"
-          fontWeight="semibold"
-          color="green.500"
-          _dark={{ color: "green.200" }}
-        >
-          {name}
-        </Text>
         {decodedMessage ? (
           // successfully decoded
           <>
