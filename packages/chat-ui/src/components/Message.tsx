@@ -40,6 +40,7 @@ import React, { useCallback, useMemo } from "react";
 import { useAsync } from "react-async-hook";
 import { BsCheckCircleFill, BsCircle, BsLockFill } from "react-icons/bs";
 import { MdOutlineAddReaction } from "react-icons/md";
+import sanitizeHtml from "sanitize-html";
 import { GIPHY_API_KEY } from "../constants";
 import { useEmojis, useReply } from "../contexts";
 import {
