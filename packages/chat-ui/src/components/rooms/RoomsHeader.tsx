@@ -1,11 +1,22 @@
 import {
   Avatar,
-  Box, Button,
-  Divider, FormControl,
-  FormLabel, Heading,
-  HStack, Popover, PopoverBody, PopoverContent, PopoverTrigger,
-  Portal, Switch, Text, useColorMode,
-  useMediaQuery, VStack
+  Box,
+  Button,
+  Divider,
+  FormControl,
+  FormLabel,
+  Heading,
+  HStack,
+  Popover,
+  PopoverBody,
+  PopoverContent,
+  PopoverTrigger,
+  Portal,
+  Switch,
+  Text,
+  useColorMode,
+  useMediaQuery,
+  VStack,
 } from "@chakra-ui/react";
 import { Flex } from "../MyFlex";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -16,14 +27,15 @@ import {
   useAccelerator,
   useEndpoint,
   useLocalStorage,
-  useMint, useTokenMetadata
+  useMint,
+  useTokenMetadata,
 } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import debounce from "lodash/debounce";
 import React, { useEffect } from "react";
-import { RiArrowDownSLine, RiSettings3Fill } from "react-icons/ri";
+import { RiQuestionLine } from "react-icons/ri";
 import { useChatSdk } from "../../contexts/chatSdk";
-import { useChatOwnedAmount, useProfileKey } from "../../hooks";
+import { useChatOwnedAmount } from "../../hooks";
 import { useChat } from "../../hooks/useChat";
 import { BuyMoreButton } from "../BuyMoreButton";
 
@@ -42,11 +54,12 @@ interface ISettings {
 
 export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
   const { info: chat } = useChat(chatKey);
-  const readMint = chat?.readPermissionKey;
+  const readMintKey = chat?.readPermissionKey;
   const [isMobile] = useMediaQuery("(max-width: 680px)");
   const { metadata: readMetadata, image: readImage } = useTokenMetadata(
     chat?.readPermissionKey
   );
+  const readMint = useMint(readMintKey);
   const postMint = useMint(chat?.postPermissionKey);
   const { metadata: postMetadata, image: postImage } = useTokenMetadata(
     chat?.postPermissionKey
@@ -56,7 +69,10 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
   const { cluster } = useEndpoint();
   const { chatSdk } = useChatSdk();
   const { publicKey } = useWallet();
-  const { amount: ownedAmount } = useChatOwnedAmount(publicKey || undefined, chatKey);
+  const { amount: ownedAmount } = useChatOwnedAmount(
+    publicKey || undefined,
+    chatKey
+  );
 
   const [settings, setSettings] = useLocalStorage<ISettings>("settings", {
     soundEnabled: true,
@@ -108,30 +124,19 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
   }, [settings, publicKey, accelerator, chatSdk, chatKey]);
 
   return (
-    <Flex
-      align="center"
-      justify="space-between"
-      width="100%"
-      p="10px"
-      direction="row"
-    >
+    <Flex align="center" justify="space-between" width="100%" direction="row">
       <Heading size={isMobile ? "md" : "md"} isTruncated>
         {chat?.name}
       </Heading>
       {chat?.name && (
         <Popover placement="top-end">
           <PopoverTrigger>
-            <Button
-              leftIcon={<RiSettings3Fill size={!isMobile ? 26 : 20} />}
-              rightIcon={<RiArrowDownSLine size={!isMobile ? 26 : 20} />}
-              variant="outline"
-              borderColor="primary.500"
+            <Box
               color={colorMode === "light" ? "black" : "white"}
-              size={!isMobile ? "md" : "sm"}
-              iconSpacing={!isMobile ? 1 : 0}
+              _hover={{ cursor: "pointer" }}
             >
-              {!isMobile ? "Chat Info" : ""}
-            </Button>
+              <RiQuestionLine size={!isMobile ? 26 : 20} />
+            </Box>
           </PopoverTrigger>
           <Portal>
             <PopoverContent
@@ -155,7 +160,16 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
                           <Divider variant="dashed" />
                         </Flex>
                         <Text fontWeight="bold" textTransform="capitalize">
-                          Hold 1
+                          Hold{" "}
+                          {chat?.defaultReadPermissionAmount &&
+                            readMint &&
+                            roundToDecimals(
+                              toNumber(
+                                chat.defaultReadPermissionAmount,
+                                readMint
+                              ),
+                              4
+                            )}
                         </Text>
                         <Avatar
                           w="18px"
@@ -209,7 +223,7 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
                     )}
                   </Box>
                   <BuyMoreButton
-                    mint={readMint}
+                    mint={readMintKey}
                     btnProps={{ w: "full", size: "md" }}
                   />
                   <Box w="full">

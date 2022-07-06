@@ -9,20 +9,24 @@ import { Workspace } from "@/components/Workspace";
 import { useChatKeyFromIdentifier } from "@/hooks/useChatKeyFromIdentifier";
 import { IMessageWithPending, useMessages } from "@/hooks/useMessages";
 import { ApolloClient, gql, InMemoryCache } from "@apollo/client";
-import { NAMESPACES_IDL, NAMESPACES_PROGRAM, NAMESPACES_PROGRAM_ID } from "@cardinal/namespaces";
+import {
+  NAMESPACES_IDL,
+  NAMESPACES_PROGRAM,
+  NAMESPACES_PROGRAM_ID,
+} from "@cardinal/namespaces";
 import { useDisclosure } from "@chakra-ui/react";
 import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { AnchorProvider, Program } from "@project-serum/anchor";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import { ChatIDL, ChatIDLJson, ChatSdk } from "@strata-foundation/chat";
-import { getClusterAndEndpoint, useErrorHandler } from "@strata-foundation/react";
+import {
+  getClusterAndEndpoint,
+  useErrorHandler,
+} from "@strata-foundation/react";
 // @ts-ignore
 import LitNodeJsSdk from "lit-js-sdk/build/index.node.js";
-import {
-  GetServerSideProps,
-  InferGetServerSidePropsType
-} from "next";
+import { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import { NextSeo } from "next-seo";
 import { useRouter } from "next/router";
 import React, {
@@ -52,16 +56,15 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     cache: new InMemoryCache(),
   });
 
-
   const chat = new Program<ChatIDL>(
     ChatIDLJson as ChatIDL,
     ChatSdk.ID,
     provider
   ) as Program<ChatIDL>;
- const client = new LitNodeJsSdk.LitNodeClient({
+  const client = new LitNodeJsSdk.LitNodeClient({
     debug: false,
-    alerts: false
-  });  
+    alerts: false,
+  });
   const namespacesProgram = new Program<NAMESPACES_PROGRAM>(
     NAMESPACES_IDL,
     NAMESPACES_PROGRAM_ID,
@@ -83,9 +86,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   const entryAcc = (await connection.getAccountInfo(entryKey))!;
   const entry = await chatSdk.entryDecoder(entryKey, entryAcc);
 
-  const address = (
-    await Metadata.getPDA(entry.mint)
-  ).toBase58();
+  const address = (await Metadata.getPDA(entry.mint)).toBase58();
   const result = await apollo.query<{
     nft: { name: string; description: string; image: string };
   }>({
@@ -127,8 +128,15 @@ export default function Chatroom({
     []
   );
 
-  const { messages, error, loadingInitial, loadingMore, hasMore, fetchMore, fetchNew } =
-    useMessages(chatKey, true, 50);
+  const {
+    messages,
+    error,
+    loadingInitial,
+    loadingMore,
+    hasMore,
+    fetchMore,
+    fetchNew,
+  } = useMessages(chatKey, true, 50);
 
   const { handleErrors } = useErrorHandler();
   handleErrors(error);

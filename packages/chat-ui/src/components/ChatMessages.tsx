@@ -1,11 +1,14 @@
 import { Skeleton, SkeletonCircle } from "@chakra-ui/react";
-import { IMessage } from "@strata-foundation/chat";
 import React, { useCallback, useEffect, useMemo } from "react";
 import throttle from "lodash/throttle";
 import { Message } from "./Message";
 import { Flex } from "./MyFlex";
 import { useAsyncCallback } from "react-async-hook";
 import { sleep } from "@strata-foundation/spl-utils";
+import {
+  IMessageWithPending,
+  IMessageWithPendingAndReacts,
+} from "../hooks/useMessages";
 
 const INACTIVE_TIME = 60; // After 1 minute, new grouping
 const INFINITE_SCROLL_THRESHOLD = 300;
@@ -40,7 +43,7 @@ export const ChatMessages = ({
   hasMore: boolean;
   fetchMore: (num: number) => void;
   scrollRef: any;
-  messages?: IMessage[];
+  messages?: (IMessageWithPendingAndReacts | IMessageWithPending)[];
 }) => {
   // On render if we dont have a scroll bar
   // and we have hasMore then fetch initialMore
@@ -70,14 +73,12 @@ export const ChatMessages = ({
   );
 
   const loaders = useMemo(() => {
-    return (
-      !messages.length ? (
-        Array.from(Array(FETCH_COUNT).keys()).map((x, index) => (
-          <ChatMessageSkeleton key={`skeleton-${index}`} />
-        ))
-      ) : (
-        <ChatMessageSkeleton />
-      )
+    return !messages.length ? (
+      Array.from(Array(FETCH_COUNT).keys()).map((x, index) => (
+        <ChatMessageSkeleton key={`skeleton-${index}`} />
+      ))
+    ) : (
+      <ChatMessageSkeleton />
     );
   }, [messages.length]);
 
@@ -128,7 +129,7 @@ export const ChatMessages = ({
               messages[index + 1].endBlockTime >=
                 (msg.startBlockTime || new Date().valueOf() / 1000) -
                   INACTIVE_TIME
-            )
+            ) || !!(msg as any).reply
           }
         />
       ))}

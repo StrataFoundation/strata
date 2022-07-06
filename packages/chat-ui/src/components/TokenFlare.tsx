@@ -16,7 +16,7 @@ function IndividualTokenFlare({
 }) {
   const { amount, loading } = useChatOwnedAmount(wallet, chat);
   const { image, metadata } = useTokenMetadata(token);
-  const color = useColorModeValue("gray.500", "gray.400")
+  const color = useColorModeValue("gray.500", "gray.400");
 
   if (loading || !amount) {
     return null;

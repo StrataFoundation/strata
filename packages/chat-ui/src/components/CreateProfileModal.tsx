@@ -37,7 +37,7 @@ import {
   useProvider,
 } from "@strata-foundation/react";
 import { sendMultipleInstructions } from "@strata-foundation/spl-utils";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useAsyncCallback } from "react-async-hook";
 import { FormProvider, useForm } from "react-hook-form";
 import * as yup from "yup";
@@ -196,6 +196,9 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
       onClose();
     }
   }, [loadingDelegate, props.isOpen, needsInit, onOpen, onClose, loadingNeeds]);
+  const onCloseCallback = useCallback(() => {
+    props.onClose && props.onClose();
+  }, [props.onClose]);
 
   const { result: chatStorage } = useChatStorageAccountKey();
   const hiddenFileInput = React.useRef<HTMLInputElement>(null);
@@ -270,9 +273,7 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
   return (
     <Modal
       isOpen={true}
-      onClose={() => {
-        props.onClose && props.onClose();
-      }}
+      onClose={onCloseCallback}
       size="lg"
       isCentered
       trapFocus={true}

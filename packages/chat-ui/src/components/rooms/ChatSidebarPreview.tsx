@@ -5,7 +5,7 @@ import {
   Text,
   useColorMode,
   useColorModeValue,
-  VStack
+  VStack,
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import React from "react";
@@ -16,9 +16,10 @@ import { Flex } from "../MyFlex";
 
 export type chatRoomProps = {
   identifier?: string;
+  onClick?: () => void;
 };
 
-export function ChatSidebarPreview({ identifier }: chatRoomProps) {
+export function ChatSidebarPreview({ identifier, onClick }: chatRoomProps) {
   const { chatKey, loading: loadingId } = useChatKeyFromIdentifier(identifier);
   const { info: chat, loading: loadingChat } = useChat(chatKey);
   const loading = loadingId || loadingChat;
@@ -30,7 +31,10 @@ export function ChatSidebarPreview({ identifier }: chatRoomProps) {
 
   //push to url for specific chat
   const handleClick = () => {
-    router.push(route(routes.chat, { id: identifier }), undefined, { shallow: true });
+    onClick && onClick();
+    router.push(route(routes.chat, { id: identifier }), undefined, {
+      shallow: true,
+    });
   };
 
   return (
@@ -39,8 +43,10 @@ export function ChatSidebarPreview({ identifier }: chatRoomProps) {
       minW="200px"
       align="center"
       bg={identifier === id ? highlightedBg : undefined}
-      p={4}
+      px={4}
+      py={3}
       cursor="pointer"
+      borderRadius="10px"
       _hover={{ bg: colorMode === "light" ? "gray.200" : "gray.700" }}
       onClick={handleClick}
     >

@@ -1,7 +1,9 @@
 import {
   Avatar,
   Box,
-  Button, ButtonGroup, HStack,
+  Button,
+  ButtonGroup,
+  HStack,
   Icon,
   IconButton,
   Popover,
@@ -90,12 +92,14 @@ function ProfileName({ sender }: { sender: PublicKey } & TextProps) {
 
 const MAX_MENTIONS_DISPLAY = 3;
 
-export function Message(props: Partial<IMessageWithPendingAndReacts> & {
-  htmlAllowlist?: any;
-  pending?: boolean;
-  showUser: boolean;
-  scrollToMessage: (id: string) => void;
-}) {
+export function Message(
+  props: Partial<IMessageWithPendingAndReacts> & {
+    htmlAllowlist?: any;
+    pending?: boolean;
+    showUser: boolean;
+    scrollToMessage: (id: string) => void;
+  }
+) {
   const {
     id: messageId,
     getDecodedMessage,
@@ -117,10 +121,11 @@ export function Message(props: Partial<IMessageWithPendingAndReacts> & {
   const { referenceMessageId: emojiReferenceMessageId, showPicker } =
     useEmojis();
   const { info: profile } = useWalletProfile(sender);
-  const { username, loading: loadingUsername } = useUsernameFromIdentifierCertificate(
-    profile?.identifierCertificateMint,
-    sender
-  );
+  const { username, loading: loadingUsername } =
+    useUsernameFromIdentifierCertificate(
+      profile?.identifierCertificateMint,
+      sender
+    );
   const name = useMemo(
     () => username || (sender && truncatePubkey(sender)),
     [username, sender?.toBase58()]
@@ -252,10 +257,7 @@ export function Message(props: Partial<IMessageWithPendingAndReacts> & {
 
   const tokens = useMemo(
     () => [chat?.readPermissionKey, chat?.postPermissionKey].filter(truthy),
-    [
-      chat?.readPermissionKey,
-      chat?.postPermissionKey,
-    ]
+    [chat?.readPermissionKey, chat?.postPermissionKey]
   );
 
   const handleConfirmationClick = useCallback(() => {
@@ -310,33 +312,167 @@ export function Message(props: Partial<IMessageWithPendingAndReacts> & {
           </PopoverBody>
         </PopoverContent>
         <PopoverTrigger>
-          <HStack
-            pl={2}
-            pr={2}
-            pb={1}
-            pt={1}
-            w="full"
-            align="start"
-            spacing={2}
-            className="strata-message"
-          >
-            {showUser ? (
-              <Avatar mt="6px" size="sm" src={profile?.imageUrl} />
-            ) : (
-              <Box w="36px" />
+          <VStack spacing={0} gap={0}>
+            {reply && (
+              <DisplayReply
+                reply={reply}
+                htmlAllowList={htmlAllowlist}
+                scrollToMessage={scrollToMessage}
+              />
             )}
-            <VStack w="full" align="start" spacing={0}>
-              {showUser && (
-                <HStack alignItems="flex-end">
-                  <Text
-                    fontSize="sm"
-                    fontWeight="semibold"
-                    color="green.500"
-                    _dark={{ color: "green.200" }}
-                  >
-                    {name}
-                  </Text>
+            <HStack
+              pl={2}
+              pr={2}
+              pb={1}
+              pt={reply ? 0 : 1}
+              w="full"
+              align="start"
+              spacing={2}
+              className="strata-message"
+            >
+              {showUser ? (
+                <Avatar mt="6px" size="sm" src={profile?.imageUrl} />
+              ) : (
+                <Box w="36px" />
+              )}
+              <VStack w="full" align="start" spacing={0}>
+                {showUser && (
+                  <HStack alignItems="center">
+                    <Text
+                      fontSize="sm"
+                      fontWeight="semibold"
+                      color="green.500"
+                      _dark={{ color: "green.200" }}
+                    >
+                      {name}
+                    </Text>
 
+                    <TokenFlare
+                      chat={chatKey}
+                      wallet={sender}
+                      tokens={tokens}
+                    />
+                  </HStack>
+                )}
+
+                <Box
+                  w="fit-content"
+                  position="relative"
+                  textAlign={"left"}
+                  wordBreak="break-word"
+                  color={textColor}
+                  id={messageId}
+                >
+                  {message ? (
+                    messageType === MessageType.Gify ? (
+                      <GifyGif gifyId={message.gifyId} />
+                    ) : message.type === MessageType.Image ? (
+                      <Files files={files} />
+                    ) : message.type === MessageType.Text ? (
+                      <Text mt={"-4px"}>{message.text}</Text>
+                    ) : (
+                      <>
+                        <Files files={files} />
+                        <div
+                          dangerouslySetInnerHTML={{
+                            __html: message.html
+                              ? sanitizeHtml(message.html, htmlAllowlist)
+                              : "",
+                          }}
+                        />
+                      </>
+                    )
+                  ) : decoding ? (
+                    loadingSkeleton
+                  ) : notEnoughTokens ? (
+                    <BuyMoreButton mint={readMint} trigger={buyMoreTrigger} />
+                  ) : (
+                    <Tooltip label={`Failed to decode message`}>
+                      <Skeleton
+                        startColor={lockedColor}
+                        height="20px"
+                        speed={100000}
+                      >
+                        {Array.from(
+                          { length: genLength(messageId || "") },
+                          () => "."
+                        ).join()}
+                      </Skeleton>
+                    </Tooltip>
+                  )}
+                </Box>
+                {inflatedReacts && inflatedReacts.length > 0 && (
+                  <HStack mt={2} pt={1}>
+                    {inflatedReacts.map(({ emoji, messages, mine }) => (
+                      <Popover matchWidth trigger="hover" key={emoji}>
+                        <PopoverTrigger>
+                          <Button
+                            onClick={() => {
+                              if (!mine)
+                                sendMessage({
+                                  type: MessageType.React,
+                                  emoji: emoji,
+                                  referenceMessageId: messageId,
+                                });
+                            }}
+                            borderLeftRadius="20px"
+                            width="55px"
+                            borderRightRadius="20px"
+                            p={0}
+                            variant={mine ? "solid" : "outline"}
+                            size="sm"
+                            key={emoji}
+                          >
+                            <HStack spacing={1}>
+                              <Text lineHeight={0} fontSize="lg">
+                                {emoji}
+                              </Text>
+                              <Text lineHeight={0} fontSize="sm">
+                                {messages.length}
+                              </Text>
+                            </HStack>
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent width="fit-content">
+                          <PopoverArrow />
+                          <PopoverBody>
+                            <HStack spacing={1}>
+                              {messages
+                                .slice(0, MAX_MENTIONS_DISPLAY)
+                                .map((message, index) => (
+                                  <HStack key={message.id} spacing={0}>
+                                    <ProfileName sender={message.sender} />
+                                    {messages.length - 1 != index && (
+                                      <Text>, </Text>
+                                    )}
+                                  </HStack>
+                                ))}
+                              {messages.length > MAX_MENTIONS_DISPLAY && (
+                                <Text>
+                                  and {messages.length - MAX_MENTIONS_DISPLAY}{" "}
+                                  others
+                                </Text>
+                              )}
+                            </HStack>
+                          </PopoverBody>
+                        </PopoverContent>
+                      </Popover>
+                    ))}
+                    <Button
+                      borderLeftRadius="20px"
+                      width="55px"
+                      borderRightRadius="20px"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleOnReaction}
+                    >
+                      <Icon as={MdOutlineAddReaction} />
+                    </Button>
+                  </HStack>
+                )}
+              </VStack>
+              <HStack alignItems="center" flexShrink={0}>
+                {showUser && (
                   <Text
                     fontSize="xs"
                     color="gray.500"
@@ -344,148 +480,19 @@ export function Message(props: Partial<IMessageWithPendingAndReacts> & {
                   >
                     {moment(time).format("LT")}
                   </Text>
-                  <TokenFlare
-                    chat={chatKey}
-                    wallet={sender}
-                    tokens={tokens}
-                  />
-                </HStack>
-              )}
-
-              <Box
-                w="fit-content"
-                position="relative"
-                textAlign={"left"}
-                wordBreak="break-word"
-                color={textColor}
-                id={messageId}
-              >
-                {reply && (
-                  <DisplayReply
-                    reply={reply}
-                    htmlAllowList={htmlAllowlist}
-                    scrollToMessage={scrollToMessage}
-                  />
                 )}
-                {message ? (
-                  messageType === MessageType.Gify ? (
-                    <GifyGif gifyId={message.gifyId} />
-                  ) : message.type === MessageType.Image ? (
-                    <Files files={files} />
-                  ) : message.type === MessageType.Text ? (
-                    <Text mt={"-4px"}>{message.text}</Text>
-                  ) : (
-                    <>
-                      <Files files={files} />
-                      <div
-                        dangerouslySetInnerHTML={{
-                          __html: message.html
-                            ? sanitizeHtml(message.html, htmlAllowlist)
-                            : "",
-                        }}
-                      />
-                    </>
-                  )
-                ) : decoding ? (
-                  loadingSkeleton
-                ) : notEnoughTokens ? (
-                  <BuyMoreButton mint={readMint} trigger={buyMoreTrigger} />
-                ) : (
-                  <Tooltip label={`Failed to decode message`}>
-                    <Skeleton
-                      startColor={lockedColor}
-                      height="20px"
-                      speed={100000}
-                    >
-                      {Array.from(
-                        { length: genLength(messageId || "") },
-                        () => "."
-                      ).join()}
-                    </Skeleton>
-                  </Tooltip>
-                )}
-              </Box>
-              {inflatedReacts && inflatedReacts.length > 0 && (
-                <HStack mt={2}>
-                  {inflatedReacts.map(({ emoji, messages, mine }) => (
-                    <Popover matchWidth trigger="hover" key={emoji}>
-                      <PopoverTrigger>
-                        <Button
-                          onClick={() => {
-                            if (!mine)
-                              sendMessage({
-                                type: MessageType.React,
-                                emoji: emoji,
-                                referenceMessageId: messageId,
-                              });
-                          }}
-                          borderLeftRadius="20px"
-                          width="55px"
-                          borderRightRadius="20px"
-                          p={0}
-                          variant={mine ? "solid" : "outline"}
-                          size="sm"
-                          key={emoji}
-                        >
-                          <HStack spacing={1}>
-                            <Text lineHeight={0} fontSize="lg">
-                              {emoji}
-                            </Text>
-                            <Text lineHeight={0} fontSize="sm">
-                              {messages.length}
-                            </Text>
-                          </HStack>
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent width="fit-content">
-                        <PopoverArrow />
-                        <PopoverBody>
-                          <HStack spacing={1}>
-                            {messages
-                              .slice(0, MAX_MENTIONS_DISPLAY)
-                              .map((message, index) => (
-                                <HStack key={message.id} spacing={0}>
-                                  <ProfileName sender={message.sender} />
-                                  {messages.length - 1 != index && (
-                                    <Text>, </Text>
-                                  )}
-                                </HStack>
-                              ))}
-                            {messages.length > MAX_MENTIONS_DISPLAY && (
-                              <Text>
-                                and {messages.length - MAX_MENTIONS_DISPLAY}{" "}
-                                others
-                              </Text>
-                            )}
-                          </HStack>
-                        </PopoverBody>
-                      </PopoverContent>
-                    </Popover>
-                  ))}
-                  <Button
-                    borderLeftRadius="20px"
-                    width="55px"
-                    borderRightRadius="20px"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleOnReaction}
-                  >
-                    <Icon as={MdOutlineAddReaction} />
-                  </Button>
-                </HStack>
-              )}
-            </VStack>
-            <Icon
-              _hover={{ cursor: "pointer" }}
-              onClick={handleConfirmationClick}
-              alignSelf="center"
-              w="12px"
-              h="12px"
-              as={pending ? BsCircle : BsCheckCircleFill}
-              color="gray"
-              title={status}
-            />
-          </HStack>
+                <Icon
+                  _hover={{ cursor: "pointer" }}
+                  onClick={handleConfirmationClick}
+                  w="12px"
+                  h="12px"
+                  as={pending ? BsCircle : BsCheckCircleFill}
+                  color="gray"
+                  title={status}
+                />
+              </HStack>
+            </HStack>
+          </VStack>
         </PopoverTrigger>
       </Popover>
     </Box>
