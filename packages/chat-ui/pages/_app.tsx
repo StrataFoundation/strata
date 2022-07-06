@@ -11,10 +11,12 @@ import {
   HolaplexGraphqlProvider,
 } from "@strata-foundation/react";
 import { AppProps } from "next/app";
-import React from "react";
+import React, { useEffect } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import ReactGA from 'react-ga';
 import { GA_TRACKING_ID, IS_PRODUCTION } from "@/constants";
+import { useRouter } from "next/router";
+import * as gtag from "@/utils/gtag";
 
 if (IS_PRODUCTION) {
   ReactGA.initialize(GA_TRACKING_ID);
@@ -23,6 +25,19 @@ if (IS_PRODUCTION) {
 require("@solana/wallet-adapter-react-ui/styles.css");
 
 function MyApp({ Component, pageProps }: AppProps) {
+  const router = useRouter();
+
+  useEffect(() => {
+    const handleRouteChange = (url: URL) => {
+      /* invoke analytics function only for production */
+      if (IS_PRODUCTION) gtag.pageview(url);
+    };
+    router.events.on("routeChangeComplete", handleRouteChange);
+    return () => {
+      router.events.off("routeChangeComplete", handleRouteChange);
+    };
+  }, [router.events]);
+    
   const onError = React.useCallback(
     (error: Error) => {
       console.error(error);
