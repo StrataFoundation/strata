@@ -18,6 +18,26 @@ const STYLE = {
   },
 };
 
+const BEFORE_STYLE = {
+  content: `""`,
+  position: "absolute",
+  left: "50%",
+  top: "8px",
+  width: "2px",
+  height: "12px",
+  bg: "gray.300",
+};
+
+const AFTER_STYLE = {
+  content: `""`,
+  position: "absolute",
+  left: "50%",
+  top: "8px",
+  width: "20px",
+  height: "2px",
+  bg: "gray.300",
+};
+
 export function DisplayReply({
   reply,
   htmlAllowList,
@@ -44,24 +64,8 @@ export function DisplayReply({
         w="36px"
         h="100%"
         position="relative"
-        _before={{
-          content: `""`,
-          position: "absolute",
-          left: "50%",
-          top: "8px",
-          width: "2px",
-          height: "12px",
-          bg: "gray.300",
-        }}
-        _after={{
-          content: `""`,
-          position: "absolute",
-          left: "50%",
-          top: "8px",
-          width: "20px",
-          height: "2px",
-          bg: "gray.300",
-        }}
+        _before={BEFORE_STYLE}
+        _after={AFTER_STYLE}
         _dark={{
           _before: {
             bg: "gray.700",

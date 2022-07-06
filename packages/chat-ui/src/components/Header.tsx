@@ -14,6 +14,7 @@ export const Header: React.FC<IHeaderProps> = ({ children, onSidebarOpen }) => (
     justify="space-between"
     w="full"
     zIndex="sticky"
+    p={4}
     bg="white"
     _dark={{
       bg: "gray.900",
@@ -21,6 +22,7 @@ export const Header: React.FC<IHeaderProps> = ({ children, onSidebarOpen }) => (
     borderBottomWidth="1px"
     color="inherit"
     minH="16"
+    gap={4}
   >
     <IconButton
       aria-label="Menu"

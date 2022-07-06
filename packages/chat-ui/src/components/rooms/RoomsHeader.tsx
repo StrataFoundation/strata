@@ -123,13 +123,7 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
   }, [settings, publicKey, accelerator, chatSdk, chatKey]);
 
   return (
-    <Flex
-      align="center"
-      justify="space-between"
-      width="100%"
-      p={4}
-      direction="row"
-    >
+    <Flex align="center" justify="space-between" width="100%" direction="row">
       <Heading size={isMobile ? "md" : "md"} isTruncated>
         {chat?.name}
       </Heading>
