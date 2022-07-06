@@ -94,12 +94,11 @@ async function getMessages(
       ]
         .filter((msg) => msg.txids.every((txid) => !failedTx.has(txid)))
         .sort((a, b) => b.startBlockTime - a.startBlockTime)
-        .map(({ parts, ...rest }) => ({
-          ...rest,
-          parts,
+        .map((message) => {
           // @ts-ignore
-          pending: parts.some((p) => p.pending),
-        }));
+          message.pending = message.parts.some((p) => p.pending)
+          return message;
+        })
     } else {
       return prevMessages || [];
     }
@@ -107,6 +106,10 @@ async function getMessages(
 
   return [];
 }
+
+// Only change the identity of message.reacts if the number of reacts has increased on a message
+// chat -> message id -> number of reacts
+let cachedReacts: Record<string, Record<string, IMessageWithPending[]>> = {};
 
 export function useMessages(
   chat: PublicKey | undefined,
@@ -177,6 +180,7 @@ export function useMessages(
 
       return acc;
     }, {} as Record<string, IMessageWithPending[]>);
+    
     const messagesById = messages.reduce((acc, msg) => {
       if (msg && msg.type !== MessageType.React) {
         if (!acc[msg.id]) {
@@ -187,16 +191,30 @@ export function useMessages(
       return acc;
     }, {} as Record<string, IMessageWithPending>);
 
+    // Don't change identity of reacts array if the number of reacts has not increased
+    let cachedReactsLocal: Record<string, IMessageWithPending[]> = {}
+    if (chat) {
+      cachedReacts[chat.toBase58()] = cachedReacts[chat.toBase58()] || {};
+      cachedReactsLocal = cachedReacts[chat.toBase58()];
+    }
+
     return messages
       .filter((msg) => msg.type !== MessageType.React)
-      .map((message) => ({
-        ...message,
-        reacts: reacts[message.id] || [],
-        reply: message.referenceMessageId
-          ? messagesById[message.referenceMessageId]
-          : null,
-      }));
-  }, [messages]);
+      .map((message) => {
+        cachedReactsLocal[message.id] = cachedReactsLocal[message.id] || [];
+        if (cachedReactsLocal[message.id].length != reacts[message.id]?.length) {
+          cachedReactsLocal[message.id] = reacts[message.id];
+        }
+
+        return {
+          ...message,
+          reacts: cachedReactsLocal[message.id],
+          reply: message.referenceMessageId
+            ? messagesById[message.referenceMessageId]
+            : null,
+        };
+      });
+  }, [chat, messages]);
 
   return {
     ...rest,
