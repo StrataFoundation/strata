@@ -404,7 +404,7 @@ export function Message(
                   )}
                 </Box>
                 {inflatedReacts && inflatedReacts.length > 0 && (
-                  <HStack mt={2}>
+                  <HStack mt={2} pt={1}>
                     {inflatedReacts.map(({ emoji, messages, mine }) => (
                       <Popover matchWidth trigger="hover" key={emoji}>
                         <PopoverTrigger>
