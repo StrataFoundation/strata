@@ -335,7 +335,7 @@ export function Message(
               {showUser ? (
                 <Avatar mt="6px" size="sm" src={profile?.imageUrl} />
               ) : (
-                <Box w="36px" />
+                <Box w="34px" />
               )}
               <VStack w="full" align="start" spacing={0}>
                 {showUser && (
