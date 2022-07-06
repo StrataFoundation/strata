@@ -1,9 +1,13 @@
-import { Box, HStack, Text } from "@chakra-ui/react";
+import { Avatar, Box, HStack, Text } from "@chakra-ui/react";
 import { MessageType } from "@strata-foundation/chat";
-import React from "react";
+import { truncatePubkey } from "@strata-foundation/react";
+import React, { useMemo } from "react";
 import { useAsync } from "react-async-hook";
-import sanitizeHtml from "sanitize-html";
-import { IMessageWithPending } from "../hooks";
+import {
+  IMessageWithPending,
+  useUsernameFromIdentifierCertificate,
+  useWalletProfile,
+} from "../hooks";
 
 const STYLE = {
   color: "gray.500",
@@ -46,12 +50,31 @@ export function DisplayReply({
   scrollToMessage: (id: string) => void;
 }) {
   const { result: decodedMessage } = useAsync(reply.getDecodedMessage, []);
+  const { info: profile } = useWalletProfile(reply.sender);
+  const { username, loading: loadingUsername } =
+    useUsernameFromIdentifierCertificate(
+      profile?.identifierCertificateMint,
+      reply.sender
+    );
+  const name = useMemo(
+    () => username || (reply.sender && truncatePubkey(reply.sender)),
+    [username, reply?.sender?.toBase58()]
+  );
 
   return (
-    <HStack p={1} pb={0} w="full" align="start" spacing={2} fontSize="xs">
+    <HStack
+      p={1}
+      pb={0}
+      w="full"
+      align="start"
+      spacing={2}
+      fontSize="xs"
+      overflow="hidden"
+    >
       <Box
         w="36px"
         h="100%"
+        flexShrink={0}
         position="relative"
         _before={BEFORE_STYLE}
         _after={AFTER_STYLE}
@@ -65,25 +88,32 @@ export function DisplayReply({
         }}
       />
       <HStack
+        w="full"
         gap={0}
         spacing={1}
         onClick={() => scrollToMessage(reply.id)}
         {...STYLE}
       >
+        <Avatar size="2xs" src={profile?.imageUrl} />
+        <Text
+          fontSize="xs"
+          fontWeight="semibold"
+          color="green.500"
+          _dark={{ color: "green.200" }}
+        >
+          {name}
+        </Text>
         {decodedMessage ? (
           // successfully decoded
           <>
             {reply.type === MessageType.Text ? (
-              <Text>{decodedMessage.text}</Text>
+              <Text w={{ base: "70%", md: "full" }} isTruncated>
+                {decodedMessage.text}
+              </Text>
             ) : reply.type === MessageType.Html ? (
-              <Text
-                noOfLines={2}
-                dangerouslySetInnerHTML={{
-                  __html: decodedMessage.html
-                    ? sanitizeHtml(decodedMessage.html, htmlAllowList)
-                    : "",
-                }}
-              />
+              <Text w={{ base: "70%", md: "full" }} isTruncated>
+                {decodedMessage.html?.replace(/<[^>]*>?/gm, "")}
+              </Text>
             ) : (
               <Text>Click to see attachment</Text>
             )}
