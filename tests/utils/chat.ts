@@ -13,11 +13,6 @@ import {
 import {
   sendMultipleInstructions
 } from "@strata-foundation/spl-utils";
-import nacl from "tweetnacl";
-import {
-  fromString as uint8arrayFromString,
-  toString as uint8arrayToString,
-} from "uint8arrays";
 
 export async function initializeUser(
   provider: AnchorProvider, 
@@ -107,25 +102,3 @@ export async function initializeChat(
   return chat;
 }
 
-export const AUTH_SIGNATURE_BODY =
-  "I am creating an account to use Lit Protocol at {{timestamp}}";
-
-export async function getAuthSig(publicKey: PublicKey, secretKey: Uint8Array) {
-  const now = new Date().toISOString();
-  const body = AUTH_SIGNATURE_BODY.replace("{{timestamp}}", now);
-
-  const data = new TextEncoder().encode(body);
-  const signed = nacl.sign.detached(data, secretKey);
-  // const signed = await provider.signMessage(data, "utf8");
-
-  const hexSig = uint8arrayToString(signed, "base16");
-
-  const authSig = {
-    sig: hexSig,
-    derivedVia: "solana.signMessage",
-    signedMessage: body,
-    address: publicKey.toBase58(),
-  };
-
-  return authSig;
-}

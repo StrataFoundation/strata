@@ -32,12 +32,14 @@ import LitJsSdk from "lit-js-sdk";
 // @ts-ignore
 import { v4 as uuid } from "uuid";
 import { CaseInsensitiveMarkerV0, ChatIDL, ChatV0, DelegateWalletV0, NamespacesV0, PermissionType, PostAction, ProfileV0, SettingsV0, MessageType as RawMessageType } from "./generated/chat";
+import { getAuthSig, MessageSigner } from "./lit";
 import { uploadFiles } from "./shdw";
 
 const MESSAGE_MAX_CHARACTERS = 352; // TODO: This changes with optional accounts in the future
 
 export * from "./generated/chat";
 export * from "./shdw";
+export * from "./lit";
 
 const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
   "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
@@ -396,10 +398,12 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
   async _litAuth() {
     try {
-      this.litAuthSig = await this.litJsSdk.checkAndSignAuthMessage({
-        chain: this.chain,
-        alertWhenUnauthorized: false,
-      });
+      // @ts-ignore
+      if (!this.wallet.signMessage) {
+        throw new Error("This wallet does not support signMessage. Please use another wallet")
+      }
+      // @ts-ignore
+      this.litAuthSig = await getAuthSig(this.wallet.publicKey, this.wallet as MessageSigner)
     } finally {
       this.authingLit = null;
     }
@@ -642,10 +646,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       ? Buffer.from(storedKey, "hex")
       : undefined;
     if (!symmetricKey) {
-      await this.authingLit;
-      if (!this.isLitAuthed && this.wallet && this.wallet.publicKey) {
-        await this.litAuth();
-      }
+      await this.litAuth();
       symmetricKey = await this.litClient.getEncryptionKey({
         solRpcConditions: accessControlConditions,
         // Note, below we convert the encryptedSymmetricKey from a UInt8Array to a hex string.  This is because we obtained the encryptedSymmetricKey from "saveEncryptionKey" which returns a UInt8Array.  But the getEncryptionKey method expects a hex string.
@@ -715,6 +716,9 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         if (decodedMessage) {
           return decodedMessage;
         }
+        
+        await this.litAuth();
+
         const chatAcc = await this.getChat(chatKey);
         let readAmount: BN;
         try {
@@ -1067,7 +1071,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   > {
     const transaction = new Transaction();
     const certificateMintKeypair = Keypair.generate();
-    console.log("cert", certificateMintKeypair.publicKey.toBase58());
     let signers = [];
     let certificateMint = certificateMintKeypair.publicKey;
     const namespaces = await this.getNamespaces();
@@ -1558,10 +1561,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   }: SendMessageArgs): Promise<BigInstructionResult<{ messageId: string }>> {
     const { referenceMessageId, type, ...message } = rawMessage;
     if (encrypted) {
-      await this.authingLit;
-      if (!this.isLitAuthed && this.wallet && this.wallet.publicKey) {
-        await this.litAuth();
-      }
+      await this.litAuth();
     }
     let { fileAttachments, ...normalMessage } = message;
     const chatAcc = (await this.getChat(chat))!;

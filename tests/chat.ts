@@ -16,7 +16,8 @@ import {
   IChat,
   IdentifierType,
   MessageType,
-  PermissionType
+  PermissionType,
+  getAuthSig,
 } from "@strata-foundation/chat";
 import {
   createMint,
@@ -28,7 +29,7 @@ import ChaiAsPromised from "chai-as-promised";
 // @ts-ignore
 import LitNodeJsSdk from "lit-js-sdk/build/index.node.js";
 import { TokenUtils } from "./utils/token";
-import { initializeUser, initializeChat, getAuthSig } from "./utils/chat";
+import { initializeUser, initializeChat } from "./utils/chat";
 import { NATIVE_MINT } from "@solana/spl-token";
 
 use(ChaiAsPromised);
@@ -215,7 +216,7 @@ describe("chat", () => {
         10,
         profileKeypair.publicKey
       );
-      await tokenUtils.createAtaAndMint(
+      await createAtaAndMint(
         provider,
         readPermissionMint,
         10,
