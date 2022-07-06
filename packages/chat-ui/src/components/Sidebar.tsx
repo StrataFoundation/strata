@@ -74,6 +74,7 @@ export const Sidebar = (props: any) => {
       borderRightWidth="1px"
       w="80"
       py={4}
+      pt={3}
       gap={1}
       {...props}
     >
@@ -83,22 +84,20 @@ export const Sidebar = (props: any) => {
             <Icon as={RiSearch2Line} />
           </InputLeftElement>
           <Input
-            borderColor="gray.600"
             type="search"
+            variant="filled"
             placeholder="Search"
             value={input}
             onChange={handleSearch}
           />
         </InputGroup>
 
-        <IconButton
-          variant="outline"
+        {/* <IconButton
           aria-label="Create Chat"
-          borderColor="gray.600"
           padding={0}
           icon={<Icon as={RiAddCircleLine} w={6} h={6} />}
           isDisabled
-        />
+        /> */}
       </Flex>
       <Flex
         direction="column"
