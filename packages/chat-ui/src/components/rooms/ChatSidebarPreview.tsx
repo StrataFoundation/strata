@@ -41,7 +41,8 @@ export function ChatSidebarPreview({ identifier }: chatRoomProps) {
       minW="200px"
       align="center"
       bg={identifier === id ? highlightedBg : undefined}
-      p={4}
+      px={4}
+      py={3}
       cursor="pointer"
       borderRadius="10px"
       _hover={{ bg: colorMode === "light" ? "gray.200" : "gray.700" }}
