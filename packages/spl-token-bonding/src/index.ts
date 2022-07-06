@@ -22,6 +22,7 @@ import {
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
+  ComputeBudgetProgram,
 } from "@solana/web3.js";
 import {
   AnchorSdk,
@@ -1665,6 +1666,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
 
     const instructions = [];
     const signers = [];
+    let req = ComputeBudgetProgram.setComputeUnitLimit({units: 300000});
+    instructions.push(req);
 
     if (!destination) {
       destination = await Token.getAssociatedTokenAddress(
@@ -2167,6 +2170,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     );
 
     const instructions = [];
+    let req = ComputeBudgetProgram.setComputeUnitLimit({units: 250000});
+    instructions.push(req);
     if (!source) {
       source = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
