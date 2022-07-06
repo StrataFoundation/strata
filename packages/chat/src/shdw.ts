@@ -112,7 +112,7 @@ export async function initStorageIfNeeded(
       }
       sizeKB = Math.ceil(sizeToAdd / 1024);
     } else if (!storageAccount) {
-      sizeKB = Math.ceil(sizeBytes / 1024);
+      sizeKB = Math.ceil((2 * sizeBytes) / 1024);
     }
 
     console.log(
