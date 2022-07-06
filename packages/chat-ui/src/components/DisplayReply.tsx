@@ -1,4 +1,4 @@
-import { Avatar, Box, HStack, Text } from "@chakra-ui/react";
+import { Avatar, Box, Flex, HStack, Text } from "@chakra-ui/react";
 import { MessageType } from "@strata-foundation/chat";
 import { truncatePubkey } from "@strata-foundation/react";
 import React, { useMemo } from "react";
@@ -62,16 +62,8 @@ export function DisplayReply({
   );
 
   return (
-    <HStack
-      p={1}
-      pb={0}
-      w="full"
-      align="start"
-      spacing={2}
-      fontSize="xs"
-      overflow="hidden"
-    >
-      <Box
+    <HStack p={1} pb={0} w="full" align="start" spacing={2} fontSize="xs">
+      <Flex
         w="36px"
         h="100%"
         flexShrink={0}
@@ -88,7 +80,7 @@ export function DisplayReply({
         }}
       />
       <HStack
-        w="full"
+        flexGrow={1}
         gap={0}
         spacing={1}
         onClick={() => scrollToMessage(reply.id)}
@@ -107,11 +99,11 @@ export function DisplayReply({
           // successfully decoded
           <>
             {reply.type === MessageType.Text ? (
-              <Text w={{ base: "70%", md: "full" }} isTruncated>
+              <Text maxW={{ base: "150px", md: "600px" }} isTruncated>
                 {decodedMessage.text}
               </Text>
             ) : reply.type === MessageType.Html ? (
-              <Text w={{ base: "70%", md: "full" }} isTruncated>
+              <Text maxW={{ base: "150px", md: "600px" }} isTruncated>
                 {decodedMessage.html?.replace(/<[^>]*>?/gm, "")}
               </Text>
             ) : (

@@ -33,7 +33,7 @@ import {
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import debounce from "lodash/debounce";
 import React, { useEffect } from "react";
-import { RiQuestionLine } from "react-icons/ri";
+import { RiSettings4Fill } from "react-icons/ri";
 import { useChatSdk } from "../../contexts/chatSdk";
 import { useChatOwnedAmount } from "../../hooks";
 import { useChat } from "../../hooks/useChat";
@@ -135,7 +135,7 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
               color={colorMode === "light" ? "black" : "white"}
               _hover={{ cursor: "pointer" }}
             >
-              <RiQuestionLine size={!isMobile ? 26 : 20} />
+              <RiSettings4Fill size={!isMobile ? 26 : 20} />
             </Box>
           </PopoverTrigger>
           <Portal>
