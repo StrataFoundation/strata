@@ -32,18 +32,18 @@ const options: {
   subHeading: string;
 }[] = [
   {
-    value: "0.01",
-    heading: "200",
+    value: "0.02",
+    heading: "~200",
     subHeading: "Messages",
   },
   {
     value: "0.05",
-    heading: "10,000",
+    heading: "~10,000",
     subHeading: "Messages",
   },
   {
     value: "0.1",
-    heading: "20,000",
+    heading: "~20,000",
     subHeading: "Messages",
   },
 ];
