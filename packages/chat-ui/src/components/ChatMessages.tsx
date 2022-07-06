@@ -1,7 +1,7 @@
 import { Skeleton, SkeletonCircle } from "@chakra-ui/react";
 import React, { useCallback, useEffect, useMemo } from "react";
 import throttle from "lodash/throttle";
-import { Message } from "./Message";
+import { MemodMessage } from "./Message";
 import { Flex } from "./MyFlex";
 import { useAsyncCallback } from "react-async-hook";
 import { sleep } from "@strata-foundation/spl-utils";
@@ -118,7 +118,7 @@ export const ChatMessages = ({
       onScroll={handleOnScroll}
     >
       {messages?.map((msg, index) => (
-        <Message
+        <MemodMessage
           scrollToMessage={scrollToMessage}
           key={msg?.id}
           {...msg}

@@ -524,3 +524,5 @@ function genLength(id: string): number {
 
   return lengths[id];
 }
+
+export const MemodMessage = React.memo(Message);
