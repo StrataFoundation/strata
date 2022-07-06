@@ -1,9 +1,7 @@
-import { Box, HStack, Icon, Text } from "@chakra-ui/react";
-import { PublicKey } from "@solana/web3.js";
+import { Box, HStack, Text } from "@chakra-ui/react";
 import { MessageType } from "@strata-foundation/chat";
 import React from "react";
 import { useAsync } from "react-async-hook";
-import { MdReply } from "react-icons/md";
 import sanitizeHtml from "sanitize-html";
 import { IMessageWithPending } from "../hooks";
 
@@ -75,28 +73,38 @@ export function DisplayReply({
           },
         }}
       />
-      {decodedMessage ? (
-        // successfully decoded
-        <>
-          {reply.type === MessageType.Text ? (
-            <Text>{decodedMessage.text}</Text>
-          ) : reply.type === MessageType.Html ? (
-            <Text
-              noOfLines={2}
-              dangerouslySetInnerHTML={{
-                __html: decodedMessage.html
-                  ? sanitizeHtml(decodedMessage.html, htmlAllowList)
-                  : "",
-              }}
-            />
-          ) : (
-            <Text>Click to see attachment</Text>
-          )}
-        </>
-      ) : (
-        // need to fetch more messages
-        <Text>Click to find reply</Text>
-      )}
+      <HStack gap={0} spacing={1}>
+        <Text
+          fontSize="xs"
+          fontWeight="semibold"
+          color="green.500"
+          _dark={{ color: "green.200" }}
+        >
+          {name}
+        </Text>
+        {decodedMessage ? (
+          // successfully decoded
+          <>
+            {reply.type === MessageType.Text ? (
+              <Text>{decodedMessage.text}</Text>
+            ) : reply.type === MessageType.Html ? (
+              <Text
+                noOfLines={2}
+                dangerouslySetInnerHTML={{
+                  __html: decodedMessage.html
+                    ? sanitizeHtml(decodedMessage.html, htmlAllowList)
+                    : "",
+                }}
+              />
+            ) : (
+              <Text>Click to see attachment</Text>
+            )}
+          </>
+        ) : (
+          // need to fetch more messages
+          <Text>Click to find reply</Text>
+        )}
+      </HStack>
     </HStack>
   );
 }
