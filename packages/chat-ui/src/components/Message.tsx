@@ -485,7 +485,7 @@ export function Message(
                   </HStack>
                 )}
               </VStack>
-              <Flex flexShrink={0}>
+              <HStack alignItems="center" flexShrink={0}>
                 {showUser && (
                   <Hide below="md">
                     <Text
@@ -506,7 +506,7 @@ export function Message(
                   color="gray"
                   title={status}
                 />
-              </Flex>
+              </HStack>
             </HStack>
           </VStack>
         </PopoverTrigger>
