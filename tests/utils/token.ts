@@ -152,15 +152,24 @@ export class TokenUtils {
         collectionMint: collectionKey,
         nftMint: mintKeypair.publicKey,
       })
-    } else {
-      await splTokenMetadata.createMasterEdition({
-        mint: mintKeypair.publicKey,
-      })
     }
 
     return {
       mintKey,
       collectionKey,
     };
+  }
+
+  async createTestNftCollection(
+    provider: AnchorProvider,
+    recipient: PublicKey,
+    mintKeypair: Keypair=Keypair.generate(),
+    holderKey: PublicKey=provider.wallet.publicKey,
+  ) {
+    await this.createTestNft(provider, recipient, mintKeypair, holderKey);
+    const splTokenMetadata = await SplTokenMetadata.init(provider);
+    await splTokenMetadata.createMasterEdition({
+      mint: mintKeypair.publicKey,
+    });
   }
 }

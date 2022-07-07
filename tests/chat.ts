@@ -299,7 +299,7 @@ describe("chat", () => {
 
         // create nft from permitted collection on localnet and devnet
         const nftCollectionKeypair = Keypair.generate();
-        await tokenUtils.createTestNft(provider, nftHolder.publicKey, nftCollectionKeypair, provider.wallet.publicKey);
+        await tokenUtils.createTestNftCollection(provider, nftHolder.publicKey, nftCollectionKeypair, provider.wallet.publicKey);
         await tokenUtils.createTestNft(provider, nftHolder.publicKey, nftMintKeypair, provider.wallet.publicKey, nftCollectionKeypair.publicKey);
 
         // create chat where nft holders of a collection are auth
