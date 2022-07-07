@@ -81,7 +81,6 @@ describe("chat", () => {
     let postPermissionMint: PublicKey;
 
     before(async () => {
-      await chatSdk.initializeNamespaces();
       readPermissionMint = await createMint(provider, me, 9);
       postPermissionMint = readPermissionMint;
       await createAtaAndMint(provider, readPermissionMint, 10);
