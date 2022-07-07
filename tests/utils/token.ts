@@ -3,17 +3,14 @@ import { PublicKey, Transaction, SystemProgram, Keypair } from "@solana/web3.js"
 import { NATIVE_MINT, AccountLayout, TOKEN_PROGRAM_ID, Token, ASSOCIATED_TOKEN_PROGRAM_ID, AccountInfo as TokenAccountInfo, u64 } from '@solana/spl-token';
 import { expect } from "chai";
 import {
-  Metadata,
   Creator,
   DataV2,
-  CreateMetadataV2,
   Collection,
 } from "@metaplex-foundation/mpl-token-metadata";
 import {
   createMint,
-  sendInstructions,
-  sendMultipleInstructions,
   SplTokenMetadata,
+  createAtaAndMint,
 } from "@strata-foundation/spl-utils";
 
 export class TokenUtils {
@@ -143,7 +140,7 @@ export class TokenUtils {
       mint: mintKey,
     });
 
-    await this.createAtaAndMint(
+    await createAtaAndMint(
       provider,
       mintKeypair.publicKey,
       1,
