@@ -1,4 +1,3 @@
-import React from "react";
 import ReactGA from "react-ga";
 
 export const useAnalyticsEventTracker = (category="Chat") => {

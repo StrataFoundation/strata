@@ -16,7 +16,6 @@ import toast, { Toaster } from "react-hot-toast";
 import ReactGA from 'react-ga';
 import { GA_TRACKING_ID, IS_PRODUCTION } from "@/constants";
 import { useRouter } from "next/router";
-import * as gtag from "@/utils/gtag";
 
 if (IS_PRODUCTION) {
   ReactGA.initialize(GA_TRACKING_ID);
@@ -30,7 +29,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   useEffect(() => {
     const handleRouteChange = (url: URL) => {
       /* invoke analytics function only for production */
-      if (IS_PRODUCTION) gtag.pageview(url);
+      if (IS_PRODUCTION) ReactGA.pageview(window.location.pathname + window.location.search);
     };
     router.events.on("routeChangeComplete", handleRouteChange);
     return () => {
