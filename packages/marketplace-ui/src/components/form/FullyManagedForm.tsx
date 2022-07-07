@@ -104,8 +104,9 @@ async function createFullyManaged(
       break;
   }
 
+  const c = values.startingPrice * (k + 1);
   let config: ICurveConfig = new TimeDecayExponentialCurveConfig({
-    c: values.startingPrice,
+    c,
     k0: k,
     k1: k,
     d: 1,
@@ -116,7 +117,7 @@ async function createFullyManaged(
       .addCurve(
         0,
         new TimeDecayExponentialCurveConfig({
-          c: values.startingPrice,
+          c,
           k0: 0,
           k1: 0,
           d: 1,
@@ -126,7 +127,7 @@ async function createFullyManaged(
       .addCurve(
         30 * 60, // 30 minutes
         new TimeDecayExponentialCurveConfig({
-          c: values.startingPrice,
+          c,
           k0: 0,
           k1: k,
           d: 0.5,
