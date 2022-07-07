@@ -1,11 +1,11 @@
 import { Chatbox } from "@/components/Chatbox";
 import { ChatMessages } from "@/components/ChatMessages";
 import { EmojiPickerPopover } from "@/components/EmojiPicker";
+import { FileUploadMask } from "@/components/FileUploadMask";
 import { Header } from "@/components/Header";
 import { Layout } from "@/components/Layout";
 import { LegacyWalletMigrationModal } from "@/components/LegacyWalletMigrationModal";
 import { RoomsHeader } from "@/components/rooms/RoomsHeader";
-import { Workspace } from "@/components/Workspace";
 import { useChatKeyFromIdentifier } from "@/hooks/useChatKeyFromIdentifier";
 import { IMessageWithPending, useMessages } from "@/hooks/useMessages";
 import { ApolloClient, gql, InMemoryCache } from "@apollo/client";
@@ -14,12 +14,12 @@ import {
   NAMESPACES_PROGRAM,
   NAMESPACES_PROGRAM_ID,
 } from "@cardinal/namespaces";
-import { useDisclosure } from "@chakra-ui/react";
+import { Box, Flex, useDisclosure } from "@chakra-ui/react";
 import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { AnchorProvider, Program } from "@project-serum/anchor";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
-import { ChatIDL, ChatIDLJson, ChatSdk } from "@strata-foundation/chat";
+import { ChatIDL, ChatIDLJson, ChatSdk, randomizeFileName } from "@strata-foundation/chat";
 import {
   getClusterAndEndpoint,
   useErrorHandler,
@@ -37,6 +37,7 @@ import React, {
   useState,
 } from "react";
 import { useAsyncCallback } from "react-async-hook";
+import { useDropzone } from "react-dropzone";
 
 const SOLANA_URL =
   process.env.NEXT_PUBLIC_SOLANA_URL || "https://ssc-dao.genesysgo.net/";
@@ -115,6 +116,10 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   };
 };
 
+const DARK_BG = {
+  bg: "gray.900",
+};
+
 export default function Chatroom({
   name,
   image,
@@ -177,11 +182,39 @@ export default function Chatroom({
     [msgWeHave, messages, pendingMessages]
   );
 
+
+  const [files, setFiles] = useState<{ name: string; file: File }[]>([]);
+  const onUpload = useCallback(
+    async (newFiles: File[]) => {
+      setFiles((files) => [
+        ...files,
+        ...[...newFiles].map((file) => {
+          const ret = {
+            name: file.name,
+            file,
+          };
+          randomizeFileName(file); // so no conflicts with gengo
+          return ret;
+        }),
+      ]);
+    },
+    [setFiles]
+  );
+  const { getRootProps, getInputProps, open, isFocused, isDragAccept } =
+    useDropzone({
+      // Disable click and keydown behavior
+      noClick: true,
+      noKeyboard: true,
+      onDrop: onUpload,
+    });
+  const rootProps = useMemo(() => getRootProps({ className: "dropzone" }), [getRootProps]);
+
   useEffect(() => {
     setPendingMessages((pendingMessages) =>
       pendingMessages.filter((p) => !msgWeHave.has(p.id))
     );
   }, [msgWeHave]);
+
 
   return (
     <Layout
@@ -209,7 +242,21 @@ export default function Chatroom({
       <Header onSidebarOpen={sidebar.onOpen}>
         <RoomsHeader chatKey={chatKey} />
       </Header>
-      <Workspace>
+
+      <Flex
+        position="relative"
+        direction="column"
+        w="full"
+        h="full"
+        grow={1}
+        bg="white"
+        _dark={DARK_BG}
+        overflow="hidden"
+        {...rootProps}
+      >
+        {" "}
+        {(isFocused || isDragAccept) && <FileUploadMask />}
+        <input {...getInputProps()} />
         <EmojiPickerPopover chatKey={chatKey} />
         <ChatMessages
           isLoading={loadingInitial}
@@ -223,8 +270,12 @@ export default function Chatroom({
           scrollRef={scrollRef}
           chatKey={chatKey}
           onAddPendingMessage={onAddPendingMessage}
+          files={files}
+          setFiles={setFiles}
+          onUploadFile={open}
         />
-      </Workspace>
+      </Flex>
+      {/* </Flex> */}
     </Layout>
   );
 }

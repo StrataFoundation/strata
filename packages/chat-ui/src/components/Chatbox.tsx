@@ -20,6 +20,7 @@ import {
   PopoverContent,
   PopoverBody,
 } from "@chakra-ui/react";
+import { IoMdAttach } from "react-icons/io";
 import { Flex } from "./MyFlex";
 import { PublicKey } from "@solana/web3.js";
 import {
@@ -70,6 +71,16 @@ export type chatProps = {
   onAddPendingMessage?: (message: IMessageWithPending) => void;
   chatKey?: PublicKey;
   scrollRef?: any;
+  files: { name: string; file: File }[];
+  setFiles: React.Dispatch<
+    React.SetStateAction<
+      {
+        name: string;
+        file: File;
+      }[]
+    >
+  >;
+  onUploadFile: () => void;
 };
 
 const popoverWidth = {
@@ -84,6 +95,9 @@ export function Chatbox({
   scrollRef,
   chatKey,
   onAddPendingMessage,
+  files,
+  setFiles,
+  onUploadFile
 }: chatProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [input, setInput] = useState("");
@@ -106,13 +120,6 @@ export function Chatbox({
     error: delegateError,
   } = useLoadDelegate();
   const {
-    isOpen: profileIsOpen,
-    onClose: closeProfile,
-    onOpen: openProfile,
-  } = useDisclosure({
-    defaultIsOpen: false,
-  });
-  const {
     isOpen: delegateIsOpen,
     onClose: closeDelegate,
     onOpen: openDelegate,
@@ -122,11 +129,6 @@ export function Chatbox({
 
   const gaEventTracker = useAnalyticsEventTracker();
 
-  const [files, setFiles] = useState<{ name: string; file: File }[]>([]);
-  const onCancelFile = useCallback(
-    (file: any) => setFiles((files) => files.filter((f) => f.file != file)),
-    [setFiles]
-  );
   const chatBg = useColorModeValue("gray.100", "gray.800");
   const { handleErrors } = useErrorHandler();
   const { info: chat } = useChat(chatKey);
@@ -160,6 +162,11 @@ export function Chatbox({
       }
     },
   });
+
+  const onCancelFile = useCallback(
+    (file: any) => setFiles((files: { name: string; file: File }[]) => files.filter((f) => f.file != file)),
+    [setFiles]
+  );
 
   const { replyMessage, hideReply } = useReply();
   useEffect(() => {
@@ -243,20 +250,6 @@ export function Chatbox({
     }),
     [sendMessage, input, files]
   );
-
-  const onUpload = useCallback(async (newFiles: FileList) => {
-    setFiles((files) => [
-      ...files,
-      ...[...newFiles].map((file) => {
-        const ret = {
-          name: file.name,
-          file,
-        };
-        randomizeFileName(file); // so no conflicts with gengo
-        return ret;
-      }),
-    ]);
-  }, [setFiles]);
 
   const handleEmojiClick = (native: string) => {
     setInput(
@@ -410,11 +403,13 @@ export function Chatbox({
             </HStack>
           )}
 
-          { (needsTopOff || needsInit) && <LoadWalletModal
-            isOpen={delegateIsOpen}
-            onClose={closeDelegate}
-            onLoaded={closeDelegate}
-          /> }
+          {(needsTopOff || needsInit) && (
+            <LoadWalletModal
+              isOpen={delegateIsOpen}
+              onClose={closeDelegate}
+              onLoaded={closeDelegate}
+            />
+          )}
           <Flex
             direction="column"
             position="sticky"
@@ -433,11 +428,7 @@ export function Chatbox({
               <PopoverTrigger>
                 <Flex w="full" />
               </PopoverTrigger>
-              <PopoverContent
-                bg={chatBg}
-                border="none"
-                w={popoverWidth}
-              >
+              <PopoverContent bg={chatBg} border="none" w={popoverWidth}>
                 <PopoverBody px={0} pt={0}>
                   <VStack spacing={0} w="full" align="start">
                     <Text
@@ -492,8 +483,12 @@ export function Chatbox({
                   value={input}
                   onKeyDown={handleKeyDown}
                 />
-                <FileAttachment
-                  onUpload={onUpload}
+                <IconButton
+                  isLoading={loading}
+                  aria-label="Select Image"
+                  variant="outline"
+                  onClick={onUploadFile}
+                  icon={<Icon w="24px" h="24px" as={IoMdAttach} />}
                 />
                 <IconButton
                   aria-label="Select GIF"
