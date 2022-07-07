@@ -182,7 +182,7 @@ export const useTransactions = ({
 
   useEffect(() => {
     let subId: string;
-    (async () => {
+    let promise = (async () => {
       if (subscribe && address && accelerated && accelerator) {
         subId = await accelerator.onTransaction(
           cluster as Cluster,
@@ -215,9 +215,12 @@ export const useTransactions = ({
     })();
 
     return () => {
-      if (subId && accelerator) {
-        accelerator.unsubscribeTransaction(subId);
-      }
+        (async () => {
+          await promise;
+          if (subId && accelerator) {
+            accelerator.unsubscribeTransaction(subId);
+          }
+        })();        
     };
   }, [subscribe, accelerated, accelerator, addrStr, setTransactions]);
 

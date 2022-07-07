@@ -4,6 +4,7 @@ import { useConnection } from "@solana/wallet-adapter-react";
 import { Connection, PublicKey } from "@solana/web3.js";
 import { ChatSdk } from "@strata-foundation/chat";
 import { useAccount, useTokenAccount } from "@strata-foundation/react";
+import { useMemo } from "react";
 import { useAsync } from "react-async-hook";
 import { useChatSdk } from "../contexts";
 import { useCaseInsensitiveMarker } from "./useCaseInsensitiveMarker";
@@ -47,9 +48,15 @@ export function useWalletFromIdentifier(identifier?: string): {
 
   const { info: tokenAccount } = useTokenAccount(tokenAccountKey);
 
+  const wallet = useMemo(() => {
+    if (tokenAccount && namespaces && !tokenAccount.owner.equals(namespaces.userNamespace)) {
+      return tokenAccount?.owner
+    }
+  }, [namespaces, tokenAccount]);
+
   return {
     loading: loading1 || loading2 || loading3 || loading4,
-    wallet: tokenAccount?.owner,
+    wallet,
     error: error || error2,
   };
 }

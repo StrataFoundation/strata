@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   ButtonGroup,
+  Hide,
   HStack,
   Icon,
   IconButton,
@@ -11,6 +12,7 @@ import {
   PopoverBody,
   PopoverContent,
   PopoverTrigger,
+  Show,
   Skeleton,
   Text,
   TextProps,
@@ -312,7 +314,7 @@ export function Message(
           </PopoverBody>
         </PopoverContent>
         <PopoverTrigger>
-          <VStack spacing={0} gap={0}>
+          <VStack spacing={0} gap={0} w="full">
             {reply && (
               <DisplayReply
                 reply={reply}
@@ -333,7 +335,7 @@ export function Message(
               {showUser ? (
                 <Avatar mt="6px" size="sm" src={profile?.imageUrl} />
               ) : (
-                <Box w="36px" />
+                <Box w="34px" />
               )}
               <VStack w="full" align="start" spacing={0}>
                 {showUser && (
@@ -346,6 +348,18 @@ export function Message(
                     >
                       {name}
                     </Text>
+
+                    {showUser && (
+                      <Show below="md">
+                        <Text
+                          fontSize="xs"
+                          color="gray.500"
+                          _dark={{ color: "gray.400" }}
+                        >
+                          {moment(time).format("LT")}
+                        </Text>
+                      </Show>
+                    )}
 
                     <TokenFlare
                       chat={chatKey}
@@ -473,13 +487,15 @@ export function Message(
               </VStack>
               <HStack alignItems="center" flexShrink={0}>
                 {showUser && (
-                  <Text
-                    fontSize="xs"
-                    color="gray.500"
-                    _dark={{ color: "gray.400" }}
-                  >
-                    {moment(time).format("LT")}
-                  </Text>
+                  <Hide below="md">
+                    <Text
+                      fontSize="xs"
+                      color="gray.500"
+                      _dark={{ color: "gray.400" }}
+                    >
+                      {moment(time).format("LT")}
+                    </Text>
+                  </Hide>
                 )}
                 <Icon
                   _hover={{ cursor: "pointer" }}
@@ -508,3 +524,5 @@ function genLength(id: string): number {
 
   return lengths[id];
 }
+
+export const MemodMessage = React.memo(Message);
