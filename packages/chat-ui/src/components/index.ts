@@ -15,7 +15,6 @@ export * from "./CopyBlackBox";
 export * from "./Layout";
 export * from "./Header";
 export * from "./Sidebar";
-export * from "./Workspace";
 export * from "./LongPromiseNotification";
 export * from "./EmojiPicker";
 export * from "./Files";
@@ -23,3 +22,4 @@ export * from "./DisplayReply";
 export * from "./ReplyBar";
 export * from "./TokenFlare";
 export * from "./MyFlex";
+export * from "./FileUploadMask"

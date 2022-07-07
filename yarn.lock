@@ -5633,15 +5633,17 @@
   dependencies:
     lodash.debounce "^4.0.8"
 
-"@shadow-drive/sdk@^2.0.4":
-  version "2.0.5"
-  resolved "https://registry.yarnpkg.com/@shadow-drive/sdk/-/sdk-2.0.5.tgz#d35f07fbc222e272f91cc5155cf65fbe4b0f5b8c"
-  integrity sha512-TpREH4mQut01WuvBQB8V0bygcjoqLcvHpC6nLxkUBc3nRQDOyNkUq6ZTxxZo2Xr7ZJnNILbCs02ZGf3WDouiCw==
+"@shadow-drive/sdk@^3.0.0":
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/@shadow-drive/sdk/-/sdk-3.0.0.tgz#67f54e2a41c465f3cfee74c53bc9b246af32fa67"
+  integrity sha512-qvJQFl9JZW+ufQjra0fsDz5b31n0Q7l9kz2KaH5MkvA2tlsqOB7irKGb7gFZ3WuZZW3/pmPfDRbTFSv+GyFU1g==
   dependencies:
     "@project-serum/anchor" "^0.24.2"
     "@solana/spl-token" "^0.2.0"
     cross-fetch "^3.1.5"
     form-data "^4.0.0"
+    node-fetch "2"
+    tweetnacl "^1.0.3"
 
 "@sideway/address@^4.1.0":
   version "4.1.2"
@@ -8303,6 +8305,11 @@ atob@^2.1.2:
   version "2.1.2"
   resolved "https://registry.npmjs.org/atob/-/atob-2.1.2.tgz"
   integrity sha512-Wm6ukoaOGJi/73p/cl2GvLjTI5JM1k/O14isD73YML8StrH/7/lRFgmg8nICZgD3bZZvjwCGxtMOD3wWNAu8cg==
+
+attr-accept@^2.2.2:
+  version "2.2.2"
+  resolved "https://registry.yarnpkg.com/attr-accept/-/attr-accept-2.2.2.tgz#646613809660110749e92f2c10833b70968d929b"
+  integrity sha512-7prDjvt9HmqiZ0cl5CRjtS84sEyhsHP2coDkaZKRKVfCDo9s7iw7ChVmar78Gu9pC4SoR/28wFu/G5JJhTnqEg==
 
 auth0-js@^9.19.0:
   version "9.19.0"
@@ -12961,6 +12968,13 @@ file-loader@^6.2.0:
   dependencies:
     loader-utils "^2.0.0"
     schema-utils "^3.0.0"
+
+file-selector@^0.6.0:
+  version "0.6.0"
+  resolved "https://registry.yarnpkg.com/file-selector/-/file-selector-0.6.0.tgz#fa0a8d9007b829504db4d07dd4de0310b65287dc"
+  integrity sha512-QlZ5yJC0VxHxQQsQhXvBaC7VRJ2uaxTf+Tfpu4Z/OcVQJVpZO+DGU0rkoVW5ce2SccxugvpBJoMvUs59iILYdw==
+  dependencies:
+    tslib "^2.4.0"
 
 file-type@5.2.0, file-type@^5.2.0:
   version "5.2.0"
@@ -19763,7 +19777,7 @@ prop-types@^15.5.0, prop-types@^15.5.8, prop-types@^15.6.2, prop-types@^15.7.2:
     object-assign "^4.1.1"
     react-is "^16.8.1"
 
-prop-types@^15.5.10:
+prop-types@^15.5.10, prop-types@^15.8.1:
   version "15.8.1"
   resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.8.1.tgz#67d87bf1a694f48435cf332c24af10214a3140b5"
   integrity sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==
@@ -20292,6 +20306,15 @@ react-dom@^16.8.4:
     object-assign "^4.1.1"
     prop-types "^15.6.2"
     scheduler "^0.19.1"
+
+react-dropzone@^14.2.2:
+  version "14.2.2"
+  resolved "https://registry.yarnpkg.com/react-dropzone/-/react-dropzone-14.2.2.tgz#a75a0676055fe9e2cb78578df4dedb4c42b54f98"
+  integrity sha512-5oyGN/B5rNhop2ggUnxztXBQ6q6zii+OMEftPzsxAR2hhpVWz0nAV+3Ktxo2h5bZzdcCKrpd8bfWAVsveIBM+w==
+  dependencies:
+    attr-accept "^2.2.2"
+    file-selector "^0.6.0"
+    prop-types "^15.8.1"
 
 react-error-overlay@7.0.0-next.54+1465357b:
   version "7.0.0-next.54"

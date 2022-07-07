@@ -2,6 +2,7 @@ import { getOrca, OrcaPoolConfig } from "@orca-so/sdk";
 import { AnchorProvider } from "@project-serum/anchor";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
 import { ShdwDrive, StorageAccount } from "@shadow-drive/sdk";
+import { StorageAccountInfo } from "@shadow-drive/sdk/dist/types";
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import {
@@ -15,9 +16,9 @@ import BN from "bn.js";
 import Decimal from "decimal.js";
 
 const PROGRAM_ID = new PublicKey(
-  "2e1wdyNhUvE76y6yUCvah2KaviavMJYKoRun8acMRBZZ"
+  "FsPWZQjiwSRMPeBEzz8udJ7W9sRSULaPoaaqAKS5eSaf"
 );
-const SHDW = new PublicKey("SHDWyBxihqiCj6YekG2GUr7wqKLeLAMK1gHZck9pL6y");
+const SHDW = new PublicKey("SHDWmahkzuFwa46CpG1BF3tBHUoBTfqpypWzLRL7vNX");
 
 function getStorageAccount(
   key: PublicKey,
@@ -62,9 +63,9 @@ function getEndpoint(connection: Connection) {
   const endpoint = connection._rpcEndpoint
 
   // Gengo only works on mainnet
-  if (endpoint.includes("dev")) {
-    return "https://ssc-dao.genesysgo.net";
-  }
+  // if (endpoint.includes("dev")) {
+  //   return "https://ssc-dao.genesysgo.net";
+  // }
 
   return endpoint;
 }
@@ -91,11 +92,8 @@ export async function initStorageIfNeeded(
 
     const shdwDrive = new ShdwDrive(localProvider.connection, localProvider.wallet);
 
-    const orca = getOrca(localProvider.connection);
-    const orcaSolPool = orca.getPool(OrcaPoolConfig.SHDW_SOL);
-
     const [accountKey] = await getStorageAccount(pubKey, new BN(0));
-    let storageAccount: StorageAccount | undefined;
+    let storageAccount: StorageAccountInfo | undefined;
     try {
       storageAccount = await shdwDrive.getStorageAccount(accountKey);
     } catch (e: any) {
@@ -104,9 +102,12 @@ export async function initStorageIfNeeded(
 
     // Double storage size every time there's not enough
     let sizeKB = 0;
-    const storageAccountBigEnough = storageAccount && (Number(storageAccount.storageAvailable) > sizeBytes);
+    const storageAvailable =
+      storageAccount && (Number(storageAccount.reserved_bytes) - Number(storageAccount.current_usage));
+    const storageAccountBigEnough =
+      storageAvailable && storageAvailable > sizeBytes;
     if (!storageAccountBigEnough) {
-      let sizeToAdd = Number(storageAccount?.storageAvailable || (2 * sizeBytes));
+      let sizeToAdd = Number(storageAvailable || 2 * sizeBytes);
       while (sizeToAdd < sizeBytes) {
         sizeToAdd += sizeToAdd;
       }
@@ -117,21 +118,24 @@ export async function initStorageIfNeeded(
 
     console.log(
       `Storage currently has ${Number(
-        storageAccount?.storageAvailable || 0
+        storageAvailable || 0
       )}, file size is ${sizeBytes}, adding ${sizeKB} KB`
     );
 
     const shadesNeeded = storageAccountBigEnough ? 0 : Math.max((sizeKB * 1024), 1);
     const shdwNeeded = shadesNeeded / Math.pow(10, 9);
-    const solToken = orcaSolPool.getTokenB();
-    const shdwToken = orcaSolPool.getTokenA();
+
     const shdwOwnedAmount = await getOwnedAmount(localProvider, pubKey, SHDW);
     const solOwnedAmount = (await connection.getAccountInfo(pubKey))?.lamports;
     if (!solOwnedAmount) {
       throw new Error("Not enough sol")
     }
 
-    if (shdwOwnedAmount < shadesNeeded) {
+    if (shdwOwnedAmount < shdwNeeded) {
+      const orca = getOrca(localProvider.connection);
+      const orcaSolPool = orca.getPool(OrcaPoolConfig.SHDW_SOL);
+      const solToken = orcaSolPool.getTokenB();
+      const shdwToken = orcaSolPool.getTokenA();
       const quote = await orcaSolPool.getQuote(
         shdwToken,
         // Add 5% more than we need, at least need 1 shade
@@ -174,9 +178,19 @@ export async function initStorageIfNeeded(
     await shdwDrive.init();
 
     if (storageAccount && sizeKB && !storageAccountBigEnough) {
-      await withRetries(() => shdwDrive.addStorage(accountKey, sizeKB + "KB"), 3);
+      await withRetries(
+        () => shdwDrive.addStorage(accountKey, sizeKB + "KB", "v2"),
+        3
+      );
     } else if (!storageAccount) {
-      await withRetries(() => shdwDrive.createStorageAccount("chat", sizeKB + "KB"), 3);
+      await withRetries(
+        () => shdwDrive.createStorageAccount("chat", sizeKB + "KB", "v2"),
+        3
+      );
+      await withRetries(
+        () => shdwDrive.makeStorageImmutable(accountKey, "v2"),
+        3
+      );
     }
   }
 }
@@ -207,11 +221,13 @@ export async function uploadFiles(
     await shdwDrive.init();
 
     const res = await withRetries(async () => {
-      const uploaded = (await shdwDrive.uploadMultipleFiles(
-        accountKey,
-        // @ts-ignore
-        files as FileList
-      )).map((r) => r.location);
+      const uploaded = (
+        await shdwDrive.uploadMultipleFiles(
+          accountKey,
+          // @ts-ignore
+          files as FileList,
+        )
+      ).map((r) => r.location);
       if (uploaded.length !== files.length) {
         throw new Error("Upload failed");
       }
@@ -248,10 +264,10 @@ const DEVNET_WALLET = Keypair.fromSecretKey(
   ])
 );
 function maybeUseDevnetWallet(connection: Connection, delegateWallet: Keypair | undefined): Keypair | undefined {
-  // @ts-ignore
-  if (connection._rpcEndpoint.includes("dev")) {
-    return DEVNET_WALLET
-  }
+  // // @ts-ignore
+  // if (connection._rpcEndpoint.includes("dev")) {
+  //   return DEVNET_WALLET
+  // }
   return delegateWallet;
 }
 
