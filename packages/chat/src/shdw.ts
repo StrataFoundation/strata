@@ -16,7 +16,7 @@ import BN from "bn.js";
 import Decimal from "decimal.js";
 
 const PROGRAM_ID = new PublicKey(
-  "2e1wdyNhUvE76y6yUCvah2KaviavMJYKoRun8acMRBZZ"
+  "FsPWZQjiwSRMPeBEzz8udJ7W9sRSULaPoaaqAKS5eSaf"
 );
 const SHDW = new PublicKey("SHDWyBxihqiCj6YekG2GUr7wqKLeLAMK1gHZck9pL6y");
 
