@@ -189,7 +189,7 @@ export function Chatbox({
         toast.custom(
           (t) => (
             <LongPromiseNotification
-              estTimeMillis={2 * 60 * 1000}
+              estTimeMillis={1 * 60 * 1000}
               text={text}
               onError={(e) => {
                 handleErrors(e);
