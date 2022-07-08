@@ -1,4 +1,4 @@
-import ReactGA from "react-ga";
+import * as gtag from "../utils/gtag";
 
 export const useAnalyticsEventTracker = (category="Chat") => {
   const eventTracker = ({
@@ -6,10 +6,7 @@ export const useAnalyticsEventTracker = (category="Chat") => {
     label = "undefined label",
     value = 0,
   }) => {
-    //@ts-ignore
-    if (window.ga) { // object is defined on window when analytics is initialized
-        ReactGA.event({category, action, label, value});
-    }
+    gtag.event({category, action, label, value});
   }
   return eventTracker;
 }
