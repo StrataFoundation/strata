@@ -7,7 +7,7 @@ import { useTokenBonding } from "./useTokenBonding";
 import { useTokenMetadata } from "./useTokenMetadata";
 
 export interface IManyToOneSwapDriverArgs
-  extends Omit<ISwapDriverArgs, "id" | "tradingMints"> {
+  extends Omit<ISwapDriverArgs, "tokenBondingKey" | "tradingMints"> {
   inputs: {
     baseMint: PublicKey;
     tokenBonding: PublicKey;
@@ -41,7 +41,7 @@ export const useManyToOneSwapDriver = ({
     publicKey: tokenBonding?.targetMint,
   };
   const driverProps = useSwapDriver({
-    id: tokenBonding?.targetMint,
+    tokenBondingKey,
     onConnectWallet,
     extraTransactionInfo,
     tradingMints: {

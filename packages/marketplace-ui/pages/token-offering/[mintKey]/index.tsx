@@ -82,7 +82,7 @@ export const SwapDisplay: NextPage = ({
               </Box>
             )}
             {typeof window != "undefined" && (
-              <TokenOffering id={mintKey} />
+              <TokenOffering mintKey={mintKey} />
             )}
           </Box>
         </Container>

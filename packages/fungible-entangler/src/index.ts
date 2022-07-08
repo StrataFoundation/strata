@@ -291,27 +291,24 @@ export class FungibleEntangler extends AnchorSdk<any> {
     return this.getAccount(entanglerKey, this.parentEntanglerDecoder);
   }
 
-  childEntanglerDecoder: TypedAccountParser<IFungibleChildEntangler | undefined> = (
+  childEntanglerDecoder: TypedAccountParser<IFungibleChildEntangler> = (
     pubkey,
     account
   ) => {
-    try {
-      const coded = this.program.coder.accounts.decode<IFungibleChildEntangler>(
-        "FungibleChildEntanglerV0",
-        account.data
-      );
-      return {
-        ...coded,
-        publicKey: pubkey,
-      };
-    } catch(err) {
-      return undefined
-    }
+    const coded = this.program.coder.accounts.decode<IFungibleChildEntangler>(
+      "FungibleChildEntanglerV0",
+      account.data
+    );
+
+    return {
+      ...coded,
+      publicKey: pubkey,
+    };
   };
 
   getChildEntangler(
     entanglerKey: PublicKey
-  ): Promise<IFungibleChildEntangler | null | undefined> {
+  ): Promise<IFungibleChildEntangler | null> {
     return this.getAccount(entanglerKey, this.childEntanglerDecoder);
   }
 
@@ -509,7 +506,7 @@ export class FungibleEntangler extends AnchorSdk<any> {
     authority = this.provider.wallet.publicKey,
     payer = this.provider.wallet.publicKey,
     source = this.provider.wallet.publicKey,
-    dynamicSeed = Keypair.generate().publicKey.toBuffer(),
+    dynamicSeed,
     amount,
     parentMint,
     childMint,

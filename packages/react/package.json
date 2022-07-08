@@ -40,7 +40,6 @@
     "@strata-foundation/spl-token-bonding": "^3.8.2",
     "@strata-foundation/spl-token-collective": "^3.8.2",
     "@strata-foundation/spl-utils": "^3.8.2",
-    "@strata-foundation/fungible-entangler": "^3.7.0",
     "@toruslabs/solana-embed": "0.0.9",
     "@types/lru-cache": "^7.6.1",
     "axios": "^0.25.0",

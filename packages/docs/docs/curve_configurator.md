@@ -21,13 +21,13 @@ import { CurveConfiguratorFromVariables } from "@site/src/components/CurveConfig
 
 <CurveConfiguratorFromVariables />
 
-## LBC Configurator
+## LBP Configurator
 
 ```jsx async
 var maxTime = 24 * 60 * 60; // 24 hours
 var startSupply = 0;
 var endSupply = 5000;
-var { curveConfig, reserves, supply } = MarketplaceSdk.lbcCurve({
+var { curveConfig, reserves, supply } = MarketplaceSdk.lbpCurve({
   interval: maxTime,
   startPrice: 5,
   minPrice: 0.5,

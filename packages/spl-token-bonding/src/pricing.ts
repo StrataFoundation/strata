@@ -151,13 +151,11 @@ export class BondingPricing {
     baseMint: PublicKey,
     targetMint: PublicKey,
     ignoreFrozen: boolean = false,
-    unixTime?: number,
-    childEntanglerMint?: PublicKey | undefined,
-    parentEntanglerMint?: PublicKey | undefined,
+    unixTime?: number
   ): number {
-    const lowMint = this.hierarchy.lowest(baseMint, targetMint, childEntanglerMint, parentEntanglerMint);
-    const highMint = this.hierarchy.highest(baseMint, targetMint, childEntanglerMint, parentEntanglerMint);
-    const isBuying = this.isBuying(lowMint, targetMint, childEntanglerMint, parentEntanglerMint);
+    const lowMint = this.hierarchy.lowest(baseMint, targetMint);
+    const highMint = lowMint.equals(baseMint) ? targetMint : baseMint;
+    const isBuying = lowMint.equals(targetMint);
 
     const path = this.hierarchy.path(lowMint, highMint, ignoreFrozen);
 
@@ -186,33 +184,17 @@ export class BondingPricing {
     }
   }
 
-  isBuying(
-    lowMint: PublicKey,
-    targetMint: PublicKey,
-    childEntanglerMint?: PublicKey | undefined,
-    parentEntanglerMint?: PublicKey | undefined,
-  ) {
-    if (childEntanglerMint && parentEntanglerMint) {
-      return (
-        lowMint.equals(targetMint) || (parentEntanglerMint.equals(targetMint) && lowMint.equals(childEntanglerMint))
-      )
-    }
-    return lowMint.equals(targetMint);
-  }
-
   swapTargetAmount(
     targetAmount: number,
     baseMint: PublicKey,
     targetMint: PublicKey,
     /** Ignore frozen curves, just compute the value. */
     ignoreFreeze: boolean = false,
-    unixTime?: number,
-    childEntanglerMint?: PublicKey | undefined,
-    parentEntanglerMint?: PublicKey | undefined,
+    unixTime?: number
   ): number {
-    const lowMint = this.hierarchy.lowest(baseMint, targetMint, childEntanglerMint, parentEntanglerMint);
-    const highMint = this.hierarchy.highest(baseMint, targetMint, childEntanglerMint, parentEntanglerMint);
-    const isBuying = this.isBuying(lowMint, targetMint, childEntanglerMint, parentEntanglerMint);
+    const lowMint = this.hierarchy.lowest(baseMint, targetMint);
+    const highMint = lowMint.equals(baseMint) ? targetMint : baseMint;
+    const isBuying = lowMint.equals(targetMint);
 
     const path = this.hierarchy.path(lowMint, highMint, ignoreFreeze);
 

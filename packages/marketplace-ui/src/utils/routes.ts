@@ -25,8 +25,8 @@ export const routes: Record<string, IRoute> = {
   sale: { path: "/sales/:mintKey", params: ["mintKey"] },
   newLbc: { path: "/launchpad/lbcs/new", params: [] },
   tokenLbc: {
-    path: "/lbcs/token-offering/:id", // key is expected to be either a mint or child entangler
-    params: ["id"],
+    path: "/lbcs/token-offering/:mintKey",
+    params: ["mintKey"],
   },
   mintLbc: {
     path: "/lbcs/mint/:candyMachineId",
@@ -48,7 +48,7 @@ export const routes: Record<string, IRoute> = {
     path: "/token-offering/:mintKey",
     params: ["mintKey"],
   },
-  swap: { path: "/swap/:id", params: ["id"] },
+  swap: { path: "/swap/:mintKey", params: ["mintKey"] },
   newFullyManaged: { path: "/launchpad/fully-managed/new", params: [] },
   newManual: { path: "/launchpad/manual/new", params: [] },
   launchpad: { path: "/launchpad", params: [] },

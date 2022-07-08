@@ -5,35 +5,47 @@ import {
   SwapForm,
   Notification,
   useErrorHandler,
+  useTokenBonding,
   useSwapDriver,
   ISwapFormValues,
   useStrataSdks,
+  useTokenAccount,
   useMint,
-  useTokenSwapFromId,
+  useTokenBondingKey,
   roundToDecimals,
 } from "@strata-foundation/react";
-import { useAsyncCallback } from "react-async-hook";
+import { useAsync, useAsyncCallback, UseAsyncReturn } from "react-async-hook";
+import {
+  SplTokenBonding,
+  toNumber,
+} from "@strata-foundation/spl-token-bonding";
 
 const identity = () => {};
 export const TokenOffering = ({
-  id,
+  mintKey,
   showAttribution = true,
   onConnectWallet = () => {}
 }: {
-  id: PublicKey | undefined;
+  mintKey: PublicKey | undefined;
   showAttribution?: boolean;
   onConnectWallet?: () => void;
 }) => {
-  const { tokenBondingSdk, fungibleEntanglerSdk } = useStrataSdks();
+  const { result: sellOnlyTokenBondingKey, error: keyError1 } =
+    useTokenBondingKey(mintKey, 1);
+  const { tokenBondingSdk } = useStrataSdks();
+  const { info: sellOnlyTokenBonding, loading: sellOnlyLoading } =
+    useTokenBonding(sellOnlyTokenBondingKey);
+  const { result: tokenBondingKey, error: keyError2 } = useTokenBondingKey(
+    sellOnlyTokenBonding?.targetMint,
+    0
+  );
 
-  const { 
-    tokenBonding, 
-    retrievalTokenBonding,
-    numRemaining, 
-    childEntangler, 
-    parentEntangler 
-  } = useTokenSwapFromId(id);
-  const supplyMint = useMint(retrievalTokenBonding?.baseMint);
+  const { info: tokenBonding } = useTokenBonding(tokenBondingKey);
+  const { info: supplyAcc } = useTokenAccount(
+    sellOnlyTokenBonding?.baseStorage
+  );
+  const supplyMint = useMint(sellOnlyTokenBonding?.baseMint);
+
   const {
     execute: onSubmit,
     loading: submitting,
@@ -41,28 +53,15 @@ export const TokenOffering = ({
   } = useAsyncCallback(async function (values: ISwapFormValues) {
     const instructions = [];
     const signers = [];
-
-    // buy the first bonding curve
     const { instructions: i1, signers: s1 } =
       await tokenBondingSdk!.buyInstructions({
         desiredTargetAmount: +values.bottomAmount,
         slippage: +values.slippage / 100,
-        tokenBonding: tokenBonding?.publicKey!,
+        tokenBonding: tokenBondingKey!,
       });
     instructions.push(...i1);
     signers.push(...s1);
-
-    // if there is an entangler, then swap the token from the bonding curve through it
-    if (childEntangler && parentEntangler) {
-      const { instructions: i2, signers: s2 } = 
-        await fungibleEntanglerSdk!.swapChildForParentInstructions({
-          parentEntangler: parentEntangler.publicKey,
-          childEntangler: childEntangler.publicKey,
-          amount: +values.bottomAmount,
-      })
-      instructions.push(...i2);
-      signers.push(...s2);
-    } else if (retrievalTokenBonding) {
+    if (sellOnlyTokenBonding) {
       const { instructions: i2, signers: s2 } =
         await tokenBondingSdk!.sellInstructions({
           targetAmount: roundToDecimals(
@@ -70,12 +69,13 @@ export const TokenOffering = ({
             supplyMint.decimals
           ),
           slippage: +values.slippage / 100,
-          tokenBonding: retrievalTokenBonding.publicKey!,
+          tokenBonding: sellOnlyTokenBondingKey!,
         });
 
       instructions.push(...i2);
       signers.push(...s2);
     }
+
     await tokenBondingSdk!.sendInstructions(instructions, signers);
     toast.custom((t) => (
       <Notification
@@ -91,7 +91,7 @@ export const TokenOffering = ({
   });
 
   const { handleErrors } = useErrorHandler();
-  handleErrors(submitError);
+  handleErrors(keyError1, keyError2, submitError);
 
   const tradingMints = useMemo(() => {
     return {
@@ -104,17 +104,19 @@ export const TokenOffering = ({
     onTradingMintsChange: () => {},
     swap: (args) => {},
     onConnectWallet: onConnectWallet,
-    id,
+    tokenBondingKey: tokenBondingKey,
   });
 
   return (
     <SwapForm
       showAttribution={showAttribution}
-      isLoading={driverLoading}
+      isLoading={driverLoading || sellOnlyLoading}
       isSubmitting={submitting}
       {...swapProps}
       onSubmit={onSubmit}
-      numRemaining={numRemaining}
+      numRemaining={
+        supplyAcc && supplyMint && toNumber(supplyAcc.amount, supplyMint)
+      }
     />
   );
 };

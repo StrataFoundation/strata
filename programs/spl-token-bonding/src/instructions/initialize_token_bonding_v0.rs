@@ -32,7 +32,7 @@ pub struct InitializeTokenBondingV0Args {
   /**
    * Allow starting a curve from a later reserve/supply ratio of ignor reserve and supply changes.
    *
-   * This allows for things like the LBC where you don't need to provide any initial liquidity
+   * This allows for things like the LBP where you don't need to provide any initial liquidity
    */
   pub initial_reserves_pad: u64,
   pub initial_supply_pad: u64,
