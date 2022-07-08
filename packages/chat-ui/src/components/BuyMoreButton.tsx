@@ -85,7 +85,7 @@ export function BuyMoreButton({
             )}
             {account && !loadingBonding && tokenBondingKey && (
               <Swap
-                tokenBondingKey={tokenBondingKey}
+                id={mint!}
                 onConnectWallet={() => {
                   onClose();
                   setVisible(true);

@@ -1051,7 +1051,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       return this._namespaces;
     }
 
-    this._namespacesPromise = this._namespacesPromise || this._getNamespaces();
+    this._namespacesPromise = this._getNamespaces();
     this._namespaces = await this._namespacesPromise;
     return this._namespaces!;
   }

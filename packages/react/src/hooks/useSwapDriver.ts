@@ -12,6 +12,8 @@ import {
   BondingHierarchy,
   ISwapArgs,
   toNumber,
+  IPreInstructionArgs, 
+  IPostInstructionArgs
 } from "@strata-foundation/spl-token-bonding";
 import React, { useEffect, useState } from "react";
 import { useAsync } from "react-async-hook";
@@ -26,13 +28,15 @@ import {
   useOwnedAmount,
   useProvider,
   useSolanaUnixTime,
-  useTokenBonding,
+  useTokenSwapFromId,
   useTokenMetadata,
+  useStrataSdks,
 } from "./";
+import { InstructionResult } from "@strata-foundation/spl-utils";
 
 export interface ISwapDriverArgs
   extends Pick<ISwapFormProps, "onConnectWallet" | "extraTransactionInfo"> {
-  tokenBondingKey: PublicKey | undefined;
+  id: PublicKey | undefined;
   tradingMints: { base?: PublicKey; target?: PublicKey };
   onTradingMintsChange(mints: { base: PublicKey; target: PublicKey }): void;
   swap(args: ISwapArgs & { ticker: string }): void;
@@ -105,7 +109,7 @@ export async function getMissingSpace(
 
 export const useSwapDriver = ({
   onConnectWallet,
-  tokenBondingKey,
+  id,
   tradingMints,
   onTradingMintsChange,
   swap,
@@ -113,11 +117,17 @@ export const useSwapDriver = ({
 }: ISwapDriverArgs): Omit<ISwapFormProps, "isSubmitting"> & {
   loading: boolean;
 } => {
+  const { fungibleEntanglerSdk } = useStrataSdks()
   const { provider } = useProvider();
   const [internalError, setInternalError] = useState<Error | undefined>();
   const [spendCap, setSpendCap] = useState<number>(0);
-  const { info: tokenBonding, loading: tokenBondingLoading } =
-    useTokenBonding(tokenBondingKey);
+  const { 
+    tokenBonding, 
+    numRemaining, 
+    childEntangler, 
+    parentEntangler,
+    loading: tokenSwapLoading,
+  } = useTokenSwapFromId(id);
   const { base: baseMint, target: targetMint } = tradingMints;
 
   const {
@@ -151,11 +161,10 @@ export const useSwapDriver = ({
 
   const targetMintAcct = useMint(targetMint);
 
-  const allMints = React.useMemo(
-    () =>
-      [tokenBonding?.targetMint, ...getMints(pricing?.hierarchy)].filter(
+  const allMints: PublicKey[] = React.useMemo(
+    () => [tokenBonding?.targetMint, ...getMints(pricing?.hierarchy), parentEntangler?.parentMint].filter(
         truthy
-      ),
+      ).filter((x) => (childEntangler ? !x.equals(childEntangler.childMint) : true)), // don't display child entangled tokens
     [tokenBonding, pricing]
   );
 
@@ -184,6 +193,8 @@ export const useSwapDriver = ({
     }
   }, [tokenBonding, targetMint, pricing, setSpendCap, unixTime]);
 
+  const childMint = useMint(childEntangler?.childMint);
+
   const base = baseMint && {
     name: baseMeta?.data.name || "",
     ticker: baseMeta?.data.symbol || "",
@@ -198,10 +209,8 @@ export const useSwapDriver = ({
     publicKey: targetMint,
   };
 
-  const lowMint =
-    base &&
-    target &&
-    pricing?.hierarchy.lowest(base.publicKey, target.publicKey);
+  const lowMint = pricing?.hierarchy.lowest(base!.publicKey, target!.publicKey, childEntangler?.childMint, parentEntangler?.parentMint);
+
   const targetBonding = lowMint && pricing?.hierarchy.findTarget(lowMint);
   const mintCap: number | undefined =
     targetBonding &&
@@ -209,7 +218,6 @@ export const useSwapDriver = ({
     (targetBonding.mintCap as BN | undefined) &&
     toNumber(targetBonding.mintCap as BN, targetMintAcct);
 
-  const { numRemaining } = useCapInfo(tokenBondingKey);
 
   const handleSubmit = async (values: ISwapFormValues) => {
     if (values.topAmount) {
@@ -234,12 +242,45 @@ export const useSwapDriver = ({
           };
         }
 
+        const entangledBase = (parentEntangler && childEntangler && parentEntangler.parentMint.equals(baseMint!)) ? childEntangler.childMint : baseMint;
+        const entangledTarget = (parentEntangler && childEntangler && parentEntangler.parentMint.equals(targetMint!)) ? childEntangler.childMint : targetMint;
         await swap({
-          baseMint: baseMint!,
-          targetMint: targetMint!,
+          baseMint: entangledBase!,
+          targetMint: entangledTarget!,
           ...outputAmountSetting,
           slippage: +values.slippage / 100,
           ticker: target!.ticker,
+          async preInstructions({isFirst, amount, isBuy}: IPreInstructionArgs): Promise<InstructionResult<null>> {
+            if (!isFirst || !childEntangler || !parentEntangler || isBuy || !fungibleEntanglerSdk) {
+              return {
+                instructions: [],
+                signers: [],
+                output: null,
+              }
+            }
+  
+            let numAmount = toNumber(amount!, childMint)
+            return await fungibleEntanglerSdk?.swapParentForChildInstructions({
+              parentEntangler: parentEntangler.publicKey,
+              childEntangler: childEntangler.publicKey,
+              amount: numAmount,
+            });
+          },
+          async postInstructions({isLast, amount, isBuy}: IPostInstructionArgs): Promise<InstructionResult<null>> {
+            if (!isLast || !childEntangler || !parentEntangler || !isBuy || !fungibleEntanglerSdk) {
+              return {
+                instructions: [],
+                signers: [],
+                output: null,
+              }
+            }
+            const numAmount = toNumber(amount!, childMint)
+            return await fungibleEntanglerSdk?.swapChildForParentInstructions({
+              parentEntangler: parentEntangler.publicKey,
+              childEntangler: childEntangler.publicKey,
+              amount: numAmount,
+            })
+          },
         });
       } catch (e: any) {
         setInternalError(e);
@@ -254,7 +295,7 @@ export const useSwapDriver = ({
     loading:
       targetMetaLoading ||
       baseMetaLoading ||
-      tokenBondingLoading ||
+      tokenSwapLoading ||
       !tokenBonding ||
       !baseMeta,
     onConnectWallet,
@@ -267,7 +308,7 @@ export const useSwapDriver = ({
       });
     },
     onSubmit: handleSubmit,
-    tokenBonding,
+    id,
     pricing,
     base,
     target,
@@ -279,10 +320,7 @@ export const useSwapDriver = ({
         allMints.filter(
           (mint) =>
             baseMint &&
-            !mint.equals(baseMint) &&
-            pricing &&
-            targetMint &&
-            pricing.hierarchy.path(mint, targetMint).length > 0
+            !mint.equals(baseMint)
         ),
       [baseMint, allMints]
     ),
@@ -293,8 +331,7 @@ export const useSwapDriver = ({
             targetMint &&
             pricing &&
             baseMint &&
-            !mint.equals(targetMint) &&
-            pricing.hierarchy.path(baseMint, mint).length > 0
+            !mint.equals(targetMint)
         ),
       [targetMint, allMints]
     ),

@@ -19,6 +19,7 @@ import {
   toBN,
 } from "@strata-foundation/spl-token-bonding";
 import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
+import { FungibleEntangler } from "@strata-foundation/fungible-entangler";
 import {
   Attribute,
   BigInstructionResult,
@@ -138,7 +139,7 @@ interface ICreateBountyArgs {
   bondingArgs?: Partial<ICreateTokenBondingArgs>;
 }
 
-interface ILbpCurveArgs {
+interface ILbcCurveArgs {
   /** Max tokens to be sold */
   maxSupply: number;
   /** Interval in seconds to sell them over */
@@ -156,7 +157,7 @@ interface ILbpCurveArgs {
 }
 
 interface ICreateLiquidityBootstrapperArgs
-  extends ILbpCurveArgs,
+  extends ILbcCurveArgs,
     IProtocolFees {
   payer?: PublicKey;
   /**
@@ -172,7 +173,7 @@ interface ICreateLiquidityBootstrapperArgs
    */
   authority?: PublicKey;
   /**
-   * The token metadata for the LBP item
+   * The token metadata for the LBC item
    */
   metadata?: DataV2;
 
@@ -302,13 +303,15 @@ export class MarketplaceSdk {
   static async init(
     provider: AnchorProvider,
     splTokenBondingProgramId: PublicKey = SplTokenBonding.ID,
-    splTokenCollectiveProgramId: PublicKey = SplTokenCollective.ID
+    splTokenCollectiveProgramId: PublicKey = SplTokenCollective.ID,
+    fungibleEntanglerProgramId: PublicKey = FungibleEntangler.ID,
   ): Promise<MarketplaceSdk> {
     return new this(
       provider,
       await SplTokenBonding.init(provider, splTokenBondingProgramId),
       await SplTokenCollective.init(provider, splTokenCollectiveProgramId),
-      await SplTokenMetadata.init(provider)
+      await FungibleEntangler.init(provider, fungibleEntanglerProgramId),
+      await SplTokenMetadata.init(provider),
     );
   }
 
@@ -316,6 +319,7 @@ export class MarketplaceSdk {
     readonly provider: AnchorProvider,
     readonly tokenBondingSdk: SplTokenBonding,
     readonly tokenCollectiveSdk: SplTokenCollective,
+    readonly fungibleEntanglerSdk: FungibleEntangler,
     readonly tokenMetadataSdk: SplTokenMetadata
   ) {}
 
@@ -940,7 +944,7 @@ export class MarketplaceSdk {
     minPrice,
     maxSupply,
     timeDecay,
-  }: ILbpCurveArgs): {
+  }: ILbcCurveArgs): {
     reserves: number;
     supply: number;
     curveConfig: ICurveConfig;
