@@ -27,7 +27,11 @@ export async function getAuthSig(
   if (signer instanceof Uint8Array) {
     signed = nacl.sign.detached(data, signer);
   } else {
-    signed = await signer.signMessage(data, "utf8");
+    try {
+      signed = await signer.signMessage(data, "utf8");
+    } catch (e: any) {
+      throw new Error(`Error signing lit message. This may be because you are using a Ledger, which does not support signMessage. ${e}`);
+    }
   }
 
   const hexSig = uint8arrayToString(signed, "base16");

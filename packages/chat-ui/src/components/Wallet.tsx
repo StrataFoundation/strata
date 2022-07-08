@@ -44,7 +44,6 @@ export const Wallet = ({
       new SolflareWalletAdapter({ network: clusterFromUseEndpoint }),
       new SlopeWalletAdapter(),
       new TorusWalletAdapter(),
-      new LedgerWalletAdapter(),
       new ExodusWalletAdapter(),
     ],
     [clusterFromUseEndpoint]
