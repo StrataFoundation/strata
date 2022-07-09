@@ -6,7 +6,7 @@ import { FungibleEntangler } from "@strata-foundation/fungible-entangler";
 import { ApolloClient, gql, InMemoryCache } from "@apollo/client";
 import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { GetServerSideProps } from "next";
-import { getClusterAndEndpoint } from "../hooks";
+import { getClusterAndEndpoint } from "@strata-foundation/react";
 
 export const mintMetadataServerSideProps: GetServerSideProps = async (
   context

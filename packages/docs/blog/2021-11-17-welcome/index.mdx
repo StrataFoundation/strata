@@ -58,7 +58,7 @@ You can customize everything from your curve's shape to its launch-time characte
 Ready to get started? Here’s how you can create a social token on devnet right now:
 
 ```jsx async name=create_social
-var { tokenBonding } = await tokenCollectiveSdk.createSocialToken({
+var { targetMint } = await tokenCollectiveSdk.createSocialToken({
   ignoreIfExists: true, // If a Social Token already exists for this wallet, ignore.
   metadata: {
     name: "Learning Strata Token",
@@ -78,10 +78,10 @@ Now display it in React!
 
 ```jsx live
 function TokenDisplay() {
-  const { tokenBonding } = useVariables(); // Getting token bonding from above code;
+  const { targetMint } = useVariables(); // Getting token bonding from above code;
 
   if (tokenBonding) {
-    return <Swap tokenBondingKey={tokenBonding} />;
+    return <Swap id={targetMint} />;
   }
 
   return <div>Please run the code block above</div>;

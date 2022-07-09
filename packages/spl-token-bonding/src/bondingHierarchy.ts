@@ -60,12 +60,7 @@ export class BondingHierarchy {
     )?.tokenBonding?.targetMint;
   }
 
-  lowest(one: PublicKey, two: PublicKey, childEntangledMint?: PublicKey | undefined, parentEntangledMint?: PublicKey | undefined): PublicKey {
-    if (parentEntangledMint && childEntangledMint) {
-      // account for entangled tokens
-      if (one.equals(parentEntangledMint)) one = childEntangledMint;
-      else if (two.equals(parentEntangledMint)) two = childEntangledMint;
-    }
+  lowest(one: PublicKey, two: PublicKey): PublicKey {
     const found = this.lowestOrUndefined(one, two);
 
     if (!found) {
@@ -89,12 +84,7 @@ export class BondingHierarchy {
     )?.tokenBonding?.baseMint;
   }
 
-  highest(one: PublicKey, two: PublicKey, childEntangledMint?: PublicKey | undefined, parentEntangledMint?: PublicKey | undefined): PublicKey {
-    if (parentEntangledMint && childEntangledMint) {
-      // account for entangled tokens
-      if (one.equals(parentEntangledMint)) one = childEntangledMint;
-      else if (two.equals(parentEntangledMint)) two = childEntangledMint;
-    }
+  highest(one: PublicKey, two: PublicKey): PublicKey {
     const found = this.highestOrUndefined(one, two);
 
     if (!found) {

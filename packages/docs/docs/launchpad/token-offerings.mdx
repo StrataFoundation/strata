@@ -195,11 +195,10 @@ var marketItemInstrs1 = await marketplaceSdk.createMarketItemInstructions({
   },
 });
 var retrievalInstrs1 =
-    await marketplaceSdk.createRetrievalCurveForSetSupplyInstructions({
-      reserveAuthority: publicKey,
-      supplyMint: offering.mint,
-      supplyAmount: 10,
-      targetMint: marketItemInstrs1.output.targetMint,
+    await fungibleEntanglerSdk.createFungibleEntanglerInstructions({
+      amount: 10, // deposit 10 sellMint tokens to be sold
+      parentMint: offerring.mint,
+      childMint: marketItemInstrs1.output.targetMint, // mint of the intermediary token
     });
 var marketItemInstrs2 = await marketplaceSdk.createMarketItemInstructions({
   metadata: intermediaryMetadata,
@@ -211,41 +210,15 @@ var marketItemInstrs2 = await marketplaceSdk.createMarketItemInstructions({
   },
 });
 var retrievalInstrs2 =
-    await marketplaceSdk.createRetrievalCurveForSetSupplyInstructions({
-      reserveAuthority: publicKey,
-      supplyMint: offering.mint,
-      supplyAmount: 10,
-      targetMint: marketItemInstrs2.output.targetMint,
-    });
+    await fungibleEntanglerSdk.createFungibleChildEntanglerInstructions({
+      parentEntangler: retrievalInstrs1.output.parentEntangler,
+      amount: 10, // deposit 10 sellMint tokens to be sold
+      childMint: marketItemInstrs2.output.targetMint, // mint of the intermediary token
+    })
 await sendMultipleInstructions(
   marketplaceSdk.tokenBondingSdk.errors || new Map(),
   provider,
   [...marketItemInstrs1.instructions, retrievalInstrs1.instructions, ...marketItemInstrs2.instructions, retrievalInstrs2.instructions],
   [...marketItemInstrs1.signers, retrievalInstrs1.signers, ...marketItemInstrs2.signers, retrievalInstrs2.signers]
 );
-```
-
-```jsx async deps=three_tokens_sale
-var basesAndBonding = [{
-  baseMint: a.mint,
-  tokenBonding: marketItemInstrs1.output.tokenBonding,
-},{
-  baseMint: b.mint,
-  tokenBonding: marketItemInstrs2.output.tokenBonding,
-}];
-var targetMint = offering.mint;
-```
-```jsx live
-function ManyToOne() {
-  var { basesAndBonding, targetMint } = useVariables();
-
-  if (basesAndBonding && targetMint) {
-    return <ManyToOneSwap
-      inputs={basesAndBonding}
-      targetMint={targetMint}
-    />
-  }
-
-  return <div>Please run the code block above</div>
-}
 ```

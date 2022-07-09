@@ -59,10 +59,12 @@ const validationSchema = yup
 export interface ISwapFormProps {
   isLoading?: boolean;
   isSubmitting: boolean;
+  isBuying: boolean;
   onConnectWallet: () => void;
   onTradingMintsChange: (args: { base: PublicKey; target: PublicKey }) => void;
   onBuyBase?: (tokenBonding: PublicKey) => void;
   onSubmit: (values: ISwapFormValues) => Promise<void>;
+  goLiveDate: Date | undefined;
   id: PublicKey | undefined;
   pricing: BondingPricing | undefined;
   baseOptions: PublicKey[];
@@ -134,6 +136,8 @@ export const SwapForm = ({
   baseOptions,
   targetOptions,
   mintCap,
+  isBuying,
+  goLiveDate,
   numRemaining,
   showAttribution = true,
   swapBaseWithTargetEnabled = true,
@@ -145,6 +149,7 @@ export const SwapForm = ({
   const [insufficientLiq, setInsufficientLiq] = useState<boolean>(false);
   const [rate, setRate] = useState<string>("--");
   const [fee, setFee] = useState<string>("--");
+  const notLive = goLiveDate && (new Date() < goLiveDate)
   const {
     register,
     handleSubmit,
@@ -172,25 +177,14 @@ export const SwapForm = ({
   const moreThanSpendCap = +(topAmount || 0) > spendCap;
   const unixTime = useSolanaUnixTime();
 
-  const {
-    tokenBonding,
-    childEntangler,
-    parentEntangler,
-  } = useTokenSwapFromId(id);
+  const { tokenBonding, childEntangler, parentEntangler } =
+    useTokenSwapFromId(id);
 
-  const lowMint = pricing?.hierarchy.lowest(base!.publicKey, target!.publicKey, childEntangler?.childMint, parentEntangler?.parentMint);
-  const isBuying = pricing?.isBuying(lowMint!, target!.publicKey, childEntangler?.childMint, parentEntangler?.parentMint);
-
-  const targetBonding = lowMint && pricing?.hierarchy.findTarget(lowMint);
   const passedMintCap =
     typeof numRemaining !== "undefined" && numRemaining < bottomAmount;
 
   const targetMintAcc = useMint(target?.publicKey);
   const baseMintAcc = useMint(base?.publicKey);
-
-  const notLive =
-    targetBonding &&
-    targetBonding.goLiveUnixTime.toNumber() > new Date().valueOf() / 1000;
 
   const handleConnectWallet = () => onConnectWallet();
   const manualResetForm = () => {
@@ -221,9 +215,7 @@ export const SwapForm = ({
         base.publicKey,
         target.publicKey,
         true,
-        unixTime,
-        childEntangler?.childMint,
-        parentEntangler?.parentMint,
+        unixTime
       );
       if (isNaN(amount)) {
         setInsufficientLiq(true);
@@ -254,7 +246,13 @@ export const SwapForm = ({
   const handleBottomChange = (value: number | undefined = 0) => {
     if (tokenBonding && pricing && base && target && value && +value >= 0) {
       let amount = Math.abs(
-        pricing.swapTargetAmount(+value, target.publicKey, base.publicKey, true, unixTime, childEntangler?.childMint, parentEntangler?.parentMint)
+        pricing.swapTargetAmount(
+          +value,
+          target.publicKey,
+          base.publicKey,
+          true,
+          unixTime
+        )
       );
       setLastSet("bottom");
 
@@ -643,11 +641,7 @@ export const SwapForm = ({
                 )}
                 {notLive && (
                   <Text>
-                    Goes live at{" "}
-                    {targetBonding &&
-                      new Date(
-                        targetBonding.goLiveUnixTime.toNumber() * 1000
-                      ).toLocaleString()}
+                    Goes live at {goLiveDate && goLiveDate.toLocaleString()}
                   </Text>
                 )}
                 {!hasBaseAmount && (
@@ -722,3 +716,5 @@ export const SwapForm = ({
     </Box>
   );
 };
+
+export const MemodSwapForm = React.memo(SwapForm);

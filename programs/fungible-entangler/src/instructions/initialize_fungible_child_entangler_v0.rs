@@ -1,4 +1,4 @@
-use crate::{error::ErrorCode, state::*};
+use crate::{state::*, error::ErrorCode};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 
@@ -16,7 +16,6 @@ pub const CHILD_ENTANGLER_SIZE: usize = 1 + // key
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct InitializeFungibleChildEntanglerV0Args {
-  pub authority: Option<Pubkey>,
   pub go_live_unix_time: i64,
   pub freeze_swap_unix_time: Option<i64>,
 }
@@ -26,7 +25,10 @@ pub struct InitializeFungibleChildEntanglerV0Args {
 pub struct InitializeFungibleChildEntanglerV0<'info> {
   #[account(mut)]
   pub payer: Signer<'info>,
+  pub authority: Signer<'info>,
   #[account(
+    mut,
+    constraint = parent_entangler.authority.ok_or(error!(ErrorCode::NoAuthority))? == authority.key(),
     constraint = parent_entangler.parent_mint != child_mint.key()
   )]
   pub parent_entangler: Box<Account<'info, FungibleParentEntanglerV0>>,
@@ -63,14 +65,8 @@ pub fn handler(
   ctx: Context<InitializeFungibleChildEntanglerV0>,
   args: InitializeFungibleChildEntanglerV0Args,
 ) -> Result<()> {
-  require!(
-    args.authority == ctx.accounts.parent_entangler.authority,
-    ErrorCode::InvalidAuthority
-  );
-
   let entangler = &mut ctx.accounts.entangler;
 
-  entangler.authority = args.authority;
   entangler.parent_entangler = ctx.accounts.parent_entangler.key();
   entangler.child_mint = ctx.accounts.child_mint.key();
   entangler.child_storage = ctx.accounts.child_storage.key();
@@ -83,6 +79,8 @@ pub fn handler(
   entangler.created_at_unix_time = ctx.accounts.clock.unix_timestamp;
   entangler.bump_seed = *ctx.bumps.get("entangler").unwrap();
   entangler.storage_bump_seed = *ctx.bumps.get("child_storage").unwrap();
+
+  ctx.accounts.parent_entangler.num_children += 1;
 
   Ok(())
 }

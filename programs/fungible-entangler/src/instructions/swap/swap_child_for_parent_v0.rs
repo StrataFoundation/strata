@@ -23,7 +23,6 @@ pub fn handler(ctx: Context<SwapChildForParentV0>, args: SwapV0Args) -> Result<(
   )?;
 
   let parent_entangler = &mut ctx.accounts.common.parent_entangler;
-  let parent_mint = ctx.accounts.common.parent_mint.to_account_info();
   let source = ctx.accounts.common.source.to_account_info();
   let destination = ctx.accounts.common.destination.to_account_info();
   let parent_storage = ctx.accounts.common.parent_storage.to_account_info();
@@ -46,7 +45,7 @@ pub fn handler(ctx: Context<SwapChildForParentV0>, args: SwapV0Args) -> Result<(
 
   let parent_entangler_seeds: &[&[&[u8]]] = &[&[
     b"entangler",
-    parent_mint.key.as_ref(),
+    parent_entangler.parent_mint.as_ref(),
     &parent_entangler.dynamic_seed,
     &[parent_entangler.bump_seed],
   ]];

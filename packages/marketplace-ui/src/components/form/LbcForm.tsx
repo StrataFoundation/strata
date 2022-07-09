@@ -27,6 +27,7 @@ import {
 import {
   usePrimaryClaimedTokenRef,
   useProvider,
+  useEndpoint,
 } from "@strata-foundation/react";
 import BN from "bn.js";
 import {
@@ -53,7 +54,6 @@ import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { TokenMintDecimalsInputs } from "./TokenMintDecimalsInputs";
 import { TokenIntervalInputs } from "./TokenIntervalnputs";
 import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
-import { useEndpoint } from "../../hooks/useEndpoint";
 
 interface ILbcFormProps
   extends Partial<IMetadataFormProps>,
@@ -61,6 +61,7 @@ interface ILbcFormProps
   useCandyMachine: boolean;
   convertCandyMachine: boolean;
   candyMachineId: string;
+  sellFrozen: boolean;
   mint: string;
   symbol?: string;
   authority: string;
@@ -77,6 +78,7 @@ const validationSchema = yup.object({
   mint: yup.string().required(),
   useExistingMint: yup.boolean(),
   useCandyMachine: yup.boolean(),
+  sellFrozen: yup.boolean(),
   convertCandyMachine: yup.boolean(),
   existingMint: yup.string().when(["useExistingMint", "useCandyMachine"], {
     is: (useExistingMint: boolean, useCandyMachine: boolean) =>
@@ -152,7 +154,7 @@ async function createLbcCandyMachine(
     bondingArgs: {
       targetMintDecimals: Number(values.decimals || 0),
       goLiveDate: values.goLiveDate,
-      sellFrozen: values.useExistingMint
+      sellFrozen: true
     },
   });
 
@@ -275,7 +277,7 @@ async function createLbcExistingMint(
     bondingArgs: {
       targetMintDecimals: Number(values.decimals || 0),
       goLiveDate: values.goLiveDate,
-      sellFrozen: false,
+      sellFrozen: values.sellFrozen,
     },
   });
 
@@ -295,7 +297,7 @@ async function createLbcExistingMint(
     instructions,
     signers
   );
-  return route(routes.tokenLbc, { 
+  return route(routes.tokenLbcAdmin, { 
     id: entanglerInstrs.output.childEntangler.toString()
   })
 }
@@ -343,7 +345,7 @@ async function createLbcNewMint(
     bondingArgs: {
       targetMintDecimals: Number(values.decimals || 0),
       goLiveDate: values.goLiveDate,
-      sellFrozen: false,
+      sellFrozen: values.sellFrozen,
     },
   });
 
@@ -354,7 +356,7 @@ async function createLbcNewMint(
     signers
   );
 
-  return route(routes.tokenLbc, { id: targetMint.toBase58() })
+  return route(routes.tokenLbcAdmin, { id: targetMint.toBase58() })
 }
 
 async function createLiquidityBootstrapper(
@@ -575,9 +577,10 @@ export const LbcForm: React.FC = () => {
             <TokenIntervalInputs />
             <FormControlWithError
               id="mintCap"
-              help={useCandyMachine ?
-                "The number of items that will be sold in the dynamic pricing mint. This should not exceed the number of items remaining in the candymachine at the time dynamic pricing begins. Note that, depending on the above parameters this may not mint out" :
-                "The number of tokens to mint. Note that, depending on the above parameters this liqudity bootstrapping may not sell out"
+              help={
+                useCandyMachine
+                  ? "The number of items that will be sold in the dynamic pricing mint. This should not exceed the number of items remaining in the candymachine at the time dynamic pricing begins. Note that, depending on the above parameters this may not mint out"
+                  : "The number of tokens to mint. Note that, depending on the above parameters this liqudity bootstrapping may not sell out"
               }
               label="Number of Tokens"
               errors={errors}
@@ -589,6 +592,17 @@ export const LbcForm: React.FC = () => {
                 {...register("mintCap")}
               />
             </FormControlWithError>
+
+            {!useCandyMachine && (
+              <FormControlWithError
+                id="sellFrozen"
+                help="Disable selling of tokens back to the LBC. Allowing users to sell back to the LBC can aid in price discovery."
+                label="Disable Selling"
+                errors={errors}
+              >
+                <Switch {...register("sellFrozen")} />
+              </FormControlWithError>
+            )}
 
             <FormControlWithError
               id="goLiveDate"
@@ -608,7 +622,10 @@ export const LbcForm: React.FC = () => {
                 label="Convert CandyMachine to Dynamic Pricing?"
                 errors={errors}
               >
-                <Switch isChecked={convertCandyMachine} {...register("convertCandyMachine")} />
+                <Switch
+                  isChecked={convertCandyMachine}
+                  {...register("convertCandyMachine")}
+                />
               </FormControlWithError>
             )}
 

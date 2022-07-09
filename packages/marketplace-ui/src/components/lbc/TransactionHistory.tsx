@@ -38,7 +38,7 @@ import { BiRefresh } from "react-icons/bi";
 export const TransactionHistory = ({
   tokenBondingKey,
 }: {
-  tokenBondingKey: PublicKey;
+  tokenBondingKey?: PublicKey;
 }) => {
   const { info: tokenBonding, loading: loadingBonding } =
     useTokenBonding(tokenBondingKey);
@@ -126,7 +126,7 @@ export const TransactionHistory = ({
 
   const thProps: TableColumnHeaderProps = {
     textTransform: "none",
-    color: "white",
+    color: icoColor,
     fontSize: "14px",
     letterSpacing: "none",
     padding: 4,

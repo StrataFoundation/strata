@@ -58,7 +58,7 @@ jobs:
         id: deploy
         with:
           program: fungible_entangler
-          program-id: Ae6wbxtjpoKGCuSdHGQXRudmdpSfGpu6KHtjDcWEDjP8
+          program-id: fent99TYZcj9PGbeooaZXEMQzMd7rz8vYFiudd8HevB
           network: https://ssc-dao.genesysgo.net
           keypair: ${{ secrets.DEPLOY_KEYPAIR }}
           governance: C2QmGPr3qFHUXYZdBJn8NEoNz2kcxBm9mwMoGMn2QFdq

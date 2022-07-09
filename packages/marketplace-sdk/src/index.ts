@@ -19,7 +19,7 @@ import {
   toBN,
 } from "@strata-foundation/spl-token-bonding";
 import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
-import { FungibleEntangler } from "@strata-foundation/fungible-entangler";
+import { FungibleEntangler, ICreateFungibleEntanglerOutput } from "@strata-foundation/fungible-entangler";
 import {
   Attribute,
   BigInstructionResult,
@@ -227,7 +227,13 @@ interface IDisburseCurveArgs {
   includeRetrievalCurve?: boolean;
 
   /** Should this only transfer reserves, or transfer and close? */
-  closeBonding?: Boolean
+  closeBonding?: Boolean;
+
+  /** Should this close the passed entangler for token offerings? */
+  closeEntangler?: Boolean;
+
+  parentEntangler?: PublicKey;
+  childEntangler?: PublicKey;
 }
 
 interface ICreateTokenBondingForSetSupplyArgs
@@ -304,14 +310,14 @@ export class MarketplaceSdk {
     provider: AnchorProvider,
     splTokenBondingProgramId: PublicKey = SplTokenBonding.ID,
     splTokenCollectiveProgramId: PublicKey = SplTokenCollective.ID,
-    fungibleEntanglerProgramId: PublicKey = FungibleEntangler.ID,
+    fungibleEntanglerProgramId: PublicKey = FungibleEntangler.ID
   ): Promise<MarketplaceSdk> {
     return new this(
       provider,
       await SplTokenBonding.init(provider, splTokenBondingProgramId),
       await SplTokenCollective.init(provider, splTokenCollectiveProgramId),
       await FungibleEntangler.init(provider, fungibleEntanglerProgramId),
-      await SplTokenMetadata.init(provider),
+      await SplTokenMetadata.init(provider)
     );
   }
 
@@ -433,6 +439,9 @@ export class MarketplaceSdk {
     destination,
     includeRetrievalCurve,
     closeBonding = true,
+    parentEntangler,
+    childEntangler,
+    closeEntangler,
   }: IDisburseCurveArgs): Promise<InstructionResult<null>> {
     const instructions = [];
     const signers = [];
@@ -480,6 +489,51 @@ export class MarketplaceSdk {
         });
       instructions.push(...i2);
       signers.push(...s2);
+    }
+
+    if (closeEntangler && parentEntangler && childEntangler) {
+      const parentEntanglerAcct =
+        (await this.fungibleEntanglerSdk.getParentEntangler(parentEntangler))!;
+      const childEntanglerAcct =
+        (await this.fungibleEntanglerSdk.getChildEntangler(childEntangler))!;
+      const childAmount = await this.tokenBondingSdk.getTokenAccountBalance(
+        childEntanglerAcct.childStorage
+      );
+      const parentAmount =
+        await this.tokenBondingSdk.getTokenAccountBalance(
+          parentEntanglerAcct.parentStorage
+        );
+      
+      const transferChild = await this.fungibleEntanglerSdk.transferInstructions({
+        childEntangler,
+        amount: childAmount
+      });
+      const transferParent =
+        await this.fungibleEntanglerSdk.transferInstructions({
+          parentEntangler,
+          amount: parentAmount,
+        });
+
+      const closeChild = await this.fungibleEntanglerSdk.closeInstructions({
+        childEntangler,
+      });
+
+      const closeParent = await this.fungibleEntanglerSdk.closeInstructions({
+        parentEntangler,
+      });
+
+      instructions.push(
+        ...transferChild.instructions,
+        ...transferParent.instructions,
+        ...closeChild.instructions,
+        ...closeParent.instructions
+      );
+      signers.push(
+        ...transferChild.signers,
+        ...transferParent.signers,
+        ...closeChild.signers,
+        ...closeParent.signers
+      );
     }
 
     if (includeRetrievalCurve) {
@@ -1138,116 +1192,6 @@ export class MarketplaceSdk {
    *
    *    Offer bonding curve - sells an intermediary token for the base token
    *    Retrieval bonding curve - allows burning the intermediary token for the set supply
-   *
-   * This function gets the retrieval bonding curve
-   */
-  async createRetrievalCurveForSetSupplyInstructions({
-    supplyAmount,
-    supplyMint,
-    source = this.provider.wallet.publicKey,
-    fixedCurve = new PublicKey(MarketplaceSdk.FIXED_CURVE),
-    reserveAuthority = this.provider.wallet.publicKey,
-    targetMint,
-  }: ICreateRetrievalCurveForSetSupplyArgs): Promise<
-    InstructionResult<ICreateTokenBondingOutput>
-  > {
-    const supplyMintAcc = await getMintInfo(this.provider, supplyMint);
-    const sourceAcct = await this.provider.connection.getAccountInfo(source);
-
-    // Source is a wallet, need to get the ATA
-    if (!sourceAcct || sourceAcct.owner.equals(SystemProgram.programId)) {
-      const ataSource = await Token.getAssociatedTokenAddress(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        supplyMint,
-        source,
-        true
-      );
-      if (!(await this.tokenBondingSdk.accountExists(ataSource))) {
-        throw new Error(
-          `Source of ${source?.toBase58()} does not hold any ${supplyMint.toBase58()} tokens`
-        );
-      }
-
-      source = ataSource;
-    }
-
-    const sourceAcctAta = await getTokenAccount(this.provider, source);
-
-    const instructions = [];
-    const signers = [];
-    const retrievalInstrs =
-      await this.tokenBondingSdk.createTokenBondingInstructions({
-        ignoreExternalReserveChanges: true,
-        ignoreExternalSupplyChanges: true,
-        advanced: {
-          initialSupplyPad: supplyAmount,
-          initialReservesPad: supplyAmount,
-        },
-        curve: fixedCurve,
-        baseMint: supplyMint,
-        targetMint,
-        targetMintDecimals: supplyMintAcc.decimals,
-        buyTargetRoyalties: null,
-        sellTargetRoyalties: null,
-        buyBaseRoyalties: null,
-        sellBaseRoyalties: null,
-        index: 1,
-        buyBaseRoyaltyPercentage: 0,
-        buyTargetRoyaltyPercentage: 0,
-        sellBaseRoyaltyPercentage: 0,
-        sellTargetRoyaltyPercentage: 0,
-        reserveAuthority,
-      });
-
-    instructions.push(
-      ...retrievalInstrs.instructions,
-      Token.createTransferInstruction(
-        TOKEN_PROGRAM_ID,
-        source,
-        retrievalInstrs.output.baseStorage,
-        sourceAcctAta.owner,
-        [],
-        new u64(
-          (supplyAmount * Math.pow(10, supplyMintAcc.decimals)).toLocaleString(
-            "fullwide",
-            {
-              useGrouping: false,
-            }
-          )
-        )
-      )
-    );
-    signers.push(...retrievalInstrs.signers);
-
-    return {
-      instructions: instructions,
-      signers: signers,
-      output: retrievalInstrs.output,
-    };
-  }
-
-  /**
-   * Executes `createRetrievalCurveForSetSupplyInstructions`
-   * @param args
-   * @returns
-   */
-  async createRetrievalCurveForSetSupply(
-    args: ICreateRetrievalCurveForSetSupplyArgs,
-    finality?: Finality
-  ): Promise<ICreateTokenBondingOutput> {
-    return this.tokenBondingSdk.execute(
-      this.createRetrievalCurveForSetSupplyInstructions(args),
-      args.payer,
-      finality
-    );
-  }
-
-  /**
-   * Sell `supplyAmount` supply of tokens of `supplyMint` by creating a system of two bonding curves:
-   *
-   *    Offer bonding curve - sells an intermediary token for the base token
-   *    Retrieval bonding curve - allows burning the intermediary token for the set supply
    */
   async createTokenBondingForSetSupplyInstructions({
     supplyAmount,
@@ -1259,7 +1203,7 @@ export class MarketplaceSdk {
   }: ICreateTokenBondingForSetSupplyArgs): Promise<
     BigInstructionResult<{
       offer: ICreateTokenBondingOutput;
-      retrieval: ICreateTokenBondingOutput;
+      retrieval: ICreateFungibleEntanglerOutput;
     }>
   > {
     const supplyMintAcc = await getMintInfo(this.provider, supplyMint);
@@ -1283,8 +1227,6 @@ export class MarketplaceSdk {
       source = ataSource;
     }
 
-    const sourceAcctAta = await getTokenAccount(this.provider, source);
-
     const offeringInstrs =
       await this.tokenBondingSdk.createTokenBondingInstructions({
         ...args,
@@ -1296,12 +1238,12 @@ export class MarketplaceSdk {
       });
 
     const retrievalInstrs =
-      await this.createRetrievalCurveForSetSupplyInstructions({
-        targetMint: offeringInstrs.output.targetMint,
-        supplyMint,
-        supplyAmount,
-        reserveAuthority,
-        fixedCurve,
+      await this.fungibleEntanglerSdk.createFungibleEntanglerInstructions({
+        authority: reserveAuthority!,
+        dynamicSeed: Keypair.generate().publicKey.toBuffer(),
+        amount: supplyAmount,
+        parentMint: supplyMint, // swaps from childMint to parentMint
+        childMint: offeringInstrs.output.targetMint,
       });
 
     return {
@@ -1324,7 +1266,7 @@ export class MarketplaceSdk {
     finality?: Finality
   ): Promise<{
     offer: ICreateTokenBondingOutput;
-    retrieval: ICreateTokenBondingOutput;
+    retrieval: ICreateFungibleEntanglerOutput;
   }> {
     return this.tokenBondingSdk.executeBig(
       this.createTokenBondingForSetSupplyInstructions(args),

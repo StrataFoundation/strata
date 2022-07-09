@@ -1,35 +1,51 @@
 import { PublicKey } from "@solana/web3.js";
-import { useSwapDriver } from "../../hooks/useSwapDriver";
+import { ISwapArgs } from "@strata-foundation/spl-token-bonding";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { useErrorHandler, useSwap, useTokenSwapFromId, useMint } from "../../hooks";
+import { useErrorHandler, useSwap, useTokenSwapFromId } from "../../hooks";
+import { useSwapDriver } from "../../hooks/useSwapDriver";
 import { Notification } from "../Notification";
-import { SwapForm } from "./SwapForm";
+import { MemodSwapForm } from "./SwapForm";
 
 
 const identity = () => {};
-export const Swap = ({ id, onConnectWallet }: { 
+export const Swap = ({
+  id,
+  onConnectWallet,
+  onSuccess = (values) => {
+    toast.custom((t) => (
+      <Notification
+        show={t.visible}
+        type="success"
+        heading="Transaction Successful"
+        message={`Succesfully purchased ${Number(values.targetAmount).toFixed(
+          9
+        )}!`}
+        onDismiss={() => toast.dismiss(t.id)}
+      />
+    ));
+  },
+}: {
   id: PublicKey;
   onConnectWallet?: () => void;
+  onSuccess?: (values: ISwapArgs & { targetAmount: number }) => void;
 }) => {
-
   const { loading, error, execute } = useSwap();
   const { handleErrors } = useErrorHandler();
   handleErrors(error);
 
-  const { 
-    tokenBonding, 
-    numRemaining, 
-    childEntangler, 
-    parentEntangler,
-  } = useTokenSwapFromId(id);
+  const { tokenBonding, numRemaining, childEntangler, parentEntangler } =
+    useTokenSwapFromId(id);
 
   const [tradingMints, setTradingMints] = useState<{
     base?: PublicKey;
     target?: PublicKey;
   }>({
     base: tokenBonding?.baseMint,
-    target: (parentEntangler && childEntangler) ? parentEntangler.parentMint : tokenBonding?.targetMint,
+    target:
+      parentEntangler && childEntangler
+        ? parentEntangler.parentMint
+        : tokenBonding?.targetMint,
   });
 
   React.useEffect(() => {
@@ -55,24 +71,18 @@ export const Swap = ({ id, onConnectWallet }: {
     swap: (args) =>
       execute({
         entangled: parentEntangler?.parentMint,
-        ...args
-      }).then(({ targetAmount }) => {
-        toast.custom((t) => (
-          <Notification
-            show={t.visible}
-            type="success"
-            heading="Transaction Successful"
-            message={`Succesfully purchased ${Number(targetAmount).toFixed(
-              9
-            )} ${args.ticker}!`}
-            onDismiss={() => toast.dismiss(t.id)}
-          />
-        ));
-      }).catch(console.error),
+        ...args,
+      })
+        .then((values) => {
+          onSuccess({...args, ...values });
+        })
+        .catch(console.error),
     id,
   });
 
   return (
-    <SwapForm isLoading={driverLoading} isSubmitting={loading} {...swapProps} />
+    <MemodSwapForm isLoading={driverLoading} isSubmitting={loading} {...swapProps} />
   );
 };
+
+export const MemodSwap = React.memo(Swap);

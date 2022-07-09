@@ -2,7 +2,7 @@ import { Container } from '@chakra-ui/react';
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import React from 'react';
-import { SaleForm } from '../src/components/form/SaleForm';
+import { FixedPriceForm } from '../src/components/form/FixedPriceForm';
 
 const Home: NextPage = () => {
   return (
@@ -15,7 +15,7 @@ const Home: NextPage = () => {
 
       <main>
         <Container>
-          <SaleForm />
+          <FixedPriceForm />
         </Container>
       </main>
     </div>

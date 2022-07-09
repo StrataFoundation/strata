@@ -15,10 +15,9 @@ import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { clusterApiUrl } from "@solana/web3.js";
-import { truncatePubkey } from "@strata-foundation/react";
+import { useEndpoint, truncatePubkey } from "@strata-foundation/react";
 import React, { FC, MouseEvent, useCallback } from "react";
 import { BsChevronDown, BsFillPersonFill } from "react-icons/bs";
-import { useEndpoint } from "../hooks/useEndpoint";
 
 export const WalletModalButton: FC<ButtonProps> = ({
   children = "Select Wallet",

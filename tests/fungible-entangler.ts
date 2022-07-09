@@ -72,7 +72,6 @@ describe("fungible-entangler", () => {
       (await fungibleEntanglerProgram.getChildEntangler(childEntanglerOut))!;
 
     expect(tB58(childEntanglerAcct.childMint)).to.eq(tB58(childMint));
-    expect(tB58(childEntanglerAcct.authority)).to.eq(tB58(me));
 
     await tokenUtils.expectBalance(childEntanglerAcct.childStorage, 0);
   });
@@ -105,7 +104,6 @@ describe("fungible-entangler", () => {
     await tokenUtils.expectAtaBalance(me, parentEntanglerAcct.parentMint, 0);
     await tokenUtils.expectBalance(parentEntanglerAcct.parentStorage, 100);
     expect(tB58(childEntanglerAcct.childMint)).to.eq(tB58(childMint));
-    expect(tB58(childEntanglerAcct.authority)).to.eq(tB58(me));
     await tokenUtils.expectBalance(childEntanglerAcct.childStorage, 0);
   });
 
@@ -272,6 +270,146 @@ describe("fungible-entangler", () => {
         100
       );
       await tokenUtils.expectAtaBalance(me, childEntanglerAcct!.childMint, 0);
+    });
+  });
+
+  describe("transfer and close", () => {
+    let parentMint,
+      childMint,
+      parentEntangler: PublicKey,
+      childEntangler: PublicKey,
+      parentEntanglerAcct: IFungibleParentEntangler | null,
+      childEntanglerAcct: IFungibleChildEntangler | null;
+
+    beforeEach(async () => {
+      const dynamicSeed = Keypair.generate().publicKey;
+      parentMint = await createMint(provider, me, 0);
+      childMint = await createMint(provider, me, 0);
+      await createAtaAndMint(provider, parentMint, 100);
+      await createAtaAndMint(provider, childMint, 50);
+
+      const {
+        parentEntangler: parentEntanglerOut,
+        childEntangler: childEntanglerOut,
+        childStorage: childStorageOut,
+      } = await fungibleEntanglerProgram.createFungibleEntangler({
+        authority: me,
+        parentMint,
+        childMint,
+        amount: 50,
+        dynamicSeed: dynamicSeed.toBuffer(),
+      });
+
+      parentEntangler = parentEntanglerOut;
+      childEntangler = childEntanglerOut;
+
+      parentEntanglerAcct =
+        (await fungibleEntanglerProgram.getParentEntangler(
+          parentEntanglerOut
+        ))!;
+
+      childEntanglerAcct =
+        (await fungibleEntanglerProgram.getChildEntangler(
+          childEntanglerOut
+        ))!;
+    });
+
+    it("transfers from the child back to the admin", async () => {
+      await waitForUnixTime(
+        provider.connection,
+        BigInt(parentEntanglerAcct!.goLiveUnixTime.toNumber() + 1)
+      );
+
+      await fungibleEntanglerProgram.swapChildForParent({
+        parentEntangler,
+        childEntangler,
+        amount: 30,
+      });
+
+      await fungibleEntanglerProgram.transfer({
+        childEntangler,
+        amount: 15
+      })
+
+      await tokenUtils.expectBalance(parentEntanglerAcct!.parentStorage, 20);
+      await tokenUtils.expectBalance(childEntanglerAcct!.childStorage, 15);
+      await tokenUtils.expectAtaBalance(
+        me,
+        parentEntanglerAcct!.parentMint,
+        80
+      );
+      await tokenUtils.expectAtaBalance(me, childEntanglerAcct!.childMint, 35);
+    });
+
+    it("closes the child entangler", async () => {
+      await waitForUnixTime(
+        provider.connection,
+        BigInt(parentEntanglerAcct!.goLiveUnixTime.toNumber() + 1)
+      );
+
+      await fungibleEntanglerProgram.close({
+        childEntangler,
+      });
+      const childEntanglerAcct =
+        (await fungibleEntanglerProgram.getChildEntangler(
+          childEntangler
+        ));
+      expect(childEntanglerAcct).to.be.null;
+    });
+
+    it("transfers from the parent back to the admin", async () => {
+      await waitForUnixTime(
+        provider.connection,
+        BigInt(parentEntanglerAcct!.goLiveUnixTime.toNumber() + 1)
+      );
+
+      await fungibleEntanglerProgram.swapChildForParent({
+        parentEntangler,
+        childEntangler,
+        amount: 30,
+      });
+
+      await fungibleEntanglerProgram.transfer({
+        parentEntangler,
+        amount: 15,
+      });
+
+      await tokenUtils.expectBalance(
+        parentEntanglerAcct!.parentStorage,
+        5
+      );
+      await tokenUtils.expectBalance(childEntanglerAcct!.childStorage, 30);
+      await tokenUtils.expectAtaBalance(
+        me,
+        parentEntanglerAcct!.parentMint,
+        95
+      );
+      await tokenUtils.expectAtaBalance(
+        me,
+        childEntanglerAcct!.childMint,
+        20
+      );
+    });
+
+    it("closes the parent entangler", async () => {
+      await waitForUnixTime(
+        provider.connection,
+        BigInt(parentEntanglerAcct!.goLiveUnixTime.toNumber() + 1)
+      );
+
+      await fungibleEntanglerProgram.transfer({
+        parentEntangler,
+        amount: 50
+      });
+      await fungibleEntanglerProgram.close({
+        childEntangler,
+      });
+      await fungibleEntanglerProgram.close({
+        parentEntangler,
+      });
+      const parentEntanglerAcct2 =
+        await fungibleEntanglerProgram.getParentEntangler(parentEntangler);
+      expect(parentEntanglerAcct2).to.be.null;
     });
   });
 

@@ -1,38 +1,30 @@
-import { BN, AnchorProvider } from "@project-serum/anchor";
+import { AnchorProvider, BN } from "@project-serum/anchor";
 import {
   AccountLayout,
   ASSOCIATED_TOKEN_PROGRAM_ID,
   Token,
   TOKEN_PROGRAM_ID,
-  u64,
+  u64
 } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
-import { useCapInfo } from "./useCapInfo";
 import {
-  BondingHierarchy,
-  ISwapArgs,
-  toNumber,
-  IPreInstructionArgs, 
-  IPostInstructionArgs
+  BondingHierarchy, IPostInstructionArgs, IPreInstructionArgs, ISwapArgs,
+  toNumber
 } from "@strata-foundation/spl-token-bonding";
-import React, { useEffect, useState } from "react";
+import { InstructionResult } from "@strata-foundation/spl-utils";
+import React, { useEffect, useMemo, useState } from "react";
 import { useAsync } from "react-async-hook";
 import { ISwapFormProps, ISwapFormValues } from "../components/Swap/SwapForm";
 import { truthy } from "../utils";
 import {
-  amountAsNum,
-  useBondingPricing,
-  useErrorHandler,
+  amountAsNum, useErrorHandler,
   useEstimatedFees,
   useMint,
   useOwnedAmount,
   useProvider,
-  useSolanaUnixTime,
-  useTokenSwapFromId,
-  useTokenMetadata,
-  useStrataSdks,
+  useSolanaUnixTime, useStrataSdks, useTokenMetadata
 } from "./";
-import { InstructionResult } from "@strata-foundation/spl-utils";
+import { useSwapPricing } from "./useSwapPricing";
 
 export interface ISwapDriverArgs
   extends Pick<ISwapFormProps, "onConnectWallet" | "extraTransactionInfo"> {
@@ -127,7 +119,9 @@ export const useSwapDriver = ({
     childEntangler, 
     parentEntangler,
     loading: tokenSwapLoading,
-  } = useTokenSwapFromId(id);
+    pricing,
+    error
+  } = useSwapPricing(id);
   const { base: baseMint, target: targetMint } = tradingMints;
 
   const {
@@ -143,11 +137,6 @@ export const useSwapDriver = ({
     loading: targetMetaLoading,
     error: targetMetaError,
   } = useTokenMetadata(targetMint);
-  const {
-    loading: curveLoading,
-    pricing,
-    error,
-  } = useBondingPricing(tokenBonding?.publicKey);
 
   const { result: missingSpace, error: missingSpaceError } = useAsync(
     getMissingSpace,
@@ -209,8 +198,39 @@ export const useSwapDriver = ({
     publicKey: targetMint,
   };
 
-  const lowMint = pricing?.hierarchy.lowest(base!.publicKey, target!.publicKey, childEntangler?.childMint, parentEntangler?.parentMint);
+  function subEntangledMint(mint: PublicKey | undefined) {
+    if (mint && parentEntangler && childEntangler) {
+      if (mint.equals(parentEntangler.parentMint)) {
+        return childEntangler.childMint;
+      }
+    }
 
+    return mint;
+  };
+
+
+
+  const baseWithEntangleRemoved = useMemo(() => {
+    return subEntangledMint(base?.publicKey);
+  }, [base?.publicKey.toBase58(), parentEntangler, childEntangler]);
+
+  const targetWithEntangleRemoved = useMemo(() => {
+    return subEntangledMint(target?.publicKey);
+  }, [target?.publicKey.toBase58(), parentEntangler, childEntangler]);
+
+  const lowMint = useMemo(() => {
+    try {
+      if (baseWithEntangleRemoved && targetWithEntangleRemoved) {
+        return pricing?.hierarchy.lowest(
+          baseWithEntangleRemoved,
+          targetWithEntangleRemoved
+        );
+      }
+    } catch (e: any) {
+      console.warn(e);
+      /// Do nothing
+    }
+  }, [pricing, baseWithEntangleRemoved, targetWithEntangleRemoved]);
   const targetBonding = lowMint && pricing?.hierarchy.findTarget(lowMint);
   const mintCap: number | undefined =
     targetBonding &&
@@ -274,11 +294,10 @@ export const useSwapDriver = ({
                 output: null,
               }
             }
-            const numAmount = toNumber(amount!, childMint)
             return await fungibleEntanglerSdk?.swapChildForParentInstructions({
               parentEntangler: parentEntangler.publicKey,
               childEntangler: childEntangler.publicKey,
-              amount: numAmount,
+              all: true,
             })
           },
         });
@@ -315,23 +334,18 @@ export const useSwapDriver = ({
     ownedBase,
     spendCap,
     feeAmount,
+    isBuying: Boolean(pricing && lowMint && target && pricing.isBuying(lowMint, target.publicKey)),
+    goLiveDate:
+      targetBonding && new Date(targetBonding.goLiveUnixTime.toNumber() * 1000),
     baseOptions: React.useMemo(
-      () =>
-        allMints.filter(
-          (mint) =>
-            baseMint &&
-            !mint.equals(baseMint)
-        ),
+      () => allMints.filter((mint) => baseMint && !mint.equals(baseMint)),
       [baseMint, allMints]
     ),
     targetOptions: React.useMemo(
       () =>
         allMints.filter(
           (mint) =>
-            targetMint &&
-            pricing &&
-            baseMint &&
-            !mint.equals(targetMint)
+            targetMint && pricing && baseMint && !mint.equals(targetMint)
         ),
       [targetMint, allMints]
     ),
@@ -339,7 +353,9 @@ export const useSwapDriver = ({
       baseMint &&
         targetMint &&
         pricing &&
-        pricing.hierarchy.path(targetMint, baseMint).length > 0
+        targetWithEntangleRemoved &&
+        baseWithEntangleRemoved && 
+        pricing.hierarchy.path(targetWithEntangleRemoved, baseWithEntangleRemoved).length > 0
     ),
   };
 };

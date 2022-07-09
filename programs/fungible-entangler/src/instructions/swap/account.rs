@@ -1,26 +1,20 @@
 use crate::state::*;
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Mint, Token, TokenAccount};
+use anchor_spl::token::{Token, TokenAccount};
 
 #[derive(Accounts)]
 pub struct SwapCommonV0<'info> {
   #[account(mut,
-    has_one = parent_mint,
     has_one = parent_storage
   )]
   pub parent_entangler: Box<Account<'info, FungibleParentEntanglerV0>>,
   #[account(mut)]
-  pub parent_mint: Box<Account<'info, Mint>>,
-  #[account(mut)]
   pub parent_storage: Box<Account<'info, TokenAccount>>,
   #[account(mut,
     has_one = parent_entangler,
-    has_one = child_mint,
     has_one = child_storage
   )]
   pub child_entangler: Box<Account<'info, FungibleChildEntanglerV0>>,
-  #[account(mut)]
-  pub child_mint: Box<Account<'info, Mint>>,
   #[account(mut)]
   pub child_storage: Box<Account<'info, TokenAccount>>,
   #[account(mut)]

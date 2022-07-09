@@ -116,10 +116,10 @@ var { tokenBonding, targetMint } =
 
 ```jsx live
 function TokenDisplay() {
-  const { tokenBonding } = useVariables(); // Getting token bonding from above code;
+  const { targetMint } = useVariables(); // Getting token bonding from above code;
 
   if (tokenBonding) {
-    return <Swap tokenBondingKey={tokenBonding} />;
+    return <Swap id={targetMint} />;
   }
 
   return <div>Please run the code block above</div>;

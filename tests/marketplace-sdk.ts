@@ -11,6 +11,7 @@ import { NATIVE_MINT } from "@solana/spl-token";
 import { waitForUnixTime } from "./utils/clock";
 import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
 import { AnchorProvider } from "@project-serum/anchor";
+import { FungibleEntangler } from "@strata-foundation/fungible-entangler";
 
 use(ChaiAsPromised);
 
@@ -27,6 +28,10 @@ describe("marketplace-sdk", () => {
   const tokenUtils = new TokenUtils(provider);
   const tokenBondingProgram = new SplTokenBonding(provider, program);
   const splTokenMetadata = new SplTokenMetadata({ provider });
+  const fungibleEntangler = new FungibleEntangler(
+    provider,
+    anchor.workspace.FungibleEntangler
+  );
   const tokenCollectiveProgram = new SplTokenCollective({
     provider,
     program,
@@ -37,7 +42,8 @@ describe("marketplace-sdk", () => {
     provider,
     tokenBondingProgram,
     tokenCollectiveProgram,
-    splTokenMetadata
+    fungibleEntangler,
+    splTokenMetadata,
   );
   const me = tokenBondingProgram.wallet.publicKey;
 
@@ -158,10 +164,10 @@ describe("marketplace-sdk", () => {
       tokenBonding: offer.tokenBonding,
       slippage: 0.05
     });
-    await tokenBondingProgram.sell({
-      targetAmount: 25,
-      tokenBonding: retrieval.tokenBonding,
-      slippage: 0.05,
+    await marketplaceSdk.fungibleEntanglerSdk.swapChildForParent({
+      amount: 25,
+      parentEntangler: retrieval.parentEntangler,
+      childEntangler: retrieval.childEntangler,
     });
 
     await tokenUtils.expectAtaBalance(me, mint, 25);
@@ -171,10 +177,10 @@ describe("marketplace-sdk", () => {
       tokenBonding: offer.tokenBonding,
       slippage: 0.05,
     });
-    await tokenBondingProgram.sell({
-      targetAmount: 25,
-      tokenBonding: retrieval.tokenBonding,
-      slippage: 0.05,
+    await marketplaceSdk.fungibleEntanglerSdk.swapChildForParent({
+      amount: 25,
+      parentEntangler: retrieval.parentEntangler,
+      childEntangler: retrieval.childEntangler,
     });
 
     await tokenUtils.expectAtaBalance(me, mint, 50);

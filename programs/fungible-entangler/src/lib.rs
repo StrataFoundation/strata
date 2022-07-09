@@ -41,4 +41,30 @@ pub mod fungible_entangler {
   ) -> Result<()> {
     instructions::swap_child_for_parent_v0::handler(ctx, args)
   }
+
+  pub fn close_fungible_child_entangler_v0(
+    ctx: Context<CloseFungibleChildEntanglerV0>,
+  ) -> Result<()> {
+    instructions::close_fungible_child_entangler_v0::handler(ctx)
+  }
+
+  pub fn close_fungible_parent_entangler_v0(
+    ctx: Context<CloseFungibleParentEntanglerV0>,
+  ) -> Result<()> {
+    instructions::close_fungible_parent_entangler_v0::handler(ctx)
+  }
+
+  pub fn transfer_child_storage_v0(
+    ctx: Context<TransferChildStorageV0>,
+    args: TransferChildStorageArgsV0,
+  ) -> Result<()> {
+    instructions::transfer_child_storage_v0::handler(ctx, args)
+  }
+
+  pub fn transfer_parent_storage_v0(
+    ctx: Context<TransferParentStorageV0>,
+    args: TransferParentStorageArgsV0,
+  ) -> Result<()> {
+    instructions::transfer_parent_storage_v0::handler(ctx, args)
+  }
 }

@@ -62,7 +62,7 @@ export const Header: React.FC = () => {
               onClick={isOpen ? onClose : onOpen}
             />
             <HStack spacing={8} alignItems={"center"}>
-              <Link href="/">
+              <Link href={route(routes.launchpad)}>
                 <Image alt="Strata Launchpad" src="/logo-launchpad.svg" />
               </Link>
               <HStack
