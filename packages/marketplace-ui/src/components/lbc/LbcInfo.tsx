@@ -1,13 +1,9 @@
 import {
   Box,
   BoxProps,
-  Button,
   Center,
-  Collapse,
   HStack,
   Icon,
-  LightMode,
-  Link,
   Progress,
   Spinner,
   Stack,
@@ -16,7 +12,6 @@ import {
   Tooltip,
   useColorModeValue,
   useDisclosure,
-  useInterval,
   VStack,
 } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
@@ -24,13 +19,11 @@ import {
   useCapInfo,
   useCurve,
   useSolanaUnixTime,
-  useTokenBonding,
+  useTokenSwapFromId,
   useTokenMetadata,
 } from "@strata-foundation/react";
-import moment from "moment";
 import React, { useEffect, useState } from "react";
 import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
-import { BsChevronDown, BsChevronUp } from "react-icons/bs";
 import { useLivePrice } from "../..//hooks/useLivePrice";
 import { numberWithCommas } from "../../utils/numberWithCommas";
 import { RiInformationFill } from "react-icons/ri";
@@ -58,22 +51,25 @@ export const BigText = ({ children, ...other }: TextProps) => {
 };
 
 export const LbcInfo = ({
-  tokenBondingKey,
+  id,
   useTokenOfferingCurve = false,
   price: inputPrice,
 }: {
-  tokenBondingKey: PublicKey;
+  id: PublicKey;
   useTokenOfferingCurve?: boolean;
   price?: number;
 }) => {
   const { isOpen, onToggle } = useDisclosure({
     defaultIsOpen: false,
   });
-  const { info: tokenBonding, loading: loadingBonding } =
-    useTokenBonding(tokenBondingKey);
-  const { price, loading: loadingPricing } = useLivePrice(tokenBondingKey);
-  const { numRemaining, mintCap } = useCapInfo(
-    tokenBondingKey,
+  const { 
+    tokenBonding, 
+    numRemaining,
+    loading: loadingBonding,
+  } = useTokenSwapFromId(id);
+  const { price, loading: loadingPricing } = useLivePrice(tokenBonding?.publicKey);
+  const { mintCap } = useCapInfo(
+    tokenBonding?.publicKey,
     useTokenOfferingCurve
   );
 

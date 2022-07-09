@@ -28,7 +28,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import {
   usePublicKey,
-  useTokenBondingFromMint,
+  useTokenSwapFromId,
 } from "@strata-foundation/react";
 import {
   GetServerSideProps,
@@ -47,9 +47,15 @@ export const LbcDisplay: NextPage = ({
   description,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const router = useRouter();
-  const { mintKey: mintKeyRaw } = router.query;
-  const mintKey = usePublicKey(mintKeyRaw as string);
-  const { info: tokenBonding, loading } = useTokenBondingFromMint(mintKey);
+
+  const { id: idRaw } = router.query;
+  const id = usePublicKey(idRaw as string);
+
+  const { 
+    tokenBonding, 
+    loading,
+  } = useTokenSwapFromId(id);
+
   const { price } = useLivePrice(tokenBonding?.publicKey);
   const { publicKey } = useWallet();
   const { isAdmin } = useIsBountyAdmin(
@@ -84,7 +90,7 @@ export const LbcDisplay: NextPage = ({
           title={`Strata LBC Token Offering | ${name}`}
           description={description}
           image={image}
-          url={`${SITE_URL}/bounty/${mintKey}/`}
+          url={`${SITE_URL}/lbcs/token-offering/${id?.toString()}/`}
         />
         <VStack spacing={2} align="left">
           <Container mt={"35px"} justifyContent="stretch" maxW="600px">
@@ -132,12 +138,12 @@ export const LbcDisplay: NextPage = ({
                       <VStack align="stretch" spacing={8}>
                         <LbcInfo
                           price={price}
-                          tokenBondingKey={tokenBonding.publicKey}
+                          id={id!}
                           useTokenOfferingCurve
                         />
                         <TokenOffering
                           onConnectWallet={onConnectWallet}
-                          mintKey={mintKey}
+                          id={id!}
                         />
                       </VStack>
                     )}

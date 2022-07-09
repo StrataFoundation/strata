@@ -1,5 +1,5 @@
 ---
-sidebar_position: 3
+sidebar_position: 4
 ---
 
 # Token Offerings
@@ -9,25 +9,26 @@ A bonding curve accepts tokens in exchange for minting new tokens.
 What then, if you either (a) do not want to give up mint authority or (b) want 
 to sell some tokens that have already been minted? This is where token offerings come into play
 
-In a token offering, a system of two bonding curves is created
+In a token offering, a bonding curve and a fungible entangler are created.
 
   * A bonding curve that accepts the base mint (i.e. sol) and mints an intermediary token
-  * A bonding curve that allows you to burn the intermediary token in exchange for the target token
+  * A fungible entangler that can swap between the intermediary token and the output token.
 
-All intermediary tokens are created with the same token metadata, which allows Strata sdk to
-recognize that it should search for a burn bonding curve.
-
+This system allows two way swaps, so buyers can sell their tokens back for base tokens, although the 
+price will potentially have fluctuated between their purchase and their sell. This behaviour can be disabled to 
+make it only one way.
 
 ## Create a Token Offering
 
-Creating a token offering comes in two steps. First, we create a sale using a normal bonding curve. 
-Then, we create the second bonding curve for retrieval. The second set of instructions will transfer the
-tokens being sold into the secondary bonding curve.
+Creating a token offering comes in two steps. First, we create a sale using a bonding curve. 
+Then, we create the fungible entangler. For your token offering, you can decide between having a fixed sale price
+or using a dynamic pricing mechanism. You can also customise the curve used by your dynamic pricing. See the 
+LBC page for more information.
 
 First, create a token which we plan to offer:
 
 ```jsx async name=sell_token
-var { mint } = await marketplaceSdk.createManualToken({
+var { mint: sellMint } = await marketplaceSdk.createManualToken({
   metadata: new DataV2({
     // Max name len 32
     name: "Token we are Selling",
@@ -43,9 +44,9 @@ var { mint } = await marketplaceSdk.createManualToken({
 })
 ```
 
-Now, let's sell 100 of those tokens for 0.01 SOL.
+Here's a fixed price sale of 100 of these tokens for 0.01 SOL.
 
-```jsx async name=create deps=sell_token
+```jsx async name=fixed-sale deps=sell_token
 var marketItemInstrs = await marketplaceSdk.createMarketItemInstructions({
   metadata: new DataV2({
     // Max name len 32
@@ -57,28 +58,57 @@ var marketItemInstrs = await marketplaceSdk.createMarketItemInstructions({
     collection: null,
     uses: null,
   }),
-  quantity: 10,
+  quantity: 100,
   price: 0.01,
   baseMint: NATIVE_MINT,
   bondingArgs: {
     targetMintDecimals: 0,
   },
 });
-var retrievalInstrs =
-    await marketplaceSdk.createRetrievalCurveForSetSupplyInstructions({
-      reserveAuthority: publicKey,
-      supplyMint: mint,
-      supplyAmount: 100,
-      targetMint: marketItemInstrs.output.targetMint,
-    });
+
+var entanglerInstrs = await fungibleEntanglerSdk.createFungibleEntanglerInstructions({
+  amount: 100, // deposit 100 sellMint tokens to be sold
+  parentMint: sellMint,
+  childMint: marketItemInstrs.output.targetMint, // mint of the intermediary token
+});
+
 await sendMultipleInstructions(
   marketplaceSdk.tokenBondingSdk.errors || new Map(),
-  provider,
-  [...marketItemInstrs.instructions, retrievalInstrs.instructions],
-  [...marketItemInstrs.signers, retrievalInstrs.signers]
+  marketplaceSdk.provider,
+  [...marketItemInstrs.instructions, entanglerInstrs.instructions],
+  [...marketItemInstrs.signers, entanglerInstrs.signers]
 );
+```
 
-var retrievalBonding = retrievalInstrs.output.tokenBonding;
+Here's a dynamic pricing sale. Here it will start at 0.05 SOL and fall to 0.01 SOL over 5 minutes.
+In a Strata token offering, the offering is reversible, i.e. users can sell their tokens for the current price back for SOL.
+If you don't want users to be able to sell, set sellFrozen to true.
+
+```jsx async name=lbc-sale deps=sell_token
+var lbcInstructions = await marketplaceSdk.createLiquidityBootstrapperInstructions({
+  baseMint: NATIVE_MINT,
+  startPrice: 0.05,
+  minPrice: 0.01,
+  interval: 5 * 60 * 60,
+  maxSupply: 100,
+  bondingArgs: {
+    targetMintDecimals: 0,
+    sellFrozen: false,
+  },
+});
+
+var entanglerInstrs = await fungibleEntanglerSdk.createFungibleEntanglerInstructions({
+  amount: 100, // deposit 100 sellMint tokens to be sold
+  parentMint: sellMint,
+  childMint: marketItemInstrs.output.targetMint, // mint of the intermediary token
+});
+
+await sendMultipleInstructions(
+  marketplaceSdk.tokenBondingSdk.errors || new Map(),
+  marketplaceSdk.provider,
+  [...marketItemInstrs.instructions, entanglerInstrs.instructions],
+  [...marketItemInstrs.signers, entanglerInstrs.signers]
+);
 ```
 
 ## Many to One Swap
