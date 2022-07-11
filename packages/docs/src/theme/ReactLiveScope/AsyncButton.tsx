@@ -6,7 +6,11 @@ import {
   WalletMultiButton,
 } from "@solana/wallet-adapter-react-ui";
 import { Connection, PublicKey } from "@solana/web3.js";
-import { useProvider, useStrataSdks } from "@strata-foundation/react";
+import {
+  useProvider,
+  useStrataSdks,
+  useEndpoint,
+} from "@strata-foundation/react";
 import BN from "bn.js";
 import clsx from "clsx";
 import { parse } from "esprima";
@@ -15,7 +19,7 @@ import { FaPlay } from "react-icons/fa";
 import { useVariablesContext } from "../Root/variables";
 import styles from "./styles.module.css";
 import { clusterApiUrl } from "@solana/web3.js";
-import { useEndpoint, useMarketplaceSdk } from "@strata-foundation/react";
+import { useMarketplaceSdk } from "@strata-foundation/marketplace-ui";
 
 
 function BrowserOnlyReactJson(props) {
