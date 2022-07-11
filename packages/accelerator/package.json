@@ -4,7 +4,7 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
-  "version": "3.6.1",
+  "version": "3.9.0",
   "description": "Transaction accelerator api",
   "repository": {
     "type": "git",

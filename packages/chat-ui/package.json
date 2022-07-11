@@ -5,7 +5,7 @@
     "registry": "https://registry.npmjs.org/"
   },
   "source": "src/index.ts",
-  "version": "3.6.1",
+  "version": "3.9.0",
   "license": "Apache-2.0",
   "exports": {
     ".": "./dist/lib/index.js"
@@ -38,10 +38,10 @@
     "@solana/wallet-adapter-react-ui": "^0.9.5",
     "@solana/wallet-adapter-wallets": "^0.16.1",
     "@solana/web3.js": "^1.43.4",
-    "@strata-foundation/accelerator": "^3.6.1",
-    "@strata-foundation/chat": "^3.6.1",
-    "@strata-foundation/react": "^3.6.1",
-    "@strata-foundation/spl-token-bonding": "^3.6.1",
+    "@strata-foundation/accelerator": "^3.9.0",
+    "@strata-foundation/chat": "^3.9.0",
+    "@strata-foundation/react": "^3.9.0",
+    "@strata-foundation/spl-token-bonding": "^3.9.0",
     "@types/emoji-mart": "^3.0.9",
     "@types/request-promise": "^4.1.48",
     "@types/sanitize-html": "^2.6.2",
