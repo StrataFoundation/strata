@@ -3,12 +3,19 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-
-## Unreleased
+# [3.9.0](https://github.com/StrataFoundation/strata/compare/v3.8.2...v3.9.0) (2022-07-11)
 
 ## Breaking
 
   * Move `HolaplexGraphqlProvider` to `react` package
+  * Move `useEndpoint` from `marketplace-ui` to `react` package
+  * Switch to fungible entangler for token offerings (selling a token without giving mint authority)
+    * Legacy implementations (system of two bonding curves, one sell only) are still supported. But deprecated
+
+## Added
+
+  * Fungible entangler is now officially in use. Pre-release instructions have changed.
+  * Chat packages now published for experimentation. These interfaces are subject to change, and `chat` program is not yet under governance.
 
 
 ## [3.8.2](https://github.com/StrataFoundation/strata/compare/v3.8.1...v3.8.2) (2022-06-19)

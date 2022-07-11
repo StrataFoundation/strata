@@ -4,7 +4,7 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
-  "version": "3.5.4",
+  "version": "3.9.0",
   "description": "React components and helpers to auth to GenesysGo RPC",
   "repository": {
     "type": "git",

@@ -4,7 +4,7 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
-  "version": "3.6.1",
+  "version": "3.9.0",
   "description": "Interface to the chat smart contract",
   "repository": {
     "type": "git",
@@ -33,7 +33,7 @@
     "@project-serum/anchor": "^0.24.2",
     "@shadow-drive/sdk": "^3.0.4",
     "@solana/web3.js": "^1.43.4",
-    "@strata-foundation/spl-utils": "^3.6.1",
+    "@strata-foundation/spl-utils": "^3.9.0",
     "@types/uuid": "^8.3.4",
     "add": "^2.0.6",
     "bn.js": "^5.2.0",
