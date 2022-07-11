@@ -5,3 +5,4 @@ export * from "./Branding";
 export * from "./LbcStatus";
 export * from "./mint";
 export * from "./TransactionHistory";
+export * from "./Lbc";

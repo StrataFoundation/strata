@@ -1,7 +1,6 @@
 import { NATIVE_MINT } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
-import { percent } from "@strata-foundation/spl-utils";
-import { BondingHierarchy, SplTokenBonding } from ".";
+import { BondingHierarchy } from ".";
 
 /**
  * Traverse a bonding hierarchy, executing func and accumulating
@@ -101,14 +100,66 @@ function now(): number {
   return new Date().valueOf() / 1000;
 }
 
-export class BondingPricing {
+export interface IBondingPricing {
+
+  get hierarchy(): BondingHierarchy;
+
+  current(baseMint: PublicKey, unixTime?: number): number;
+
+  locked(baseMint?: PublicKey): number;
+
+  swap(
+    baseAmount: number,
+    baseMint: PublicKey,
+    targetMint: PublicKey,
+    ignoreFrozen: boolean,
+    unixTime?: number,
+  ): number;
+
+  isBuying(
+    lowMint: PublicKey,
+    targetMint: PublicKey,
+  ): boolean;
+
+  swapTargetAmount(
+    targetAmount: number,
+    baseMint: PublicKey,
+    targetMint: PublicKey,
+    /** Ignore frozen curves, just compute the value. */
+    ignoreFreeze: boolean,
+    unixTime?: number,
+  ): number;
+
+  sellTargetAmount(
+    targetAmountNum: number,
+    baseMint?: PublicKey,
+    unixTime?: number
+  ): number;
+
+  buyTargetAmount(
+    targetAmountNum: number,
+    baseMint?: PublicKey,
+    unixTime?: number
+  ): number;
+
+  buyWithBaseAmount(
+    baseAmountNum: number,
+    baseMint?: PublicKey,
+    unixTime?: number
+  ): number ;
+}
+
+export class BondingPricing implements IBondingPricing {
   hierarchy: BondingHierarchy;
 
   constructor(args: { hierarchy: BondingHierarchy }) {
     this.hierarchy = args.hierarchy;
   }
 
-  current(baseMint: PublicKey = this.hierarchy.tokenBonding.baseMint, unixTime?: number): number {
+  current(
+    baseMint?: PublicKey,
+    unixTime?: number
+  ): number {
     return reduce({
       hierarchy: this.hierarchy,
       func: (acc: number, current: BondingHierarchy) => {
@@ -122,12 +173,12 @@ export class BondingPricing {
         );
       },
       initial: 1,
-      destination: baseMint,
+      destination: baseMint || this.hierarchy.tokenBonding.baseMint,
       wrappedSolMint: this.hierarchy.wrappedSolMint,
     });
   }
 
-  locked(baseMint: PublicKey = this.hierarchy.tokenBonding.baseMint): number {
+  locked(baseMint?: PublicKey): number {
     return reduce({
       hierarchy: this.hierarchy.parent,
       func: (acc: number, current: BondingHierarchy) => {
@@ -141,7 +192,7 @@ export class BondingPricing {
         );
       },
       initial: this.hierarchy.pricingCurve.locked(),
-      destination: baseMint,
+      destination: baseMint || this.hierarchy.tokenBonding.baseMint,
       wrappedSolMint: this.hierarchy.wrappedSolMint,
     });
   }
@@ -151,11 +202,14 @@ export class BondingPricing {
     baseMint: PublicKey,
     targetMint: PublicKey,
     ignoreFrozen: boolean = false,
-    unixTime?: number
+    unixTime?: number,
   ): number {
     const lowMint = this.hierarchy.lowest(baseMint, targetMint);
-    const highMint = lowMint.equals(baseMint) ? targetMint : baseMint;
-    const isBuying = lowMint.equals(targetMint);
+    const highMint = this.hierarchy.highest(baseMint, targetMint);
+    const isBuying = this.isBuying(
+      lowMint,
+      targetMint,
+    );
 
     const path = this.hierarchy.path(lowMint, highMint, ignoreFrozen);
 
@@ -184,17 +238,27 @@ export class BondingPricing {
     }
   }
 
+  isBuying(
+    lowMint: PublicKey,
+    targetMint: PublicKey,
+  ) {
+    return lowMint.equals(targetMint);
+  }
+
   swapTargetAmount(
     targetAmount: number,
     baseMint: PublicKey,
     targetMint: PublicKey,
     /** Ignore frozen curves, just compute the value. */
     ignoreFreeze: boolean = false,
-    unixTime?: number
+    unixTime?: number,
   ): number {
     const lowMint = this.hierarchy.lowest(baseMint, targetMint);
-    const highMint = lowMint.equals(baseMint) ? targetMint : baseMint;
-    const isBuying = lowMint.equals(targetMint);
+    const highMint = this.hierarchy.highest(baseMint, targetMint);
+    const isBuying = this.isBuying(
+      lowMint,
+      targetMint,
+    );
 
     const path = this.hierarchy.path(lowMint, highMint, ignoreFreeze);
 
@@ -223,7 +287,7 @@ export class BondingPricing {
 
   sellTargetAmount(
     targetAmountNum: number,
-    baseMint: PublicKey = this.hierarchy.tokenBonding.baseMint,
+    baseMint?: PublicKey,
     unixTime?: number
   ): number {
     return reduce({
@@ -237,14 +301,14 @@ export class BondingPricing {
         );
       },
       initial: targetAmountNum,
-      destination: baseMint,
+      destination: baseMint || this.hierarchy.tokenBonding.baseMint,
       wrappedSolMint: this.hierarchy.wrappedSolMint,
     });
   }
 
   buyTargetAmount(
     targetAmountNum: number,
-    baseMint: PublicKey = this.hierarchy.tokenBonding.baseMint,
+    baseMint?: PublicKey,
     unixTime?: number
   ): number {
     return reduce({
@@ -258,14 +322,14 @@ export class BondingPricing {
         );
       },
       initial: targetAmountNum,
-      destination: baseMint,
+      destination: baseMint || this.hierarchy.tokenBonding.baseMint,
       wrappedSolMint: this.hierarchy.wrappedSolMint,
     });
   }
 
   buyWithBaseAmount(
     baseAmountNum: number,
-    baseMint: PublicKey = this.hierarchy.tokenBonding.baseMint,
+    baseMint?: PublicKey,
     unixTime?: number
   ): number {
     return reduceFromParent({
@@ -279,7 +343,7 @@ export class BondingPricing {
         );
       },
       initial: baseAmountNum,
-      destination: baseMint,
+      destination: baseMint || this.hierarchy.tokenBonding.baseMint,
       wrappedSolMint: this.hierarchy.wrappedSolMint,
     });
   }

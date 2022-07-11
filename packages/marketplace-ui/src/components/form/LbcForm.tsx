@@ -18,6 +18,7 @@ import {
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import {
   LBC_CURVE_FEES,
@@ -26,6 +27,7 @@ import {
 import {
   usePrimaryClaimedTokenRef,
   useProvider,
+  useEndpoint,
 } from "@strata-foundation/react";
 import BN from "bn.js";
 import {
@@ -52,14 +54,14 @@ import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { TokenMintDecimalsInputs } from "./TokenMintDecimalsInputs";
 import { TokenIntervalInputs } from "./TokenIntervalnputs";
 import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
-import { useEndpoint } from "../../hooks/useEndpoint";
 
-interface ILbpFormProps
+interface ILbcFormProps
   extends Partial<IMetadataFormProps>,
     IUseExistingMintProps {
   useCandyMachine: boolean;
   convertCandyMachine: boolean;
   candyMachineId: string;
+  sellFrozen: boolean;
   mint: string;
   symbol?: string;
   authority: string;
@@ -76,6 +78,7 @@ const validationSchema = yup.object({
   mint: yup.string().required(),
   useExistingMint: yup.boolean(),
   useCandyMachine: yup.boolean(),
+  sellFrozen: yup.boolean(),
   convertCandyMachine: yup.boolean(),
   existingMint: yup.string().when(["useExistingMint", "useCandyMachine"], {
     is: (useExistingMint: boolean, useCandyMachine: boolean) =>
@@ -115,62 +118,25 @@ const validationSchema = yup.object({
   disclosures: disclosuresSchema,
 });
 
-async function createLiquidityBootstrapper(
-  marketplaceSdk: MarketplaceSdk,
-  values: ILbpFormProps
-): Promise<PublicKey> {
+async function createLbcCandyMachine(
+  marketplaceSdk: MarketplaceSdk, 
+  values: ILbcFormProps,
+  cluster: WalletAdapterNetwork | "localnet",
+): Promise<string> {
   const targetMintKeypair = Keypair.generate();
   const authority = new PublicKey(values.authority);
   const mint = new PublicKey(values.mint);
 
-  let metadata;
-  if (values.useExistingMint && !values.useCandyMachine) {
-    const existingMint = new PublicKey(values.existingMint!);
-
-    values.decimals = (
-      await getMintInfo(marketplaceSdk.provider, existingMint)
-    ).decimals;
-
-    metadata = new DataV2({
-      name: values.name || "",
-      symbol: values.symbol || "",
-      uri: values.uri || "",
-      sellerFeeBasisPoints: 0,
-      creators: null,
-      collection: null,
-      uses: null,
-    });
-  } else if (values.useCandyMachine) {
-    metadata = new DataV2({
-      // Max name len 32
-      name: "Candymachine Mint Token",
-      symbol: "NFTs",
-      uri: "",
-      sellerFeeBasisPoints: 0,
-      creators: null,
-      collection: null,
-      uses: null,
-    });
-  } else {
-    const uri = await marketplaceSdk.tokenMetadataSdk.uploadMetadata({
-      provider: values.provider,
-      name: values.name!,
-      symbol: values.symbol! || "",
-      description: values.description,
-      image: values.image,
-      mint: targetMintKeypair.publicKey,
-    });
-    metadata = new DataV2({
-      // Max name len 32
-      name: values.name!.substring(0, 32),
-      symbol: (values.symbol || "").substring(0, 10),
-      uri,
-      sellerFeeBasisPoints: 0,
-      creators: null,
-      collection: null,
-      uses: null,
-    });
-  }
+  const metadata = new DataV2({
+    // Max name len 32
+    name: "Candymachine Mint Token",
+    symbol: "NFTs",
+    uri: "",
+    sellerFeeBasisPoints: 0,
+    creators: null,
+    collection: null,
+    uses: null,
+  });
 
   const {
     output: { targetMint },
@@ -188,21 +154,9 @@ async function createLiquidityBootstrapper(
     bondingArgs: {
       targetMintDecimals: Number(values.decimals || 0),
       goLiveDate: values.goLiveDate,
-      sellFrozen: values.useExistingMint
+      sellFrozen: true
     },
   });
-
-  if (values.useExistingMint && !values.useCandyMachine) {
-    const retrievalInstrs =
-      await marketplaceSdk.createRetrievalCurveForSetSupplyInstructions({
-        reserveAuthority: authority,
-        supplyMint: new PublicKey(values.existingMint!),
-        supplyAmount: values.mintCap,
-        targetMint,
-      });
-    instructions.push(retrievalInstrs.instructions);
-    signers.push(retrievalInstrs.signers);
-  }
 
   // Update the candymachine to use this mint
   if (values.useCandyMachine && values.convertCandyMachine) {
@@ -268,11 +222,159 @@ async function createLiquidityBootstrapper(
     signers
   );
 
-  return targetMint;
+  return route(routes.mintLbcAdmin, {
+    candyMachineId: values.candyMachineId,
+    tokenBondingKey: (
+      await SplTokenBonding.tokenBondingKey(targetMint)
+    )[0].toBase58(),
+    cluster
+  })
+}
+
+/**
+ * For an existing mint, the token is sold using an LBC and a fungible entangler.
+ * The LBC converts between the base to and from an intermediary token.
+ * The fungible entangler converts between the intermediary to and from the token to sell.
+ * 
+ * This makes the sale process reversible without requiring the mint authority.
+ */
+async function createLbcExistingMint(
+  marketplaceSdk: MarketplaceSdk,
+  values: ILbcFormProps,
+): Promise<string> {
+  const intermediaryMintKeypair = Keypair.generate();
+  const authority = new PublicKey(values.authority);
+  const mint = new PublicKey(values.mint);
+  const existingMint = new PublicKey(values.existingMint!);
+
+  values.decimals = (
+    await getMintInfo(marketplaceSdk.provider, existingMint)
+  ).decimals;
+
+  const metadata = new DataV2({
+    name: values.name || "",
+    symbol: values.symbol || "",
+    uri: values.uri || "",
+    sellerFeeBasisPoints: 0,
+    creators: null,
+    collection: null,
+    uses: null,
+  });
+
+  const {
+    output: { targetMint: intermediaryMint },
+    instructions,
+    signers,
+  } = await marketplaceSdk.createLiquidityBootstrapperInstructions({
+    targetMintKeypair: intermediaryMintKeypair,
+    authority,
+    metadata,
+    baseMint: mint,
+    startPrice: Number(values.startPrice),
+    minPrice: Number(values.minPrice),
+    interval: Number(values.interval),
+    maxSupply: Number(values.mintCap),
+    bondingArgs: {
+      targetMintDecimals: Number(values.decimals || 0),
+      goLiveDate: values.goLiveDate,
+      sellFrozen: values.sellFrozen,
+    },
+  });
+
+  const entanglerInstrs = await marketplaceSdk.fungibleEntanglerSdk.createFungibleEntanglerInstructions({
+    authority,
+    dynamicSeed: Keypair.generate().publicKey.toBuffer(),
+    amount: values.mintCap,
+    parentMint: existingMint, // swaps from childMint to parentMint
+    childMint: intermediaryMint,
+  })
+  instructions.push(entanglerInstrs.instructions);
+  signers.push(entanglerInstrs.signers);
+
+  await sendMultipleInstructions(
+    marketplaceSdk.tokenBondingSdk.errors || new Map(),
+    marketplaceSdk.provider,
+    instructions,
+    signers
+  );
+  return route(routes.tokenLbcAdmin, { 
+    id: entanglerInstrs.output.childEntangler.toString()
+  })
+}
+
+async function createLbcNewMint(
+  marketplaceSdk: MarketplaceSdk,
+  values: ILbcFormProps,
+): Promise<string> {
+  const targetMintKeypair = Keypair.generate();
+  const authority = new PublicKey(values.authority);
+  const mint = new PublicKey(values.mint);
+
+  const uri = await marketplaceSdk.tokenMetadataSdk.uploadMetadata({
+    provider: values.provider,
+    name: values.name!,
+    symbol: values.symbol! || "",
+    description: values.description,
+    image: values.image,
+    mint: targetMintKeypair.publicKey,
+  });
+  const metadata = new DataV2({
+    // Max name len 32
+    name: values.name!.substring(0, 32),
+    symbol: (values.symbol || "").substring(0, 10),
+    uri,
+    sellerFeeBasisPoints: 0,
+    creators: null,
+    collection: null,
+    uses: null,
+  });
+
+  const {
+    output: { targetMint },
+    instructions,
+    signers,
+  } = await marketplaceSdk.createLiquidityBootstrapperInstructions({
+    targetMintKeypair,
+    authority,
+    metadata,
+    baseMint: mint,
+    startPrice: Number(values.startPrice),
+    minPrice: Number(values.minPrice),
+    interval: Number(values.interval),
+    maxSupply: Number(values.mintCap),
+    bondingArgs: {
+      targetMintDecimals: Number(values.decimals || 0),
+      goLiveDate: values.goLiveDate,
+      sellFrozen: values.sellFrozen,
+    },
+  });
+
+  await sendMultipleInstructions(
+    marketplaceSdk.tokenBondingSdk.errors || new Map(),
+    marketplaceSdk.provider,
+    instructions,
+    signers
+  );
+
+  return route(routes.tokenLbcAdmin, { id: targetMint.toBase58() })
+}
+
+async function createLiquidityBootstrapper(
+  marketplaceSdk: MarketplaceSdk,
+  values: ILbcFormProps,
+  cluster: WalletAdapterNetwork | "localnet",
+): Promise<string> {
+  if (values.useCandyMachine) {
+    return await createLbcCandyMachine(marketplaceSdk, values, cluster);
+  } else if (values.useExistingMint) {
+    return await createLbcExistingMint(marketplaceSdk, values);
+  } else {
+    return await createLbcNewMint(marketplaceSdk, values);
+  }
 }
 
 export const LbcForm: React.FC = () => {
-  const formProps = useForm<ILbpFormProps>({
+  const formProps = useForm<ILbcFormProps>({
     resolver: yupResolver(validationSchema),
     defaultValues: { useExistingMint: true },
   });
@@ -329,23 +431,17 @@ export const LbcForm: React.FC = () => {
     }
   }, [startPrice, minPrice, setError, clearErrors]);
 
-  const onSubmit = async (values: ILbpFormProps) => {
-    const mintKey = await execute(marketplaceSdk!, values);
+  const onSubmit = async (values: ILbcFormProps) => {
+    const url = await execute(marketplaceSdk!, values, cluster);
     if (values.useCandyMachine) {
       router.push(
-        route(routes.mintLbcAdmin, {
-          candyMachineId: values.candyMachineId,
-          tokenBondingKey: (
-            await SplTokenBonding.tokenBondingKey(mintKey)
-          )[0].toBase58(),
-          cluster,
-        }),
+        url,
         undefined,
         { shallow: true }
       );
     } else {
       router.push(
-        route(routes.tokenLbc, { mintKey: mintKey.toBase58() }),
+        url,
         undefined,
         { shallow: true }
       );
@@ -481,9 +577,10 @@ export const LbcForm: React.FC = () => {
             <TokenIntervalInputs />
             <FormControlWithError
               id="mintCap"
-              help={useCandyMachine ?
-                "The number of items that will be sold in the dynamic pricing mint. This should not exceed the number of items remaining in the candymachine at the time dynamic pricing begins. Note that, depending on the above parameters this may not mint out" :
-                "The number of tokens to mint. Note that, depending on the above parameters this liqudity bootstrapping may not sell out"
+              help={
+                useCandyMachine
+                  ? "The number of items that will be sold in the dynamic pricing mint. This should not exceed the number of items remaining in the candymachine at the time dynamic pricing begins. Note that, depending on the above parameters this may not mint out"
+                  : "The number of tokens to mint. Note that, depending on the above parameters this liqudity bootstrapping may not sell out"
               }
               label="Number of Tokens"
               errors={errors}
@@ -495,6 +592,17 @@ export const LbcForm: React.FC = () => {
                 {...register("mintCap")}
               />
             </FormControlWithError>
+
+            {!useCandyMachine && (
+              <FormControlWithError
+                id="sellFrozen"
+                help="Disable selling of tokens back to the LBC. Allowing users to sell back to the LBC can aid in price discovery."
+                label="Disable Selling"
+                errors={errors}
+              >
+                <Switch {...register("sellFrozen")} />
+              </FormControlWithError>
+            )}
 
             <FormControlWithError
               id="goLiveDate"
@@ -514,7 +622,10 @@ export const LbcForm: React.FC = () => {
                 label="Convert CandyMachine to Dynamic Pricing?"
                 errors={errors}
               >
-                <Switch isChecked={convertCandyMachine} {...register("convertCandyMachine")} />
+                <Switch
+                  isChecked={convertCandyMachine}
+                  {...register("convertCandyMachine")}
+                />
               </FormControlWithError>
             )}
 

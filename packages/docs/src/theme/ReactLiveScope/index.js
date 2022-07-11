@@ -9,6 +9,7 @@ import {
   Numberu32,
   Numberu64,
 } from "@solana/spl-name-service";
+import { Toaster } from "react-hot-toast";
 import { Program } from "@project-serum/anchor";
 import { DarkMode, CSSReset } from "@chakra-ui/react";
 import {
@@ -86,6 +87,17 @@ function Swap(props) {
     <BrowserOnly fallback={<div>...</div>}>
       {() => {
         const Component = require("@strata-foundation/react").Swap;
+        return <Component {...props} />;
+      }}
+    </BrowserOnly>
+  );
+}
+
+function Lbc(props) {
+  return (
+    <BrowserOnly fallback={<div>...</div>}>
+      {() => {
+        const Component = require("@strata-foundation/marketplace-ui").Lbc;
         return <Component {...props} />;
       }}
     </BrowserOnly>
@@ -193,7 +205,9 @@ const ReactLiveScope = {
   ReactShadow,
   CSSReset,
   MarketplaceProviders,
+  Toaster,
   usePublicKey,
+  Lbc,
   ...React,
 };
 

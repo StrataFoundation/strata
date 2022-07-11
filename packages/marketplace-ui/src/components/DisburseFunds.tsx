@@ -8,10 +8,11 @@ import {
   useGovernance,
   usePublicKey,
   useReserveAmount, useTokenBonding,
-  useTokenRef
+  useTokenRef,
+  useTokenSwapFromId
 } from "@strata-foundation/react";
 import { InstructionResult } from "@strata-foundation/spl-utils";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useAsync } from "react-async-hook";
 import toast from "react-hot-toast";
 import { BsClipboard } from "react-icons/bs";
@@ -23,30 +24,50 @@ import { Recipient } from "./form/Recipient";
 async function getInstructions(
   marketplaceSdk: MarketplaceSdk | undefined,
   reserveAmount: number | undefined,
-  tokenBondingKey: PublicKey,
+  tokenBondingKey: PublicKey | undefined,
   address: PublicKey | undefined,
   includeRetrievalCurve: boolean | undefined,
-  closeBonding: boolean | undefined
+  closeBonding: boolean | undefined,
+  closeEntangler: boolean | undefined,
+  parentEntangler: PublicKey | undefined,
+  childEntangler: PublicKey | undefined
 ): Promise<InstructionResult<null> | undefined> {
-  if (marketplaceSdk && address && reserveAmount) {
-    return marketplaceSdk?.disburseCurveInstructions({
+  if (tokenBondingKey && marketplaceSdk && address && reserveAmount) {
+    return marketplaceSdk.disburseCurveInstructions({
       destination: address,
       tokenBonding: tokenBondingKey,
       includeRetrievalCurve,
       closeBonding,
+      closeEntangler,
+      childEntangler,
+      parentEntangler
     });
   }
 }
 
 export const DisburseFunds = ({
-  tokenBondingKey,
+  tokenBondingKey: inputTokenBondingKey,
+  id,
   includeRetrievalCurve = false,
-  closeBonding = false
+  closeBonding = false,
+  closeEntangler = false,
 }: {
-  tokenBondingKey: PublicKey;
+  tokenBondingKey?: PublicKey;
+  /** Id could either be a parent entangler or target mint */
+  id?: PublicKey;
   includeRetrievalCurve?: boolean;
   closeBonding?: boolean;
+  closeEntangler?: boolean;
 }) => {
+  const {
+    tokenBonding: swapBonding,
+    parentEntangler,
+    childEntangler,
+  } = useTokenSwapFromId(id);
+  const tokenBondingKey = useMemo(
+    () => swapBonding?.publicKey || inputTokenBondingKey,
+    [inputTokenBondingKey?.toBase58(), swapBonding]
+  );
   const [address, setAddress] = useState("");
   const { marketplaceSdk } = useMarketplaceSdk();
   const reserveAmount = useReserveAmount(tokenBondingKey);
@@ -63,7 +84,10 @@ export const DisburseFunds = ({
     tokenBondingKey,
     addressKey,
     includeRetrievalCurve,
-    closeBonding
+    closeBonding,
+    closeEntangler,
+    parentEntangler?.publicKey,
+    childEntangler?.publicKey
   ]);
 
   const { isAdmin } = useIsBountyAdmin(publicKey || undefined, tokenBondingKey);
@@ -93,19 +117,23 @@ export const DisburseFunds = ({
             mt={4}
             isLoading={bondingLoading || governanceLoading}
             variant="outline"
-            colorScheme={closeBonding ? "red": "primary"}
+            colorScheme={closeBonding ? "red" : "primary"}
             w="full"
             action={async () => {
               if (marketplaceSdk) {
                 await marketplaceSdk.disburseCurve({
-                  tokenBonding: tokenBondingKey,
+                  parentEntangler: parentEntangler?.publicKey,
+                  childEntangler: childEntangler?.publicKey,
+                  closeEntangler,
+                  closeBonding,
+                  tokenBonding: tokenBondingKey!,
                   destination: new PublicKey(address),
                   includeRetrievalCurve,
                 });
               }
             }}
           >
-            { closeBonding ? "Disburse and Close" : "Disburse" }
+            {closeBonding ? "Disburse and Close" : "Disburse"}
           </AsyncButton>
         )}
         <VStack spacing={2} align="flex-start">

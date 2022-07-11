@@ -57,7 +57,7 @@ export const SellToken: FC = () => {
       router.push(route(routes.newLbc, { mint }), undefined, { shallow: true });
 
     if (selectedOption === SellTokenOption.FixedPrice)
-      router.push(route(routes.newSale, { mint }), undefined, {
+      router.push(route(routes.newFixedPrice, { mint }), undefined, {
         shallow: true,
       });
   };

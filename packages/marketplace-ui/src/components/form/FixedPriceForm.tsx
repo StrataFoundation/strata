@@ -162,16 +162,21 @@ async function createMarket(
   instructions.push(...marketItemInstrs.instructions);
   signers.push(...marketItemInstrs.signers);
 
+  let id = targetMintKeypair.publicKey;
   if (values.useExistingMint) {
     const retrievalInstrs =
-      await marketplaceSdk.createRetrievalCurveForSetSupplyInstructions({
-        reserveAuthority: marketplaceSdk.provider.wallet.publicKey,
-        supplyMint: new PublicKey(values.existingMint!),
-        supplyAmount: values.quantity,
-        targetMint: targetMintKeypair.publicKey,
-      });
+      await marketplaceSdk.fungibleEntanglerSdk.createFungibleEntanglerInstructions(
+        {
+          authority: marketplaceSdk.provider.wallet.publicKey,
+          dynamicSeed: Keypair.generate().publicKey.toBuffer(),
+          amount: values.quantity,
+          parentMint: new PublicKey(values.existingMint!), // swaps from childMint to parentMint
+          childMint: targetMintKeypair.publicKey,
+        }
+      );
     instructions.push(retrievalInstrs.instructions);
     signers.push(retrievalInstrs.signers);
+    id = retrievalInstrs.output.childEntangler;
   }
 
   await sendMultipleInstructions(
@@ -181,10 +186,10 @@ async function createMarket(
     signers
   );
 
-  return targetMintKeypair.publicKey;
+  return id;
 }
 
-export const SaleForm: React.FC = () => {
+export const FixedPriceForm: React.FC = () => {
   const formProps = useForm<IMarketplaceFormProps>({
     resolver: yupResolver(validationSchema),
     defaultValues: {
@@ -208,10 +213,10 @@ export const SaleForm: React.FC = () => {
   const { isOpen, onToggle } = useDisclosure();
 
   const onSubmit = async (values: IMarketplaceFormProps) => {
-    const mintKey = await execute(marketplaceSdk!, values);
+    const id = await execute(marketplaceSdk!, values);
     router.push(
-      route(values.decimals === 0 ? routes.sale : routes.tokenOffering, {
-        mintKey: mintKey.toBase58(),
+      route(routes.fixedPriceAdmin, {
+        id: id.toBase58(),
       }),
       undefined,
       { shallow: true }

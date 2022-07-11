@@ -1,0 +1,103 @@
+---
+sidebar_position: 2
+slug: token-offering
+title: Token Offering
+description: Manage an Existing Token Offering
+keywords: [Solana, Dynamic Pricing, LBP, LBC, Manage, Token, Token Offering]
+---
+:::success Congratulations
+
+Your token offering is live! You can visit it at the following url:
+
+<UrlDisplay subs={["id", "cluster"]} value="https://app.strataprotocol.com/swap/:id?cluster=:cluster" />
+:::
+
+import { QueryStringSetter } from "@site/src/components/QueryStringSetter";
+import { UrlDisplay } from "@site/src/components/UrlDisplay";
+import { PublicKey } from "@solana/web3.js";
+import { NetworkSelect } from "@site/src/components/NetworkSelect";
+
+<NetworkSelect />
+
+<QueryStringSetter label="Token Offering ID" name="id" conv={(v) => new PublicKey(v)} />
+
+## Bookmark These Links
+
+You’ll need these important links to access your token offering.
+
+This admin page:
+
+<UrlDisplay subs={["id", "cluster"]} value="https://docs.strataprotocol.com/launchpad/admin/fixed-price?id=:id&cluster=:cluster" />
+
+The url for the offering:
+
+<UrlDisplay subs={["id", "cluster"]} value="https://app.strataprotocol.com/swap/:id?cluster=:cluster" />
+
+
+## Collect Funds
+
+When the token offering is over, if you are the beneficiary (admin), you should see a disburse funds option here:
+
+import { VariableDisburseFunds } from "@site/src/components/VariableDisburseFunds";
+
+<VariableDisburseFunds />
+
+If you would like to disburse funds, retrieve unsold tokens, and recover rent from the bonding curve (this will render the UI unusable):
+
+<VariableDisburseFunds closeBonding closeEntangler />
+
+## Embed the swap to your site
+
+```bash
+yarn add @strata-foundation/react @strata-foundation/marketplace-ui react-shadow
+```
+
+```js
+import { MarketplaceProviders } from "@strata-foundation/marketplace-ui";
+import { usePublicKey, Swap } from "@strata-foundation/react";
+import { CSSReset } from "@chakra-ui/react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import ReactShadow from "react-shadow/emotion";
+```
+
+
+Light Mode:
+
+```jsx live allowMainnet
+function SwapComponent() {
+  const { id: idRaw } = useVariables();
+  const { setVisible } = useWalletModal();
+  const id = usePublicKey(idRaw);
+
+  // Shadow div and css reset are not required, but will make sure our styles do not conflict with yours
+  return <ReactShadow.div>
+    <MarketplaceProviders resetCSS onError={(err) => console.error(err)}>
+      <Swap id={id} />
+    </MarketplaceProviders>
+  </ReactShadow.div>
+}
+```
+
+Dark Mode:
+```js
+import { DarkMode } from "@chakra-ui/react";
+```
+```jsx live allowMainnet
+function SwapComponent() {
+  const { id: idRaw } = useVariables();
+  const { setVisible } = useWalletModal();
+  const id = usePublicKey(idRaw);
+
+  // Shadow div and css reset are not required, but will make sure our styles do not conflict with yours
+  return <ReactShadow.div>
+    <CSSReset />
+      <MarketplaceProviders resetCSS onError={(err) => console.error(err)}>
+        <DarkMode>
+          <div style={{ color: "white", backgroundColor: "black" }}>
+            <Swap id={id} />
+          </div>
+        </DarkMode>
+    </MarketplaceProviders>
+  </ReactShadow.div>
+}
+```

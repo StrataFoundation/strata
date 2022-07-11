@@ -3,6 +3,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import {
   BondingPricing,
+  IBondingPricing,
   ITokenBonding,
   SplTokenBonding,
 } from "@strata-foundation/spl-token-bonding";
@@ -80,7 +81,7 @@ export function useOwnedAmount(
 export interface PricingState {
   loading: boolean;
   tokenBonding?: ITokenBonding;
-  pricing?: BondingPricing;
+  pricing?: IBondingPricing;
   error?: Error;
 }
 /**

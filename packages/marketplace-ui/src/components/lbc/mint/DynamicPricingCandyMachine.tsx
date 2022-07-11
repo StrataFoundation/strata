@@ -43,6 +43,7 @@ import { toDate } from "./utils";
 export interface DynamicPricingCandyMachineProps {
   candyMachineId?: anchor.web3.PublicKey;
   onConnectWallet: () => void;
+  onSuccess?: (mint: PublicKey) => void;
 }
 
 export const DynamicPricingCandyMachine = (
@@ -73,17 +74,21 @@ export const DynamicPricingCandyMachine = (
         props.candyMachineId
       ) {
         const mint = await mintOneToken(candyMachine, publicKey, args);
-        toast.custom(
-          (t) => (
-            <MintedNftNotification
-              mint={mint}
-              onDismiss={() => toast.dismiss(t.id)}
-            />
-          ),
-          {
-            duration: Infinity,
-          }
-        );
+        if (props.onSuccess) {
+          props.onSuccess(mint)
+        } else {
+          toast.custom(
+            (t) => (
+              <MintedNftNotification
+                mint={mint}
+                onDismiss={() => toast.dismiss(t.id)}
+              />
+            ),
+            {
+              duration: Infinity,
+            }
+          );  
+        }
       }
     } catch (error: any) {
       let message =
@@ -149,7 +154,7 @@ export const DynamicPricingCandyMachine = (
       </TabList>
       <TabPanels>
         <TabPanel p={0} pt={4}>
-          <LbcStatus tokenBondingKey={tokenBonding?.publicKey} />
+          { typeof window !== "undefined" && <LbcStatus tokenBondingKey={tokenBonding?.publicKey} /> }
           <Box
             zIndex={1}
             shadow="xl"
@@ -161,18 +166,15 @@ export const DynamicPricingCandyMachine = (
           >
             {connected && (
               <>
-                {(loading || !candyMachine) && (
+                {!candyMachine && (
                   <Center>
                     <Spinner />
                   </Center>
                 )}
-                {!(loading || !candyMachine) && (
+                {candyMachine && (
                   <VStack align="stretch" spacing={8}>
                     {tokenBonding && (
-                      <LbcInfo
-                        price={price}
-                        tokenBondingKey={tokenBonding.publicKey}
-                      />
+                      <LbcInfo price={price} id={tokenBonding.targetMint} />
                     )}
 
                     {!tokenBonding && <CandyMachineInfo {...cmState} />}
@@ -258,17 +260,10 @@ export const DynamicPricingCandyMachine = (
             minH="300px"
             bg={background}
           >
-            {loading && (
-              <Center>
-                <Spinner />
-              </Center>
-            )}
-            {!loading && tokenBonding && (
-              <VStack align="stretch" spacing={8}>
-                <BondingPlot tokenBondingKey={tokenBonding.publicKey} />
-                <TransactionHistory tokenBondingKey={tokenBonding.publicKey} />
-              </VStack>
-            )}
+            <VStack align="stretch" spacing={8}>
+              <BondingPlot tokenBondingKey={tokenBonding?.publicKey} />
+              <TransactionHistory tokenBondingKey={tokenBonding?.publicKey} />
+            </VStack>
           </Box>
         </TabPanel>
       </TabPanels>

@@ -1,6 +1,6 @@
 import React from "react";
 import BrowserOnly from "@docusaurus/BrowserOnly";
-import { useEndpoint } from "@strata-foundation/marketplace-ui";
+import { useEndpoint } from "@strata-foundation/react";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useWallet } from "@solana/wallet-adapter-react";
 import {
@@ -34,7 +34,7 @@ const MainnetGuard = ({ children = null as any }) => {
 };
 
 export const Buy = () => {
-  const tokenBondingKey = SplTokenCollective.OPEN_COLLECTIVE_BONDING_ID;
+  const mintKey = SplTokenCollective.OPEN_COLLECTIVE_MINT_ID;
   const { connected, publicKey } = useWallet();
 
   return (
@@ -44,7 +44,7 @@ export const Buy = () => {
           <WalletMultiButton />
         </WalletModalProvider>
       )}
-      {connected && <Swap tokenBondingKey={tokenBondingKey} />}
+      {connected && <Swap id={mintKey} />}
     </div>
   );
 };

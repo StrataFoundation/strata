@@ -4,6 +4,7 @@ import {
   useQueryString,
   useSolanaUnixTime,
   useTokenBonding,
+  useTokenSwapFromId,
 } from "@strata-foundation/react";
 import { useVariables } from "../../theme/Root/variables";
 import React, { useState } from "react";
@@ -25,7 +26,9 @@ export function CurveConfiguratorFromBonding({
   rateVsTime = false,
   salesVsTime = false,
 }: CurveConfiguratorFromVariablesProps) {
-  const { tokenBondingKey } = useVariables();
+  const { tokenBondingKey: inputTokenBondingKey, id } = useVariables();
+  const { tokenBonding } = useTokenSwapFromId(id);
+  const tokenBondingKey = useMemo(() => inputTokenBondingKey || tokenBonding?.publicKey, [tokenBonding, inputTokenBondingKey])
   const { info: tokenBondingAcct } = useTokenBonding(tokenBondingKey);
   const { info: curve } = useCurve(tokenBondingAcct?.curve);
   const baseMint = useMint(tokenBondingAcct?.baseMint);
@@ -73,16 +76,6 @@ export function CurveConfiguratorFromBonding({
       return toNumber(tokenBondingAcct.supplyFromBonding.sub(targetMint.supply), targetMint)
     }
   }, [tokenBondingAcct, targetMint]);
-
-  console.log(
-    tokenBondingKey,
-    bondTimeOffset,
-    bondReserves,
-    bondSupply,
-    bondEndSupply,
-    bondMaxTime,
-    curve
-  );
 
   if (
     !bondTimeOffset ||

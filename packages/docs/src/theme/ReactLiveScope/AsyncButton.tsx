@@ -15,7 +15,7 @@ import { FaPlay } from "react-icons/fa";
 import { useVariablesContext } from "../Root/variables";
 import styles from "./styles.module.css";
 import { clusterApiUrl } from "@solana/web3.js";
-import { useEndpoint, useMarketplaceSdk } from "@strata-foundation/marketplace-ui";
+import { useEndpoint, useMarketplaceSdk } from "@strata-foundation/react";
 
 
 function BrowserOnlyReactJson(props) {

@@ -81,7 +81,6 @@ describe("chat", () => {
     let postPermissionMint: PublicKey;
 
     before(async () => {
-      await chatSdk.initializeNamespaces();
       readPermissionMint = await createMint(provider, me, 9);
       postPermissionMint = readPermissionMint;
       await createAtaAndMint(provider, readPermissionMint, 10);
@@ -261,7 +260,8 @@ describe("chat", () => {
         // devnet provider is required because lit protocol reads from devnet, not localhost
         const devnetConnection = new Connection("https://api.devnet.solana.com");
         devnetProvider = new AnchorProvider(devnetConnection, provider.wallet, AnchorProvider.defaultOptions());
-        await devnetConnection.requestAirdrop(devnetProvider.wallet.publicKey, 1 * LAMPORTS_PER_SOL);
+        const sig = await devnetConnection.requestAirdrop(devnetProvider.wallet.publicKey, 1 * LAMPORTS_PER_SOL);
+        await devnetConnection.confirmTransaction(sig);
 
         // create permitted token on localnet and devnet
         const tokenMintKeypair = Keypair.generate();
@@ -299,10 +299,8 @@ describe("chat", () => {
 
         // create nft from permitted collection on localnet and devnet
         const nftCollectionKeypair = Keypair.generate();
-        // await createMint(provider, me, 0, nftCollectionKeypair);
-        await tokenUtils.createTestNft(provider, nftHolder.publicKey, nftCollectionKeypair, provider.wallet.publicKey);
+        await tokenUtils.createTestNftCollection(provider, nftHolder.publicKey, nftCollectionKeypair, provider.wallet.publicKey);
         await tokenUtils.createTestNft(provider, nftHolder.publicKey, nftMintKeypair, provider.wallet.publicKey, nftCollectionKeypair.publicKey);
-        // await tokenUtils.createTestNft(devnetProvider, nftHolder.publicKey, nftMintKeypair, provider.wallet.publicKey, nftCollectionKeypair.publicKey);
 
         // create chat where nft holders of a collection are auth
         const nftChatId = randomIdentifier();
