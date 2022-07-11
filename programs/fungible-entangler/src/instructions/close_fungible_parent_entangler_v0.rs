@@ -1,4 +1,8 @@
-use crate::{state::*, error::ErrorCode, util::{close_token_account, CloseTokenAccount}};
+use crate::{
+  error::ErrorCode,
+  state::*,
+  util::{close_token_account, CloseTokenAccount},
+};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
 
@@ -16,16 +20,12 @@ pub struct CloseFungibleParentEntanglerV0<'info> {
     has_one = parent_storage,
   )]
   pub parent_entangler: Box<Account<'info, FungibleParentEntanglerV0>>,
-  #[account(
-    mut
-  )]
+  #[account(mut)]
   pub parent_storage: Box<Account<'info, TokenAccount>>,
   pub token_program: Program<'info, Token>,
 }
 
-pub fn handler(
-  ctx: Context<CloseFungibleParentEntanglerV0>,
-) -> Result<()> {
+pub fn handler(ctx: Context<CloseFungibleParentEntanglerV0>) -> Result<()> {
   let entangler = &mut ctx.accounts.parent_entangler;
   let parent_entangler_seeds: &[&[&[u8]]] = &[&[
     b"entangler",
@@ -47,4 +47,3 @@ pub fn handler(
 
   Ok(())
 }
-

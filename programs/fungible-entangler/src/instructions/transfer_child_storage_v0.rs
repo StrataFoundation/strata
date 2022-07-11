@@ -1,6 +1,6 @@
-use crate::{state::*, error::ErrorCode};
+use crate::{error::ErrorCode, state::*};
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Token, TokenAccount, self, Transfer};
+use anchor_spl::token::{self, Token, TokenAccount, Transfer};
 
 #[derive(Accounts)]
 pub struct TransferChildStorageV0<'info> {
@@ -15,9 +15,7 @@ pub struct TransferChildStorageV0<'info> {
     has_one = child_storage,
   )]
   pub entangler: Box<Account<'info, FungibleChildEntanglerV0>>,
-  #[account(
-    mut
-  )]
+  #[account(mut)]
   pub child_storage: Box<Account<'info, TokenAccount>>,
   #[account(mut)]
   pub destination: Box<Account<'info, TokenAccount>>,
@@ -26,12 +24,12 @@ pub struct TransferChildStorageV0<'info> {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct TransferChildStorageArgsV0 {
-  pub amount: u64
+  pub amount: u64,
 }
 
 pub fn handler(
   ctx: Context<TransferChildStorageV0>,
-  args: TransferChildStorageArgsV0
+  args: TransferChildStorageArgsV0,
 ) -> Result<()> {
   let entangler = &mut ctx.accounts.entangler;
   let child_entangler_seeds: &[&[&[u8]]] = &[&[
@@ -57,4 +55,3 @@ pub fn handler(
 
   Ok(())
 }
-

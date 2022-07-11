@@ -20,7 +20,6 @@ export function VariableDisburseFunds({
     return <WalletMultiButton />;
   }
 
-  console.log(variables)
   return (
     <ReactShadow.div>
       <Box mb="16px">
