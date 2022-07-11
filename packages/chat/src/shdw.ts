@@ -63,9 +63,9 @@ function getEndpoint(connection: Connection) {
   const endpoint = connection._rpcEndpoint
 
   // Gengo only works on mainnet
-  // if (endpoint.includes("dev")) {
-  //   return "https://ssc-dao.genesysgo.net";
-  // }
+  if (endpoint.includes("dev")) {
+    return "https://ssc-dao.genesysgo.net";
+  }
 
   return endpoint;
 }
@@ -177,11 +177,20 @@ export async function initStorageIfNeeded(
 
     await shdwDrive.init();
 
+    // Ensure immutable
+    if (storageAccount && !storageAccount.immutable) {
+      await withRetries(
+        () => shdwDrive.makeStorageImmutable(accountKey, "v2"),
+        3
+      );
+    }
+
     if (storageAccount && sizeKB && !storageAccountBigEnough) {
       await withRetries(
         () => shdwDrive.addStorage(accountKey, sizeKB + "KB", "v2"),
         3
       );
+     
     } else if (!storageAccount) {
       await withRetries(
         () => shdwDrive.createStorageAccount("chat", sizeKB + "KB", "v2"),
@@ -264,10 +273,10 @@ const DEVNET_WALLET = Keypair.fromSecretKey(
   ])
 );
 function maybeUseDevnetWallet(connection: Connection, delegateWallet: Keypair | undefined): Keypair | undefined {
-  // // @ts-ignore
-  // if (connection._rpcEndpoint.includes("dev")) {
-  //   return DEVNET_WALLET
-  // }
+  // @ts-ignore
+  if (connection._rpcEndpoint.includes("dev")) {
+    return DEVNET_WALLET
+  }
   return delegateWallet;
 }
 

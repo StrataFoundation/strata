@@ -133,7 +133,7 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
     onClose,
     onOpen,
   } = useDisclosure({
-    defaultIsOpen: false,
+    defaultIsOpen: true,
   });
 
   const {
@@ -190,12 +190,10 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
   }
 
   useEffect(() => {
-    if (loadingDelegate || (props.isOpen && !loadingNeeds && needsInit)) {
-      onOpen();
-    } else {
+    if (props.isOpen && !loadingNeeds && !needsInit) {
       onClose();
     }
-  }, [loadingDelegate, props.isOpen, needsInit, onOpen, onClose, loadingNeeds]);
+  }, [loadingDelegate, props.isOpen, needsInit, onClose, loadingNeeds]);
   const onCloseCallback = useCallback(() => {
     props.onClose && props.onClose();
   }, [props.onClose]);
@@ -225,7 +223,7 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
       toast.custom(
         (t) => (
           <LongPromiseNotification
-            estTimeMillis={1 * 60 * 1000}
+            estTimeMillis={2 * 60 * 1000}
             text={text}
             onError={(e) => {
               handleErrors(e);
@@ -254,7 +252,7 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
     }
   }, [image]);
 
-  if (loadWalletIsOpen) {
+  if (props.isOpen && loadWalletIsOpen) {
     return (
       <LoadWalletModal
         isOpen={true}
