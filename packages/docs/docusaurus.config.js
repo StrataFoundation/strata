@@ -161,10 +161,6 @@ const config = {
     ({
       ...(process.env.GOOGLE_ANALYTICS
         ? {
-            googleAnalytics: {
-              trackingID: process.env.GOOGLE_ANALYTICS,
-              anonymizeIP: true,
-            },
             gtag: {
               trackingID: process.env.GOOGLE_ANALYTICS,
               anonymizeIP: true,
