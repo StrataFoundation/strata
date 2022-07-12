@@ -131,7 +131,7 @@ export const EditMetadataForm = ({
     }
   }, [mint, router, setValue]);
   useEffect(() => {
-    if (metadata) {
+    if (metadata && data && image) {
       setValue("name", metadata?.data.name);
       setValue("symbol", metadata?.data.symbol);
       setValue("description", data?.description || "");
@@ -142,7 +142,7 @@ export const EditMetadataForm = ({
         if (imageFile) setValue("image", imageFile);
       })();
     }
-  }, [setValue, metadata, data]);
+  }, [setValue, metadata, data, image]);
 
   const onSubmit = async (values: IEditMetadataFormProps) => {
     await execute(tokenMetadataSdk!, values);
@@ -239,6 +239,7 @@ const getFileFromUrl = async (
 
   const data = await fetch(url, { cache: "no-cache" });
   const blob = await data.blob();
+  if (!blob.type.includes("image")) return undefined
   const fileName = `${name}${blob.type === defaultType ? ".jpeg" : "png"}`;
   const file = new File([blob], fileName, { type: blob.type || defaultType });
 
