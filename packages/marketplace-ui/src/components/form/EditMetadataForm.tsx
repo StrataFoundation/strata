@@ -131,7 +131,7 @@ export const EditMetadataForm = ({
     }
   }, [mint, router, setValue]);
   useEffect(() => {
-    if (metadata && data && image) {
+    if (metadata && data && image && !(isSubmitting || loading)) {
       setValue("name", metadata?.data.name);
       setValue("symbol", metadata?.data.symbol);
       setValue("description", data?.description || "");
@@ -240,7 +240,7 @@ const getFileFromUrl = async (
   const data = await fetch(url, { cache: "no-cache" });
   const blob = await data.blob();
   if (!blob.type.includes("image")) return undefined
-  const fileName = `${name}${blob.type === defaultType ? ".jpeg" : "png"}`;
+  const fileName = `${name}${blob.type === defaultType ? ".jpeg" : ".png"}`;
   const file = new File([blob], fileName, { type: blob.type || defaultType });
 
   return file;
