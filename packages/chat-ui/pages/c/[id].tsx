@@ -1,4 +1,4 @@
-import { Chatbox } from "@/components/Chatbox";
+import { Chatbox } from "@/components/chatbox/ChatboxWithGuards";
 import { ChatMessages } from "@/components/ChatMessages";
 import { EmojiPickerPopover } from "@/components/EmojiPicker";
 import { FileUploadMask } from "@/components/FileUploadMask";

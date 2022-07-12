@@ -1,7 +1,7 @@
 import { Skeleton, SkeletonCircle } from "@chakra-ui/react";
 import React, { useCallback, useEffect, useMemo } from "react";
 import throttle from "lodash/throttle";
-import { MemodMessage } from "./Message";
+import { MemodMessage } from "./message/Message";
 import { Flex } from "./MyFlex";
 import { useAsyncCallback } from "react-async-hook";
 import { sleep } from "@strata-foundation/spl-utils";

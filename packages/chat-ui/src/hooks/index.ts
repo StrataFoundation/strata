@@ -21,4 +21,7 @@ export * from "./useWalletSettings";
 export * from "./useChatOwnedAmount";
 export * from "./useAnalyticsEventTracker";
 export * from "./useInflatedReacts";
+export * from "./useChatPermissions";
+export * from "./useChatPermissionsKey";
+export * from "./useChatPermissionsFromChat";
 export * from "./useEmojiSearch";

@@ -52,11 +52,11 @@ pub fn handler(ctx: Context<InitializeChatV0>, args: InitializeChatArgsV0) -> Re
   );
   // require!(args.identifier.chars().all(char::is_alphanumeric), ErrorCode::StringNotAlphanumeric);
 
-  ctx.accounts.chat.name = args.name;
-  ctx.accounts.chat.post_message_program_id = args.post_message_program_id;
-  ctx.accounts.chat.identifier_certificate_mint = ctx.accounts.identifier_certificate_mint.key();
-  ctx.accounts.chat.metadata_url = args.metadata_url;
-  ctx.accounts.chat.image_url = args.image_url;
+  // ctx.accounts.chat.name = args.name;
+  // ctx.accounts.chat.post_message_program_id = args.post_message_program_id;
+  // ctx.accounts.chat.identifier_certificate_mint = ctx.accounts.identifier_certificate_mint.key();
+  // ctx.accounts.chat.metadata_url = args.metadata_url;
+  // ctx.accounts.chat.image_url = args.image_url;
   ctx.accounts.chat.bump = *ctx.bumps.get("chat").unwrap();
 
   resize_to_fit(

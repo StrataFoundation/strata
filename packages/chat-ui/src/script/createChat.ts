@@ -43,13 +43,16 @@ async function run(): Promise<void> {
   await chatSdk.initializeChat({
     identifierCertificateMint,
     name: args[3],
-    readPermissionKey: new PublicKey(args[4]),
-    postPermissionKey: new PublicKey(args[4]),
     imageUrl: args[5],
-    readPermissionType: PermissionType.Native,
-    postPermissionType: PermissionType.Native,
-    defaultReadPermissionAmount: 0.1,
-    postPermissionAmount: 0.1,
+
+    permissions: {
+      readPermissionKey: new PublicKey(args[4]),
+      postPermissionKey: new PublicKey(args[4]),
+      readPermissionType: PermissionType.Native,
+      postPermissionType: PermissionType.Native,
+      defaultReadPermissionAmount: 0.1,
+      postPermissionAmount: 0.1,
+    },
   });
 }
 

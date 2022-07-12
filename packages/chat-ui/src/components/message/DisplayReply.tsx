@@ -7,7 +7,7 @@ import {
   IMessageWithPending,
   useUsernameFromIdentifierCertificate,
   useWalletProfile,
-} from "../hooks";
+} from "../../hooks";
 
 const STYLE = {
   color: "gray.500",

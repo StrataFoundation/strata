@@ -998,7 +998,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     );
   }
 
-  static chatPermissionsKey(chat: PublicKey, programId: PublicKey) {
+  static chatPermissionsKey(chat: PublicKey, programId: PublicKey = ChatSdk.ID) {
     return PublicKey.findProgramAddress(
       [Buffer.from("permissions", "utf-8"), chat.toBuffer()],
       programId
