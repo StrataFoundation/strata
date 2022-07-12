@@ -2396,7 +2396,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         TOKEN_PROGRAM_ID,
         tokenBondingAcct.baseMint,
         destinationWallet,
-        true
+        false // Explicitly don't allow owner off curve. You need to pass destination as an already created thing to do this
       );
       if (!(await this.accountExists(ataDestination))) {
         instructions.push(

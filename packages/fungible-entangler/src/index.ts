@@ -954,7 +954,7 @@ export class FungibleEntangler extends AnchorSdk<FungibleEntanglerIDL> {
         TOKEN_PROGRAM_ID,
         mint,
         destinationWallet,
-        true
+        false // Explicitly don't allow owner off curve. You need to pass destination as an already created thing to do this
       );
       if (!(await this.accountExists(ataDestination))) {
         instructions.push(

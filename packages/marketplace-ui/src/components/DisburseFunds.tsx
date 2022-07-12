@@ -34,7 +34,7 @@ async function getInstructions(
 ): Promise<InstructionResult<null> | undefined> {
   if (tokenBondingKey && marketplaceSdk && address && reserveAmount) {
     return marketplaceSdk.disburseCurveInstructions({
-      destination: address,
+      destinationWallet: address,
       tokenBonding: tokenBondingKey,
       includeRetrievalCurve,
       closeBonding,
@@ -127,7 +127,7 @@ export const DisburseFunds = ({
                   closeEntangler,
                   closeBonding,
                   tokenBonding: tokenBondingKey!,
-                  destination: new PublicKey(address),
+                  destinationWallet: new PublicKey(address),
                   includeRetrievalCurve,
                 });
               }
