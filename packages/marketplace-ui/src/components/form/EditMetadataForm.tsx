@@ -9,6 +9,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { PublicKey } from "@solana/web3.js";
 import {
+  useMint,
   useProvider,
   usePublicKey,
   useStrataSdks,
@@ -27,6 +28,7 @@ import { IMetadataFormProps, TokenMetadataInputs } from "./TokenMetadataInputs";
 interface IEditMetadataFormProps extends IMetadataFormProps {
   symbol: string;
   mint: string;
+  externalUrl: string;
 }
 
 const validationSchema = yup.object({
@@ -35,6 +37,7 @@ const validationSchema = yup.object({
   name: yup.string().required().min(2),
   description: yup.string(),
   symbol: yup.string().min(2).max(10),
+  externalUrl: yup.string(),
 });
 
 async function editMetadata(
@@ -49,6 +52,7 @@ async function editMetadata(
     description: values.description,
     image: values.image,
     mint: mintKey,
+    externalUrl: values.externalUrl,
   });
 
   const instructions = [];
@@ -116,6 +120,7 @@ export const EditMetadataForm = ({
   const router = useRouter();
   const { mint, name, symbol } = watch();
   const mintKey = usePublicKey(mint as string | undefined);
+  const mintAcc = useMint(mintKey);
   const { metadata, image } = useTokenMetadata(mintKey);
   const insufficientAuthority = metadata?.updateAuthority
     ? metadata.updateAuthority != publicKey?.toBase58()
@@ -191,7 +196,16 @@ export const EditMetadataForm = ({
             >
               <Input {...register("symbol")} />
             </FormControlWithError>
-
+            { mintAcc && mintAcc.decimals == 0 && (
+              <FormControlWithError
+                id="externalUrl"
+                help="An optional URL that will be rendered in some wallets and explorers"
+                label="External URL"
+                errors={errors}
+              >
+                <Input {...register("externalUrl")} />
+              </FormControlWithError>
+            )}
             {error && <Alert status="error">{error.toString()}</Alert>}
 
             <Button
