@@ -3,7 +3,7 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-# [Unreleased]
+## [3.9.2](https://github.com/StrataFoundation/strata/compare/v3.9.1...v3.9.2) (2022-07-12)
 
 ### Fixed
  

@@ -21,8 +21,8 @@
     },
     "dependencies": {
         "@solana/web3.js": "^1.43.4",
-        "@strata-foundation/spl-token-bonding": "^3.9.1",
-        "@strata-foundation/spl-token-collective": "^3.9.1",
+        "@strata-foundation/spl-token-bonding": "^3.9.2",
+        "@strata-foundation/spl-token-collective": "^3.9.2",
         "@strata-foundation/spl-utils": "^3.9.0",
         "bn.js": "^5.2.0",
         "commander": "^9.2.0",
@@ -35,5 +35,5 @@
         "typescript": "^4.3.4"
     },
     "gitHead": "4623c709db43b3503af871ddbdf325da202e0e62",
-    "version": "3.9.1"
+    "version": "3.9.2"
 }
