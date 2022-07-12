@@ -19,7 +19,12 @@ import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { AnchorProvider, Program } from "@project-serum/anchor";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
-import { ChatIDL, ChatIDLJson, ChatSdk, randomizeFileName } from "@strata-foundation/chat";
+import {
+  ChatIDL,
+  ChatIDLJson,
+  ChatSdk,
+  randomizeFileName,
+} from "@strata-foundation/chat";
 import {
   getClusterAndEndpoint,
   useErrorHandler,
@@ -182,7 +187,6 @@ export default function Chatroom({
     [msgWeHave, messages, pendingMessages]
   );
 
-
   const [files, setFiles] = useState<{ name: string; file: File }[]>([]);
   const onUpload = useCallback(
     async (newFiles: File[]) => {
@@ -207,14 +211,16 @@ export default function Chatroom({
       noKeyboard: true,
       onDrop: onUpload,
     });
-  const rootProps = useMemo(() => getRootProps({ className: "dropzone" }), [getRootProps]);
+  const rootProps = useMemo(
+    () => getRootProps({ className: "dropzone" }),
+    [getRootProps]
+  );
 
   useEffect(() => {
     setPendingMessages((pendingMessages) =>
       pendingMessages.filter((p) => !msgWeHave.has(p.id))
     );
   }, [msgWeHave]);
-
 
   return (
     <Layout
