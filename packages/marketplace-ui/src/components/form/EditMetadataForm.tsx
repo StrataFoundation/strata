@@ -121,7 +121,7 @@ export const EditMetadataForm = ({
   const { mint, name, symbol } = watch();
   const mintKey = usePublicKey(mint as string | undefined);
   const mintAcc = useMint(mintKey);
-  const { metadata, image } = useTokenMetadata(mintKey);
+  const { metadata, data, image } = useTokenMetadata(mintKey);
   const insufficientAuthority = metadata?.updateAuthority
     ? metadata.updateAuthority != publicKey?.toBase58()
     : false;
@@ -134,12 +134,15 @@ export const EditMetadataForm = ({
     if (metadata) {
       setValue("name", metadata?.data.name);
       setValue("symbol", metadata?.data.symbol);
+      setValue("description", data?.description || "");
+      setValue("externalUrl", data?.external_url || "");
+
       (async () => {
         const imageFile = await getFileFromUrl(image, "image");
         if (imageFile) setValue("image", imageFile);
       })();
     }
-  }, [setValue, metadata]);
+  }, [setValue, metadata, data]);
 
   const onSubmit = async (values: IEditMetadataFormProps) => {
     await execute(tokenMetadataSdk!, values);
