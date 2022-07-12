@@ -94,21 +94,26 @@ describe("chat", () => {
           identifier,
           type: IdentifierType.Chat,
         });
-      const { chat } = await chatSdk.initializeChat({
+      const { chat, chatPermissions } = await chatSdk.initializeChat({
         identifierCertificateMint: chatIdentifierCertificateMint,
         name,
-        readPermissionKey: readPermissionMint,
-        postPermissionKey: postPermissionMint,
+        permissions: {
+          readPermissionKey: readPermissionMint,
+          postPermissionKey: postPermissionMint,
+        },
       });
       const chatAcc = await chatSdk.getChat(chat);
       expect(chatAcc?.identifierCertificateMint.toBase58()).to.eq(
         chatIdentifierCertificateMint.toBase58()
       );
       expect(chatAcc?.name).to.eq(name);
-      expect(chatAcc?.readPermissionKey?.toBase58()).to.eq(
+      const chatPermissionsAcc = (await chatSdk.getChatPermissions(
+        chatPermissions!
+      ))!;
+      expect(chatPermissionsAcc?.readPermissionKey?.toBase58()).to.eq(
         readPermissionMint.toBase58()
       );
-      expect(chatAcc?.postPermissionKey?.toBase58()).to.eq(
+      expect(chatPermissionsAcc?.postPermissionKey?.toBase58()).to.eq(
         postPermissionMint.toBase58()
       );
     });
@@ -184,9 +189,13 @@ describe("chat", () => {
         message: { type: MessageType.Text, text: "anon" },
         encrypted: false,
       });
-      const parts = await chatSdk.getMessagePartsFromTx((txids || [])[0]!);
+      const parts = await chatSdk.getMessagePartsFromTx({
+        chat,
+        txid: (txids || [])[0]!,
+        idl: program.idl,
+      });
       const { getDecodedMessage } = (await chatSdk.getMessageFromParts(
-        parts
+        parts,
       ))!;
       const decodedMessage = await getDecodedMessage();
       expect(decodedMessage?.text).to.eq("anon");
@@ -333,7 +342,7 @@ describe("chat", () => {
           [...signers[0], tokenHolder]
         );
         
-        const parts = await chatSdk.getMessagePartsFromTx(txid);
+        const parts = await chatSdk.getMessagePartsFromTx({ chat, txid, idl: program.idl });
         const { getDecodedMessage } = (await chatSdk.getMessageFromParts(parts))!;
         const decodedMessage = await getDecodedMessage();
         expect(decodedMessage?.text).to.eq("hello");
@@ -358,7 +367,11 @@ describe("chat", () => {
           instructions[0],
           [...signers[0], nftHolder]
         );
-        const parts = await chatSdk.getMessagePartsFromTx(txid);
+        const parts = await chatSdk.getMessagePartsFromTx({
+          chat,
+          txid,
+          idl: program.idl,
+        });
         const { getDecodedMessage } = (await chatSdk.getMessageFromParts(parts))!;
         const decodedMessage = await getDecodedMessage();
         expect(decodedMessage?.text).to.eq("hello");
@@ -390,7 +403,7 @@ describe("chat", () => {
         message: { type: MessageType.Text, text: "hello" },
         encrypted: false,
       });
-      const parts = await chatSdk.getMessagePartsFromTx((txids || [])[0]!);
+      const parts = await chatSdk.getMessagePartsFromTx({ chat, txid: (txids || [])[0]!, idl: program.idl });
       const { getDecodedMessage } = (await chatSdk.getMessageFromParts(parts))!;
       const decodedMessage = await getDecodedMessage();
       expect(decodedMessage?.text).to.eq("hello");
@@ -402,7 +415,11 @@ describe("chat", () => {
         message: { type: MessageType.Text, text: "anon" },
         encrypted: false,
       });
-      const parts = await chatSdk.getMessagePartsFromTx((txids || [])[0]!);
+      const parts = await chatSdk.getMessagePartsFromTx({
+        chat,
+        txid: (txids || [])[0]!,
+        idl: program.idl,
+      });
       const { getDecodedMessage } = (await chatSdk.getMessageFromParts(
         parts
       ))!;
@@ -423,7 +440,11 @@ describe("chat", () => {
         instructions[0],
         [...signers[0], profileKeypair]
       );
-      const parts = await chatSdk.getMessagePartsFromTx(txid);
+      const parts = await chatSdk.getMessagePartsFromTx({
+        chat,
+        txid,
+        idl: program.idl,
+      });
       const { getDecodedMessage } = (await chatSdk.getMessageFromParts(
         parts
       ))!;
@@ -445,7 +466,11 @@ describe("chat", () => {
       const parts = (
         await Promise.all(
           Array.from(txids || []).map((txid) =>
-            chatSdk.getMessagePartsFromTx(txid!)
+            chatSdk.getMessagePartsFromTx({
+              chat,
+              txid: txid!,
+              idl: program.idl,
+            })
           )
         )
       ).flat();

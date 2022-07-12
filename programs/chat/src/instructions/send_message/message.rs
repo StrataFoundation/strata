@@ -1,5 +1,7 @@
 use anchor_lang::prelude::*;
 
+use crate::state::PermissionType;
+
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub enum MessageType {
   Text,
@@ -27,4 +29,6 @@ pub struct MessagePartV0 {
   pub condition_version: u8,
   pub message_type: MessageType,
   pub reference_message_id: Option<String>,
+  pub read_permission_key: Pubkey,
+  pub read_permission_type: PermissionType,
 }

@@ -30,6 +30,13 @@ pub mod chat {
     instructions::initialize_chat_v0::handler(ctx, args)
   }
 
+  pub fn initialize_chat_permissions_v0(
+    ctx: Context<InitializeChatPermissionsV0>,
+    args: InitializeChatPermissionsArgsV0,
+  ) -> Result<()> {
+    instructions::initialize_chat_permissions_v0::handler(ctx, args)
+  }
+
   pub fn initialize_settings_v0(
     ctx: Context<InitializeSettingsV0>,
     args: InitializeSettingsArgsV0,

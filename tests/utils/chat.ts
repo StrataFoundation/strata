@@ -94,10 +94,12 @@ export async function initializeChat(
   const { chat } = await chatSdk.initializeChat({
     identifierCertificateMint: chatIdentifierCertificateMint,
     name,
-    readPermissionKey,
-    postPermissionKey,
-    readPermissionType,
-    postPermissionType
+    permissions: {
+      readPermissionKey,
+      postPermissionKey,
+      readPermissionType,
+      postPermissionType,
+    },
   });
   return chat;
 }
