@@ -1666,8 +1666,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
 
     const instructions = [];
     const signers = [];
-    let req = ComputeBudgetProgram.setComputeUnitLimit({units: 400000});
-    instructions.push(req);
+    // let req = ComputeBudgetProgram.setComputeUnitLimit({units: 400000});
+    // instructions.push(req);
 
     if (!destination) {
       destination = await Token.getAssociatedTokenAddress(
@@ -2170,8 +2170,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     );
 
     const instructions = [];
-    let req = ComputeBudgetProgram.setComputeUnitLimit({units: 350000});
-    instructions.push(req);
+    // let req = ComputeBudgetProgram.setComputeUnitLimit({units: 350000});
+    // instructions.push(req);
     if (!source) {
       source = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
