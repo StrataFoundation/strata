@@ -168,7 +168,9 @@ interface ITransferArgs {
   /** The amount of tokens */
   amount: number | BN;
 
-  /** The destination acct. **Default:** this wallet */
+  /** The destination wallet. **Default:** this wallet */
+  destinationWallet?: PublicKey;
+  /** The destination ata acct. **Default:** this wallet ata */
   destination?: PublicKey;
 }
 
@@ -915,6 +917,7 @@ export class FungibleEntangler extends AnchorSdk<FungibleEntanglerIDL> {
     payer = this.wallet.publicKey,
     amount,
     destination,
+    destinationWallet = this.wallet.publicKey,
     ...rest
   }: TransferArgs): Promise<InstructionResult<null>> {
     let { parentEntangler, childEntangler } = {
@@ -940,17 +943,9 @@ export class FungibleEntangler extends AnchorSdk<FungibleEntanglerIDL> {
     const instructions: TransactionInstruction[] = [];
     const signers: Keypair[] = [];
 
-    if (!destination) {
-      destination = await Token.getAssociatedTokenAddress(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        mint,
-        this.wallet.publicKey,
-        true
-      );
-    }
-
-    const destAcct = await this.provider.connection.getAccountInfo(destination);
+    const destAcct =
+      destination &&
+      (await this.provider.connection.getAccountInfo(destination));
 
     // Destination is a wallet, need to get the ATA
     if (!destAcct || destAcct.owner.equals(SystemProgram.programId)) {
@@ -958,7 +953,7 @@ export class FungibleEntangler extends AnchorSdk<FungibleEntanglerIDL> {
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         mint,
-        destination,
+        destinationWallet,
         true
       );
       if (!(await this.accountExists(ataDestination))) {
@@ -968,7 +963,7 @@ export class FungibleEntangler extends AnchorSdk<FungibleEntanglerIDL> {
             TOKEN_PROGRAM_ID,
             mint,
             ataDestination,
-            destination,
+            destinationWallet,
             payer
           )
         );
@@ -989,7 +984,7 @@ export class FungibleEntangler extends AnchorSdk<FungibleEntanglerIDL> {
               parentEntangler,
               entangler: childEntangler!,
               childStorage: childEntanglerAcct!.childStorage,
-              destination,
+              destination: destination!,
               tokenProgram: TOKEN_PROGRAM_ID,
             },
           }
@@ -1006,7 +1001,7 @@ export class FungibleEntangler extends AnchorSdk<FungibleEntanglerIDL> {
               authority: parentEntanglerAcct!.authority!,
               parentEntangler,
               parentStorage: parentEntanglerAcct!.parentStorage,
-              destination,
+              destination: destination!,
               tokenProgram: TOKEN_PROGRAM_ID,
             },
           }
@@ -1055,32 +1050,28 @@ export class FungibleEntangler extends AnchorSdk<FungibleEntanglerIDL> {
 
     if (isCloseChild) {
       instructions.push(
-        await this.instruction.closeFungibleChildEntanglerV0(
-          {
-            accounts: {
-              refund,
-              authority: parentEntanglerAcct!.authority!,
-              parentEntangler,
-              entangler: childEntangler!,
-              childStorage: childEntanglerAcct!.childStorage,
-              tokenProgram: TOKEN_PROGRAM_ID,
-            },
-          }
-        )
+        await this.instruction.closeFungibleChildEntanglerV0({
+          accounts: {
+            refund,
+            authority: parentEntanglerAcct!.authority!,
+            parentEntangler,
+            entangler: childEntangler!,
+            childStorage: childEntanglerAcct!.childStorage,
+            tokenProgram: TOKEN_PROGRAM_ID,
+          },
+        })
       );
     } else {
       instructions.push(
-        await this.instruction.closeFungibleParentEntanglerV0(
-          {
-            accounts: {
-              refund,
-              authority: parentEntanglerAcct!.authority!,
-              parentEntangler,
-              parentStorage: parentEntanglerAcct!.parentStorage,
-              tokenProgram: TOKEN_PROGRAM_ID,
-            },
-          }
-        )
+        await this.instruction.closeFungibleParentEntanglerV0({
+          accounts: {
+            refund,
+            authority: parentEntanglerAcct!.authority!,
+            parentEntangler,
+            parentStorage: parentEntanglerAcct!.parentStorage,
+            tokenProgram: TOKEN_PROGRAM_ID,
+          },
+        })
       );
     }
 

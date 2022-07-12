@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [Unreleased]
+
+### Fixed
+ 
+  * Disburse funds and transfer on both token bonding and fungible entangler could, under some circumstances, transer to an ata of an ata
+
 ## [3.9.1](https://github.com/StrataFoundation/strata/compare/v3.9.0...v3.9.1) (2022-07-12)
 
 ## Fixed
