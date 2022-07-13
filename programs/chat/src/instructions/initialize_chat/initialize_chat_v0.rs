@@ -1,9 +1,9 @@
+use crate::instructions::initialize_chat::arg::InitializeChatArgsV0;
 use crate::state::*;
 use crate::{error::ErrorCode, utils::resize_to_fit};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, TokenAccount};
 use namespaces::state::Entry;
-use crate::instructions::initialize_chat::arg::InitializeChatArgsV0;
 
 #[derive(Accounts)]
 #[instruction(args: InitializeChatArgsV0)]
@@ -47,7 +47,8 @@ pub fn handler(ctx: Context<InitializeChatV0>, args: InitializeChatArgsV0) -> Re
   ctx.accounts.chat.name = args.name;
   ctx.accounts.chat.post_message_program_id = args.post_message_program_id;
   ctx.accounts.chat.admin = Some(ctx.accounts.owner_wallet.key());
-  ctx.accounts.chat.identifier_certificate_mint = Some(ctx.accounts.identifier_certificate_mint.key());
+  ctx.accounts.chat.identifier_certificate_mint =
+    Some(ctx.accounts.identifier_certificate_mint.key());
   ctx.accounts.chat.metadata_url = args.metadata_url;
   ctx.accounts.chat.image_url = args.image_url;
   ctx.accounts.chat.bump = *ctx.bumps.get("chat").unwrap();

@@ -18,5 +18,5 @@ pub enum ErrorCode {
   InvalidPermissionType,
 
   #[msg("The realloc increase was too large")]
-  InvalidDataIncrease
+  InvalidDataIncrease,
 }

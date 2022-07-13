@@ -1,5 +1,5 @@
 use crate::state::*;
-use crate::{utils::resize_to_fit};
+use crate::utils::resize_to_fit;
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
@@ -35,13 +35,17 @@ pub struct InitializeChatPermissionsArgsV0 {
   pub post_pay_destination: Option<Pubkey>,
 }
 
-pub fn handler(ctx: Context<InitializeChatPermissionsV0>, args: InitializeChatPermissionsArgsV0) -> Result<()> {
+pub fn handler(
+  ctx: Context<InitializeChatPermissionsV0>,
+  args: InitializeChatPermissionsArgsV0,
+) -> Result<()> {
   ctx.accounts.chat_permissions.post_permission_key = args.post_permission_key;
   ctx.accounts.chat_permissions.post_permission_amount = args.post_permission_amount;
   ctx.accounts.chat_permissions.post_permission_action = args.post_permission_action;
   ctx.accounts.chat_permissions.post_pay_destination = args.post_pay_destination;
   ctx.accounts.chat_permissions.read_permission_key = args.read_permission_key;
-  ctx.accounts.chat_permissions.default_read_permission_amount = args.default_read_permission_amount;
+  ctx.accounts.chat_permissions.default_read_permission_amount =
+    args.default_read_permission_amount;
   ctx.accounts.chat_permissions.bump = *ctx.bumps.get("chat_permissions").unwrap();
   ctx.accounts.chat_permissions.post_permission_type = args.post_permission_type;
   ctx.accounts.chat_permissions.read_permission_type = args.read_permission_type;

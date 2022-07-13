@@ -1,4 +1,8 @@
-use crate::{error::ErrorCode, utils::resize_to_fit, state::{ChatV0, ChatType}};
+use crate::{
+  error::ErrorCode,
+  state::{ChatType, ChatV0},
+  utils::resize_to_fit,
+};
 use anchor_lang::prelude::*;
 
 use crate::instructions::initialize_chat::arg::InitializeChatArgsV0;
@@ -10,7 +14,7 @@ pub struct InitializeUnidentifiedChatV0<'info> {
   pub payer: Signer<'info>,
   /// CHECK: This is a create or update
   #[account(
-    init_if_needed, 
+    init,
     payer = payer,
     space = std::cmp::max(8 + std::mem::size_of::<ChatV0>(), chat.data.borrow_mut().len()),
   )]
@@ -18,14 +22,17 @@ pub struct InitializeUnidentifiedChatV0<'info> {
   pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<InitializeUnidentifiedChatV0>, args: InitializeChatArgsV0, admin: Option<Pubkey>) -> Result<()> {
+pub fn handler(
+  ctx: Context<InitializeUnidentifiedChatV0>,
+  args: InitializeChatArgsV0,
+  admin: Option<Pubkey>,
+) -> Result<()> {
   require!(args.name.len() <= 100, ErrorCode::InvalidStringLength);
   require!(args.image_url.len() <= 200, ErrorCode::InvalidStringLength);
   require!(
     args.metadata_url.len() <= 200,
     ErrorCode::InvalidStringLength
   );
-
 
   ctx.accounts.chat.chat_type = ChatType::Unidentified;
   ctx.accounts.chat.name = args.name;

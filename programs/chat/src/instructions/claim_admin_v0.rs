@@ -1,11 +1,10 @@
+use crate::instructions::initialize_chat::arg::InitializeChatArgsV0;
 /**
  * The holder of the chat certificate is able to claim admin over the chat
  */
-
 use crate::state::*;
 use anchor_lang::prelude::*;
-use anchor_spl::token::{TokenAccount};
-use crate::instructions::initialize_chat::arg::InitializeChatArgsV0;
+use anchor_spl::token::TokenAccount;
 
 #[derive(Accounts)]
 #[instruction(args: InitializeChatArgsV0)]

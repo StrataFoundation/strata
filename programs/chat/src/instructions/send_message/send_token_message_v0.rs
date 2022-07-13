@@ -54,7 +54,8 @@ pub fn assert_meets_permissions(ctx: &Context<SendTokenMessageV0>) -> Result<()>
 
   // attempt to verify the token holding
   if ctx.accounts.chat_permissions.post_permission_key == ctx.accounts.post_permission_mint.key()
-    && ctx.accounts.post_permission_account.amount >= ctx.accounts.chat_permissions.post_permission_amount
+    && ctx.accounts.post_permission_account.amount
+      >= ctx.accounts.chat_permissions.post_permission_amount
   {
     return Ok(());
   }

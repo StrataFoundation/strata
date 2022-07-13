@@ -123,9 +123,11 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   } catch (e: any) {
     console.error(e);
     return {
-      name: null,
-      description: null,
-      image: null,
+      props: {
+        name: null,
+        description: null,
+        image: null,
+      },
     };
   }
 };

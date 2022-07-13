@@ -39,7 +39,7 @@ impl Default for PermissionType {
 #[derive(PartialEq, AnchorSerialize, AnchorDeserialize, Clone)]
 pub enum ChatType {
   Identified,
-  Unidentified
+  Unidentified,
 }
 
 impl Default for ChatType {
@@ -47,7 +47,6 @@ impl Default for ChatType {
     ChatType::Identified
   }
 }
-
 
 #[account]
 #[derive(Default)]
@@ -59,14 +58,14 @@ pub struct ChatV0 {
   pub metadata_url: String,
   /** For maximum composability, you can plug in your own chat program for gating send message. */
   pub post_message_program_id: Pubkey, // Default: CHAT
-  /* 
+  /*
   The admin of this chat
   */
-  pub admin: Option<Pubkey>, 
-  pub identifier_certificate_mint: Option<Pubkey>, 
+  pub admin: Option<Pubkey>,
+  pub identifier_certificate_mint: Option<Pubkey>,
 }
 
-// 
+//
 // PDA["permissions", chat]
 #[account]
 #[derive(Default)]
