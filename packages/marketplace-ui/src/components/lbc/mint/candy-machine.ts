@@ -7,6 +7,7 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import {
+  Connection,
   PublicKey,
   Signer,
   SystemProgram,
@@ -218,13 +219,13 @@ export const mintOneToken = async (
   const remainingAccounts = []
   const instructions = []
   const signers: Signer[] = [mint]
-  const ataBalance = (
+  const ataBalance = candyMachine.tokenMint ? (
     await tokenBondingSdk.getTokenAccountBalance(userPayingAccountAddress)
-  ).toNumber()
+  ).toNumber() : (await candyMachine.program.provider.connection.getAccountInfo(payer))?.lamports
 
   let bondingInstructions: TransactionInstruction[] = []
   let bondingSigners: Signer[] = []
-  if (tokenBonding && ataBalance < 1) {
+  if (tokenBonding && (ataBalance || 0) < 1) {
     console.log("Buying bonding curve...", ataBalance)
     if (isNaN(maxPrice)) {
       throw new Error("Invalid slippage");

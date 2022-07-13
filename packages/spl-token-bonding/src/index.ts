@@ -564,9 +564,13 @@ export interface ITransferReservesArgs {
   tokenBonding: PublicKey;
   amount: BN | number;
   /**
-   * The destination for the reserves **Default:** ata of wallet
+   * The destination for the reserves **Default:** ata of destinationWallet
    */
   destination?: PublicKey;
+  /**
+   * The destination wallet for the reserves **Default:** 
+   */
+  destinationWallet?: PublicKey;
   /**
    * Optional (**Default**: Reserve authority on the token bonding). This parameter is only needed when updating the reserve
    * authority in the same txn as ruunning transfer
@@ -2356,6 +2360,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     destination,
     amount,
     reserveAuthority,
+    destinationWallet = this.wallet.publicKey,
     payer = this.wallet.publicKey,
   }: ITransferReservesArgs): Promise<InstructionResult<null>> {
     const tokenBondingAcct = (await this.getTokenBonding(tokenBonding))!;
@@ -2375,21 +2380,11 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       );
     }
 
-    if (!destination) {
-      if (isNative) {
-        destination = this.wallet.publicKey;
-      } else {
-        destination = await Token.getAssociatedTokenAddress(
-          ASSOCIATED_TOKEN_PROGRAM_ID,
-          TOKEN_PROGRAM_ID,
-          tokenBondingAcct.baseMint,
-          this.wallet.publicKey,
-          true
-        );
-      }
+    if (!destination && isNative) {
+      destination = destinationWallet;
     }
 
-    const destAcct = await this.provider.connection.getAccountInfo(destination);
+    const destAcct = destination && await this.provider.connection.getAccountInfo(destination);
 
     // Destination is a wallet, need to get the ATA
     if (
@@ -2400,8 +2395,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         tokenBondingAcct.baseMint,
-        destination,
-        true
+        destinationWallet,
+        false // Explicitly don't allow owner off curve. You need to pass destination as an already created thing to do this
       );
       if (!(await this.accountExists(ataDestination))) {
         instructions.push(
@@ -2410,7 +2405,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
             TOKEN_PROGRAM_ID,
             tokenBondingAcct.baseMint,
             ataDestination,
-            destination,
+            destinationWallet,
             payer
           )
         );
@@ -2435,7 +2430,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         await this.instruction.transferReservesNativeV0(args, {
           accounts: {
             common,
-            destination,
+            destination: destination!,
             state: state.publicKey,
             wrappedSolMint: state.wrappedSolMint,
             mintAuthority: (
@@ -2451,7 +2446,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         await this.instruction.transferReservesV0(args, {
           accounts: {
             common,
-            destination,
+            destination: destination!,
           },
         })
       );

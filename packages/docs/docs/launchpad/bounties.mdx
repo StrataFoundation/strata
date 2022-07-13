@@ -172,7 +172,7 @@ the bounty.
 await tokenBondingSdk.transferReserves({
   tokenBonding,
   amount: 0.001,
-  destination: publicKey
+  destinationWallet: publicKey
 })
 ```
 
@@ -181,7 +181,7 @@ To fully disburse and close the bounty:
 ```js async deps=create
 await marketplaceSdk.disburseBounty({
   tokenBonding,
-  destination: publicKey
+  destinationWallet: publicKey
 })
 ```
 
