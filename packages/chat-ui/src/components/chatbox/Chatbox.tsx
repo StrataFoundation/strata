@@ -145,7 +145,7 @@ export function Chatbox({
                   toast.dismiss(t.id);
                 }}
                 exec={async () => {
-                  await sendMessageImpl(m);
+                  await sendMessageImpl({ message: m });
                   return true;
                 }}
                 onComplete={async () => {
@@ -159,7 +159,7 @@ export function Chatbox({
           );
           setFiles([]);
         } else {
-          await sendMessageImpl(m);
+          await sendMessageImpl({ message: m });
         }
       } finally {
         setLoading(false);
@@ -198,9 +198,9 @@ export function Chatbox({
   const handleSendClick = useCallback(
     () =>
       sendMessage({
-        type: MessageType.Html,
-        html: converter.makeHtml(input),
-        fileAttachments: files,
+          type: MessageType.Html,
+          html: converter.makeHtml(input),
+          fileAttachments: files,
       }),
     [sendMessage, input, files]
   );

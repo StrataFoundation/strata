@@ -5,16 +5,19 @@ import {
   ChatSdk,
   IChat,
   IProfile,
-  ISendMessageContent
+  ISendMessageContent,
+  PermissionType
 } from "@strata-foundation/chat";
 import {
   useAccelerator, useCollectionOwnedAmount, useEndpoint
 } from "@strata-foundation/react";
 import { sendAndConfirmWithRetry } from "@strata-foundation/spl-utils";
+import BN from "bn.js";
 import { useAsyncCallback } from "react-async-hook";
 import { useChatSdk } from "../contexts";
 import { IMessageWithPending, useChat, useWalletProfile } from "../hooks";
 import { useDelegateWallet } from "../hooks/useDelegateWallet";
+import { useChatPermissionsFromChat } from "./useChatPermissionsFromChat";
 
 
 export interface IUseSendMessageArgs {
@@ -25,13 +28,18 @@ export interface IUseSendMessageArgs {
 export interface IUseSendMessageReturn {
   onAddPendingMessage?: (message: IMessageWithPending) => void;
   chatKey?: PublicKey;
-  sendMessage(message: ISendMessageContent): Promise<void>;
+  sendMessage(args: {
+    message: ISendMessageContent;
+    readPermissionKey?: PublicKey;
+    readPermissionAmount?: BN;
+    readPermissionType?: PermissionType;
+  }): Promise<void>;
   error?: Error;
   loading: boolean;
 }
 
 async function sendMessage({
-  chat,
+  chatKey,
   chatSdk,
   accelerator,
   delegateWalletKeypair,
@@ -39,8 +47,11 @@ async function sendMessage({
   onAddPendingMessage,
   message,
   nftMint,
+  readPermissionAmount,
+  readPermissionKey,
+  readPermissionType
 }: {
-  chat: IChat | undefined;
+  chatKey: PublicKey | undefined;
   chatSdk: ChatSdk | undefined;
   accelerator: Accelerator | undefined;
   delegateWalletKeypair: Keypair | undefined;
@@ -48,15 +59,20 @@ async function sendMessage({
   onAddPendingMessage: ((message: IMessageWithPending) => void) | undefined;
   message: ISendMessageContent;
   nftMint?: PublicKey;
+  readPermissionKey: PublicKey;
+  readPermissionAmount: BN;
+  readPermissionType: PermissionType;
 }) {
-  const chatKey = chat?.publicKey;
   if (chatSdk && chatKey) {
-    const payer = delegateWalletKeypair?.publicKey || chatSdk.wallet.publicKey;;
+    const payer = delegateWalletKeypair?.publicKey || chatSdk.wallet.publicKey;
     const {
       instructions: instructionGroups,
       signers: signerGroups,
       output: { messageId },
     } = await chatSdk.sendMessageInstructions({
+      readPermissionAmount,
+      readPermissionKey,
+      readPermissionType,
       nftMint,
       delegateWalletKeypair,
       payer,
@@ -111,7 +127,9 @@ async function sendMessage({
         chatKey,
         getDecodedMessage: () => Promise.resolve(content),
         encryptedSymmetricKey: "",
-        readPermissionAmount: chat!.defaultReadPermissionAmount,
+        readPermissionKey,
+        readPermissionAmount,
+        readPermissionType,
         startBlockTime: blockTime!,
         endBlockTime: blockTime!,
         parts: [],
@@ -140,28 +158,33 @@ export function useSendMessage({ chatKey, onAddPendingMessage }: IUseSendMessage
   const { keypair: delegateWalletKeypair } = useDelegateWallet();
   const { info: chat } = useChat(chatKey);
   const { cluster } = useEndpoint();
+  const { info: chatPermissions } = useChatPermissionsFromChat(chatKey);
   const { matches } = useCollectionOwnedAmount(
-    chat?.postPermissionKey
+    chatPermissions?.postPermissionKey
   );
 
-  const {
-    error,
-    loading,
-    execute,
-  } = useAsyncCallback(sendMessage);
+  const { error, loading, execute } = useAsyncCallback(sendMessage);
 
   return {
     error,
-    sendMessage: (message: ISendMessageContent) => {
+    sendMessage: ({
+      message,
+      readPermissionKey = chatPermissions?.readPermissionKey,
+      readPermissionAmount = chatPermissions?.defaultReadPermissionAmount,
+      readPermissionType = chatPermissions?.readPermissionType,
+    }) => {
       return execute({
-        chat,
+        chatKey,
         chatSdk,
         accelerator,
         delegateWalletKeypair,
         cluster,
         onAddPendingMessage,
         message,
-        nftMint: matches && matches[0]
+        nftMint: matches && matches[0],
+        readPermissionType: readPermissionType!,
+        readPermissionKey: readPermissionKey!,
+        readPermissionAmount: readPermissionAmount!,
       });
     },
     loading,

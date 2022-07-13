@@ -36,16 +36,34 @@ impl Default for PermissionType {
   }
 }
 
+#[derive(PartialEq, AnchorSerialize, AnchorDeserialize, Clone)]
+pub enum ChatType {
+  Identified,
+  Unidentified
+}
+
+impl Default for ChatType {
+  fn default() -> Self {
+    ChatType::Identified
+  }
+}
+
+
 #[account]
 #[derive(Default)]
 pub struct ChatV0 {
   pub bump: u8,
-  pub identifier_certificate_mint: Pubkey, // The certificate of the primary identifier for this chat
+  pub chat_type: ChatType,
   pub name: String,
   pub image_url: String,
   pub metadata_url: String,
   /** For maximum composability, you can plug in your own chat program for gating send message. */
   pub post_message_program_id: Pubkey, // Default: CHAT
+  /* 
+  The admin of this chat
+  */
+  pub admin: Option<Pubkey>, 
+  pub identifier_certificate_mint: Option<Pubkey>, 
 }
 
 // 

@@ -7,6 +7,9 @@ use anchor_lang::prelude::*;
 pub struct InitializeChatPermissionsV0<'info> {
   #[account(mut)]
   pub payer: Signer<'info>,
+  #[account(
+    constraint = chat.admin.unwrap() == admin.key()
+  )]
   pub chat: Box<Account<'info, ChatV0>>,
   #[account(
     init_if_needed,
@@ -16,6 +19,7 @@ pub struct InitializeChatPermissionsV0<'info> {
     bump,
   )]
   pub chat_permissions: Box<Account<'info, ChatPermissionsV0>>,
+  pub admin: Signer<'info>,
   pub system_program: Program<'info, System>,
 }
 

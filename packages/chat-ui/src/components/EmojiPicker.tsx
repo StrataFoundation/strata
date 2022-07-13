@@ -63,9 +63,11 @@ export const EmojiPickerPopover: FC<IEmojiPickerPopover> = ({ chatKey }) => {
   useEffect(() => {
     if (emoji) {
       sendMessage({
-        type: MessageType.React,
-        emoji: emoji.native,
-        referenceMessageId,
+        message: {
+          type: MessageType.React,
+          emoji: emoji.native,
+          referenceMessageId,
+        },
       });
       reset();
     }

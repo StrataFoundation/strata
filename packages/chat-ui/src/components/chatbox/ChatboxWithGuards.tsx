@@ -11,7 +11,7 @@ import {
   useTokenMetadata
 } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
-import { useChatPermissionsFromChat } from "dist/lib/hooks";
+import { useChatPermissionsFromChat } from "../../hooks";
 import React, {
   useRef, useState
 } from "react";

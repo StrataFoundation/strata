@@ -1,10 +1,13 @@
 import { Button, HStack, Icon, Popover, PopoverArrow, PopoverBody, PopoverContent, PopoverTrigger, Text, TextProps } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
 import { truncatePubkey, useErrorHandler } from "@strata-foundation/react";
-import { IMessageWithPending } from "dist/lib/hooks";
 import React from "react";
 import { MdOutlineAddReaction } from "react-icons/md";
-import { useInflatedReacts, useUsernameFromIdentifierCertificate, useWalletProfile } from "../../hooks/";
+import {
+  IMessageWithPending, useInflatedReacts,
+  useUsernameFromIdentifierCertificate,
+  useWalletProfile,
+} from "../../hooks/";
 
 const MAX_MENTIONS_DISPLAY = 3;
 
@@ -98,5 +101,5 @@ export function Reacts({
     );
   }
 
-  return null;
+  return <div />;
 }

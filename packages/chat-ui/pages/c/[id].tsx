@@ -1,4 +1,4 @@
-import { Chatbox } from "@/components/chatbox/ChatboxWithGuards";
+import { ChatboxWithGuards } from "@/components/chatbox/ChatboxWithGuards";
 import { ChatMessages } from "@/components/ChatMessages";
 import { EmojiPickerPopover } from "@/components/EmojiPicker";
 import { FileUploadMask } from "@/components/FileUploadMask";
@@ -19,7 +19,12 @@ import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { AnchorProvider, Program } from "@project-serum/anchor";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
-import { ChatIDL, ChatIDLJson, ChatSdk, randomizeFileName } from "@strata-foundation/chat";
+import {
+  ChatIDL,
+  ChatIDLJson,
+  ChatSdk,
+  randomizeFileName,
+} from "@strata-foundation/chat";
 import {
   getClusterAndEndpoint,
   useErrorHandler,
@@ -43,77 +48,86 @@ const SOLANA_URL =
   process.env.NEXT_PUBLIC_SOLANA_URL || "https://ssc-dao.genesysgo.net/";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  const { endpoint } = getClusterAndEndpoint(
-    (context.query.cluster || SOLANA_URL) as string
-  );
-  const connection = new Connection(endpoint, {});
-  const provider = new AnchorProvider(
-    connection,
-    new NodeWallet(Keypair.generate()),
-    {}
-  );
-  const apollo = new ApolloClient({
-    uri: "https://graph.holaplex.com/v1",
-    cache: new InMemoryCache(),
-  });
+  try {
+    const { endpoint } = getClusterAndEndpoint(
+      (context.query.cluster || SOLANA_URL) as string
+    );
+    const connection = new Connection(endpoint, {});
+    const provider = new AnchorProvider(
+      connection,
+      new NodeWallet(Keypair.generate()),
+      {}
+    );
+    const apollo = new ApolloClient({
+      uri: "https://graph.holaplex.com/v1",
+      cache: new InMemoryCache(),
+    });
 
-  const chat = new Program<ChatIDL>(
-    ChatIDLJson as ChatIDL,
-    ChatSdk.ID,
-    provider
-  ) as Program<ChatIDL>;
-  const client = new LitNodeJsSdk.LitNodeClient({
-    debug: false,
-    alerts: false,
-  });
-  const namespacesProgram = new Program<NAMESPACES_PROGRAM>(
-    NAMESPACES_IDL,
-    NAMESPACES_PROGRAM_ID,
-    provider
-  );
-  const chatSdk = new ChatSdk({
-    provider,
-    program: chat,
-    litClient: client,
-    namespacesProgram,
-  });
+    const chat = new Program<ChatIDL>(
+      ChatIDLJson as ChatIDL,
+      ChatSdk.ID,
+      provider
+    ) as Program<ChatIDL>;
+    const client = new LitNodeJsSdk.LitNodeClient({
+      debug: false,
+      alerts: false,
+    });
+    const namespacesProgram = new Program<NAMESPACES_PROGRAM>(
+      NAMESPACES_IDL,
+      NAMESPACES_PROGRAM_ID,
+      provider
+    );
+    const chatSdk = new ChatSdk({
+      provider,
+      program: chat,
+      litClient: client,
+      namespacesProgram,
+    });
 
-  const entryKey = (
-    await ChatSdk.entryKey(
-      new PublicKey("36u2NChTRLo53UrfEFMV6Pgug6YKbKAmw3M4Mi1JfFdn"),
-      context.params?.id as string
-    )
-  )[0];
-  const entryAcc = (await connection.getAccountInfo(entryKey))!;
-  const entry = await chatSdk.entryDecoder(entryKey, entryAcc);
+    const entryKey = (
+      await ChatSdk.entryKey(
+        new PublicKey("36u2NChTRLo53UrfEFMV6Pgug6YKbKAmw3M4Mi1JfFdn"),
+        context.params?.id as string
+      )
+    )[0];
+    const entryAcc = (await connection.getAccountInfo(entryKey))!;
+    const entry = await chatSdk.entryDecoder(entryKey, entryAcc);
 
-  const address = (await Metadata.getPDA(entry.mint)).toBase58();
-  const result = await apollo.query<{
-    nft: { name: string; description: string; image: string };
-  }>({
-    query: gql`
-      query GetUrl($address: String!) {
-        nft(address: $address) {
-          name
-          description
-          image
+    const address = (await Metadata.getPDA(entry.mint)).toBase58();
+    const result = await apollo.query<{
+      nft: { name: string; description: string; image: string };
+    }>({
+      query: gql`
+        query GetUrl($address: String!) {
+          nft(address: $address) {
+            name
+            description
+            image
+          }
         }
-      }
-    `,
-    variables: {
-      address,
-    },
-  });
+      `,
+      variables: {
+        address,
+      },
+    });
 
-  const { name, description, image } = result.data?.nft || {};
+    const { name, description, image } = result.data?.nft || {};
 
-  return {
-    props: {
-      name: name || null,
-      description: description || null,
-      image: image || null,
-    },
-  };
+    return {
+      props: {
+        name: name || null,
+        description: description || null,
+        image: image || null,
+      },
+    };
+  } catch (e: any) {
+    console.error(e);
+    return {
+      name: null,
+      description: null,
+      image: null,
+    };
+  }
 };
 
 const DARK_BG = {
@@ -182,7 +196,6 @@ export default function Chatroom({
     [msgWeHave, messages, pendingMessages]
   );
 
-
   const [files, setFiles] = useState<{ name: string; file: File }[]>([]);
   const onUpload = useCallback(
     async (newFiles: File[]) => {
@@ -207,14 +220,16 @@ export default function Chatroom({
       noKeyboard: true,
       onDrop: onUpload,
     });
-  const rootProps = useMemo(() => getRootProps({ className: "dropzone" }), [getRootProps]);
+  const rootProps = useMemo(
+    () => getRootProps({ className: "dropzone" }),
+    [getRootProps]
+  );
 
   useEffect(() => {
     setPendingMessages((pendingMessages) =>
       pendingMessages.filter((p) => !msgWeHave.has(p.id))
     );
   }, [msgWeHave]);
-
 
   return (
     <Layout
@@ -266,7 +281,7 @@ export default function Chatroom({
           hasMore={hasMore}
           fetchMore={fetchMore}
         />
-        <Chatbox
+        <ChatboxWithGuards
           scrollRef={scrollRef}
           chatKey={chatKey}
           onAddPendingMessage={onAddPendingMessage}

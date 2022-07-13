@@ -6,7 +6,7 @@ import {
   Icon,
   Popover,
   PopoverBody,
-  PopoverContent,
+  PopoverContent, 
   PopoverTrigger,
   Skeleton,
   Text,
@@ -257,9 +257,11 @@ export function Message(
                     onReact={(emoji, mine) => {
                       if (!mine)
                         sendMessage({
-                          type: MessageType.React,
-                          emoji: emoji,
-                          referenceMessageId: messageId,
+                          message: {
+                            type: MessageType.React,
+                            emoji: emoji,
+                            referenceMessageId: messageId,
+                          },
                         });
                     }}
                   />

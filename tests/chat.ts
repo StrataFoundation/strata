@@ -103,7 +103,7 @@ describe("chat", () => {
         },
       });
       const chatAcc = await chatSdk.getChat(chat);
-      expect(chatAcc?.identifierCertificateMint.toBase58()).to.eq(
+      expect(chatAcc?.identifierCertificateMint!.toBase58()).to.eq(
         chatIdentifierCertificateMint.toBase58()
       );
       expect(chatAcc?.name).to.eq(name);
@@ -117,7 +117,84 @@ describe("chat", () => {
         postPermissionMint.toBase58()
       );
     });
+
+    it("intializes an unidentified chat", async () => {
+      const name = "Test Test";
+      const { chat, chatPermissions } = await chatSdk.initializeChat({
+        name,
+        permissions: {
+          readPermissionKey: readPermissionMint,
+          postPermissionKey: postPermissionMint,
+        },
+      });
+      const chatAcc = await chatSdk.getChat(chat);
+      expect(chatAcc?.identifierCertificateMint).to.be.null;
+      expect(chatAcc?.name).to.eq(name);
+      const chatPermissionsAcc = (await chatSdk.getChatPermissions(
+        chatPermissions!
+      ))!;
+      expect(chatPermissionsAcc?.readPermissionKey?.toBase58()).to.eq(
+        readPermissionMint.toBase58()
+      );
+      expect(chatPermissionsAcc?.postPermissionKey?.toBase58()).to.eq(
+        postPermissionMint.toBase58()
+      );
+    });
   });
+
+    describe("close chat", () => {
+      let readPermissionMint: PublicKey;
+      let postPermissionMint: PublicKey;
+
+      before(async () => {
+        readPermissionMint = await createMint(provider, me, 9);
+        postPermissionMint = readPermissionMint;
+        await createAtaAndMint(provider, readPermissionMint, 10);
+      });
+
+      it("closes an identified chat", async () => {
+        const identifier = randomIdentifier();
+        const name = "Test Test";
+        const { certificateMint: chatIdentifierCertificateMint } =
+          await chatSdk.claimIdentifier({
+            identifier,
+            type: IdentifierType.Chat,
+          });
+        const { chat, chatPermissions } = await chatSdk.initializeChat({
+          identifierCertificateMint: chatIdentifierCertificateMint,
+          name,
+          permissions: {
+            readPermissionKey: readPermissionMint,
+            postPermissionKey: postPermissionMint,
+          },
+        });
+        await chatSdk.closeChat({
+          chat
+        });
+        const chatAcc = await chatSdk.getChat(chat);
+        const chatPermissionsAcc = await chatSdk.getChat(chatPermissions!);
+        expect(chatAcc).to.be.null;
+        expect(chatPermissionsAcc).to.be.null;
+      });
+
+      it("closes an unidentified chat", async () => {
+        const name = "Test Test";
+        const { chat, chatPermissions } = await chatSdk.initializeChat({
+          name,
+          permissions: {
+            readPermissionKey: readPermissionMint,
+            postPermissionKey: postPermissionMint,
+          },
+        });
+        await chatSdk.closeChat({
+          chat,
+        });
+        const chatAcc = await chatSdk.getChat(chat);
+        const chatPermissionsAcc = await chatSdk.getChat(chatPermissions!);
+        expect(chatAcc).to.be.null;
+        expect(chatPermissionsAcc).to.be.null;
+      });
+    });
 
   describe("initialize profile", () => {
     it("intializes a profile", async () => {

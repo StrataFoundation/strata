@@ -1,8 +1,9 @@
 use std::io::Write;
+use crate::error::ErrorCode;
 
 use anchor_lang::{
   prelude::*,
-  solana_program::{program::invoke, system_instruction},
+  solana_program::{program::invoke, system_instruction, entrypoint::MAX_PERMITTED_DATA_INCREASE},
 };
 
 /// Pads the string to the desired size with `0u8`s.
@@ -43,6 +44,11 @@ pub fn resize_to_fit<'info, T: AccountSerialize + AccountDeserialize + Owner + C
   let new_size = writer.total + 64; // Pad enough for two pubkeys so deserialize doesn't fail
   let new_minimum_balance = rent.minimum_balance(new_size);
   let lamports_diff = new_minimum_balance.saturating_sub(account.to_account_info().lamports());
+  let old_size =  account.to_account_info().data.borrow().len();
+
+  if new_size > old_size && (new_size - old_size) > MAX_PERMITTED_DATA_INCREASE {
+    return Err(error!(ErrorCode::InvalidDataIncrease));
+  }
   msg!("Resizing to {} with lamports {}", new_size, lamports_diff);
   invoke(
     &system_instruction::transfer(payer.key, &account.key(), lamports_diff),

@@ -23,11 +23,38 @@ pub mod chat {
     instructions::initialize_namespaces_v0::handler(ctx, args)
   }
 
+
+  pub fn claim_admin_v0(
+    ctx: Context<ClaimAdminV0>,
+  ) -> Result<()> {
+    instructions::claim_admin_v0::handler(ctx)
+  }
+
   pub fn initialize_chat_v0(
     ctx: Context<InitializeChatV0>,
     args: InitializeChatArgsV0,
   ) -> Result<()> {
     instructions::initialize_chat_v0::handler(ctx, args)
+  }
+
+  pub fn initialize_unidentified_chat_v0(
+    ctx: Context<InitializeUnidentifiedChatV0>,
+    args: InitializeChatArgsV0,
+    admin: Option<Pubkey>
+  ) -> Result<()> {
+    instructions::initialize_unidentified_chat_v0::handler(ctx, args, admin)
+  }
+
+  pub fn close_chat_v0(
+    ctx: Context<CloseChatV0>,
+  ) -> Result<()> {
+    instructions::close_chat_v0::handler(ctx)
+  }
+
+  pub fn close_chat_permissions_v0(
+    ctx: Context<CloseChatPermissionsV0>,
+  ) -> Result<()> {
+    instructions::close_chat_permissions_v0::handler(ctx)
   }
 
   pub fn initialize_chat_permissions_v0(
