@@ -5,8 +5,10 @@ import {
   Collapse,
   Flex,
   Input,
+  Link,
   Switch,
   VStack,
+  Text,
 } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
@@ -561,6 +563,16 @@ export const LbcForm: React.FC = () => {
                 {...register("startPrice")}
               />
             </FormControlWithError>
+            <Text size="lg" alignSelf="start">
+              Need help? Watch{" "}
+              <Link
+                isExternal
+                color="primary.500"
+                href="https://www.youtube.com/watch?v=qLeDVwLAPCA"
+              >
+                How to choose Dynamic Pricing/LBC Parameters
+              </Link>
+            </Text>
             <FormControlWithError
               id="minPrice"
               help="The minimum possible price for this token, if nobody buys during the bootstrapping interval. The wider the range between starting price and minimum price, the more rapidly the price will fall. It is reccommended to keep these numbers within 5x of each other."
