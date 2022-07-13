@@ -56,6 +56,10 @@ export const routes: Record<string, IRoute> = {
   launchpad: { path: "/launchpad", params: [] },
   create: { path: "/launchpad/create", params: [] },
   sell: { path: "/launchpad/sell", params: [] },
+  tokenAdmin: {
+    path: "/launchpad/admin/:mintKey",
+    params: ["mintKey"]
+  }
 };
 
 function rmUndefined(
