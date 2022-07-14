@@ -12,6 +12,8 @@ import {
 import { Toaster } from "react-hot-toast";
 import { Program } from "@project-serum/anchor";
 import { DarkMode, CSSReset } from "@chakra-ui/react";
+import { MessageType, PermissionType } from "@strata-foundation/chat";
+import { Chatroom, ChatMessages, useMessages } from "@strata-foundation/chat-ui";
 import {
   AccountLayout,
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -127,6 +129,18 @@ function MarketplaceProviders(props) {
   );
 }
 
+function ChatProviders(props) {
+  return (
+    <BrowserOnly fallback={<div>...</div>}>
+      {() => {
+        const Component =
+          require("@strata-foundation/chat-ui").ChatProviders;
+        return <Component {...props} />;
+      }}
+    </BrowserOnly>
+  );
+}
+
 function ManyToOneSwap(props) {
     return (
       <BrowserOnly fallback={<div>...</div>}>
@@ -176,6 +190,7 @@ const ReactLiveScope = {
   useBondingPricing,
   useTokenRef,
   useTokenBonding,
+  Chatroom,
   useVariablesContext,
   useVariables,
   useTokenMetadata,
@@ -205,8 +220,13 @@ const ReactLiveScope = {
   ReactShadow,
   CSSReset,
   MarketplaceProviders,
+  ChatProviders,
+  useMessages,
+  ChatMessages,
   Toaster,
   usePublicKey,
+  MessageType,
+  PermissionType,
   Lbc,
   ...React,
 };

@@ -1,8 +1,6 @@
-export * from "./chatbox";
 export * from "./ChatMessages";
 export * from "./Container";
 export * from "./DarkModeSwitch";
-export * from "./message/Message";
 export * from "./Wallet";
 export * from "./rooms";
 export * from "./CreateProfileModal";
@@ -23,3 +21,5 @@ export * from "./MyFlex";
 export * from "./FileUploadMask"
 export * from "./BuyMoreButton";
 export * from "./message";
+export * from "./ChatProviders";
+export * from "./Chatroom";

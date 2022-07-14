@@ -12,7 +12,8 @@ pub struct CloseChatPermissionsV0<'info> {
   pub chat: Box<Account<'info, ChatV0>>,
   #[account(
     mut,
-    close = refund
+    close = refund,
+    has_one = chat
   )]
   pub chat_permissions: Box<Account<'info, ChatPermissionsV0>>,
   pub admin: Signer<'info>,

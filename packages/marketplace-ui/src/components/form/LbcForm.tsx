@@ -419,12 +419,12 @@ export const LbcForm: React.FC = () => {
         setError("startPrice", {
           type: "custom",
           message:
-            "The diffrence between Starting Price and Minimum Price is greater than the reccommended 5x of each other.",
+            "The difference between Starting Price and Minimum Price is greater than the reccommended 5x of each other.",
         });
         setError("minPrice", {
           type: "custom",
           message:
-            "The diffrence between Minimum Price and Starting Price is greater than the reccommended 5x of each other.",
+            "The difference between Minimum Price and Starting Price is greater than the reccommended 5x of each other.",
         });
       } else {
         clearErrors("minPrice");

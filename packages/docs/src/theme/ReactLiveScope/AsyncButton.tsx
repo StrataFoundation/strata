@@ -1,6 +1,7 @@
 import BrowserOnly from "@docusaurus/BrowserOnly";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { useChatSdk } from "@strata-foundation/chat-ui";
 import {
   WalletModalProvider,
   WalletMultiButton,
@@ -102,6 +103,7 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
   const sdks = useStrataSdks();
   const { marketplaceSdk } = useMarketplaceSdk();
   const { provider } = useProvider();
+  const { chatSdk } = useChatSdk();
   const { endpoint, setClusterOrEndpoint } = useEndpoint();
 
   var vars = {}; // Outer variable, not stored.
@@ -124,6 +126,7 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
           provider,
           ...sdks,
           marketplaceSdk,
+          chatSdk,
           publicKey,
           ...scope,
           ...globalVariables,
@@ -139,7 +142,7 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
       }
     }
     return execInner
-  }, [marketplaceSdk, provider, publicKey, sdks.tokenCollectiveSdk, sdks.tokenMetadataSdk, sdks.tokenBondingSdk]);
+  }, [chatSdk, marketplaceSdk, provider, publicKey, sdks.tokenCollectiveSdk, sdks.tokenMetadataSdk, sdks.tokenBondingSdk]);
  
   async function wrappedExecWithDeps() {
     setError(undefined);
@@ -155,7 +158,7 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
 
   useEffect(() => {
     register(name, deps.filter(Boolean), exec);
-  }, [publicKey, ...Object.values(sdks), marketplaceSdk]);
+  }, [publicKey, ...Object.values(sdks), marketplaceSdk, chatSdk]);
 
   useEffect(() => {
     if (error) {
@@ -166,7 +169,7 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
   const fullLoading =
     loading || !sdks.tokenBondingSdk || !sdks.tokenCollectiveSdk;
 
-  if (endpoint.includes("mainnet") && !allowMainnet) {
+  if (!endpoint.includes("devnet") && !allowMainnet) {
     return (
       <div className={styles.container}>
         <button

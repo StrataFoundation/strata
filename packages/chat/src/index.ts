@@ -274,8 +274,9 @@ export interface InitializeChatArgs {
   payer?: PublicKey;
   /** The admin of this chat instance. **Default:** This wallet */
   admin?: PublicKey;
-  /** The unique shortname of the chat. This is a cardinal certificate NFT. If not provided, will create an unidentifiedChat */
+  /** The unique shortname of the chat. This is a cardinal certificate NFT. If this and identifier are not provided, will create an unidentifiedChat */
   identifierCertificateMint?: PublicKey;
+  identifier?: string;
   /** If not providing an identifier, creates an unidentified chat using this keypair. **Default:** Generate new keypair */
   chatKeypair?: Keypair;
   /** Human readable name for the chat */
@@ -474,6 +475,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     );
 
     const ChatIDLJson = await Program.fetchIdl(chatProgramId, provider);
+
     const chat = new Program<ChatIDL>(
       ChatIDLJson as ChatIDL,
       chatProgramId,
@@ -1453,6 +1455,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   async initializeChatInstructions({
     payer = this.wallet.publicKey,
     identifierCertificateMint,
+    identifier,
     name,
     permissions,
     postMessageProgramId = this.programId,
@@ -1461,32 +1464,52 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     chatKeypair,
     admin = this.wallet.publicKey,
   }: InitializeChatArgs): Promise<
-    InstructionResult<{
+    BigInstructionResult<{
       chat: PublicKey;
       chatPermissions?: PublicKey;
       chatKeypair?: Keypair;
+      identifierCertificateMint?: PublicKey;
     }>
   > {
     const instructions = [];
-    const signers: Signer[] = [];
+    const signers: Signer[][] = [];
 
+    if (identifier) {
+      const identifierInsts = await this.claimIdentifierInstructions({
+        payer,
+        owner: admin,
+        identifier,
+        type: IdentifierType.Chat,
+      });
+      identifierCertificateMint = identifierInsts.output.certificateMint;
+      instructions.push(...identifierInsts.instructions);
+      signers.push(...identifierInsts.signers);
+    }
+
+    const initChatInstructions = [];
+    const initChatSigners = [];
     let chat: PublicKey;
     if (identifierCertificateMint) {
       chat = (
         await ChatSdk.chatKey(identifierCertificateMint, this.programId)
       )[0];
 
-      const metadataKey = await Metadata.getPDA(identifierCertificateMint);
-      const metadata = await new Metadata(
-        metadataKey,
-        (await this.provider.connection.getAccountInfo(metadataKey))!
-      );
       const namespaces = await this.getNamespaces();
-      const [entryName] = metadata.data.data.name.split(".");
+      if (!identifier) {
+        const metadataKey = await Metadata.getPDA(identifierCertificateMint);
+        const metadata = await new Metadata(
+          metadataKey,
+          (await this.provider.connection.getAccountInfo(metadataKey))!
+        );
+        const [entryName] = metadata.data.data.name.split(".");
+        identifier = entryName;
+      }
+
       const [entry] = await await ChatSdk.entryKey(
         namespaces.chatNamespace,
-        entryName
+        identifier
       );
+      
       const identifierCertificateMintAccount =
         await Token.getAssociatedTokenAddress(
           ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -1515,7 +1538,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
           },
         }
       );
-      instructions.push(instruction);
+      initChatInstructions.push(instruction);
     } else {
       chatKeypair = chatKeypair || Keypair.generate();
       chat = chatKeypair.publicKey;
@@ -1535,8 +1558,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
           },
         }
       );
-      instructions.push(instruction);
-      signers.push(chatKeypair);
+      initChatInstructions.push(instruction);
+      initChatSigners.push(chatKeypair);
     }
 
     let chatPermissions: PublicKey | undefined = undefined;
@@ -1579,7 +1602,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       chatPermissions = (
         await ChatSdk.chatPermissionsKey(chat, this.programId)
       )[0];
-      instructions.push(
+      initChatInstructions.push(
         await this.instruction.initializeChatPermissionsV0(
           {
             defaultReadPermissionAmount: readAmount as AnchorBN,
@@ -1604,11 +1627,15 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       );
     }
 
+    instructions.push(initChatInstructions);
+    signers.push(initChatSigners);
+
     return {
       output: {
         chat,
         chatPermissions,
         chatKeypair,
+        identifierCertificateMint,
       },
       signers,
       instructions,
@@ -1617,9 +1644,9 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
   async initializeChat(
     args: InitializeChatArgs,
-    commitment: Commitment = "confirmed"
-  ): Promise<{ chat: PublicKey; chatPermissions?: PublicKey }> {
-    return this.execute(
+    commitment: Finality = "confirmed"
+  ): Promise<{ chat: PublicKey; chatPermissions?: PublicKey; identifierCertificateMint?: PublicKey }> {
+    return this.executeBig(
       this.initializeChatInstructions(args),
       args.payer,
       commitment

@@ -86,13 +86,8 @@ export async function initializeUser(
 export async function initializeChat(
   chatSdk: ChatSdk, identifier: string, name: string, readPermissionKey: PublicKey, postPermissionKey: PublicKey, readPermissionType: PermissionType, postPermissionType: PermissionType
 ) {
-  const { certificateMint: chatIdentifierCertificateMint } =
-    await chatSdk.claimIdentifier({
-      identifier,
-      type: IdentifierType.Chat,
-    });
   const { chat } = await chatSdk.initializeChat({
-    identifierCertificateMint: chatIdentifierCertificateMint,
+    identifier,
     name,
     permissions: {
       readPermissionKey,

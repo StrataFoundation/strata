@@ -189,7 +189,6 @@ export function Message(
             {reply && (
               <DisplayReply
                 reply={reply}
-                htmlAllowList={htmlAllowlist}
                 scrollToMessage={scrollToMessage}
               />
             )}

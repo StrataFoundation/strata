@@ -42,11 +42,9 @@ const AFTER_STYLE = {
 
 export function DisplayReply({
   reply,
-  htmlAllowList,
   scrollToMessage,
 }: {
   reply: IMessageWithPending;
-  htmlAllowList: any;
   scrollToMessage: (id: string) => void;
 }) {
   const { result: decodedMessage } = useAsync(reply.getDecodedMessage, []);

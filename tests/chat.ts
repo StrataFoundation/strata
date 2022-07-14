@@ -89,13 +89,12 @@ describe("chat", () => {
     it("intializes a chat", async () => {
       const identifier = randomIdentifier();
       const name = "Test Test";
-      const { certificateMint: chatIdentifierCertificateMint } =
-        await chatSdk.claimIdentifier({
-          identifier,
-          type: IdentifierType.Chat,
-        });
-      const { chat, chatPermissions } = await chatSdk.initializeChat({
+      const {
+        chat,
+        chatPermissions,
         identifierCertificateMint: chatIdentifierCertificateMint,
+      } = await chatSdk.initializeChat({
+        identifier,
         name,
         permissions: {
           readPermissionKey: readPermissionMint,
@@ -104,7 +103,7 @@ describe("chat", () => {
       });
       const chatAcc = await chatSdk.getChat(chat);
       expect(chatAcc?.identifierCertificateMint!.toBase58()).to.eq(
-        chatIdentifierCertificateMint.toBase58()
+        chatIdentifierCertificateMint!.toBase58()
       );
       expect(chatAcc?.name).to.eq(name);
       const chatPermissionsAcc = (await chatSdk.getChatPermissions(
@@ -155,13 +154,8 @@ describe("chat", () => {
       it("closes an identified chat", async () => {
         const identifier = randomIdentifier();
         const name = "Test Test";
-        const { certificateMint: chatIdentifierCertificateMint } =
-          await chatSdk.claimIdentifier({
-            identifier,
-            type: IdentifierType.Chat,
-          });
         const { chat, chatPermissions } = await chatSdk.initializeChat({
-          identifierCertificateMint: chatIdentifierCertificateMint,
+          identifier,
           name,
           permissions: {
             readPermissionKey: readPermissionMint,

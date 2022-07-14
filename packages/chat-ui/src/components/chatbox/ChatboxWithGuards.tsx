@@ -37,10 +37,9 @@ export function ChatboxWithGuards({
   setFiles,
   onUploadFile,
 }: chatProps) {
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-  const [input, setInput] = useState("");
-  const { emojis, search, searchMatch, reset: resetEmoji } = useEmojiSearch();
-  const { isOpen, onToggle, onClose } = useDisclosure();
+  const myScrollRef = useRef(null);
+  if (!scrollRef) scrollRef = myScrollRef;
+
   const {
     isOpen: loadWalletIsOpen,
     onOpen: onOpenLoadWallet,

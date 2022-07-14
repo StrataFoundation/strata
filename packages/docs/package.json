@@ -41,6 +41,8 @@
     "@strata-foundation/react": "^3.9.2",
     "@strata-foundation/spl-token-bonding": "^3.9.2",
     "@strata-foundation/spl-token-collective": "^3.9.2",
+    "@strata-foundation/chat-ui": "^3.9.2",
+    "@strata-foundation/chat": "^3.9.2",
     "@svgr/webpack": "^5.5.0",
     "assert": "^2.0.0",
     "browserify-zlib": "^0.2.0",

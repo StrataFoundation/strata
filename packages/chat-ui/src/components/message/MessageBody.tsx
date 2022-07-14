@@ -43,6 +43,8 @@ export function MessageBody({
     ],
     [message]
   );
+
+  console.log("BODY ON MY", message, messageType, htmlAllowlist)
   
   return messageType === MessageType.Gify ? (
     <GifyGif gifyId={message.gifyId} />

@@ -40,6 +40,7 @@
     "@strata-foundation/marketplace-sdk": "^3.9.2",
     "@strata-foundation/spl-token-bonding": "^3.9.2",
     "@strata-foundation/spl-token-collective": "^3.9.2",
+    "@strata-foundation/accelerator": "^3.9.0",
     "@strata-foundation/spl-utils": "^3.9.0",
     "@toruslabs/solana-embed": "0.0.9",
     "@types/lru-cache": "^7.6.1",
