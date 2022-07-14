@@ -4,14 +4,15 @@ import {
   Text,
   Flex,
 } from "@chakra-ui/react";
-import { IMetadataExtension } from "@strata-foundation/spl-utils";
 
-interface TokenPreviewProps {
-  data: IMetadataExtension | undefined;
-  image: string | undefined
+interface LaunchPreviewProps {
+  name: string | undefined;
+  amountRaised: number | undefined;
+  image: string | undefined;
+  baseTokenName: string | undefined;
 }
 
-export const TokenPreview = ({ data, image }: TokenPreviewProps) => {
+export const LaunchPreview = ({ name, amountRaised, image, baseTokenName }: LaunchPreviewProps) => {
   return (
     <Flex>
       <Image
@@ -28,17 +29,17 @@ export const TokenPreview = ({ data, image }: TokenPreviewProps) => {
           textAlign="left" 
           fontWeight="bold"
         >
-          {data?.name}
+          {name}
         </Text>
         <Text 
           fontSize="md" 
           color="white" 
           marginTop="0 !important"
         >
-            ${data?.symbol}
+          Amount raised: {amountRaised} {baseTokenName}
           </Text>
       </Stack>
     </Flex>
   );
 };
-  
+    
