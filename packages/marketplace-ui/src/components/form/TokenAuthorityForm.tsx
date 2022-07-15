@@ -124,39 +124,39 @@ export const TokenAuthorityForm = ({
   return (
     <Box bgColor="white" borderRadius="8px" w="full">
       <Box padding="20px">
-      <FormProvider {...formProps}>
-        <form onSubmit={handleSubmit(onSubmit)} style={{ width: "100%" }}>
-          <VStack spacing={8} w="full">
-            <FormControlWithError
-              id="mintAuthority"
-              label="Mint Authority"
-              errors={errors}
-            >
-              <Input {...register("mintAuthority")} />
-            </FormControlWithError>
-            <FormControlWithError
-              id="freezeAuthority"
-              label="Freeze Authority"
-              errors={errors}
-            >
-              <Input {...register("freezeAuthority")} />
-            </FormControlWithError>
+        <FormProvider {...formProps}>
+          <form onSubmit={handleSubmit(onSubmit)} style={{ width: "100%" }}>
+            <VStack spacing={8} w="full">
+              <FormControlWithError
+                id="mintAuthority"
+                label="Mint Authority"
+                errors={errors}
+              >
+                <Input {...register("mintAuthority")} />
+              </FormControlWithError>
+              <FormControlWithError
+                id="freezeAuthority"
+                label="Freeze Authority"
+                errors={errors}
+              >
+                <Input {...register("freezeAuthority")} />
+              </FormControlWithError>
 
-            {error && <Alert status="error">{error.toString()}</Alert>}
+              {error && <Alert status="error">{error.toString()}</Alert>}
 
-            <Button
-              isDisabled={!hasAnyAuth}
-              type="submit"
-              alignSelf="flex-end"
-              colorScheme="primary"
-              isLoading={isSubmitting || loading}
-              loadingText={awaitingApproval ? "Awaiting Approval" : "Loading"}
-            >
-              { !hasAnyAuth ? "You do not hold mint or freeze authority" : "Update Authorities" }
-            </Button>
-          </VStack>
-        </form>
-      </FormProvider>
+              <Button
+                isDisabled={!hasAnyAuth}
+                type="submit"
+                alignSelf="flex-end"
+                colorScheme="primary"
+                isLoading={isSubmitting || loading}
+                loadingText={awaitingApproval ? "Awaiting Approval" : "Loading"}
+              >
+                { !hasAnyAuth ? "You do not hold mint or freeze authority" : "Update Authorities" }
+              </Button>
+            </VStack>
+          </form>
+        </FormProvider>
       </Box>
     </Box>
   );
