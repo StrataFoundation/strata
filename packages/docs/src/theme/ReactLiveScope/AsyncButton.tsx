@@ -22,7 +22,6 @@ import styles from "./styles.module.css";
 import { clusterApiUrl } from "@solana/web3.js";
 import { useMarketplaceSdk } from "@strata-foundation/marketplace-ui";
 
-
 function BrowserOnlyReactJson(props) {
   return (
     <BrowserOnly fallback={<div>...</div>}>
@@ -110,17 +109,19 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
   const exec = useMemo(() => {
     async function execInner(globalVariables: any) {
       setRunningThisCommand(true);
-      const connection = new Connection(clusterApiUrl(WalletAdapterNetwork.Devnet))
+      const connection = new Connection(
+        clusterApiUrl(WalletAdapterNetwork.Devnet)
+      );
       try {
-        const walletAcct =
-          publicKey && (await connection.getAccountInfo(publicKey));
-        if (!walletAcct || walletAcct.lamports < 500000000) {
-          try {
+        try {
+          const walletAcct =
+            publicKey && (await connection.getAccountInfo(publicKey));
+          if (!walletAcct || walletAcct.lamports < 500000000) {
             publicKey &&
               (await connection.requestAirdrop(publicKey, 1000000000));
-          } catch (e: any) {
-            // ignore. If we can't airdrop it's probably mainnet
           }
+        } catch (e: any) {
+          // ignore. If we can't airdrop it's probably mainnet
         }
         const injectedVars = {
           provider,
@@ -141,9 +142,17 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
         setRunningThisCommand(false);
       }
     }
-    return execInner
-  }, [chatSdk, marketplaceSdk, provider, publicKey, sdks.tokenCollectiveSdk, sdks.tokenMetadataSdk, sdks.tokenBondingSdk]);
- 
+    return execInner;
+  }, [
+    chatSdk,
+    marketplaceSdk,
+    provider,
+    publicKey,
+    sdks.tokenCollectiveSdk,
+    sdks.tokenMetadataSdk,
+    sdks.tokenBondingSdk,
+  ]);
+
   async function wrappedExecWithDeps() {
     setError(undefined);
     setLoading(true);
@@ -169,7 +178,10 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
   const fullLoading =
     loading || !sdks.tokenBondingSdk || !sdks.tokenCollectiveSdk;
 
-  if (!endpoint.includes("devnet") && !allowMainnet) {
+  if (
+    !(endpoint.includes("devnet") || endpoint.includes("localhost")) &&
+    !allowMainnet
+  ) {
     return (
       <div className={styles.container}>
         <button

@@ -1,12 +1,21 @@
 ---
 sidebar_position: 1
-slug: /getting_started
 ---
 
 # Getting Started
 
 Strata chat is a fully decentralized, embeddable, token gated chat solution. You can use our public interface
 at https://chat.strataprotocol.com. Or follow the docs here to embed chat anywhere you'd like!
+
+The code for this chatroom is entirely open source [here](https://github.com/StrataFoundation/strata/tree/master/packages/chat-ui)
+
+Try it out:
+
+import { PublicKey } from "@solana/web3.js";
+import { Chatroom } from "@strata-foundation/chat-ui";
+
+<div style={{ height: "300px" }}>
+</div>
 
 ## Initializing the SDK
 
@@ -69,7 +78,7 @@ var { txids } = await chatSdk.sendMessage({
 });
 ```
 
-### Display Messages with React
+### Display Chatbox with React
 
 First, make sure to setup our providers. You may also want to use ReactShadow to ensure
 our styles do not conflict with yours:
@@ -95,9 +104,16 @@ function MessagesDisplay() {
   const { chat } = useVariables(); // Getting chat from above code;
 
   return <div style={{height: "300px"}}>
-    <Chatroom
-      chatKey={chat}
-    />
+    <SendMessageProvider chatKey={chat}>
+      <Chatroom
+        chatKey={chat}
+      />
+    </SendMessageProvider>
   </div>;
 }
 ```
+
+## Next Steps
+
+Interested in customizing the chat? Head over to the [Composability](./composability) docs!
+

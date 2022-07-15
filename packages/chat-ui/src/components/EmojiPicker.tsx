@@ -4,8 +4,7 @@ import data from "@emoji-mart/data";
 import { PublicKey } from "@solana/web3.js";
 import { useErrorHandler } from "@strata-foundation/react";
 import { MessageType } from "@strata-foundation/chat";
-import { useEmojis } from "../contexts";
-import { useSendMessage } from "../hooks";
+import { useEmojis, useSendMessage } from "../contexts";
 import { Flex } from "./MyFlex";
 
 export const EmojiPicker: FC<any> = (props) => {
@@ -47,7 +46,7 @@ export const EmojiPickerPopover: FC<IEmojiPickerPopover> = ({ chatKey }) => {
   const rgbInput = useColorModeValue("255 255 255", "56 63 75");
   const colorBorder = useColorModeValue("#e4e7eb", "");
   const { handleErrors } = useErrorHandler();
-  const { sendMessage, error } = useSendMessage({ chatKey });
+  const { sendMessage, error } = useSendMessage();
   handleErrors(error);
 
   const reset = useCallback(() => {

@@ -28,11 +28,11 @@ import { useAsync } from "react-async-hook";
 import { BsLockFill } from "react-icons/bs";
 import { DisplayReply, MessageHeader, MessageStatus, Reacts } from ".";
 import { BuyMoreButton } from "..";
-import { useEmojis, useReply } from "../../contexts";
+import { useEmojis, useReply, useSendMessage } from "../../contexts";
 import {
   IMessageWithPendingAndReacts, useChatOwnedAmount,
   useChatPermissionsFromChat,
-  useSendMessage, useWalletProfile
+  useWalletProfile
 } from "../../hooks";
 import { MessageBody } from "./MessageBody";
 import { MessageToolbar } from "./MessageToolbar";
@@ -117,9 +117,7 @@ export function Message(
   const highlightedBg = useColorModeValue("gray.200", "gray.800");
 
   const { handleErrors } = useErrorHandler();
-  const { sendMessage, error } = useSendMessage({
-    chatKey,
-  });
+  const { sendMessage, error } = useSendMessage();
   handleErrors(error, decodeError);
 
   const handleOnReaction = useCallback(() => {

@@ -1,27 +1,31 @@
-import { useWallet } from "@solana/wallet-adapter-react";
-import { Keypair, PublicKey, SYSVAR_CLOCK_PUBKEY, Transaction } from "@solana/web3.js";
+import {
+  Keypair,
+  PublicKey,
+  SYSVAR_CLOCK_PUBKEY,
+  Transaction,
+} from "@solana/web3.js";
+import React from "react";
 import { Accelerator, Cluster } from "@strata-foundation/accelerator";
 import {
   ChatSdk,
-  IChat,
-  IProfile,
   ISendMessageContent,
-  PermissionType
+  PermissionType,
 } from "@strata-foundation/chat";
 import {
-  useAccelerator, useCollectionOwnedAmount, useEndpoint
+  useAccelerator,
+  useCollectionOwnedAmount,
+  useEndpoint,
 } from "@strata-foundation/react";
 import { sendAndConfirmWithRetry } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
+import { createContext, FC, useContext } from "react";
 import { useAsyncCallback } from "react-async-hook";
 import { useChatSdk } from "../contexts";
-import { IMessageWithPending, useChat, useWalletProfile } from "../hooks";
+import { IMessageWithPending, useChat } from "../hooks";
 import { useDelegateWallet } from "../hooks/useDelegateWallet";
-import { useChatPermissionsFromChat } from "./useChatPermissionsFromChat";
-
+import { useChatPermissionsFromChat } from "../hooks/useChatPermissionsFromChat";
 
 export interface IUseSendMessageArgs {
-  onAddPendingMessage?: (message: IMessageWithPending) => void;
   chatKey?: PublicKey;
 }
 
@@ -33,6 +37,7 @@ export interface IUseSendMessageReturn {
     readPermissionKey?: PublicKey;
     readPermissionAmount?: BN;
     readPermissionType?: PermissionType;
+    onAddPendingMessage?: (message: IMessageWithPending) => void;
   }): Promise<void>;
   error?: Error;
   loading: boolean;
@@ -49,7 +54,7 @@ async function sendMessage({
   nftMint,
   readPermissionAmount,
   readPermissionKey,
-  readPermissionType
+  readPermissionType,
 }: {
   chatKey: PublicKey | undefined;
   chatSdk: ChatSdk | undefined;
@@ -152,7 +157,9 @@ async function sendMessage({
     );
   }
 }
-export function useSendMessage({ chatKey, onAddPendingMessage }: IUseSendMessageArgs): IUseSendMessageReturn {
+export function useStrataSendMessage({
+  chatKey,
+}: IUseSendMessageArgs): IUseSendMessageReturn {
   const { chatSdk } = useChatSdk();
   const { accelerator } = useAccelerator();
   const { keypair: delegateWalletKeypair } = useDelegateWallet();
@@ -169,6 +176,7 @@ export function useSendMessage({ chatKey, onAddPendingMessage }: IUseSendMessage
     error,
     sendMessage: ({
       message,
+      onAddPendingMessage,
       readPermissionKey = chatPermissions?.readPermissionKey,
       readPermissionAmount = chatPermissions?.defaultReadPermissionAmount,
       readPermissionType = chatPermissions?.readPermissionType,
@@ -179,8 +187,8 @@ export function useSendMessage({ chatKey, onAddPendingMessage }: IUseSendMessage
         accelerator,
         delegateWalletKeypair,
         cluster,
-        onAddPendingMessage,
         message,
+        onAddPendingMessage,
         nftMint: matches && matches[0],
         readPermissionType: readPermissionType!,
         readPermissionKey: readPermissionKey!,
@@ -190,3 +198,25 @@ export function useSendMessage({ chatKey, onAddPendingMessage }: IUseSendMessage
     loading,
   };
 }
+
+const SendMessageContext = createContext<IUseSendMessageReturn>(
+  {} as IUseSendMessageReturn
+);
+
+export const SendMessageProvider: FC<IUseSendMessageArgs> = ({ children, ...rest }) => {
+  const ret = useStrataSendMessage(rest)
+
+  return (
+    <SendMessageContext.Provider value={ret}>
+      {children}
+    </SendMessageContext.Provider>
+  );
+};
+
+export const useSendMessage = () => {
+  const context = useContext(SendMessageContext);
+  if (context === undefined) {
+    throw new Error("useSendMessage must be used within a ReplyProvider");
+  }
+  return context;
+};

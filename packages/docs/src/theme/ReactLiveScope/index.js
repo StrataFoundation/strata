@@ -12,8 +12,13 @@ import {
 import { Toaster } from "react-hot-toast";
 import { Program } from "@project-serum/anchor";
 import { DarkMode, CSSReset } from "@chakra-ui/react";
-import { MessageType, PermissionType } from "@strata-foundation/chat";
-import { Chatroom, ChatMessages, useMessages } from "@strata-foundation/chat-ui";
+import { ChatSdk, MessageType, PermissionType } from "@strata-foundation/chat";
+import {
+  Chatroom,
+  ChatMessages,
+  useMessages,
+  SendMessageProvider,
+} from "@strata-foundation/chat-ui";
 import {
   AccountLayout,
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -220,11 +225,13 @@ const ReactLiveScope = {
   ReactShadow,
   CSSReset,
   MarketplaceProviders,
+  SendMessageProvider,
   ChatProviders,
   useMessages,
   ChatMessages,
   Toaster,
   usePublicKey,
+  ChatSdk,
   MessageType,
   PermissionType,
   Lbc,

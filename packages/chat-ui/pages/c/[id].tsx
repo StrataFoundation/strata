@@ -3,6 +3,7 @@ import { Header } from "@/components/Header";
 import { Layout } from "@/components/Layout";
 import { LegacyWalletMigrationModal } from "@/components/LegacyWalletMigrationModal";
 import { RoomsHeader } from "@/components/rooms/RoomsHeader";
+import { SendMessageProvider } from "@/contexts/sendMessage";
 import { useChatKeyFromIdentifier } from "@/hooks/useChatKeyFromIdentifier";
 import { ApolloClient, gql, InMemoryCache } from "@apollo/client";
 import {
@@ -150,10 +151,12 @@ export default function ChatroomPage({
         }}
       />
       <LegacyWalletMigrationModal />
-      <Header onSidebarOpen={sidebar.onOpen}>
-        <RoomsHeader chatKey={chatKey || pubkeyChatKey} />
-      </Header>
-      <Chatroom chatKey={chatKey || pubkeyChatKey} />
+      <SendMessageProvider chatKey={chatKey || pubkeyChatKey}>
+        <Header onSidebarOpen={sidebar.onOpen}>
+          <RoomsHeader chatKey={chatKey || pubkeyChatKey} />
+        </Header>
+        <Chatroom chatKey={chatKey || pubkeyChatKey} />
+      </SendMessageProvider>
     </Layout>
   );
 }

@@ -1,12 +1,27 @@
-import { PublicKey } from "@solana/web3.js";
 import {
-  IMessageWithPending,
-  useAnalyticsEventTracker,
-  useDelegateWallet,
-  useEmojiSearch,
-  useChatPermissionsFromChat,
-  useSendMessage,
-} from "../../hooks";
+  Button,
+  Divider,
+  Flex,
+  HStack,
+  Icon,
+  IconButton,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalHeader,
+  ModalOverlay,
+  Popover,
+  PopoverBody,
+  PopoverContent,
+  PopoverTrigger,
+  Text,
+  useColorModeValue,
+  useDisclosure,
+  VStack,
+} from "@chakra-ui/react";
+import { PublicKey } from "@solana/web3.js";
+import { ISendMessageContent, MessageType } from "@strata-foundation/chat";
+import { useErrorHandler } from "@strata-foundation/react";
 import React, {
   KeyboardEventHandler,
   useCallback,
@@ -14,41 +29,22 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { IoMdAttach } from "react-icons/io";
-import { AiOutlineGif, AiOutlineSend } from "react-icons/ai";
-import { useWallet } from "@solana/wallet-adapter-react";
-import {
-  Button,
-  HStack,
-  useColorModeValue,
-  useDisclosure,
-  VStack,
-  Text,
-  PopoverTrigger,
-  Popover,
-  Divider,
-  Modal,
-  ModalOverlay,
-  ModalHeader,
-  ModalBody,
-  ModalContent,
-  Flex,
-  PopoverContent,
-  PopoverBody,
-  IconButton,
-  Icon,
-} from "@chakra-ui/react";
-import { useErrorHandler } from "@strata-foundation/react";
-import { useReply } from "../../contexts";
 import { useAsyncCallback } from "react-async-hook";
-import { ISendMessageContent, MessageType } from "@strata-foundation/chat";
 import toast from "react-hot-toast";
-import { LongPromiseNotification } from "../LongPromiseNotification";
+import { AiOutlineGif, AiOutlineSend } from "react-icons/ai";
+import { IoMdAttach } from "react-icons/io";
 import { Converter } from "showdown";
-import { GifSearch } from "../GifSearch";
-import { ReplyBar } from "./ReplyBar";
+import { useReply, useSendMessage } from "../../contexts";
+import {
+  IMessageWithPending,
+  useAnalyticsEventTracker,
+  useEmojiSearch,
+} from "../../hooks";
 import { Files } from "../Files";
+import { GifSearch } from "../GifSearch";
+import { LongPromiseNotification } from "../LongPromiseNotification";
 import { ChatInput } from "./ChatInput";
+import { ReplyBar } from "./ReplyBar";
 
 const converter = new Converter({
   simpleLineBreaks: true,
@@ -76,9 +72,9 @@ const popoverWidth = {
 };
 
 export function Chatbox({
-  scrollRef,
   chatKey,
-  onAddPendingMessage,
+  scrollRef,
+  onAddPendingMessage: inputOnAddPendingMessage,
   files,
   setFiles,
   onUploadFile,
@@ -97,16 +93,7 @@ export function Chatbox({
   const { handleErrors } = useErrorHandler();
 
   const [loading, setLoading] = useState(false);
-  const { sendMessage: sendMessageImpl, error } = useSendMessage({
-    chatKey,
-    onAddPendingMessage: (msg) => {
-      setLoading(false);
-      scrollRef.current.scrollTop = 0;
-      if (onAddPendingMessage) {
-        onAddPendingMessage(msg);
-      }
-    },
-  });
+  const { sendMessage: sendMessageImpl, error } = useSendMessage();
 
   const onCancelFile = useCallback(
     (file: any) =>
@@ -120,6 +107,14 @@ export function Chatbox({
   useEffect(() => {
     if (replyMessage) inputRef.current?.focus();
   }, [replyMessage]);
+
+  const onAddPendingMessage = (msg: IMessageWithPending) => {
+    setLoading(false);
+    scrollRef.current.scrollTop = 0;
+    if (inputOnAddPendingMessage) {
+      inputOnAddPendingMessage(msg);
+    }
+  };
 
   const { execute: sendMessage } = useAsyncCallback(
     async (m: ISendMessageContent) => {
@@ -145,7 +140,7 @@ export function Chatbox({
                   toast.dismiss(t.id);
                 }}
                 exec={async () => {
-                  await sendMessageImpl({ message: m });
+                  await sendMessageImpl({ message: m, onAddPendingMessage });
                   return true;
                 }}
                 onComplete={async () => {
@@ -159,7 +154,7 @@ export function Chatbox({
           );
           setFiles([]);
         } else {
-          await sendMessageImpl({ message: m });
+          await sendMessageImpl({ message: m, onAddPendingMessage });
         }
       } finally {
         setLoading(false);
@@ -198,9 +193,9 @@ export function Chatbox({
   const handleSendClick = useCallback(
     () =>
       sendMessage({
-          type: MessageType.Html,
-          html: converter.makeHtml(input),
-          fileAttachments: files,
+        type: MessageType.Html,
+        html: converter.makeHtml(input),
+        fileAttachments: files,
       }),
     [sendMessage, input, files]
   );
@@ -332,7 +327,10 @@ export function Chatbox({
             <GifSearch
               onSelect={(gifyId) => {
                 onCloseGify();
-                sendMessage({ type: MessageType.Gify, gifyId });
+                sendMessage({
+                  type: MessageType.Gify,
+                  gifyId,
+                });
               }}
             />
           </ModalBody>
