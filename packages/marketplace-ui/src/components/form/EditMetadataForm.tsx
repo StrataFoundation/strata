@@ -118,6 +118,7 @@ export const EditMetadataForm = ({
   const { visible, setVisible } = useWalletModal();
   const { connected, publicKey } = useWallet();
   const router = useRouter();
+  const { mintKey: mintKeyRaw } = router.query;
   const { mint, name, symbol } = watch();
   const mintKey = usePublicKey(mint as string | undefined);
   const mintAcc = useMint(mintKey);
@@ -130,6 +131,12 @@ export const EditMetadataForm = ({
       setValue("mint", mint as string);
     }
   }, [mint, router, setValue]);
+  useEffect(() => {
+    if (mintKeyRaw) {
+      const mintKey = new PublicKey(mintKeyRaw);
+      setValue("mint", mintKey.toString());
+    }
+  }, [setValue, mintKeyRaw])
   useEffect(() => {
     if (metadata && data && image && !(isSubmitting || loading)) {
       setValue("name", metadata?.data.name);

@@ -21,6 +21,7 @@ import { TokenLaunches } from "./TokenLaunches";
 import { TokenAuthorityForm } from "../form/TokenAuthorityForm";
 import { MintTokensWidget } from "./MintTokensWidget";
 import { SellTokensButton } from "./SellTokensButton";
+import { route, routes } from "@/utils/routes";
 
 export const TokenAdmin: React.FC = () => {
   const { connected } = useWallet();
@@ -39,6 +40,15 @@ export const TokenAdmin: React.FC = () => {
             borderColor="primary.500"
             color="white"
             variant="outline"
+            onClick={() => {
+              router.push(
+                route(routes.editMetadata, {
+                  mintKey: mintKey?.toString(),
+                }),
+                undefined,
+                { shallow: true }
+              )
+            }}
           >
             Edit
           </Button>
