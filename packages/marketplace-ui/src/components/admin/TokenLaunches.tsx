@@ -23,16 +23,18 @@ interface TokenPreviewProps {
 
 export const TokenLaunches = ({ mintKey }: TokenPreviewProps) => {
   // TODO can there be multiple valid token bondings?
-  const tokenBonding = useTokenBondingFromMint(mintKey);
-  
+  // TODO has to account for fungible entanglers securely
+  const { info: tokenBonding } = useTokenBondingFromMint(mintKey);
+  console.log(tokenBonding);
   return (
-    <>
-      {tokenBonding && (
-        <Box color="white" borderRadius="8px">
-          <LaunchPreview />
-        </Box>
+    <Box bgColor="white" borderRadius="8px" w="full">
+      {tokenBonding ? (
+        <LaunchPreview />
+      ) : (
+        <Text padding="30px">Launch a token offering</Text>
       )}
-    </>
+    </Box>
+
   );
 };
   
