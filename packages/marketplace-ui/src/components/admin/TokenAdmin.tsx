@@ -82,8 +82,7 @@ export const TokenAdmin: React.FC = () => {
                   <VStack w={{ base: "100%", md: "35%" }} alignItems="flex-start" paddingLeft="30px">
                     <Text fontSize="xl" color="black.500" fontWeight="bold">Token Actions</Text>
                     <SellTokensButton />
-                    <Text fontSize="xl" color="black.500" fontWeight="bold">Mint Tokens</Text>
-                    <MintTokensWidget values={{}} mintAuthority={mint?.mintAuthority}/>
+                    <MintTokensWidget values={{}} mintKey={mintKey} mint={mint}/>
                   </VStack>
                 </Flex>
               </Box>
