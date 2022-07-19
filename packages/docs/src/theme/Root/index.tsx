@@ -8,11 +8,14 @@ import {
   ErrorHandlerProvider,
   ProviderContextProvider,
   ThemeProvider,
+  HolaplexGraphqlProvider,
+  AcceleratorProvider,
 } from "@strata-foundation/react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import React from "react";
 import { VariablesProvider } from "./variables";
 import toast, { Toaster } from "react-hot-toast";
+import { ChatSdkProvider, EmojisProvider, ReplyProvider } from "@strata-foundation/chat-ui";
 
 // Default styles that can be overridden by your app
 require("@solana/wallet-adapter-react-ui/styles.css");
@@ -63,16 +66,26 @@ export default ({ children }) => {
                 <AccountProvider commitment="confirmed">
                   <StrataSdksProvider>
                     <MarketplaceSdkProvider>
-                      <VariablesProvider>
-                        {children}
-                        <Toaster
-                          position="bottom-center"
-                          containerStyle={{
-                            margin: "auto",
-                            width: "420px",
-                          }}
-                        />
-                      </VariablesProvider>
+                      <ChatSdkProvider>
+                        <HolaplexGraphqlProvider>
+                          <EmojisProvider>
+                            <ReplyProvider>
+                              <AcceleratorProvider url="wss://prod-api.teamwumbo.com/accelerator">
+                                <VariablesProvider>
+                                  {children}
+                                  <Toaster
+                                    position="bottom-center"
+                                    containerStyle={{
+                                      margin: "auto",
+                                      width: "420px",
+                                    }}
+                                  />
+                                </VariablesProvider>
+                              </AcceleratorProvider>
+                            </ReplyProvider>
+                          </EmojisProvider>
+                        </HolaplexGraphqlProvider>
+                      </ChatSdkProvider>
                     </MarketplaceSdkProvider>
                   </StrataSdksProvider>
                 </AccountProvider>

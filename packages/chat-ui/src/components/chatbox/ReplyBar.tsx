@@ -1,11 +1,11 @@
 import { CloseButton, Text } from "@chakra-ui/react";
 import { truncatePubkey } from "@strata-foundation/react";
 import React, { useMemo } from "react";
-import { useReply } from "../contexts";
+import { useReply } from "../../contexts";
 import {
   useUsernameFromIdentifierCertificate,
   useWalletProfile,
-} from "../hooks";
+} from "../../hooks";
 
 export function ReplyBar() {
   const { replyMessage, hideReply } = useReply();

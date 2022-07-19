@@ -1,8 +1,8 @@
-import { AnchorProvider, Provider, Wallet } from "@project-serum/anchor";
 import { PublicKey } from "@solana/web3.js";
 import nacl from "tweetnacl";
+import { TextEncoder } from "util";
 import {
-  toString as uint8arrayToString,
+  toString as uint8arrayToString
 } from "uint8arrays";
 
 export const AUTH_SIGNATURE_BODY =

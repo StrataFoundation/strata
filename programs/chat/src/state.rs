@@ -36,22 +36,50 @@ impl Default for PermissionType {
   }
 }
 
+#[derive(PartialEq, AnchorSerialize, AnchorDeserialize, Clone)]
+pub enum ChatType {
+  Identified,
+  Unidentified,
+}
+
+impl Default for ChatType {
+  fn default() -> Self {
+    ChatType::Identified
+  }
+}
+
 #[account]
 #[derive(Default)]
 pub struct ChatV0 {
   pub bump: u8,
-  pub post_permission_key: Pubkey, // Permission keys can be a token mint or an nft collection
-  pub read_permission_key: Pubkey,
-  pub post_permission_amount: u64,
-  pub default_read_permission_amount: u64,
-  pub post_permission_action: PostAction,
-  pub identifier_certificate_mint: Pubkey, // The certificate of the primary identifier for this chat
+  pub chat_type: ChatType,
   pub name: String,
   pub image_url: String,
   pub metadata_url: String,
-  pub post_pay_destination: Option<Pubkey>,
+  /** For maximum composability, you can plug in your own chat program for gating send message. */
+  pub post_message_program_id: Pubkey, // Default: CHAT
+  /*
+  The admin of this chat
+  */
+  pub admin: Option<Pubkey>,
+  pub identifier_certificate_mint: Option<Pubkey>,
+}
+
+//
+// PDA["permissions", chat]
+#[account]
+#[derive(Default)]
+pub struct ChatPermissionsV0 {
+  pub bump: u8,
+  pub chat: Pubkey,
   pub post_permission_type: PermissionType,
   pub read_permission_type: PermissionType,
+  pub post_permission_key: Pubkey, // Permission keys can be a token mint or an nft collection
+  pub read_permission_key: Pubkey,
+  pub post_permission_amount: u64,
+  pub default_read_permission_amount: u64, // The default amount for read permission. Some messages may be more.
+  pub post_permission_action: PostAction,
+  pub post_pay_destination: Option<Pubkey>,
 }
 
 #[account]
