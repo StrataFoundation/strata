@@ -42,7 +42,7 @@ function validateAuthorities(mint: MintInfo | undefined, values: ITokenAuthority
     if (!hasMintAuth) {
       return "You need the mint authority to change it";
     }
-  } 
+  }
   if (freezeAuthChanged(mint, values)) {
     if (!hasFreezeAuth) {
       return "You need the freeze authority to change it";

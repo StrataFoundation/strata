@@ -53,7 +53,7 @@ export const DisburseFunds = ({
   closeEntangler = false,
 }: {
   tokenBondingKey?: PublicKey;
-  /** Id could either be a parent entangler or target mint */
+  /** Id could either be a child entangler or target mint */
   id?: PublicKey;
   includeRetrievalCurve?: boolean;
   closeBonding?: boolean;

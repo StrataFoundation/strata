@@ -21,7 +21,8 @@ import { TokenLaunches } from "./TokenLaunches";
 import { TokenAuthorityForm } from "../form/TokenAuthorityForm";
 import { MintTokensWidget } from "./MintTokensWidget";
 import { SellTokensButton } from "./SellTokensButton";
-import { route, routes } from "@/utils/routes";
+import { route, routes } from "../../utils/routes";
+import React from 'react';
 
 export const TokenAdmin: React.FC = () => {
   const { connected } = useWallet();
@@ -85,13 +86,13 @@ export const TokenAdmin: React.FC = () => {
                 <Flex w="full" flexWrap="wrap" marginTop="2em">
                   <VStack w={{ base: "100%", md: "65%" }} alignItems="flex-start">
                     <Text fontSize="xl" color="black.500" fontWeight="bold">Launches</Text>
-                    <TokenLaunches mintKey={mintKey} />
+                    <TokenLaunches mintKey={mintKey} name={data?.name} image={image} />
                     <Text fontSize="xl" color="black.500" fontWeight="bold">Authority Preferences</Text>
                     <TokenAuthorityForm values={{}} metadata={metadata} mint={mint} mintKey={mintKey} />
                   </VStack>
                   <VStack w={{ base: "100%", md: "35%" }} alignItems="flex-start" paddingLeft="30px">
                     <Text fontSize="xl" color="black.500" fontWeight="bold">Token Actions</Text>
-                    <SellTokensButton />
+                    <SellTokensButton mintKey={mintKey}/>
                     <MintTokensWidget values={{}} mintKey={mintKey} mint={mint}/>
                   </VStack>
                 </Flex>
