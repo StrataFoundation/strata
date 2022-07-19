@@ -112,8 +112,6 @@ export const ChatMessages = ({
     document.removeEventListener("keypress", keyPress);
   });
 
-  console.log("messages", messages);
-
   return (
     <Flex
       grow={1}
