@@ -3,29 +3,45 @@ import {
   Stack,
   Text,
   Flex,
+  Icon,
+  IconButton,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalOverlay,
+  ModalHeader,
+  useDisclosure,
 } from "@chakra-ui/react";
+import React from 'react';
+import { PublicKey } from '@solana/web3.js';
+import { useReserveAmount, useTokenSwapFromId } from "@strata-foundation/react";
+import { MdSettings } from "react-icons/md";
+import { LaunchSettingsModal } from "./LaunchSettingsModal";
+
 
 interface LaunchPreviewProps {
+  id: PublicKey;
   name: string | undefined;
-  amountRaised: number | undefined;
   image: string | undefined;
-  baseTokenName: string | undefined;
 }
 
-export const LaunchPreview = ({ name, amountRaised, image, baseTokenName }: LaunchPreviewProps) => {
+export const LaunchPreview = ({ id, name, image }: LaunchPreviewProps) => {
+  const { tokenBonding, childEntangler, parentEntangler } = useTokenSwapFromId(id);
+  const { isOpen, onToggle, onClose } = useDisclosure();
+  const reserveAmount = useReserveAmount(tokenBonding?.publicKey);
   return (
-    <Flex>
+    <Flex alignItems="center" w="full">
       <Image
         alt="Token logo"
-        w="70px"
-        h="70px"
+        marginLeft="2em"
+        w="50px"
+        h="50px"
         borderRadius="50%"
         src={image}
       />
       <Stack paddingLeft="10px">
         <Text 
           fontSize="2xl" 
-          color="white" 
           textAlign="left" 
           fontWeight="bold"
         >
@@ -33,12 +49,13 @@ export const LaunchPreview = ({ name, amountRaised, image, baseTokenName }: Laun
         </Text>
         <Text 
           fontSize="md" 
-          color="white" 
           marginTop="0 !important"
         >
-          Amount raised: {amountRaised} {baseTokenName}
+          Amount raised: {reserveAmount} 
           </Text>
       </Stack>
+      <Icon w="24px" h="24px" as={MdSettings} onClick={onToggle} cursor="pointer" marginLeft="auto" marginRight="2em" />
+      <LaunchSettingsModal id={id} isOpen={isOpen} onClose={onClose} />
     </Flex>
   );
 };

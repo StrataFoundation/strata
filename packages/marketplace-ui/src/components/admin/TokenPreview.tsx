@@ -5,10 +5,11 @@ import {
   Flex,
 } from "@chakra-ui/react";
 import { IMetadataExtension } from "@strata-foundation/spl-utils";
+import React from 'react';
 
 interface TokenPreviewProps {
   data: IMetadataExtension | undefined;
-  image: string | undefined
+  image: string | undefined;
 }
 
 export const TokenPreview = ({ data, image }: TokenPreviewProps) => {
