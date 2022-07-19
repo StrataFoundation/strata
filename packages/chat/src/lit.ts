@@ -1,9 +1,11 @@
 import { PublicKey } from "@solana/web3.js";
 import nacl from "tweetnacl";
-import { TextEncoder } from "util";
+import { TextEncoder as NodeTextEncoder } from "util";
 import {
   toString as uint8arrayToString
 } from "uint8arrays";
+
+const NodeAndWebTextEncoder = typeof TextEncoder === "undefined" ? NodeTextEncoder : TextEncoder;
 
 export const AUTH_SIGNATURE_BODY =
   "I am creating an account to use Lit Protocol at {{timestamp}}";
@@ -22,7 +24,7 @@ export async function getAuthSig(
   const now = new Date().toISOString();
   const body = AUTH_SIGNATURE_BODY.replace("{{timestamp}}", now);
 
-  const data = new TextEncoder().encode(body);
+  const data = new NodeAndWebTextEncoder().encode(body);
   let signed: Uint8Array;
   if (signer instanceof Uint8Array) {
     signed = nacl.sign.detached(data, signer);

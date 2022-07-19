@@ -48,10 +48,10 @@ async function run(): Promise<void> {
     permissions: {
       readPermissionKey: new PublicKey(args[4]),
       postPermissionKey: new PublicKey(args[4]),
-      readPermissionType: PermissionType.Native,
-      postPermissionType: PermissionType.Native,
-      defaultReadPermissionAmount: 0.1,
-      postPermissionAmount: 0.1,
+      readPermissionType: PermissionType.NFT,
+      postPermissionType: PermissionType.NFT,
+      defaultReadPermissionAmount: 1,
+      postPermissionAmount: 1,
     },
   });
 }
