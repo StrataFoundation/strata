@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from "react";
 import { Textarea, TextareaProps } from "@chakra-ui/react";
+import React from "react";
 
 export interface IChatInputProps extends TextareaProps {
   inputRef: React.RefObject<HTMLTextAreaElement>;

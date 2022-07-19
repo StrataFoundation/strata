@@ -5,8 +5,10 @@ import {
   Collapse,
   Flex,
   Input,
+  Link,
   Switch,
   VStack,
+  Text,
 } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
@@ -417,12 +419,12 @@ export const LbcForm: React.FC = () => {
         setError("startPrice", {
           type: "custom",
           message:
-            "The diffrence between Starting Price and Minimum Price is greater than the reccommended 5x of each other.",
+            "The difference between Starting Price and Minimum Price is greater than the reccommended 5x of each other.",
         });
         setError("minPrice", {
           type: "custom",
           message:
-            "The diffrence between Minimum Price and Starting Price is greater than the reccommended 5x of each other.",
+            "The difference between Minimum Price and Starting Price is greater than the reccommended 5x of each other.",
         });
       } else {
         clearErrors("minPrice");
@@ -561,6 +563,16 @@ export const LbcForm: React.FC = () => {
                 {...register("startPrice")}
               />
             </FormControlWithError>
+            <Text size="lg" alignSelf="start">
+              Need help? Watch{" "}
+              <Link
+                isExternal
+                color="primary.500"
+                href="https://www.youtube.com/watch?v=qLeDVwLAPCA"
+              >
+                How to choose Dynamic Pricing/LBC Parameters
+              </Link>
+            </Text>
             <FormControlWithError
               id="minPrice"
               help="The minimum possible price for this token, if nobody buys during the bootstrapping interval. The wider the range between starting price and minimum price, the more rapidly the price will fall. It is reccommended to keep these numbers within 5x of each other."

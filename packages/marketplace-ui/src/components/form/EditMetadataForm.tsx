@@ -9,6 +9,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { PublicKey } from "@solana/web3.js";
 import {
+  useMint,
   useProvider,
   usePublicKey,
   useStrataSdks,
@@ -27,6 +28,7 @@ import { IMetadataFormProps, TokenMetadataInputs } from "./TokenMetadataInputs";
 interface IEditMetadataFormProps extends IMetadataFormProps {
   symbol: string;
   mint: string;
+  externalUrl: string;
 }
 
 const validationSchema = yup.object({
@@ -35,6 +37,7 @@ const validationSchema = yup.object({
   name: yup.string().required().min(2),
   description: yup.string(),
   symbol: yup.string().min(2).max(10),
+  externalUrl: yup.string(),
 });
 
 async function editMetadata(
@@ -49,6 +52,7 @@ async function editMetadata(
     description: values.description,
     image: values.image,
     mint: mintKey,
+    externalUrl: values.externalUrl,
   });
 
   const instructions = [];
@@ -117,7 +121,8 @@ export const EditMetadataForm = ({
   const { mintKey: mintKeyRaw } = router.query;
   const { mint, name, symbol } = watch();
   const mintKey = usePublicKey(mint as string | undefined);
-  const { metadata, image } = useTokenMetadata(mintKey);
+  const mintAcc = useMint(mintKey);
+  const { metadata, data, image } = useTokenMetadata(mintKey);
   const insufficientAuthority = metadata?.updateAuthority
     ? metadata.updateAuthority != publicKey?.toBase58()
     : false;
@@ -133,15 +138,18 @@ export const EditMetadataForm = ({
     }
   }, [setValue, mintKeyRaw])
   useEffect(() => {
-    if (metadata) {
+    if (metadata && data && image && !(isSubmitting || loading)) {
       setValue("name", metadata?.data.name);
       setValue("symbol", metadata?.data.symbol);
+      setValue("description", data?.description || "");
+      setValue("externalUrl", data?.external_url || "");
+
       (async () => {
         const imageFile = await getFileFromUrl(image, "image");
         if (imageFile) setValue("image", imageFile);
       })();
     }
-  }, [setValue, metadata]);
+  }, [setValue, metadata, data, image]);
 
   const onSubmit = async (values: IEditMetadataFormProps) => {
     await execute(tokenMetadataSdk!, values);
@@ -198,7 +206,16 @@ export const EditMetadataForm = ({
             >
               <Input {...register("symbol")} />
             </FormControlWithError>
-
+            { mintAcc && mintAcc.decimals == 0 && (
+              <FormControlWithError
+                id="externalUrl"
+                help="An optional URL that will be rendered in some wallets and explorers"
+                label="External URL"
+                errors={errors}
+              >
+                <Input {...register("externalUrl")} />
+              </FormControlWithError>
+            )}
             {error && <Alert status="error">{error.toString()}</Alert>}
 
             <Button
@@ -229,7 +246,8 @@ const getFileFromUrl = async (
 
   const data = await fetch(url, { cache: "no-cache" });
   const blob = await data.blob();
-  const fileName = `${name}${blob.type === defaultType ? ".jpeg" : "png"}`;
+  if (!blob.type.includes("image")) return undefined
+  const fileName = `${name}${blob.type === defaultType ? ".jpeg" : ".png"}`;
   const file = new File([blob], fileName, { type: blob.type || defaultType });
 
   return file;

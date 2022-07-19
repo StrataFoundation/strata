@@ -36,6 +36,7 @@ export interface IUseMessages {
 const emptyTx = new Set<string>();
 
 async function getMessages(
+  chat: PublicKey,
   chatSdk?: ChatSdk,
   txs?: TransactionResponseWithSig[],
   prevMessages?: IMessageWithPending[]
@@ -71,6 +72,7 @@ async function getMessages(
                     txid: sig,
                     meta,
                     blockTime,
+                    chat
                   })
                 ).map((f) => ({ ...f, pending }));
               } catch (e: any) {
@@ -141,9 +143,10 @@ export function useMessages(
 
   useEffect(() => {
     (async () => {
-      if (!rest.loadingInitial) {
+      if (!rest.loadingInitial && chat) {
         try {
           const newMessages = await getMessages(
+            chat,
             chatSdk,
             transactions,
             messages
@@ -161,7 +164,7 @@ export function useMessages(
         }
       }
     })();
-  }, [chatSdk, transactions, setState, rest.loadingInitial]);
+  }, [chat, chatSdk, transactions, setState, rest.loadingInitial]);
 
   // Group by and pull off reaction and reply messages
   const messagesWithReactsAndReplies = useMemo(() => {
