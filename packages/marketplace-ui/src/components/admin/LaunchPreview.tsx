@@ -22,7 +22,7 @@ interface LaunchPreviewProps {
 }
 
 export const LaunchPreview = ({ id, name, image }: LaunchPreviewProps) => {
-  const { tokenBonding, childEntangler, parentEntangler } = useTokenSwapFromId(id);
+  const { tokenBonding } = useTokenSwapFromId(id);
   const { isOpen, onToggle, onClose } = useDisclosure();
   const reserveAmount = useReserveAmount(tokenBonding?.publicKey);
   const { metadata } = useMetaplexTokenMetadata(tokenBonding?.baseMint);
