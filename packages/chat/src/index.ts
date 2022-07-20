@@ -485,11 +485,11 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       alertWhenUnauthorized: false,
       debug: false,
     });
-    // try {
-    //   await client.connect();
-    // } catch (e: any) {
-    //   console.warn(e);
-    // }
+    try {
+      await client.connect();
+    } catch (e: any) {
+      console.warn(e);
+    }
 
     return new this({
       provider,
