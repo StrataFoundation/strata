@@ -80,19 +80,19 @@ export const TokenAdmin: React.FC = () => {
               </Flex>
             )}
               <Box w="full">
-                <Text fontSize="2xl" color="black.500" fontWeight="bold">
+                <Text fontSize="3xl" color="black.500" fontWeight="bold">
                   Admin Settings
                 </Text>
                 <Flex w="full" flexWrap="wrap" marginTop="2em">
                   <VStack w={{ base: "100%", md: "65%" }} alignItems="flex-start">
-                    <Text fontSize="xl" color="black.500" fontWeight="bold">Launches</Text>
+                    <Text fontSize="xl" color="black.500" fontWeight="bold" pb="20px">Launches</Text>
                     <TokenLaunches mintKey={mintKey} name={data?.name} image={image} />
-                    <Text fontSize="xl" color="black.500" fontWeight="bold">Authority Preferences</Text>
+                    <Text fontSize="xl" color="black.500" fontWeight="bold" pt="20px" pb="20px">Authority Preferences</Text>
                     <TokenAuthorityForm values={{}} metadata={metadata} mint={mint} mintKey={mintKey} />
                   </VStack>
                   <VStack w={{ base: "100%", md: "35%" }} alignItems="flex-start" paddingLeft="30px">
                     <Text fontSize="xl" color="black.500" fontWeight="bold">Token Actions</Text>
-                    <SellTokensButton mintKey={mintKey}/>
+                    <SellTokensButton mintKey={mintKey} />
                     <MintTokensWidget values={{}} mintKey={mintKey} mint={mint}/>
                   </VStack>
                 </Flex>

@@ -4,23 +4,19 @@ import {
   Text,
   Flex,
   Icon,
-  IconButton,
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalOverlay,
-  ModalHeader,
   useDisclosure,
 } from "@chakra-ui/react";
 import React from 'react';
 import { PublicKey } from '@solana/web3.js';
-import { useReserveAmount, useTokenSwapFromId } from "@strata-foundation/react";
+import { useMetaplexTokenMetadata, useReserveAmount, useTokenSwapFromId } from "@strata-foundation/react";
 import { MdSettings } from "react-icons/md";
 import { LaunchSettingsModal } from "./LaunchSettingsModal";
+import { useRouter } from "next/router";
+import { routes, route } from "../../utils/routes";
 
 
 interface LaunchPreviewProps {
-  id: PublicKey;
+  id: PublicKey | undefined;
   name: string | undefined;
   image: string | undefined;
 }
@@ -29,6 +25,8 @@ export const LaunchPreview = ({ id, name, image }: LaunchPreviewProps) => {
   const { tokenBonding, childEntangler, parentEntangler } = useTokenSwapFromId(id);
   const { isOpen, onToggle, onClose } = useDisclosure();
   const reserveAmount = useReserveAmount(tokenBonding?.publicKey);
+  const { metadata } = useMetaplexTokenMetadata(tokenBonding?.baseMint);
+  const router = useRouter();
   return (
     <Flex alignItems="center" w="full">
       <Image
@@ -39,9 +37,21 @@ export const LaunchPreview = ({ id, name, image }: LaunchPreviewProps) => {
         borderRadius="50%"
         src={image}
       />
-      <Stack paddingLeft="10px">
+      <Stack 
+        paddingLeft="10px" 
+        onClick={() => {
+          router.push(
+            route(routes.swap, {
+              id: id?.toString(),
+            }),
+            undefined,
+            { shallow: true }
+          )
+        }}
+        cursor="pointer"
+      >
         <Text 
-          fontSize="2xl" 
+          fontSize="xl" 
           textAlign="left" 
           fontWeight="bold"
         >
@@ -51,11 +61,11 @@ export const LaunchPreview = ({ id, name, image }: LaunchPreviewProps) => {
           fontSize="md" 
           marginTop="0 !important"
         >
-          Amount raised: {reserveAmount} 
+          Amount raised: {reserveAmount} {metadata?.data?.symbol}
           </Text>
       </Stack>
       <Icon w="24px" h="24px" as={MdSettings} onClick={onToggle} cursor="pointer" marginLeft="auto" marginRight="2em" />
-      <LaunchSettingsModal id={id} isOpen={isOpen} onClose={onClose} />
+      <LaunchSettingsModal id={id!} isOpen={isOpen} onClose={onClose} />
     </Flex>
   );
 };
