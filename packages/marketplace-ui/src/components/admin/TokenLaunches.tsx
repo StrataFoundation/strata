@@ -3,7 +3,7 @@ import {
   Flex,
 } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
-import { useStrataSdks, useTokenBondingFromMint } from "@strata-foundation/react";
+import { truthy, useFungibleChildEntangler, useStrataSdks, useTokenBondingFromMint } from "@strata-foundation/react";
 import { LaunchPreview } from "./LaunchPreview";
 import React, { useState } from 'react';
 import { useAsync } from "react-async-hook";
@@ -20,8 +20,8 @@ export const TokenLaunches = ({ mintKey, name, image }: TokenPreviewProps) => {
   const { info: tokenBonding } = useTokenBondingFromMint(mintKey);
   const { fungibleEntanglerSdk } = useStrataSdks();
   const { publicKey } = useWallet();
-
-  const [parsed, setParsed] = useState<(IFungibleChildEntangler | undefined)[]>([]);
+  const [parsed, setParsed] = useState<PublicKey[]>([]);
+  const { info: entangler } = useFungibleChildEntangler(parsed[0]);
   useAsync(async () => {
     if (!mintKey || !fungibleEntanglerSdk) return
     const parentAccounts = await fungibleEntanglerSdk?.provider.connection.getProgramAccounts(FungibleEntangler.ID,
@@ -56,13 +56,13 @@ export const TokenLaunches = ({ mintKey, name, image }: TokenPreviewProps) => {
             ]
           }
         )
-        return childEntanglers?.map((child) => {
-          return fungibleEntanglerSdk?.childEntanglerDecoder(child.pubkey, child.account);
-        })
+        return childEntanglers?.map((child) => child.pubkey).filter(truthy)
       }))
       setParsed(parsed[0]!);
+      return;
     }
-  }, [mintKey, fungibleEntanglerSdk]);
+    setParsed([]);
+  }, [mintKey, fungibleEntanglerSdk, entangler]);
 
   return (
     <Flex bgColor="white" borderRadius="8px" w="full" h="7em">
@@ -70,10 +70,10 @@ export const TokenLaunches = ({ mintKey, name, image }: TokenPreviewProps) => {
         <LaunchPreview id={mintKey!} name={name} image={image}/>
       ) : parsed.length ? (
         parsed.map((val) => (
-          <LaunchPreview id={val?.publicKey} name={name} image={image} key={val?.publicKey?.toString()}/>
+          <LaunchPreview id={val} name={name} image={image} key={val.toString()}/>
         ))
       ) : (
-        <Text alignSelf="center">Launch a token offering</Text>
+        <Text alignSelf="center" ml="20px">No current token offerings.</Text>
       )}
     </Flex>
 

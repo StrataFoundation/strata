@@ -5,6 +5,7 @@ import { PublicKey } from "@solana/web3.js";
 import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
 import {
   Notification,
+  useAccountFetchCache,
   useGovernance,
   usePublicKey,
   useReserveAmount, useTokenBonding,
@@ -90,6 +91,7 @@ export const DisburseFunds = ({
     childEntangler?.publicKey
   ]);
 
+  const cache = useAccountFetchCache();
   const { isAdmin } = useIsBountyAdmin(publicKey || undefined, tokenBondingKey);
 
   if (isAdmin && tokenBonding) {
@@ -130,6 +132,9 @@ export const DisburseFunds = ({
                   destinationWallet: new PublicKey(address),
                   includeRetrievalCurve,
                 });
+                if (closeEntangler && childEntangler?.publicKey) {
+                  cache?.delete(childEntangler.publicKey);
+                }
               }
             }}
           >
