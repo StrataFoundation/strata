@@ -12,7 +12,7 @@ import { PublicKey } from '@solana/web3.js';
 import { DisburseFunds } from "..";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useTokenSwapFromId } from "@strata-foundation/react";
-import { useIsBountyAdmin } from "@/hooks/useIsBountyAdmin";
+import { useIsBountyAdmin } from "../../hooks/useIsBountyAdmin";
   
   
 interface LaunchSettingsModalProps {
