@@ -21,7 +21,7 @@ pub struct SendNativeMessageV0<'info> {
   pub signer: Signer<'info>, // Wallet signing for this transaction, may be the same as sender. May be a delegate
 }
 
-pub fn handler(ctx: Context<SendNativeMessageV0>, _args: MessagePartV0) -> Result<()> {
+pub fn handler(ctx: Context<SendNativeMessageV0>, message: MessagePartV0) -> Result<()> {
   let rm_acc_length = ctx.remaining_accounts.len();
   let has_delegate = match ctx.accounts.chat_permissions.post_permission_type {
     PermissionType::Native => rm_acc_length == 1,
@@ -40,5 +40,12 @@ pub fn handler(ctx: Context<SendNativeMessageV0>, _args: MessagePartV0) -> Resul
     return Err(error!(ErrorCode::IncorrectSender));
   }
 
+  emit!(MessagePartEventV0 {
+    chat: ctx.accounts.chat.key(),
+    sender: ctx.accounts.sender.key(),
+    signer: ctx.accounts.signer.key(),
+    message: message
+  });
+  
   Ok(())
 }
