@@ -41,7 +41,7 @@ export function Chatroom({ chatKey }: { chatKey?: PublicKey }) {
     hasMore,
     fetchMore,
     fetchNew,
-  } = useMessages(chatKey, true, 50);
+  } = useMessages({ chat: chatKey, accelerated: true, numTransactions: 50 });
 
   const { handleErrors } = useErrorHandler();
   handleErrors(error);

@@ -15,6 +15,7 @@ const getMultipleAccountsCore = async (
 
   const unsafeRes = await connection._rpcRequest("getMultipleAccounts", args);
   if (unsafeRes.error) {
+    debugger;
     throw new Error(
       "failed to get info about account " + unsafeRes.error.message
     );
