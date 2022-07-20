@@ -13,7 +13,7 @@ import { PublicKey } from "@solana/web3.js";
 export const SellTokensButton = ({mintKey}: {mintKey: PublicKey | undefined}) => {
   const router = useRouter();
   return (
-    <Box bgColor="black.500" color="white" borderRadius="8px" padding="30px">
+    <Box bgColor="black.500" color="white" borderRadius="8px" padding="30px" mb="10px !important" >
       <Image src="/swap.png" h="70px" marginBottom="20px" />
       <Text fontSize="lg" fontWeight="bold">Sell Existing Token</Text>
       <Text fontSize="md">You already have a token created that you would like to sell.</Text>

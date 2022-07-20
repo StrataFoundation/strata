@@ -1,23 +1,14 @@
 import {
-  Alert,
-  Box,
-  Image,
-  Button,
-  Container,
-  Center,
-  Stack,
   Text,
-  Collapse,
   Flex,
-  Input,
-  Switch,
-  VStack,
 } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
-import { useTokenBondingFromMint } from "@strata-foundation/react";
+import { useStrataSdks, useTokenBondingFromMint } from "@strata-foundation/react";
 import { LaunchPreview } from "./LaunchPreview";
-import React from 'react';
-import { IMetadataExtension } from "@strata-foundation/spl-utils";
+import React, { useState } from 'react';
+import { useAsync } from "react-async-hook";
+import { FungibleEntangler, IFungibleChildEntangler } from "@strata-foundation/fungible-entangler";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 interface TokenPreviewProps {
   mintKey: PublicKey | undefined;
@@ -27,13 +18,62 @@ interface TokenPreviewProps {
 
 export const TokenLaunches = ({ mintKey, name, image }: TokenPreviewProps) => {
   const { info: tokenBonding } = useTokenBondingFromMint(mintKey);
+  const { fungibleEntanglerSdk } = useStrataSdks();
+  const { publicKey } = useWallet();
+
+  const [parsed, setParsed] = useState<(IFungibleChildEntangler | undefined)[]>([]);
+  useAsync(async () => {
+    if (!mintKey || !fungibleEntanglerSdk) return
+    const parentAccounts = await fungibleEntanglerSdk?.provider.connection.getProgramAccounts(FungibleEntangler.ID,
+      {
+        filters: [
+          {
+            memcmp: {
+              offset: 8,
+              bytes: mintKey?.toBase58() || "",
+            },
+          },
+        ]
+      }
+    );
+    if (parentAccounts && parentAccounts.length) {
+      const parsedParents = parentAccounts.map((acc) => {
+        return fungibleEntanglerSdk?.parentEntanglerDecoder(acc.pubkey, acc.account)!;
+      }).filter((acc) => {
+        return acc?.authority?.equals(publicKey!)
+      });
+
+      const parsed = await Promise.all(parsedParents.map(async (acc) => {
+        const childEntanglers = await fungibleEntanglerSdk?.provider.connection.getProgramAccounts(FungibleEntangler.ID,
+          {
+            filters: [
+              {
+                memcmp: {
+                  offset: 8,
+                  bytes: acc.publicKey.toString() || "",
+                }
+              }
+            ]
+          }
+        )
+        return childEntanglers?.map((child) => {
+          return fungibleEntanglerSdk?.childEntanglerDecoder(child.pubkey, child.account);
+        })
+      }))
+      setParsed(parsed[0]!);
+    }
+  }, [mintKey, fungibleEntanglerSdk]);
 
   return (
     <Flex bgColor="white" borderRadius="8px" w="full" h="7em">
       {tokenBonding ? (
         <LaunchPreview id={mintKey!} name={name} image={image}/>
+      ) : parsed.length ? (
+        parsed.map((val) => (
+          <LaunchPreview id={val?.publicKey} name={name} image={image} key={val?.publicKey?.toString()}/>
+        ))
       ) : (
-        <Text padding="30px">Launch a token offering</Text>
+        <Text alignSelf="center">Launch a token offering</Text>
       )}
     </Flex>
 
