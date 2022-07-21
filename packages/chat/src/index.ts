@@ -35,7 +35,7 @@ import { CaseInsensitiveMarkerV0, ChatIDL, ChatV0, DelegateWalletV0, NamespacesV
 import { getAuthSig, MessageSigner } from "./lit";
 import { uploadFiles } from "./shdw";
 
-const MESSAGE_MAX_CHARACTERS = 352; // TODO: This changes with optional accounts in the future
+const MESSAGE_MAX_CHARACTERS = 450; // TODO: This changes with optional accounts in the future
 
 export * from "./generated/chat";
 export * from "./shdw";
@@ -430,6 +430,13 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   }
 
   async _litAuth() {
+    const cached = storage.get("lit-auth-sol-signature");
+    const cachedDate = storage.get("lit-auth-sol-signature-date") || 0;
+    const cachedAuthSig = JSON.parse(cached as string);
+    if (Number(cachedDate) >= (new Date().valueOf() - 24 * 60 * 60 * 1000) && this.wallet.publicKey.toBase58() === cachedAuthSig?.address) {
+      this.litAuthSig = cachedAuthSig;
+      return
+    }
     try {
       // @ts-ignore
       if (!this.wallet.signMessage) {
@@ -442,6 +449,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         // @ts-ignore
         this.wallet as MessageSigner
       );
+      storage.set("lit-auth-sol-signature", JSON.stringify(this.litAuthSig));
+      storage.set("lit-auth-sol-signature-date", new Date().valueOf().toString());
     } finally {
       this.authingLit = null;
     }
