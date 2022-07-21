@@ -109,8 +109,14 @@ export const CreateChatModal: React.FC<ICreateChatModalProps> = ({
   const handleNext = useCallback(async () => {
     if (state.step === CreateChatStep.Summary) {
       setState({ isSubmitting: true });
-      const { name, identifier, ownsIdentifier, readForm, postForm } =
-        state.wizardData;
+      const {
+        name,
+        identifier,
+        ownsIdentifier,
+        readForm,
+        postForm,
+        postIsSameAsRead,
+      } = state.wizardData;
 
       let identifierOut,
         postPermissionKey =
@@ -131,23 +137,34 @@ export const CreateChatModal: React.FC<ICreateChatModalProps> = ({
         readPermissionAmount = readForm.amount,
         instructions = [];
 
-      //if (!ownsIdentifier) {
-      console.log("Claiming identifier...", identifier);
-      identifierOut = await chatSdk?.claimIdentifierInstructions({
-        type: IdentifierType.Chat,
-        identifier,
-      });
-      instructions.push(identifierOut?.instructions);
-      // } else {
-      //   what to do if they ownIdentifier
-      // }
-
-      if (postForm.type === "token") {
-        console.log("Creating post permission token...");
+      if (!ownsIdentifier) {
+        console.log("Claiming identifier...", identifier);
+        identifierOut = await chatSdk?.claimIdentifierInstructions({
+          type: IdentifierType.Chat,
+          identifier,
+        });
+        instructions.push(identifierOut?.instructions);
+      } else {
+        // what to do if they ownIdentifier
       }
 
-      if (readForm.type === "token") {
-        console.log("Creating read permission token...");
+      if (postForm.type === "token" || readForm.type === "token") {
+        if (postIsSameAsRead) {
+          console.log(
+            `Creating single post and read permission ${identifier} token...`
+            // postPermissionKey =
+            // readPermissionKey =
+          );
+        } else {
+          if (postForm.type === "token") {
+            console.log(`Creating post permission ${identifier}Post token...`);
+            // postPermissionKey =
+          }
+          if (readForm.type === "token") {
+            console.log(`Creating read permission ${identifier}Read token...`);
+            // readPermissionKey =
+          }
+        }
       }
 
       console.log("postPermissionKey", postPermissionKey);
