@@ -1,8 +1,5 @@
 import { ChatProviders } from "@/components/ChatProviders";
 import { Wallet } from "@/components/Wallet";
-import { ChatSdkProvider } from "@/contexts/chatSdk";
-import { EmojisProvider } from "@/contexts/emojis";
-import { ReplyProvider } from "@/contexts/reply";
 import { IS_PRODUCTION } from "@/constants";
 import { useMediaQuery } from "@chakra-ui/react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
