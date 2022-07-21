@@ -17,13 +17,12 @@ impl Default for MessageType {
   }
 }
 
-
 #[event]
 pub struct MessagePartEventV0 {
   pub chat: Pubkey,
   pub sender: Pubkey,
   pub signer: Pubkey,
-  pub message: MessagePartV0
+  pub message: MessagePartV0,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]

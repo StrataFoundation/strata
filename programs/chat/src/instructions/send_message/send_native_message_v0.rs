@@ -46,6 +46,6 @@ pub fn handler(ctx: Context<SendNativeMessageV0>, message: MessagePartV0) -> Res
     signer: ctx.accounts.signer.key(),
     message: message
   });
-  
+
   Ok(())
 }
