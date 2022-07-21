@@ -35,7 +35,14 @@ import {
   useTokenMetadata,
 } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
-import React, { useRef, useEffect, useState, useMemo, useCallback, KeyboardEventHandler } from "react";
+import React, {
+  useRef,
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+  KeyboardEventHandler,
+} from "react";
 import { AiOutlineGif, AiOutlineSend } from "react-icons/ai";
 import {
   IMessageWithPending,
@@ -48,7 +55,7 @@ import {
 import { useReply } from "../contexts/reply";
 import { BuyMoreButton } from "./BuyMoreButton";
 import { ChatInput } from "./ChatInput";
-import { FileAttachment } from "./FileAttachment";
+import { FileAttachment } from "./form/FileAttachment";
 import { GifSearch } from "./GifSearch";
 import { Converter } from "showdown";
 import toast from "react-hot-toast";
@@ -97,7 +104,7 @@ export function Chatbox({
   onAddPendingMessage,
   files,
   setFiles,
-  onUploadFile
+  onUploadFile,
 }: chatProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [input, setInput] = useState("");
@@ -139,7 +146,10 @@ export function Chatbox({
   const { metadata: postMetadata, image: postImage } = useTokenMetadata(
     chat?.postPermissionKey
   );
-  const { amount: ownedAmount } = useChatOwnedAmount(publicKey || undefined, chatKey);
+  const { amount: ownedAmount } = useChatOwnedAmount(
+    publicKey || undefined,
+    chatKey
+  );
   const mint = useMint(chat?.postPermissionKey);
   const postAmount =
     chat?.postPermissionAmount &&
@@ -164,7 +174,10 @@ export function Chatbox({
   });
 
   const onCancelFile = useCallback(
-    (file: any) => setFiles((files: { name: string; file: File }[]) => files.filter((f) => f.file != file)),
+    (file: any) =>
+      setFiles((files: { name: string; file: File }[]) =>
+        files.filter((f) => f.file != file)
+      ),
     [setFiles]
   );
 
@@ -172,59 +185,64 @@ export function Chatbox({
   useEffect(() => {
     if (replyMessage) inputRef.current?.focus();
   }, [replyMessage]);
-  
-  const { execute: sendMessage } = useAsyncCallback(async (m: ISendMessageContent) => {
-    setInput("");
-    resetEmoji();
-    setLoading(true);
-    hideReply();
 
-    try {
-      if (replyMessage?.id) m.referenceMessageId = replyMessage?.id;
-      // Show toast if uploading files
-      if (m.fileAttachments && m.fileAttachments.length > 0) {
-        const text = `Uploading ${m.fileAttachments.map(
-          (f) => f.name
-        )} to SHDW Drive...`;
-        toast.custom(
-          (t) => (
-            <LongPromiseNotification
-              estTimeMillis={1 * 60 * 1000}
-              text={text}
-              onError={(e) => {
-                handleErrors(e);
-                toast.dismiss(t.id);
-              }}
-              exec={async () => {
-                await sendMessageImpl(m);
-                return true;
-              }}
-              onComplete={async () => {
-                toast.dismiss(t.id);
-              }}
-            />
-          ),
-          {
-            duration: Infinity,
-          }
-        );
-        setFiles([]);
-      } else {
-        await sendMessageImpl(m);
+  const { execute: sendMessage } = useAsyncCallback(
+    async (m: ISendMessageContent) => {
+      setInput("");
+      resetEmoji();
+      setLoading(true);
+      hideReply();
+
+      try {
+        if (replyMessage?.id) m.referenceMessageId = replyMessage?.id;
+        // Show toast if uploading files
+        if (m.fileAttachments && m.fileAttachments.length > 0) {
+          const text = `Uploading ${m.fileAttachments.map(
+            (f) => f.name
+          )} to SHDW Drive...`;
+          toast.custom(
+            (t) => (
+              <LongPromiseNotification
+                estTimeMillis={1 * 60 * 1000}
+                text={text}
+                onError={(e) => {
+                  handleErrors(e);
+                  toast.dismiss(t.id);
+                }}
+                exec={async () => {
+                  await sendMessageImpl(m);
+                  return true;
+                }}
+                onComplete={async () => {
+                  toast.dismiss(t.id);
+                }}
+              />
+            ),
+            {
+              duration: Infinity,
+            }
+          );
+          setFiles([]);
+        } else {
+          await sendMessageImpl(m);
+        }
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
+      gaEventTracker({
+        action: "Send Message",
+      });
     }
-    gaEventTracker({
-      action: "Send Message",
-    });
-  })
+  );
 
-  const handleChange = useCallback(async (e: React.FormEvent<HTMLTextAreaElement>) => {
-    const content = e.currentTarget.value;
-    search(e);
-    setInput(content);
-  }, [setInput, search]);
+  const handleChange = useCallback(
+    async (e: React.FormEvent<HTMLTextAreaElement>) => {
+      const content = e.currentTarget.value;
+      search(e);
+      setInput(content);
+    },
+    [setInput, search]
+  );
 
   const handleKeyDown: KeyboardEventHandler<HTMLTextAreaElement> = useCallback(
     (ev) => {
@@ -242,12 +260,13 @@ export function Chatbox({
     [sendMessage, files, input]
   );
 
-  const handleSendClick = useCallback(() =>
-    sendMessage({
-      type: MessageType.Html,
-      html: converter.makeHtml(input),
-      fileAttachments: files,
-    }),
+  const handleSendClick = useCallback(
+    () =>
+      sendMessage({
+        type: MessageType.Html,
+        html: converter.makeHtml(input),
+        fileAttachments: files,
+      }),
     [sendMessage, input, files]
   );
 

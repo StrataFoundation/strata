@@ -1,7 +1,7 @@
 import { Wallet } from "@/components/Wallet";
 import { ChatSdkProvider } from "@/contexts/chatSdk";
 import { EmojisProvider } from "@/contexts/emojis";
-import { ReplyProvider }  from "@/contexts/reply";
+import { ReplyProvider } from "@/contexts/reply";
 import { useMediaQuery } from "@chakra-ui/react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import {
@@ -32,7 +32,7 @@ function MyApp({ Component, pageProps }: AppProps) {
       router.events.off("routeChangeComplete", handleRouteChange);
     };
   }, [router.events]);
-    
+
   const onError = React.useCallback(
     (error: Error) => {
       console.error(error);

@@ -9,7 +9,7 @@ export * from "./CreateProfileModal";
 export * from "./ProfileButton";
 export * from "./GifSearch";
 export * from "./ChatInput";
-export * from "./FileAttachment";
+export * from "./form";
 export * from "./EmojiSearch";
 export * from "./CopyBlackBox";
 export * from "./Layout";
@@ -22,4 +22,4 @@ export * from "./DisplayReply";
 export * from "./ReplyBar";
 export * from "./TokenFlare";
 export * from "./MyFlex";
-export * from "./FileUploadMask"
+export * from "./FileUploadMask";
