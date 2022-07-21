@@ -134,7 +134,7 @@ export function TokenMetadataInputs({
         <input
           id="image"
           type="file"
-          accept=".png,.jpg,.gif,.mp4,.svg"
+          accept=".png,.jpg,.gif,.mp4,.svg,.jpeg"
           multiple={false}
           onChange={handleImageChange}
           ref={hiddenFileInput}

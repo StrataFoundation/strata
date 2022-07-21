@@ -177,13 +177,13 @@ export async function initStorageIfNeeded(
 
     await shdwDrive.init();
 
-    // Ensure immutable
-    if (storageAccount && !storageAccount.immutable) {
-      await withRetries(
-        () => shdwDrive.makeStorageImmutable(accountKey, "v2"),
-        3
-      );
-    }
+    // TODO: Ensure immutable. Rn throws invalid account descriminator for v1 accounts
+    // if (storageAccount && !storageAccount.immutable) {
+    //   await withRetries(
+    //     () => shdwDrive.makeStorageImmutable(accountKey, "v2"),
+    //     3
+    //   );
+    // }
 
     if (storageAccount && sizeKB && !storageAccountBigEnough) {
       await withRetries(

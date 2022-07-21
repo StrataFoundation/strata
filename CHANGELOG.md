@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.9.2](https://github.com/StrataFoundation/strata/compare/v3.9.1...v3.9.2) (2022-07-12)
+
+### Fixed
+ 
+  * Disburse funds and transfer on both token bonding and fungible entangler could, under some circumstances, transer to an ata of an ata
+
+## [3.9.1](https://github.com/StrataFoundation/strata/compare/v3.9.0...v3.9.1) (2022-07-12)
+
+## Fixed
+
+  * Remove compute budget changes that cause bonding tx not to run
+
+
 # [3.9.0](https://github.com/StrataFoundation/strata/compare/v3.8.2...v3.9.0) (2022-07-11)
 
 ## Breaking
@@ -11,6 +24,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
   * Move `useEndpoint` from `marketplace-ui` to `react` package
   * Switch to fungible entangler for token offerings (selling a token without giving mint authority)
     * Legacy implementations (system of two bonding curves, one sell only) are still supported. But deprecated
+  * `Swap` component now takes `id=` `mint` or `child entangler` public key
 
 ## Added
 

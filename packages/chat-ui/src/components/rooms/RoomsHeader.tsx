@@ -38,6 +38,7 @@ import { useChatSdk } from "../../contexts/chatSdk";
 import { useChatOwnedAmount } from "../../hooks";
 import { useChat } from "../../hooks/useChat";
 import { BuyMoreButton } from "../BuyMoreButton";
+import { useChatPermissionsFromChat } from "../../hooks";
 
 const playSound = debounce(() => {
   const audio = new Audio("/notification.mp3");
@@ -54,15 +55,16 @@ interface ISettings {
 
 export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
   const { info: chat } = useChat(chatKey);
-  const readMintKey = chat?.readPermissionKey;
+  const { info: chatPermissions } = useChatPermissionsFromChat(chatKey);
+  const readMintKey = chatPermissions?.readPermissionKey;
   const [isMobile] = useMediaQuery("(max-width: 680px)");
   const { metadata: readMetadata, image: readImage } = useTokenMetadata(
-    chat?.readPermissionKey
+    chatPermissions?.readPermissionKey
   );
   const readMint = useMint(readMintKey);
-  const postMint = useMint(chat?.postPermissionKey);
+  const postMint = useMint(chatPermissions?.postPermissionKey);
   const { metadata: postMetadata, image: postImage } = useTokenMetadata(
-    chat?.postPermissionKey
+    chatPermissions?.postPermissionKey
   );
   const { colorMode } = useColorMode();
   const { accelerator } = useAccelerator();
@@ -93,6 +95,7 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
           chatKey,
           async ({ transaction, txid, blockTime }) => {
             const parts = await chatSdk.getMessagePartsFromInflatedTx({
+              chat: chatKey,
               txid,
               blockTime,
               transaction: {
@@ -161,11 +164,11 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
                         </Flex>
                         <Text fontWeight="bold" textTransform="capitalize">
                           Hold{" "}
-                          {chat?.defaultReadPermissionAmount &&
+                          {chatPermissions?.defaultReadPermissionAmount &&
                             readMint &&
                             roundToDecimals(
                               toNumber(
-                                chat.defaultReadPermissionAmount,
+                                chatPermissions.defaultReadPermissionAmount,
                                 readMint
                               ),
                               4
@@ -186,11 +189,11 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
                           <Divider variant="dashed" />
                         </Flex>
                         <Text fontWeight="bold" textTransform="capitalize">
-                          {Object.keys(chat?.postPermissionAction || {})[0]}{" "}
-                          {chat?.postPermissionAmount &&
+                          {Object.keys(chatPermissions?.postPermissionAction || {})[0]}{" "}
+                          {chatPermissions?.postPermissionAmount &&
                             postMint &&
                             roundToDecimals(
-                              toNumber(chat.postPermissionAmount, postMint),
+                              toNumber(chatPermissions.postPermissionAmount, postMint),
                               4
                             )}
                         </Text>

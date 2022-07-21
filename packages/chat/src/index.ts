@@ -14,7 +14,7 @@ import {
 } from "@metaplex-foundation/mpl-token-metadata";
 import { AnchorProvider, BN as AnchorBN, IdlTypes, Program, utils } from "@project-serum/anchor";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, NATIVE_MINT, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { Commitment, ConfirmedTransactionMeta, Finality, Keypair, Message, PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, Transaction } from "@solana/web3.js";
+import { Commitment, ConfirmedTransactionMeta, Finality, Keypair, Message, PublicKey, Signer, SystemProgram, SYSVAR_RENT_PUBKEY, Transaction } from "@solana/web3.js";
 import {
   AnchorSdk,
   BigInstructionResult,
@@ -26,16 +26,16 @@ import {
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
 // @ts-ignore
-import * as bs58 from "bs58";
+import bs58 from "bs58";
 // @ts-ignore
 import LitJsSdk from "lit-js-sdk";
 // @ts-ignore
 import { v4 as uuid } from "uuid";
-import { CaseInsensitiveMarkerV0, ChatIDL, ChatV0, DelegateWalletV0, NamespacesV0, PermissionType, PostAction, ProfileV0, SettingsV0, MessageType as RawMessageType } from "./generated/chat";
+import { CaseInsensitiveMarkerV0, ChatIDL, ChatV0, DelegateWalletV0, NamespacesV0, PermissionType, PostAction, ProfileV0, SettingsV0, MessageType as RawMessageType, ChatPermissionsV0 } from "./generated/chat";
 import { getAuthSig, MessageSigner } from "./lit";
 import { uploadFiles } from "./shdw";
 
-const MESSAGE_MAX_CHARACTERS = 352; // TODO: This changes with optional accounts in the future
+const MESSAGE_MAX_CHARACTERS = 450; // TODO: This changes with optional accounts in the future
 
 export * from "./generated/chat";
 export * from "./shdw";
@@ -44,11 +44,6 @@ export * from "./lit";
 const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
   "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
 );
-
-const WHITELIST_INSTRUCTIONS = new Set([
-  "sendTokenMessageV0",
-  "sendNativeMessageV0",
-]);
 
 interface SymKeyInfo {
   encryptedSymKey: string;
@@ -223,6 +218,10 @@ export interface IChat extends ChatV0 {
   publicKey: PublicKey;
 }
 
+export interface IChatPermissions extends ChatPermissionsV0 {
+  publicKey: PublicKey;
+}
+
 export interface IEntry extends EntryData {
   publicKey: PublicKey;
   mint: PublicKey;
@@ -254,6 +253,8 @@ export interface IMessage {
   txids: string[];
   startBlockTime: number;
   endBlockTime: number;
+  readPermissionType: PermissionType,
+  readPermissionKey: PublicKey;
   readPermissionAmount: BN;
   referenceMessageId: string | null;
 
@@ -273,28 +274,54 @@ export interface InitializeChatArgs {
   payer?: PublicKey;
   /** The admin of this chat instance. **Default:** This wallet */
   admin?: PublicKey;
-  /** The unique shortname of the chat. This is a cardinal certificate NFT */
-  identifierCertificateMint: PublicKey;
+  /** The unique shortname of the chat. This is a cardinal certificate NFT. If this and identifier are not provided, will create an unidentifiedChat */
+  identifierCertificateMint?: PublicKey;
+  identifier?: string;
+  /** If not providing an identifier, creates an unidentified chat using this keypair. **Default:** Generate new keypair */
+  chatKeypair?: Keypair;
   /** Human readable name for the chat */
   name: string;
-  /** The mint you need to read this chat */
-  readPermissionKey: PublicKey;
-  /** The mint you need to post to this chat */
-  postPermissionKey: PublicKey;
-  /** The gating mechanism, part of an NFT collection or just holds the token. **Default:** Token */
-  readPermissionType?: PermissionType;
-  /** The gating mechanism, part of an NFT collection or just holds the token **Default:** Token */
-  postPermissionType?: PermissionType;
-  /** The number of tokens needed to post to this chat. **Default:** 1 */
-  postPermissionAmount?: number | BN;
-  /** The action to take when posting. **Default:** hold */
-  postPermissionAction?: PostAction;
-  /** Amount of read permission mint required to read this chat by default. **Default:** 1 */
-  defaultReadPermissionAmount?: any;
-  /** The destination to pay to on post */
-  postPayDestination?: PublicKey;
   imageUrl?: string;
   metadataUrl?: string;
+  /** 
+   * The program id that we expect messages to come from. **Default: ** Chat program.
+   * This is your hook to have custom post gating logic.
+   */
+  postMessageProgramId?: PublicKey;
+  // If using default chat permissioning
+  permissions?: {
+    /** The mint you need to read this chat */
+    readPermissionKey: PublicKey;
+    /** The mint you need to post to this chat */
+    postPermissionKey: PublicKey;
+    /** The gating mechanism, part of an NFT collection or just holds the token. **Default:** Token */
+    readPermissionType?: PermissionType;
+    /** The gating mechanism, part of an NFT collection or just holds the token **Default:** Token */
+    postPermissionType?: PermissionType;
+    /** The number of tokens needed to post to this chat. **Default:** 1 */
+    postPermissionAmount?: number | BN;
+    /** The action to take when posting. **Default:** hold */
+    postPermissionAction?: PostAction;
+    /** Amount of read permission mint required to read this chat by default. **Default:** 1 */
+    defaultReadPermissionAmount?: any;
+    /** The destination to pay to on post */
+    postPayDestination?: PublicKey;
+  };
+}
+
+export interface CloseChatArgs {
+  refund?: PublicKey;
+  /** The chat to close */
+  chat: PublicKey;
+  /** The admin account, **Default:** this.wallet.publicKey */
+  admin?: PublicKey;
+}
+
+export interface ClaimChatAdminArgs {
+  /** The chat to close */
+  chat: PublicKey;
+  /** The admin account, **Default:** this.wallet.publicKey */
+  admin?: PublicKey;
 }
 
 export interface InitializeProfileArgs {
@@ -335,8 +362,14 @@ export interface SendMessageArgs {
   /** The message to send */
   message: ISendMessageContent;
 
-  /** The amount of tokens needed to read. **Default:** from chat */
-  readPermissionAmount?: number;
+  /** The amount of tokens needed to read. **Default:** from chat permissions */
+  readPermissionAmount?: number | BN;
+
+  /** The read permission key (collection, token mint, etc). **Default:** from chat permissions */
+  readPermissionKey?: PublicKey;
+
+  /** The read permission key (collection, token mint, etc). **Default:** from chat permissions */
+  readPermissionType?: PermissionType;
 
   /** Lit protocol conditions, **Default:** The chatroom default */
   accessControlConditions?: any;
@@ -397,13 +430,27 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   }
 
   async _litAuth() {
+    const cached = storage.get("lit-auth-sol-signature");
+    const cachedDate = storage.get("lit-auth-sol-signature-date") || 0;
+    const cachedAuthSig = JSON.parse(cached as string);
+    if (Number(cachedDate) >= (new Date().valueOf() - 24 * 60 * 60 * 1000) && this.wallet.publicKey.toBase58() === cachedAuthSig?.address) {
+      this.litAuthSig = cachedAuthSig;
+      return
+    }
     try {
       // @ts-ignore
       if (!this.wallet.signMessage) {
-        throw new Error("This wallet does not support signMessage. Please use another wallet")
+        throw new Error(
+          "This wallet does not support signMessage. Please use another wallet"
+        );
       }
-      // @ts-ignore
-      this.litAuthSig = await getAuthSig(this.wallet.publicKey, this.wallet as MessageSigner)
+      this.litAuthSig = await getAuthSig(
+        this.wallet.publicKey,
+        // @ts-ignore
+        this.wallet as MessageSigner
+      );
+      storage.set("lit-auth-sol-signature", JSON.stringify(this.litAuthSig));
+      storage.set("lit-auth-sol-signature-date", new Date().valueOf().toString());
     } finally {
       this.authingLit = null;
     }
@@ -437,6 +484,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     );
 
     const ChatIDLJson = await Program.fetchIdl(chatProgramId, provider);
+
     const chat = new Program<ChatIDL>(
       ChatIDLJson as ChatIDL,
       chatProgramId,
@@ -446,7 +494,11 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       alertWhenUnauthorized: false,
       debug: false,
     });
-    await client.connect();
+    try {
+      await client.connect();
+    } catch (e: any) {
+      console.warn(e);
+    }
 
     return new this({
       provider,
@@ -518,6 +570,21 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       name: depuff(coded.name),
       imageUrl: depuff(coded.imageUrl),
       metadataUrl: depuff(coded.metadataUrl),
+      publicKey: pubkey,
+    };
+  };
+
+  chatPermissionsDecoder: TypedAccountParser<IChatPermissions> = (
+    pubkey,
+    account
+  ) => {
+    const coded = this.program.coder.accounts.decode<IChatPermissions>(
+      "ChatPermissionsV0",
+      account.data
+    );
+
+    return {
+      ...coded,
       publicKey: pubkey,
     };
   };
@@ -599,6 +666,12 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     return this.getAccount(chatKey, this.chatDecoder);
   }
 
+  getChatPermissions(
+    chatPermissionsKey: PublicKey
+  ): Promise<IChatPermissions | null> {
+    return this.getAccount(chatPermissionsKey, this.chatPermissionsDecoder);
+  }
+
   getProfile(profileKey: PublicKey): Promise<IProfile | null> {
     return this.getAccount(profileKey, this.profileDecoder);
   }
@@ -616,6 +689,12 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     );
   }
 
+  /**
+   * Get messages from a bunch of parts. NOTE: It is highly reccommended you use accountFetchCache for efficiency.
+   * @param parts
+   * @param ignorePartial
+   * @returns
+   */
   async getMessagesFromParts(
     parts: IMessagePart[],
     ignorePartial: boolean = true
@@ -678,10 +757,20 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     return this.symKeyFetchCache[encryptedSymmetricKey];
   }
 
+  /**
+   * Get message from a bunch of parts. NOTE: It is highly reccommended you use accountFetchCache for efficiency.
+   *
+   * @param parts
+   * @param ignorePartial
+   * @returns
+   */
   async getMessageFromParts(
     parts: IMessagePart[],
     ignorePartial: boolean = true
   ): Promise<IMessage | undefined> {
+    if (parts.length == 0) {
+      return undefined;
+    }
     if (ignorePartial && parts.length !== parts[0].totalParts) {
       return undefined;
     }
@@ -697,6 +786,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       chatKey,
       encryptedSymmetricKey,
       referenceMessageId,
+      readPermissionKey,
+      readPermissionType,
       ...rest
     } = parts[0];
 
@@ -710,34 +801,31 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       endBlockTime: parts[parts.length - 1].blockTime,
       txids: parts.map((part) => part.txid),
       readPermissionAmount,
+      readPermissionKey,
+      readPermissionType,
       content,
       chatKey,
       getDecodedMessage: async () => {
         if (decodedMessage) {
           return decodedMessage;
         }
-        
-        await this.litAuth();
 
-        const chatAcc = await this.getChat(chatKey);
         let readAmount: BN;
         try {
-          const readMint = await getMintInfo(
-            this.provider,
-            chatAcc!.readPermissionKey
-          );
+          const readMint = await getMintInfo(this.provider, readPermissionKey);
           readAmount = toBN(readPermissionAmount, readMint);
         } catch {
           readAmount = new BN(readPermissionAmount);
         }
 
         if (encryptedSymmetricKey) {
+          await this.litAuth();
           const accessControlConditions = getAccessConditions(
             parts[0].conditionVersion,
-            chatAcc!.readPermissionKey,
+            readPermissionKey,
             readAmount,
             this.chain,
-            chatAcc!.readPermissionType
+            readPermissionType
           );
 
           try {
@@ -789,16 +877,25 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     };
   }
 
+  /**
+   * Get message parts from a tx. NOTE: It is highly reccommended you use accountFetchCache for efficiency.
+   * @param param0
+   * @returns
+   */
   async getMessagePartsFromInflatedTx({
+    chat,
     transaction,
     txid,
     meta,
     blockTime,
+    idl,
   }: {
+    chat: PublicKey;
     transaction: { message: Message; signatures: string[] };
     txid: string;
     meta?: ConfirmedTransactionMeta | null;
     blockTime?: number | null;
+    idl?: any;
   }): Promise<IMessagePart[]> {
     if (meta?.err) {
       return [];
@@ -809,27 +906,48 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         this.programId
       )
     );
-    const coder = this.program.coder.instruction;
+    const chatAcc = (await this.getChat(chat))!;
+    if (!idl) {
+      idl = await Program.fetchIdl(chatAcc.postMessageProgramId, this.provider);
+    }
 
-    const sendMessageIdl = this.program.idl.instructions.find((i: any) =>
-      WHITELIST_INSTRUCTIONS.has(i.name)
-    )!;
-    const senderAccountIndex = sendMessageIdl.accounts.findIndex(
-      (account: any) => account.name === "sender"
+    if (!idl) {
+      throw new Error("Chat only supports programs with published IDLs.");
+    }
+
+    const program = new Program(
+      idl,
+      chatAcc.postMessageProgramId,
+      this.provider
     );
-    // LEGACY: This only exists on old messages
-    const profileAccountIndex = 2;
-    const chatAccountIndex = sendMessageIdl.accounts.findIndex(
-      (account: any) => account.name === "chat"
-    );
+    const coder = program.coder.instruction;
 
     const decoded = instructions
+      .filter((ix) =>
+        ensurePubkey(transaction.message.accountKeys[ix.programIdIndex]).equals(
+          chatAcc.postMessageProgramId
+        )
+      )
       .map((ix) => {
         // Just make the buff bigger so we can add stuff later
         const buf = Buffer.concat([bs58.decode(ix.data), Buffer.alloc(1000)]);
+        // @ts-ignore
+        const { name, data } = coder.decode(buf);
+        const sendMessageIdl = idl.instructions.find(
+          (ix: any) => ix.name == name
+        )!;
+        const senderAccountIndex = sendMessageIdl.accounts.findIndex(
+          (account: any) => account.name === "sender"
+        );
+        // LEGACY: This only exists on old messages
+        const profileAccountIndex = 2;
+        const chatAccountIndex = sendMessageIdl.accounts.findIndex(
+          (account: any) => account.name === "chat"
+        );
+
         return {
           // @ts-ignore
-          data: coder.decode(buf),
+          data,
           sender: ensurePubkey(
             transaction.message.accountKeys[ix.accounts[senderAccountIndex]]
           ),
@@ -844,30 +962,53 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       .filter(truthy);
 
     return Promise.all(
-      decoded
-        .filter((decoded) => WHITELIST_INSTRUCTIONS.has(decoded.data.name))
-        .map(async (decoded) => {
-          const args = decoded.data.data.args;
+      decoded.map(async (decoded) => {
+        const args = decoded.data.args;
 
-          let sender = decoded.sender;
-          // Time of the switchover. Didn't feel like this was worthy of a major version bump so early on
-          if (blockTime && blockTime < 1657043710) {
-            const profileAcc = await this.getProfile(decoded.profile);
-            sender = profileAcc!.ownerWallet;
-          }
+        let sender = decoded.sender;
+        // Time of the switchover. Didn't feel like this was worthy of a major version bump so early on
+        if (blockTime && blockTime < 1657043710) {
+          const profileAcc = await this.getProfile(decoded.profile);
+          sender = profileAcc!.ownerWallet;
+        }
 
-          return {
-            ...args,
-            blockTime,
-            txid,
-            chatKey: decoded.chat,
-            sender,
-          };
-        })
+        if (!args.readPermissionKey) {
+          const chatPermissions = (
+            await ChatSdk.chatPermissionsKey(decoded.chat, this.programId)
+          )[0];
+          const chatPermissionsAcc = await this.getChatPermissions(
+            chatPermissions
+          );
+          args.readPermissionKey = chatPermissionsAcc?.readPermissionKey;
+          args.readPermissionType = chatPermissionsAcc?.readPermissionType;
+        }
+
+        return {
+          ...args,
+          blockTime,
+          txid,
+          chatKey: decoded.chat,
+          sender,
+        };
+      })
     );
   }
 
-  async getMessagePartsFromTx(txid: string): Promise<IMessagePart[]> {
+  /**
+   * Get message parts from a tx. NOTE: It is highly reccommended you use accountFetchCache for efficiency.
+   *
+   * @param txid
+   * @returns
+   */
+  async getMessagePartsFromTx({
+    chat,
+    txid,
+    idl,
+  }: {
+    chat: PublicKey;
+    txid: string;
+    idl?: any;
+  }): Promise<IMessagePart[]> {
     const connection = this.provider.connection;
     const tx = await connection.getTransaction(txid, {
       commitment: "confirmed",
@@ -882,10 +1023,12 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     }
 
     return this.getMessagePartsFromInflatedTx({
+      chat,
       transaction: tx.transaction,
       txid,
       meta: tx.meta,
       blockTime: tx.blockTime,
+      idl,
     });
   }
 
@@ -894,7 +1037,20 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     programId: PublicKey = ChatSdk.ID
   ): Promise<[PublicKey, number]> {
     return PublicKey.findProgramAddress(
-      [Buffer.from("chat", "utf-8"), identifierCertificateMint.toBuffer()],
+      [
+        Buffer.from("identified-chat", "utf-8"),
+        identifierCertificateMint.toBuffer(),
+      ],
+      programId
+    );
+  }
+
+  static chatPermissionsKey(
+    chat: PublicKey,
+    programId: PublicKey = ChatSdk.ID
+  ) {
+    return PublicKey.findProgramAddress(
+      [Buffer.from("permissions", "utf-8"), chat.toBuffer()],
       programId
     );
   }
@@ -1214,114 +1370,296 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     );
   }
 
+  async claimChatAdminInstructions({
+    chat,
+    admin = this.wallet.publicKey,
+  }: ClaimChatAdminArgs): Promise<InstructionResult<null>> {
+    const chatAcc = (await this.getChat(chat))!;
+    if (chatAcc.identifierCertificateMint && !chatAcc.admin?.equals(admin)) {
+      const identifierCertificateMintAccount =
+        await Token.getAssociatedTokenAddress(
+          ASSOCIATED_TOKEN_PROGRAM_ID,
+          TOKEN_PROGRAM_ID,
+          chatAcc.identifierCertificateMint!,
+          admin,
+          true
+        );
+
+      return {
+        output: null,
+        signers: [],
+        instructions: [
+          await this.instruction.claimAdminV0({
+            accounts: {
+              chat,
+              identifierCertificateMintAccount,
+              ownerWallet: admin
+            }
+          })
+        ]
+      }
+    }
+    return {
+      output: null,
+      signers: [],
+      instructions: []
+    }
+  }
+
+  async claimAdmin(args: ClaimChatAdminArgs, commitment: Finality = "confirmed"): Promise<null> {
+    return this.execute(this.claimChatAdminInstructions(args), args.admin, commitment);
+  }
+
+  async closeChatInstructions({
+    refund = this.wallet.publicKey,
+    chat,
+    admin = this.wallet.publicKey,
+  }: CloseChatArgs): Promise<InstructionResult<null>> {
+    const instructions = [];
+
+    instructions.push(
+      ...(await this.claimChatAdminInstructions({
+        chat,
+        admin,
+      })).instructions
+    );
+
+    const chatPermissionsKey = (await ChatSdk.chatPermissionsKey(chat))[0];
+    const chatPermissions = await this.getChatPermissions(chatPermissionsKey);
+
+    if (chatPermissions) {
+      instructions.push(
+        await this.instruction.closeChatPermissionsV0({
+          accounts: {
+            refund,
+            admin,
+            chat,
+            chatPermissions: chatPermissionsKey,
+            systemProgram: SystemProgram.programId,
+          },
+        })
+      );
+    }
+    instructions.push(
+      await this.instruction.closeChatV0({
+        accounts: {
+          refund,
+          admin,
+          chat,
+          systemProgram: SystemProgram.programId,
+        },
+      })
+    );
+    return {
+      signers: [],
+      instructions,
+      output: null,
+    };
+  }
+
+  async closeChat(args: CloseChatArgs, commitment?: Finality): Promise<void> {
+    await this.execute(
+      this.closeChatInstructions(args),
+      args.refund,
+      commitment
+    );
+  }
+
   async initializeChatInstructions({
     payer = this.wallet.publicKey,
     identifierCertificateMint,
+    identifier,
     name,
-    readPermissionKey,
-    postPermissionKey,
-    postPermissionAction = PostAction.Hold,
-    postPayDestination,
-    postPermissionAmount = 1,
-    defaultReadPermissionAmount = 1,
+    permissions,
+    postMessageProgramId = this.programId,
     imageUrl = "",
     metadataUrl = "",
-    readPermissionType = PermissionType.Token,
-    postPermissionType = PermissionType.Token,
-  }: InitializeChatArgs): Promise<InstructionResult<{ chat: PublicKey }>> {
-    const chat = (
-      await ChatSdk.chatKey(identifierCertificateMint, this.programId)
-    )[0];
+    chatKeypair,
+    admin = this.wallet.publicKey,
+  }: InitializeChatArgs): Promise<
+    BigInstructionResult<{
+      chat: PublicKey;
+      chatPermissions?: PublicKey;
+      chatKeypair?: Keypair;
+      identifierCertificateMint?: PublicKey;
+    }>
+  > {
+    const instructions = [];
+    const signers: Signer[][] = [];
 
-    if (readPermissionKey.equals(NATIVE_MINT)) {
-      readPermissionType = PermissionType.Native;
+    if (identifier) {
+      const identifierInsts = await this.claimIdentifierInstructions({
+        payer,
+        owner: admin,
+        identifier,
+        type: IdentifierType.Chat,
+      });
+      identifierCertificateMint = identifierInsts.output.certificateMint;
+      instructions.push(...identifierInsts.instructions);
+      signers.push(...identifierInsts.signers);
     }
 
-    if (postPermissionKey.equals(NATIVE_MINT)) {
-      postPermissionType = PermissionType.Native;
-    }
+    const initChatInstructions = [];
+    const initChatSigners = [];
+    let chat: PublicKey;
+    if (identifierCertificateMint) {
+      chat = (
+        await ChatSdk.chatKey(identifierCertificateMint, this.programId)
+      )[0];
 
-    // find the permission amounts
-    let postAmount;
-    try {
-      const postMint = await getMintInfo(this.provider, postPermissionKey);
-      postAmount = toBN(postPermissionAmount, postMint);
-    } catch {
-      // permission key isn't a mint account
-      postAmount = new BN(postPermissionAmount);
-    }
-    let readAmount;
-    try {
-      const readMint = await getMintInfo(this.provider, readPermissionKey);
-      readAmount = toBN(defaultReadPermissionAmount, readMint);
-    } catch {
-      // permission key isn't a mint account
-      readAmount = new BN(defaultReadPermissionAmount);
-    }
-
-    const metadataKey = await Metadata.getPDA(identifierCertificateMint);
-    const metadata = await new Metadata(
-      metadataKey,
-      (await this.provider.connection.getAccountInfo(metadataKey))!
-    );
-    const namespaces = await this.getNamespaces();
-    const [entryName] = metadata.data.data.name.split(".");
-    const [entry] = await await ChatSdk.entryKey(
-      namespaces.chatNamespace,
-      entryName
-    );
-
-    const identifierCertificateMintAccount =
-      await Token.getAssociatedTokenAddress(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        identifierCertificateMint,
-        this.wallet.publicKey,
-        true
-      );
-
-    const instruction = await this.instruction.initializeChatV0(
-      {
-        name,
-        imageUrl: imageUrl,
-        metadataUrl: metadataUrl,
-        defaultReadPermissionAmount: readAmount as AnchorBN,
-        postPermissionKey,
-        readPermissionKey,
-        postPermissionAction: postPermissionAction as never,
-        postPermissionAmount: postAmount as AnchorBN,
-        postPayDestination: postPayDestination || null,
-        readPermissionType: readPermissionType as never,
-        postPermissionType: postPermissionType as never,
-      },
-      {
-        accounts: {
-          payer,
-          chat,
-          namespaces: namespaces.publicKey,
-          entry,
-          identifierCertificateMint,
-          identifierCertificateMintAccount,
-          ownerWallet: this.wallet.publicKey,
-          systemProgram: SystemProgram.programId,
-        },
+      const namespaces = await this.getNamespaces();
+      if (!identifier) {
+        const metadataKey = await Metadata.getPDA(identifierCertificateMint);
+        const metadata = await new Metadata(
+          metadataKey,
+          (await this.provider.connection.getAccountInfo(metadataKey))!
+        );
+        const [entryName] = metadata.data.data.name.split(".");
+        identifier = entryName;
       }
-    );
+
+      const [entry] = await await ChatSdk.entryKey(
+        namespaces.chatNamespace,
+        identifier
+      );
+      
+      const identifierCertificateMintAccount =
+        await Token.getAssociatedTokenAddress(
+          ASSOCIATED_TOKEN_PROGRAM_ID,
+          TOKEN_PROGRAM_ID,
+          identifierCertificateMint,
+          admin,
+          true
+        );
+      const instruction = await this.instruction.initializeChatV0(
+        {
+          name,
+          imageUrl: imageUrl,
+          metadataUrl: metadataUrl,
+          postMessageProgramId,
+        },
+        {
+          accounts: {
+            payer,
+            chat,
+            namespaces: namespaces.publicKey,
+            entry,
+            identifierCertificateMint,
+            identifierCertificateMintAccount,
+            ownerWallet: admin,
+            systemProgram: SystemProgram.programId,
+          },
+        }
+      );
+      initChatInstructions.push(instruction);
+    } else {
+      chatKeypair = chatKeypair || Keypair.generate();
+      chat = chatKeypair.publicKey;
+      const instruction = await this.instruction.initializeUnidentifiedChatV0(
+        {
+          name,
+          imageUrl: imageUrl,
+          metadataUrl: metadataUrl,
+          postMessageProgramId,
+        },
+        admin,
+        {
+          accounts: {
+            payer,
+            chat,
+            systemProgram: SystemProgram.programId,
+          },
+        }
+      );
+      initChatInstructions.push(instruction);
+      initChatSigners.push(chatKeypair);
+    }
+
+    let chatPermissions: PublicKey | undefined = undefined;
+    if (permissions) {
+      let {
+        readPermissionKey,
+        postPermissionKey,
+        postPermissionAction = PostAction.Hold,
+        postPayDestination,
+        postPermissionAmount = 1,
+        defaultReadPermissionAmount = 1,
+        readPermissionType = PermissionType.Token,
+        postPermissionType = PermissionType.Token,
+      } = permissions;
+      if (readPermissionKey.equals(NATIVE_MINT)) {
+        readPermissionType = PermissionType.Native;
+      }
+
+      if (postPermissionKey.equals(NATIVE_MINT)) {
+        postPermissionType = PermissionType.Native;
+      }
+
+      // find the permission amounts
+      let postAmount;
+      try {
+        const postMint = await getMintInfo(this.provider, postPermissionKey);
+        postAmount = toBN(postPermissionAmount, postMint);
+      } catch {
+        // permission key isn't a mint account
+        postAmount = new BN(postPermissionAmount);
+      }
+      let readAmount;
+      try {
+        const readMint = await getMintInfo(this.provider, readPermissionKey);
+        readAmount = toBN(defaultReadPermissionAmount, readMint);
+      } catch {
+        // permission key isn't a mint account
+        readAmount = new BN(defaultReadPermissionAmount);
+      }
+      chatPermissions = (
+        await ChatSdk.chatPermissionsKey(chat, this.programId)
+      )[0];
+      initChatInstructions.push(
+        await this.instruction.initializeChatPermissionsV0(
+          {
+            defaultReadPermissionAmount: readAmount as AnchorBN,
+            postPermissionKey,
+            readPermissionKey,
+            postPermissionAction: postPermissionAction as never,
+            postPermissionAmount: postAmount as AnchorBN,
+            postPayDestination: postPayDestination || null,
+            readPermissionType: readPermissionType as never,
+            postPermissionType: postPermissionType as never,
+          },
+          {
+            accounts: {
+              payer,
+              chat,
+              chatPermissions: chatPermissions!,
+              admin,
+              systemProgram: SystemProgram.programId,
+            },
+          }
+        )
+      );
+    }
+
+    instructions.push(initChatInstructions);
+    signers.push(initChatSigners);
 
     return {
       output: {
         chat,
+        chatPermissions,
+        chatKeypair,
+        identifierCertificateMint,
       },
-      signers: [],
-      instructions: [instruction],
+      signers,
+      instructions,
     };
   }
 
   async initializeChat(
     args: InitializeChatArgs,
-    commitment: Commitment = "confirmed"
-  ): Promise<{ chat: PublicKey }> {
-    return this.execute(
+    commitment: Finality = "confirmed"
+  ): Promise<{ chat: PublicKey; chatPermissions?: PublicKey; identifierCertificateMint?: PublicKey }> {
+    return this.executeBig(
       this.initializeChatInstructions(args),
       args.payer,
       commitment
@@ -1558,38 +1896,47 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     delegateWalletKeypair,
     encrypted = true,
     nftMint,
+    readPermissionKey,
+    readPermissionType,
   }: SendMessageArgs): Promise<BigInstructionResult<{ messageId: string }>> {
     const { referenceMessageId, type, ...message } = rawMessage;
     if (encrypted) {
       await this.litAuth();
     }
     let { fileAttachments, ...normalMessage } = message;
+    const chatPermissions = (
+      await ChatSdk.chatPermissionsKey(chat, this.programId)
+    )[0];
+    const chatPermissionsAcc = (await this.getChatPermissions(
+      chatPermissions
+    ))!;
+
     const chatAcc = (await this.getChat(chat))!;
     let readAmount;
     try {
       const readMint = await getMintInfo(
         this.provider,
-        chatAcc.readPermissionKey
+        chatPermissionsAcc.readPermissionKey
       );
       readAmount = toBN(
-        readPermissionAmount || chatAcc.defaultReadPermissionAmount,
+        readPermissionAmount || chatPermissionsAcc.defaultReadPermissionAmount,
         readMint
       );
     } catch {
       readAmount = new BN(
-        readPermissionAmount || chatAcc.defaultReadPermissionAmount
+        readPermissionAmount || chatPermissionsAcc.defaultReadPermissionAmount
       );
     }
     const accessControlConditionsToUse = getAccessConditions(
       this.conditionVersion,
-      chatAcc.readPermissionKey,
+      chatPermissionsAcc.readPermissionKey,
       readAmount,
       this.chain,
-      chatAcc!.readPermissionType
+      chatPermissionsAcc!.readPermissionType
     );
 
     const storedSymKey = this.symKeyStorage.getSymKeyToUse(
-      chatAcc.readPermissionKey,
+      chatPermissionsAcc.readPermissionKey,
       readAmount.toNumber()
     );
     let symmKey: any;
@@ -1677,7 +2024,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
           "base16"
         );
         this.symKeyStorage.setSymKeyToUse(
-          chatAcc.readPermissionKey,
+          chatPermissionsAcc.readPermissionKey,
           readAmount.toNumber(),
           {
             symKey: Buffer.from(await exportSymmetricKey(symmKey)).toString(
@@ -1696,7 +2043,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     const postPermissionAccount = await Token.getAssociatedTokenAddress(
       ASSOCIATED_TOKEN_PROGRAM_ID,
       TOKEN_PROGRAM_ID,
-      nftMint ? nftMint : chatAcc.postPermissionKey,
+      nftMint ? nftMint : chatPermissionsAcc.postPermissionKey,
       sender,
       true
     );
@@ -1728,7 +2075,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     const instructionGroups = [];
     const signerGroups = [];
     const messageId = uuid();
-    const ix = chatAcc?.postPermissionKey.equals(NATIVE_MINT)
+    const ix = chatPermissionsAcc?.postPermissionKey.equals(NATIVE_MINT)
       ? this.instruction.sendNativeMessageV0
       : this.instruction.sendTokenMessageV0;
     for (let i = 0; i < numGroups; i++) {
@@ -1744,6 +2091,10 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
             ),
             encryptedSymmetricKey,
             readPermissionAmount: readAmount,
+            readPermissionType: (readPermissionType ||
+              chatPermissionsAcc.readPermissionType) as never,
+            readPermissionKey:
+              readPermissionKey || chatPermissionsAcc.readPermissionKey,
             totalParts: numGroups,
             currentPart: i,
             messageType: (RawMessageType as any)[
@@ -1754,10 +2105,13 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
           {
             accounts: {
               chat,
+              chatPermissions,
               sender,
               signer: delegateWallet || sender,
               postPermissionAccount,
-              postPermissionMint: nftMint ? nftMint : chatAcc.postPermissionKey,
+              postPermissionMint: nftMint
+                ? nftMint
+                : chatPermissionsAcc.postPermissionKey,
               tokenProgram: TOKEN_PROGRAM_ID,
             },
             remainingAccounts,

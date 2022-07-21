@@ -10,13 +10,16 @@ use std::str::FromStr;
 #[derive(Accounts)]
 pub struct SendTokenMessageV0<'info> {
   pub chat: Box<Account<'info, ChatV0>>,
+  #[account(
+    has_one = chat
+  )]
+  pub chat_permissions: Box<Account<'info, ChatPermissionsV0>>,
   /// CHECK: Either delegate wallet passed into additional accounts or this is a signer
   pub sender: UncheckedAccount<'info>,
   pub signer: Signer<'info>, // Wallet signing for this transaction, may be the same as sender. May be a delegate
   #[account(
     mut,
     constraint = post_permission_account.mint == post_permission_mint.key(),
-    // constraint = post_permission_account.owner == profile.owner_wallet
   )]
   pub post_permission_account: Account<'info, TokenAccount>,
   #[account(mut)]
@@ -50,8 +53,9 @@ pub fn assert_meets_permissions(ctx: &Context<SendTokenMessageV0>) -> Result<()>
   let remaining_accs = &mut ctx.remaining_accounts.iter();
 
   // attempt to verify the token holding
-  if ctx.accounts.chat.post_permission_key == ctx.accounts.post_permission_mint.key()
-    && ctx.accounts.post_permission_account.amount >= ctx.accounts.chat.post_permission_amount
+  if ctx.accounts.chat_permissions.post_permission_key == ctx.accounts.post_permission_mint.key()
+    && ctx.accounts.post_permission_account.amount
+      >= ctx.accounts.chat_permissions.post_permission_amount
   {
     return Ok(());
   }
@@ -61,18 +65,18 @@ pub fn assert_meets_permissions(ctx: &Context<SendTokenMessageV0>) -> Result<()>
 
   let metadata = assert_valid_metadata(metadata_info, ctx.accounts.post_permission_mint.key())?;
   let collection = metadata.collection.unwrap();
-  if ctx.accounts.chat.post_permission_key == collection.key && collection.verified {
+  if ctx.accounts.chat_permissions.post_permission_key == collection.key && collection.verified {
     return Ok(());
   }
 
   Err(error!(ErrorCode::PermissionDenied))
 }
 
-pub fn handler(ctx: Context<SendTokenMessageV0>, _args: MessagePartV0) -> Result<()> {
+pub fn handler(ctx: Context<SendTokenMessageV0>, message: MessagePartV0) -> Result<()> {
   assert_meets_permissions(&ctx)?;
 
   let rm_acc_length = ctx.remaining_accounts.len();
-  let has_delegate = match ctx.accounts.chat.post_permission_type {
+  let has_delegate = match ctx.accounts.chat_permissions.post_permission_type {
     PermissionType::Token => rm_acc_length == 1,
     PermissionType::NFT => rm_acc_length == 2,
     _ => return Err(error!(ErrorCode::InvalidPermissionType)),
@@ -89,6 +93,13 @@ pub fn handler(ctx: Context<SendTokenMessageV0>, _args: MessagePartV0) -> Result
   } else if ctx.accounts.signer.key() != ctx.accounts.sender.key() {
     return Err(error!(ErrorCode::IncorrectSender));
   }
+
+  emit!(MessagePartEventV0 {
+    chat: ctx.accounts.chat.key(),
+    sender: ctx.accounts.sender.key(),
+    signer: ctx.accounts.signer.key(),
+    message
+  });
 
   Ok(())
 }

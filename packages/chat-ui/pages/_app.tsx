@@ -1,20 +1,16 @@
+import { ChatProviders } from "@/components/ChatProviders";
 import { Wallet } from "@/components/Wallet";
 import { ChatSdkProvider } from "@/contexts/chatSdk";
 import { EmojisProvider } from "@/contexts/emojis";
 import { ReplyProvider } from "@/contexts/reply";
+import { IS_PRODUCTION } from "@/constants";
 import { useMediaQuery } from "@chakra-ui/react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
-import {
-  AcceleratorProvider,
-  Notification,
-  StrataProviders,
-  HolaplexGraphqlProvider,
-} from "@strata-foundation/react";
+import { Notification } from "@strata-foundation/react";
 import { AppProps } from "next/app";
+import { useRouter } from "next/router";
 import React, { useEffect } from "react";
 import toast, { Toaster } from "react-hot-toast";
-import { IS_PRODUCTION } from "@/constants";
-import { useRouter } from "next/router";
 import * as gtag from "../src/utils/gtag";
 
 require("@solana/wallet-adapter-react-ui/styles.css");
@@ -70,36 +66,26 @@ function MyApp({ Component, pageProps }: AppProps) {
   return (
     <Wallet>
       <WalletModalProvider>
-        <StrataProviders resetCSS onError={onError}>
-          <AcceleratorProvider url="wss://prod-api.teamwumbo.com/accelerator">
-            <ChatSdkProvider>
-              <HolaplexGraphqlProvider>
-                <EmojisProvider>
-                  <ReplyProvider>
-                    <Component {...pageProps} />
-                    {isMobile ? (
-                      <Toaster
-                        position="top-center"
-                        containerStyle={{
-                          margin: "60px auto",
-                          width: "90%",
-                          maxWidth: "420px",
-                        }}
-                      />
-                    ) : (
-                      <Toaster
-                        position="bottom-left"
-                        containerStyle={{
-                          width: "420px",
-                        }}
-                      />
-                    )}
-                  </ReplyProvider>
-                </EmojisProvider>
-              </HolaplexGraphqlProvider>
-            </ChatSdkProvider>
-          </AcceleratorProvider>
-        </StrataProviders>
+        <ChatProviders>
+          <Component {...pageProps} />
+          {isMobile ? (
+            <Toaster
+              position="top-center"
+              containerStyle={{
+                margin: "60px auto",
+                width: "90%",
+                maxWidth: "420px",
+              }}
+            />
+          ) : (
+            <Toaster
+              position="bottom-left"
+              containerStyle={{
+                width: "420px",
+              }}
+            />
+          )}
+        </ChatProviders>
       </WalletModalProvider>
     </Wallet>
   );

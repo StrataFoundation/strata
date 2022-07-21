@@ -50,7 +50,7 @@ export const DynamicPricingCandyMachine = (
   props: DynamicPricingCandyMachineProps
 ) => {
   const { connection } = useConnection();
-  const { publicKey, connected, signTransaction } = useWallet();
+  const { publicKey, connected, signTransaction, wallet } = useWallet();
 
   const cmState = useCandyMachineInfo(props.candyMachineId);
   const { candyMachine, isWhitelistUser, isActive, isPresale } = cmState;

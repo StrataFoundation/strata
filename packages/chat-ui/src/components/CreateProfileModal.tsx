@@ -65,7 +65,6 @@ const validationSchema = yup.object({
   username: yup
     .string()
     .required()
-    .min(6)
     .max(28)
     .matches(
       /^[a-zA-Z0-9_\-]*$/,
@@ -121,6 +120,7 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
     watch,
     clearErrors,
     setValue,
+    setError,
     formState: { errors, isSubmitting },
   } = formProps;
   const [step, setStep] = useState("");
@@ -176,11 +176,14 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
       </Link>
     </Box>
   );
-  ("");
 
   handleErrors(error, delegateError);
 
   async function onSubmit(args: IProfileProps): Promise<void> {
+    if (args.username.length < 6 && !wallet) {
+      setError("username", { message: "Username must be at least 6 characters." });
+      return
+    }
     await execute(chatSdk, args, setStep);
     if (props.onClose) {
       props.onClose();

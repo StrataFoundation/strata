@@ -5,9 +5,11 @@ slug: /
 
 # Getting Started
 
-The Strata Protocol lets you effortlessly create tokens and networks of Tokens (Collectives) on Solana!
+The Strata Protocol lets you effortlessly create and price tokens and token collectives on Solana!
 
 Looking to launch a token? Check out our launchpad at [app.strataprotocol.com](https://app.strataprotocol.com). The documentation behind the launchpad can be found under the "Launchpad" section of these docs.
+
+Looking to learn more about chat? [Chat Docs](./chat/getting_started)
 
 Looking to learn more about tokens, systems of tokens, and bonding curves? Read on.
 
@@ -31,21 +33,11 @@ import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
 import { getAssociatedAccountBalance, SplTokenMetadata } from "@strata-foundation/spl-utils";
 
-anchor.setProvider(anchor.Provider.local());
 const provider = anchor.getProvider();
 
-const tokenCollectiveSdk, tokenBondingSdk, tokenMetadataSdk;
-async function getPrograms() {
-  tokenCollectiveSdk = await SplTokenCollective.init(provider);
-  tokenBondingSdk = await SplTokenBonding.init(provider);
-  tokenMetadataSdk = await SplTokenMetadata.init(provider);
-  return {
-    tokenCollectiveSdk,
-    tokenBondingSdk,
-    tokenMetadataSdk
-  }
-}
-getPrograms().catch(console.error);
+const tokenCollectiveSdk = await SplTokenCollective.init(provider);
+const tokenBondingSdk = await SplTokenBonding.init(provider);
+const tokenMetadataSdk = await SplTokenMetadata.init(provider);
 ```
 
 ## Creating a Social Token

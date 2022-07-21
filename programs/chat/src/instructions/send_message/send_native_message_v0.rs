@@ -7,21 +7,23 @@ use std::convert::*;
 
 #[derive(Accounts)]
 pub struct SendNativeMessageV0<'info> {
-  #[account(
-    constraint = chat.post_permission_key == native_mint::id()
-  )]
   pub chat: Box<Account<'info, ChatV0>>,
+  #[account(
+    has_one = chat,
+    constraint = chat_permissions.post_permission_key == native_mint::id()
+  )]
+  pub chat_permissions: Box<Account<'info, ChatPermissionsV0>>,
   /// CHECK: Either delegate wallet passed into additional accounts or this is a signer
   #[account(
-    constraint = **sender.lamports.borrow() >= chat.post_permission_amount
+    constraint = **sender.lamports.borrow() >= chat_permissions.post_permission_amount
   )]
   pub sender: UncheckedAccount<'info>,
   pub signer: Signer<'info>, // Wallet signing for this transaction, may be the same as sender. May be a delegate
 }
 
-pub fn handler(ctx: Context<SendNativeMessageV0>, _args: MessagePartV0) -> Result<()> {
+pub fn handler(ctx: Context<SendNativeMessageV0>, message: MessagePartV0) -> Result<()> {
   let rm_acc_length = ctx.remaining_accounts.len();
-  let has_delegate = match ctx.accounts.chat.post_permission_type {
+  let has_delegate = match ctx.accounts.chat_permissions.post_permission_type {
     PermissionType::Native => rm_acc_length == 1,
     _ => return Err(error!(ErrorCode::InvalidPermissionType)),
   };
@@ -37,6 +39,13 @@ pub fn handler(ctx: Context<SendNativeMessageV0>, _args: MessagePartV0) -> Resul
   } else if ctx.accounts.signer.key() != ctx.accounts.sender.key() {
     return Err(error!(ErrorCode::IncorrectSender));
   }
+
+  emit!(MessagePartEventV0 {
+    chat: ctx.accounts.chat.key(),
+    sender: ctx.accounts.sender.key(),
+    signer: ctx.accounts.signer.key(),
+    message
+  });
 
   Ok(())
 }

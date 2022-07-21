@@ -1,7 +1,7 @@
 import { Skeleton, SkeletonCircle } from "@chakra-ui/react";
-import React, { useCallback, useEffect, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import throttle from "lodash/throttle";
-import { MemodMessage } from "./Message";
+import { MemodMessage } from "./message";
 import { Flex } from "./MyFlex";
 import { useAsyncCallback } from "react-async-hook";
 import { sleep } from "@strata-foundation/spl-utils";
@@ -42,9 +42,12 @@ export const ChatMessages = ({
   isLoadingMore: boolean;
   hasMore: boolean;
   fetchMore: (num: number) => void;
-  scrollRef: any;
+  scrollRef?: any;
   messages?: (IMessageWithPendingAndReacts | IMessageWithPending)[];
 }) => {
+  const myScrollRef = useRef(null);
+  if (!scrollRef) scrollRef = myScrollRef;
+  
   // On render if we dont have a scroll bar
   // and we have hasMore then fetch initialMore
   useEffect(() => {

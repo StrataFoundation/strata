@@ -1,12 +1,17 @@
 import BrowserOnly from "@docusaurus/BrowserOnly";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { useChatSdk } from "@strata-foundation/chat-ui";
 import {
   WalletModalProvider,
   WalletMultiButton,
 } from "@solana/wallet-adapter-react-ui";
 import { Connection, PublicKey } from "@solana/web3.js";
-import { useProvider, useStrataSdks } from "@strata-foundation/react";
+import {
+  useProvider,
+  useStrataSdks,
+  useEndpoint,
+} from "@strata-foundation/react";
 import BN from "bn.js";
 import clsx from "clsx";
 import { parse } from "esprima";
@@ -15,8 +20,7 @@ import { FaPlay } from "react-icons/fa";
 import { useVariablesContext } from "../Root/variables";
 import styles from "./styles.module.css";
 import { clusterApiUrl } from "@solana/web3.js";
-import { useEndpoint, useMarketplaceSdk } from "@strata-foundation/react";
-
+import { useMarketplaceSdk } from "@strata-foundation/marketplace-ui";
 
 function BrowserOnlyReactJson(props) {
   return (
@@ -98,28 +102,32 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
   const sdks = useStrataSdks();
   const { marketplaceSdk } = useMarketplaceSdk();
   const { provider } = useProvider();
+  const { chatSdk } = useChatSdk();
   const { endpoint, setClusterOrEndpoint } = useEndpoint();
 
   var vars = {}; // Outer variable, not stored.
   const exec = useMemo(() => {
     async function execInner(globalVariables: any) {
       setRunningThisCommand(true);
-      const connection = new Connection(clusterApiUrl(WalletAdapterNetwork.Devnet))
+      const connection = new Connection(
+        clusterApiUrl(WalletAdapterNetwork.Devnet)
+      );
       try {
-        const walletAcct =
-          publicKey && (await connection.getAccountInfo(publicKey));
-        if (!walletAcct || walletAcct.lamports < 500000000) {
-          try {
+        try {
+          const walletAcct =
+            publicKey && (await connection.getAccountInfo(publicKey));
+          if (!walletAcct || walletAcct.lamports < 500000000) {
             publicKey &&
               (await connection.requestAirdrop(publicKey, 1000000000));
-          } catch (e: any) {
-            // ignore. If we can't airdrop it's probably mainnet
           }
+        } catch (e: any) {
+          // ignore. If we can't airdrop it's probably mainnet
         }
         const injectedVars = {
           provider,
           ...sdks,
           marketplaceSdk,
+          chatSdk,
           publicKey,
           ...scope,
           ...globalVariables,
@@ -134,9 +142,17 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
         setRunningThisCommand(false);
       }
     }
-    return execInner
-  }, [marketplaceSdk, provider, publicKey, sdks.tokenCollectiveSdk, sdks.tokenMetadataSdk, sdks.tokenBondingSdk]);
- 
+    return execInner;
+  }, [
+    chatSdk,
+    marketplaceSdk,
+    provider,
+    publicKey,
+    sdks.tokenCollectiveSdk,
+    sdks.tokenMetadataSdk,
+    sdks.tokenBondingSdk,
+  ]);
+
   async function wrappedExecWithDeps() {
     setError(undefined);
     setLoading(true);
@@ -151,7 +167,7 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
 
   useEffect(() => {
     register(name, deps.filter(Boolean), exec);
-  }, [publicKey, ...Object.values(sdks), marketplaceSdk]);
+  }, [publicKey, ...Object.values(sdks), marketplaceSdk, chatSdk]);
 
   useEffect(() => {
     if (error) {
@@ -162,7 +178,10 @@ const AsyncButton = ({ code, scope, name, deps, allowMainnet = false }) => {
   const fullLoading =
     loading || !sdks.tokenBondingSdk || !sdks.tokenCollectiveSdk;
 
-  if (endpoint.includes("mainnet") && !allowMainnet) {
+  if (
+    !(endpoint.includes("devnet") || endpoint.includes("localhost")) &&
+    !allowMainnet
+  ) {
     return (
       <div className={styles.container}>
         <button

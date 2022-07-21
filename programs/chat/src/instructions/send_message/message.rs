@@ -1,5 +1,7 @@
 use anchor_lang::prelude::*;
 
+use crate::state::PermissionType;
+
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub enum MessageType {
   Text,
@@ -15,6 +17,14 @@ impl Default for MessageType {
   }
 }
 
+#[event]
+pub struct MessagePartEventV0 {
+  pub chat: Pubkey,
+  pub sender: Pubkey,
+  pub signer: Pubkey,
+  pub message: MessagePartV0,
+}
+
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct MessagePartV0 {
   pub id: String, // uuid v4
@@ -27,4 +37,6 @@ pub struct MessagePartV0 {
   pub condition_version: u8,
   pub message_type: MessageType,
   pub reference_message_id: Option<String>,
+  pub read_permission_key: Pubkey,
+  pub read_permission_type: PermissionType,
 }

@@ -219,9 +219,14 @@ interface IDisburseCurveArgs {
    */
   tokenBonding: PublicKey;
   /**
-   * The destination to disburse funds tos
+   * The destination to disburse funds to (ata)
    */
-  destination: PublicKey;
+  destination?: PublicKey;
+
+  /**
+   * The destination wallet to disburse funds to (if not providing destination)
+   */
+  destinationWallet?: PublicKey;
 
   /** If this is an initial token offering, also close the second curve */
   includeRetrievalCurve?: boolean;
@@ -437,6 +442,7 @@ export class MarketplaceSdk {
   async disburseCurveInstructions({
     tokenBonding,
     destination,
+    destinationWallet = this.provider.wallet.publicKey,
     includeRetrievalCurve,
     closeBonding = true,
     parentEntangler,
@@ -475,6 +481,7 @@ export class MarketplaceSdk {
       await this.tokenBondingSdk?.transferReservesInstructions({
         amount: reserveAmount!,
         destination,
+        destinationWallet,
         tokenBonding,
         reserveAuthority: authority || undefined,
       });
@@ -504,14 +511,19 @@ export class MarketplaceSdk {
           parentEntanglerAcct.parentStorage
         );
       
-      const transferChild = await this.fungibleEntanglerSdk.transferInstructions({
-        childEntangler,
-        amount: childAmount
-      });
+      const transferChild =
+        await this.fungibleEntanglerSdk.transferInstructions({
+          childEntangler,
+          amount: childAmount,
+          destination,
+          destinationWallet,
+        });
       const transferParent =
         await this.fungibleEntanglerSdk.transferInstructions({
           parentEntangler,
           amount: parentAmount,
+          destination,
+          destinationWallet,
         });
 
       const closeChild = await this.fungibleEntanglerSdk.closeInstructions({
@@ -542,6 +554,7 @@ export class MarketplaceSdk {
           await SplTokenBonding.tokenBondingKey(tokenBondingAcct.targetMint, 1)
         )[0],
         includeRetrievalCurve: false,
+        destinationWallet,
         destination,
       });
       instructions.push(...retrievalInstrs.instructions);

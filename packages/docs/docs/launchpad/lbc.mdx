@@ -135,7 +135,7 @@ the curve. This is done via the `transferReserves` command.
 await tokenBondingSdk.transferReserves({
   tokenBonding,
   amount: 0.001,
-  destination: publicKey,
+  destinationWallet: publicKey,
 });
 ```
 
@@ -154,7 +154,7 @@ var transferInstrs = await tokenBondingSdk.transferReservesInstructions({
       tokenBondingAcct.baseStorage
     )
   ).value.uiAmount,
-  destination: publicKey,
+  destinationWallet: publicKey,
   tokenBonding,
 });
 var { instructions, signers } = await tokenBondingSdk.closeInstructions({
