@@ -23,7 +23,8 @@ import { Summary } from "./Summary";
 import { ITokenFormValues } from "./TokenForm";
 import { INFTFormValues } from "./NFTForm";
 import { NATIVE_MINT } from "@solana/spl-token";
-import { PublicKey } from "@solana/web3.js";
+import { Keypair, PublicKey } from "@solana/web3.js";
+import { TimeDecayExponentialCurveConfig } from "@strata-foundation/spl-token-bonding";
 
 interface ICreateChatModalProps {
   isOpen: boolean;
@@ -149,6 +150,24 @@ export const CreateChatModal: React.FC<ICreateChatModalProps> = ({
       }
 
       if (postForm.type === "token" || readForm.type === "token") {
+        const stableCurveConfig = (startingPrice: number) =>
+          new TimeDecayExponentialCurveConfig({
+            c: startingPrice * (1 + 1),
+            k0: 1,
+            k1: 1,
+            d: 1,
+            interval: 2 * 60 * 60, // 2 hours
+          });
+
+        const bondingOpts = {
+          baseMint: NATIVE_MINT,
+          buyBaseRoyaltyPercentage: 0,
+          buyTargetRoyaltyPercentage: 5,
+          sellBaseRoyaltyPercentage: 0,
+          sellTargetRoyaltyPercentage: 0,
+          targetMintDecimals: 9,
+        };
+
         if (postIsSameAsRead) {
           console.log(
             `Creating single post and read permission ${identifier} token...`
