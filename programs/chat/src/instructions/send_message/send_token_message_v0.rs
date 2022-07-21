@@ -98,7 +98,7 @@ pub fn handler(ctx: Context<SendTokenMessageV0>, message: MessagePartV0) -> Resu
     chat: ctx.accounts.chat.key(),
     sender: ctx.accounts.sender.key(),
     signer: ctx.accounts.signer.key(),
-    message: message
+    message
   });
 
   Ok(())
