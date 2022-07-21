@@ -80,7 +80,7 @@ export const PermissionType: React.FC<IPermissionTypeProps> = ({
         postIsSameAsRead: isChecked,
         [`${permissionType}Type`]: undefined,
         ...(isChecked
-          ? { postForm: state.wizardData.readForm }
+          ? { postForm: state.wizardData.readForm as any }
           : { postForm: undefined }),
       },
     });
