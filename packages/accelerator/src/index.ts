@@ -79,9 +79,9 @@ export class Accelerator {
     })
   }
 
-  async unsubscribeTransaction(id: string): Promise<void> {
-    delete this.subs[id];
-    const subId = this.transactionListeners[id];
+  async unsubscribeTransaction(listenerId: string): Promise<void> {
+    delete this.subs[listenerId];
+    const subId = this.transactionListeners[listenerId];
     if (subId) {
       this.send({
         type: RequestType.Unsubscribe,
@@ -89,6 +89,7 @@ export class Accelerator {
       });
       await this.listenOnce((resp) => resp.type === ResponseType.Unsubscribe);
     }
+    delete this.listeners[listenerId];
   }
 
   async onTransaction(
