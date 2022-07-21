@@ -72,7 +72,7 @@ pub fn assert_meets_permissions(ctx: &Context<SendTokenMessageV0>) -> Result<()>
   Err(error!(ErrorCode::PermissionDenied))
 }
 
-pub fn handler(ctx: Context<SendTokenMessageV0>, _args: MessagePartV0) -> Result<()> {
+pub fn handler(ctx: Context<SendTokenMessageV0>, message: MessagePartV0) -> Result<()> {
   assert_meets_permissions(&ctx)?;
 
   let rm_acc_length = ctx.remaining_accounts.len();
@@ -93,6 +93,13 @@ pub fn handler(ctx: Context<SendTokenMessageV0>, _args: MessagePartV0) -> Result
   } else if ctx.accounts.signer.key() != ctx.accounts.sender.key() {
     return Err(error!(ErrorCode::IncorrectSender));
   }
+
+  emit!(MessagePartEventV0 {
+    chat: ctx.accounts.chat.key(),
+    sender: ctx.accounts.sender.key(),
+    signer: ctx.accounts.signer.key(),
+    message
+  });
 
   Ok(())
 }
