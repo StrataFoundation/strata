@@ -139,7 +139,7 @@ export const wizardSubmit = async ({
       // });
 
       readPermissionKey = targetMintKeypair.publicKey;
-      console.log(`Creating read permission ${identifier}Read token...`);
+      console.log(`Creating read permission ${identifier} token...`);
     }
 
     if (!postPermissionKey) {
@@ -167,7 +167,7 @@ export const wizardSubmit = async ({
         // });
 
         readPermissionKey = targetMintKeypair.publicKey;
-        console.log(`Creating read permission ${identifier}Read token...`);
+        console.log(`Creating post permission ${identifier} token...`);
       }
     }
   }
