@@ -10,7 +10,6 @@ import {
   Button,
   Flex,
   Heading,
-  Tooltip,
 } from "@chakra-ui/react";
 import { ICreateChatModalState, ReadPostType } from "./CreateChatModal";
 import { INFTFormValues } from "./NFTForm";
@@ -41,11 +40,9 @@ const LabelCodeValue: React.FC<{ label: string; value?: string | number }> = ({
       {label}:
     </Code>
     {value && (
-      <Tooltip label={value}>
-        <Text fontSize="lg" isTruncated w="auto">
-          {value}
-        </Text>
-      </Tooltip>
+      <Text fontSize="lg" isTruncated w="auto">
+        {value}
+      </Text>
     )}
     {children}
   </Flex>
@@ -84,13 +81,9 @@ const TokenSummary: React.FC<{
       </Text>
       <Text fontSize="xs" fontWeight="normal">
         {isExisting ? (
-          <>
-            <Text>You&apos;ve decided to use an existing token.</Text>
-          </>
+          <Text>You&apos;ve decided to use an existing token.</Text>
         ) : (
-          <>
-            <Text>You&apos;ve decided to create a new token.</Text>
-          </>
+          <Text>You&apos;ve decided to create a new token.</Text>
         )}
       </Text>
     </Box>
@@ -114,7 +107,7 @@ export const Summary: React.FC<ISummaryProps> = ({ state, onBack, onNext }) => {
   };
 
   const {
-    isSubmitting,
+    status,
     wizardData: {
       name,
       identifier,
@@ -184,7 +177,7 @@ export const Summary: React.FC<ISummaryProps> = ({ state, onBack, onNext }) => {
           variant="outline"
           colorScheme="primary"
           w="full"
-          isDisabled={isSubmitting}
+          // isDisabled={status === "submitting"}
         >
           <Button w="full" onClick={onBack}>
             Back
@@ -193,7 +186,7 @@ export const Summary: React.FC<ISummaryProps> = ({ state, onBack, onNext }) => {
             w="full"
             variant="solid"
             type="submit"
-            isLoading={isSubmitting}
+            // isLoading={status === "submitting"}
             loadingText="Creating Chat"
           >
             Create Chat

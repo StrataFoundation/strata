@@ -13,7 +13,8 @@ import {
 } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { IdentifierType, PermissionType } from "@strata-foundation/chat";
+
+import { useStrataSdks } from "@strata-foundation/react";
 import { useChatSdk } from "../../contexts";
 import { ProgressStep } from "./ProgressStep";
 import { BasicInfo } from "./BasicInfo";
@@ -22,9 +23,7 @@ import { Permission } from "./Permission";
 import { Summary } from "./Summary";
 import { ITokenFormValues } from "./TokenForm";
 import { INFTFormValues } from "./NFTForm";
-import { NATIVE_MINT } from "@solana/spl-token";
-import { Keypair, PublicKey } from "@solana/web3.js";
-import { TimeDecayExponentialCurveConfig } from "@strata-foundation/spl-token-bonding";
+import { wizardSubmit } from "./wizardSubmit";
 
 interface ICreateChatModalProps {
   isOpen: boolean;
@@ -52,11 +51,10 @@ export enum ReadPostType {
 
 export interface ICreateChatModalState {
   step: CreateChatStep;
-  isSubmitting: boolean;
+  status: null | "submitting";
   wizardData: {
     name: string;
     identifier: string;
-    ownsIdentifier: boolean;
     image: undefined | File;
     imageUrl: undefined | string;
     readType: undefined | ReadPostType;
@@ -69,11 +67,10 @@ export interface ICreateChatModalState {
 
 export const initialState: ICreateChatModalState = {
   step: CreateChatStep.BasicInfo,
-  isSubmitting: false,
+  status: null,
   wizardData: {
     name: "",
     identifier: "",
-    ownsIdentifier: false,
     image: undefined,
     imageUrl: undefined,
     readType: undefined,
@@ -90,6 +87,7 @@ export const CreateChatModal: React.FC<ICreateChatModalProps> = ({
 }) => {
   const { connected } = useWallet();
   const { chatSdk } = useChatSdk();
+  const { tokenBondingSdk, tokenMetadataSdk } = useStrataSdks();
   const { setVisible } = useWalletModal();
   const [state, setState] = useReducer(
     (
@@ -109,93 +107,15 @@ export const CreateChatModal: React.FC<ICreateChatModalProps> = ({
 
   const handleNext = useCallback(async () => {
     if (state.step === CreateChatStep.Summary) {
-      setState({ isSubmitting: true });
-      const {
-        name,
-        identifier,
-        ownsIdentifier,
-        readForm,
-        postForm,
-        postIsSameAsRead,
-      } = state.wizardData;
-
-      let identifierOut,
-        postPermissionKey =
-          postForm.type === "native"
-            ? new PublicKey(postForm.mint!)
-            : postForm.type === "nft"
-            ? new PublicKey(postForm.collectionKey!)
-            : undefined,
-        postPermissionType = postForm.type,
-        postPermissionAmount = postForm.amount,
-        readPermissionKey =
-          readForm.type === "native"
-            ? new PublicKey(readForm.mint!)
-            : readForm.type === "nft"
-            ? new PublicKey(readForm.collectionKey!)
-            : undefined,
-        readPermissionType = readForm.type,
-        readPermissionAmount = readForm.amount,
-        instructions = [];
-
-      if (!ownsIdentifier) {
-        console.log("Claiming identifier...", identifier);
-        identifierOut = await chatSdk?.claimIdentifierInstructions({
-          type: IdentifierType.Chat,
-          identifier,
-        });
-        instructions.push(identifierOut?.instructions);
-      } else {
-        // what to do if they ownIdentifier
-      }
-
-      if (postForm.type === "token" || readForm.type === "token") {
-        const stableCurveConfig = (startingPrice: number) =>
-          new TimeDecayExponentialCurveConfig({
-            c: startingPrice * (1 + 1),
-            k0: 1,
-            k1: 1,
-            d: 1,
-            interval: 2 * 60 * 60, // 2 hours
-          });
-
-        const bondingOpts = {
-          baseMint: NATIVE_MINT,
-          buyBaseRoyaltyPercentage: 0,
-          buyTargetRoyaltyPercentage: 5,
-          sellBaseRoyaltyPercentage: 0,
-          sellTargetRoyaltyPercentage: 0,
-          targetMintDecimals: 9,
-        };
-
-        if (postIsSameAsRead) {
-          console.log(
-            `Creating single post and read permission ${identifier} token...`
-            // postPermissionKey =
-            // readPermissionKey =
-          );
-        } else {
-          if (postForm.type === "token") {
-            console.log(`Creating post permission ${identifier}Post token...`);
-            // postPermissionKey =
-          }
-          if (readForm.type === "token") {
-            console.log(`Creating read permission ${identifier}Read token...`);
-            // readPermissionKey =
-          }
-        }
-      }
-
-      console.log("postPermissionKey", postPermissionKey);
-      console.log("postPermissionType", postPermissionType);
-      console.log("postPermissionAmount", postPermissionAmount);
-      console.log("readPermissionKey", readPermissionKey);
-      console.log("readPermissionType", readPermissionType);
-      console.log("readPermissionAmount", readPermissionAmount);
-
-      // TODO;
-      console.log("submit");
-      console.log("Init chat...");
+      await wizardSubmit({
+        sdks: {
+          chatSdk,
+          tokenBondingSdk,
+          tokenMetadataSdk,
+        },
+        data: state,
+        setState,
+      });
     } else if (
       state.step === CreateChatStep.PostPermissionsType &&
       state.wizardData.postIsSameAsRead

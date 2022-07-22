@@ -51,7 +51,6 @@ import {
 } from "../hooks";
 import { useWalletFromUsernameIdentifier } from "../hooks/useWalletFromUsernameIdentifier";
 import { FormControlWithError } from "./form/FormControlWithError";
-import { CopyBlackBox } from "./CopyBlackBox";
 import toast from "react-hot-toast";
 import { LongPromiseNotification } from "./LongPromiseNotification";
 
@@ -181,8 +180,10 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
 
   async function onSubmit(args: IProfileProps): Promise<void> {
     if (args.username.length < 6 && !wallet) {
-      setError("username", { message: "Username must be at least 6 characters." });
-      return
+      setError("username", {
+        message: "Username must be at least 6 characters.",
+      });
+      return;
     }
     await execute(chatSdk, args, setStep);
     if (props.onClose) {

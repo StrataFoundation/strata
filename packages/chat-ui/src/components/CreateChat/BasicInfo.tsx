@@ -126,15 +126,6 @@ export const BasicInfo: React.FC<IBasicInfoProps> = ({
           const isValid = !identifierOwner || ownsIdentifier;
           if (isValid) {
             setIsValidIdentifier(true);
-
-            if (ownsIdentifier) {
-              setState({
-                wizardData: {
-                  ...state.wizardData,
-                  ownsIdentifier: true,
-                },
-              });
-            }
           } else {
             setIsValidIdentifier(false);
             setError("identifier", {

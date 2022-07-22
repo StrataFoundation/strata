@@ -63,7 +63,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       litClient: client,
       namespacesProgram,
     });
-
     const entryKey = (
       await ChatSdk.entryKey(
         new PublicKey("36u2NChTRLo53UrfEFMV6Pgug6YKbKAmw3M4Mi1JfFdn"),

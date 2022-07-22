@@ -1,9 +1,9 @@
+import { StrataProviders, Notification } from "@strata-foundation/react";
 import { ChatProviders } from "@/components/ChatProviders";
 import { Wallet } from "@/components/Wallet";
 import { IS_PRODUCTION } from "@/constants";
 import { useMediaQuery } from "@chakra-ui/react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
-import { Notification } from "@strata-foundation/react";
 import { AppProps } from "next/app";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
@@ -63,26 +63,28 @@ function MyApp({ Component, pageProps }: AppProps) {
   return (
     <Wallet>
       <WalletModalProvider>
-        <ChatProviders>
-          <Component {...pageProps} />
-          {isMobile ? (
-            <Toaster
-              position="top-center"
-              containerStyle={{
-                margin: "60px auto",
-                width: "90%",
-                maxWidth: "420px",
-              }}
-            />
-          ) : (
-            <Toaster
-              position="bottom-left"
-              containerStyle={{
-                width: "420px",
-              }}
-            />
-          )}
-        </ChatProviders>
+        <StrataProviders>
+          <ChatProviders>
+            <Component {...pageProps} />
+            {isMobile ? (
+              <Toaster
+                position="top-center"
+                containerStyle={{
+                  margin: "60px auto",
+                  width: "90%",
+                  maxWidth: "420px",
+                }}
+              />
+            ) : (
+              <Toaster
+                position="bottom-left"
+                containerStyle={{
+                  width: "420px",
+                }}
+              />
+            )}
+          </ChatProviders>
+        </StrataProviders>
       </WalletModalProvider>
     </Wallet>
   );
