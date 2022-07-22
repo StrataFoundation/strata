@@ -56,7 +56,7 @@ const validationSchema = yup.object({
   decimals: yup.number().required(),
 });
 
-async function createFullyManaged(
+async function createManual(
   tokenMetadataSdk: SplTokenMetadata,
   values: IManualForm
 ): Promise<PublicKey> {
@@ -168,13 +168,13 @@ export const ManualForm: React.FC = () => {
   const { connected } = useWallet();
   const { visible, setVisible } = useWalletModal();
   const { awaitingApproval } = useProvider();
-  const { execute, loading, error } = useAsyncCallback(createFullyManaged);
+  const { execute, loading, error } = useAsyncCallback(createManual);
   const { tokenMetadataSdk } = useStrataSdks();
   const router = useRouter();
 
   const onSubmit = async (values: IManualForm) => {
     const mintKey = await execute(tokenMetadataSdk!, values);
-    router.push(route(routes.sell, { mint: mintKey.toBase58() }), undefined, {
+    router.push(route(routes.tokenAdmin, { mintKey: mintKey.toBase58() }), undefined, {
       shallow: true,
     });
   };

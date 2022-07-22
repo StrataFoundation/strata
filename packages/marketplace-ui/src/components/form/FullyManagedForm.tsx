@@ -240,8 +240,8 @@ export const FullyManagedForm: React.FC = () => {
   const onSubmit = async (values: IFullyManagedForm) => {
     const mintKey = await execute(marketplaceSdk!, values);
     router.push(
-      route(routes.swap, {
-        id: mintKey.toBase58(),
+      route(routes.tokenAdmin, {
+        mintKey: mintKey.toBase58(),
       }),
       undefined,
       { shallow: true }
