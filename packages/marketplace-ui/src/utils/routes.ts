@@ -59,6 +59,10 @@ export const routes: Record<string, IRoute> = {
   tokenAdmin: {
     path: "/launchpad/admin/:mintKey",
     params: ["mintKey"]
+  },
+  myTokens: {
+    path: "/launchpad/mytokens",
+    params: [],
   }
 };
 

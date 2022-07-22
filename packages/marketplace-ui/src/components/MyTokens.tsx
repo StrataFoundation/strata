@@ -1,25 +1,19 @@
 import {
-  Alert,
   Box,
   Button,
   Container,
   Center,
   Stack,
   Text,
-  Collapse,
   Flex,
-  Input,
-  Switch,
   VStack,
 } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
 import React, { useEffect, useState } from 'react';
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { useRouter } from "next/router";
-import { usePublicKey, useTokenMetadata, useProvider } from "@strata-foundation/react";
-import { routes, route } from "../../src/utils/routes";
-import { MintInfo, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { useProvider } from "@strata-foundation/react";
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { TokenAccountParser } from "@strata-foundation/react";
 import { truthy } from "@strata-foundation/spl-utils";
 import { TokenItem } from "./TokenItem";
