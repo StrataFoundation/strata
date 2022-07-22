@@ -1,7 +1,7 @@
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
 import { NATIVE_MINT } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
-import { ChatSdk, PermissionType } from "@strata-foundation/chat";
+import { ChatSdk, PermissionType, uploadFiles } from "@strata-foundation/chat";
 import {
   SplTokenBonding,
   TimeCurveConfig,
@@ -18,6 +18,7 @@ interface IWazardSubmitOpts {
     chatSdk: ChatSdk | undefined;
   };
   data: ICreateChatModalState;
+  delegateWallet: Keypair | undefined;
   setState: (value: Partial<ICreateChatModalState>) => void;
 }
 
@@ -87,6 +88,7 @@ const getMetadataOpts = ({
 export const wizardSubmit = async ({
   sdks,
   data: { wizardData },
+  delegateWallet,
   setState,
 }: IWazardSubmitOpts) => {
   setState({ status: "submitting" });
@@ -127,6 +129,9 @@ export const wizardSubmit = async ({
         targetMint: targetMintKeypair.publicKey,
       };
 
+      setState({ subStatus: "Uploading read token metadata to SHDW Drive..." });
+      // await uploadFiles(chatSdk!.provider, [], delegateWallet);
+
       // need to get uri
       // const metadata = getMetadataOpts({
       //   identifier: `${postIsSameAsRead ? "" : "READ"}${identifier}`,
@@ -150,6 +155,11 @@ export const wizardSubmit = async ({
           ...defaultBondingOpts,
           targetMint: targetMintKeypair.publicKey,
         };
+
+        setState({
+          subStatus: "Uploading post token metadata to SHDW Drive...",
+        });
+        // await uploadFiles(chatSdk!.provider, [], delegateWallet);
 
         // const metadata = getMetadataOpts({
         //   identifier: `POST${identifier}`,

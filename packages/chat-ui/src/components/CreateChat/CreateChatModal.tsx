@@ -14,8 +14,9 @@ import {
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 
-import { useStrataSdks } from "@strata-foundation/react";
+import { useErrorHandler, useStrataSdks } from "@strata-foundation/react";
 import { useChatSdk } from "../../contexts";
+import { useDelegateWallet, useLoadDelegate } from "../../hooks";
 import { ProgressStep } from "./ProgressStep";
 import { BasicInfo } from "./BasicInfo";
 import { PermissionType as PermissionTypeSelect } from "./PermissionType";
@@ -52,6 +53,7 @@ export enum ReadPostType {
 export interface ICreateChatModalState {
   step: CreateChatStep;
   status: null | "submitting";
+  subStatus: null | string;
   wizardData: {
     name: string;
     identifier: string;
@@ -68,6 +70,7 @@ export interface ICreateChatModalState {
 export const initialState: ICreateChatModalState = {
   step: CreateChatStep.BasicInfo,
   status: null,
+  subStatus: null,
   wizardData: {
     name: "",
     identifier: "",
@@ -86,9 +89,10 @@ export const CreateChatModal: React.FC<ICreateChatModalProps> = ({
   onClose,
 }) => {
   const { connected } = useWallet();
+  const { setVisible } = useWalletModal();
   const { chatSdk } = useChatSdk();
   const { tokenBondingSdk, tokenMetadataSdk } = useStrataSdks();
-  const { setVisible } = useWalletModal();
+  const { keypair: delegateWallet } = useDelegateWallet();
   const [state, setState] = useReducer(
     (
       state: ICreateChatModalState,
@@ -114,6 +118,7 @@ export const CreateChatModal: React.FC<ICreateChatModalProps> = ({
           tokenMetadataSdk,
         },
         data: state,
+        delegateWallet,
         setState,
       });
     } else if (
