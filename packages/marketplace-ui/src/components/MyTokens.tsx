@@ -17,7 +17,7 @@ import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { TokenAccountParser } from "@strata-foundation/react";
 import { truthy } from "@strata-foundation/spl-utils";
 import { TokenItem } from "./TokenItem";
-
+// TODO use vybe to get token bondings that the user is general authority on for fully managed tokens
 export const MyTokens = () => {
   const { publicKey, connected } = useWallet();
   const { visible, setVisible } = useWalletModal();

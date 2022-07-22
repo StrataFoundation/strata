@@ -4,13 +4,11 @@ import {
   Text,
   Flex,
   Icon,
-  useDisclosure,
 } from "@chakra-ui/react";
 import React from 'react';
 import { PublicKey } from '@solana/web3.js';
-import { useMetaplexTokenMetadata, useReserveAmount, useTokenSwapFromId } from "@strata-foundation/react";
+import { useEndpoint, useMetaplexTokenMetadata, useReserveAmount, useTokenSwapFromId } from "@strata-foundation/react";
 import { MdSettings } from "react-icons/md";
-import { LaunchSettingsModal } from "./LaunchSettingsModal";
 import { useRouter } from "next/router";
 import { routes, route } from "../../utils/routes";
 
@@ -23,10 +21,10 @@ interface LaunchPreviewProps {
 
 export const LaunchPreview = ({ id, name, image }: LaunchPreviewProps) => {
   const { tokenBonding } = useTokenSwapFromId(id);
-  const { isOpen, onToggle, onClose } = useDisclosure();
   const reserveAmount = useReserveAmount(tokenBonding?.publicKey);
   const { metadata } = useMetaplexTokenMetadata(tokenBonding?.baseMint);
   const router = useRouter();
+  const { cluster } = useEndpoint();
   return (
     <Flex alignItems="center" w="full">
       <Image
@@ -41,8 +39,9 @@ export const LaunchPreview = ({ id, name, image }: LaunchPreviewProps) => {
         paddingLeft="10px" 
         onClick={() => {
           router.push(
-            route(routes.swap, {
+            route(routes.tokenLbcAdmin, {
               id: id?.toString(),
+              cluster,
             }),
             undefined,
             { shallow: true }
@@ -64,8 +63,19 @@ export const LaunchPreview = ({ id, name, image }: LaunchPreviewProps) => {
           Amount raised: {reserveAmount} {metadata?.data?.symbol}
           </Text>
       </Stack>
-      <Icon w="24px" h="24px" as={MdSettings} onClick={onToggle} cursor="pointer" marginLeft="auto" marginRight="2em" />
-      <LaunchSettingsModal id={id!} isOpen={isOpen} onClose={onClose} />
+      <Icon w="24px" h="24px" 
+        as={MdSettings} 
+        onClick={() => {
+          router.push(
+            route(routes.tokenLbcAdmin, {
+              id: id?.toString(),
+              cluster,
+            }),
+            undefined,
+            { shallow: true }
+          )
+        }}
+        cursor="pointer" marginLeft="auto" marginRight="2em" />
     </Flex>
   );
 };
