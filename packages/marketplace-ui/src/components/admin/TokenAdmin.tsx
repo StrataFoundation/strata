@@ -85,7 +85,7 @@ export const TokenAdmin: React.FC = () => {
                 </Text>
                 <Flex w="full" flexWrap="wrap" marginTop="2em">
                   <VStack w={{ base: "100%", md: "65%" }} alignItems="flex-start">
-                    <Text fontSize="xl" color="black.500" fontWeight="bold" pb="20px">Launches</Text>
+                    <Text fontSize="xl" color="black.500" fontWeight="bold">Launches</Text>
                     <TokenLaunches mintKey={mintKey} name={data?.name} image={image} />
                     <Text fontSize="xl" color="black.500" fontWeight="bold" pt="20px" pb="20px">Authority Preferences</Text>
                     <TokenAuthorityForm values={{}} metadata={metadata} mint={mint} mintKey={mintKey} />
