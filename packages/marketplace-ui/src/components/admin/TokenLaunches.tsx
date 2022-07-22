@@ -7,7 +7,7 @@ import { truthy, useFungibleChildEntangler, useStrataSdks, useTokenBondingFromMi
 import { LaunchPreview } from "./LaunchPreview";
 import React, { useState } from 'react';
 import { useAsync } from "react-async-hook";
-import { FungibleEntangler, IFungibleChildEntangler } from "@strata-foundation/fungible-entangler";
+import { FungibleEntangler } from "@strata-foundation/fungible-entangler";
 import { useWallet } from "@solana/wallet-adapter-react";
 
 interface TokenPreviewProps {
