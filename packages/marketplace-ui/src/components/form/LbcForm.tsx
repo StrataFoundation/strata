@@ -301,8 +301,8 @@ async function createLbcExistingMint(
     instructions,
     signers
   );
-  return route(routes.tokenAdmin, {
-    mintKey: existingMint.toString()
+  return route(routes.tokenLbcAdmin, { 
+    id: entanglerInstrs.output.childEntangler.toString()
   })
 }
 
@@ -360,9 +360,7 @@ async function createLbcNewMint(
     signers
   );
 
-  return route(routes.tokenAdmin, {
-    mintKey: targetMint.toString()
-  })
+  return route(routes.tokenLbcAdmin, { id: targetMint.toBase58() })
 }
 
 async function createLiquidityBootstrapper(
