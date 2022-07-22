@@ -1,33 +1,21 @@
 import {
-  Alert,
-  Box,
-  Button,
-  Container,
-  Center,
-  Stack,
   Text,
-  Collapse,
   Flex,
-  Input,
-  Switch,
-  VStack,
   Image,
   Icon,
 } from "@chakra-ui/react";
 import { MdSettings } from "react-icons/md";
 import { PublicKey } from "@solana/web3.js";
-import React, { useEffect, useState, useMemo } from 'react';
+import React from 'react';
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useTokenAuthorities } from "@strata-foundation/react";
 import { useRouter } from "next/router";
 import { routes, route } from "../utils/routes";
 
-
 export const TokenItem = ({mint}: {mint: PublicKey}) => {
   const router = useRouter();
   const { publicKey, connected } = useWallet();
-  const { metadata, data, mint: mintInfo, hasAnyAuth, image } = useTokenAuthorities(mint, publicKey || undefined);
-  console.log(hasAnyAuth);
+  const { data, hasAnyAuth, image } = useTokenAuthorities(mint, publicKey || undefined);
   return (
     <>
       { hasAnyAuth ? (
