@@ -1,10 +1,10 @@
 import { NextPage } from "next";
 import { TokenAdmin } from "@/components/admin/TokenAdmin";
 
-export const NewLBC: NextPage = () => {
+export const TokenAdminPage: NextPage = () => {
   return (
     <TokenAdmin />
   );
 };
 
-export default NewLBC;
+export default TokenAdminPage;

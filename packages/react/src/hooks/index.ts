@@ -54,3 +54,4 @@ export * from "./useSolanaUnixTime";
 export * from "./useTokenSwapFromFungibleEntangler";
 export * from "./useTokenSwapFromId";
 export * from "./useCollectionOwnedAmount";
+export * from "./useTokenAuthorities";
