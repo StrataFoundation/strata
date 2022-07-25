@@ -108,7 +108,8 @@ export const wizardSubmit = async ({
   const { readForm, postForm, postIsSameAsRead } = wizardData;
   let readPermissionType, readPermissionAmount, readPermissionKey;
   let postPermissionType, postPermissionAmount, postPermissionKey;
-  let readTokenOut, postTokenOut;
+  let instructions = [],
+    signers = [];
 
   readPermissionType = getPermissionType(readForm.type);
   readPermissionAmount = readForm.amount;
