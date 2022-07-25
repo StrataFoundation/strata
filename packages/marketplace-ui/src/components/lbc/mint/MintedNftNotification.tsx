@@ -8,6 +8,7 @@ import {
   Image,
   Skeleton,
   Text,
+  useColorModeValue,
   VStack,
 } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
@@ -27,12 +28,12 @@ export const MintedNftNotification = ({
   return (
     <Alert
       w="full"
-      bgColor="black.300"
+      bgColor={useColorModeValue("white", "black.300")}
       borderTop="1px"
       borderTopColor="gray.600"
       rounded="lg"
       fontFamily="body"
-      color="white"
+      color={useColorModeValue("black", "white")}
       status={"success"}
       flexDirection="column"
       p={0}
@@ -59,7 +60,7 @@ export const MintedNftNotification = ({
         <Text color="gray.400">
           {loading
             ? "Waiting on your preview..."
-            : `Here is a preview of your NFT: ${
+            : `Here is a preview of ${
                 metadata ? metadata.data.name : ""
               }`}
         </Text>
@@ -68,7 +69,7 @@ export const MintedNftNotification = ({
         position="absolute"
         right="8px"
         top="8px"
-        color="gray.400"
+        color={useColorModeValue("gray.600", "gray.400")}
         _hover={{ color: "gray.600", cursor: "pointer" }}
         onClick={onDismiss}
       />

@@ -3,13 +3,13 @@ import { ICandyMachineState } from "../../../hooks/useCandyMachineInfo";
 import { HStack, Text, VStack } from "@chakra-ui/react";
 import { NATIVE_MINT } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
-import { useMint, useTokenMetadata } from "@strata-foundation/react";
+import { useMint, useMetaplexTokenMetadata } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import { BigText, BlackBox } from "../LbcInfo";
 import * as anchor from "@project-serum/anchor";
 
 export const CandyMachineInfo = ({ candyMachine, itemsRemaining, isWhitelistUser, discountPrice }: ICandyMachineState) => {
-  const { metadata, loading: loadingMeta } = useTokenMetadata(
+  const { metadata, loading: loadingMeta } = useMetaplexTokenMetadata(
     candyMachine?.tokenMint
   );
   const ticker = loadingMeta ? "" : metadata?.data.symbol || "SOL";

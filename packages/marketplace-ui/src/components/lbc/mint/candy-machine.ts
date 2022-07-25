@@ -422,6 +422,19 @@ export const mintOneToken = async (
     }
   }
 
+  // Close intermediary account
+  if (tokenBonding && (ataBalance || 0) == 1) {
+    instructions.push(
+      Token.createCloseAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        userPayingAccountAddress,
+        payer,
+        payer,
+        []
+      )
+    );
+  }
+
   await sendMultipleInstructions(
     tokenBondingSdk.errors || new Map(),
     tokenBondingSdk.provider,
