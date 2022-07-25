@@ -124,7 +124,6 @@ export function AddChatButton({
   const { chatSdk } = useChatSdk();
 async function handleNewChat(e:any){
     const identifier = randomIdentifier();
-    const name = "Test Test";
     if (chatSdk){
     const {
       chat,
