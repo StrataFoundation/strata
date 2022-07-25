@@ -192,7 +192,7 @@ export const LbcInfo = ({
                   {isNaN(priceToUse)
                     ? "Not Started"
                     : metadata?.data.symbol === "USDC"
-                    ? `$${numberWithCommas(priceToUse, 4)}`
+                    ? `$${numberWithCommas(priceToUse, 2)}`
                     : `${numberWithCommas(priceToUse, 4)} ${
                         metadata?.data.symbol
                       }`}
