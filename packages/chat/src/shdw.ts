@@ -3,7 +3,13 @@ import { AnchorProvider } from "@project-serum/anchor";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
 import { ShdwDrive, StorageAccount } from "@shadow-drive/sdk";
 import { StorageAccountInfo } from "@shadow-drive/sdk/dist/types";
-import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
+import {
+  AccountLayout,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  Token,
+  TOKEN_PROGRAM_ID,
+  u64,
+} from "@solana/spl-token";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import {
   toNumber,
@@ -60,7 +66,7 @@ async function getOwnedAmount(
 
 function getEndpoint(connection: Connection) {
   // @ts-ignore
-  const endpoint = connection._rpcEndpoint
+  const endpoint = connection._rpcEndpoint;
 
   // Gengo only works on mainnet
   if (endpoint.includes("dev")) {
@@ -90,7 +96,10 @@ export async function initStorageIfNeeded(
       ? delegateWallet.publicKey
       : provider.wallet.publicKey;
 
-    const shdwDrive = new ShdwDrive(localProvider.connection, localProvider.wallet);
+    const shdwDrive = new ShdwDrive(
+      localProvider.connection,
+      localProvider.wallet
+    );
 
     const [accountKey] = await getStorageAccount(pubKey, new BN(0));
     let storageAccount: StorageAccountInfo | undefined;
@@ -103,7 +112,9 @@ export async function initStorageIfNeeded(
     // Double storage size every time there's not enough
     let sizeKB = 0;
     const storageAvailable =
-      storageAccount && (Number(storageAccount.reserved_bytes) - Number(storageAccount.current_usage));
+      storageAccount &&
+      Number(storageAccount.reserved_bytes) -
+        Number(storageAccount.current_usage);
     const storageAccountBigEnough =
       storageAvailable && storageAvailable > sizeBytes;
     if (!storageAccountBigEnough) {
@@ -122,13 +133,15 @@ export async function initStorageIfNeeded(
       )}, file size is ${sizeBytes}, adding ${sizeKB} KB`
     );
 
-    const shadesNeeded = storageAccountBigEnough ? 0 : Math.max((sizeKB * 1024), 1);
+    const shadesNeeded = storageAccountBigEnough
+      ? 0
+      : Math.max(sizeKB * 1024, 1);
     const shdwNeeded = shadesNeeded / Math.pow(10, 9);
 
     const shdwOwnedAmount = await getOwnedAmount(localProvider, pubKey, SHDW);
     const solOwnedAmount = (await connection.getAccountInfo(pubKey))?.lamports;
     if (!solOwnedAmount) {
-      throw new Error("Not enough sol")
+      throw new Error("Not enough sol");
     }
 
     if (shdwOwnedAmount < shdwNeeded) {
@@ -190,7 +203,6 @@ export async function initStorageIfNeeded(
         () => shdwDrive.addStorage(accountKey, sizeKB + "KB", "v2"),
         3
       );
-     
     } else if (!storageAccount) {
       await withRetries(
         () => shdwDrive.createStorageAccount("chat", sizeKB + "KB", "v2"),
@@ -211,9 +223,9 @@ export async function uploadFiles(
   tries: number = 5
 ): Promise<string[] | undefined> {
   if (files.length == 0) {
-    return []
+    return [];
   }
-  
+
   const size = files.reduce((acc, f) => acc + f.size, 0);
   await initStorageIfNeeded(provider, delegateWallet, size);
   if (provider) {
@@ -234,7 +246,7 @@ export async function uploadFiles(
         await shdwDrive.uploadMultipleFiles(
           accountKey,
           // @ts-ignore
-          files as FileList,
+          files as FileList
         )
       ).map((r) => r.location);
       if (uploaded.length !== files.length) {
@@ -272,24 +284,29 @@ const DEVNET_WALLET = Keypair.fromSecretKey(
     215, 145, 146, 206, 179, 116, 224, 158, 180, 176, 27, 221, 238, 77, 69, 207,
   ])
 );
-function maybeUseDevnetWallet(connection: Connection, delegateWallet: Keypair | undefined): Keypair | undefined {
+function maybeUseDevnetWallet(
+  connection: Connection,
+  delegateWallet: Keypair | undefined
+): Keypair | undefined {
   // @ts-ignore
   if (connection._rpcEndpoint.includes("dev")) {
-    return DEVNET_WALLET
+    return DEVNET_WALLET;
   }
   return delegateWallet;
 }
 
-async function withRetries<T>(arg0: () => Promise<T>, tries: number = 3): Promise<T> {
+async function withRetries<T>(
+  arg0: () => Promise<T>,
+  tries: number = 3
+): Promise<T> {
   try {
-    return await arg0()
+    return await arg0();
   } catch (e: any) {
     if (tries > 0) {
       console.warn(`Failed tx, retrying up to ${tries} more times.`, e);
-      await sleep(1000)
-      return withRetries(arg0, tries - 1)
+      await sleep(1000);
+      return withRetries(arg0, tries - 1);
     }
     throw e;
   }
 }
-

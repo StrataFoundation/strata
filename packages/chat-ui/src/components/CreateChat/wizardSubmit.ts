@@ -1,7 +1,12 @@
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
 import { NATIVE_MINT } from "@solana/spl-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
-import { ChatSdk, PermissionType, uploadFiles } from "@strata-foundation/chat";
+import {
+  ChatSdk,
+  PermissionType,
+  randomizeFileName,
+  uploadFiles,
+} from "@strata-foundation/chat";
 import {
   SplTokenBonding,
   TimeCurveConfig,
@@ -85,6 +90,12 @@ const getMetadataOpts = ({
     uses: null,
   });
 
+const getJsonFile = (arg0: {}) =>
+  new File(
+    [new Blob([JSON.stringify(arg0)], { type: "application/json" })],
+    "file.json"
+  );
+
 export const wizardSubmit = async ({
   sdks,
   data: { wizardData },
@@ -130,13 +141,35 @@ export const wizardSubmit = async ({
       };
 
       setState({ subStatus: "Uploading read token metadata to SHDW Drive..." });
-      // await uploadFiles(chatSdk!.provider, [], delegateWallet);
 
-      // need to get uri
-      // const metadata = getMetadataOpts({
-      //   identifier: `${postIsSameAsRead ? "" : "READ"}${identifier}`,
-      //   uri,
-      // });
+      try {
+        const file = getJsonFile({
+          name,
+          symbol: identifier,
+          description: postIsSameAsRead
+            ? `Permission token for ${identifier} chat`
+            : `Read permission token for ${identifier} chat`,
+          image: imageUrl,
+          mint: targetMintKeypair.publicKey,
+        });
+        randomizeFileName(file);
+
+        const uri = await uploadFiles(
+          chatSdk!.provider,
+          [file],
+          delegateWallet
+        );
+
+        if (!uri || !uri.length)
+          throw new Error("Failed to upload token metadata");
+
+        const metadata = getMetadataOpts({
+          identifier: `${postIsSameAsRead ? "" : "READ"}${identifier}`,
+          uri: uri[0],
+        });
+      } catch (e) {
+        // what we doing with this
+      }
 
       readPermissionKey = targetMintKeypair.publicKey;
       console.log(`Creating read permission ${identifier} token...`);
@@ -159,12 +192,33 @@ export const wizardSubmit = async ({
         setState({
           subStatus: "Uploading post token metadata to SHDW Drive...",
         });
-        // await uploadFiles(chatSdk!.provider, [], delegateWallet);
 
-        // const metadata = getMetadataOpts({
-        //   identifier: `POST${identifier}`,
-        //   uri,
-        // });
+        try {
+          const file = getJsonFile({
+            name,
+            symbol: identifier,
+            description: `Post permission token for ${identifier} chat`,
+            image: imageUrl,
+            mint: targetMintKeypair.publicKey,
+          });
+          randomizeFileName(file);
+
+          const uri = await uploadFiles(
+            chatSdk!.provider,
+            [file],
+            delegateWallet
+          );
+
+          if (!uri || !uri.length)
+            throw new Error("Failed to upload token metadata");
+
+          const metadata = getMetadataOpts({
+            identifier: `${postIsSameAsRead ? "" : "READ"}${identifier}`,
+            uri: uri[0],
+          });
+        } catch (e) {
+          // what we doing with this
+        }
 
         readPermissionKey = targetMintKeypair.publicKey;
         console.log(`Creating post permission ${identifier} token...`);
@@ -173,18 +227,18 @@ export const wizardSubmit = async ({
   }
 
   console.log("Initialize Chat");
-  const chatOut = await chatSdk?.initializeChatInstructions({
-    name,
-    identifier,
-    imageUrl,
-    permissions: {
-      readPermissionKey: readPermissionKey!,
-      defaultReadPermissionAmount: readPermissionAmount,
-      readPermissionType,
-      postPermissionKey: postPermissionKey!,
-      postPermissionAmount,
-      postPermissionType,
-    },
-  });
+  // const chatOut = await chatSdk?.initializeChatInstructions({
+  //   name,
+  //   identifier,
+  //   imageUrl,
+  //   permissions: {
+  //     readPermissionKey: readPermissionKey!,
+  //     defaultReadPermissionAmount: readPermissionAmount,
+  //     readPermissionType,
+  //     postPermissionKey: postPermissionKey!,
+  //     postPermissionAmount,
+  //     postPermissionType,
+  //   },
+  // });
   console.log(wizardData);
 };
