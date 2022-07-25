@@ -20,7 +20,7 @@ import {
   useCurve,
   useSolanaUnixTime,
   useTokenSwapFromId,
-  useTokenMetadata,
+  useMetaplexTokenMetadata,
 } from "@strata-foundation/react";
 import React, { useEffect, useState } from "react";
 import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
@@ -62,12 +62,14 @@ export const LbcInfo = ({
   const { isOpen, onToggle } = useDisclosure({
     defaultIsOpen: false,
   });
-  const { 
-    tokenBonding, 
+  const {
+    tokenBonding,
     numRemaining,
     loading: loadingBonding,
   } = useTokenSwapFromId(id);
-  const { price, loading: loadingPricing } = useLivePrice(tokenBonding?.publicKey);
+  const { price, loading: loadingPricing } = useLivePrice(
+    tokenBonding?.publicKey
+  );
   const { mintCap } = useCapInfo(
     tokenBonding?.publicKey,
     useTokenOfferingCurve
@@ -101,8 +103,10 @@ export const LbcInfo = ({
       ? tokenBonding.goLiveUnixTime.toNumber() < unixTime
       : false;
 
-  const { metadata } = useTokenMetadata(tokenBonding?.baseMint);
-  const { metadata: targetMeta } = useTokenMetadata(tokenBonding?.targetMint);
+  const { metadata } = useMetaplexTokenMetadata(tokenBonding?.baseMint);
+  const { metadata: targetMeta } = useMetaplexTokenMetadata(
+    tokenBonding?.targetMint
+  );
 
   const renderer = ({
     days,
@@ -187,6 +191,8 @@ export const LbcInfo = ({
                 <BigText>
                   {isNaN(priceToUse)
                     ? "Not Started"
+                    : metadata?.data.symbol === "USDC"
+                    ? `$${numberWithCommas(priceToUse, 2)}`
                     : `${numberWithCommas(priceToUse, 4)} ${
                         metadata?.data.symbol
                       }`}

@@ -132,7 +132,7 @@ async function createLbcCandyMachine(
   const metadata = new DataV2({
     // Max name len 32
     name: "Candymachine Mint Token",
-    symbol: "NFTs",
+    symbol: "",
     uri: "",
     sellerFeeBasisPoints: 0,
     creators: null,
