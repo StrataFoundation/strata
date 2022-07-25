@@ -50,7 +50,16 @@ export const MintedNftNotification = ({
           />
         )}
       </Box>
-      <VStack align="left" w="full" p={8} spacing={1}>
+      <VStack
+        align="left"
+        w="full"
+        p={8}
+        spacing={1}
+        borderWidth="2px"
+        borderTopWidth={0}
+        borderBottomRadius="8px"
+        borderColor={useColorModeValue("gray.200", "black.300")}
+      >
         <HStack align="left" spacing={1}>
           <AlertTitle fontSize="24px" fontWeight={700}>
             Success!
@@ -60,9 +69,7 @@ export const MintedNftNotification = ({
         <Text color="gray.400">
           {loading
             ? "Waiting on your preview..."
-            : `Here is a preview of ${
-                metadata ? metadata.data.name : ""
-              }`}
+            : `Here is a preview of ${metadata ? metadata.data.name : ""}`}
         </Text>
       </VStack>
       <CloseButton
