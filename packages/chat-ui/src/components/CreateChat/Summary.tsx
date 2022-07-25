@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   Box,
@@ -97,6 +97,7 @@ const TokenSummary: React.FC<{
 );
 
 export const Summary: React.FC<ISummaryProps> = ({ state, onBack, onNext }) => {
+  const [imgUrl, setImgUrl] = useState<string>();
   const {
     handleSubmit,
     formState: { errors },
@@ -115,9 +116,23 @@ export const Summary: React.FC<ISummaryProps> = ({ state, onBack, onNext }) => {
       readForm,
       postType,
       postForm,
+      image,
       imageUrl,
     },
   } = state;
+
+  useEffect(() => {
+    if (image) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setImgUrl((event.target?.result as string) || "");
+      };
+
+      reader.readAsDataURL(image);
+    } else {
+      setImgUrl(undefined);
+    }
+  }, [image]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
@@ -140,7 +155,7 @@ export const Summary: React.FC<ISummaryProps> = ({ state, onBack, onNext }) => {
                 alt={`${identifier}-chat-image`}
                 w="80px"
                 h="80px"
-                src={imageUrl}
+                src={imgUrl || imageUrl}
               />
             </LabelCodeValue>
           </Stack>

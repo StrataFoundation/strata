@@ -158,6 +158,7 @@ export const BasicInfo: React.FC<IBasicInfoProps> = ({
       reader.onload = (event) => {
         setImgUrl((event.target?.result as string) || "");
       };
+
       reader.readAsDataURL(image);
 
       if (!imageUrl) {
@@ -305,19 +306,6 @@ export const BasicInfo: React.FC<IBasicInfoProps> = ({
             </FormErrorMessage>
           )}
         </FormControl>
-        <Flex align="center" w="full">
-          <Divider borderColor="gray.500" />
-          <Text px={4}>OR</Text>
-          <Divider borderColor="gray.500" />
-        </Flex>
-        <FormControlWithError
-          id="imageUrl"
-          help="A url to the image to use for your chat"
-          label="Image URL"
-          errors={errors}
-        >
-          <Input variant="filled" {...inputBg} {...register("imageUrl")} />
-        </FormControlWithError>
         <ButtonGroup variant="outline" colorScheme="primary" w="full">
           <Button w="full" onClick={onBack}>
             Back
