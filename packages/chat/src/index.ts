@@ -1,3 +1,4 @@
+import { DataV2, Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import {
   CLAIM_REQUEST_SEED, EntryData, ENTRY_SEED, NamespaceData,
   NAMESPACES_IDL,
@@ -8,10 +9,6 @@ import {
   withCreateClaimRequest, withInitNameEntry, withInitNameEntryMint,
 } from "@cardinal/namespaces";
 import { LocalStorageLRU } from "@cocalc/local-storage-lru";
-import {
-  Metadata,
-  MasterEdition,
-} from "@metaplex-foundation/mpl-token-metadata";
 import { AnchorProvider, BN as AnchorBN, IdlTypes, Program, utils } from "@project-serum/anchor";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, NATIVE_MINT, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { Commitment, ConfirmedTransactionMeta, Finality, Keypair, Message, PublicKey, Signer, SystemProgram, SYSVAR_RENT_PUBKEY, Transaction } from "@solana/web3.js";
@@ -22,8 +19,11 @@ import {
   InstructionResult,
   toBN,
   truthy,
-  TypedAccountParser
+  TypedAccountParser,
+  createMintInstructions,
+  SplTokenMetadata
 } from "@strata-foundation/spl-utils";
+import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import BN from "bn.js";
 // @ts-ignore
 import bs58 from "bs58";
@@ -410,6 +410,25 @@ function depuff(str: string): string {
   return str.replace(new RegExp("\0", "g"), "");
 }
 
+interface ICreateMetadataForBondingArgs {
+  /**
+   * The update authority on the metadata created. **Default:** Seller
+   */
+  metadataUpdateAuthority?: PublicKey;
+  /**
+   * The token metadata for the marketplace item
+   */
+  metadata: DataV2;
+  /**
+   * Optionally, use this keypair to create the target mint
+   */
+  targetMintKeypair?: Keypair;
+  /**
+   * Decimals for the mint
+   */
+  decimals: number;
+}
+
 export class ChatSdk extends AnchorSdk<ChatIDL> {
   litClient: LitJsSdk;
   litAuthSig: any | undefined;
@@ -422,6 +441,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   conditionVersion = CONDITION_VERSION;
   _namespaces: INamespaces | null = null;
   _namespacesPromise: Promise<INamespaces> | null = null;
+  tokenBondingSdk: SplTokenBonding;
+  tokenMetadataSdk: SplTokenMetadata;
 
   static ID = new PublicKey("chatGL6yNgZT2Z3BeMYGcgdMpcBKdmxko4C5UhEX4To");
 
@@ -473,7 +494,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
   static async init(
     provider: AnchorProvider,
-    chatProgramId: PublicKey = ChatSdk.ID
+    chatProgramId: PublicKey = ChatSdk.ID,
+    splTokenBondingProgramId: PublicKey = SplTokenBonding.ID,
   ): Promise<ChatSdk> {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
@@ -490,10 +512,15 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       chatProgramId,
       provider
     ) as Program<ChatIDL>;
+
+    const tokenBondingSdk = await SplTokenBonding.init(provider, splTokenBondingProgramId);
+    const tokenMetadataSdk = await SplTokenMetadata.init(provider);
+    
     const client = new LitJsSdk.LitNodeClient({
       alertWhenUnauthorized: false,
       debug: false,
     });
+
     try {
       await client.connect();
     } catch (e: any) {
@@ -505,6 +532,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       program: chat,
       litClient: client,
       namespacesProgram,
+      tokenBondingSdk,
+      tokenMetadataSdk
     });
   }
 
@@ -515,12 +544,16 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     namespacesProgram,
     // @ts-ignore
     symKeyStorage = new LocalSymKeyStorage(provider.connection._rpcEndpoint),
+    tokenBondingSdk,
+    tokenMetadataSdk,
   }: {
     provider: AnchorProvider;
     program: Program<ChatIDL>;
     litClient: typeof LitJsSdk;
     namespacesProgram: Program<NAMESPACES_PROGRAM>;
     symKeyStorage?: ISymKeyStorage;
+    tokenBondingSdk: SplTokenBonding;
+    tokenMetadataSdk: SplTokenMetadata;
   }) {
     super({ provider, program });
 
@@ -543,8 +576,9 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     }
     this.litClient = litClient;
     this.symKeyStorage = symKeyStorage;
-
     this.litJsSdk = LitJsSdk;
+    this.tokenBondingSdk = tokenBondingSdk;
+    this.tokenMetadataSdk = tokenMetadataSdk;
   }
 
   entryDecoder: TypedAccountParser<IEntry> = (pubkey, account) => {
@@ -2141,6 +2175,60 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       args.payer,
       commitment
     );
+  }
+
+  async createMetadataForBondingInstructions({
+    metadataUpdateAuthority = this.provider.wallet.publicKey,
+    metadata,
+    targetMintKeypair = Keypair.generate(),
+    decimals,
+  }: ICreateMetadataForBondingArgs): Promise<
+  InstructionResult<{ metadata: PublicKey; mint: PublicKey }> {
+    const targetMint = targetMintKeypair.publicKey;
+    const instructions = [];
+    const signers = [];
+
+    instructions.push(
+      ...(await createMintInstructions(
+        this.tokenBondingSdk.provider,
+        this.provider.wallet.publicKey,
+        targetMint,
+        decimals
+      ))
+    );
+    signers.push(targetMintKeypair);
+    const {
+      instructions: metadataInstructions,
+      signers: metadataSigners,
+      output,
+    } = await this.tokenMetadataSdk.createMetadataInstructions({
+      data: metadata,
+      mint: targetMint,
+      mintAuthority: this.provider.wallet.publicKey,
+      authority: metadataUpdateAuthority,
+    });
+    instructions.push(...metadataInstructions);
+    signers.push(...metadataSigners);
+
+    instructions.push(
+      Token.createSetAuthorityInstruction(
+        TOKEN_PROGRAM_ID,
+        targetMint,
+        (await SplTokenBonding.tokenBondingKey(targetMint))[0],
+        "MintTokens",
+        this.provider.wallet.publicKey,
+        []
+      )
+    );
+
+    return {
+      instructions,
+      signers,
+      output: {
+        ...output,
+        mint: targetMint,
+      },
+    };
   }
 }
 

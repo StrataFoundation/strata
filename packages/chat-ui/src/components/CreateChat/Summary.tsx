@@ -109,6 +109,7 @@ export const Summary: React.FC<ISummaryProps> = ({ state, onBack, onNext }) => {
 
   const {
     status,
+    subStatus,
     wizardData: {
       name,
       identifier,
@@ -188,6 +189,9 @@ export const Summary: React.FC<ISummaryProps> = ({ state, onBack, onNext }) => {
             </Stack>
           </Stack>
         </Stack>
+        <Text color="primary.500" fontWeight="bold">
+          {subStatus}&nbsp;
+        </Text>
         <ButtonGroup
           variant="outline"
           colorScheme="primary"

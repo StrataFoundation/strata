@@ -103,7 +103,7 @@ export const wizardSubmit = async ({
   setState,
 }: IWazardSubmitOpts) => {
   setState({ status: "submitting" });
-  const { chatSdk, tokenBondingSdk, tokenMetadataSdk } = sdks;
+  const { chatSdk, tokenBondingSdk } = sdks;
   const { name, identifier, image, imageUrl } = wizardData;
   const { readForm, postForm, postIsSameAsRead } = wizardData;
   let readPermissionType, readPermissionAmount, readPermissionKey;
@@ -131,28 +131,21 @@ export const wizardSubmit = async ({
   if (!readPermissionKey || !postPermissionKey) {
     if (!readPermissionKey) {
       const targetMintKeypair = Keypair.generate();
-      const curveOut = await tokenBondingSdk?.initializeCurveInstructions({
-        config: getCurveConfig((readForm as ITokenFormValues).startingPrice!),
+      const file = getJsonFile({
+        name,
+        symbol: identifier,
+        description: postIsSameAsRead
+          ? `Permission token for ${identifier} chat`
+          : `Read permission token for ${identifier} chat`,
+        image: imageUrl,
+        mint: targetMintKeypair.publicKey,
       });
-
-      const bondingOpts = {
-        ...defaultBondingOpts,
-        targetMint: targetMintKeypair.publicKey,
-      };
-
-      setState({ subStatus: "Uploading read token metadata to SHDW Drive..." });
+      randomizeFileName(file);
 
       try {
-        const file = getJsonFile({
-          name,
-          symbol: identifier,
-          description: postIsSameAsRead
-            ? `Permission token for ${identifier} chat`
-            : `Read permission token for ${identifier} chat`,
-          image: imageUrl,
-          mint: targetMintKeypair.publicKey,
+        setState({
+          subStatus: "Uploading read token metadata to SHDW Drive...",
         });
-        randomizeFileName(file);
 
         const uri = await uploadFiles(
           chatSdk!.provider,
@@ -167,12 +160,37 @@ export const wizardSubmit = async ({
           identifier: `${postIsSameAsRead ? "" : "READ"}${identifier}`,
           uri: uri[0],
         });
-      } catch (e) {
-        // what we doing with this
-      }
 
-      readPermissionKey = targetMintKeypair.publicKey;
-      console.log(`Creating read permission ${identifier} token...`);
+        setState({
+          subStatus: "Creating stable price curve for read permission...",
+        });
+        const curveOut = await tokenBondingSdk?.initializeCurveInstructions({
+          config: getCurveConfig((readForm as ITokenFormValues).startingPrice!),
+        });
+
+        const bondingOpts = {
+          ...defaultBondingOpts,
+          targetMint: targetMintKeypair.publicKey,
+          curve: curveOut!.output.curve,
+        };
+
+        const metadataOut = await chatSdk?.createMetadataForBondingInstructions(
+          {
+            targetMintKeypair,
+            metadataUpdateAuthority: chatSdk.wallet.publicKey,
+            metadata,
+            decimals: bondingOpts.targetMintDecimals,
+          }
+        );
+
+        const bondingOut =
+          await tokenBondingSdk?.createTokenBondingInstructions(bondingOpts);
+
+        readPermissionKey = targetMintKeypair.publicKey;
+        console.log(`Creating read permission ${identifier} token...`);
+      } catch (e) {
+        console.log(e);
+      }
     }
 
     if (!postPermissionKey) {
@@ -180,28 +198,19 @@ export const wizardSubmit = async ({
         postPermissionKey = readPermissionKey;
       } else {
         const targetMintKeypair = Keypair.generate();
-        const curveOut = await tokenBondingSdk?.initializeCurveInstructions({
-          config: getCurveConfig((postForm as ITokenFormValues).startingPrice!),
+        const file = getJsonFile({
+          name,
+          symbol: identifier,
+          description: `Post permission token for ${identifier} chat`,
+          image: imageUrl,
+          mint: targetMintKeypair.publicKey,
         });
-
-        const bondingOpts = {
-          ...defaultBondingOpts,
-          targetMint: targetMintKeypair.publicKey,
-        };
-
-        setState({
-          subStatus: "Uploading post token metadata to SHDW Drive...",
-        });
+        randomizeFileName(file);
 
         try {
-          const file = getJsonFile({
-            name,
-            symbol: identifier,
-            description: `Post permission token for ${identifier} chat`,
-            image: imageUrl,
-            mint: targetMintKeypair.publicKey,
+          setState({
+            subStatus: "Uploading read token metadata to SHDW Drive...",
           });
-          randomizeFileName(file);
 
           const uri = await uploadFiles(
             chatSdk!.provider,
@@ -213,15 +222,42 @@ export const wizardSubmit = async ({
             throw new Error("Failed to upload token metadata");
 
           const metadata = getMetadataOpts({
-            identifier: `${postIsSameAsRead ? "" : "READ"}${identifier}`,
+            identifier: `POST${identifier}`,
             uri: uri[0],
           });
-        } catch (e) {
-          // what we doing with this
-        }
 
-        readPermissionKey = targetMintKeypair.publicKey;
-        console.log(`Creating post permission ${identifier} token...`);
+          setState({
+            subStatus: "Creating stable price curve for post permission...",
+          });
+
+          const curveOut = await tokenBondingSdk?.initializeCurveInstructions({
+            config: getCurveConfig(
+              (readForm as ITokenFormValues).startingPrice!
+            ),
+          });
+
+          const bondingOpts = {
+            ...defaultBondingOpts,
+            targetMint: targetMintKeypair.publicKey,
+            curve: curveOut!.output.curve,
+          };
+
+          const metadataOut =
+            await chatSdk?.createMetadataForBondingInstructions({
+              targetMintKeypair,
+              metadataUpdateAuthority: chatSdk.wallet.publicKey,
+              metadata,
+              decimals: bondingOpts.targetMintDecimals,
+            });
+
+          const bondingOut =
+            await tokenBondingSdk?.createTokenBondingInstructions(bondingOpts);
+
+          readPermissionKey = targetMintKeypair.publicKey;
+          console.log(`Creating read permission ${identifier} token...`);
+        } catch (e) {
+          console.log(e);
+        }
       }
     }
   }
