@@ -3,12 +3,13 @@ import {
   NAMESPACES_PROGRAM,
   NAMESPACES_PROGRAM_ID
 } from "@cardinal/namespaces";
+
 import * as anchor from "@project-serum/anchor";
 import { AnchorProvider, Program } from "@project-serum/anchor";
 import {
   Connection,
   Keypair,
-  LAMPORTS_PER_SOL,
+  LAMPORTS_PER_SOL, 
   PublicKey, SystemProgram
 } from "@solana/web3.js";
 import {
