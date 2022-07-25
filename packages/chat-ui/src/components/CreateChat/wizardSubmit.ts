@@ -165,6 +165,7 @@ export const wizardSubmit = async ({
         setState({
           subStatus: "Creating stable price curve for read permission...",
         });
+
         const curveOut = await tokenBondingSdk?.initializeCurveInstructions({
           config: getCurveConfig((readForm as ITokenFormValues).startingPrice!),
         });
@@ -188,7 +189,6 @@ export const wizardSubmit = async ({
           await tokenBondingSdk?.createTokenBondingInstructions(bondingOpts);
 
         readPermissionKey = targetMintKeypair.publicKey;
-        console.log(`Creating read permission ${identifier} token...`);
       } catch (e) {
         console.log(e);
       }
@@ -255,7 +255,6 @@ export const wizardSubmit = async ({
             await tokenBondingSdk?.createTokenBondingInstructions(bondingOpts);
 
           readPermissionKey = targetMintKeypair.publicKey;
-          console.log(`Creating read permission ${identifier} token...`);
         } catch (e) {
           console.log(e);
         }
