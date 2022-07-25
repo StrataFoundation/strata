@@ -132,9 +132,6 @@ export const DisburseFunds = ({
                   destinationWallet: new PublicKey(address),
                   includeRetrievalCurve,
                 });
-                if (closeEntangler && childEntangler?.publicKey) {
-                  cache?.delete(childEntangler.publicKey);
-                }
               }
             }}
           >
