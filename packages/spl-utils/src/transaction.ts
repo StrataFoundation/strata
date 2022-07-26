@@ -94,7 +94,6 @@ export async function sendMultipleInstructions(
     await provider.connection.getRecentBlockhash("confirmed")
   ).blockhash;
   const ixAndSigners = instructionGroups
-    .filter((instructions) => instructions.length > 0)
     .map((instructions, i) => {
       const signers = signerGroups[i];
 
@@ -102,7 +101,9 @@ export async function sendMultipleInstructions(
         instructions,
         signers,
       };
-    });
+    })
+    .filter(({instructions}) => instructions.length > 0)
+
   const txns = ixAndSigners.map(({ instructions }) => {
     const tx = new Transaction({
       feePayer: payer || provider.wallet.publicKey,
