@@ -144,9 +144,11 @@ export const BasicInfo: React.FC<IBasicInfoProps> = ({
 
   const onSubmit = (data: any) => {
     setState({
+      ...state,
       wizardData: {
         ...state.wizardData,
         ...data,
+        imageUploaded: true,
       },
     });
     onNext();
@@ -167,9 +169,11 @@ export const BasicInfo: React.FC<IBasicInfoProps> = ({
           randomizeFileName(image);
           const url = `https://shdw-drive.genesysgo.net/${chatStorage}/${image.name}`;
           setValue("imageUrl", url);
+          let innerImageUploaded = false;
 
           try {
             await uploadFiles(chatSdk!.provider, [image], delegateWallet);
+            innerImageUploaded = true;
             setState({
               ...state,
               wizardData: {
@@ -181,7 +185,7 @@ export const BasicInfo: React.FC<IBasicInfoProps> = ({
             handleErrors(e as Error);
           } finally {
             setIsUploading(false);
-            if (!imageUploaded) {
+            if (!innerImageUploaded) {
               setValue("imageUrl", undefined);
               setValue("image", undefined);
               setImgUrl(undefined);
@@ -327,6 +331,8 @@ export const BasicInfo: React.FC<IBasicInfoProps> = ({
               isUploading ||
               !imageUploaded
             }
+            isLoading={isUploading}
+            loadingText="Uploading image"
           >
             Next
           </Button>

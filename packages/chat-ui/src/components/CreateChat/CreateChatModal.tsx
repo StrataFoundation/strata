@@ -118,10 +118,15 @@ export const CreateChatModal: React.FC<ICreateChatModalProps> = ({
   };
 
   const handleNext = useCallback(async () => {
-    if (CreateChatStep.next(state.lastStep) == CreateChatStep.Summary) {
+    const isOnSummary = state.step === CreateChatStep.Summary;
+
+    if (
+      (!isOnSummary && CreateChatStep.next(state.lastStep)) ==
+      CreateChatStep.Summary
+    ) {
       setState({ step: CreateChatStep.Summary });
     } else {
-      if (state.step === CreateChatStep.Summary) {
+      if (isOnSummary) {
         await wizardSubmit({
           sdks: {
             chatSdk,

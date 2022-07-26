@@ -46,6 +46,7 @@ export const PermissionType: React.FC<IPermissionTypeProps> = ({
     onChange: (x) => {
       setSelectedOption(x as ReadPostType);
       setState({
+        ...state,
         wizardData: {
           ...state.wizardData,
           postIsSameAsRead: false,
@@ -62,6 +63,7 @@ export const PermissionType: React.FC<IPermissionTypeProps> = ({
   useEffect(() => {
     if (selectedOption) {
       setState({
+        ...state,
         wizardData: {
           ...state.wizardData,
           [`${permissionType}Type`]: selectedOption,
@@ -75,6 +77,7 @@ export const PermissionType: React.FC<IPermissionTypeProps> = ({
     setSelectedOption(undefined);
 
     setState({
+      ...state,
       wizardData: {
         ...state.wizardData,
         postIsSameAsRead: isChecked,
