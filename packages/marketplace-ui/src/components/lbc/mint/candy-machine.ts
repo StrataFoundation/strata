@@ -418,7 +418,7 @@ export const mintOneToken = async (
     }
   }
 
-  // Close intermediary account
+  // Close intermediary account, if it exists and doesn't hold more than 0 tokens
   const cleanupInstructions: TransactionInstruction[] = [];
   if (tokenBonding && (ataBalance || 0) == 1) {
     cleanupInstructions.push(
