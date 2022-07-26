@@ -9,6 +9,8 @@ import {
   NAMESPACES_PROGRAM,
   NAMESPACES_PROGRAM_ID,
 } from "@cardinal/namespaces";
+import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
+import { SplTokenMetadata } from "@strata-foundation/spl-utils";
 
 const args = process.argv;
 async function run(): Promise<void> {
@@ -28,12 +30,21 @@ async function run(): Promise<void> {
     NAMESPACES_PROGRAM_ID,
     provider
   );
+  const tokenBondingSdk = await SplTokenBonding.init(
+    provider,
+    SplTokenBonding.ID
+  );
+  const tokenMetadataSdk = await SplTokenMetadata.init(provider);
+
   const chatSdk = new ChatSdk({
     provider,
     program: chat,
     litClient: client,
     namespacesProgram,
+    tokenBondingSdk,
+    tokenMetadataSdk,
   });
+
   await chatSdk.initializeNamespaces();
 
   console.log("Claiming identifier...");
@@ -42,7 +53,7 @@ async function run(): Promise<void> {
       type: IdentifierType.User,
       identifier: args[2],
     });
-  console.log(identifierCertificateMint.toBase58())
+  console.log(identifierCertificateMint.toBase58());
 }
 
 run().catch((e) => {

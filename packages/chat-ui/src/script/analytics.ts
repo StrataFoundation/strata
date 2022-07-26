@@ -10,16 +10,27 @@ import {
   NAMESPACES_PROGRAM_ID,
 } from "@cardinal/namespaces";
 import { Connection } from "@solana/web3.js";
+import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
+import { SplTokenMetadata } from "@strata-foundation/spl-utils";
 
-async function countSigs(connection: Connection, before?: string): Promise<number> {
-  const sigs = await connection.getSignaturesForAddress(ChatSdk.ID, {
-    before,
-    limit: 1000
-  }, "confirmed");
-  const count = sigs.length
+async function countSigs(
+  connection: Connection,
+  before?: string
+): Promise<number> {
+  const sigs = await connection.getSignaturesForAddress(
+    ChatSdk.ID,
+    {
+      before,
+      limit: 1000,
+    },
+    "confirmed"
+  );
+  const count = sigs.length;
 
   if (count === 1000) {
-    return count + await countSigs(connection, sigs[sigs.length - 1].signature)
+    return (
+      count + (await countSigs(connection, sigs[sigs.length - 1].signature))
+    );
   }
 
   return count;
@@ -66,25 +77,36 @@ async function run(): Promise<void> {
     NAMESPACES_PROGRAM_ID,
     provider
   );
+  const tokenBondingSdk = await SplTokenBonding.init(
+    provider,
+    SplTokenBonding.ID
+  );
+  const tokenMetadataSdk = await SplTokenMetadata.init(provider);
+
   const chatSdk = new ChatSdk({
     provider,
     program: chat,
     litClient: client,
     namespacesProgram,
+    tokenBondingSdk,
+    tokenMetadataSdk,
   });
   await chatSdk.initializeNamespaces();
 
-  const profiles = (await chatSdk.account.profileV0.all());
+  const profiles = await chatSdk.account.profileV0.all();
   const chats = await chatSdk.account.chatV0.all();
-  const txns = (await countSigs(chatSdk.provider.connection))
+  const txns = await countSigs(chatSdk.provider.connection);
   const delegates = await chatSdk.account.delegateWalletV0.all();
-
 
   console.log(`${profiles.length} profiles`);
   console.log(`${chats.length} chats`);
   console.log(`${delegates.length} delegate wallets`);
   console.log(`${txns} txns`);
-  console.log(`Roughly ${txns - chats.length - profiles.length - delegates.length} messages`);
+  console.log(
+    `Roughly ${
+      txns - chats.length - profiles.length - delegates.length
+    } messages`
+  );
 }
 
 run().catch((e) => {

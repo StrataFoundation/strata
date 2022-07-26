@@ -1,6 +1,11 @@
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
 import { NATIVE_MINT } from "@solana/spl-token";
-import { Keypair, PublicKey } from "@solana/web3.js";
+import {
+  Keypair,
+  PublicKey,
+  Signer,
+  TransactionInstruction,
+} from "@solana/web3.js";
 import {
   ChatSdk,
   PermissionType,
@@ -108,8 +113,8 @@ export const wizardSubmit = async ({
   const { readForm, postForm, postIsSameAsRead } = wizardData;
   let readPermissionType, readPermissionAmount, readPermissionKey;
   let postPermissionType, postPermissionAmount, postPermissionKey;
-  let instructions = [],
-    signers = [];
+  let instructions: TransactionInstruction[][] = [],
+    signers: Signer[][] = [];
 
   readPermissionType = getPermissionType(readForm.type);
   readPermissionAmount = readForm.amount;
@@ -176,17 +181,25 @@ export const wizardSubmit = async ({
           curve: curveOut!.output.curve,
         };
 
-        const metadataOut = await chatSdk?.createMetadataForBondingInstructions(
-          {
-            targetMintKeypair,
-            metadataUpdateAuthority: chatSdk.wallet.publicKey,
-            metadata,
-            decimals: bondingOpts.targetMintDecimals,
-          }
-        );
+        const metaOut = await chatSdk?.createMetadataForBondingInstructions({
+          targetMintKeypair,
+          metadataUpdateAuthority: chatSdk.wallet.publicKey,
+          metadata,
+          decimals: bondingOpts.targetMintDecimals,
+        });
 
         const bondingOut =
           await tokenBondingSdk?.createTokenBondingInstructions(bondingOpts);
+
+        instructions.push(
+          [...curveOut!.instructions!, ...metaOut!.instructions],
+          bondingOut!.instructions
+        );
+
+        signers.push(
+          [...curveOut!.signers, ...metaOut!.signers],
+          bondingOut!.signers
+        );
 
         readPermissionKey = targetMintKeypair.publicKey;
       } catch (e) {
@@ -210,7 +223,7 @@ export const wizardSubmit = async ({
 
         try {
           setState({
-            subStatus: "Uploading read token metadata to SHDW Drive...",
+            subStatus: "Uploading post token metadata to SHDW Drive...",
           });
 
           const uri = await uploadFiles(
@@ -243,18 +256,27 @@ export const wizardSubmit = async ({
             curve: curveOut!.output.curve,
           };
 
-          const metadataOut =
-            await chatSdk?.createMetadataForBondingInstructions({
-              targetMintKeypair,
-              metadataUpdateAuthority: chatSdk.wallet.publicKey,
-              metadata,
-              decimals: bondingOpts.targetMintDecimals,
-            });
+          const metaOut = await chatSdk?.createMetadataForBondingInstructions({
+            targetMintKeypair,
+            metadataUpdateAuthority: chatSdk.wallet.publicKey,
+            metadata,
+            decimals: bondingOpts.targetMintDecimals,
+          });
 
           const bondingOut =
             await tokenBondingSdk?.createTokenBondingInstructions(bondingOpts);
 
-          readPermissionKey = targetMintKeypair.publicKey;
+          instructions.push(
+            [...curveOut!.instructions!, ...metaOut!.instructions],
+            bondingOut!.instructions
+          );
+
+          signers.push(
+            [...curveOut!.signers, ...metaOut!.signers],
+            bondingOut!.signers
+          );
+
+          postPermissionKey = targetMintKeypair.publicKey;
         } catch (e) {
           console.log(e);
         }
@@ -262,8 +284,17 @@ export const wizardSubmit = async ({
     }
   }
 
-  console.log("Initialize Chat");
-  // const chatOut = await chatSdk?.initializeChatInstructions({
+  // if (instructions.length > 0) {
+  //   await chatSdk?.executeBig(
+  //     Promise.resolve({
+  //       output: null,
+  //       instructions,
+  //       signers,
+  //     })
+  //   );
+  // }
+
+  // await chatSdk?.initializeChat({
   //   name,
   //   identifier,
   //   imageUrl,
@@ -276,5 +307,6 @@ export const wizardSubmit = async ({
   //     postPermissionType,
   //   },
   // });
-  console.log(wizardData);
+
+  setState({ status: "success" });
 };

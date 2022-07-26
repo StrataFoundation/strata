@@ -1,4 +1,4 @@
-import React, { useReducer, useCallback, useState } from "react";
+import React, { useReducer, useCallback, useState, useEffect } from "react";
 import {
   Modal,
   ModalBody,
@@ -14,7 +14,7 @@ import {
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 
-import { useErrorHandler, useStrataSdks } from "@strata-foundation/react";
+import { useStrataSdks } from "@strata-foundation/react";
 import { useChatSdk } from "../../contexts";
 import { useDelegateWallet, useLoadDelegate } from "../../hooks";
 import { ProgressStep } from "./ProgressStep";
@@ -25,6 +25,7 @@ import { Summary } from "./Summary";
 import { ITokenFormValues } from "./TokenForm";
 import { INFTFormValues } from "./NFTForm";
 import { wizardSubmit } from "./wizardSubmit";
+import { useRouter } from "next/router";
 
 interface ICreateChatModalProps {
   isOpen: boolean;
@@ -52,13 +53,16 @@ export enum ReadPostType {
 
 export interface ICreateChatModalState {
   step: CreateChatStep;
-  status: null | "submitting";
+  lastStep: CreateChatStep;
+  status: null | "submitting" | "success" | string;
   subStatus: null | string;
+  error: null | Error | "string";
   wizardData: {
     name: string;
     identifier: string;
     image: undefined | File;
     imageUrl: undefined | string;
+    imageUploaded: boolean;
     readType: undefined | ReadPostType;
     postType: undefined | ReadPostType;
     postIsSameAsRead: boolean;
@@ -69,13 +73,16 @@ export interface ICreateChatModalState {
 
 export const initialState: ICreateChatModalState = {
   step: CreateChatStep.BasicInfo,
+  lastStep: CreateChatStep.BasicInfo,
   status: null,
   subStatus: null,
+  error: null,
   wizardData: {
     name: "",
     identifier: "",
     image: undefined,
     imageUrl: undefined,
+    imageUploaded: false,
     readType: undefined,
     postType: undefined,
     postIsSameAsRead: false,
@@ -91,6 +98,7 @@ export const CreateChatModal: React.FC<ICreateChatModalProps> = ({
   const { connected } = useWallet();
   const { setVisible } = useWalletModal();
   const { chatSdk } = useChatSdk();
+  const router = useRouter();
   const { tokenBondingSdk, tokenMetadataSdk } = useStrataSdks();
   const { keypair: delegateWallet } = useDelegateWallet();
   const [state, setState] = useReducer(
@@ -110,40 +118,63 @@ export const CreateChatModal: React.FC<ICreateChatModalProps> = ({
   };
 
   const handleNext = useCallback(async () => {
-    if (state.step === CreateChatStep.Summary) {
-      await wizardSubmit({
-        sdks: {
-          chatSdk,
-          tokenBondingSdk,
-          tokenMetadataSdk,
-        },
-        data: state,
-        delegateWallet,
-        setState,
-      });
-    } else if (
-      state.step === CreateChatStep.PostPermissionsType &&
-      state.wizardData.postIsSameAsRead
-    ) {
+    if (CreateChatStep.next(state.lastStep) == CreateChatStep.Summary) {
       setState({ step: CreateChatStep.Summary });
     } else {
-      setState({ step: CreateChatStep.next(state.step) });
+      if (state.step === CreateChatStep.Summary) {
+        await wizardSubmit({
+          sdks: {
+            chatSdk,
+            tokenBondingSdk,
+            tokenMetadataSdk,
+          },
+          data: state,
+          delegateWallet,
+          setState,
+        });
+      } else if (
+        state.step === CreateChatStep.PostPermissionsType &&
+        state.wizardData.postIsSameAsRead
+      ) {
+        setState({ step: CreateChatStep.Summary, lastStep: state.step });
+      } else {
+        setState({
+          step: CreateChatStep.next(state.step),
+          lastStep: state.step,
+        });
+      }
     }
   }, [state, setState]);
 
-  const handleBack = useCallback(() => {
-    if (state.step === CreateChatStep.BasicInfo) {
-      setState(initialState);
-      onClose();
-    } else if (
-      state.step === CreateChatStep.Summary &&
-      state.wizardData.postIsSameAsRead
-    ) {
-      setState({ step: CreateChatStep.PostPermissionsType });
-    } else {
-      setState({ step: CreateChatStep.prev(state.step) });
+  const handleBack = useCallback(
+    (stepOverride?: CreateChatStep) => {
+      if (stepOverride && stepOverride in CreateChatStep) {
+        setState({ step: stepOverride });
+      } else {
+        if (state.step === CreateChatStep.BasicInfo) {
+          setState(initialState);
+          onClose();
+        } else if (
+          state.step === CreateChatStep.Summary &&
+          state.wizardData.postIsSameAsRead
+        ) {
+          setState({ step: CreateChatStep.PostPermissionsType });
+        } else {
+          setState({ step: CreateChatStep.prev(state.step) });
+        }
+      }
+    },
+    [state, setState, onClose]
+  );
+
+  useEffect(() => {
+    if (state.status === "success") {
+      router.push({
+        pathname: `/c/${state.wizardData.identifier}`,
+      });
+      handleClose();
     }
-  }, [state, setState, onClose]);
+  }, [state.status]);
 
   return (
     <Modal onClose={handleClose} isOpen={isOpen} size="lg">

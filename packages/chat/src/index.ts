@@ -2182,8 +2182,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     metadata,
     targetMintKeypair = Keypair.generate(),
     decimals,
-  }: ICreateMetadataForBondingArgs): Promise<
-  InstructionResult<{ metadata: PublicKey; mint: PublicKey }> {
+  }: ICreateMetadataForBondingArgs): Promise<InstructionResult<{ metadata: PublicKey; mint: PublicKey }>> {
     const targetMint = targetMintKeypair.publicKey;
     const instructions = [];
     const signers = [];

@@ -19,7 +19,7 @@ import {
   Flex,
   HStack,
   Image,
-  Divider,
+  Progress,
 } from "@chakra-ui/react";
 import {
   RiCheckLine,
@@ -30,7 +30,6 @@ import { PublicKey } from "@solana/web3.js";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { randomizeFileName, uploadFiles } from "@strata-foundation/chat";
 import { useErrorHandler } from "@strata-foundation/react";
-import toast from "react-hot-toast";
 import { ICreateChatModalState } from "./CreateChatModal";
 import { useChatSdk } from "../../contexts";
 import {
@@ -38,7 +37,6 @@ import {
   useLoadDelegate,
   useWalletFromChatIdentifier,
 } from "../../hooks";
-import { LongPromiseNotification } from "../LongPromiseNotification";
 import { FormControlWithError } from "../form";
 
 interface IBasicInfoProps {
@@ -76,6 +74,8 @@ export const BasicInfo: React.FC<IBasicInfoProps> = ({
   const { handleErrors } = useErrorHandler();
   const { result: chatStorage } = useChatStorageAccountKey();
   const hiddenFileInput = useRef<HTMLInputElement>(null);
+  const { imageUploaded } = state.wizardData;
+  const [isUploading, setIsUploading] = useState<boolean>(false);
   const [imgUrl, setImgUrl] = useState<string>();
   const [isValidIdentifier, setIsValidIdentifier] = useState<null | boolean>(
     null
@@ -153,50 +153,50 @@ export const BasicInfo: React.FC<IBasicInfoProps> = ({
   };
 
   useEffect(() => {
-    if (image) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setImgUrl((event.target?.result as string) || "");
-      };
+    (async () => {
+      if (image) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          setImgUrl((event.target?.result as string) || "");
+        };
 
-      reader.readAsDataURL(image);
+        reader.readAsDataURL(image);
 
-      if (!imageUrl) {
-        const text = `Uploading ${image.name} to SHDW Drive...`;
-        randomizeFileName(image);
-        const url = `https://shdw-drive.genesysgo.net/${chatStorage}/${image.name}`;
-        setValue("imageUrl", url);
-        toast.custom(
-          (t) => (
-            <LongPromiseNotification
-              estTimeMillis={2 * 60 * 1000}
-              text={text}
-              onError={(e) => {
-                handleErrors(e);
-                toast.dismiss(t.id);
-              }}
-              exec={async () => {
-                await uploadFiles(chatSdk!.provider, [image], delegateWallet);
-                return true;
-              }}
-              onComplete={async () => {
-                const images = document.querySelectorAll(`img[src*="${url}"]`);
-                images.forEach((image) => {
-                  // @ts-ignore
-                  image.src = url;
-                });
-                toast.dismiss(t.id);
-              }}
-            />
-          ),
-          {
-            duration: Infinity,
+        if (!imageUrl) {
+          setIsUploading(true);
+          randomizeFileName(image);
+          const url = `https://shdw-drive.genesysgo.net/${chatStorage}/${image.name}`;
+          setValue("imageUrl", url);
+
+          try {
+            await uploadFiles(chatSdk!.provider, [image], delegateWallet);
+            setState({
+              ...state,
+              wizardData: {
+                ...state.wizardData,
+                imageUploaded: true,
+              },
+            });
+          } catch (e) {
+            handleErrors(e as Error);
+          } finally {
+            setIsUploading(false);
+            if (!imageUploaded) {
+              setValue("imageUrl", undefined);
+              setValue("image", undefined);
+              setImgUrl(undefined);
+              setError("image", {
+                message: "Image failed to upload, please try again",
+              });
+              // @ts-ignore
+              hiddenFileInput.current?.value = "";
+            }
           }
-        );
+        }
+      } else {
+        setImgUrl(undefined);
       }
-    } else {
-      setImgUrl(undefined);
-    }
+    })();
   }, [image]);
 
   return (
@@ -269,6 +269,7 @@ export const BasicInfo: React.FC<IBasicInfoProps> = ({
               colorScheme="primary"
               variant="outline"
               onClick={() => hiddenFileInput.current!.click()}
+              disabled={isUploading}
             >
               Choose Image
             </Button>
@@ -277,12 +278,14 @@ export const BasicInfo: React.FC<IBasicInfoProps> = ({
               <HStack spacing={2} align="center">
                 <Image alt={image?.name} w="32px" h="32px" src={imgUrl} />
                 <Text color="gray.500">{image?.name}</Text>
-                <Icon
-                  w="22px"
-                  h="22px"
-                  color="green.400"
-                  as={RiCheckboxCircleFill}
-                />
+                {imageUploaded && (
+                  <Icon
+                    w="22px"
+                    h="22px"
+                    color="green.400"
+                    as={RiCheckboxCircleFill}
+                  />
+                )}
               </HStack>
             )}
           </HStack>
@@ -305,6 +308,9 @@ export const BasicInfo: React.FC<IBasicInfoProps> = ({
               {errors.image.message}
             </FormErrorMessage>
           )}
+          {isUploading && (
+            <Progress size="xs" isIndeterminate colorScheme="orange" mt={2} />
+          )}
         </FormControl>
         <ButtonGroup variant="outline" colorScheme="primary" w="full">
           <Button w="full" onClick={onBack}>
@@ -314,7 +320,13 @@ export const BasicInfo: React.FC<IBasicInfoProps> = ({
             w="full"
             variant="solid"
             type="submit"
-            disabled={!name || !isValidIdentifier || (!imageUrl && !image)}
+            disabled={
+              !name ||
+              !isValidIdentifier ||
+              (!imageUrl && !image) ||
+              isUploading ||
+              !imageUploaded
+            }
           >
             Next
           </Button>

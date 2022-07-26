@@ -10,14 +10,19 @@ import {
   Button,
   Flex,
   Heading,
+  Progress,
 } from "@chakra-ui/react";
-import { ICreateChatModalState, ReadPostType } from "./CreateChatModal";
+import {
+  CreateChatStep,
+  ICreateChatModalState,
+  ReadPostType,
+} from "./CreateChatModal";
 import { INFTFormValues } from "./NFTForm";
 import { ITokenFormValues } from "./TokenForm";
 
 interface ISummaryProps {
   state: ICreateChatModalState;
-  onBack: () => void;
+  onBack: (step?: CreateChatStep | any) => void;
   onNext: () => void;
 }
 
@@ -52,12 +57,28 @@ const NFTSummary: React.FC<{
   permissionType: "read" | "post";
   amount: number;
   collectionKey: string;
-}> = ({ permissionType, amount, collectionKey }) => (
+  onBack: (step?: CreateChatStep | any) => void;
+}> = ({ permissionType, amount, collectionKey, onBack }) => (
   <Stack>
     <Box>
-      <Text fontWeight="bold" fontSize="md" textTransform="capitalize">
-        {permissionType} permission
-      </Text>
+      <Heading fontWeight="bold" fontSize="md" textTransform="capitalize">
+        {permissionType} permission{" "}
+        <Button
+          variant="link"
+          colorScheme="primary"
+          size="xs"
+          onClick={() =>
+            onBack(
+              {
+                read: CreateChatStep.ReadPermissions,
+                post: CreateChatStep.PostPermissions,
+              }[permissionType]
+            )
+          }
+        >
+          Edit
+        </Button>
+      </Heading>
       <Text fontSize="xs" fontWeight="normal">
         You&apos;ve decided to use an NFT collection.
       </Text>
@@ -73,12 +94,28 @@ const TokenSummary: React.FC<{
   amount: number;
   mint: string;
   startingPrice?: number;
-}> = ({ permissionType, isExisting, amount, mint, startingPrice }) => (
+  onBack: (step?: CreateChatStep | any) => void;
+}> = ({ permissionType, isExisting, amount, mint, startingPrice, onBack }) => (
   <Stack>
     <Box>
-      <Text fontWeight="bold" fontSize="md" textTransform="capitalize">
-        {permissionType} permission
-      </Text>
+      <Heading fontWeight="bold" fontSize="md" textTransform="capitalize">
+        {permissionType} permission{" "}
+        <Button
+          variant="link"
+          colorScheme="primary"
+          size="xs"
+          onClick={() =>
+            onBack(
+              {
+                read: CreateChatStep.ReadPermissions,
+                post: CreateChatStep.PostPermissions,
+              }[permissionType]
+            )
+          }
+        >
+          Edit
+        </Button>
+      </Heading>
       <Text fontSize="xs" fontWeight="normal">
         {isExisting ? (
           <Text>You&apos;ve decided to use an existing token.</Text>
@@ -122,6 +159,7 @@ export const Summary: React.FC<ISummaryProps> = ({ state, onBack, onNext }) => {
     },
   } = state;
 
+  const isSubmitting = status === "submitting";
   useEffect(() => {
     if (image) {
       const reader = new FileReader();
@@ -148,7 +186,17 @@ export const Summary: React.FC<ISummaryProps> = ({ state, onBack, onNext }) => {
         </Box>
         <Stack w="full" gap={6}>
           <Stack>
-            <Heading fontSize="lg">Basic Info</Heading>
+            <Heading fontSize="lg">
+              Basic Info{" "}
+              <Button
+                variant="link"
+                colorScheme="primary"
+                size="xs"
+                onClick={() => onBack(CreateChatStep.BasicInfo)}
+              >
+                Edit
+              </Button>
+            </Heading>
             <LabelCodeValue label="name" value={name} />
             <LabelCodeValue label="identifier" value={identifier} />
             <LabelCodeValue label="image">
@@ -165,11 +213,13 @@ export const Summary: React.FC<ISummaryProps> = ({ state, onBack, onNext }) => {
               {readType === ReadPostType.NFT ? (
                 <NFTSummary
                   {...(readForm as INFTFormValues)}
+                  onBack={onBack}
                   permissionType="read"
                 />
               ) : (
                 <TokenSummary
                   {...(readForm as ITokenFormValues)}
+                  onBack={onBack}
                   permissionType="read"
                 />
               )}
@@ -178,11 +228,13 @@ export const Summary: React.FC<ISummaryProps> = ({ state, onBack, onNext }) => {
               {postType === ReadPostType.NFT ? (
                 <NFTSummary
                   {...(postForm as INFTFormValues)}
+                  onBack={onBack}
                   permissionType="post"
                 />
               ) : (
                 <TokenSummary
                   {...(postForm as ITokenFormValues)}
+                  onBack={onBack}
                   permissionType="post"
                 />
               )}
@@ -192,11 +244,20 @@ export const Summary: React.FC<ISummaryProps> = ({ state, onBack, onNext }) => {
         <Text color="primary.500" fontWeight="bold">
           {subStatus}&nbsp;
         </Text>
+        {isSubmitting && (
+          <Progress
+            size="xs"
+            isIndeterminate
+            colorScheme="orange"
+            mt={2}
+            w="full"
+          />
+        )}
         <ButtonGroup
           variant="outline"
           colorScheme="primary"
           w="full"
-          // isDisabled={status === "submitting"}
+          isDisabled={isSubmitting}
         >
           <Button w="full" onClick={onBack}>
             Back
@@ -205,7 +266,7 @@ export const Summary: React.FC<ISummaryProps> = ({ state, onBack, onNext }) => {
             w="full"
             variant="solid"
             type="submit"
-            // isLoading={status === "submitting"}
+            isLoading={isSubmitting}
             loadingText="Creating Chat"
           >
             Create Chat
