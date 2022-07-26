@@ -1,6 +1,6 @@
 {
   "name": "@strata-foundation/spl-token-collective",
-  "version": "3.9.6",
+  "version": "3.9.7",
   "description": "Interface to the spl-token-collective smart contract",
   "publishConfig": {
     "access": "public",
@@ -30,8 +30,8 @@
     "@bonfida/spl-name-service": "^0.1.22",
     "@project-serum/anchor": "^0.24.2",
     "@solana/web3.js": "^1.43.4",
-    "@strata-foundation/spl-token-bonding": "^3.9.6",
-    "@strata-foundation/spl-utils": "^3.9.6",
+    "@strata-foundation/spl-token-bonding": "^3.9.7",
+    "@strata-foundation/spl-utils": "^3.9.7",
     "bn.js": "^5.2.0",
     "copyfiles": "^2.4.1"
   },
