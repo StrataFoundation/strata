@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Alert,
   AlertIcon,
@@ -9,11 +10,10 @@ import {
   Skeleton,
   Text,
   useColorModeValue,
-  VStack,
+  VStack
 } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
-import { useTokenMetadata } from "@strata-foundation/react";
-import React from "react";
+import { useMetaplexTokenMetadata } from "@strata-foundation/react";
 
 export interface IMintedNftNotificationProps {
   onDismiss?: () => void;
@@ -24,7 +24,7 @@ export const MintedNftNotification = ({
   onDismiss,
   mint,
 }: IMintedNftNotificationProps) => {
-  const { metadata, image, loading } = useTokenMetadata(mint);
+  const { metadata, image, loading } = useMetaplexTokenMetadata(mint);
   return (
     <Alert
       w="full"
