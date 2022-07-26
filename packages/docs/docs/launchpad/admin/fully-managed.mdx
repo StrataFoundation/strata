@@ -1,0 +1,101 @@
+---
+sidebar_position: 4
+slug: fully-managed
+title: Fully Managed Token
+description: Manage an Existing Fully Managed Token
+keywords: [Solana, Dynamic Pricing, LBP, LBC, Manage, Token, Token Offering, Fully Managed]
+---
+:::success Congratulations
+
+Your token offering is live! You can visit it at the following url:
+
+<UrlDisplay subs={["id", "cluster"]} value="https://app.strataprotocol.com/swap/:id?cluster=:cluster" />
+:::
+
+import { QueryStringSetter } from "@site/src/components/QueryStringSetter";
+import { UrlDisplay } from "@site/src/components/UrlDisplay";
+import { PublicKey } from "@solana/web3.js";
+import { NetworkSelect } from "@site/src/components/NetworkSelect";
+import { UpdateRoyalties } from "@site/src/components/UpdateRoyalties";
+
+<NetworkSelect />
+
+
+<QueryStringSetter label="Token Offering ID" name="id" conv={(v) => new PublicKey(v)} />
+
+## Bookmark These Links
+
+You’ll need these important links to access your token offering.
+
+This admin page:
+
+<UrlDisplay subs={["id", "cluster"]} value="https://docs.strataprotocol.com/launchpad/admin/lbc?id=:id&cluster=:cluster" />
+
+The url for the offering:
+
+<UrlDisplay subs={["id", "cluster"]} value="https://app.strataprotocol.com/swap/:id?cluster=:cluster" />
+
+## Funds
+
+For fully managed tokens, the bootstrapped liquidity can't be withdrawn by the admin. It can only be returned by selling 
+the tokens that have been bought back to the bonding curve. Funds can be raised by having a royalty set on the bonding curve,
+and you can edit your royalties by connecting your wallet and using the below form.
+
+<UpdateRoyalties />
+
+
+## Embed the swap to your site
+
+```bash
+yarn add @strata-foundation/react @strata-foundation/marketplace-ui react-shadow
+```
+
+```js
+import { MarketplaceProviders } from "@strata-foundation/marketplace-ui";
+import { usePublicKey, Swap } from "@strata-foundation/react";
+import { CSSReset } from "@chakra-ui/react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import ReactShadow from "react-shadow/emotion";
+```
+
+
+Light Mode:
+
+```jsx live allowMainnet
+function SwapComponent() {
+  const { id: idRaw } = useVariables();
+  const { setVisible } = useWalletModal();
+  const id = usePublicKey(idRaw);
+
+  // Shadow div and css reset are not required, but will make sure our styles do not conflict with yours
+  return <ReactShadow.div>
+    <MarketplaceProviders resetCSS onError={(err) => console.error(err)}>
+      <Swap id={id} />
+    </MarketplaceProviders>
+  </ReactShadow.div>
+}
+```
+
+Dark Mode:
+```js
+import { DarkMode } from "@chakra-ui/react";
+```
+```jsx live allowMainnet
+function SwapComponent() {
+  const { id: idRaw } = useVariables();
+  const { setVisible } = useWalletModal();
+  const id = usePublicKey(idRaw);
+
+  // Shadow div and css reset are not required, but will make sure our styles do not conflict with yours
+  return <ReactShadow.div>
+    <CSSReset />
+      <MarketplaceProviders resetCSS onError={(err) => console.error(err)}>
+        <DarkMode>
+          <div style={{ color: "white", backgroundColor: "black" }}>
+            <Swap id={id} />
+          </div>
+        </DarkMode>
+    </MarketplaceProviders>
+  </ReactShadow.div>
+}
+```

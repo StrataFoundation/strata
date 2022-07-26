@@ -58,7 +58,9 @@ export const TokenLaunches = ({ mintKey, name, image }: TokenPreviewProps) => {
         )
         return childEntanglers?.map((child) => child.pubkey).filter(truthy)
       }))
-      setParsed(parsed[0]!);
+      if (parsed[0]) {
+        setParsed(parsed[0]);
+      }
       return;
     }
     setParsed([]);
