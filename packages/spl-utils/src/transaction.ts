@@ -104,7 +104,6 @@ export async function sendMultipleInstructions(
       };
     })
     .filter(({instructions}) => instructions.length > 0)
-
   const txns = ixAndSigners.map(({ instructions }) => {
     const tx = new Transaction({
       feePayer: payer || provider.wallet.publicKey,
