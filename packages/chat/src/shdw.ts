@@ -1,7 +1,7 @@
 import { getOrca, OrcaPoolConfig } from "@orca-so/sdk";
 import { AnchorProvider } from "@project-serum/anchor";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
-import { ShdwDrive, StorageAccount } from "@shadow-drive/sdk";
+import { ShdwDrive } from "@shadow-drive/sdk";
 import { StorageAccountInfo } from "@shadow-drive/sdk/dist/types";
 import {
   AccountLayout,

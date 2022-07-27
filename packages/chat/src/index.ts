@@ -1,17 +1,44 @@
 import { DataV2, Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import {
-  CLAIM_REQUEST_SEED, EntryData, ENTRY_SEED, NamespaceData,
+  CLAIM_REQUEST_SEED,
+  EntryData,
+  ENTRY_SEED,
+  NamespaceData,
   NAMESPACES_IDL,
   NAMESPACES_PROGRAM,
   NAMESPACES_PROGRAM_ID,
   NAMESPACE_SEED,
   withClaimNameEntry,
-  withCreateClaimRequest, withInitNameEntry, withInitNameEntryMint,
+  withCreateClaimRequest,
+  withInitNameEntry,
+  withInitNameEntryMint,
 } from "@cardinal/namespaces";
 import { LocalStorageLRU } from "@cocalc/local-storage-lru";
-import { AnchorProvider, BN as AnchorBN, IdlTypes, Program, utils } from "@project-serum/anchor";
-import { ASSOCIATED_TOKEN_PROGRAM_ID, NATIVE_MINT, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { Commitment, ConfirmedTransactionMeta, Finality, Keypair, Message, PublicKey, Signer, SystemProgram, SYSVAR_RENT_PUBKEY, Transaction } from "@solana/web3.js";
+import {
+  AnchorProvider,
+  BN as AnchorBN,
+  IdlTypes,
+  Program,
+  utils,
+} from "@project-serum/anchor";
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  NATIVE_MINT,
+  Token,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
+import {
+  Commitment,
+  ConfirmedTransactionMeta,
+  Finality,
+  Keypair,
+  Message,
+  PublicKey,
+  Signer,
+  SystemProgram,
+  SYSVAR_RENT_PUBKEY,
+  Transaction,
+} from "@solana/web3.js";
 import {
   AnchorSdk,
   BigInstructionResult,
@@ -21,7 +48,7 @@ import {
   truthy,
   TypedAccountParser,
   createMintInstructions,
-  SplTokenMetadata
+  SplTokenMetadata,
 } from "@strata-foundation/spl-utils";
 import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import BN from "bn.js";
@@ -31,7 +58,19 @@ import bs58 from "bs58";
 import LitJsSdk from "lit-js-sdk";
 // @ts-ignore
 import { v4 as uuid } from "uuid";
-import { CaseInsensitiveMarkerV0, ChatIDL, ChatV0, DelegateWalletV0, NamespacesV0, PermissionType, PostAction, ProfileV0, SettingsV0, MessageType as RawMessageType, ChatPermissionsV0 } from "./generated/chat";
+import {
+  CaseInsensitiveMarkerV0,
+  ChatIDL,
+  ChatV0,
+  DelegateWalletV0,
+  NamespacesV0,
+  PermissionType,
+  PostAction,
+  ProfileV0,
+  SettingsV0,
+  MessageType as RawMessageType,
+  ChatPermissionsV0,
+} from "./generated/chat";
 import { getAuthSig, MessageSigner } from "./lit";
 import { uploadFiles } from "./shdw";
 
@@ -69,8 +108,7 @@ interface ISymKeyStorage {
   ): number | null;
 }
 
-const storage =
-  new LocalStorageLRU();
+const storage = new LocalStorageLRU();
 
 // 3 hours
 const KEY_EXPIRY = 3 * 60 * 60 * 1000;
@@ -78,9 +116,8 @@ const KEY_EXPIRY = 3 * 60 * 60 * 1000;
 const CONDITION_VERSION = 2;
 
 export class LocalSymKeyStorage implements ISymKeyStorage {
-  constructor(readonly url: string) {
-  }
-  
+  constructor(readonly url: string) {}
+
   setSymKey(encrypted: string, unencrypted: string): void {
     storage.set("enc" + CONDITION_VERSION + encrypted, unencrypted);
   }
@@ -89,7 +126,9 @@ export class LocalSymKeyStorage implements ISymKeyStorage {
     return storage.get("enc" + CONDITION_VERSION + encrypted) as string | null;
   }
   private getKey(mintOrCollection: PublicKey, amount: number): string {
-    return `sym-${CONDITION_VERSION}-${this.url}-${mintOrCollection.toBase58()}-${amount}`;
+    return `sym-${CONDITION_VERSION}-${
+      this.url
+    }-${mintOrCollection.toBase58()}-${amount}`;
   }
   setSymKeyToUse(
     mintOrCollection: PublicKey,
@@ -110,7 +149,10 @@ export class LocalSymKeyStorage implements ISymKeyStorage {
     }
     return null;
   }
-  getSymKeyToUse(mintOrCollection: PublicKey, amount: number): SymKeyInfo | null {
+  getSymKeyToUse(
+    mintOrCollection: PublicKey,
+    amount: number
+  ): SymKeyInfo | null {
     const aDayAgo = new Date();
     aDayAgo.setDate(aDayAgo.getDate() - 1);
     const lastSet = this.getTimeSinceLastSet(mintOrCollection, amount);
@@ -131,7 +173,6 @@ export class LocalSymKeyStorage implements ISymKeyStorage {
   }
 }
 
-
 const SYMM_KEY_ALGO_PARAMS = {
   name: "AES-CBC",
   length: 256,
@@ -145,7 +186,9 @@ async function generateSymmetricKey(): Promise<CryptoKey> {
   return symmKey;
 }
 
-export async function importSymmetricKey(symmKey: BufferSource): Promise<CryptoKey> {
+export async function importSymmetricKey(
+  symmKey: BufferSource
+): Promise<CryptoKey> {
   const importedSymmKey = await crypto.subtle.importKey(
     "raw",
     symmKey,
@@ -165,7 +208,7 @@ export enum MessageType {
   Html = "html",
   Gify = "gify",
   Image = "image",
-  React = "react" // An emoji react to another message
+  React = "react", // An emoji react to another message
 }
 
 export interface INamespaces extends NamespacesV0 {
@@ -197,7 +240,12 @@ export interface GifyMessage {
   gifyId: string;
 }
 
-export interface IMessageContent extends Partial<ReactMessage>, Partial<TextMessage>, Partial<HtmlMessage>, Partial<ImageMessage>, Partial<GifyMessage> {
+export interface IMessageContent
+  extends Partial<ReactMessage>,
+    Partial<TextMessage>,
+    Partial<HtmlMessage>,
+    Partial<ImageMessage>,
+    Partial<GifyMessage> {
   type: MessageType;
   referenceMessageId?: string;
 }
@@ -232,7 +280,7 @@ export interface IProfile extends ProfileV0 {
 }
 
 export interface ISettings extends SettingsV0 {
-  getDelegateWalletSeed(): Promise<string>
+  getDelegateWalletSeed(): Promise<string>;
 }
 
 export interface ICaseInsensitiveMarker extends CaseInsensitiveMarkerV0 {
@@ -253,7 +301,7 @@ export interface IMessage {
   txids: string[];
   startBlockTime: number;
   endBlockTime: number;
-  readPermissionType: PermissionType,
+  readPermissionType: PermissionType;
   readPermissionKey: PublicKey;
   readPermissionAmount: BN;
   referenceMessageId: string | null;
@@ -283,7 +331,7 @@ export interface InitializeChatArgs {
   name: string;
   imageUrl?: string;
   metadataUrl?: string;
-  /** 
+  /**
    * The program id that we expect messages to come from. **Default: ** Chat program.
    * This is your hook to have custom post gating logic.
    */
@@ -391,7 +439,7 @@ export interface SendMessageArgs {
 
 export enum IdentifierType {
   Chat = "chat",
-  User = "me"
+  User = "me",
 }
 
 export interface ClaimIdentifierArgs {
@@ -454,9 +502,12 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     const cached = storage.get("lit-auth-sol-signature");
     const cachedDate = storage.get("lit-auth-sol-signature-date") || 0;
     const cachedAuthSig = JSON.parse(cached as string);
-    if (Number(cachedDate) >= (new Date().valueOf() - 24 * 60 * 60 * 1000) && this.wallet.publicKey.toBase58() === cachedAuthSig?.address) {
+    if (
+      Number(cachedDate) >= new Date().valueOf() - 24 * 60 * 60 * 1000 &&
+      this.wallet.publicKey.toBase58() === cachedAuthSig?.address
+    ) {
       this.litAuthSig = cachedAuthSig;
-      return
+      return;
     }
     try {
       // @ts-ignore
@@ -471,7 +522,10 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         this.wallet as MessageSigner
       );
       storage.set("lit-auth-sol-signature", JSON.stringify(this.litAuthSig));
-      storage.set("lit-auth-sol-signature-date", new Date().valueOf().toString());
+      storage.set(
+        "lit-auth-sol-signature-date",
+        new Date().valueOf().toString()
+      );
     } finally {
       this.authingLit = null;
     }
@@ -495,7 +549,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   static async init(
     provider: AnchorProvider,
     chatProgramId: PublicKey = ChatSdk.ID,
-    splTokenBondingProgramId: PublicKey = SplTokenBonding.ID,
+    splTokenBondingProgramId: PublicKey = SplTokenBonding.ID
   ): Promise<ChatSdk> {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
@@ -513,9 +567,12 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       provider
     ) as Program<ChatIDL>;
 
-    const tokenBondingSdk = await SplTokenBonding.init(provider, splTokenBondingProgramId);
+    const tokenBondingSdk = await SplTokenBonding.init(
+      provider,
+      splTokenBondingProgramId
+    );
     const tokenMetadataSdk = await SplTokenMetadata.init(provider);
-    
+
     const client = new LitJsSdk.LitNodeClient({
       alertWhenUnauthorized: false,
       debug: false,
@@ -533,7 +590,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       litClient: client,
       namespacesProgram,
       tokenBondingSdk,
-      tokenMetadataSdk
+      tokenMetadataSdk,
     });
   }
 
@@ -1427,21 +1484,28 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
             accounts: {
               chat,
               identifierCertificateMintAccount,
-              ownerWallet: admin
-            }
-          })
-        ]
-      }
+              ownerWallet: admin,
+            },
+          }),
+        ],
+      };
     }
     return {
       output: null,
       signers: [],
-      instructions: []
-    }
+      instructions: [],
+    };
   }
 
-  async claimAdmin(args: ClaimChatAdminArgs, commitment: Finality = "confirmed"): Promise<null> {
-    return this.execute(this.claimChatAdminInstructions(args), args.admin, commitment);
+  async claimAdmin(
+    args: ClaimChatAdminArgs,
+    commitment: Finality = "confirmed"
+  ): Promise<null> {
+    return this.execute(
+      this.claimChatAdminInstructions(args),
+      args.admin,
+      commitment
+    );
   }
 
   async closeChatInstructions({
@@ -1452,10 +1516,12 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     const instructions = [];
 
     instructions.push(
-      ...(await this.claimChatAdminInstructions({
-        chat,
-        admin,
-      })).instructions
+      ...(
+        await this.claimChatAdminInstructions({
+          chat,
+          admin,
+        })
+      ).instructions
     );
 
     const chatPermissionsKey = (await ChatSdk.chatPermissionsKey(chat))[0];
@@ -1556,7 +1622,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         namespaces.chatNamespace,
         identifier
       );
-      
+
       const identifierCertificateMintAccount =
         await Token.getAssociatedTokenAddress(
           ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -1638,7 +1704,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         // permission key isn't a mint account
         postAmount = new BN(postPermissionAmount);
       }
-      
+
       let readAmount;
       try {
         const readMint = await getMintInfo(this.provider, readPermissionKey);
@@ -1694,7 +1760,11 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   async initializeChat(
     args: InitializeChatArgs,
     commitment: Finality = "confirmed"
-  ): Promise<{ chat: PublicKey; chatPermissions?: PublicKey; identifierCertificateMint?: PublicKey }> {
+  ): Promise<{
+    chat: PublicKey;
+    chatPermissions?: PublicKey;
+    identifierCertificateMint?: PublicKey;
+  }> {
     return this.executeBig(
       this.initializeChatInstructions(args),
       args.payer,
@@ -2184,7 +2254,9 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     metadata,
     targetMintKeypair = Keypair.generate(),
     decimals,
-  }: ICreateMetadataForBondingArgs): Promise<InstructionResult<{ metadata: PublicKey; mint: PublicKey }>> {
+  }: ICreateMetadataForBondingArgs): Promise<
+    InstructionResult<{ metadata: PublicKey; mint: PublicKey }>
+  > {
     const targetMint = targetMintKeypair.publicKey;
     const instructions = [];
     const signers = [];
@@ -2233,7 +2305,13 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   }
 }
 
-function getAccessConditions(conditionVersion: number, readKey: PublicKey, threshold: BN, chain: string, permissionType: PermissionType) {
+function getAccessConditions(
+  conditionVersion: number,
+  readKey: PublicKey,
+  threshold: BN,
+  chain: string,
+  permissionType: PermissionType
+) {
   if (conditionVersion === 0) {
     return [tokenAccessPermissions(readKey, threshold, chain)];
   }
@@ -2252,10 +2330,14 @@ function getAccessConditions(conditionVersion: number, readKey: PublicKey, thres
   } else if (permissionTypeStr == "native") {
     return [nativePermissions(readKey, threshold, chain)];
   }
-    return [collectionAccessPermissions(readKey, threshold, chain)];
+  return [collectionAccessPermissions(readKey, threshold, chain)];
 }
 
-function collectionAccessPermissions(permittedCollection: PublicKey, threshold: BN, chain: string) {
+function collectionAccessPermissions(
+  permittedCollection: PublicKey,
+  threshold: BN,
+  chain: string
+) {
   return {
     method: "balanceOfMetaplexCollection",
     params: [permittedCollection.toBase58()],
@@ -2265,15 +2347,17 @@ function collectionAccessPermissions(permittedCollection: PublicKey, threshold: 
       comparator: ">=",
       value: threshold.toString(10),
     },
-  }
+  };
 }
 
-function tokenAccessPermissions(readPermissionMint: PublicKey, threshold: BN, chain: string) {
+function tokenAccessPermissions(
+  readPermissionMint: PublicKey,
+  threshold: BN,
+  chain: string
+) {
   return {
     method: "balanceOfToken",
-    params: [
-      readPermissionMint.toBase58()
-    ],
+    params: [readPermissionMint.toBase58()],
     chain,
     returnValueTest: {
       key: `$.amount`,
@@ -2287,13 +2371,13 @@ function myWalletPermissions(wallet: PublicKey) {
   return {
     method: "",
     params: [":userAddress"],
-    chain: 'solana',
+    chain: "solana",
     returnValueTest: {
       key: "",
       comparator: "=",
-      value: wallet.toBase58()
+      value: wallet.toBase58(),
     },
-  }
+  };
 }
 
 function nativePermissions(wallet: PublicKey, threshold: BN, chain: string) {
@@ -2304,9 +2388,9 @@ function nativePermissions(wallet: PublicKey, threshold: BN, chain: string) {
     returnValueTest: {
       key: "",
       comparator: ">=",
-      value: threshold.toString(10)
-    }
-  }
+      value: threshold.toString(10),
+    },
+  };
 }
 
 function buf2hex(buffer: ArrayBuffer): string {
