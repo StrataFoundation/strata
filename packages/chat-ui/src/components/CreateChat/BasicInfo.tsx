@@ -167,20 +167,26 @@ export const BasicInfo: React.FC<IBasicInfoProps> = ({
         if (!imageUrl) {
           setIsUploading(true);
           randomizeFileName(image);
-          const url = `https://shdw-drive.genesysgo.net/${chatStorage}/${image.name}`;
-          setValue("imageUrl", url);
           let innerImageUploaded = false;
 
           try {
-            await uploadFiles(chatSdk!.provider, [image], delegateWallet);
-            innerImageUploaded = true;
-            setState({
-              ...state,
-              wizardData: {
-                ...state.wizardData,
-                imageUploaded: true,
-              },
-            });
+            const uri = await uploadFiles(
+              chatSdk!.provider,
+              [image],
+              delegateWallet
+            );
+
+            if (uri && uri.length > 0) {
+              setValue("imageUrl", uri[0]);
+              innerImageUploaded = true;
+              setState({
+                ...state,
+                wizardData: {
+                  ...state.wizardData,
+                  imageUploaded: true,
+                },
+              });
+            }
           } catch (e) {
             handleErrors(e as Error);
           } finally {

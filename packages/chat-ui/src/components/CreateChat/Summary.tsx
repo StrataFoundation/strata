@@ -11,6 +11,10 @@ import {
   Flex,
   Heading,
   Progress,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
 } from "@chakra-ui/react";
 import {
   CreateChatStep,
@@ -135,18 +139,12 @@ const TokenSummary: React.FC<{
 
 export const Summary: React.FC<ISummaryProps> = ({ state, onBack, onNext }) => {
   const [imgUrl, setImgUrl] = useState<string>();
-  const {
-    handleSubmit,
-    formState: { errors },
-  } = useForm();
-
-  const onSubmit = (data: any) => {
-    onNext();
-  };
-
+  const { handleSubmit } = useForm();
+  const onSubmit = (data: any) => onNext();
   const {
     status,
     subStatus,
+    error,
     wizardData: {
       name,
       identifier,
@@ -160,6 +158,7 @@ export const Summary: React.FC<ISummaryProps> = ({ state, onBack, onNext }) => {
   } = state;
 
   const isSubmitting = status === "submitting";
+
   useEffect(() => {
     if (image) {
       const reader = new FileReader();
@@ -241,9 +240,11 @@ export const Summary: React.FC<ISummaryProps> = ({ state, onBack, onNext }) => {
             </Stack>
           </Stack>
         </Stack>
-        <Text color="primary.500" fontWeight="bold">
-          {subStatus}&nbsp;
-        </Text>
+        {subStatus && (
+          <Text color="primary.500" fontWeight="bold">
+            {subStatus}&nbsp;
+          </Text>
+        )}
         {isSubmitting && (
           <Progress
             size="xs"
@@ -252,6 +253,27 @@ export const Summary: React.FC<ISummaryProps> = ({ state, onBack, onNext }) => {
             mt={2}
             w="full"
           />
+        )}
+        {error && (
+          <Alert
+            status="error"
+            variant="subtle"
+            flexDirection="column"
+            alignItems="center"
+            justifyContent="center"
+            textAlign="center"
+            height="160px"
+          >
+            <AlertIcon boxSize="40px" mr={0} />
+            <AlertTitle mt={2} mb={1} fontSize="lg">
+              Failed to create chat!
+            </AlertTitle>
+            <AlertDescription maxWidth="sm">
+              {error.message}
+              <br />
+              Please try again...
+            </AlertDescription>
+          </Alert>
         )}
         <ButtonGroup
           variant="outline"

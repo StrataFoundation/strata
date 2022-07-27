@@ -17,14 +17,13 @@ import {
   TimeCurveConfig,
   TimeDecayExponentialCurveConfig,
 } from "@strata-foundation/spl-token-bonding";
-import { SplTokenMetadata } from "@strata-foundation/spl-utils";
+import { sendMultipleInstructions, toBN } from "@strata-foundation/spl-utils";
 import { ICreateChatModalState } from "./CreateChatModal";
 import { ITokenFormValues } from "./TokenForm";
 
 interface IWazardSubmitOpts {
   sdks: {
     tokenBondingSdk: SplTokenBonding | undefined;
-    tokenMetadataSdk: SplTokenMetadata | undefined;
     chatSdk: ChatSdk | undefined;
   };
   data: ICreateChatModalState;
@@ -107,115 +106,51 @@ export const wizardSubmit = async ({
   delegateWallet,
   setState,
 }: IWazardSubmitOpts) => {
-  setState({ status: "submitting" });
   const { chatSdk, tokenBondingSdk } = sdks;
-  const { name, identifier, image, imageUrl } = wizardData;
+  let innerError: null | Error = null;
+  const { name, identifier, imageUrl } = wizardData;
   const { readForm, postForm, postIsSameAsRead } = wizardData;
-  let readPermissionType, readPermissionAmount, readPermissionKey;
-  let postPermissionType, postPermissionAmount, postPermissionKey;
-  let instructions: TransactionInstruction[][] = [],
-    signers: Signer[][] = [];
 
-  readPermissionType = getPermissionType(readForm.type);
-  readPermissionAmount = readForm.amount;
-  readPermissionKey =
-    readForm.type === "native"
-      ? new PublicKey(readForm.mint!)
-      : readForm.type === "nft"
-      ? new PublicKey(readForm.collectionKey!)
-      : undefined;
+  if (chatSdk && tokenBondingSdk) {
+    setState({ status: "submitting", error: undefined });
+    let readPermissionType, readPermissionAmount, readPermissionKey;
+    let postPermissionType, postPermissionAmount, postPermissionKey;
+    let readPermissionInstructions: TransactionInstruction[][] = [],
+      readPermissionSigners: Signer[][] = [],
+      postPermissionInstructions: TransactionInstruction[][] = [],
+      postPermissionSigners: Signer[][] = [];
 
-  postPermissionType = getPermissionType(postForm.type);
-  postPermissionAmount = postForm.amount;
-  postPermissionKey =
-    postForm.type === "native"
-      ? new PublicKey(postForm.mint!)
-      : postForm.type === "nft"
-      ? new PublicKey(postForm.collectionKey!)
-      : undefined;
+    readPermissionType = getPermissionType(readForm.type);
+    readPermissionAmount = readForm.amount;
+    readPermissionKey =
+      readForm.type === "native"
+        ? new PublicKey(readForm.mint!)
+        : readForm.type === "nft"
+        ? new PublicKey(readForm.collectionKey!)
+        : undefined;
 
-  if (!readPermissionKey || !postPermissionKey) {
-    if (!readPermissionKey) {
-      const targetMintKeypair = Keypair.generate();
-      const file = getJsonFile({
-        name,
-        symbol: identifier,
-        description: postIsSameAsRead
-          ? `Permission token for ${identifier} chat`
-          : `Read permission token for ${identifier} chat`,
-        image: imageUrl,
-        mint: targetMintKeypair.publicKey,
-      });
-      randomizeFileName(file);
+    postPermissionType = getPermissionType(postForm.type);
+    postPermissionAmount = postForm.amount;
+    postPermissionKey =
+      postForm.type === "native"
+        ? new PublicKey(postForm.mint!)
+        : postForm.type === "nft"
+        ? new PublicKey(postForm.collectionKey!)
+        : undefined;
 
-      try {
-        setState({
-          subStatus: "Uploading read token metadata to SHDW Drive...",
-        });
-
-        const uri = await uploadFiles(
-          chatSdk!.provider,
-          [file],
-          delegateWallet
+    if (!readPermissionKey || !postPermissionKey) {
+      if (!readPermissionKey) {
+        readPermissionAmount = toBN(
+          readForm.amount!,
+          defaultBondingOpts.targetMintDecimals
         );
-
-        if (!uri || !uri.length)
-          throw new Error("Failed to upload token metadata");
-
-        const metadata = getMetadataOpts({
-          identifier: `${postIsSameAsRead ? "" : "READ"}${identifier}`,
-          uri: uri[0],
-        });
-
-        setState({
-          subStatus: "Creating stable price curve for read permission...",
-        });
-
-        const curveOut = await tokenBondingSdk?.initializeCurveInstructions({
-          config: getCurveConfig((readForm as ITokenFormValues).startingPrice!),
-        });
-
-        const bondingOpts = {
-          ...defaultBondingOpts,
-          targetMint: targetMintKeypair.publicKey,
-          curve: curveOut!.output.curve,
-        };
-
-        const metaOut = await chatSdk?.createMetadataForBondingInstructions({
-          targetMintKeypair,
-          metadataUpdateAuthority: chatSdk.wallet.publicKey,
-          metadata,
-          decimals: bondingOpts.targetMintDecimals,
-        });
-
-        const bondingOut =
-          await tokenBondingSdk?.createTokenBondingInstructions(bondingOpts);
-
-        instructions.push(
-          [...curveOut!.instructions!, ...metaOut!.instructions],
-          bondingOut!.instructions
-        );
-
-        signers.push(
-          [...curveOut!.signers, ...metaOut!.signers],
-          bondingOut!.signers
-        );
-
-        readPermissionKey = targetMintKeypair.publicKey;
-      } catch (e) {
-        console.log(e);
-      }
-    }
-
-    if (!postPermissionKey) {
-      if (postIsSameAsRead) {
-        postPermissionKey = readPermissionKey;
-      } else {
         const targetMintKeypair = Keypair.generate();
         const file = getJsonFile({
           name,
           symbol: identifier,
-          description: `Post permission token for ${identifier} chat`,
+          description: postIsSameAsRead
+            ? `Permission token for ${identifier} chat`
+            : `Read permission token for ${identifier} chat`,
           image: imageUrl,
           mint: targetMintKeypair.publicKey,
         });
@@ -223,7 +158,7 @@ export const wizardSubmit = async ({
 
         try {
           setState({
-            subStatus: "Uploading post token metadata to SHDW Drive...",
+            subStatus: "Uploading read token metadata to SHDW drive...",
           });
 
           const uri = await uploadFiles(
@@ -236,15 +171,11 @@ export const wizardSubmit = async ({
             throw new Error("Failed to upload token metadata");
 
           const metadata = getMetadataOpts({
-            identifier: `POST${identifier}`,
+            identifier: `${postIsSameAsRead ? "" : "READ"}${identifier}`,
             uri: uri[0],
           });
 
-          setState({
-            subStatus: "Creating stable price curve for post permission...",
-          });
-
-          const curveOut = await tokenBondingSdk?.initializeCurveInstructions({
+          const curveOut = await tokenBondingSdk.initializeCurveInstructions({
             config: getCurveConfig(
               (readForm as ITokenFormValues).startingPrice!
             ),
@@ -256,7 +187,7 @@ export const wizardSubmit = async ({
             curve: curveOut!.output.curve,
           };
 
-          const metaOut = await chatSdk?.createMetadataForBondingInstructions({
+          const metaOut = await chatSdk.createMetadataForBondingInstructions({
             targetMintKeypair,
             metadataUpdateAuthority: chatSdk.wallet.publicKey,
             metadata,
@@ -264,49 +195,152 @@ export const wizardSubmit = async ({
           });
 
           const bondingOut =
-            await tokenBondingSdk?.createTokenBondingInstructions(bondingOpts);
+            await tokenBondingSdk.createTokenBondingInstructions(bondingOpts);
 
-          instructions.push(
+          readPermissionInstructions.push(
             [...curveOut!.instructions!, ...metaOut!.instructions],
             bondingOut!.instructions
           );
 
-          signers.push(
+          readPermissionSigners.push(
             [...curveOut!.signers, ...metaOut!.signers],
             bondingOut!.signers
           );
 
-          postPermissionKey = targetMintKeypair.publicKey;
+          readPermissionKey = targetMintKeypair.publicKey;
         } catch (e) {
-          console.log(e);
+          innerError = e as Error;
+          setState({
+            error: e as Error,
+          });
+        }
+      }
+
+      if (!postPermissionKey && !innerError) {
+        if (postIsSameAsRead) {
+          postPermissionKey = readPermissionKey;
+        } else {
+          postPermissionAmount = toBN(
+            readForm.amount!,
+            defaultBondingOpts.targetMintDecimals
+          );
+          const targetMintKeypair = Keypair.generate();
+          const file = getJsonFile({
+            name,
+            symbol: identifier,
+            description: `Post permission token for ${identifier} chat`,
+            image: imageUrl,
+            mint: targetMintKeypair.publicKey,
+          });
+          randomizeFileName(file);
+
+          try {
+            setState({
+              subStatus: "Uploading post token metadata to SHDW drive...",
+            });
+
+            const uri = await uploadFiles(
+              chatSdk!.provider,
+              [file],
+              delegateWallet
+            );
+
+            if (!uri || !uri.length)
+              throw new Error("Failed to upload token metadata");
+
+            const metadata = getMetadataOpts({
+              identifier: `POST${identifier}`,
+              uri: uri[0],
+            });
+
+            const curveOut = await tokenBondingSdk.initializeCurveInstructions({
+              config: getCurveConfig(
+                (readForm as ITokenFormValues).startingPrice!
+              ),
+            });
+
+            const bondingOpts = {
+              ...defaultBondingOpts,
+              targetMint: targetMintKeypair.publicKey,
+              curve: curveOut!.output.curve,
+            };
+
+            const metaOut = await chatSdk.createMetadataForBondingInstructions({
+              targetMintKeypair,
+              metadataUpdateAuthority: chatSdk.wallet.publicKey,
+              metadata,
+              decimals: bondingOpts.targetMintDecimals,
+            });
+
+            const bondingOut =
+              await tokenBondingSdk.createTokenBondingInstructions(bondingOpts);
+
+            postPermissionInstructions.push(
+              [...curveOut!.instructions!, ...metaOut!.instructions],
+              bondingOut!.instructions
+            );
+
+            postPermissionSigners.push(
+              [...curveOut!.signers, ...metaOut!.signers],
+              bondingOut!.signers
+            );
+
+            postPermissionKey = targetMintKeypair.publicKey;
+          } catch (e) {
+            innerError = e as Error;
+            setState({
+              error: e as Error,
+            });
+          }
         }
       }
     }
+
+    if (!innerError) {
+      const chatOut = await chatSdk.initializeChatInstructions({
+        name,
+        identifier,
+        imageUrl,
+        permissions: {
+          readPermissionKey: readPermissionKey!,
+          defaultReadPermissionAmount: readPermissionAmount,
+          readPermissionType,
+          postPermissionKey: postPermissionKey!,
+          postPermissionAmount,
+          postPermissionType,
+        },
+      });
+
+      setState({
+        subStatus: `Creating ${identifier} chat...`,
+      });
+
+      try {
+        await sendMultipleInstructions(
+          chatSdk.errors || tokenBondingSdk.errors || new Map(),
+          chatSdk.provider,
+          [
+            ...readPermissionInstructions,
+            ...postPermissionInstructions,
+            ...chatOut.instructions,
+          ],
+          [
+            ...readPermissionSigners,
+            ...postPermissionSigners,
+            ...chatOut.signers,
+          ]
+        );
+
+        setState({ status: "success", subStatus: undefined });
+      } catch (e) {
+        setState({
+          status: undefined,
+          subStatus: undefined,
+          error: e as Error,
+        });
+      }
+    } else {
+      setState({ status: undefined, subStatus: undefined });
+    }
   }
-
-  // if (instructions.length > 0) {
-  //   await chatSdk?.executeBig(
-  //     Promise.resolve({
-  //       output: null,
-  //       instructions,
-  //       signers,
-  //     })
-  //   );
-  // }
-
-  // await chatSdk?.initializeChat({
-  //   name,
-  //   identifier,
-  //   imageUrl,
-  //   permissions: {
-  //     readPermissionKey: readPermissionKey!,
-  //     defaultReadPermissionAmount: readPermissionAmount,
-  //     readPermissionType,
-  //     postPermissionKey: postPermissionKey!,
-  //     postPermissionAmount,
-  //     postPermissionType,
-  //   },
-  // });
-
-  setState({ status: "success" });
 };

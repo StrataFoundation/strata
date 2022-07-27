@@ -1638,6 +1638,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         // permission key isn't a mint account
         postAmount = new BN(postPermissionAmount);
       }
+      
       let readAmount;
       try {
         const readMint = await getMintInfo(this.provider, readPermissionKey);
@@ -1646,6 +1647,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         // permission key isn't a mint account
         readAmount = new BN(defaultReadPermissionAmount);
       }
+
       chatPermissions = (
         await ChatSdk.chatPermissionsKey(chat, this.programId)
       )[0];

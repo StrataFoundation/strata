@@ -56,7 +56,7 @@ export interface ICreateChatModalState {
   lastStep: CreateChatStep;
   status: null | "submitting" | "success" | string;
   subStatus: null | string;
-  error: null | Error | "string";
+  error: null | Error;
   wizardData: {
     name: string;
     identifier: string;
@@ -99,7 +99,7 @@ export const CreateChatModal: React.FC<ICreateChatModalProps> = ({
   const { setVisible } = useWalletModal();
   const { chatSdk } = useChatSdk();
   const router = useRouter();
-  const { tokenBondingSdk, tokenMetadataSdk } = useStrataSdks();
+  const { tokenBondingSdk } = useStrataSdks();
   const { keypair: delegateWallet } = useDelegateWallet();
   const [state, setState] = useReducer(
     (
@@ -131,7 +131,6 @@ export const CreateChatModal: React.FC<ICreateChatModalProps> = ({
           sdks: {
             chatSdk,
             tokenBondingSdk,
-            tokenMetadataSdk,
           },
           data: state,
           delegateWallet,
@@ -176,6 +175,7 @@ export const CreateChatModal: React.FC<ICreateChatModalProps> = ({
     if (state.status === "success") {
       router.push({
         pathname: `/c/${state.wizardData.identifier}`,
+        query: router.query,
       });
       handleClose();
     }
