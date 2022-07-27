@@ -14,7 +14,7 @@ import { useDisclosure } from "@chakra-ui/react";
 import { AnchorProvider, Program } from "@project-serum/anchor";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
-import { ChatIDL, ChatIDLJson, ChatSdk } from "@strata-foundation/chat";
+import { ChatIDL, ChatIDLJson, ChatSdk, IEntry } from "@strata-foundation/chat";
 import { getClusterAndEndpoint, usePublicKey } from "@strata-foundation/react";
 // @ts-ignore
 import LitNodeJsSdk from "lit-js-sdk/build/index.node.js";
@@ -25,8 +25,40 @@ import { useRouter } from "next/router";
 const SOLANA_URL =
   process.env.NEXT_PUBLIC_SOLANA_URL || "https://ssc-dao.genesysgo.net/";
 
+const QUICK_PROPS: Record<string, any> = {
+  solana: {
+    name: "solana",
+    description:
+      "solana.chat - A decentralized chatroom powered by Strata Protocol on Solana",
+    image:
+      '"https://nft.cardinal.so/metadata/9497kTCD3ct7JaRTzCzQvS5N5iwbzxaK8Sci6gDZTq8C?name=solana.chat"',
+    chatKey: "EzNMGtFA62nvDfCybZi4vhfeJUoMJyMijcKoC8heoyHK",
+  },
+  open: {
+    name: "open",
+    description:
+      "open.chat - A decentralized chatroom powered by Strata Protocol on Solana",
+    image:
+      '"https://nft.cardinal.so/metadata/5tjEoagtGJrMoywNHg5UXqXyVxkcfZr78Zeu7RmaCuDJ?name=open.chat"',
+    chatKey: "HN8GF8nKHLnymPUwn4cfNmtSwAcErRweDDDGzyhj6wKH",
+  },
+};
+
 export const getServerSideProps: GetServerSideProps = async (context) => {
   try {
+    const quickProps = QUICK_PROPS[(context.params?.id || "") as string];
+    if (quickProps) {
+      // Valid for a week
+      context.res.setHeader(
+        "Cache-Control",
+        "public, s-maxage=604800, stale-while-revalidate=59"
+      );
+
+      return {
+        props: quickProps,
+      };
+    }
+
     const { endpoint } = getClusterAndEndpoint(
       (context.query.cluster || SOLANA_URL) as string
     );
@@ -38,27 +70,11 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       new NodeWallet(Keypair.generate()),
       {}
     );
-
-    const chat = new Program<ChatIDL>(
-      ChatIDLJson as ChatIDL,
-      ChatSdk.ID,
-      provider
-    ) as Program<ChatIDL>;
-    const client = new LitNodeJsSdk.LitNodeClient({
-      debug: false,
-      alerts: false,
-    });
     const namespacesProgram = new Program<NAMESPACES_PROGRAM>(
       NAMESPACES_IDL,
       NAMESPACES_PROGRAM_ID,
       provider
     );
-    const chatSdk = new ChatSdk({
-      provider,
-      program: chat,
-      litClient: client,
-      namespacesProgram,
-    });
 
     const entryKey = (
       await ChatSdk.entryKey(
@@ -67,18 +83,22 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       )
     )[0];
     const entryAcc = (await connection.getAccountInfo(entryKey))!;
-    const entry = (await chatSdk.entryDecoder(entryKey, entryAcc))!;
+    const entry = (await namespacesProgram.coder.accounts.decode<IEntry>(
+      "entry",
+      entryAcc.data
+    ))
 
     // Valid for a week
     context.res.setHeader(
       "Cache-Control",
       "public, s-maxage=604800, stale-while-revalidate=59"
     );
+
     return {
       props: {
         name: context.params?.id || null,
         description: `${context.params?.id}.chat - A decentralized chatroom powered by Strata Protocol on Solana`,
-        uri: `"https://nft.cardinal.so/metadata/${entry?.mint.toBase58()}?name=${
+        image: `"https://nft.cardinal.so/metadata/${entry?.mint.toBase58()}?name=${
           context.params?.id
         }.chat"`,
         chatKey: (await ChatSdk.chatKey(entry.mint))[0].toBase58(),
@@ -100,6 +120,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 export default function ChatroomPage({
   name,
   image,
+  description,
   chatKey: chatKeyStr
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const sidebar = useDisclosure();
@@ -115,11 +136,11 @@ export default function ChatroomPage({
     >
       <NextSeo
         title={name}
-        description={`${name} - A decentralized chatroom powered by Strata Protocol on Solana`}
+        description={description}
         openGraph={{
           url: `chat.strataprotocol.com/c/${id as string}`,
           title: name,
-          description: `${name} - `,
+          description: description,
           images: [{ url: image }],
           site_name: "StrataChat",
         }}
