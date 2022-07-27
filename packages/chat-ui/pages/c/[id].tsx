@@ -3,22 +3,19 @@ import { Header } from "@/components/Header";
 import { Layout } from "@/components/Layout";
 import { LegacyWalletMigrationModal } from "@/components/LegacyWalletMigrationModal";
 import { RoomsHeader } from "@/components/rooms/RoomsHeader";
-import { VISIBLE_CHATS } from "@/constants";
 import { SendMessageProvider } from "@/contexts/sendMessage";
-import { useChatKeyFromIdentifier } from "@/hooks/useChatKeyFromIdentifier";
-import { ApolloClient, gql, InMemoryCache } from "@apollo/client";
+import { ApolloClient, InMemoryCache } from "@apollo/client";
 import {
   NAMESPACES_IDL,
   NAMESPACES_PROGRAM,
-  NAMESPACES_PROGRAM_ID,
+  NAMESPACES_PROGRAM_ID
 } from "@cardinal/namespaces";
 import { useDisclosure } from "@chakra-ui/react";
-import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { AnchorProvider, Program } from "@project-serum/anchor";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import { ChatIDL, ChatIDLJson, ChatSdk } from "@strata-foundation/chat";
-import { getClusterAndEndpoint, usePublicKey } from "@strata-foundation/react";
+import { getClusterAndEndpoint } from "@strata-foundation/react";
 // @ts-ignore
 import LitNodeJsSdk from "lit-js-sdk/build/index.node.js";
 import { GetServerSideProps, InferGetServerSidePropsType } from "next";
@@ -33,16 +30,14 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     const { endpoint } = getClusterAndEndpoint(
       (context.query.cluster || SOLANA_URL) as string
     );
-    const connection = new Connection(endpoint, {});
+    const connection = new Connection(endpoint, {
+      commitment: "confirmed"
+    });
     const provider = new AnchorProvider(
       connection,
       new NodeWallet(Keypair.generate()),
       {}
     );
-    const apollo = new ApolloClient({
-      uri: "https://graph.holaplex.com/v1",
-      cache: new InMemoryCache(),
-    });
 
     const chat = new Program<ChatIDL>(
       ChatIDLJson as ChatIDL,
@@ -74,6 +69,11 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     const entryAcc = (await connection.getAccountInfo(entryKey))!;
     const entry = (await chatSdk.entryDecoder(entryKey, entryAcc))!;
 
+    // Valid for a week
+    context.res.setHeader(
+      "Cache-Control",
+      "public, s-maxage=604800, stale-while-revalidate=59"
+    );
     return {
       props: {
         name: context.params?.id || null,
@@ -96,13 +96,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
   }
 };
-
-export async function getStaticProps() {
-  return {
-    paths: VISIBLE_CHATS.map(chat => ({ params: { id: chat } })),
-    fallback: false,
-  };
-}
 
 export default function ChatroomPage({
   name,
