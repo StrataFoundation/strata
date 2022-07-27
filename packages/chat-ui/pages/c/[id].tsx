@@ -97,7 +97,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   }
 };
 
-export async function getStaticPaths() {
+export async function getStaticProps() {
   return {
     paths: VISIBLE_CHATS.map(chat => ({ params: { id: chat } })),
     fallback: false,
