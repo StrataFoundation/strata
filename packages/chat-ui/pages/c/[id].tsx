@@ -15,7 +15,7 @@ import { AnchorProvider, Program } from "@project-serum/anchor";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import { ChatIDL, ChatIDLJson, ChatSdk } from "@strata-foundation/chat";
-import { getClusterAndEndpoint } from "@strata-foundation/react";
+import { getClusterAndEndpoint, usePublicKey } from "@strata-foundation/react";
 // @ts-ignore
 import LitNodeJsSdk from "lit-js-sdk/build/index.node.js";
 import { GetServerSideProps, InferGetServerSidePropsType } from "next";
@@ -81,7 +81,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         uri: `"https://nft.cardinal.so/metadata/${entry?.mint.toBase58()}?name=${
           context.params?.id
         }.chat"`,
-        chatKey: await ChatSdk.chatKey(entry.mint)
+        chatKey: (await ChatSdk.chatKey(entry.mint))[0].toBase58(),
       },
     };
   } catch (e: any) {
@@ -100,11 +100,12 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 export default function ChatroomPage({
   name,
   image,
-  chatKey
+  chatKey: chatKeyStr
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const sidebar = useDisclosure();
   const router = useRouter();
   const { id } = router.query;
+  const chatKey = usePublicKey(chatKeyStr);
 
   return (
     <Layout
