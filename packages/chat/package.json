@@ -34,6 +34,7 @@
     "@shadow-drive/sdk": "^3.0.6",
     "@solana/web3.js": "^1.43.4",
     "@strata-foundation/spl-utils": "^3.9.7",
+    "@strata-foundation/spl-token-bonding": "^3.9.7",
     "@types/uuid": "^8.3.4",
     "add": "^2.0.6",
     "bn.js": "^5.2.0",
