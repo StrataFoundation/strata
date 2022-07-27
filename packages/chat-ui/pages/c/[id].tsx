@@ -31,7 +31,7 @@ const QUICK_PROPS: Record<string, any> = {
     description:
       "solana.chat - A decentralized chatroom powered by Strata Protocol on Solana",
     image:
-      '"https://nft.cardinal.so/img/9497kTCD3ct7JaRTzCzQvS5N5iwbzxaK8Sci6gDZTq8C?name=solana.chat"',
+      '"https://nft.cardinal.so/img/9497kTCD3ct7JaRTzCzQvS5N5iwbzxaK8Sci6gDZTq8C?name=solana"',
     chatKey: "EzNMGtFA62nvDfCybZi4vhfeJUoMJyMijcKoC8heoyHK",
   },
   open: {
@@ -39,7 +39,7 @@ const QUICK_PROPS: Record<string, any> = {
     description:
       "open.chat - A decentralized chatroom powered by Strata Protocol on Solana",
     image:
-      '"https://nft.cardinal.so/img/5tjEoagtGJrMoywNHg5UXqXyVxkcfZr78Zeu7RmaCuDJ?name=open.chat"',
+      '"https://nft.cardinal.so/img/5tjEoagtGJrMoywNHg5UXqXyVxkcfZr78Zeu7RmaCuDJ?name=open"',
     chatKey: "HN8GF8nKHLnymPUwn4cfNmtSwAcErRweDDDGzyhj6wKH",
   },
 };
@@ -100,7 +100,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         description: `${context.params?.id}.chat - A decentralized chatroom powered by Strata Protocol on Solana`,
         image: `"https://nft.cardinal.so/img/${entry?.mint.toBase58()}?name=${
           context.params?.id
-        }.chat"`,
+        }"`,
         chatKey: (await ChatSdk.chatKey(entry.mint))[0].toBase58(),
       },
     };
