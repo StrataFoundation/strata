@@ -35,7 +35,7 @@ import { CaseInsensitiveMarkerV0, ChatIDL, ChatV0, DelegateWalletV0, NamespacesV
 import { getAuthSig, MessageSigner } from "./lit";
 import { uploadFiles } from "./shdw";
 
-const MESSAGE_MAX_CHARACTERS = 450; // TODO: This changes with optional accounts in the future
+const MESSAGE_MAX_CHARACTERS = 352; // TODO: This changes with optional accounts in the future
 
 export * from "./generated/chat";
 export * from "./shdw";

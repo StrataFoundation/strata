@@ -11,7 +11,7 @@ import {
 import { __DEV__ } from "@chakra-ui/utils";
 import * as React from "react";
 
-export interface FlexOptions {
+interface FlexOptions {
   /**
    * Shorthand for `alignItems` style prop
    * @type SystemProps["alignItems"]
@@ -55,7 +55,7 @@ export interface FlexOptions {
   shrink?: SystemProps["flexShrink"];
 }
 
-export interface FlexProps extends HTMLChakraProps<"div">, FlexOptions {}
+interface FlexProps extends HTMLChakraProps<"div">, FlexOptions {}
 
 /**
  * React component used to create flexbox layouts.

@@ -10,7 +10,7 @@ import {
   TWITTER_ROOT_PARENT_REGISTRY_KEY,
   TWITTER_VERIFICATION_AUTHORITY,
   updateInstruction,
-} from "@bonfida/spl-name-service";
+} from "@solana/spl-name-service";
 import {
   Connection,
   PublicKey,
