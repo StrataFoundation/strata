@@ -27,7 +27,7 @@ const SOLANA_URL =
 
 const QUICK_PROPS: Record<string, any> = {
   solana: {
-    name: "solana",
+    name: "solana.chat",
     description:
       "solana.chat - A decentralized chatroom powered by Strata Protocol on Solana",
     image:
@@ -35,7 +35,7 @@ const QUICK_PROPS: Record<string, any> = {
     chatKey: "EzNMGtFA62nvDfCybZi4vhfeJUoMJyMijcKoC8heoyHK",
   },
   open: {
-    name: "open",
+    name: "open.chat",
     description:
       "open.chat - A decentralized chatroom powered by Strata Protocol on Solana",
     image:
@@ -96,7 +96,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
     return {
       props: {
-        name: context.params?.id || null,
+        name: context.params?.id || null + ".chat",
         description: `${context.params?.id}.chat - A decentralized chatroom powered by Strata Protocol on Solana`,
         image: `"https://nft.cardinal.so/img/${entry?.mint.toBase58()}?name=${
           context.params?.id
