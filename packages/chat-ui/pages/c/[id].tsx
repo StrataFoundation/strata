@@ -80,7 +80,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         description: `${context.params?.id}.chat - A decentralized chatroom powered by Strata Protocol on Solana`,
         uri: `"https://nft.cardinal.so/metadata/${entry?.mint.toBase58()}?name=${
           context.params?.id
-        }"`,
+        }.chat"`,
         chatKey: await ChatSdk.chatKey(entry.mint)
       },
     };
