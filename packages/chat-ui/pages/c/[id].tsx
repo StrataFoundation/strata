@@ -3,27 +3,22 @@ import { Header } from "@/components/Header";
 import { Layout } from "@/components/Layout";
 import { LegacyWalletMigrationModal } from "@/components/LegacyWalletMigrationModal";
 import { RoomsHeader } from "@/components/rooms/RoomsHeader";
+import { VISIBLE_CHATS } from "@/constants";
 import { SendMessageProvider } from "@/contexts/sendMessage";
 import { useChatKeyFromIdentifier } from "@/hooks/useChatKeyFromIdentifier";
 import { ApolloClient, gql, InMemoryCache } from "@apollo/client";
 import {
   NAMESPACES_IDL,
   NAMESPACES_PROGRAM,
-  NAMESPACES_PROGRAM_ID
+  NAMESPACES_PROGRAM_ID,
 } from "@cardinal/namespaces";
 import { useDisclosure } from "@chakra-ui/react";
 import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { AnchorProvider, Program } from "@project-serum/anchor";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
-import {
-  ChatIDL,
-  ChatIDLJson,
-  ChatSdk
-} from "@strata-foundation/chat";
-import {
-  getClusterAndEndpoint, usePublicKey
-} from "@strata-foundation/react";
+import { ChatIDL, ChatIDLJson, ChatSdk } from "@strata-foundation/chat";
+import { getClusterAndEndpoint, usePublicKey } from "@strata-foundation/react";
 // @ts-ignore
 import LitNodeJsSdk from "lit-js-sdk/build/index.node.js";
 import { GetServerSideProps, InferGetServerSidePropsType } from "next";
@@ -77,33 +72,16 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       )
     )[0];
     const entryAcc = (await connection.getAccountInfo(entryKey))!;
-    const entry = await chatSdk.entryDecoder(entryKey, entryAcc);
-
-    const address = (await Metadata.getPDA(entry.mint)).toBase58();
-    const result = await apollo.query<{
-      nft: { name: string; description: string; image: string };
-    }>({
-      query: gql`
-        query GetUrl($address: String!) {
-          nft(address: $address) {
-            name
-            description
-            image
-          }
-        }
-      `,
-      variables: {
-        address,
-      },
-    });
-
-    const { name, description, image } = result.data?.nft || {};
+    const entry = (await chatSdk.entryDecoder(entryKey, entryAcc))!;
 
     return {
       props: {
-        name: name || null,
-        description: description || null,
-        image: image || null,
+        name: context.params?.id || null,
+        description: `${context.params?.id}.chat - A decentralized chatroom powered by Strata Protocol on Solana`,
+        uri: `"https://nft.cardinal.so/metadata/${entry?.mint.toBase58()}?name=${
+          context.params?.id
+        }"`,
+        chatKey: await ChatSdk.chatKey(entry.mint)
       },
     };
   } catch (e: any) {
@@ -113,21 +91,28 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         name: null,
         description: null,
         image: null,
+        chatKey: null
       },
     };
   }
 };
 
+export async function getStaticPaths() {
+  return {
+    paths: VISIBLE_CHATS.map(chat => ({ params: { id: chat } })),
+    fallback: false,
+  };
+}
+
 export default function ChatroomPage({
   name,
   image,
+  chatKey
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const sidebar = useDisclosure();
   const router = useRouter();
   const { id } = router.query;
-  const { chatKey } = useChatKeyFromIdentifier(id as string | undefined);
-  const pubkeyChatKey = usePublicKey(id as string);
-  
+
   return (
     <Layout
       isSidebarOpen={sidebar.isOpen}
@@ -140,7 +125,7 @@ export default function ChatroomPage({
         openGraph={{
           url: `chat.strataprotocol.com/c/${id as string}`,
           title: name,
-          description: `${name} - A decentralized chatroom powered by Strata Protocol on Solana`,
+          description: `${name} - `,
           images: [{ url: image }],
           site_name: "StrataChat",
         }}
@@ -151,11 +136,11 @@ export default function ChatroomPage({
         }}
       />
       <LegacyWalletMigrationModal />
-      <SendMessageProvider chatKey={chatKey || pubkeyChatKey}>
+      <SendMessageProvider chatKey={chatKey}>
         <Header onSidebarOpen={sidebar.onOpen}>
-          <RoomsHeader chatKey={chatKey || pubkeyChatKey} />
+          <RoomsHeader chatKey={chatKey} />
         </Header>
-        <Chatroom chatKey={chatKey || pubkeyChatKey} />
+        <Chatroom chatKey={chatKey} />
       </SendMessageProvider>
     </Layout>
   );
