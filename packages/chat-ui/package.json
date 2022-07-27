@@ -5,7 +5,7 @@
     "registry": "https://registry.npmjs.org/"
   },
   "source": "src/index.ts",
-  "version": "3.9.11",
+  "version": "3.9.12",
   "license": "Apache-2.0",
   "exports": {
     ".": "./dist/lib/index.js"
@@ -40,7 +40,7 @@
     "@solana/web3.js": "^1.43.4",
     "@strata-foundation/accelerator": "^3.9.3",
     "@strata-foundation/chat": "^3.9.7",
-    "@strata-foundation/react": "^3.9.11",
+    "@strata-foundation/react": "^3.9.12",
     "@strata-foundation/spl-token-bonding": "^3.9.7",
     "@types/emoji-mart": "^3.0.9",
     "@types/request-promise": "^4.1.48",
