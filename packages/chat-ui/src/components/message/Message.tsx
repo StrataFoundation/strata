@@ -108,6 +108,7 @@ export function Message(
   // Re decode if not enough tokens changes
   const getDecodedMessageOrIdentity = (_: boolean) =>
     getDecodedMessage ? getDecodedMessage() : Promise.resolve(undefined);
+
   const {
     result: message,
     loading: decoding,
@@ -220,7 +221,7 @@ export function Message(
                   color={textColor}
                   id={messageId}
                 >
-                  {message && messageType ? (
+                  {!notEnoughTokens && message && messageType ? (
                     <MessageBody
                       htmlAllowlist={htmlAllowlist}
                       message={message}
