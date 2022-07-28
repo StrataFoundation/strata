@@ -88,8 +88,6 @@ export const TokenLaunches = ({ mintKey, name, image }: TokenPreviewProps) => {
 
   useEffect(() => {
     if (mintKey && parentVars) {
-      console.log("tm2");
-      console.log(parentVars);
       loadParentEntanglers({
         variables: parentVars,
         context: {

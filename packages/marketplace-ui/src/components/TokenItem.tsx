@@ -13,20 +13,17 @@ import { useRouter } from "next/router";
 import { routes, route } from "../utils/routes";
 import { MetadataData } from "@metaplex-foundation/mpl-token-metadata";
 
-export const TokenItem = ({mint, updateRef, isIntermediateToken}: {
+export const TokenItem = ({mint, isIntermediateToken}: {
   mint: PublicKey,
-  updateRef: number,
   isIntermediateToken: (mint: PublicKey, metadata: MetadataData, hasTokenBonding: boolean) => boolean
 }) => {
   const router = useRouter();
   const { publicKey } = useWallet();
   const { data, hasAnyAuth, image, metadata } = useTokenAuthorities(mint, publicKey || undefined);
   const { info: tokenBonding } = useTokenBondingFromMint(mint);
-  const shouldDisplay = useMemo(() => {
-    if (mint && metadata && hasAnyAuth) {
-      return !isIntermediateToken(mint, metadata!, !!tokenBonding);
-    }
-  }, [updateRef, metadata, mint, hasAnyAuth, tokenBonding])
+
+  const shouldDisplay = mint && metadata && hasAnyAuth ? !isIntermediateToken(mint, metadata!, !!tokenBonding) : false;
+
   return (
     <>
       { hasAnyAuth && shouldDisplay ? (
