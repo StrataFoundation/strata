@@ -36,7 +36,6 @@ export const MyTokens = () => {
 
 
   const [tokensRecord, setTokensRecord] = useState<Record<string,Set<string>>>({});
-  const [updateRef, setUpdateRef] = useState<number>(0);
   // TODO this intermediate token detection is flawed, if bonding curve is closed no way to detect which is the real token to display
   const isIntermediateToken = useCallback(
     (mint: PublicKey, metadata: MetadataData, hasTokenBonding: boolean) => {
@@ -45,16 +44,13 @@ export const MyTokens = () => {
       }
       const serial = serialize(metadata);
       if (serial in tokensRecord) {
-        if (tokensRecord[serial].has(mint.toString())) {
-          if (tokensRecord[serial].size > 1 && hasTokenBonding) {
-            return true
-          }
-          return false;
-        } else {
+        if (!tokensRecord[serial].has(mint.toString())) {
           tokensRecord[serial].add(mint.toString());
-          setUpdateRef(updateRef + 1); // calls a rerender which will trigger this callback to run again from child component
-          return false;
         }
+        if (tokensRecord[serial].size > 1 && hasTokenBonding) {
+          return true
+        }
+        return false;
       }
       tokensRecord[serial] = new Set([mint.toString()])
       return false
@@ -108,7 +104,7 @@ export const MyTokens = () => {
                 <Flex w="full" flexWrap="wrap" marginTop="2em">
                   <VStack w="full" alignItems="flex-start">
                     {mints.map((mint) => (
-                      <TokenItem mint={mint} updateRef={updateRef} isIntermediateToken={isIntermediateToken} key={mint.toString()}/>
+                      <TokenItem mint={mint} isIntermediateToken={isIntermediateToken} key={mint.toString()}/>
                     ))}
                   </VStack>
                 </Flex>
