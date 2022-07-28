@@ -9,7 +9,7 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useProvider } from "@strata-foundation/react";
@@ -17,7 +17,8 @@ import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { TokenAccountParser } from "@strata-foundation/react";
 import { truthy } from "@strata-foundation/spl-utils";
 import { TokenItem } from "./TokenItem";
-// TODO use vybe to get token bondings that the user is general authority on for fully managed tokens
+import { MetadataData } from "@metaplex-foundation/mpl-token-metadata";
+
 export const MyTokens = () => {
   const { publicKey, connected } = useWallet();
   const { visible, setVisible } = useWalletModal();
@@ -32,6 +33,34 @@ export const MyTokens = () => {
     }
     getTokenAccounts();
   }, [publicKey, provider]);
+
+
+  const [tokensRecord, setTokensRecord] = useState<Record<string,Set<string>>>({});
+  const [updateRef, setUpdateRef] = useState<number>(0);
+  // TODO this intermediate token detection is flawed, if bonding curve is closed no way to detect which is the real token to display
+  const isIntermediateToken = useCallback(
+    (mint: PublicKey, metadata: MetadataData, hasTokenBonding: boolean) => {
+      function serialize(metadata: MetadataData): string {
+        return `${metadata.data.name} - ${metadata?.data?.symbol}`
+      }
+      const serial = serialize(metadata);
+      if (serial in tokensRecord) {
+        if (tokensRecord[serial].has(mint.toString())) {
+          if (tokensRecord[serial].size > 1 && hasTokenBonding) {
+            return true
+          }
+          return false;
+        } else {
+          tokensRecord[serial].add(mint.toString());
+          setUpdateRef(updateRef + 1); // calls a rerender which will trigger this callback to run again from child component
+          return false;
+        }
+      }
+      tokensRecord[serial] = new Set([mint.toString()])
+      return false
+    },
+    []
+  );
   return (
     <>
       <Center padding="54px" backgroundColor="black.500">
@@ -79,7 +108,7 @@ export const MyTokens = () => {
                 <Flex w="full" flexWrap="wrap" marginTop="2em">
                   <VStack w="full" alignItems="flex-start">
                     {mints.map((mint) => (
-                      <TokenItem mint={mint} key={mint.toString()}/>
+                      <TokenItem mint={mint} updateRef={updateRef} isIntermediateToken={isIntermediateToken} key={mint.toString()}/>
                     ))}
                   </VStack>
                 </Flex>
