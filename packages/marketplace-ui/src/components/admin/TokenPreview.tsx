@@ -15,30 +15,34 @@ interface TokenPreviewProps {
 export const TokenPreview = ({ data, image }: TokenPreviewProps) => {
   return (
     <Flex>
-      <Image
-        alt="Token logo"
-        w="70px"
-        h="70px"
-        borderRadius="50%"
-        src={image}
-      />
-      <Stack paddingLeft="10px">
-        <Text 
-          fontSize="2xl" 
-          color="white" 
-          textAlign="left" 
-          fontWeight="bold"
-        >
-          {data?.name}
-        </Text>
-        <Text 
-          fontSize="md" 
-          color="white" 
-          marginTop="0 !important"
-        >
-            ${data?.symbol}
+      {image && (
+        <Image
+          alt="Token logo"
+          w="70px"
+          h="70px"
+          borderRadius="50%"
+          src={image}
+        />
+      )}
+      {data?.name && data?.symbol && (
+        <Stack paddingLeft="10px">
+          <Text 
+            fontSize="2xl" 
+            color="white" 
+            textAlign="left" 
+            fontWeight="bold"
+          >
+            {data?.name}
           </Text>
-      </Stack>
+          <Text 
+            fontSize="md" 
+            color="white" 
+            marginTop="0 !important"
+          >
+              ${data?.symbol}
+            </Text>
+        </Stack>
+      )}
     </Flex>
   );
 };
