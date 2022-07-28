@@ -40,6 +40,10 @@ export const routes: Record<string, IRoute> = {
     path: process.env.NEXT_PUBLIC_DOCS_URL + "/launchpad/admin/fixed-price",
     params: [],
   },
+  fullyManagedAdmin: {
+    path: process.env.NEXT_PUBLIC_DOCS_URL + "/launchpad/admin/fully-managed",
+    params: [],
+  },
   mintLbcAdmin: {
     path:
       process.env.NEXT_PUBLIC_DOCS_URL +
