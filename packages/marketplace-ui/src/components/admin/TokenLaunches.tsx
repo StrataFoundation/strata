@@ -132,8 +132,8 @@ export const TokenLaunches = ({ mintKey, name, image }: TokenPreviewProps) => {
         </Flex>
       ) : parsed.length ? (
         parsed.map((val) => (
-          <Flex bgColor="white" borderRadius="8px" w="full" h="7em" mb="15px">
-            <LaunchPreview id={val} name={name} image={image} key={val.toString()}/>
+          <Flex bgColor="white" borderRadius="8px" w="full" h="7em" mb="15px" key={val.toString()}>
+            <LaunchPreview id={val} name={name} image={image} />
           </Flex>
         ))
       ) : (
