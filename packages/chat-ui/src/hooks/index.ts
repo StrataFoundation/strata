@@ -17,7 +17,7 @@ export * from "./useCaseInsensitiveMarker";
 export * from "./useSettings";
 export * from "./useSettingsKey";
 export * from "./useWalletSettings";
-export * from "./useChatOwnedAmount";
+export * from "./useChatOwnedAmounts";
 export * from "./useAnalyticsEventTracker";
 export * from "./useInflatedReacts";
 export * from "./useChatPermissions";

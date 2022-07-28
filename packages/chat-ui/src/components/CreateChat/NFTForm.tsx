@@ -59,7 +59,7 @@ export const NFTForm: React.FC<INFTFormProps> = ({
             id="collectionKey"
             label="Collection Key"
             errors={errors}
-            help="The key of the nft collection to use fo this permission. "
+            help="The key of the nft collection to use for this permission."
           >
             <Input
               id="collectionKey"

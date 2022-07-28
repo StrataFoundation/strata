@@ -151,7 +151,7 @@ export const PermissionType: React.FC<IPermissionTypeProps> = ({
                   </Text>
                   <Text fontSize="xs">
                     {value === ReadPostType.Token &&
-                      `Participants need to hold a certain amount of a token to ${permissionType} messages"`}
+                      `Participants need to hold a certain amount of a token to ${permissionType} messages`}
                     {value === ReadPostType.NFT &&
                       `Participants need to hold a NFT from a certain collection to ${permissionType} messages`}
                   </Text>

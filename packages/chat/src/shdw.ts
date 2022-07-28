@@ -170,7 +170,7 @@ export async function initStorageIfNeeded(
       );
       const tx = swapPayload.transaction;
       tx.recentBlockhash = (
-        await localProvider.connection.getLatestBlockhash()
+        await localProvider.connection.getRecentBlockhash()
       ).blockhash;
       tx.feePayer = pubKey;
       const signers = [...swapPayload.signers, delegateWallet].filter(truthy);
