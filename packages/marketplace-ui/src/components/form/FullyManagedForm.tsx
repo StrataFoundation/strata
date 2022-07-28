@@ -189,6 +189,7 @@ async function createFullyManaged(
       metadata,
       decimals: bondingOpts.targetMintDecimals,
     });
+
     const bondingOut = await tokenBondingSdk.createTokenBondingInstructions(
       bondingOpts
     );

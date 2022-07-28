@@ -1,4 +1,3 @@
-import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
 import { useAsync } from "react-async-hook";
@@ -7,6 +6,7 @@ import { useDelegateWallet } from "./useDelegateWallet";
 const PROGRAM_ID = new PublicKey(
   "2e1wdyNhUvE76y6yUCvah2KaviavMJYKoRun8acMRBZZ"
 );
+
 function getStorageAccount(
   key: PublicKey,
   accountSeed: BN
@@ -25,7 +25,9 @@ export function useChatStorageAccountKey() {
   const { keypair: delegateWallet } = useDelegateWallet();
   return useAsync(
     async (wallet: string | undefined) =>
-      wallet ? (await getStorageAccount(new PublicKey(wallet), new BN(0)))[0] : undefined,
+      wallet
+        ? (await getStorageAccount(new PublicKey(wallet), new BN(0)))[0]
+        : undefined,
     [delegateWallet?.publicKey.toBase58()]
   );
 }

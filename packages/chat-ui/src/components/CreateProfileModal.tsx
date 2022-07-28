@@ -49,9 +49,8 @@ import {
   useWalletProfile,
   useAnalyticsEventTracker,
 } from "../hooks";
-import { useWalletFromIdentifier } from "../hooks/useWalletFromIdentifier";
-import { FormControlWithError } from "./FormControlWithError";
-import { CopyBlackBox } from "./CopyBlackBox";
+import { useWalletFromUsernameIdentifier } from "../hooks/useWalletFromUsernameIdentifier";
+import { FormControlWithError } from "./form/FormControlWithError";
 import toast from "react-hot-toast";
 import { LongPromiseNotification } from "./LongPromiseNotification";
 
@@ -145,14 +144,14 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
   } = useLoadDelegate();
 
   const gaEventTracker = useAnalyticsEventTracker();
-  
+
   const { username, image } = watch();
   const {
     account: profileAccount,
     info: profile,
     loading: loadingProfile,
   } = useWalletProfile(publicKey || undefined);
-  const { wallet } = useWalletFromIdentifier(username);
+  const { wallet } = useWalletFromUsernameIdentifier(username);
   const { username: existingUsername } = useUsernameFromIdentifierCertificate(
     profile?.identifierCertificateMint,
     profile?.ownerWallet
@@ -163,6 +162,7 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
       setValue("imageUrl", profile.imageUrl);
     }
   }, [profile, setValue]);
+
   useEffect(() => {
     if (existingUsername) setValue("username", existingUsername);
   }, [existingUsername, setValue]);
@@ -180,8 +180,10 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
 
   async function onSubmit(args: IProfileProps): Promise<void> {
     if (args.username.length < 6 && !wallet) {
-      setError("username", { message: "Username must be at least 6 characters." });
-      return
+      setError("username", {
+        message: "Username must be at least 6 characters.",
+      });
+      return;
     }
     await execute(chatSdk, args, setStep);
     if (props.onClose) {

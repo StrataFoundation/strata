@@ -6,7 +6,7 @@ export * from "./rooms";
 export * from "./CreateProfileModal";
 export * from "./ProfileButton";
 export * from "./GifSearch";
-export * from "./FileAttachment";
+export * from "./form";
 export * from "./EmojiSearch";
 export * from "./CopyBlackBox";
 export * from "./Layout";
@@ -18,7 +18,7 @@ export * from "./Files";
 export * from "./chatbox";
 export * from "./TokenFlare";
 export * from "./MyFlex";
-export * from "./FileUploadMask"
+export * from "./FileUploadMask";
 export * from "./BuyMoreButton";
 export * from "./message";
 export * from "./ChatProviders";

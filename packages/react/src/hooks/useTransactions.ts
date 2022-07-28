@@ -2,7 +2,8 @@ import { useConnection } from "@solana/wallet-adapter-react";
 import {
   ConfirmedSignatureInfo,
   Connection,
-  PublicKey, TransactionResponse
+  PublicKey,
+  TransactionResponse,
 } from "@solana/web3.js";
 import { Cluster } from "@strata-foundation/accelerator";
 import { sleep } from "@strata-foundation/spl-utils";
@@ -63,16 +64,16 @@ async function hydrateTransactions(
     return [];
   }
 
-  const rawTxs = (
-    await connection.getTransactions(signatures.map((sig) => sig.signature))
+  const rawTxs = await connection.getTransactions(
+    signatures.map((sig) => sig.signature)
   );
 
   // Some were null. Try again
-  if (rawTxs.some(t => !t) && tries < 3) {
+  if (rawTxs.some((t) => !t) && tries < 3) {
     await sleep(500);
-    return hydrateTransactions(connection, signatures, tries + 1)
+    return hydrateTransactions(connection, signatures, tries + 1);
   }
-  
+
   const txs = rawTxs.map((t, index) => {
     // @ts-ignore
     t.signature = signatures[index].signature;
@@ -106,8 +107,11 @@ function removeDups(
   // Use the block times from pending messages so that there's no weird reording on screen
   const pendingBlockTimes = txns
     .filter((tx) => tx.pending)
-    .reduce((acc, tx) => ({ ...acc, [tx.signature]: tx.blockTime }), {} as Record<string, number | null | undefined>);
-    
+    .reduce(
+      (acc, tx) => ({ ...acc, [tx.signature]: tx.blockTime }),
+      {} as Record<string, number | null | undefined>
+    );
+
   const seen = new Set();
 
   return txns
@@ -215,12 +219,12 @@ export const useTransactions = ({
     })();
 
     return () => {
-        (async () => {
-          await promise;
-          if (subId && accelerator) {
-            accelerator.unsubscribeTransaction(subId);
-          }
-        })();        
+      (async () => {
+        await promise;
+        if (subId && accelerator) {
+          accelerator.unsubscribeTransaction(subId);
+        }
+      })();
     };
   }, [subscribe, accelerated, accelerator, addrStr, setTransactions]);
 

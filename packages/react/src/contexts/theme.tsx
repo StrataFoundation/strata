@@ -7,7 +7,7 @@ import {
 import { runIfFn, mergeWith } from "@chakra-ui/utils";
 
 const primary = {
-  50: "#fdefe7",
+  50: "rgba(238, 111, 46, 0.1)",
   100: "#fbd6c2",
   200: "#f8bb99",
   300: "#f5a070",
@@ -22,14 +22,25 @@ const primary = {
 function primaryAlwaysLightMode(componentConfig: any): any {
   return {
     ...componentConfig,
-    variants: Object.entries(componentConfig.variants || {}).reduce((acc, entry) => {
-      acc[entry[0]] = ({ colorMode, colorScheme, ...rest }: any) =>
-        runIfFn(entry[1], { ...rest, colorScheme, colorMode: colorScheme === "primary" ? "light" : colorMode });
+    variants: Object.entries(componentConfig.variants || {}).reduce(
+      (acc, entry) => {
+        acc[entry[0]] = ({ colorMode, colorScheme, ...rest }: any) =>
+          runIfFn(entry[1], {
+            ...rest,
+            colorScheme,
+            colorMode: colorScheme === "primary" ? "light" : colorMode,
+          });
 
-      return acc;
-    }, {} as Record<string, any>),
+        return acc;
+      },
+      {} as Record<string, any>
+    ),
     baseStyle: ({ colorMode, colorScheme, ...rest }: any) =>
-      runIfFn(componentConfig.baseStyle, { ...rest, colorScheme, colorMode: colorScheme === "primary" ? "light" : colorMode }),
+      runIfFn(componentConfig.baseStyle, {
+        ...rest,
+        colorScheme,
+        colorMode: colorScheme === "primary" ? "light" : colorMode,
+      }),
   };
 }
 
@@ -144,7 +155,10 @@ export const theme: any = extendTheme({
   },
 });
 
-export const ThemeProvider: FC<{resetCSS?: boolean}> = ({ children, resetCSS = false }) => (
+export const ThemeProvider: FC<{ resetCSS?: boolean }> = ({
+  children,
+  resetCSS = false,
+}) => (
   <ChakraProvider resetCSS={resetCSS} theme={theme}>
     {children}
   </ChakraProvider>

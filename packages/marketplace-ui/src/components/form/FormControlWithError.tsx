@@ -8,12 +8,23 @@ export interface IFormControlWithErrorProps<A> {
   help?: string;
   label?: string;
 }
-export function FormControlWithError<A>({ id, label, help, children, errors, ...rest }: IFormControlWithErrorProps<A>) {
-  return <FormControl id={id} {...rest}>
-    {label && <FormLabel htmlFor={id}>{ label }</FormLabel>}
-    {children}
-    {(errors[id] || help) && <FormHelperText color={errors[id]?.message && "red.400"}>
-      {errors[id]?.message || help}
-    </FormHelperText>}
-  </FormControl>
+export function FormControlWithError<A>({
+  id,
+  label,
+  help,
+  children,
+  errors,
+  ...rest
+}: IFormControlWithErrorProps<A>) {
+  return (
+    <FormControl id={id} {...rest}>
+      {label && <FormLabel htmlFor={id}>{label}</FormLabel>}
+      {children}
+      {(errors[id] || help) && (
+        <FormHelperText color={errors[id]?.message && "red.400"}>
+          {errors[id]?.message || help}
+        </FormHelperText>
+      )}
+    </FormControl>
+  );
 }

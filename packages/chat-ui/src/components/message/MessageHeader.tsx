@@ -4,7 +4,6 @@ import React, { useMemo } from "react";
 import { TokenFlare } from "../TokenFlare";
 import moment from "moment";
 import {
-  useChat,
   useChatPermissionsFromChat,
   useUsernameFromIdentifierCertificate,
   useWalletProfile,
@@ -14,7 +13,7 @@ import { truncatePubkey, truthy } from "@strata-foundation/react";
 export function MessageHeader({
   chatKey,
   sender,
-  startBlockTime
+  startBlockTime,
 }: {
   chatKey?: PublicKey;
   sender?: PublicKey;
@@ -22,11 +21,10 @@ export function MessageHeader({
 }) {
   const { info: chatPermissions } = useChatPermissionsFromChat(chatKey);
   const { info: profile } = useWalletProfile(sender);
-  const { username } =
-    useUsernameFromIdentifierCertificate(
-      profile?.identifierCertificateMint,
-      sender
-    );
+  const { username } = useUsernameFromIdentifierCertificate(
+    profile?.identifierCertificateMint,
+    sender
+  );
   const name = useMemo(
     () => username || (sender && truncatePubkey(sender)),
     [username, sender?.toBase58()]

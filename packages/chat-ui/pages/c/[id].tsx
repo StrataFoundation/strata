@@ -4,23 +4,22 @@ import { Layout } from "@/components/Layout";
 import { LegacyWalletMigrationModal } from "@/components/LegacyWalletMigrationModal";
 import { RoomsHeader } from "@/components/rooms/RoomsHeader";
 import { SendMessageProvider } from "@/contexts/sendMessage";
-import { ApolloClient, InMemoryCache } from "@apollo/client";
+import { useChatKeyFromIdentifier } from "@/hooks/useChatKeyFromIdentifier";
 import {
   NAMESPACES_IDL,
   NAMESPACES_PROGRAM,
-  NAMESPACES_PROGRAM_ID
+  NAMESPACES_PROGRAM_ID,
 } from "@cardinal/namespaces";
 import { useDisclosure } from "@chakra-ui/react";
 import { AnchorProvider, Program } from "@project-serum/anchor";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
-import { ChatIDL, ChatIDLJson, ChatSdk, IEntry } from "@strata-foundation/chat";
+import { ChatSdk, IEntry } from "@strata-foundation/chat";
 import { getClusterAndEndpoint, usePublicKey } from "@strata-foundation/react";
-// @ts-ignore
-import LitNodeJsSdk from "lit-js-sdk/build/index.node.js";
 import { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import { NextSeo } from "next-seo";
 import { useRouter } from "next/router";
+import { useMemo } from "react";
 
 const SOLANA_URL =
   process.env.NEXT_PUBLIC_SOLANA_URL || "https://ssc-dao.genesysgo.net/";
@@ -63,7 +62,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       (context.query.cluster || SOLANA_URL) as string
     );
     const connection = new Connection(endpoint, {
-      commitment: "confirmed"
+      commitment: "confirmed",
     });
     const provider = new AnchorProvider(
       connection,
@@ -83,10 +82,10 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       )
     )[0];
     const entryAcc = (await connection.getAccountInfo(entryKey))!;
-    const entry = (await namespacesProgram.coder.accounts.decode<IEntry>(
+    const entry = await namespacesProgram.coder.accounts.decode<IEntry>(
       "entry",
       entryAcc.data
-    ))
+    );
 
     // Valid for a week
     context.res.setHeader(
@@ -111,7 +110,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         name: null,
         description: null,
         image: null,
-        chatKey: null
+        chatKey: null,
       },
     };
   }
@@ -121,12 +120,19 @@ export default function ChatroomPage({
   name,
   image,
   description,
-  chatKey: chatKeyStr
+  chatKey: chatKeyRaw,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const sidebar = useDisclosure();
   const router = useRouter();
   const { id } = router.query;
-  const chatKey = usePublicKey(chatKeyStr);
+  const { chatKey: chatKeyFromQuery } = useChatKeyFromIdentifier(
+    id as string | undefined
+  );
+  const chatKeyFromStatic = usePublicKey(chatKeyRaw);
+  const chatKey = useMemo(
+    () => chatKeyFromQuery || chatKeyFromStatic,
+    [chatKeyFromQuery, chatKeyFromStatic]
+  );
 
   return (
     <Layout

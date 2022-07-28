@@ -1,5 +1,9 @@
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
-import { AnchorProvider, BorshAccountsCoder, Provider } from "@project-serum/anchor";
+import {
+  AnchorProvider,
+  BorshAccountsCoder,
+  Provider,
+} from "@project-serum/anchor";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   NATIVE_MINT,
@@ -19,7 +23,10 @@ import {
   toBN,
 } from "@strata-foundation/spl-token-bonding";
 import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
-import { FungibleEntangler, ICreateFungibleEntanglerOutput } from "@strata-foundation/fungible-entangler";
+import {
+  FungibleEntangler,
+  ICreateFungibleEntanglerOutput,
+} from "@strata-foundation/fungible-entangler";
 import {
   Attribute,
   BigInstructionResult,
@@ -506,11 +513,10 @@ export class MarketplaceSdk {
       const childAmount = await this.tokenBondingSdk.getTokenAccountBalance(
         childEntanglerAcct.childStorage
       );
-      const parentAmount =
-        await this.tokenBondingSdk.getTokenAccountBalance(
-          parentEntanglerAcct.parentStorage
-        );
-      
+      const parentAmount = await this.tokenBondingSdk.getTokenAccountBalance(
+        parentEntanglerAcct.parentStorage
+      );
+
       const transferChild =
         await this.fungibleEntanglerSdk.transferInstructions({
           childEntangler,
@@ -716,7 +722,7 @@ export class MarketplaceSdk {
   }
 
   async createMetadataForBondingInstructions({
-    metadataUpdateAuthority,
+    metadataUpdateAuthority = this.provider.wallet.publicKey,
     metadata,
     targetMintKeypair = Keypair.generate(),
     decimals,

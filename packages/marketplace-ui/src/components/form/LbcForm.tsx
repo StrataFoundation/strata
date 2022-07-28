@@ -121,9 +121,9 @@ const validationSchema = yup.object({
 });
 
 async function createLbcCandyMachine(
-  marketplaceSdk: MarketplaceSdk, 
+  marketplaceSdk: MarketplaceSdk,
   values: ILbcFormProps,
-  cluster: WalletAdapterNetwork | "localnet",
+  cluster: WalletAdapterNetwork | "localnet"
 ): Promise<string> {
   const targetMintKeypair = Keypair.generate();
   const authority = new PublicKey(values.authority);
@@ -156,7 +156,7 @@ async function createLbcCandyMachine(
     bondingArgs: {
       targetMintDecimals: Number(values.decimals || 0),
       goLiveDate: values.goLiveDate,
-      sellFrozen: true
+      sellFrozen: true,
     },
   });
 
@@ -193,9 +193,8 @@ async function createLbcCandyMachine(
       new PublicKey("cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ"),
       marketplaceSdk.provider
     );
-    const candymachine: any = await candymachineProgram.account.candyMachine.fetch(
-      candyMachineId
-    );
+    const candymachine: any =
+      await candymachineProgram.account.candyMachine.fetch(candyMachineId);
     const ix = await candymachineProgram.instruction.updateCandyMachine(
       {
         ...candymachine.data,
@@ -229,20 +228,20 @@ async function createLbcCandyMachine(
     tokenBondingKey: (
       await SplTokenBonding.tokenBondingKey(targetMint)
     )[0].toBase58(),
-    cluster
-  })
+    cluster,
+  });
 }
 
 /**
  * For an existing mint, the token is sold using an LBC and a fungible entangler.
  * The LBC converts between the base to and from an intermediary token.
  * The fungible entangler converts between the intermediary to and from the token to sell.
- * 
+ *
  * This makes the sale process reversible without requiring the mint authority.
  */
 async function createLbcExistingMint(
   marketplaceSdk: MarketplaceSdk,
-  values: ILbcFormProps,
+  values: ILbcFormProps
 ): Promise<string> {
   const intermediaryMintKeypair = Keypair.generate();
   const authority = new PublicKey(values.authority);
@@ -283,13 +282,16 @@ async function createLbcExistingMint(
     },
   });
 
-  const entanglerInstrs = await marketplaceSdk.fungibleEntanglerSdk.createFungibleEntanglerInstructions({
-    authority,
-    dynamicSeed: Keypair.generate().publicKey.toBuffer(),
-    amount: values.mintCap,
-    parentMint: existingMint, // swaps from childMint to parentMint
-    childMint: intermediaryMint,
-  })
+  const entanglerInstrs =
+    await marketplaceSdk.fungibleEntanglerSdk.createFungibleEntanglerInstructions(
+      {
+        authority,
+        dynamicSeed: Keypair.generate().publicKey.toBuffer(),
+        amount: values.mintCap,
+        parentMint: existingMint, // swaps from childMint to parentMint
+        childMint: intermediaryMint,
+      }
+    );
   instructions.push(entanglerInstrs.instructions);
   signers.push(entanglerInstrs.signers);
 
@@ -299,14 +301,14 @@ async function createLbcExistingMint(
     instructions,
     signers
   );
-  return route(routes.tokenLbcAdmin, { 
-    id: entanglerInstrs.output.childEntangler.toString()
-  })
+  return route(routes.tokenLbcAdmin, {
+    id: entanglerInstrs.output.childEntangler.toString(),
+  });
 }
 
 async function createLbcNewMint(
   marketplaceSdk: MarketplaceSdk,
-  values: ILbcFormProps,
+  values: ILbcFormProps
 ): Promise<string> {
   const targetMintKeypair = Keypair.generate();
   const authority = new PublicKey(values.authority);
@@ -358,13 +360,13 @@ async function createLbcNewMint(
     signers
   );
 
-  return route(routes.tokenLbcAdmin, { id: targetMint.toBase58() })
+  return route(routes.tokenLbcAdmin, { id: targetMint.toBase58() });
 }
 
 async function createLiquidityBootstrapper(
   marketplaceSdk: MarketplaceSdk,
   values: ILbcFormProps,
-  cluster: WalletAdapterNetwork | "localnet",
+  cluster: WalletAdapterNetwork | "localnet"
 ): Promise<string> {
   if (values.useCandyMachine) {
     return await createLbcCandyMachine(marketplaceSdk, values, cluster);
@@ -436,17 +438,9 @@ export const LbcForm: React.FC = () => {
   const onSubmit = async (values: ILbcFormProps) => {
     const url = await execute(marketplaceSdk!, values, cluster);
     if (values.useCandyMachine) {
-      router.push(
-        url,
-        undefined,
-        { shallow: true }
-      );
+      router.push(url, undefined, { shallow: true });
     } else {
-      router.push(
-        url,
-        undefined,
-        { shallow: true }
-      );
+      router.push(url, undefined, { shallow: true });
     }
   };
 

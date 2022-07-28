@@ -47,7 +47,7 @@ export const ChatMessages = ({
 }) => {
   const myScrollRef = useRef(null);
   if (!scrollRef) scrollRef = myScrollRef;
-  
+
   // On render if we dont have a scroll bar
   // and we have hasMore then fetch initialMore
   useEffect(() => {

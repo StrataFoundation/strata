@@ -1,15 +1,19 @@
+import { SITE_URL } from "./constants";
+
 export interface IRoute {
   path: string;
   params: string[];
 }
-
-export const DOCS_URL = process.env.NEXT_PUBLIC_DOCS_URL;
 
 export const routes: Record<string, IRoute> = {
   chats: { path: "/", params: [] },
   chat: {
     path: "/c/:id",
     params: ["id"],
+  },
+  fullyManagedLaunchpad: {
+    path: `${SITE_URL}/launchpad/full-managed/new`,
+    params: [],
   },
 };
 
