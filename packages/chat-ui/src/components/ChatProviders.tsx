@@ -1,6 +1,6 @@
 import {
   AcceleratorProvider,
-  HolaplexGraphqlProvider,
+  GraphqlProvider,
   StrataProviders,
 } from "@strata-foundation/react";
 import React, { FC } from "react";
@@ -14,13 +14,13 @@ export const ChatProviders: FC<{
   <StrataProviders resetCSS onError={onError}>
     <AcceleratorProvider url="wss://prod-api.teamwumbo.com/accelerator">
       <ChatSdkProvider>
-        <HolaplexGraphqlProvider>
+        <GraphqlProvider>
           <EmojisProvider>
             <ReplyProvider>
               {children}
             </ReplyProvider>
           </EmojisProvider>
-        </HolaplexGraphqlProvider>
+        </GraphqlProvider>
       </ChatSdkProvider>
     </AcceleratorProvider>
   </StrataProviders>
