@@ -33,6 +33,7 @@ export function useTokenSwapFromId(
       retrievalTokenBonding: sellOnlyTokenBonding,
       numRemaining,
       loading: bondingLoading || sellBondingLoading,
+      entangled: false,
     }
   }
 

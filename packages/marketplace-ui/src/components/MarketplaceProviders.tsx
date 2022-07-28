@@ -1,4 +1,4 @@
-import { HolaplexGraphqlProvider, StrataProviders } from "@strata-foundation/react";
+import { GraphqlProvider, StrataProviders } from "@strata-foundation/react";
 import React, { FC } from "react";
 import { MarketplaceSdkProvider } from "../contexts";
 
@@ -9,7 +9,7 @@ export const MarketplaceProviders: FC<{
 }> = ({ children, onError = defaultOnError, resetCSS = false }) => (
   <StrataProviders onError={onError} resetCSS={resetCSS}>
     <MarketplaceSdkProvider>
-      <HolaplexGraphqlProvider>{children}</HolaplexGraphqlProvider>
+      <GraphqlProvider>{children}</GraphqlProvider>
     </MarketplaceSdkProvider>
   </StrataProviders>
 );
