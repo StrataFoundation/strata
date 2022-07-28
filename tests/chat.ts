@@ -80,6 +80,7 @@ describe("chat", () => {
     tokenBondingProgram,
     tokenMetadataProgram,
   });
+
   chatSdk.litJsSdk = LitNodeJsSdk;
   const me = chatSdk.wallet.publicKey;
 
