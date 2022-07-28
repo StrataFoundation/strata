@@ -4,6 +4,7 @@ import { Layout } from "@/components/Layout";
 import { LegacyWalletMigrationModal } from "@/components/LegacyWalletMigrationModal";
 import { RoomsHeader } from "@/components/rooms/RoomsHeader";
 import { SendMessageProvider } from "@/contexts/sendMessage";
+import { useChatKeyFromIdentifier } from "@/hooks/useChatKeyFromIdentifier";
 import { ApolloClient, InMemoryCache } from "@apollo/client";
 import {
   NAMESPACES_IDL,
@@ -21,6 +22,7 @@ import LitNodeJsSdk from "lit-js-sdk/build/index.node.js";
 import { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import { NextSeo } from "next-seo";
 import { useRouter } from "next/router";
+import { useMemo } from "react";
 
 const SOLANA_URL =
   process.env.NEXT_PUBLIC_SOLANA_URL || "https://ssc-dao.genesysgo.net/";
@@ -121,12 +123,14 @@ export default function ChatroomPage({
   name,
   image,
   description,
+  chatKey: chatKeyRaw
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const sidebar = useDisclosure();
   const router = useRouter();
   const { id } = router.query;
-  const chatKeyRaw = router.query?.chatKey;
-  const chatKey = usePublicKey(chatKeyRaw);
+  const { chatKey: chatKeyFromQuery } = useChatKeyFromIdentifier(id as string | undefined);
+  const chatKeyFromStatic = usePublicKey(chatKeyRaw);
+  const chatKey = useMemo(() => chatKeyFromQuery || chatKeyFromStatic, [chatKeyFromQuery, chatKeyFromStatic]);
 
   return (
     <Layout
