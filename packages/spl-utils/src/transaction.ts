@@ -93,28 +93,40 @@ export async function sendMultipleInstructions(
   const recentBlockhash = (
     await provider.connection.getRecentBlockhash("confirmed")
   ).blockhash;
-  const txns = instructionGroups
-    .map((instructions, index) => {
-      const signers = signerGroups[index];
-      if (instructions.length > 0) {
-        console.log(provider.wallet.publicKey.toBase58(), payer?.toBase58());
-        const tx = new Transaction({
-          feePayer: payer || provider.wallet.publicKey,
-          recentBlockhash,
-        });
-        tx.add(...instructions);
-        if (signers.length > 0) {
-          tx.partialSign(...signers);
-        }
+  
+  const ixAndSigners = instructionGroups
+    .map((instructions, i) => {
+      const signers = signerGroups[i];
 
-        return tx;
-      }
+      return {
+        instructions,
+        signers,
+      };
     })
-    .filter(truthy);
+    .filter(({instructions}) => instructions.length > 0)
+  const txns = ixAndSigners.map(({ instructions }) => {
+    const tx = new Transaction({
+      feePayer: payer || provider.wallet.publicKey,
+      recentBlockhash,
+    });
 
-  const txnsSigned = (await provider.wallet.signAllTransactions(txns)).map(
-    (tx) => tx.serialize()
-  );
+    tx.add(...instructions);
+
+    return tx;
+  });
+
+  const txnsSignedByWallet = (await provider.wallet.signAllTransactions(txns));
+  const txnsSigned = txnsSignedByWallet
+    .map((tx, index) => {
+      const signers = ixAndSigners[index].signers;
+
+      if (signers.length > 0) {
+        tx.partialSign(...signers);
+      }
+
+      return tx;
+    })
+    .map((tx) => tx.serialize());
 
   console.log("Sending multiple transactions...");
   try {

@@ -190,6 +190,14 @@ export function Chatbox({
     [sendMessage, files, input]
   );
 
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.style.height = "0px";
+      const scrollHeight = inputRef.current.scrollHeight;
+      inputRef.current.style.height = scrollHeight + "px";
+    }
+  }, [inputRef, input]);
+
   const handleSendClick = useCallback(
     () =>
       sendMessage({
@@ -281,7 +289,7 @@ export function Chatbox({
         >
           <Files files={files} onCancelFile={onCancelFile} />
           <ReplyBar />
-          <HStack w="full">
+          <HStack w="full" alignItems="flex-end">
             <ChatInput
               inputRef={inputRef}
               onChange={handleChange}

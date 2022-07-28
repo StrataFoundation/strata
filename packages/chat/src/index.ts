@@ -430,6 +430,13 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   }
 
   async _litAuth() {
+    const cached = storage.get("lit-auth-sol-signature");
+    const cachedDate = storage.get("lit-auth-sol-signature-date") || 0;
+    const cachedAuthSig = JSON.parse(cached as string);
+    if (Number(cachedDate) >= (new Date().valueOf() - 24 * 60 * 60 * 1000) && this.wallet.publicKey.toBase58() === cachedAuthSig?.address) {
+      this.litAuthSig = cachedAuthSig;
+      return
+    }
     try {
       // @ts-ignore
       if (!this.wallet.signMessage) {
@@ -442,6 +449,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         // @ts-ignore
         this.wallet as MessageSigner
       );
+      storage.set("lit-auth-sol-signature", JSON.stringify(this.litAuthSig));
+      storage.set("lit-auth-sol-signature-date", new Date().valueOf().toString());
     } finally {
       this.authingLit = null;
     }
@@ -485,11 +494,11 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       alertWhenUnauthorized: false,
       debug: false,
     });
-    // try {
-    //   await client.connect();
-    // } catch (e: any) {
-    //   console.warn(e);
-    // }
+    try {
+      await client.connect();
+    } catch (e: any) {
+      console.warn(e);
+    }
 
     return new this({
       provider,

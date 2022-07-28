@@ -3,6 +3,32 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.9.5](https://github.com/StrataFoundation/strata/compare/v3.9.4...v3.9.5) (2022-07-26)
+
+**Note:** Version bump only for package @strata-foundation/strata
+
+### Fixed
+
+  * Bug in submitting multiple transactions with empty transaction groups
+
+
+## [3.9.4](https://github.com/StrataFoundation/strata/compare/v3.9.3...v3.9.4) (2022-07-26)
+
+**Note:** Version bump only for package @strata-foundation/strata
+
+### Fixed
+
+  * Make react a peer dep in chat-ui and marketplace-ui packages
+
+
+## [3.9.3](https://github.com/StrataFoundation/strata/compare/v3.9.2...v3.9.3) (2022-07-25)
+
+### Changed
+
+  * Better light mode for MintedNftNotification
+  * Remove "NFTs" as symbol from intermediary tokens on candymachine mints.
+
+
 ## [3.9.2](https://github.com/StrataFoundation/strata/compare/v3.9.1...v3.9.2) (2022-07-12)
 
 ### Fixed

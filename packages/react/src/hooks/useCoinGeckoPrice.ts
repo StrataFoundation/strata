@@ -4,7 +4,8 @@ import { useInterval } from "./useInterval";
 import LRU from "lru-cache";
 
 const lru = new LRU({
-  ttl: 1000 * 60 * 2
+  ttl: 1000 * 60 * 2,
+  ttlAutopurge: true
 });
 
 export async function getCoinGeckoPriceUsd(
