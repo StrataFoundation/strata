@@ -6,4 +6,4 @@ export * from "./theme";
 export * from "./tokenList";
 export * from "./acceleratorContext";
 export * from "./providerContext";
-export * from "./HolaplexGraphqlProvider"
+export * from "./GraphqlProvider"

@@ -9,3 +9,4 @@ export * from "./FullyManagedForm";
 export * from "./TokenMetadataInputs";
 export * from "./RadioCard";
 export * from "./EditMetadataForm";
+export * from "./RoyaltiesInputs";

@@ -8,7 +8,7 @@ import {
   ErrorHandlerProvider,
   ProviderContextProvider,
   ThemeProvider,
-  HolaplexGraphqlProvider,
+  GraphqlProvider,
   AcceleratorProvider,
 } from "@strata-foundation/react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
@@ -67,7 +67,7 @@ export default ({ children }) => {
                   <StrataSdksProvider>
                     <MarketplaceSdkProvider>
                       <ChatSdkProvider>
-                        <HolaplexGraphqlProvider>
+                        <GraphqlProvider>
                           <EmojisProvider>
                             <ReplyProvider>
                               <AcceleratorProvider url="wss://prod-api.teamwumbo.com/accelerator">
@@ -84,7 +84,7 @@ export default ({ children }) => {
                               </AcceleratorProvider>
                             </ReplyProvider>
                           </EmojisProvider>
-                        </HolaplexGraphqlProvider>
+                        </GraphqlProvider>
                       </ChatSdkProvider>
                     </MarketplaceSdkProvider>
                   </StrataSdksProvider>

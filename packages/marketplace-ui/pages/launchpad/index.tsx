@@ -212,7 +212,7 @@ export const LaunchPad: FC = ({ children }) => {
           w="100%"
           maxW="492px"
           cursor="pointer"
-          onClick={() => router.push(route(routes.editMetadata))}
+          onClick={() => router.push(route(routes.myTokens))}
         >
           <Stack direction="row">
             <Flex flexShrink={0} justifyContent="center" alignItems="center">
@@ -225,12 +225,11 @@ export const LaunchPad: FC = ({ children }) => {
             </Flex>
             <Stack flexGrow={1} spacing={0}>
               <Text fontWeight="bold" fontSize="sm">
-                Edit my Token&apos;s Name, Symbol, or Image
+                Manage my tokens
               </Text>
               <Text color="gray.500" fontSize="xs">
-                Update the name, symbol, or image of an existing token using the
-                Metaplex Token Metadata Standard. You can also use this to
-                convert token-list tokens to be Metaplex standard compliant.
+                Manage your tokens. Update or add metadata, mint tokens, manage
+                authorities.
               </Text>
             </Stack>
           </Stack>

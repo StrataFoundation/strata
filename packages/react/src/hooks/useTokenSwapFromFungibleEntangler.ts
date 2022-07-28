@@ -16,6 +16,7 @@ export interface ITokenSwap {
 
   childEntangler?: IFungibleChildEntangler;
   parentEntangler?: IFungibleParentEntangler;
+  entangled: boolean;
 
   loading: boolean;
 }
@@ -39,6 +40,7 @@ export function useTokenSwapFromFungibleEntangler (
     numRemaining: supplyAcc && supplyMint && toNumber(supplyAcc?.amount, supplyMint),
     childEntangler: childEntangler,
     parentEntangler: parentEntangler,
-    loading: loading1 || loading2 || loading3
+    loading: loading1 || loading2 || loading3,
+    entangled: true,
   }
 }
