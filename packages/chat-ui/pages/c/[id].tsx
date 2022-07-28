@@ -121,12 +121,12 @@ export default function ChatroomPage({
   name,
   image,
   description,
-  chatKey: chatKeyStr
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const sidebar = useDisclosure();
   const router = useRouter();
   const { id } = router.query;
-  const chatKey = usePublicKey(chatKeyStr);
+  const chatKeyRaw = router.query?.chatKey;
+  const chatKey = usePublicKey(chatKeyRaw);
 
   return (
     <Layout
