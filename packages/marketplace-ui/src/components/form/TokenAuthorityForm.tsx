@@ -98,7 +98,7 @@ export const TokenAuthorityForm = ({
       instructions.push(Token.createSetAuthorityInstruction(
         TOKEN_PROGRAM_ID,
         mintKey!,
-        new PublicKey(values.mintAuthority),
+        values.mintAuthority == "" ? null : new PublicKey(values.mintAuthority),
         "MintTokens",
         publicKey!,
         []
@@ -108,7 +108,7 @@ export const TokenAuthorityForm = ({
       instructions.push(Token.createSetAuthorityInstruction(
         TOKEN_PROGRAM_ID,
         mintKey!,
-        new PublicKey(values.freezeAuthority),
+        values.freezeAuthority == "" ? null : new PublicKey(values.freezeAuthority),
         "FreezeAccount",
         publicKey!,
         []
