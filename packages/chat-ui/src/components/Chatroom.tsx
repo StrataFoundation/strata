@@ -6,20 +6,10 @@ import { FileUploadMask } from "./FileUploadMask";
 import { IMessageWithPending, useMessages } from "../hooks/useMessages";
 import { Flex } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
-import {
-  randomizeFileName
-} from "@strata-foundation/chat";
-import {
-  useErrorHandler
-} from "@strata-foundation/react";
+import { randomizeFileName } from "@strata-foundation/chat";
+import { useErrorHandler } from "@strata-foundation/react";
 // @ts-ignore
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAsyncCallback } from "react-async-hook";
 import { useDropzone } from "react-dropzone";
 
@@ -27,7 +17,7 @@ const DARK_BG = {
   bg: "gray.900",
 };
 
-export function Chatroom({ chatKey }: { chatKey?: PublicKey }) {
+export const Chatroom: React.FC<{ chatKey?: PublicKey }> = ({ chatKey }) => {
   const scrollRef = useRef(null);
   const [pendingMessages, setPendingMessages] = useState<IMessageWithPending[]>(
     []
@@ -151,4 +141,4 @@ export function Chatroom({ chatKey }: { chatKey?: PublicKey }) {
       />
     </Flex>
   );
-}
+};
