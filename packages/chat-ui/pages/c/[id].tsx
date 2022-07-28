@@ -4,6 +4,7 @@ import { Layout } from "@/components/Layout";
 import { LegacyWalletMigrationModal } from "@/components/LegacyWalletMigrationModal";
 import { RoomsHeader } from "@/components/rooms/RoomsHeader";
 import { SendMessageProvider } from "@/contexts/sendMessage";
+import { ApolloClient, InMemoryCache } from "@apollo/client";
 import {
   NAMESPACES_IDL,
   NAMESPACES_PROGRAM,
@@ -13,8 +14,10 @@ import { useDisclosure } from "@chakra-ui/react";
 import { AnchorProvider, Program } from "@project-serum/anchor";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
-import { ChatSdk, IEntry } from "@strata-foundation/chat";
+import { ChatIDL, ChatIDLJson, ChatSdk, IEntry } from "@strata-foundation/chat";
 import { getClusterAndEndpoint, usePublicKey } from "@strata-foundation/react";
+// @ts-ignore
+import LitNodeJsSdk from "lit-js-sdk/build/index.node.js";
 import { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import { NextSeo } from "next-seo";
 import { useRouter } from "next/router";
@@ -72,6 +75,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       NAMESPACES_PROGRAM_ID,
       provider
     );
+
     const entryKey = (
       await ChatSdk.entryKey(
         new PublicKey("36u2NChTRLo53UrfEFMV6Pgug6YKbKAmw3M4Mi1JfFdn"),
