@@ -6,19 +6,30 @@ import {
 } from "@chakra-ui/react";
 import { MdSettings } from "react-icons/md";
 import { PublicKey } from "@solana/web3.js";
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useTokenAuthorities } from "@strata-foundation/react";
+import { useTokenAuthorities, useTokenBondingFromMint } from "@strata-foundation/react";
 import { useRouter } from "next/router";
 import { routes, route } from "../utils/routes";
+import { MetadataData } from "@metaplex-foundation/mpl-token-metadata";
 
-export const TokenItem = ({mint}: {mint: PublicKey}) => {
+export const TokenItem = ({mint, updateRef, isIntermediateToken}: {
+  mint: PublicKey,
+  updateRef: number,
+  isIntermediateToken: (mint: PublicKey, metadata: MetadataData, hasTokenBonding: boolean) => boolean
+}) => {
   const router = useRouter();
-  const { publicKey, connected } = useWallet();
-  const { data, hasAnyAuth, image } = useTokenAuthorities(mint, publicKey || undefined);
+  const { publicKey } = useWallet();
+  const { data, hasAnyAuth, image, metadata } = useTokenAuthorities(mint, publicKey || undefined);
+  const { info: tokenBonding } = useTokenBondingFromMint(mint);
+  const shouldDisplay = useMemo(() => {
+    if (mint && metadata && hasAnyAuth) {
+      return !isIntermediateToken(mint, metadata!, !!tokenBonding);
+    }
+  }, [updateRef, metadata, mint, hasAnyAuth, tokenBonding])
   return (
     <>
-      { hasAnyAuth ? (
+      { hasAnyAuth && shouldDisplay ? (
           <Flex bgColor="white" borderRadius="8px" w="full" h="7em" alignItems="center">
             <Flex
               onClick={() => {
