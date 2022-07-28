@@ -30,19 +30,19 @@ async function run(): Promise<void> {
     NAMESPACES_PROGRAM_ID,
     provider
   );
-  const tokenBondingSdk = await SplTokenBonding.init(
+  const tokenBondingProgram = await SplTokenBonding.init(
     provider,
     SplTokenBonding.ID
   );
-  const tokenMetadataSdk = await SplTokenMetadata.init(provider);
+  const tokenMetadataProgram = await SplTokenMetadata.init(provider);
 
   const chatSdk = new ChatSdk({
     provider,
     program: chat,
     litClient: client,
     namespacesProgram,
-    tokenBondingSdk,
-    tokenMetadataSdk,
+    tokenBondingProgram,
+    tokenMetadataProgram,
   });
 
   await chatSdk.initializeNamespaces();

@@ -489,8 +489,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   conditionVersion = CONDITION_VERSION;
   _namespaces: INamespaces | null = null;
   _namespacesPromise: Promise<INamespaces> | null = null;
-  tokenBondingSdk: SplTokenBonding;
-  tokenMetadataSdk: SplTokenMetadata;
+  tokenBondingProgram: SplTokenBonding;
+  tokenMetadataProgram: SplTokenMetadata;
 
   static ID = new PublicKey("chatGL6yNgZT2Z3BeMYGcgdMpcBKdmxko4C5UhEX4To");
 
@@ -567,11 +567,11 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       provider
     ) as Program<ChatIDL>;
 
-    const tokenBondingSdk = await SplTokenBonding.init(
+    const tokenMetadataProgram = await SplTokenMetadata.init(provider);
+    const tokenBondingProgram = await SplTokenBonding.init(
       provider,
       splTokenBondingProgramId
     );
-    const tokenMetadataSdk = await SplTokenMetadata.init(provider);
 
     const client = new LitJsSdk.LitNodeClient({
       alertWhenUnauthorized: false,
@@ -589,8 +589,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       program: chat,
       litClient: client,
       namespacesProgram,
-      tokenBondingSdk,
-      tokenMetadataSdk,
+      tokenBondingProgram,
+      tokenMetadataProgram,
     });
   }
 
@@ -601,16 +601,16 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     namespacesProgram,
     // @ts-ignore
     symKeyStorage = new LocalSymKeyStorage(provider.connection._rpcEndpoint),
-    tokenBondingSdk,
-    tokenMetadataSdk,
+    tokenBondingProgram,
+    tokenMetadataProgram,
   }: {
     provider: AnchorProvider;
     program: Program<ChatIDL>;
     litClient: typeof LitJsSdk;
     namespacesProgram: Program<NAMESPACES_PROGRAM>;
     symKeyStorage?: ISymKeyStorage;
-    tokenBondingSdk: SplTokenBonding;
-    tokenMetadataSdk: SplTokenMetadata;
+    tokenBondingProgram: SplTokenBonding;
+    tokenMetadataProgram: SplTokenMetadata;
   }) {
     super({ provider, program });
 
@@ -634,8 +634,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     this.litClient = litClient;
     this.symKeyStorage = symKeyStorage;
     this.litJsSdk = LitJsSdk;
-    this.tokenBondingSdk = tokenBondingSdk;
-    this.tokenMetadataSdk = tokenMetadataSdk;
+    this.tokenBondingProgram = tokenBondingProgram;
+    this.tokenMetadataProgram = tokenMetadataProgram;
   }
 
   entryDecoder: TypedAccountParser<IEntry> = (pubkey, account) => {
@@ -2263,7 +2263,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
     instructions.push(
       ...(await createMintInstructions(
-        this.tokenBondingSdk.provider,
+        this.tokenBondingProgram.provider,
         this.provider.wallet.publicKey,
         targetMint,
         decimals
@@ -2274,7 +2274,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       instructions: metadataInstructions,
       signers: metadataSigners,
       output,
-    } = await this.tokenMetadataSdk.createMetadataInstructions({
+    } = await this.tokenMetadataProgram.createMetadataInstructions({
       data: metadata,
       mint: targetMint,
       mintAuthority: this.provider.wallet.publicKey,
