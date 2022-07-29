@@ -1,18 +1,13 @@
 import { usePrevious } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
+import { ChatSdk, IMessage, MessageType } from "@strata-foundation/chat";
 import {
-  ChatSdk,
-  IMessage,
-  MessageType,
-  ReactMessage
-} from "@strata-foundation/chat";
-import {
-  TransactionResponseWithSig, truthy, useMint, useOwnedAmount, useTransactions
+  TransactionResponseWithSig,
+  truthy,
+  useTransactions,
 } from "@strata-foundation/react";
-import { toNumber } from "@strata-foundation/spl-utils";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 import { useChatSdk } from "../contexts";
-import { useChat } from "./useChat";
 
 export interface IMessageWithPending extends IMessage {
   pending?: boolean;
@@ -21,6 +16,12 @@ export interface IMessageWithPending extends IMessage {
 export interface IMessageWithPendingAndReacts extends IMessage {
   reacts: IMessageWithPending[];
   reply: IMessageWithPending | null;
+}
+
+export interface IUseMessagesState {
+  error: Error | undefined;
+  loading: boolean;
+  messages: IMessageWithPending[] | undefined;
 }
 
 export interface IUseMessages {
@@ -72,7 +73,7 @@ async function getMessages(
                     txid: sig,
                     meta,
                     blockTime,
-                    chat
+                    chat,
                   })
                 ).map((f) => ({ ...f, pending }));
               } catch (e: any) {
@@ -98,9 +99,9 @@ async function getMessages(
         .sort((a, b) => b.startBlockTime - a.startBlockTime)
         .map((message) => {
           // @ts-ignore
-          message.pending = message.parts.some((p) => p.pending)
+          message.pending = message.parts.some((p) => p.pending);
           return message;
-        })
+        });
     } else {
       return prevMessages || [];
     }
@@ -119,31 +120,45 @@ export function useMessages(
   numTransactions: number = 50
 ): IUseMessages {
   const { chatSdk } = useChatSdk();
-  const { transactions, ...rest } = useTransactions({
+  const { transactions, loadingInitial, ...rest } = useTransactions({
     address: chat,
     numTransactions,
     subscribe: true,
     accelerated,
   });
-  const [{ loading, messages }, setState] = useState<{
-    messages: IMessageWithPending[] | undefined,
-    loading: boolean
-  }>({
-    messages: undefined,
-    loading: false
-  });
-  const [error, setError] = useState<Error>();
+
+  const [state, setState] = useReducer(
+    (state: IUseMessagesState, newState: Partial<IUseMessagesState>) => ({
+      ...state,
+      ...newState,
+    }),
+    {
+      error: undefined,
+      messages: undefined,
+      loading: true,
+    } as IUseMessagesState
+  );
+
+  const chatB58 = chat?.toBase58();
+  const { loading, error, messages } = state;
 
   useEffect(() => {
     setState({
       loading: true,
-      messages: []
+      messages: undefined,
+      error: undefined,
     });
-  }, [chat?.toBase58(), setState]);
+  }, [chatB58]);
+
+  useEffect(() => {
+    if (messages != undefined) {
+      setState({ loading: false });
+    }
+  }, [messages]);
 
   useEffect(() => {
     (async () => {
-      if (!rest.loadingInitial && chat) {
+      if (!loadingInitial && chat && chatSdk && transactions.length) {
         try {
           const newMessages = await getMessages(
             chat,
@@ -152,19 +167,15 @@ export function useMessages(
             messages
           );
           setState({
-            loading: false,
             messages: newMessages,
+            error: undefined,
           });
         } catch (e: any) {
-          setError(e);
-          setState({
-            loading: false,
-            messages: [],
-          });
+          setState({ error: e, loading: false, messages: [] });
         }
       }
     })();
-  }, [chat, chatSdk, transactions, setState, rest.loadingInitial]);
+  }, [chatSdk, transactions, loadingInitial]);
 
   // Group by and pull off reaction and reply messages
   const messagesWithReactsAndReplies = useMemo(() => {
@@ -183,7 +194,7 @@ export function useMessages(
 
       return acc;
     }, {} as Record<string, IMessageWithPending[]>);
-    
+
     const messagesById = messages.reduce((acc, msg) => {
       if (msg && msg.type !== MessageType.React) {
         if (!acc[msg.id]) {
@@ -195,7 +206,7 @@ export function useMessages(
     }, {} as Record<string, IMessageWithPending>);
 
     // Don't change identity of reacts array if the number of reacts has not increased
-    let cachedReactsLocal: Record<string, IMessageWithPending[]> = {}
+    let cachedReactsLocal: Record<string, IMessageWithPending[]> = {};
     if (chat) {
       cachedReacts[chat.toBase58()] = cachedReacts[chat.toBase58()] || {};
       cachedReactsLocal = cachedReacts[chat.toBase58()];
@@ -205,7 +216,9 @@ export function useMessages(
       .filter((msg) => msg.type !== MessageType.React)
       .map((message) => {
         cachedReactsLocal[message.id] = cachedReactsLocal[message.id] || [];
-        if (cachedReactsLocal[message.id].length != reacts[message.id]?.length) {
+        if (
+          cachedReactsLocal[message.id].length != reacts[message.id]?.length
+        ) {
           cachedReactsLocal[message.id] = reacts[message.id];
         }
 
@@ -221,7 +234,7 @@ export function useMessages(
 
   return {
     ...rest,
-    loadingInitial: rest.loadingInitial || loading,
+    loadingInitial: loadingInitial || loading,
     error: rest.error || error,
     messages: messagesWithReactsAndReplies,
   };

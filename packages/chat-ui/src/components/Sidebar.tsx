@@ -73,8 +73,8 @@ export const Sidebar = (props: any) => {
       color="inherit"
       borderRightWidth="1px"
       w="80"
-      py={4}
       pt={3}
+      pb={0}
       gap={1}
       {...props}
     >
@@ -120,23 +120,26 @@ export const Sidebar = (props: any) => {
             />
           ))}
       </Flex>
-      <VStack gap={2} w="full" px={4}>
+      <VStack w="full" gap={0} spacing={0} px={0}>
         <Divider />
-        <Flex align="center" justifyContent="space-evenly" w="full" gap={2}>
+        <IconButton
+          w="full"
+          colorScheme="gray"
+          variant="ghost"
+          rounded="none"
+          aria-label="Toggle Dark Mode"
+          icon={
+            colorMode === "light" ? (
+              <Icon as={RiMoonLine} />
+            ) : (
+              <Icon as={RiSunLine} />
+            )
+          }
+          onClick={toggleColorMode}
+        />
+        <Divider />
+        <Flex align="center" justifyContent="space-evenly" w="full">
           <ProfileButton />
-          <IconButton
-            colorScheme="primary"
-            variant="outline"
-            aria-label="Toggle Dark Mode"
-            icon={
-              colorMode === "light" ? (
-                <Icon as={RiMoonLine} />
-              ) : (
-                <Icon as={RiSunLine} />
-              )
-            }
-            onClick={toggleColorMode}
-          />
         </Flex>
       </VStack>
     </VStack>
