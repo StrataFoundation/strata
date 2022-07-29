@@ -13,7 +13,6 @@ export const Header: React.FC<IHeaderProps> = ({ children, onSidebarOpen }) => (
     align="center"
     justify="space-between"
     w="full"
-    zIndex="sticky"
     px={4}
     bg="white"
     _dark={{
