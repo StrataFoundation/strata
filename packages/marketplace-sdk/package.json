@@ -10,18 +10,18 @@
     "type": "git",
     "url": "https://github.com/StrataFoundation/strata"
   },
-  "module": "./dist/esm/index.esm.js",
-  "main": "./dist/cjs/index.js",
-  "types": "dist/cjs/index.d.ts",
-  "exports": {
+  "main": "dist/index.umd.js",
+  "module": "dist/index.es.js",
+  "types": "dist/index.d.ts",
+"exports": {
     ".": {
       "import": "./dist/index.es.js",
       "require": "./dist/index.umd.js"
     }
   },
   "scripts": {
-    "build": "rimraf dist/ && rollup --config",
-    "watch": "rollup --config --watch",
+    "build": "tsc && vite build",
+    "watch": "vite build --watch",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
     "precommit": "git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' .",
     "prepare": "yarn run build"

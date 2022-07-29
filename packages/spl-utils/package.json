@@ -10,10 +10,14 @@
     "type": "git",
     "url": "https://github.com/StrataFoundation/strata"
   },
-  "main": "dist/lib/index.js",
-  "types": "dist/lib/index.d.ts",
-  "exports": {
-    ".": "./dist/lib/index.js"
+  "main": "dist/index.umd.js",
+  "module": "dist/index.es.js",
+  "types": "dist/index.d.ts",
+"exports": {
+    ".": {
+      "import": "./dist/index.es.js",
+      "require": "./dist/index.umd.js"
+    }
   },
   "files": [
     "dist/lib/**/*"
