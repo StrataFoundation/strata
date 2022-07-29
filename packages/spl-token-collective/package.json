@@ -17,8 +17,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc && vite build",
-    "watch": "vite build --watch",
+    "build": "tsc && npx vite build",
+    "watch": "npx vite build --watch",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
     "precommit": "git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' .",
     "prepare": "yarn run build"

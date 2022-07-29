@@ -14,8 +14,8 @@
     "registry": "https://registry.npmjs.org/"
   },
   "scripts": {
-    "watch": "vite build --watch",
-    "build": "tsc && vite build",
+    "watch": "npx vite build --watch",
+    "build": "tsc && npx vite build",
     "preview": "vite preview"
   },
   "dependencies": {

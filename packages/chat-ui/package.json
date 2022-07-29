@@ -16,8 +16,8 @@
   "scripts": {
     "clean": "npx shx rm -rf .next",
     "dev": "NODE_OPTIONS='--inspect' next dev",
-    "watch": "vite build --watch",
-    "build-lib": "tsc && vite build",
+    "watch": "npx vite build --watch",
+    "build-lib": "tsc && npx vite build",
     "build": "yarn clean && next build && tsc --project tsconfig-build.json",
     "start": "next start",
     "lint": "next lint",
