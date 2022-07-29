@@ -6,7 +6,7 @@ import {
   truthy,
   useTransactions,
 } from "@strata-foundation/react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 import { useChatSdk } from "../contexts";
 
 export interface IMessageWithPending extends IMessage {
@@ -16,6 +16,12 @@ export interface IMessageWithPending extends IMessage {
 export interface IMessageWithPendingAndReacts extends IMessage {
   reacts: IMessageWithPending[];
   reply: IMessageWithPending | null;
+}
+
+export interface IUseMessagesState {
+  error: Error | undefined;
+  loading: boolean;
+  messages: IMessageWithPending[] | undefined;
 }
 
 export interface IUseMessages {
@@ -114,28 +120,45 @@ export function useMessages(
   numTransactions: number = 50
 ): IUseMessages {
   const { chatSdk } = useChatSdk();
-  const { transactions, ...rest } = useTransactions({
+  const { transactions, loadingInitial, ...rest } = useTransactions({
     address: chat,
     numTransactions,
     subscribe: true,
     accelerated,
   });
 
-  const [{ error, loading, messages }, setState] = useState<{
-    error: Error | undefined;
-    messages: IMessageWithPending[] | undefined;
-    loading: boolean;
-  }>({
-    error: undefined,
-    messages: undefined,
-    loading: false,
-  });
+  const [state, setState] = useReducer(
+    (state: IUseMessagesState, newState: Partial<IUseMessagesState>) => ({
+      ...state,
+      ...newState,
+    }),
+    {
+      error: undefined,
+      messages: undefined,
+      loading: true,
+    } as IUseMessagesState
+  );
 
   const chatB58 = chat?.toBase58();
+  const { loading, error, messages } = state;
 
-  const handleGetNewMessages = useCallback(async () => {
-    if (chat) {
-      if (!rest.loadingInitial) {
+  useEffect(() => {
+    setState({
+      loading: true,
+      messages: undefined,
+      error: undefined,
+    });
+  }, [chatB58]);
+
+  useEffect(() => {
+    if (messages != undefined) {
+      setState({ loading: false });
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    (async () => {
+      if (!loadingInitial && chat && chatSdk && transactions.length) {
         try {
           const newMessages = await getMessages(
             chat,
@@ -144,7 +167,6 @@ export function useMessages(
             messages
           );
           setState({
-            loading: false,
             messages: newMessages,
             error: undefined,
           });
@@ -152,22 +174,8 @@ export function useMessages(
           setState({ error: e, loading: false, messages: [] });
         }
       }
-    }
-  }, [transactions, setState]);
-
-  useEffect(() => {
-    setState({
-      loading: true,
-      messages: [],
-      error: undefined,
-    });
-  }, [chatB58]);
-
-  useEffect(() => {
-    (async () => {
-      await handleGetNewMessages();
     })();
-  }, [chatSdk, handleGetNewMessages]);
+  }, [chatSdk, transactions, loadingInitial]);
 
   // Group by and pull off reaction and reply messages
   const messagesWithReactsAndReplies = useMemo(() => {
@@ -226,7 +234,7 @@ export function useMessages(
 
   return {
     ...rest,
-    loadingInitial: rest.loadingInitial || loading,
+    loadingInitial: loadingInitial || loading,
     error: rest.error || error,
     messages: messagesWithReactsAndReplies,
   };
