@@ -144,9 +144,10 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
           </PopoverTrigger>
           <Portal>
             <PopoverContent
+              mt="10px"
               border={0}
               bg={colorMode === "light" ? "gray.200" : "gray.800"}
-              borderRadius={14}
+              borderRadius="0 0 14px 14px"
             >
               <PopoverBody py={6} px={4}>
                 <VStack alignItems="start" spacing={4}>

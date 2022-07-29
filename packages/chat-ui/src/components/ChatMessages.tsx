@@ -1,4 +1,11 @@
-import { Skeleton, SkeletonCircle } from "@chakra-ui/react";
+import {
+  Text,
+  Skeleton,
+  SkeletonCircle,
+  Stack,
+  Icon,
+  Box,
+} from "@chakra-ui/react";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import throttle from "lodash/throttle";
 import { MemodMessage } from "./message";
@@ -47,6 +54,7 @@ export const ChatMessages = ({
 }) => {
   const myScrollRef = useRef(null);
   if (!scrollRef) scrollRef = myScrollRef;
+  const hasMessages = messages.length > 0;
 
   // On render if we dont have a scroll bar
   // and we have hasMore then fetch initialMore
@@ -120,23 +128,59 @@ export const ChatMessages = ({
       ref={scrollRef}
       onScroll={handleOnScroll}
     >
-      {messages?.map((msg, index) => (
-        <MemodMessage
-          scrollToMessage={scrollToMessage}
-          key={msg?.id}
-          {...msg}
-          showUser={
-            !(
-              messages[index + 1] &&
-              messages[index + 1].sender.equals(msg.sender) &&
-              messages[index + 1].endBlockTime >=
-                (msg.startBlockTime || new Date().valueOf() / 1000) -
-                  INACTIVE_TIME
-            ) || !!(msg as any).reply
-          }
-        />
-      ))}
+      {!isLoading &&
+        messages?.map((msg, index) => (
+          <MemodMessage
+            scrollToMessage={scrollToMessage}
+            key={msg?.id}
+            {...msg}
+            showUser={
+              !(
+                messages[index + 1] &&
+                messages[index + 1].sender.equals(msg.sender) &&
+                messages[index + 1].endBlockTime >=
+                  (msg.startBlockTime || new Date().valueOf() / 1000) -
+                    INACTIVE_TIME
+              ) || !!(msg as any).reply
+            }
+          />
+        ))}
       {(isLoading || isLoadingMore) && loaders}
+      {!(isLoading || isLoadingMore) && !hasMessages && (
+        <Stack
+          w="full"
+          h="full"
+          justifyContent="center"
+          alignItems="center"
+          gap={0}
+          spacing={0}
+          position="relative"
+          lineHeight={9}
+        >
+          <Text fontSize="3xl" zIndex="1">
+            Its Quiet In Here
+          </Text>
+          <Text fontSize="3xl" color="primary.500" zIndex="1">
+            Say Something
+          </Text>
+          <Icon
+            width={"100%"}
+            height={"50%"}
+            viewBox="0 0 578 440"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            color="gray.800"
+            position="absolute"
+          >
+            <path
+              fillRule="evenodd"
+              clipRule="evenodd"
+              d="M239.184 439.443c-55.13-5.419-110.241-21.365-151.074-58.767C42.307 338.722-7.478 282.729.938 221.217c8.433-61.644 78.896-91.048 126.871-130.712 34.337-28.388 70.198-51.348 112.004-66.78C282.34 8.024 325.382-3.369 370.518.904c54.019 5.115 112.774 10.886 150.881 49.482 39.916 40.427 49.421 100.753 53.385 157.402 4.13 59.015 11.255 128.44-30.444 170.44-41.383 41.683-111.6 19.106-169.213 30.663-46.68 9.364-88.56 35.21-135.943 30.551z"
+              fill="currentColor"
+            />
+          </Icon>
+        </Stack>
+      )}
     </Flex>
   );
 };

@@ -5,6 +5,7 @@ import { LegacyWalletMigrationModal } from "@/components/LegacyWalletMigrationMo
 import { RoomsHeader } from "@/components/rooms/RoomsHeader";
 import { SendMessageProvider } from "@/contexts/sendMessage";
 import { useChatKeyFromIdentifier } from "@/hooks/useChatKeyFromIdentifier";
+import { ApolloClient, InMemoryCache } from "@apollo/client";
 import {
   NAMESPACES_IDL,
   NAMESPACES_PROGRAM,
