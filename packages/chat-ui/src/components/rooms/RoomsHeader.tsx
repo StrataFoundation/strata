@@ -143,9 +143,10 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
           </PopoverTrigger>
           <Portal>
             <PopoverContent
+              mt="10px"
               border={0}
               bg={colorMode === "light" ? "gray.200" : "gray.800"}
-              borderRadius={14}
+              borderRadius="0 0 14px 14px"
             >
               <PopoverBody py={6} px={4}>
                 <VStack alignItems="start" spacing={4}>
@@ -189,11 +190,18 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
                           <Divider variant="dashed" />
                         </Flex>
                         <Text fontWeight="bold" textTransform="capitalize">
-                          {Object.keys(chatPermissions?.postPermissionAction || {})[0]}{" "}
+                          {
+                            Object.keys(
+                              chatPermissions?.postPermissionAction || {}
+                            )[0]
+                          }{" "}
                           {chatPermissions?.postPermissionAmount &&
                             postMint &&
                             roundToDecimals(
-                              toNumber(chatPermissions.postPermissionAmount, postMint),
+                              toNumber(
+                                chatPermissions.postPermissionAmount,
+                                postMint
+                              ),
                               4
                             )}
                         </Text>

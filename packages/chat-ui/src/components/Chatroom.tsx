@@ -6,20 +6,10 @@ import { FileUploadMask } from "./FileUploadMask";
 import { IMessageWithPending, useMessages } from "../hooks/useMessages";
 import { Flex } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
-import {
-  randomizeFileName
-} from "@strata-foundation/chat";
-import {
-  useErrorHandler
-} from "@strata-foundation/react";
+import { randomizeFileName } from "@strata-foundation/chat";
+import { useErrorHandler } from "@strata-foundation/react";
 // @ts-ignore
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAsyncCallback } from "react-async-hook";
 import { useDropzone } from "react-dropzone";
 
@@ -29,6 +19,8 @@ const DARK_BG = {
 
 export function Chatroom({ chatKey }: { chatKey?: PublicKey }) {
   const scrollRef = useRef(null);
+  const { handleErrors } = useErrorHandler();
+  const [files, setFiles] = useState<{ name: string; file: File }[]>([]);
   const [pendingMessages, setPendingMessages] = useState<IMessageWithPending[]>(
     []
   );
@@ -42,8 +34,6 @@ export function Chatroom({ chatKey }: { chatKey?: PublicKey }) {
     fetchMore,
     fetchNew,
   } = useMessages(chatKey, true, 50);
-
-  const { handleErrors } = useErrorHandler();
   handleErrors(error);
 
   const { execute: onFocus } = useAsyncCallback(async function () {
@@ -60,18 +50,18 @@ export function Chatroom({ chatKey }: { chatKey?: PublicKey }) {
     return () => {
       window.removeEventListener("focus", onFocus);
     };
-  }, []);
+  });
 
   const msgWeHave = useMemo(
     () => new Set(Array.from(messages?.map((message) => message.id) || [])),
     [messages]
   );
 
-  const onAddPendingMessage = useCallback(
-    (pending: IMessageWithPending) =>
-      setPendingMessages((msgs) => [...(msgs || []), pending]),
-    [setPendingMessages]
-  );
+  useEffect(() => {
+    setPendingMessages((pendingMessages) =>
+      pendingMessages.filter((p) => !msgWeHave.has(p.id))
+    );
+  }, [msgWeHave]);
 
   const messagesWithPending = useMemo(
     () =>
@@ -82,7 +72,12 @@ export function Chatroom({ chatKey }: { chatKey?: PublicKey }) {
     [msgWeHave, messages, pendingMessages]
   );
 
-  const [files, setFiles] = useState<{ name: string; file: File }[]>([]);
+  const onAddPendingMessage = useCallback(
+    (pending: IMessageWithPending) =>
+      setPendingMessages((msgs) => [...(msgs || []), pending]),
+    [setPendingMessages]
+  );
+
   const onUpload = useCallback(
     async (newFiles: File[]) => {
       setFiles((files) => [
@@ -99,6 +94,7 @@ export function Chatroom({ chatKey }: { chatKey?: PublicKey }) {
     },
     [setFiles]
   );
+
   const { getRootProps, getInputProps, open, isFocused, isDragAccept } =
     useDropzone({
       // Disable click and keydown behavior
@@ -110,12 +106,6 @@ export function Chatroom({ chatKey }: { chatKey?: PublicKey }) {
     () => getRootProps({ className: "dropzone" }),
     [getRootProps]
   );
-
-  useEffect(() => {
-    setPendingMessages((pendingMessages) =>
-      pendingMessages.filter((p) => !msgWeHave.has(p.id))
-    );
-  }, [msgWeHave]);
 
   return (
     <Flex

@@ -4,6 +4,7 @@ import { Layout } from "@/components/Layout";
 import { LegacyWalletMigrationModal } from "@/components/LegacyWalletMigrationModal";
 import { RoomsHeader } from "@/components/rooms/RoomsHeader";
 import { SendMessageProvider } from "@/contexts/sendMessage";
+import { useChatKeyFromIdentifier } from "@/hooks/useChatKeyFromIdentifier";
 import { ApolloClient, InMemoryCache } from "@apollo/client";
 import {
   NAMESPACES_IDL,
@@ -21,6 +22,7 @@ import LitNodeJsSdk from "lit-js-sdk/build/index.node.js";
 import { GetServerSideProps, GetStaticProps, InferGetServerSidePropsType, InferGetStaticPropsType } from "next";
 import { NextSeo } from "next-seo";
 import { useRouter } from "next/router";
+import { useMemo } from "react";
 
 export async function getStaticPaths() {
   return {
@@ -133,7 +135,9 @@ export default function ChatroomPage({
   const sidebar = useDisclosure();
   const router = useRouter();
   const { id } = router.query;
-  const chatKey = usePublicKey(chatKeyStr);
+  const { chatKey: chatKeyFromQuery } = useChatKeyFromIdentifier(id as string | undefined);
+  const chatKeyFromStatic = usePublicKey(chatKeyStr);
+  const chatKey = useMemo(() => chatKeyFromQuery || chatKeyFromStatic, [chatKeyFromQuery, chatKeyFromStatic]);
 
   return (
     <Layout
