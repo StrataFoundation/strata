@@ -9,6 +9,7 @@ import {
   InputLeftElement,
   useColorMode,
   VStack,
+  Flex,
 } from "@chakra-ui/react";
 import {
   RiSearch2Line,
@@ -22,7 +23,6 @@ import { useLocalStorage } from "@strata-foundation/react";
 import { VISIBLE_CHATS } from "../constants";
 import { useRouter } from "next/router";
 import { useChat, useChatKeyFromIdentifier } from "../hooks";
-import { Flex } from "./MyFlex";
 
 const DARK_BG = {
   bg: "gray.900",
