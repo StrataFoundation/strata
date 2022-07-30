@@ -1,15 +1,18 @@
 import {
-  Flex, Icon, Skeleton,
+  Flex,
+  Icon,
+  Skeleton,
   SkeletonCircle,
-  Stack, Text
+  Stack,
+  Text,
 } from "@chakra-ui/react";
 import { sleep } from "@strata-foundation/spl-utils";
 import throttle from "lodash/throttle";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { useAsyncCallback } from "react-async-hook";
 import {
   IMessageWithPending,
-  IMessageWithPendingAndReacts
+  IMessageWithPendingAndReacts,
 } from "../hooks/useMessages";
 import { MemodMessage } from "./message";
 
