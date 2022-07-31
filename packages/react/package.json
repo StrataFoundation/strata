@@ -2,10 +2,10 @@
   "name": "@strata-foundation/react",
   "version": "3.9.12",
   "description": "React utils for strata foundation",
-  "source": "src/index.ts",
   "main": "dist/index.umd.js",
   "module": "dist/index.es.js",
   "types": "dist/index.d.ts",
+  "sideEffects": false,
   "files": [
     "dist"
   ],
@@ -14,8 +14,8 @@
     "registry": "https://registry.npmjs.org/"
   },
   "scripts": {
-    "watch": "npx vite build --watch",
-    "build": "tsc && npx vite build",
+    "watch": "npx rollup --config",
+    "build": "npx rollup --config --watch",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -52,15 +52,22 @@
     "yup": "^0.32.11"
   },
   "peerDependencies": {
-    "react": "^16.8 || ^17 || ^18",
-    "react-dom": "^16.8 || ^17 || ^18",
     "@chakra-ui/react": "^1 || ^2",
     "@chakra-ui/utils": "^1 || ^2",
     "@emotion/react": "^11.6.0",
-    "@emotion/styled": "^11.6.0"
+    "@emotion/styled": "^11.6.0",
+    "react": "^16.8 || ^17 || ^18",
+    "react-dom": "^16.8 || ^17 || ^18"
   },
   "devDependencies": {
     "@babel/core": "^7.16.12",
+    "@chakra-ui/react": "^1.8.1",
+    "@emotion/react": "^11.6.0",
+    "@emotion/styled": "^11.6.0",
+    "@rollup/plugin-commonjs": "^22.0.1",
+    "@rollup/plugin-node-resolve": "^13.3.0",
+    "@rollup/plugin-replace": "^4.0.0",
+    "@rollup/plugin-typescript": "^8.3.4",
     "@types/lru-cache": "^7.6.1",
     "@types/node": "^16.11.6",
     "@types/react": "^17.0.33",
@@ -72,11 +79,10 @@
     "git-format-staged": "^2.1.3",
     "parcel": "^2.0.0",
     "react": "^17.0.2",
-    "@emotion/react": "^11.6.0",
-    "@emotion/styled": "^11.6.0",
     "react-dom": "^17.0.2",
-    "@chakra-ui/react": "^1.8.1",
+    "rollup": "^2.77.2",
     "rollup-plugin-auto-external": "^2.0.0",
+    "rollup-plugin-terser": "^7.0.2",
     "typescript": "^4.4.4",
     "vite": "^3.0.4",
     "vite-plugin-dts": "^1.4.0"

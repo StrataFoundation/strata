@@ -12,13 +12,20 @@ const defaultOnError = (error: Error) => console.log(error);
 export const StrataProviders: FC<{
   onError?: (error: Error) => void;
   resetCSS?: boolean;
-}> = ({ children, onError = defaultOnError, resetCSS = false }) => (
+  tokenList?: boolean;
+}> = ({
+  children,
+  tokenList = true,
+  onError = defaultOnError,
+  resetCSS = false,
+}) => (
   <ThemeProvider resetCSS={resetCSS}>
     <ErrorHandlerProvider onError={onError}>
       <ProviderContextProvider>
         <AccountProvider commitment="confirmed">
           <StrataSdksProvider>
-            <TokenListProvider>{children}</TokenListProvider>
+            {tokenList && <TokenListProvider>{children}</TokenListProvider>}
+            {children}
           </StrataSdksProvider>
         </AccountProvider>
       </ProviderContextProvider>

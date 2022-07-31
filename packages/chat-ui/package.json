@@ -4,16 +4,17 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
-  "source": "src/index.ts",
   "version": "3.9.12",
   "license": "Apache-2.0",
   "main": "dist/index.umd.js",
   "module": "dist/index.es.js",
   "types": "dist/index.d.ts",
+  "sideEffects": false,
   "files": [
     "dist"
   ],
   "scripts": {
+    "build:analyze": "ANALYZE=true yarn build",
     "clean": "npx shx rm -rf .next",
     "dev": "NODE_OPTIONS='--inspect' next dev",
     "watch": "npx vite build --watch",
@@ -75,6 +76,7 @@
     "@chakra-ui/react": "^1.8.1",
     "@emotion/react": "^11.6.0",
     "@emotion/styled": "^11.6.0",
+    "@next/bundle-analyzer": "^12.2.3",
     "@types/bn.js": "^5.1.0",
     "@types/escape-html": "^1.0.2",
     "@types/gtag.js": "^0.0.10",
@@ -84,13 +86,15 @@
     "@types/rollup-plugin-auto-external": "^2.0.2",
     "eslint": "^8.6.0",
     "eslint-config-next": "^12.0.7",
+    "next-compose-plugins": "^2.2.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "rollup-plugin-auto-external": "^2.0.0",
     "shx": "^0.3.3",
     "typescript": "~4.4.4",
     "vite": "^3.0.4",
-    "vite-plugin-dts": "^1.4.0"
+    "vite-plugin-dts": "^1.4.0",
+    "webpack-bundle-analyzer": "^4.5.0"
   },
   "gitHead": "ff670e6a6211209648c56dd69e5f5dfbda631b42"
 }

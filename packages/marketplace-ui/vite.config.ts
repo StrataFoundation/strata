@@ -20,7 +20,7 @@ export default defineConfig({
       fileName: (format) => `index.${format}.js`,
     },
     rollupOptions: {
-      external: ["@chakra-ui/system"],
+      external: ["@chakra-ui/system", "react", "react-dom"],
       output: {
         globals: {
           react: "React",

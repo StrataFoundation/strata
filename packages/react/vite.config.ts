@@ -3,9 +3,11 @@ import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 import autoExternal from "rollup-plugin-auto-external";
 import react from "@vitejs/plugin-react";
+import commonjs from "@rollup/plugin-commonjs";
 
 export default defineConfig({
   plugins: [
+    commonjs(),
     react(),
     dts({
       insertTypesEntry: true,
@@ -20,7 +22,7 @@ export default defineConfig({
       fileName: (format) => `index.${format}.js`,
     },
     rollupOptions: {
-      external: ["@chakra-ui/system"],
+      external: ["@chakra-ui/system", "react", "react-dom"],
       output: {
         globals: {
           react: "React",

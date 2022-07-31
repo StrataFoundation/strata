@@ -65,7 +65,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   return (
     <Wallet>
       <WalletModalProvider>
-        <ChatProviders>
+        <ChatProviders onError={onError}>
           <Component {...pageProps} />
           {isMobile ? (
             <Toaster
