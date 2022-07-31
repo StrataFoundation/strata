@@ -1,6 +1,7 @@
 import { PublicKey } from "@solana/web3.js";
 import { IFungibleChildEntangler } from "@strata-foundation/fungible-entangler";
-import { UseAccountState, useStrataSdks, useAccount } from "./";
+import { UseAccountState, useAccount } from "./useAccount";
+import { useStrataSdks } from "./useStrataSdks";
 
 export function useFungibleChildEntangler(
   childEntanglerKey: PublicKey | undefined | null,

@@ -2,7 +2,7 @@ import { Governance, GovernanceAccountParser } from "@solana/spl-governance";
 import { AccountInfo, PublicKey } from "@solana/web3.js";
 import {
   useAccount
-} from "../hooks";
+} from "./useAccount";
 
 function govParser(
   pubkey: PublicKey,

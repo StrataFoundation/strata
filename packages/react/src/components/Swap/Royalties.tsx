@@ -1,6 +1,6 @@
 import { ITokenBonding } from "@strata-foundation/spl-token-bonding";
 import React from "react";
-import { useTokenMetadata } from "../../hooks";
+import { useTokenMetadata } from "../../hooks/useTokenMetadata";
 import { TransactionInfo } from "./TransactionInfo";
 
 export const humanReadablePercentage = (u32: number) => {

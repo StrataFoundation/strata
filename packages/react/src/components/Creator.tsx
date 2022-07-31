@@ -2,8 +2,9 @@ import { Avatar, Box, Button, HStack, Link, Text } from "@chakra-ui/react";
 import { MetadataData } from "@metaplex-foundation/mpl-token-metadata";
 import { PublicKey } from "@solana/web3.js";
 import { ITokenRef } from "@strata-foundation/spl-token-collective";
+import { useSocialTokenMetadata } from "../hooks/useSocialTokenMetadata";
+import { useErrorHandler } from "../hooks/useErrorHandler";
 import React from "react";
-import { useErrorHandler, useSocialTokenMetadata } from "../hooks";
 import { useReverseName } from "../hooks/nameService";
 import { useGovernance } from "../hooks/useGovernance";
 

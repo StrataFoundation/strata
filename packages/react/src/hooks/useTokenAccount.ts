@@ -1,5 +1,5 @@
-import { useAccount, UseAccountState } from ".";
-import { TokenAccountParser } from "../utils";
+import { useAccount, UseAccountState } from "./useAccount";
+import { TokenAccountParser } from "../utils/getWalletTokenAccounts";
 import { AccountInfo as TokenAccountInfo, Token } from "@solana/spl-token";
 import { AccountInfo, PublicKey } from "@solana/web3.js";
 

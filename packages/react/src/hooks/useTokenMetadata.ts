@@ -1,7 +1,7 @@
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { ITokenWithMetaAndAccount } from "@strata-foundation/spl-token-collective";
-import { useMintTokenRef } from ".";
+import { useMintTokenRef } from "./tokenRef";
 import { useAssociatedAccount } from "./useAssociatedAccount";
 import { useMetaplexTokenMetadata } from "./useMetaplexMetadata";
 

@@ -8,7 +8,7 @@ import { Cluster } from "@strata-foundation/accelerator";
 import { sleep } from "@strata-foundation/spl-utils";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAccelerator } from "../contexts/acceleratorContext";
-import { truthy } from "../utils";
+import { truthy } from "../utils/truthy";
 import { useEndpoint } from "./useEndpoint";
 
 async function getSignatures(

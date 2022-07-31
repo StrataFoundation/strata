@@ -14,7 +14,7 @@ import {
 } from "@strata-foundation/spl-utils";
 import { useEffect, useMemo } from "react";
 import { useAsync } from "react-async-hook";
-import { useStrataSdks } from ".";
+import { useStrataSdks } from "./useStrataSdks";
 import { useAccount } from "./useAccount";
 import { useMint } from "./useMint";
 import { useTokenList } from "./useTokenList";

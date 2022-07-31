@@ -17,7 +17,7 @@ import { RiCoinLine } from "react-icons/ri";
 import {
   useErrorHandler, usePriceInUsd,
   useSolOwnedAmount, useTwWrappedSolMint, useUserTokensWithMeta
-} from "../../hooks";
+} from "../../";
 import { Notification } from "../Notification";
 import { Spinner } from "../Spinner";
 import { TokenInfo } from "./TokenInfo";

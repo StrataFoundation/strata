@@ -17,7 +17,7 @@ import Fuse from "fuse.js";
 import React, { useEffect, useMemo, useState } from "react";
 import { BiSearch } from "react-icons/bi";
 import { RiCoinLine } from "react-icons/ri";
-import { useUserTokensWithMeta } from "../../hooks";
+import { useUserTokensWithMeta } from "../../hooks/useUserTokensWithMeta";
 import { Spinner } from "../Spinner";
 import { TokenInfo } from "./TokenInfo";
 

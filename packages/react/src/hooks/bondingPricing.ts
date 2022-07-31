@@ -7,14 +7,15 @@ import {
   ITokenBonding,
   SplTokenBonding,
 } from "@strata-foundation/spl-token-bonding";
-import { useTokenAccount, useTokenBonding } from "./index";
 import React, { useEffect, useMemo, useState } from "react";
 import { useAsync } from "react-async-hook";
-import { useStrataSdks } from "./index";
+import { useStrataSdks } from "./useStrataSdks";
 import { useAccount } from "./useAccount";
 import { useAssociatedAccount } from "./useAssociatedAccount";
 import { useMint } from "./useMint";
 import { useTwWrappedSolMint } from "./useTwWrappedSolMint";
+import { useTokenBonding } from "./useTokenBonding";
+import { useTokenAccount } from "./useTokenAccount";
 
 export function supplyAsNum(mint: MintInfo): number {
   return amountAsNum(mint.supply, mint);

@@ -19,6 +19,8 @@ export default {
     }),
     typescript({
       tsconfig: "./tsconfig.json",
+      declaration: true,
+      outDir: "dist",
     }),
     autoExternal(),
     replace({
@@ -36,12 +38,12 @@ export default {
       dir: "dist",
       format: "esm",
       sourcemap: true,
+      preserveModulesRoot: "src",
       preserveModules: true,
     },
     {
-      dir: "dist",
-      file: "dist/index.umd.js",
-      format: "umd",
+      file: "dist/index.es.js",
+      format: "es",
       sourcemap: true,
     },
   ],

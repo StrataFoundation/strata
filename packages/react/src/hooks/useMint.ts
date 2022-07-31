@@ -1,6 +1,6 @@
 import { MintInfo, MintLayout, u64 } from "@solana/spl-token";
 import { AccountInfo, PublicKey } from "@solana/web3.js";
-import { ParsedAccountBase, useAccount } from "../hooks";
+import { ParsedAccountBase, useAccount } from "./useAccount";
 
 const deserializeMint = (data: Buffer) => {
   if (data.length !== MintLayout.span) {
