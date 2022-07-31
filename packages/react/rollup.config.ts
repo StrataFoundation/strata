@@ -14,7 +14,7 @@ export default {
     nodeResolve({
       browser: true,
       extensions: [".js", ".ts"],
-      dedupe: ["bn.js", "buffer"],
+      dedupe: ["bn.js", "buffer", "borsh", "@solana/web3.js"],
       preferBuiltins: false,
     }),
     typescript({

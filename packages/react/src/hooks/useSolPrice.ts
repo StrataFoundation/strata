@@ -1,4 +1,4 @@
-import { SolPriceContext } from "../contexts";
+import { SolPriceContext } from "../contexts/solPrice";
 import { useContext } from "react";
 
 export const useSolPrice = () => {

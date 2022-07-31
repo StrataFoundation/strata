@@ -1,10 +1,8 @@
-import {
-  AccountProvider,
-  ErrorHandlerProvider,
-  StrataSdksProvider,
-  ThemeProvider,
-  TokenListProvider,
-} from "../contexts";
+import { TokenListProvider } from "../contexts/tokenList";
+import { AccountProvider } from "../contexts/accountContext";
+import { ErrorHandlerProvider } from "../contexts/errorHandlerContext";
+import { StrataSdksProvider } from "../contexts/strataSdkContext";
+import { ThemeProvider } from "../contexts/theme";
 import React, { FC } from "react";
 import { ProviderContextProvider } from "../contexts/providerContext";
 
@@ -24,7 +22,10 @@ export const StrataProviders: FC<{
       <ProviderContextProvider>
         <AccountProvider commitment="confirmed">
           <StrataSdksProvider>
-            {tokenList && <TokenListProvider>{children}</TokenListProvider>}
+            {tokenList &&
+              import("../contexts/tokenList").then((m) => (
+                <m.TokenListProvider>{children}</m.TokenListProvider>
+              ))}
             {children}
           </StrataSdksProvider>
         </AccountProvider>
