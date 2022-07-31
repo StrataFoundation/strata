@@ -1,4 +1,4 @@
-import { GA_TRACKING_ID, IS_PRODUCTION } from "../constants";
+import { GA_TRACKING_ID, IS_PRODUCTION } from "../constants/globals";
 
 // https://developers.google.com/analytics/devguides/collection/gtagjs/pages
 export const pageview = (url: URL): void => {

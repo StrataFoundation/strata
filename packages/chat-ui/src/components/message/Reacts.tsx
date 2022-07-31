@@ -1,13 +1,23 @@
-import { Button, HStack, Icon, Popover, PopoverArrow, PopoverBody, PopoverContent, PopoverTrigger, Text, TextProps } from "@chakra-ui/react";
+import {
+  Button,
+  HStack,
+  Icon,
+  Popover,
+  PopoverArrow,
+  PopoverBody,
+  PopoverContent,
+  PopoverTrigger,
+  Text,
+  TextProps,
+} from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
 import { truncatePubkey, useErrorHandler } from "@strata-foundation/react";
 import React from "react";
 import { MdOutlineAddReaction } from "react-icons/md";
-import {
-  IMessageWithPending, useInflatedReacts,
-  useUsernameFromIdentifierCertificate,
-  useWalletProfile,
-} from "../../hooks/";
+import { IMessageWithPending } from "../../hooks/useMessages";
+import { useInflatedReacts } from "../../hooks/useInflatedReacts";
+import { useWalletProfile } from "../../hooks/useWalletProfile";
+import { useUsernameFromIdentifierCertificate } from "../../hooks/useUsernameFromIdentifierCertificate";
 
 const MAX_MENTIONS_DISPLAY = 3;
 
@@ -38,7 +48,7 @@ export function Reacts({
   } = useInflatedReacts(reacts);
   const { handleErrors } = useErrorHandler();
   handleErrors(reactError);
-  
+
   if (inflatedReacts && inflatedReacts.length > 0) {
     return (
       <HStack mt={2} pt={1}>

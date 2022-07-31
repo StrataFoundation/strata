@@ -10,7 +10,6 @@ const env = process.env.NODE_ENV;
 export default {
   input: "src/index.ts",
   plugins: [
-    commonjs(),
     nodeResolve({
       browser: true,
       extensions: [".js", ".ts"],
@@ -32,7 +31,7 @@ export default {
     }),
     terser(),
   ],
-  external: ["react", "react-dom"],
+  external: ["react", "react-dom", "react/jsx-runtime"],
   output: [
     {
       dir: "dist",

@@ -35,10 +35,10 @@ import debounce from "lodash/debounce";
 import React, { useEffect } from "react";
 import { RiSettings4Fill } from "react-icons/ri";
 import { useChatSdk } from "../../contexts/chatSdk";
-import { useChatOwnedAmount } from "../../hooks";
+import { useChatOwnedAmount } from "../../hooks/useChatOwnedAmount";
 import { useChat } from "../../hooks/useChat";
 import { BuyMoreButton } from "../BuyMoreButton";
-import { useChatPermissionsFromChat } from "../../hooks";
+import { useChatPermissionsFromChat } from "../../hooks/useChatPermissionsFromChat";
 
 const playSound = debounce(() => {
   const audio = new Audio("/notification.mp3");

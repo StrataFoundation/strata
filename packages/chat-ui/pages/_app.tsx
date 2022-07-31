@@ -1,6 +1,6 @@
 import { ChatProviders } from "@/components/ChatProviders";
 import { Wallet } from "@/components/Wallet";
-import { IS_PRODUCTION } from "@/constants";
+import { IS_PRODUCTION } from "@/constants/globals";
 import { useMediaQuery } from "@chakra-ui/react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import {
@@ -10,7 +10,7 @@ import { AppProps } from "next/app";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
 import toast, { Toaster } from "react-hot-toast";
-import * as gtag from "../src/utils/gtag";
+import {pageview} from "../src/utils/gtag";
 
 require("@solana/wallet-adapter-react-ui/styles.css");
 
@@ -20,7 +20,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   useEffect(() => {
     const handleRouteChange = (url: URL) => {
       /* invoke analytics function only for production */
-      if (IS_PRODUCTION) gtag.pageview(url);
+      if (IS_PRODUCTION) pageview(url);
     };
     router.events.on("routeChangeComplete", handleRouteChange);
     return () => {

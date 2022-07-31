@@ -20,9 +20,10 @@ import {
 import { ProfileButton } from "./ProfileButton";
 import { ChatSidebarPreview } from "./rooms/ChatSidebarPreview";
 import { useLocalStorage } from "@strata-foundation/react";
-import { VISIBLE_CHATS } from "../constants";
+import { VISIBLE_CHATS } from "../constants/globals";
 import { useRouter } from "next/router";
-import { useChat, useChatKeyFromIdentifier } from "../hooks";
+import { useChat } from "../hooks/useChat";
+import { useChatKeyFromIdentifier } from "../hooks/useChatKeyFromIdentifier";
 
 const DARK_BG = {
   bg: "gray.900",

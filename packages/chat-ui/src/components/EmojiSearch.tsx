@@ -1,6 +1,6 @@
 import { Button, HStack, IconButton, Input, VStack } from "@chakra-ui/react";
 import React, { useEffect, useMemo, useState } from "react";
-import filterEmoji, { Emoji } from "../constants/filterEmoji";
+import { filterEmoji, Emoji } from "../constants/filterEmoji";
 
 export const EmojiSearch = ({ onSelect }: { onSelect: (em: Emoji) => void }) => {
   const [search, setSearch] = useState("");

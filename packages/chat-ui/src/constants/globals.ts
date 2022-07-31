@@ -7,5 +7,3 @@ export const GA_TRACKING_ID =
 export const IS_PRODUCTION = process.env.NODE_ENV === "production";
 export const GIPHY_API_KEY = process.env.NEXT_PUBLIC_GIPHY_API_KEY!;
 export const VISIBLE_CHATS = ["solana", "open"];
-
-export * from "./filterEmoji";

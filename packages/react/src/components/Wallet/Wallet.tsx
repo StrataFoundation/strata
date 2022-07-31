@@ -11,13 +11,14 @@ import {
 import { NATIVE_MINT } from "@solana/spl-token";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { ITokenWithMetaAndAccount } from "@strata-foundation/spl-token-collective";
+import { useSolOwnedAmount } from "../../hooks/bondingPricing";
+import { useErrorHandler } from "../../hooks/useErrorHandler";
+import { usePriceInUsd } from "../../hooks/usePriceInUsd";
+import { useTwWrappedSolMint } from "../../hooks/useTwWrappedSolMint";
+import { useUserTokensWithMeta } from "../../hooks/useUserTokensWithMeta";
 import React from "react";
 import toast from "react-hot-toast";
 import { RiCoinLine } from "react-icons/ri";
-import {
-  useErrorHandler, usePriceInUsd,
-  useSolOwnedAmount, useTwWrappedSolMint, useUserTokensWithMeta
-} from "../../";
 import { Notification } from "../Notification";
 import { Spinner } from "../Spinner";
 import { TokenInfo } from "./TokenInfo";

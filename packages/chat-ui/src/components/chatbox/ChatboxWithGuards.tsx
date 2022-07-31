@@ -12,13 +12,13 @@ import {
   useTokenMetadata
 } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
-import { useChatPermissionsFromChat } from "../../hooks";
+import { useChatPermissionsFromChat } from "../../hooks/useChatPermissionsFromChat";
 import React, {
   useRef, useState
 } from "react";
 import {
   useLoadDelegate
-} from "../../hooks";
+} from "../../hooks/useLoadDelegate";
 import { useChatOwnedAmount } from "../../hooks/useChatOwnedAmount";
 import { useEmojiSearch } from "../../hooks/useEmojiSearch";
 import { BuyMoreButton } from "../BuyMoreButton";

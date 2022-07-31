@@ -17,9 +17,13 @@ import { useErrorHandler } from "@strata-foundation/react";
 import React, { useEffect, useState } from "react";
 import { useAsyncCallback } from "react-async-hook";
 import { AiOutlinePlus } from "react-icons/ai";
-import { useChatSdk } from "../contexts";
-import { delegateWalletStorage, useDelegateWallet } from "../hooks";
-import { StrataIcon, WalletIcon } from "../svg";
+import { useChatSdk } from "../contexts/chatSdk";
+import {
+  delegateWalletStorage,
+  useDelegateWallet,
+} from "../hooks/useDelegateWallet";
+import { StrataIcon } from "../svg/Strata";
+import { WalletIcon } from "../svg/Wallet";
 import { LitProtocolWarning } from "./LitProtocolWarning";
 
 async function migrate(

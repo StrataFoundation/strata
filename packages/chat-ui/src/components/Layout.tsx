@@ -37,6 +37,8 @@ export const Layout: React.FC<ILayoutProps> = ({
       _dark={DARK_BG}
       h="100vh"
       w="100vw"
+      maxH="100%"
+      maxW="100%"
     >
       {breakpointDisplay === "unset" && <Sidebar />}
       <Drawer isOpen={isSidebarOpen} onClose={onSidebarClose} placement="left">
@@ -46,13 +48,7 @@ export const Layout: React.FC<ILayoutProps> = ({
           {isSidebarOpen && <Sidebar w="full" borderRight="none" />}
         </DrawerContent>
       </Drawer>
-      <Flex
-        ml={ML}
-        transition=".3s ease"
-        direction="column"
-        h="full"
-        w="full"
-      >
+      <Flex ml={ML} transition=".3s ease" direction="column" h="full" w="full">
         {children}
       </Flex>
     </Flex>

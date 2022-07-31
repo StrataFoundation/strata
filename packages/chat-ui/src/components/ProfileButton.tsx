@@ -23,10 +23,8 @@ import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useEndpoint } from "@strata-foundation/react";
 import React, { FC, MouseEvent, useCallback } from "react";
 import { BsCaretDownFill, BsFillPersonFill } from "react-icons/bs";
-import {
-  useUsernameFromIdentifierCertificate,
-  useWalletProfile,
-} from "../hooks";
+import { useWalletProfile } from "../hooks/useWalletProfile";
+import { useUsernameFromIdentifierCertificate } from "../hooks/useUsernameFromIdentifierCertificate";
 import { CreateProfileModal } from "./CreateProfileModal";
 
 export const ProfileButton: FC<ButtonProps> = ({

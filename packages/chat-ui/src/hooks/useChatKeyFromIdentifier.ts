@@ -5,7 +5,7 @@ import { ChatSdk } from "@strata-foundation/chat";
 import { useAccount } from "@strata-foundation/react";
 import { useEffect } from "react";
 import { useAsync } from "react-async-hook";
-import { useChatSdk } from "../contexts";
+import { useChatSdk } from "../contexts/chatSdk";
 import { useChatKey } from "./useChatKey";
 
 export function useChatKeyFromIdentifier(identifier?: string): { loading: boolean; chatKey: PublicKey | undefined; error?: Error } {

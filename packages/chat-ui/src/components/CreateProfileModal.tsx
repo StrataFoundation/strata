@@ -41,14 +41,12 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useAsyncCallback } from "react-async-hook";
 import { FormProvider, useForm } from "react-hook-form";
 import * as yup from "yup";
-import { useChatSdk } from "../contexts";
-import {
-  useChatStorageAccountKey,
-  useLoadDelegate,
-  useUsernameFromIdentifierCertificate,
-  useWalletProfile,
-  useAnalyticsEventTracker,
-} from "../hooks";
+import { useChatSdk } from "../contexts/chatSdk";
+import { useChatStorageAccountKey } from "../hooks/useChatStorageAccountKey";
+import { useLoadDelegate } from "../hooks/useLoadDelegate";
+import { useUsernameFromIdentifierCertificate } from "../hooks/useUsernameFromIdentifierCertificate";
+import { useWalletProfile } from "../hooks/useWalletProfile";
+import { useAnalyticsEventTracker } from "../hooks/useAnalyticsEventTracker";
 import { useWalletFromIdentifier } from "../hooks/useWalletFromIdentifier";
 import { FormControlWithError } from "./FormControlWithError";
 import { CopyBlackBox } from "./CopyBlackBox";
@@ -145,7 +143,7 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
   } = useLoadDelegate();
 
   const gaEventTracker = useAnalyticsEventTracker();
-  
+
   const { username, image } = watch();
   const {
     account: profileAccount,
@@ -180,8 +178,10 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
 
   async function onSubmit(args: IProfileProps): Promise<void> {
     if (args.username.length < 6 && !wallet) {
-      setError("username", { message: "Username must be at least 6 characters." });
-      return
+      setError("username", {
+        message: "Username must be at least 6 characters.",
+      });
+      return;
     }
     await execute(chatSdk, args, setStep);
     if (props.onClose) {

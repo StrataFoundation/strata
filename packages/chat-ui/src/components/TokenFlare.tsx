@@ -3,7 +3,7 @@ import { PublicKey } from "@solana/web3.js";
 import { roundToDecimals, useTokenMetadata } from "@strata-foundation/react";
 import { numberWithCommas } from "@strata-foundation/spl-utils";
 import React, { Fragment, useMemo } from "react";
-import { useChatOwnedAmount } from "../hooks";
+import { useChatOwnedAmount } from "../hooks/useChatOwnedAmount";
 
 function IndividualTokenFlare({
   token,

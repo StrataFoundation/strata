@@ -6,20 +6,20 @@ import {
   Icon,
   Popover,
   PopoverBody,
-  PopoverContent, 
+  PopoverContent,
   PopoverTrigger,
   Skeleton,
   Text,
   Tooltip,
   useColorModeValue,
-  VStack
+  VStack,
 } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { MessageType } from "@strata-foundation/chat";
 import {
   useErrorHandler,
   useMint,
-  useTokenMetadata
+  useTokenMetadata,
 } from "@strata-foundation/react";
 import { humanReadable, toNumber } from "@strata-foundation/spl-utils";
 import moment from "moment";
@@ -27,13 +27,14 @@ import React, { useCallback, useMemo } from "react";
 import { useAsync } from "react-async-hook";
 import { BsLockFill } from "react-icons/bs";
 import { DisplayReply, MessageHeader, MessageStatus, Reacts } from ".";
-import { BuyMoreButton } from "..";
-import { useEmojis, useReply, useSendMessage } from "../../contexts";
-import {
-  IMessageWithPendingAndReacts, useChatOwnedAmount,
-  useChatPermissionsFromChat,
-  useWalletProfile
-} from "../../hooks";
+import { BuyMoreButton } from "../BuyMoreButton";
+import { useEmojis } from "../../contexts/emojis";
+import { useSendMessage } from "../../contexts/sendMessage";
+import { useReply } from "../../contexts/reply";
+import { IMessageWithPendingAndReacts } from "../../hooks/useMessages";
+import { useWalletProfile } from "../../hooks/useWalletProfile";
+import { useChatOwnedAmount } from "../../hooks/useChatOwnedAmount";
+import { useChatPermissionsFromChat } from "../../hooks/useChatPermissionsFromChat";
 import { MessageBody } from "./MessageBody";
 import { MessageToolbar } from "./MessageToolbar";
 
@@ -185,10 +186,7 @@ export function Message(
         <PopoverTrigger>
           <VStack spacing={0} gap={0} w="full">
             {reply && (
-              <DisplayReply
-                reply={reply}
-                scrollToMessage={scrollToMessage}
-              />
+              <DisplayReply reply={reply} scrollToMessage={scrollToMessage} />
             )}
             <HStack
               pl={2}

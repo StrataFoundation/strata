@@ -4,7 +4,7 @@ import { GiphyFetch } from "@giphy/js-fetch-api";
 import { Gif } from "@giphy/react-components";
 import { useAsync } from "react-async-hook";
 import { Skeleton, Text } from "@chakra-ui/react";
-import { GIPHY_API_KEY } from "../../constants";
+import { GIPHY_API_KEY } from "../../constants/globals";
 import { Files } from "../Files";
 import sanitizeHtml from "sanitize-html";
 

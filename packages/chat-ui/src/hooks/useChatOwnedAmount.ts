@@ -1,6 +1,6 @@
 import { PublicKey } from "@solana/web3.js";
 import { useCollectionOwnedAmount, useUserOwnedAmount } from "@strata-foundation/react";
-import { useChatPermissionsFromChat } from "./";
+import { useChatPermissionsFromChat } from "./useChatPermissionsFromChat";
 
 function max(
   one: number | undefined,

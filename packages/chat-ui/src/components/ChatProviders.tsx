@@ -4,7 +4,9 @@ import {
   StrataProviders,
 } from "@strata-foundation/react";
 import React, { FC } from "react";
-import { ChatSdkProvider, EmojisProvider, ReplyProvider } from "../contexts";
+import { ReplyProvider } from "../contexts/reply";
+import { ChatSdkProvider } from "../contexts/chatSdk";
+import { EmojisProvider } from "../contexts/emojis";
 
 const defaultOnError = (error: Error) => console.log(error);
 export const ChatProviders: FC<{
@@ -16,9 +18,7 @@ export const ChatProviders: FC<{
       <ChatSdkProvider>
         <HolaplexGraphqlProvider>
           <EmojisProvider>
-            <ReplyProvider>
-              {children}
-            </ReplyProvider>
+            <ReplyProvider>{children}</ReplyProvider>
           </EmojisProvider>
         </HolaplexGraphqlProvider>
       </ChatSdkProvider>

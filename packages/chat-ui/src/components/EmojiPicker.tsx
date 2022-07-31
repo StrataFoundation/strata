@@ -4,7 +4,8 @@ import data from "@emoji-mart/data";
 import { PublicKey } from "@solana/web3.js";
 import { useErrorHandler } from "@strata-foundation/react";
 import { MessageType } from "@strata-foundation/chat";
-import { useEmojis, useSendMessage } from "../contexts";
+import { useEmojis } from "../contexts/emojis";
+import {  useSendMessage } from "../contexts/sendMessage";
 
 export const EmojiPicker: FC<any> = (props) => {
   const ref = useRef<any>();

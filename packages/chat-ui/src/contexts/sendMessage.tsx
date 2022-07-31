@@ -20,10 +20,11 @@ import { sendAndConfirmWithRetry } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
 import { createContext, FC, useContext } from "react";
 import { useAsyncCallback } from "react-async-hook";
-import { useChatSdk } from "../contexts";
-import { IMessageWithPending, useChat } from "../hooks";
+import { useChatSdk } from "../contexts/chatSdk";
+import { useChat } from "../hooks/useChat";
 import { useDelegateWallet } from "../hooks/useDelegateWallet";
 import { useChatPermissionsFromChat } from "../hooks/useChatPermissionsFromChat";
+import { IMessageWithPending } from "../hooks/useMessages";
 
 export interface IUseSendMessageArgs {
   chatKey?: PublicKey;
@@ -199,7 +200,7 @@ export function useStrataSendMessage({
   };
 }
 
-const SendMessageContext = createContext<IUseSendMessageReturn>(
+export const SendMessageContext = createContext<IUseSendMessageReturn>(
   {} as IUseSendMessageReturn
 );
 
