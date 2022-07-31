@@ -19,10 +19,17 @@ import { ChatIDL, ChatIDLJson, ChatSdk, IEntry } from "@strata-foundation/chat";
 import { getClusterAndEndpoint, usePublicKey } from "@strata-foundation/react";
 // @ts-ignore
 import LitNodeJsSdk from "lit-js-sdk/build/index.node.js";
-import { GetServerSideProps, InferGetServerSidePropsType } from "next";
+import { GetServerSideProps, GetStaticProps, InferGetServerSidePropsType, InferGetStaticPropsType } from "next";
 import { NextSeo } from "next-seo";
 import { useRouter } from "next/router";
 import { useMemo } from "react";
+
+export async function getStaticPaths() {
+  return {
+    paths: [{ params: { id: "solana" } }, { params: { id: "open" } }],
+    fallback: true
+  };
+}
 
 const SOLANA_URL =
   process.env.NEXT_PUBLIC_SOLANA_URL || "https://ssc-dao.genesysgo.net/";
@@ -46,15 +53,15 @@ const QUICK_PROPS: Record<string, any> = {
   },
 };
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
+export const getStaticProps: GetStaticProps = async (context) => {
   try {
     const quickProps = QUICK_PROPS[(context.params?.id || "") as string];
     if (quickProps) {
       // Valid for a week
-      context.res.setHeader(
-        "Cache-Control",
-        "public, s-maxage=604800, stale-while-revalidate=59"
-      );
+      // context.res.setHeader(
+      //   "Cache-Control",
+      //   "public, s-maxage=604800, stale-while-revalidate=59"
+      // );
 
       return {
         props: quickProps,
@@ -62,7 +69,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     }
 
     const { endpoint } = getClusterAndEndpoint(
-      (context.query.cluster || SOLANA_URL) as string
+      SOLANA_URL as string
     );
     const connection = new Connection(endpoint, {
       commitment: "confirmed"
@@ -90,11 +97,11 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       entryAcc.data
     ))
 
-    // Valid for a week
-    context.res.setHeader(
-      "Cache-Control",
-      "public, s-maxage=604800, stale-while-revalidate=59"
-    );
+    // // Valid for a week
+    // context.res.setHeader(
+    //   "Cache-Control",
+    //   "public, s-maxage=604800, stale-while-revalidate=59"
+    // );
 
     return {
       props: {
@@ -123,13 +130,13 @@ export default function ChatroomPage({
   name,
   image,
   description,
-  chatKey: chatKeyRaw
-}: InferGetServerSidePropsType<typeof getServerSideProps>) {
+  chatKey: chatKeyStr
+}: InferGetStaticPropsType<typeof getStaticProps>) {
   const sidebar = useDisclosure();
   const router = useRouter();
   const { id } = router.query;
   const { chatKey: chatKeyFromQuery } = useChatKeyFromIdentifier(id as string | undefined);
-  const chatKeyFromStatic = usePublicKey(chatKeyRaw);
+  const chatKeyFromStatic = usePublicKey(chatKeyStr);
   const chatKey = useMemo(() => chatKeyFromQuery || chatKeyFromStatic, [chatKeyFromQuery, chatKeyFromStatic]);
 
   return (

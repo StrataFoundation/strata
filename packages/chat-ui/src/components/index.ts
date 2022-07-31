@@ -17,7 +17,6 @@ export * from "./EmojiPicker";
 export * from "./Files";
 export * from "./chatbox";
 export * from "./TokenFlare";
-export * from "./MyFlex";
 export * from "./FileUploadMask"
 export * from "./BuyMoreButton";
 export * from "./message";

@@ -6,13 +6,13 @@ import {
   useColorMode,
   useColorModeValue,
   VStack,
+  Flex,
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import React from "react";
 import { useChat } from "../../hooks/useChat";
 import { useChatKeyFromIdentifier } from "../../hooks/useChatKeyFromIdentifier";
 import { route, routes } from "../../routes";
-import { Flex } from "../MyFlex";
 
 export type chatRoomProps = {
   identifier?: string;

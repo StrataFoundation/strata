@@ -1,11 +1,10 @@
 import React, { useState, useCallback, useEffect, FC, useRef } from "react";
-import { Fade, useColorModeValue } from "@chakra-ui/react";
+import { Fade, Flex, useColorModeValue } from "@chakra-ui/react";
 import data from "@emoji-mart/data";
 import { PublicKey } from "@solana/web3.js";
 import { useErrorHandler } from "@strata-foundation/react";
 import { MessageType } from "@strata-foundation/chat";
 import { useEmojis, useSendMessage } from "../contexts";
-import { Flex } from "./MyFlex";
 
 export const EmojiPicker: FC<any> = (props) => {
   const ref = useRef<any>();

@@ -1,21 +1,20 @@
 import {
-  Text,
+  Flex,
+  Icon,
   Skeleton,
   SkeletonCircle,
   Stack,
-  Icon,
-  Box,
+  Text,
 } from "@chakra-ui/react";
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
-import throttle from "lodash/throttle";
-import { MemodMessage } from "./message";
-import { Flex } from "./MyFlex";
-import { useAsyncCallback } from "react-async-hook";
 import { sleep } from "@strata-foundation/spl-utils";
+import throttle from "lodash/throttle";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import { useAsyncCallback } from "react-async-hook";
 import {
   IMessageWithPending,
   IMessageWithPendingAndReacts,
 } from "../hooks/useMessages";
+import { MemodMessage } from "./message";
 
 const INACTIVE_TIME = 60; // After 1 minute, new grouping
 const INFINITE_SCROLL_THRESHOLD = 300;

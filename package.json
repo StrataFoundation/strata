@@ -19,12 +19,13 @@
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
     "concurrently": "^6.2.1",
+    "debug": "^4.3.2",
     "mocha": "^9.1.4",
     "prettier": "2.3.1",
     "ts-mocha": "^8.0.0",
     "ts-node": "^10.5.0",
     "typescript": "^4.4.3",
-    "debug": "^4.3.2"
+    "vite": "^3.0.4"
   },
   "scripts": {
     "versionup": "lerna version --conventional-commits --no-git-tag-version",
@@ -40,7 +41,7 @@
     "release:canary": "lerna publish --canary --preid next --dist-tag next --force-publish='*' --no-push --no-git-tag-version --no-verify-access --yes",
     "watch": "npx lerna run --parallel watch",
     "build": "npx lerna run build",
-    "build-sdks": "npx lerna run build --ignore @strata-foundation/marketplace-ui --ignore @strata-foundation/docs --ignore @strata-foundation/chat-ui",
+    "build-sdks": "npx lerna run build --ignore @strata-foundation/marketplace-ui --ignore @strata-foundation/docs --ignore @strata-foundation/chat-ui --ignore @strata-foundation/site",
     "build-programs": "anchor build && npx lerna run build --scope @strata-foundation/spl-utils --scope @strata-foundation/spl-token-bonding --scope @strata-foundation/spl-token-collective --scope @strata-foundation/fungible-entangler",
     "bootstrap": "lerna run bootstrap --scope @strata-foundation/cli",
     "test": "ts-mocha -p ./tsconfig.json -t 1000000 \"tests/**/*.ts\"",

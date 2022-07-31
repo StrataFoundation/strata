@@ -1,5 +1,6 @@
 import {
   Avatar,
+  Flex,
   Box, Button, Divider, HStack, Text, useDisclosure, VStack
 } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -22,7 +23,6 @@ import { useChatOwnedAmount } from "../../hooks/useChatOwnedAmount";
 import { useEmojiSearch } from "../../hooks/useEmojiSearch";
 import { BuyMoreButton } from "../BuyMoreButton";
 import { LoadWalletModal } from "../LoadWalletModal";
-import { Flex } from "../MyFlex";
 import { Chatbox, chatProps } from "./Chatbox";
 
 
