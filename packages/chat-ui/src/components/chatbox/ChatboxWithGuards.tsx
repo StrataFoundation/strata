@@ -1,5 +1,6 @@
 import {
   Avatar,
+  Flex,
   Box,
   Button,
   Divider,
@@ -23,7 +24,6 @@ import { useLoadDelegate } from "../../hooks";
 import { useChatOwnedAmounts } from "../../hooks/useChatOwnedAmounts";
 import { BuyMoreButton } from "../BuyMoreButton";
 import { LoadWalletModal } from "../LoadWalletModal";
-import { Flex } from "../MyFlex";
 import { Chatbox, chatProps } from "./Chatbox";
 import { NATIVE_MINT } from "@solana/spl-token";
 

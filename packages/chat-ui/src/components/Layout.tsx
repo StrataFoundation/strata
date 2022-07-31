@@ -1,7 +1,11 @@
 import React from "react";
-import { Drawer, DrawerOverlay, DrawerContent, useBreakpointValue } from "@chakra-ui/react";
+import {
+  Flex, Drawer,
+  DrawerOverlay,
+  DrawerContent,
+  useBreakpointValue,
+} from "@chakra-ui/react";
 import { Sidebar } from "./Sidebar";
-import { Flex } from "./MyFlex";
 
 interface ILayoutProps {
   isSidebarOpen: boolean;

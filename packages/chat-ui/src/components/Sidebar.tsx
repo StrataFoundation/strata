@@ -9,6 +9,7 @@ import {
   InputRightElement,
   useColorMode,
   VStack,
+  Flex,
 } from "@chakra-ui/react";
 import { RiSearch2Line, RiSunLine, RiMoonLine } from "react-icons/ri";
 import { ProfileButton } from "./ProfileButton";
@@ -17,7 +18,6 @@ import { useLocalStorage } from "@strata-foundation/react";
 import { VISIBLE_CHATS } from "../constants";
 import { useRouter } from "next/router";
 import { useChat, useChatKeyFromIdentifier } from "../hooks";
-import { Flex } from "./MyFlex";
 import { CreateChatButton } from "./CreateChat";
 
 const DARK_BG = {

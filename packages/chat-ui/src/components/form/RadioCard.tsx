@@ -6,8 +6,8 @@ import {
   useColorModeValue,
   useRadio,
   UseRadioProps,
+  Flex,
 } from "@chakra-ui/react";
-import { Flex } from "../MyFlex";
 
 export type RadioCardProps = {
   helpText?: string;
