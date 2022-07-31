@@ -16,7 +16,8 @@ const config = {
       ...config.resolve.alias,
       "bn.js": path.resolve("../../node_modules/bn.js"),
       "@solana/web3.js": path.resolve("../../node_modules/@solana/web3.js"),
-      "borsh": path.resolve("../../node_modules/borsh"),
+      borsh: path.resolve("../../node_modules/borsh"),
+      buffer: path.resolve("../../node_modules/buffer"),
     };
     return config;
   },
