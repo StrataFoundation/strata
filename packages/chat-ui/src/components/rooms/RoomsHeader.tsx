@@ -59,14 +59,15 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
   const readMintKey = chatPermissions?.readPermissionKey;
   const postMintKey = chatPermissions?.postPermissionKey;
   const [isMobile] = useMediaQuery("(max-width: 680px)");
-  const { metadata: readMetadata, image: readImage } = useTokenMetadata(
-    chatPermissions?.readPermissionKey
-  );
+
   const readMint = useMint(readMintKey);
-  const postMint = useMint(chatPermissions?.postPermissionKey);
-  const { metadata: postMetadata, image: postImage } = useTokenMetadata(
-    chatPermissions?.postPermissionKey
-  );
+  const postMint = useMint(postMintKey);
+
+  const { metadata: readMetadata, image: readImage } =
+    useTokenMetadata(readMintKey);
+  const { metadata: postMetadata, image: postImage } =
+    useTokenMetadata(postMintKey);
+
   const { colorMode } = useColorMode();
   const { accelerator } = useAccelerator();
   const { cluster } = useEndpoint();

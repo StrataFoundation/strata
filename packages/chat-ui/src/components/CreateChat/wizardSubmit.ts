@@ -219,6 +219,8 @@ export const wizardSubmit = async ({
       if (!postPermissionKey && !innerError) {
         if (postIsSameAsRead) {
           postPermissionKey = readPermissionKey;
+          postPermissionAmount = readPermissionAmount;
+          postPermissionType = readPermissionType;
         } else {
           postPermissionAmount = toBN(
             readForm.amount!,
