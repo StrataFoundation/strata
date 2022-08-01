@@ -6,6 +6,7 @@ import {
   useBreakpointValue,
 } from "@chakra-ui/react";
 import { Sidebar } from "./Sidebar";
+import { useWindowSize } from "../hooks/useWindowSize";
 
 interface ILayoutProps {
   isSidebarOpen: boolean;
@@ -26,6 +27,7 @@ export const Layout: React.FC<ILayoutProps> = ({
   isSidebarOpen,
   onSidebarClose,
 }) => {
+  const [width, height] = useWindowSize();
   const breakpointDisplay = useBreakpointValue({
     base: "none",
     md: "unset",
@@ -35,10 +37,8 @@ export const Layout: React.FC<ILayoutProps> = ({
       as="section"
       bg="gray.50"
       _dark={DARK_BG}
-      h="100vh"
-      w="100vw"
-      maxH="100%"
-      maxW="100%"
+      h={height}
+      w={width}
     >
       {breakpointDisplay === "unset" && <Sidebar />}
       <Drawer isOpen={isSidebarOpen} onClose={onSidebarClose} placement="left">

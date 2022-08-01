@@ -1,14 +1,18 @@
 import nodeResolve from "@rollup/plugin-node-resolve";
 import typescript from "@rollup/plugin-typescript";
 import replace from "@rollup/plugin-replace";
+import commonjs from "@rollup/plugin-commonjs";
 import { terser } from "rollup-plugin-terser";
 import autoExternal from "rollup-plugin-auto-external";
+import json from "@rollup/plugin-json";
 
 const env = process.env.NODE_ENV;
 
 export default {
   input: "src/index.ts",
   plugins: [
+    json(),
+    commonjs(),
     nodeResolve({
       browser: true,
       extensions: [".js", ".ts"],
@@ -16,7 +20,7 @@ export default {
       preferBuiltins: false,
     }),
     typescript({
-      tsconfig: "./tsconfig.json",
+      tsconfig: "./tsconfig-build.json",
       declaration: true,
       outDir: "dist",
     }),
@@ -40,8 +44,9 @@ export default {
       preserveModules: true,
     },
     {
-      file: "dist/index.es.js",
-      format: "es",
+      name: "ChatUI",
+      file: "dist/index.umd.js",
+      format: "umd",
       sourcemap: true,
     },
   ],

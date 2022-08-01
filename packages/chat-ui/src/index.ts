@@ -62,6 +62,7 @@ export {
   useSendMessage,
 } from "./contexts/sendMessage";
 
+export { useWindowSize } from "./hooks/useWindowSize";
 export { useChat } from "./hooks/useChat";
 export { useProfileKey } from "./hooks/useProfileKey";
 export { useWalletProfile } from "./hooks/useWalletProfile";

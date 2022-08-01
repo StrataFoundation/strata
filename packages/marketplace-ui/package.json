@@ -7,7 +7,7 @@
   "version": "3.9.12",
   "license": "Apache-2.0",
   "main": "dist/index.umd.js",
-  "module": "dist/index.es.js",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "sideEffects": false,
   "files": [
@@ -15,11 +15,11 @@
   ],
   "scripts": {
     "build:analyze": "ANALYZE=true yarn build",
-    "clean": "shx rm -rf .next",
+    "clean": "npx shx rm -rf .next",
     "dev": "NODE_OPTIONS='--inspect' next dev",
-    "watch": "npx vite build --watch",
-    "build-lib": "tsc && npx vite build",
-    "build": "yarn clean && next build && tsc --project tsconfig-build.json",
+    "watch": "npx rollup --config --watch",
+    "build-lib": "npx rollup --config",
+    "build": "yarn clean && next build",
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
@@ -69,6 +69,14 @@
     "react-dom": "^16.8 || ^17 || ^18"
   },
   "devDependencies": {
+    "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-commonjs": "^22.0.1",
+    "@rollup/plugin-node-resolve": "^13.3.0",
+    "@rollup/plugin-replace": "^4.0.0",
+    "@rollup/plugin-typescript": "^8.3.4",
+    "rollup": "^2.77.2",
+    "rollup-plugin-auto-external": "^2.0.0",
+    "rollup-plugin-terser": "^7.0.2",
     "@chakra-ui/react": "^1.8.1",
     "@emotion/react": "^11.6.0",
     "@emotion/styled": "^11.6.0",
@@ -82,11 +90,8 @@
     "next-compose-plugins": "^2.2.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
-    "rollup-plugin-auto-external": "^2.0.0",
     "shx": "^0.3.3",
-    "typescript": "~4.4.4",
-    "vite": "^3.0.4",
-    "vite-plugin-dts": "^1.4.0"
+    "typescript": "~4.4.4"
   },
   "gitHead": "ff670e6a6211209648c56dd69e5f5dfbda631b42"
 }
