@@ -10,7 +10,7 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { TokenSearch } from "@strata-foundation/react";
+import { TokenSearch, usePrimaryClaimedTokenRef } from "@strata-foundation/react";
 import { useCallback, useEffect } from "react";
 import { AiOutlineSearch } from "react-icons/ai";
 
@@ -28,6 +28,8 @@ export const MintSelect = ({
       onClose();
     }
   }, []);
+  const { info: tokenRef } = usePrimaryClaimedTokenRef(publicKey);
+
   const backgroundColor = useColorModeValue("white", "black.300");
 
   useEffect(() => {
@@ -40,6 +42,14 @@ export const MintSelect = ({
 
   return (
     <>
+      {tokenRef && (
+        <Button
+          variant="link"
+          onClick={() => onChange(tokenRef.mint.toBase58())}
+        >
+          Use my Social Token
+        </Button>
+      )}
       {!isOpen && (
         <InputGroup size="md">
           <Input value={value} onChange={(e) => onChange(e.target.value)} />
