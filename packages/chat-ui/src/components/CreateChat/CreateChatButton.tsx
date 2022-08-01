@@ -9,7 +9,7 @@ import { RiMenuAddLine } from "react-icons/ri";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useErrorHandler } from "@strata-foundation/react";
 import { CreateChatModal } from "./CreateChatModal";
-import { useLoadDelegate } from "../../hooks";
+import { useLoadDelegate } from "../../hooks/useLoadDelegate";
 
 interface ICreateChatButton extends IconButtonProps {}
 

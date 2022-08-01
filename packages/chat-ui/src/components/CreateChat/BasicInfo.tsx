@@ -31,13 +31,13 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { randomizeFileName, uploadFiles } from "@strata-foundation/chat";
 import { useErrorHandler } from "@strata-foundation/react";
 import { ICreateChatModalState } from "./CreateChatModal";
-import { useChatSdk } from "../../contexts";
+import { useChatSdk } from "../../contexts/chatSdk";
 import {
-  useChatStorageAccountKey,
-  useLoadDelegate,
-  useWalletFromChatIdentifier,
-} from "../../hooks";
-import { FormControlWithError } from "../form";
+  useChatStorageAccountKey
+} from "../../hooks/useChatStorageAccountKey";
+import { useLoadDelegate } from "../../hooks/useLoadDelegate";
+import { useWalletFromChatIdentifier } from "../../hooks/useWalletFromChatIdentifier";
+import { FormControlWithError } from "../form/FormControlWithError";
 
 interface IBasicInfoProps {
   state: ICreateChatModalState;

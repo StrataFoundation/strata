@@ -1,3 +1,4 @@
+import { useChatPermissionsFromChat } from "../hooks/useChatPermissionsFromChat";
 import { Avatar, HStack, Text, useColorModeValue } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
 import { roundToDecimals, useTokenMetadata } from "@strata-foundation/react";

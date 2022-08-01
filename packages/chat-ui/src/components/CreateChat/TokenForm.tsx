@@ -19,7 +19,8 @@ import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { RiErrorWarningFill } from "react-icons/ri";
 import { NATIVE_MINT } from "@solana/spl-token";
-import { FormControlWithError, MintSelect } from "../form";
+import { FormControlWithError } from "../form/FormControlWithError";
+import { MintSelect } from "../form/MintSelect";
 import { usePublicKey } from "@strata-foundation/react";
 import { routes } from "../../routes";
 

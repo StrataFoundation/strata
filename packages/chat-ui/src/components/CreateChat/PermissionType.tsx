@@ -11,7 +11,7 @@ import {
   Switch,
   HStack,
 } from "@chakra-ui/react";
-import { RadioCardWithAffordance } from "../form";
+import { RadioCardWithAffordance } from "../form/RadioCard";
 import {
   CreateChatStep,
   ICreateChatModalState,
