@@ -12,21 +12,33 @@ const config = {
       fs: false,
       os: false,
     };
-            config.module.rules = [
-              ...config.module.rules,
-              // ensure our libs barrel files don't constitute imports
-              {
-                test: /packages\/.*src\/index.ts/i,
-                sideEffects: false,
-              },
-            ];
+    config.module.rules = [
+      ...config.module.rules,
+      // ensure our libs barrel files don't constitute imports
+      {
+        test: /packages\/.*src\/index.ts/i,
+        sideEffects: false,
+      },
+    ];
     return config;
+  },
+  async redirects() {
+    return [
+      {
+        source: "/",
+        destination: "/launchpad",
+        permanent: false,
+      },
+      {
+        source: "/lbcs/new",
+        destination: "/launchpad/lbcs/new",
+        permanent: false,
+      },
+    ];
   },
 };
 
 module.exports = withPlugins(
-  [
-    withBundleAnalyzer({ enabled: process.env.ANALYZE === "true" }),
-  ],
+  [withBundleAnalyzer({ enabled: process.env.ANALYZE === "true" })],
   config
 );
