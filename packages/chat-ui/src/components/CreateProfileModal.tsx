@@ -19,8 +19,8 @@ import {
   Image,
   Divider,
   useDisclosure,
+  Flex,
 } from "@chakra-ui/react";
-import { Flex } from "./MyFlex";
 import { LoadWalletModal } from "./LoadWalletModal";
 import { RiCheckFill } from "react-icons/ri";
 import { yupResolver } from "@hookform/resolvers/yup";

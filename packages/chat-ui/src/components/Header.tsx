@@ -1,7 +1,6 @@
 import React from "react";
-import { IconButton } from "@chakra-ui/react";
+import { IconButton, Flex } from "@chakra-ui/react";
 import { FiMenu } from "react-icons/fi";
-import { Flex } from "./MyFlex";
 
 interface IHeaderProps {
   onSidebarOpen(): void;
@@ -13,7 +12,6 @@ export const Header: React.FC<IHeaderProps> = ({ children, onSidebarOpen }) => (
     align="center"
     justify="space-between"
     w="full"
-    zIndex="sticky"
     px={4}
     bg="white"
     _dark={{

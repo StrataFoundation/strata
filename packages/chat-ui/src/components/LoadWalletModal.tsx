@@ -14,9 +14,9 @@ import {
   VStack,
   useRadioGroup,
   Stack,
+  Flex,
   Divider,
 } from "@chakra-ui/react";
-import { Flex } from "./MyFlex";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useErrorHandler, useSolOwnedAmount } from "@strata-foundation/react";
 import React, { useState } from "react";

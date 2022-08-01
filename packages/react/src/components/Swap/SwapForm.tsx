@@ -26,8 +26,8 @@ import { Spinner } from "../Spinner";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
-import { ITokenBonding, toNumber } from "@strata-foundation/spl-token-bonding";
-import { BondingPricing } from "@strata-foundation/spl-token-bonding/dist/lib/pricing";
+import { BondingHierarchy, ITokenBonding, toNumber } from "@strata-foundation/spl-token-bonding";
+import { BondingPricing } from "@strata-foundation/spl-token-bonding";
 import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { BsChevronDown } from "react-icons/bs";
@@ -594,7 +594,7 @@ export const SwapForm = ({
               target &&
               pricing?.hierarchy
                 .path(base.publicKey, target.publicKey)
-                .map((h, idx) => (
+                .map((h: BondingHierarchy, idx: number) => (
                   <Royalties
                     key={`royalties-${idx}`}
                     formRef={formRef}
