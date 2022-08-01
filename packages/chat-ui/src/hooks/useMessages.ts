@@ -167,7 +167,7 @@ export function useMessages(
             messages
           );
           setState({
-            messages: newMessages,
+            messages: newMessages.filter(msg => msg.chatKey.equals(chat)),
             error: undefined,
           });
         } catch (e: any) {
