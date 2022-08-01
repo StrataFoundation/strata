@@ -22,11 +22,7 @@ export const StrataProviders: FC<{
       <ProviderContextProvider>
         <AccountProvider commitment="confirmed">
           <StrataSdksProvider>
-            {tokenList &&
-              import("../contexts/tokenList").then((m) => (
-                <m.TokenListProvider>{children}</m.TokenListProvider>
-              ))}
-            {children}
+            <TokenListProvider>{children}</TokenListProvider>
           </StrataSdksProvider>
         </AccountProvider>
       </ProviderContextProvider>
