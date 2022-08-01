@@ -1,6 +1,7 @@
 import React, { FC } from "react";
 import {
   Box,
+  BoxProps,
   Stack,
   useColorModeValue,
   useRadio,
@@ -11,6 +12,7 @@ import {
 export type RadioCardProps = {
   helpText?: string;
   disabled?: boolean;
+  containerProps?: BoxProps;
 } & UseRadioProps;
 
 export const RadioCard: FC<RadioCardProps> = ({
@@ -59,6 +61,7 @@ export const RadioCard: FC<RadioCardProps> = ({
 export const RadioCardWithAffordance: FC<RadioCardProps> = ({
   children,
   disabled = false,
+  containerProps = {},
   ...props
 }) => {
   const { getInputProps, getCheckboxProps } = useRadio(props);
@@ -74,6 +77,7 @@ export const RadioCardWithAffordance: FC<RadioCardProps> = ({
       flexGrow={1}
       flexShrink={1}
       flexBasis={0}
+      {...containerProps}
       onClick={(e) => {
         if (disabled) {
           e.preventDefault();

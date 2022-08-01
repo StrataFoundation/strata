@@ -6,20 +6,20 @@ import {
   Icon,
   Popover,
   PopoverBody,
-  PopoverContent, 
+  PopoverContent,
   PopoverTrigger,
   Skeleton,
   Text,
   Tooltip,
   useColorModeValue,
-  VStack
+  VStack,
 } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { MessageType } from "@strata-foundation/chat";
 import {
   useErrorHandler,
   useMint,
-  useTokenMetadata
+  useTokenMetadata,
 } from "@strata-foundation/react";
 import { humanReadable, toNumber } from "@strata-foundation/spl-utils";
 import moment from "moment";
@@ -30,9 +30,10 @@ import { DisplayReply, MessageHeader, MessageStatus, Reacts } from ".";
 import { BuyMoreButton } from "..";
 import { useEmojis, useReply, useSendMessage } from "../../contexts";
 import {
-  IMessageWithPendingAndReacts, useChatOwnedAmount,
+  IMessageWithPendingAndReacts,
+  useChatOwnedAmounts,
   useChatPermissionsFromChat,
-  useWalletProfile
+  useWalletProfile,
 } from "../../hooks";
 import { MessageBody } from "./MessageBody";
 import { MessageToolbar } from "./MessageToolbar";
@@ -91,7 +92,7 @@ export function Message(
     readPermissionAmount &&
     humanReadable(readPermissionAmount, mintAcc);
 
-  const { amount: ownedAmount } = useChatOwnedAmount(
+  const { ownedReadAmount, ownedPostAmount } = useChatOwnedAmounts(
     publicKey || undefined,
     chatKey
   );
@@ -100,13 +101,14 @@ export function Message(
     return (
       readPermissionAmount &&
       mintAcc &&
-      (ownedAmount || 0) < toNumber(readPermissionAmount, mintAcc)
+      (ownedReadAmount || 0) < toNumber(readPermissionAmount, mintAcc)
     );
-  }, [readPermissionAmount, mintAcc, ownedAmount]);
+  }, [readPermissionAmount, mintAcc, ownedReadAmount]);
 
   // Re decode if not enough tokens changes
   const getDecodedMessageOrIdentity = (_: boolean) =>
     getDecodedMessage ? getDecodedMessage() : Promise.resolve(undefined);
+
   const {
     result: message,
     loading: decoding,
@@ -185,10 +187,7 @@ export function Message(
         <PopoverTrigger>
           <VStack spacing={0} gap={0} w="full">
             {reply && (
-              <DisplayReply
-                reply={reply}
-                scrollToMessage={scrollToMessage}
-              />
+              <DisplayReply reply={reply} scrollToMessage={scrollToMessage} />
             )}
             <HStack
               pl={2}
@@ -222,7 +221,7 @@ export function Message(
                   color={textColor}
                   id={messageId}
                 >
-                  {message && messageType ? (
+                  {!notEnoughTokens && message && messageType ? (
                     <MessageBody
                       htmlAllowlist={htmlAllowlist}
                       message={message}

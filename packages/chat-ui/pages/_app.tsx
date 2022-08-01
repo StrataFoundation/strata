@@ -1,11 +1,9 @@
+import { Notification } from "@strata-foundation/react";
 import { ChatProviders } from "@/components/ChatProviders";
 import { Wallet } from "@/components/Wallet";
 import { IS_PRODUCTION } from "@/constants";
 import { useMediaQuery } from "@chakra-ui/react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
-import {
-  Notification
-} from "@strata-foundation/react";
 import { AppProps } from "next/app";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
@@ -27,7 +25,7 @@ function MyApp({ Component, pageProps }: AppProps) {
       router.events.off("routeChangeComplete", handleRouteChange);
     };
   }, [router.events]);
-    
+
   const onError = React.useCallback(
     (error: Error) => {
       console.error(error);
