@@ -1,4 +1,3 @@
-
 import { Keypair, SystemProgram } from "@solana/web3.js";
 import { ChatSdk } from "@strata-foundation/chat";
 import { useSolOwnedAmount } from "@strata-foundation/react";
@@ -73,17 +72,26 @@ async function runLoadDelegate(
 }
 
 export function useLoadDelegate() {
-  const { keypair: delegateWallet, mnemonic, loading: loadingDelegate, error: delError } = useDelegateWallet();
-  const { key: structKey, loading: loadingKey } = useDelegateWalletStructKey(delegateWallet?.publicKey);
-  const { account, loading: loadingStruct } = useDelegateWalletStruct(structKey);
-  const { amount: balance, loading: loadingBalance } = useSolOwnedAmount(delegateWallet?.publicKey)
+  const {
+    keypair: delegateWallet,
+    mnemonic,
+    loading: loadingDelegate,
+    error: delError,
+  } = useDelegateWallet();
+  const { key: structKey, loading: loadingKey } = useDelegateWalletStructKey(
+    delegateWallet?.publicKey
+  );
+  const { account, loading: loadingStruct } =
+    useDelegateWalletStruct(structKey);
+  const { amount: balance, loading: loadingBalance } = useSolOwnedAmount(
+    delegateWallet?.publicKey
+  );
   const {
     execute: loadDelegate,
     error,
     loading,
   } = useAsyncCallback(runLoadDelegate);
   const { chatSdk } = useChatSdk();
-
 
   return {
     delegateWallet,
@@ -93,7 +101,9 @@ export function useLoadDelegate() {
     needsInit: !loadingDelegate && !loadingStruct && !loadingKey && !account,
     needsTopOff:
       !loadingDelegate &&
-      (delegateWallet && (!loadingBalance && balance < 0.00001)),
+      delegateWallet &&
+      !loadingBalance &&
+      balance < 0.00001,
     loadDelegate: (sol: number) => {
       return loadDelegate(delegateWallet, chatSdk, sol);
     },

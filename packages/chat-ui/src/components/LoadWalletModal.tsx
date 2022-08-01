@@ -22,7 +22,7 @@ import { useErrorHandler, useSolOwnedAmount } from "@strata-foundation/react";
 import React, { useState } from "react";
 import { AiOutlinePlus } from "react-icons/ai";
 import { useLoadDelegate, useAnalyticsEventTracker } from "../hooks";
-import { RadioCardWithAffordance } from "./RadioCard";
+import { RadioCardWithAffordance } from "./form";
 import { StrataIcon, WalletIcon } from "../svg";
 import { LitProtocolWarning } from "./LitProtocolWarning";
 
@@ -82,7 +82,7 @@ export const LoadWalletModal = (
     gaEventTracker({
       action: "Load Delegate Wallet",
       value: +selectedOption,
-    })
+    });
   };
 
   const labelStyles = {
@@ -125,10 +125,10 @@ export const LoadWalletModal = (
                 Let&apos;s load up your Chat Wallet
               </Text>
               <Text textAlign="center" fontSize="sm">
-                Strata Chat loads a hot wallet that acts as a delegate for your main wallet. This helps
-                us avoid asking for approval for every message. Load it up with
-                as many messages as you want now, you can always top it off
-                later!
+                Strata Chat loads a hot wallet that acts as a delegate for your
+                main wallet. This helps us avoid asking for approval for every
+                message. Load it up with as many messages as you want now, you
+                can always top it off later!
               </Text>
               <Stack
                 {...group}
