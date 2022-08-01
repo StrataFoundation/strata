@@ -40,12 +40,12 @@ export const Permission: React.FC<IPermissionProps> = ({
       <Box>
         <Text fontWeight="bold" fontSize="md">
           {isToken && (
-            <>Which token do you want to use for {permissionType} permissions</>
+            <>Which token do you want to use to gate {permissionType} access?</>
           )}
           {isNFT && (
             <>
-              What nft collection do you want to use for {permissionType}{" "}
-              permissions
+              What nft collection do you want to use to gate {permissionType}{" "}
+              access?
             </>
           )}
         </Text>

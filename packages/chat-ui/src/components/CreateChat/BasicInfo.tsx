@@ -261,7 +261,7 @@ export const BasicInfo: React.FC<IBasicInfoProps> = ({
                   <Box>Chat identifier is available!</Box>
                 </Flex>
               ) : (
-                "A NFT representing ownership of the chat."
+                "The shortlink for the chat, i.e \"solana\" for solana.chat. You will receive an NFT representing ownership of the chat domain."
               )}
             </FormHelperText>
           ) : (

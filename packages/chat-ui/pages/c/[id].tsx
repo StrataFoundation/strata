@@ -95,7 +95,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
       )
     )[0];
     const entryAcc = (await connection.getAccountInfo(entryKey))!;
-    const entry = await namespacesProgram.coder.accounts.decode<IEntry>(
+    const entry = entryAcc && await namespacesProgram.coder.accounts.decode<IEntry>(
       "entry",
       entryAcc.data
     );
@@ -113,7 +113,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
         image: `"https://nft.cardinal.so/img/${entry?.mint.toBase58()}?name=${
           context.params?.id
         }"`,
-        chatKey: (await ChatSdk.chatKey(entry.mint))[0].toBase58(),
+        chatKey: entry && (await ChatSdk.chatKey(entry.mint))[0].toBase58(),
       },
     };
   } catch (e: any) {

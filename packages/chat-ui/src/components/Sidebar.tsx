@@ -87,10 +87,8 @@ export const Sidebar = (props: any) => {
             value={input}
             onChange={handleSearch}
           />
-          <InputRightElement>
-            <CreateChatButton aria-label="Create Chat Button" variant="ghost" />
-          </InputRightElement>
         </InputGroup>
+        <CreateChatButton colorScheme="gray" rounded="full" variant="outline" aria-label="Create Chat Button" />
       </Flex>
       <Flex
         direction="column"

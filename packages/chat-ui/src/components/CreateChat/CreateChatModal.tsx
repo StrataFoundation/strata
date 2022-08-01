@@ -86,8 +86,8 @@ export const initialState: ICreateChatModalState = {
     readType: undefined,
     postType: undefined,
     postIsSameAsRead: false,
-    readForm: { isExisting: true },
-    postForm: { isExisting: true },
+    readForm: { isExisting: false },
+    postForm: { isExisting: false },
   },
 };
 

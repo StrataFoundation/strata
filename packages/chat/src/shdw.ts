@@ -1,5 +1,5 @@
 import { getOrca, OrcaPoolConfig } from "@orca-so/sdk";
-import { AnchorProvider, Wallet as NodeWallet } from "@project-serum/anchor";
+import { AnchorProvider, Wallet } from "@project-serum/anchor";
 import { ShdwDrive } from "@shadow-drive/sdk";
 import { StorageAccountInfo } from "@shadow-drive/sdk/dist/types";
 import {
@@ -9,13 +9,33 @@ import {
   TOKEN_PROGRAM_ID,
   u64,
 } from "@solana/spl-token";
-import { Connection, Keypair, PublicKey } from "@solana/web3.js";
+import { Connection, Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import {
   getMintInfo,
   sendAndConfirmWithRetry, sleep, toNumber, truthy
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
 import Decimal from "decimal.js";
+
+export default class NodeWallet implements Wallet {
+  constructor(readonly payer: Keypair) {}
+
+  async signTransaction(tx: Transaction): Promise<Transaction> {
+    tx.partialSign(this.payer);
+    return tx;
+  }
+
+  async signAllTransactions(txs: Transaction[]): Promise<Transaction[]> {
+    return txs.map((t) => {
+      t.partialSign(this.payer);
+      return t;
+    });
+  }
+
+  get publicKey(): PublicKey {
+    return this.payer.publicKey;
+  }
+}
 
 const PROGRAM_ID = new PublicKey(
   "2e1wdyNhUvE76y6yUCvah2KaviavMJYKoRun8acMRBZZ"
