@@ -19,12 +19,8 @@ import {
 } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import { useChatPermissionsFromChat } from "../../hooks/useChatPermissionsFromChat";
-import React, {
-  useRef, useState
-} from "react";
-import {
-  useLoadDelegate
-} from "../../hooks/useLoadDelegate";
+import React, { useRef, useState } from "react";
+import { useLoadDelegate } from "../../hooks/useLoadDelegate";
 import { useChatOwnedAmounts } from "../../hooks/useChatOwnedAmounts";
 import { BuyMoreButton } from "../BuyMoreButton";
 import { LoadWalletModal } from "../LoadWalletModal";
@@ -69,22 +65,28 @@ export function ChatboxWithGuards({
   });
   const { handleErrors } = useErrorHandler();
   const { info: chatPermissions } = useChatPermissionsFromChat(chatKey);
-  const { metadata: readMetadata, image: readImage } = useTokenMetadata(
-    chatPermissions?.readPermissionKey
-  );
 
-  const { metadata: postMetadata, image: postImage } = useTokenMetadata(
-    chatPermissions?.postPermissionKey
-  );
+  const readMintKey = chatPermissions?.readPermissionKey;
+  const postMintKey = chatPermissions?.postPermissionKey;
+
+  const readMint = useMint(readMintKey);
+  const postMint = useMint(postMintKey);
+
+  const { metadata: readMetadata, image: readImage } =
+    useTokenMetadata(readMintKey);
+
+  const { metadata: postMetadata, image: postImage } =
+    useTokenMetadata(postMintKey);
+
   const { ownedReadAmount, ownedPostAmount, isSame } = useChatOwnedAmounts(
     publicKey || undefined,
     chatKey
   );
-  const mint = useMint(chatPermissions?.postPermissionKey);
+
   const postAmount =
     chatPermissions?.postPermissionAmount &&
-    mint &&
-    toNumber(chatPermissions?.postPermissionAmount, mint);
+    postMint &&
+    toNumber(chatPermissions?.postPermissionAmount, postMint);
 
   const hasEnough =
     typeof postAmount == "undefined" ||
@@ -137,7 +139,16 @@ export function ChatboxWithGuards({
                         <Divider variant="dashed" />
                       </Flex>
                       <Text fontWeight="bold" textTransform="capitalize">
-                        Hold 1
+                        Hold{" "}
+                        {chatPermissions?.defaultReadPermissionAmount &&
+                          readMint &&
+                          roundToDecimals(
+                            toNumber(
+                              chatPermissions.defaultReadPermissionAmount,
+                              readMint
+                            ),
+                            4
+                          )}
                       </Text>
                       <Avatar
                         w="18px"
@@ -159,7 +170,15 @@ export function ChatboxWithGuards({
                             chatPermissions?.postPermissionAction || {}
                           )[0]
                         }{" "}
-                        {postAmount}
+                        {chatPermissions?.postPermissionAmount &&
+                          postMint &&
+                          roundToDecimals(
+                            toNumber(
+                              chatPermissions.postPermissionAmount,
+                              postMint
+                            ),
+                            4
+                          )}
                       </Text>
                       <Avatar
                         w="18px"
