@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [Unreleased]
+
+# Changed
+  * Massively reduce bundle size by bundling everything with rollup, using proper side effect free esm.
+  * Remove barrel style exports to help with tree shaking
+
+# Breaking
+
+  * StrataProviders no longer includes TokenListProvider. Manually include this if you would like token list fallback.
+
 ## [3.9.5](https://github.com/StrataFoundation/strata/compare/v3.9.4...v3.9.5) (2022-07-26)
 
 **Note:** Version bump only for package @strata-foundation/strata

@@ -52,7 +52,6 @@ const converter = new Converter({
 export type chatProps = {
   onAddPendingMessage?: (message: IMessageWithPending) => void;
   chatKey?: PublicKey;
-  scrollRef?: any;
   files: { name: string; file: File }[];
   setFiles: React.Dispatch<
     React.SetStateAction<
@@ -72,7 +71,6 @@ const popoverWidth = {
 
 export function Chatbox({
   chatKey,
-  scrollRef,
   onAddPendingMessage: inputOnAddPendingMessage,
   files,
   setFiles,
@@ -109,7 +107,6 @@ export function Chatbox({
 
   const onAddPendingMessage = (msg: IMessageWithPending) => {
     setLoading(false);
-    scrollRef.current.scrollTop = 0;
     if (inputOnAddPendingMessage) {
       inputOnAddPendingMessage(msg);
     }

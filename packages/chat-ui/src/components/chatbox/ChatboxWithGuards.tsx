@@ -32,16 +32,12 @@ const DARK_BG = {
 };
 
 export function ChatboxWithGuards({
-  scrollRef,
   chatKey,
   onAddPendingMessage,
   files,
   setFiles,
   onUploadFile,
 }: chatProps) {
-  const myScrollRef = useRef(null);
-  if (!scrollRef) scrollRef = myScrollRef;
-
   const {
     isOpen: loadWalletIsOpen,
     onOpen: onOpenLoadWallet,
@@ -293,7 +289,6 @@ export function ChatboxWithGuards({
           )}
 
           <Chatbox
-            scrollRef={scrollRef}
             chatKey={chatKey}
             onAddPendingMessage={onAddPendingMessage}
             files={files}

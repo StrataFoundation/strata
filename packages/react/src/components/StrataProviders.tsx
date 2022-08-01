@@ -1,19 +1,16 @@
-import { TokenListProvider } from "../contexts/tokenList";
+import { FC } from "react";
 import { AccountProvider } from "../contexts/accountContext";
 import { ErrorHandlerProvider } from "../contexts/errorHandlerContext";
+import { ProviderContextProvider } from "../contexts/providerContext";
 import { StrataSdksProvider } from "../contexts/strataSdkContext";
 import { ThemeProvider } from "../contexts/theme";
-import React, { FC } from "react";
-import { ProviderContextProvider } from "../contexts/providerContext";
 
 const defaultOnError = (error: Error) => console.log(error);
 export const StrataProviders: FC<{
   onError?: (error: Error) => void;
   resetCSS?: boolean;
-  tokenList?: boolean;
 }> = ({
   children,
-  tokenList = true,
   onError = defaultOnError,
   resetCSS = false,
 }) => (
@@ -22,7 +19,7 @@ export const StrataProviders: FC<{
       <ProviderContextProvider>
         <AccountProvider commitment="confirmed">
           <StrataSdksProvider>
-            <TokenListProvider>{children}</TokenListProvider>
+            {children}
           </StrataSdksProvider>
         </AccountProvider>
       </ProviderContextProvider>

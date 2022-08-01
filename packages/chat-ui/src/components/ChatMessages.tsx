@@ -1,23 +1,43 @@
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import {
+  Box,
   Flex,
   Icon,
   Skeleton,
   SkeletonCircle,
   Stack,
-  Text,
+  Text
 } from "@chakra-ui/react";
 import { sleep } from "@strata-foundation/spl-utils";
-import throttle from "lodash/throttle";
+import { css } from "emotion";
+import {
+  useCallback, useEffect, useMemo, useState
+} from "react";
 import { useAsyncCallback } from "react-async-hook";
+import ScrollToBottom, {
+  useAtBottom,
+  useAtTop,
+  useObserveScrollPosition,
+  useScrollTo,
+  useScrollToTop
+} from "react-scroll-to-bottom";
 import {
   IMessageWithPending,
-  IMessageWithPendingAndReacts,
+  IMessageWithPendingAndReacts
 } from "../hooks/useMessages";
 import { MemodMessage } from "./message";
 
+const ROOT_CSS = css({
+  width: "100%",
+  maxHeight: "100%",
+});
+
+const SCROLL_CSS = css({
+  width: "100%",
+  maxHeight: "100%",
+  overflowY: "auto",
+});
+
 const INACTIVE_TIME = 60; // After 1 minute, new grouping
-const INFINITE_SCROLL_THRESHOLD = 300;
 const FETCH_COUNT = 50;
 
 export const ChatMessageSkeleton = () => (
@@ -36,51 +56,31 @@ export const ChatMessageSkeleton = () => (
   </Flex>
 );
 
-export const ChatMessages = ({
-  isLoading,
-  isLoadingMore,
-  hasMore,
-  fetchMore = () => null,
-  scrollRef,
-  messages = [],
-}: {
+type ChatProps = {
   isLoading: boolean;
   isLoadingMore: boolean;
   hasMore: boolean;
   fetchMore: (num: number) => void;
-  scrollRef?: any;
   messages?: (IMessageWithPendingAndReacts | IMessageWithPending)[];
-}) => {
-  const myScrollRef = useRef(null);
-  if (!scrollRef) scrollRef = myScrollRef;
+};
+export const ChatMessagesRaw = ({
+  isLoading,
+  isLoadingMore,
+  hasMore,
+  fetchMore = () => null,
+  messages = [],
+}: ChatProps) => {
   const hasMessages = messages.length > 0;
 
-  // On render if we dont have a scroll bar
-  // and we have hasMore then fetch initialMore
-  useEffect(() => {
-    if (
-      scrollRef.current.scrollHeight == scrollRef.current.offsetHeight &&
-      hasMore &&
-      !isLoading
-    ) {
-      fetchMore(FETCH_COUNT);
-    }
-  }, [scrollRef, hasMore, isLoading, fetchMore]);
+  const [atTop] = useAtTop();
 
-  const handleOnScroll = useCallback(
-    throttle((e: any) => {
-      const scrollOffset = e.target.scrollHeight + e.target.scrollTop;
-
-      if (
-        scrollOffset <= e.target.offsetHeight + INFINITE_SCROLL_THRESHOLD &&
-        !isLoadingMore &&
-        hasMore
-      ) {
+  useEffect(()=> {
+    if (atTop && !isLoadingMore && hasMore && !isLoading) {
         fetchMore(FETCH_COUNT);
-      }
-    }, 300),
-    [isLoadingMore, fetchMore, hasMore]
-  );
+    }
+  }, [atTop, hasMore, fetchMore, isLoadingMore, isLoading])
+
+  const scrollToTop = useScrollToTop();
 
   const loaders = useMemo(() => {
     return !messages.length ? (
@@ -92,6 +92,8 @@ export const ChatMessages = ({
     );
   }, [messages.length]);
 
+  const scrollTo = useScrollTo();
+
   const { execute: scrollToMessage } = useAsyncCallback(async function (
     id: string
   ) {
@@ -102,49 +104,50 @@ export const ChatMessages = ({
         breakLoop = true;
       }
     }
-    document.addEventListener("keypress", keyPress);
-    while (!breakLoop && hasMore && scrollRef.current) {
+    function scrollIfExists() {
       let findElem = document.getElementById(id as string);
       if (findElem) {
         findElem.scrollIntoView({ behavior: "smooth", block: "center" });
-        return;
+        return true;
       }
-      // scroll to the top which should load more messages
-      scrollRef.current.scroll({
-        top: -scrollRef.current.scrollHeight,
-        behavior: "smooth",
-      });
+      return false
+    }
+    scrollIfExists()
+    document.addEventListener("keypress", keyPress);
+    while (!breakLoop && hasMore) {
+      if (!scrollIfExists()) {
+        // scroll to the top which should load more messages
+        scrollToTop();
+      }
+
       await sleep(300);
     }
     document.removeEventListener("keypress", keyPress);
   });
 
   return (
-    <Flex
-      grow={1}
-      overflowY="auto"
-      direction="column-reverse"
-      ref={scrollRef}
-      onScroll={handleOnScroll}
-    >
-      {!isLoading &&
-        messages?.map((msg, index) => (
-          <MemodMessage
-            scrollToMessage={scrollToMessage}
-            key={msg?.id}
-            {...msg}
-            showUser={
-              !(
-                messages[index + 1] &&
-                messages[index + 1].sender.equals(msg.sender) &&
-                messages[index + 1].endBlockTime >=
-                  (msg.startBlockTime || new Date().valueOf() / 1000) -
-                    INACTIVE_TIME
-              ) || !!(msg as any).reply
-            }
-          />
-        ))}
+    <>
       {(isLoading || isLoadingMore) && loaders}
+      {!isLoading &&
+        messages &&
+        Array.from(messages)
+          .reverse()
+          .map((msg, index) => (
+            <MemodMessage
+              scrollToMessage={scrollToMessage}
+              key={msg?.id}
+              {...msg}
+              showUser={
+                !(
+                  messages[index + 1] &&
+                  messages[index + 1].sender.equals(msg.sender) &&
+                  messages[index + 1].endBlockTime >=
+                    (msg.startBlockTime || new Date().valueOf() / 1000) -
+                      INACTIVE_TIME
+                ) || !!(msg as any).reply
+              }
+            />
+          ))}
       {!(isLoading || isLoadingMore) && !hasMessages && (
         <Stack
           w="full"
@@ -180,6 +183,16 @@ export const ChatMessages = ({
           </Icon>
         </Stack>
       )}
+    </>
+  );
+};
+
+export const ChatMessages = (props: ChatProps) => {
+  return (
+    <Flex flexDir="column" flexGrow={1} justify="flex-end" overflow="hidden">
+      <ScrollToBottom className={ROOT_CSS} scrollViewClassName={SCROLL_CSS}>
+        <ChatMessagesRaw {...props} />
+      </ScrollToBottom>
     </Flex>
   );
 };
