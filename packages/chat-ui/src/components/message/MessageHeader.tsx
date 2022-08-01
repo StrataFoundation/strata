@@ -11,7 +11,7 @@ import { useChatPermissionsFromChat } from "../../hooks/useChatPermissionsFromCh
 export function MessageHeader({
   chatKey,
   sender,
-  startBlockTime
+  startBlockTime,
 }: {
   chatKey?: PublicKey;
   sender?: PublicKey;
@@ -19,11 +19,10 @@ export function MessageHeader({
 }) {
   const { info: chatPermissions } = useChatPermissionsFromChat(chatKey);
   const { info: profile } = useWalletProfile(sender);
-  const { username } =
-    useUsernameFromIdentifierCertificate(
-      profile?.identifierCertificateMint,
-      sender
-    );
+  const { username } = useUsernameFromIdentifierCertificate(
+    profile?.identifierCertificateMint,
+    sender
+  );
   const name = useMemo(
     () => username || (sender && truncatePubkey(sender)),
     [username, sender?.toBase58()]

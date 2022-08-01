@@ -3,9 +3,16 @@ import { Keypair } from "@solana/web3.js";
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
 import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
-import { ExponentialCurveConfig, SplTokenBonding } from "@strata-foundation/spl-token-bonding";
+import {
+  ExponentialCurveConfig,
+  SplTokenBonding,
+} from "@strata-foundation/spl-token-bonding";
 import { TokenUtils } from "./utils/token";
-import { createMint, SplTokenMetadata, createAtaAndMint } from "@strata-foundation/spl-utils";
+import {
+  createMint,
+  SplTokenMetadata,
+  createAtaAndMint,
+} from "@strata-foundation/spl-utils";
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
 import { NATIVE_MINT } from "@solana/spl-token";
 import { waitForUnixTime } from "./utils/clock";
@@ -43,7 +50,7 @@ describe("marketplace-sdk", () => {
     tokenBondingProgram,
     tokenCollectiveProgram,
     fungibleEntangler,
-    splTokenMetadata,
+    splTokenMetadata
   );
   const me = tokenBondingProgram.wallet.publicKey;
 
@@ -125,7 +132,7 @@ describe("marketplace-sdk", () => {
       provider.connection,
       BigInt(tokenBondingAcct.goLiveUnixTime.toNumber() + 2)
     );
-    for(let i = 0; i < 25; i++) {
+    for (let i = 0; i < 25; i++) {
       await tokenBondingProgram.buy({
         tokenBonding,
         desiredTargetAmount: 1,
@@ -140,29 +147,30 @@ describe("marketplace-sdk", () => {
         b: 1,
         c: 0,
         pow: 0,
-        frac: 1
-      })
-    })
+        frac: 1,
+      }),
+    });
     const mint = await createMint(provider, me, 0);
     await createAtaAndMint(provider, mint, 50);
-    const { offer, retrieval } = await marketplaceSdk.createTokenBondingForSetSupply({
-      fixedCurve: curve,
-      curve,
-      supplyMint: mint,
-      supplyAmount: 50,
-      baseMint: NATIVE_MINT,
-      buyBaseRoyaltyPercentage: 0,
-      sellBaseRoyaltyPercentage: 0,
-      buyTargetRoyaltyPercentage: 0,
-      sellTargetRoyaltyPercentage: 0,
-    });
+    const { offer, retrieval } =
+      await marketplaceSdk.createTokenBondingForSetSupply({
+        fixedCurve: curve,
+        curve,
+        supplyMint: mint,
+        supplyAmount: 50,
+        baseMint: NATIVE_MINT,
+        buyBaseRoyaltyPercentage: 0,
+        sellBaseRoyaltyPercentage: 0,
+        buyTargetRoyaltyPercentage: 0,
+        sellTargetRoyaltyPercentage: 0,
+      });
 
     await tokenUtils.expectAtaBalance(me, mint, 0);
 
     await tokenBondingProgram.buy({
       desiredTargetAmount: 25,
       tokenBonding: offer.tokenBonding,
-      slippage: 0.05
+      slippage: 0.05,
     });
     await marketplaceSdk.fungibleEntanglerSdk.swapChildForParent({
       amount: 25,
@@ -184,5 +192,5 @@ describe("marketplace-sdk", () => {
     });
 
     await tokenUtils.expectAtaBalance(me, mint, 50);
-  })
+  });
 });

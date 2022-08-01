@@ -1,7 +1,13 @@
 import {
   Avatar,
   Flex,
-  Box, Button, Divider, HStack, Text, useDisclosure, VStack
+  Box,
+  Button,
+  Divider,
+  HStack,
+  Text,
+  useDisclosure,
+  VStack,
 } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
@@ -9,7 +15,7 @@ import {
   roundToDecimals,
   useErrorHandler,
   useMint,
-  useTokenMetadata
+  useTokenMetadata,
 } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import { useChatPermissionsFromChat } from "../../hooks/useChatPermissionsFromChat";
@@ -19,16 +25,16 @@ import React, {
 import {
   useLoadDelegate
 } from "../../hooks/useLoadDelegate";
-import { useChatOwnedAmount } from "../../hooks/useChatOwnedAmount";
-import { useEmojiSearch } from "../../hooks/useEmojiSearch";
+import { useChatOwnedAmounts } from "../../hooks/useChatOwnedAmounts";
 import { BuyMoreButton } from "../BuyMoreButton";
 import { LoadWalletModal } from "../LoadWalletModal";
 import { Chatbox, chatProps } from "./Chatbox";
-
+import { NATIVE_MINT } from "@solana/spl-token";
 
 const DARK_BG = {
   bg: "linear-gradient(0deg, rgba(17,24,39) 40%, rgba(21,24,38,0) 100%)",
 };
+
 export function ChatboxWithGuards({
   scrollRef,
   chatKey,
@@ -70,7 +76,7 @@ export function ChatboxWithGuards({
   const { metadata: postMetadata, image: postImage } = useTokenMetadata(
     chatPermissions?.postPermissionKey
   );
-  const { amount: ownedAmount } = useChatOwnedAmount(
+  const { ownedReadAmount, ownedPostAmount, isSame } = useChatOwnedAmounts(
     publicKey || undefined,
     chatKey
   );
@@ -82,8 +88,8 @@ export function ChatboxWithGuards({
 
   const hasEnough =
     typeof postAmount == "undefined" ||
-    typeof ownedAmount == "undefined" ||
-    ownedAmount >= postAmount;
+    typeof ownedPostAmount == "undefined" ||
+    ownedPostAmount >= postAmount;
 
   handleErrors(delegateError);
 
@@ -148,7 +154,11 @@ export function ChatboxWithGuards({
                         <Divider variant="dashed" />
                       </Flex>
                       <Text fontWeight="bold" textTransform="capitalize">
-                        {Object.keys(chatPermissions?.postPermissionAction || {})[0]}{" "}
+                        {
+                          Object.keys(
+                            chatPermissions?.postPermissionAction || {}
+                          )[0]
+                        }{" "}
                         {postAmount}
                       </Text>
                       <Avatar
@@ -168,7 +178,9 @@ export function ChatboxWithGuards({
                         <Divider variant="dashed" />
                       </Flex>
                       <Text fontWeight="bold" textTransform="capitalize">
-                        {ownedAmount ? roundToDecimals(ownedAmount, 4) : 0}
+                        {ownedReadAmount
+                          ? roundToDecimals(ownedReadAmount, 4)
+                          : 0}
                       </Text>
                       <Avatar
                         w="18px"
@@ -178,12 +190,39 @@ export function ChatboxWithGuards({
                       />
                     </HStack>
                   )}
+                  {!isSame && postMetadata && (
+                    <HStack spacing={1}>
+                      <Text>You currently have</Text>
+                      <Flex grow={1}>
+                        <Divider variant="dashed" />
+                      </Flex>
+                      <Text fontWeight="bold" textTransform="capitalize">
+                        {ownedPostAmount
+                          ? roundToDecimals(ownedPostAmount, 4)
+                          : 0}
+                      </Text>
+                      <Avatar
+                        w="18px"
+                        h="18px"
+                        title={postMetadata?.data.symbol}
+                        src={postImage}
+                      />
+                    </HStack>
+                  )}
                 </Box>
                 <Box pt={4}>
                   <BuyMoreButton
-                    mint={chatPermissions?.postPermissionKey}
+                    mint={chatPermissions?.readPermissionKey}
                     btnProps={{ px: 16, size: "md", variant: "solid" }}
                   />
+                  {!isSame &&
+                    chatPermissions &&
+                    !NATIVE_MINT.equals(chatPermissions?.postPermissionKey) && (
+                      <BuyMoreButton
+                        mint={chatPermissions?.postPermissionKey}
+                        btnProps={{ px: 16, size: "md", variant: "solid" }}
+                      />
+                    )}
                 </Box>
               </>
             ) : needsTopOff ? (

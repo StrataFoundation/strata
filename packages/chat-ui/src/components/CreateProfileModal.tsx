@@ -47,9 +47,8 @@ import { useLoadDelegate } from "../hooks/useLoadDelegate";
 import { useUsernameFromIdentifierCertificate } from "../hooks/useUsernameFromIdentifierCertificate";
 import { useWalletProfile } from "../hooks/useWalletProfile";
 import { useAnalyticsEventTracker } from "../hooks/useAnalyticsEventTracker";
-import { useWalletFromIdentifier } from "../hooks/useWalletFromIdentifier";
-import { FormControlWithError } from "./FormControlWithError";
-import { CopyBlackBox } from "./CopyBlackBox";
+import { useWalletFromUsernameIdentifier } from "../hooks/useWalletFromUsernameIdentifier";
+import { FormControlWithError } from "./form/FormControlWithError";
 import toast from "react-hot-toast";
 import { LongPromiseNotification } from "./LongPromiseNotification";
 
@@ -150,7 +149,7 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
     info: profile,
     loading: loadingProfile,
   } = useWalletProfile(publicKey || undefined);
-  const { wallet } = useWalletFromIdentifier(username);
+  const { wallet } = useWalletFromUsernameIdentifier(username);
   const { username: existingUsername } = useUsernameFromIdentifierCertificate(
     profile?.identifierCertificateMint,
     profile?.ownerWallet
@@ -161,6 +160,7 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
       setValue("imageUrl", profile.imageUrl);
     }
   }, [profile, setValue]);
+
   useEffect(() => {
     if (existingUsername) setValue("username", existingUsername);
   }, [existingUsername, setValue]);

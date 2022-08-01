@@ -5974,16 +5974,17 @@
   dependencies:
     lodash.debounce "^4.0.8"
 
-"@shadow-drive/sdk@^3.0.4":
-  version "3.0.4"
-  resolved "https://registry.yarnpkg.com/@shadow-drive/sdk/-/sdk-3.0.4.tgz#dd2b5e8ee61eadcebf2786340224d7182a4b1bc1"
-  integrity sha512-uyqGDG4nnd1fTaflht1h+SPGV9lyuD3lQ3jyUyv4n3BowZnEw+oT4cMlsLysjIVADGYzfR+ejb9ahOLYfEHfjQ==
+"@shadow-drive/sdk@^3.0.6":
+  version "3.0.6"
+  resolved "https://registry.yarnpkg.com/@shadow-drive/sdk/-/sdk-3.0.6.tgz#26d8181d575017cb0a60ae3496cfb3582b465ff9"
+  integrity sha512-5UsNab85B3YfY7I5OtYI4P9MMncfZj+S5KFYgYXRn972qEduZmxhuSMnoW5KyH0jMOxH1GrNHym46bzQTmmpfQ==
   dependencies:
     "@project-serum/anchor" "^0.24.2"
     "@solana/spl-token" "^0.2.0"
     cross-fetch "^3.1.5"
     form-data "^4.0.0"
     node-fetch "2"
+    rxjs "^7.5.5"
     tweetnacl "^1.0.3"
 
 "@sideway/address@^4.1.0":
@@ -21986,6 +21987,13 @@ rxjs@^7.1.0:
   integrity sha512-7SQDi7xeTMCJpqViXh8gL/lebcwlp3d831F05+9B44A4B0WfsEwUQHR64gsH1kvJ+Ep/J9K2+n1hVl1CsGN23w==
   dependencies:
     tslib "~2.1.0"
+
+rxjs@^7.5.5:
+  version "7.5.6"
+  resolved "https://registry.yarnpkg.com/rxjs/-/rxjs-7.5.6.tgz#0446577557862afd6903517ce7cae79ecb9662bc"
+  integrity sha512-dnyv2/YsXhnm461G+R/Pe5bWP41Nm6LBXEYWI6eiFP4fiwx6WRI/CD0zbdVAudd9xwLEF2IDcKXLHit0FYjUzw==
+  dependencies:
+    tslib "^2.1.0"
 
 safe-buffer@5.1.2, safe-buffer@~5.1.0, safe-buffer@~5.1.1:
   version "5.1.2"

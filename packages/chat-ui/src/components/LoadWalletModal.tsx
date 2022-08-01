@@ -23,7 +23,7 @@ import React, { useState } from "react";
 import { AiOutlinePlus } from "react-icons/ai";
 import { useAnalyticsEventTracker } from "../hooks/useAnalyticsEventTracker";
 import { useLoadDelegate } from "../hooks/useLoadDelegate";
-import { RadioCardWithAffordance } from "./RadioCard";
+import { RadioCardWithAffordance } from "./form/RadioCard";
 import { StrataIcon } from "../svg/Strata";
 import { WalletIcon } from "../svg/Wallet";
 import { LitProtocolWarning } from "./LitProtocolWarning";

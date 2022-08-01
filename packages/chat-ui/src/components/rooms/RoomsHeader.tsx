@@ -1,7 +1,6 @@
 import {
   Avatar,
   Box,
-  Button,
   Divider,
   FormControl,
   FormLabel,
@@ -35,10 +34,11 @@ import debounce from "lodash/debounce";
 import React, { useEffect } from "react";
 import { RiSettings4Fill } from "react-icons/ri";
 import { useChatSdk } from "../../contexts/chatSdk";
-import { useChatOwnedAmount } from "../../hooks/useChatOwnedAmount";
+import { useChatOwnedAmounts } from "../../hooks/useChatOwnedAmounts";
 import { useChat } from "../../hooks/useChat";
 import { BuyMoreButton } from "../BuyMoreButton";
 import { useChatPermissionsFromChat } from "../../hooks/useChatPermissionsFromChat";
+import { NATIVE_MINT } from "@solana/spl-token";
 
 const playSound = debounce(() => {
   const audio = new Audio("/notification.mp3");
@@ -57,6 +57,7 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
   const { info: chat } = useChat(chatKey);
   const { info: chatPermissions } = useChatPermissionsFromChat(chatKey);
   const readMintKey = chatPermissions?.readPermissionKey;
+  const postMintKey = chatPermissions?.postPermissionKey;
   const [isMobile] = useMediaQuery("(max-width: 680px)");
   const { metadata: readMetadata, image: readImage } = useTokenMetadata(
     chatPermissions?.readPermissionKey
@@ -71,7 +72,7 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
   const { cluster } = useEndpoint();
   const { chatSdk } = useChatSdk();
   const { publicKey } = useWallet();
-  const { amount: ownedAmount } = useChatOwnedAmount(
+  const { ownedReadAmount, ownedPostAmount, isSame } = useChatOwnedAmounts(
     publicKey || undefined,
     chatKey
   );
@@ -222,7 +223,9 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
                           <Divider variant="dashed" />
                         </Flex>
                         <Text fontWeight="bold" textTransform="capitalize">
-                          {ownedAmount ? roundToDecimals(ownedAmount, 4) : 0}
+                          {ownedReadAmount
+                            ? roundToDecimals(ownedReadAmount, 4)
+                            : 0}
                         </Text>
                         <Avatar
                           w="18px"
@@ -232,11 +235,38 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
                         />
                       </HStack>
                     )}
+                    {!isSame && postMetadata && (
+                      <HStack spacing={1}>
+                        <Text>You currently have</Text>
+                        <Flex grow={1}>
+                          <Divider variant="dashed" />
+                        </Flex>
+                        <Text fontWeight="bold" textTransform="capitalize">
+                          {ownedPostAmount
+                            ? roundToDecimals(ownedPostAmount, 4)
+                            : 0}
+                        </Text>
+                        <Avatar
+                          w="18px"
+                          h="18px"
+                          title={readMetadata?.data.symbol}
+                          src={postImage}
+                        />
+                      </HStack>
+                    )}
                   </Box>
                   <BuyMoreButton
                     mint={readMintKey}
                     btnProps={{ w: "full", size: "md" }}
                   />
+                  {!isSame &&
+                    chatPermissions &&
+                    !NATIVE_MINT.equals(chatPermissions?.postPermissionKey) && (
+                      <BuyMoreButton
+                        mint={chatPermissions?.postPermissionKey}
+                        btnProps={{ px: 16, size: "md", variant: "solid" }}
+                      />
+                    )}
                   <Box w="full">
                     <Divider mt={4} mb={2} />
                   </Box>

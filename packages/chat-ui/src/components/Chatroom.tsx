@@ -17,7 +17,7 @@ const DARK_BG = {
   bg: "gray.900",
 };
 
-export function Chatroom({ chatKey }: { chatKey?: PublicKey }) {
+export const Chatroom: React.FC<{ chatKey?: PublicKey }> = ({ chatKey }) => {
   const scrollRef = useRef(null);
   const { handleErrors } = useErrorHandler();
   const [files, setFiles] = useState<{ name: string; file: File }[]>([]);
@@ -141,4 +141,4 @@ export function Chatroom({ chatKey }: { chatKey?: PublicKey }) {
       />
     </Flex>
   );
-}
+};

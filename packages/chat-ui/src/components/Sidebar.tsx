@@ -1,22 +1,17 @@
 import React, { useEffect, useState } from "react";
 import {
-  Box,
   Divider,
   Icon,
   IconButton,
   Input,
   InputGroup,
   InputLeftElement,
+  InputRightElement,
   useColorMode,
   VStack,
   Flex,
 } from "@chakra-ui/react";
-import {
-  RiSearch2Line,
-  RiSunLine,
-  RiMoonLine,
-  RiAddCircleLine,
-} from "react-icons/ri";
+import { RiSearch2Line, RiSunLine, RiMoonLine } from "react-icons/ri";
 import { ProfileButton } from "./ProfileButton";
 import { ChatSidebarPreview } from "./rooms/ChatSidebarPreview";
 import { useLocalStorage } from "@strata-foundation/react";
@@ -24,6 +19,7 @@ import { VISIBLE_CHATS } from "../constants/globals";
 import { useRouter } from "next/router";
 import { useChat } from "../hooks/useChat";
 import { useChatKeyFromIdentifier } from "../hooks/useChatKeyFromIdentifier";
+import { CreateChatButton } from "./CreateChat/CreateChatButton";
 
 const DARK_BG = {
   bg: "gray.900",
@@ -91,14 +87,10 @@ export const Sidebar = (props: any) => {
             value={input}
             onChange={handleSearch}
           />
+          <InputRightElement>
+            <CreateChatButton aria-label="Create Chat Button" variant="ghost" />
+          </InputRightElement>
         </InputGroup>
-
-        {/* <IconButton
-          aria-label="Create Chat"
-          padding={0}
-          icon={<Icon as={RiAddCircleLine} w={6} h={6} />}
-          isDisabled
-        /> */}
       </Flex>
       <Flex
         direction="column"

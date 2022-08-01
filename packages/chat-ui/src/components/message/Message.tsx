@@ -33,7 +33,7 @@ import { useSendMessage } from "../../contexts/sendMessage";
 import { useReply } from "../../contexts/reply";
 import { IMessageWithPendingAndReacts } from "../../hooks/useMessages";
 import { useWalletProfile } from "../../hooks/useWalletProfile";
-import { useChatOwnedAmount } from "../../hooks/useChatOwnedAmount";
+import { useChatOwnedAmounts } from "../../hooks/useChatOwnedAmounts";
 import { useChatPermissionsFromChat } from "../../hooks/useChatPermissionsFromChat";
 import { MessageBody } from "./MessageBody";
 import { MessageToolbar } from "./MessageToolbar";
@@ -92,7 +92,7 @@ export function Message(
     readPermissionAmount &&
     humanReadable(readPermissionAmount, mintAcc);
 
-  const { amount: ownedAmount } = useChatOwnedAmount(
+  const { ownedReadAmount, ownedPostAmount } = useChatOwnedAmounts(
     publicKey || undefined,
     chatKey
   );
@@ -101,13 +101,14 @@ export function Message(
     return (
       readPermissionAmount &&
       mintAcc &&
-      (ownedAmount || 0) < toNumber(readPermissionAmount, mintAcc)
+      (ownedReadAmount || 0) < toNumber(readPermissionAmount, mintAcc)
     );
-  }, [readPermissionAmount, mintAcc, ownedAmount]);
+  }, [readPermissionAmount, mintAcc, ownedReadAmount]);
 
   // Re decode if not enough tokens changes
   const getDecodedMessageOrIdentity = (_: boolean) =>
     getDecodedMessage ? getDecodedMessage() : Promise.resolve(undefined);
+
   const {
     result: message,
     loading: decoding,
@@ -220,7 +221,7 @@ export function Message(
                   color={textColor}
                   id={messageId}
                 >
-                  {message && messageType ? (
+                  {!notEnoughTokens && message && messageType ? (
                     <MessageBody
                       htmlAllowlist={htmlAllowlist}
                       message={message}

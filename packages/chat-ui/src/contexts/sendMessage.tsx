@@ -204,8 +204,11 @@ export const SendMessageContext = createContext<IUseSendMessageReturn>(
   {} as IUseSendMessageReturn
 );
 
-export const SendMessageProvider: FC<IUseSendMessageArgs> = ({ children, ...rest }) => {
-  const ret = useStrataSendMessage(rest)
+export const SendMessageProvider: FC<IUseSendMessageArgs> = ({
+  children,
+  ...rest
+}) => {
+  const ret = useStrataSendMessage(rest);
 
   return (
     <SendMessageContext.Provider value={ret}>
