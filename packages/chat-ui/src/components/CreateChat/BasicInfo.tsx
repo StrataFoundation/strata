@@ -31,13 +31,13 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { randomizeFileName, uploadFiles } from "@strata-foundation/chat";
 import { useErrorHandler } from "@strata-foundation/react";
 import { ICreateChatModalState } from "./CreateChatModal";
-import { useChatSdk } from "../../contexts";
+import { useChatSdk } from "../../contexts/chatSdk";
 import {
-  useChatStorageAccountKey,
-  useLoadDelegate,
-  useWalletFromChatIdentifier,
-} from "../../hooks";
-import { FormControlWithError } from "../form";
+  useChatStorageAccountKey
+} from "../../hooks/useChatStorageAccountKey";
+import { useLoadDelegate } from "../../hooks/useLoadDelegate";
+import { useWalletFromChatIdentifier } from "../../hooks/useWalletFromChatIdentifier";
+import { FormControlWithError } from "../form/FormControlWithError";
 
 interface IBasicInfoProps {
   state: ICreateChatModalState;
@@ -261,7 +261,7 @@ export const BasicInfo: React.FC<IBasicInfoProps> = ({
                   <Box>Chat identifier is available!</Box>
                 </Flex>
               ) : (
-                "A NFT representing ownership of the chat."
+                "The shortlink for the chat, i.e \"solana\" for solana.chat. You will receive an NFT representing ownership of the chat domain."
               )}
             </FormHelperText>
           ) : (

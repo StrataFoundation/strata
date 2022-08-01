@@ -21,9 +21,11 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useErrorHandler, useSolOwnedAmount } from "@strata-foundation/react";
 import React, { useState } from "react";
 import { AiOutlinePlus } from "react-icons/ai";
-import { useLoadDelegate, useAnalyticsEventTracker } from "../hooks";
-import { RadioCardWithAffordance } from "./form";
-import { StrataIcon, WalletIcon } from "../svg";
+import { useAnalyticsEventTracker } from "../hooks/useAnalyticsEventTracker";
+import { useLoadDelegate } from "../hooks/useLoadDelegate";
+import { RadioCardWithAffordance } from "./form/RadioCard";
+import { StrataIcon } from "../svg/Strata";
+import { WalletIcon } from "../svg/Wallet";
 import { LitProtocolWarning } from "./LitProtocolWarning";
 
 const options: {

@@ -18,9 +18,13 @@ import {
   useTokenMetadata,
 } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
-import { useChatPermissionsFromChat } from "../../hooks";
-import React, { useRef } from "react";
-import { useLoadDelegate } from "../../hooks";
+import { useChatPermissionsFromChat } from "../../hooks/useChatPermissionsFromChat";
+import React, {
+  useRef, useState
+} from "react";
+import {
+  useLoadDelegate
+} from "../../hooks/useLoadDelegate";
 import { useChatOwnedAmounts } from "../../hooks/useChatOwnedAmounts";
 import { BuyMoreButton } from "../BuyMoreButton";
 import { LoadWalletModal } from "../LoadWalletModal";

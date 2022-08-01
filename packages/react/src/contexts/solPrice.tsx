@@ -1,6 +1,7 @@
 import React, { FC, ReactNode, createContext } from "react";
-import { useMarketPrice, useCoinGeckoPrice } from "../hooks";
 import { PublicKey } from "@solana/web3.js";
+import { useCoinGeckoPrice } from "../hooks/useCoinGeckoPrice";
+import { useMarketPrice } from "../hooks/useMarketPrice";
 
 export interface ISolPriceProviderProps {
   children: ReactNode;

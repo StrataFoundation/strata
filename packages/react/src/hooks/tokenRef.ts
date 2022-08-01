@@ -2,22 +2,21 @@ import { NameRegistryState } from "@bonfida/spl-name-service";
 import { useConnection } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import {
-  ITokenBonding,
-  TokenBondingV0,
+  TokenBondingV0
 } from "@strata-foundation/spl-token-bonding";
 import {
   ITokenRef,
-  SplTokenCollective,
+  SplTokenCollective
 } from "@strata-foundation/spl-token-collective";
 import { AccountFetchCache } from "@strata-foundation/spl-utils";
+import { deserializeUnchecked } from "borsh";
 import { useMemo } from "react";
 import { useAsync } from "react-async-hook";
-import { useTokenBonding, useTokenRef } from "../hooks";
 import { useAccountFetchCache } from "../hooks/useAccountFetchCache";
+import { useTokenBonding } from "../hooks/useTokenBonding";
+import { useTokenRef } from "../hooks/useTokenRef";
 import { getTwitterRegistryKey } from "../utils/nameServiceTwitter";
 import { UseAccountState } from "./useAccount";
-import { IUseTokenMetadataResult, useTokenMetadata } from "./useTokenMetadata";
-import { deserializeUnchecked } from "borsh";
 
 export async function getOwnerForName(
   cache: AccountFetchCache | undefined,
@@ -232,33 +231,3 @@ export const useTokenRefForName = (
     loading,
   };
 };
-
-export interface IUseSocialTokenMetadataResult extends IUseTokenMetadataResult {
-  tokenBonding?: ITokenBonding;
-  tokenRef?: ITokenRef;
-}
-
-/**
- * Get all metadata associated with a given wallet's social token.
- *
- * @param ownerOrTokenRef
- * @returns
- */
-export function useSocialTokenMetadata(
-  ownerOrTokenRef: PublicKey | undefined | null
-): IUseSocialTokenMetadataResult {
-  const { info: tokenRef1, loading: loading1 } =
-    usePrimaryClaimedTokenRef(ownerOrTokenRef);
-  const { info: tokenRef2, loading: loading2 } = useTokenRef(ownerOrTokenRef);
-  const tokenRef = tokenRef1 || tokenRef2;
-  const { info: tokenBonding, loading: loading3 } = useTokenBonding(
-    tokenRef?.tokenBonding || undefined
-  );
-
-  return {
-    ...useTokenMetadata(tokenBonding?.targetMint),
-    tokenRef,
-    tokenBonding,
-    loading: loading1 || loading2 || loading3
-  };
-}

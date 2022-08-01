@@ -1,3 +1,4 @@
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import {
   Flex,
   Icon,
@@ -8,7 +9,6 @@ import {
 } from "@chakra-ui/react";
 import { sleep } from "@strata-foundation/spl-utils";
 import throttle from "lodash/throttle";
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { useAsyncCallback } from "react-async-hook";
 import {
   IMessageWithPending,

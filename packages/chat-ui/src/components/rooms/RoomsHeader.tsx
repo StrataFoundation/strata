@@ -34,10 +34,10 @@ import debounce from "lodash/debounce";
 import React, { useEffect } from "react";
 import { RiSettings4Fill } from "react-icons/ri";
 import { useChatSdk } from "../../contexts/chatSdk";
-import { useChatOwnedAmounts } from "../../hooks";
+import { useChatOwnedAmounts } from "../../hooks/useChatOwnedAmounts";
 import { useChat } from "../../hooks/useChat";
 import { BuyMoreButton } from "../BuyMoreButton";
-import { useChatPermissionsFromChat } from "../../hooks";
+import { useChatPermissionsFromChat } from "../../hooks/useChatPermissionsFromChat";
 import { NATIVE_MINT } from "@solana/spl-token";
 
 const playSound = debounce(() => {

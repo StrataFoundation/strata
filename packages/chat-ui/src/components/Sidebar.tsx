@@ -15,10 +15,11 @@ import { RiSearch2Line, RiSunLine, RiMoonLine } from "react-icons/ri";
 import { ProfileButton } from "./ProfileButton";
 import { ChatSidebarPreview } from "./rooms/ChatSidebarPreview";
 import { useLocalStorage } from "@strata-foundation/react";
-import { VISIBLE_CHATS } from "../constants";
+import { VISIBLE_CHATS } from "../constants/globals";
 import { useRouter } from "next/router";
-import { useChat, useChatKeyFromIdentifier } from "../hooks";
-import { CreateChatButton } from "./CreateChat";
+import { useChat } from "../hooks/useChat";
+import { useChatKeyFromIdentifier } from "../hooks/useChatKeyFromIdentifier";
+import { CreateChatButton } from "./CreateChat/CreateChatButton";
 
 const DARK_BG = {
   bg: "gray.900",
@@ -86,10 +87,8 @@ export const Sidebar = (props: any) => {
             value={input}
             onChange={handleSearch}
           />
-          <InputRightElement>
-            <CreateChatButton aria-label="Create Chat Button" variant="ghost" />
-          </InputRightElement>
         </InputGroup>
+        <CreateChatButton colorScheme="gray" rounded="full" variant="outline" aria-label="Create Chat Button" />
       </Flex>
       <Flex
         direction="column"

@@ -3,7 +3,7 @@ import { ChatSdk } from "@strata-foundation/chat";
 import { useSolOwnedAmount } from "@strata-foundation/react";
 import { sendInstructions } from "@strata-foundation/spl-utils";
 import { useAsyncCallback } from "react-async-hook";
-import { useChatSdk } from "../contexts";
+import { useChatSdk } from "../contexts/chatSdk";
 import { getKeypairFromMnemonic, useDelegateWallet } from "./useDelegateWallet";
 import { useDelegateWalletStruct } from "./useDelegateWalletStruct";
 import { useDelegateWalletStructKey } from "./useDelegateWalletStructKey";

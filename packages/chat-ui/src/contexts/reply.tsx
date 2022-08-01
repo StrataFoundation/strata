@@ -6,7 +6,7 @@ import React, {
   useState,
   useCallback,
 } from "react";
-import { IMessageWithPendingAndReacts } from "../hooks";
+import { IMessageWithPendingAndReacts } from "../hooks/useMessages";
 
 export interface IReplyProviderProps {
   children: ReactNode;
@@ -18,7 +18,7 @@ export interface IReplyContextState {
   hideReply: () => void;
 }
 
-const ReplyContext = createContext<IReplyContextState>(
+export const ReplyContext = createContext<IReplyContextState>(
   {} as IReplyContextState
 );
 

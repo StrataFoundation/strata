@@ -17,7 +17,7 @@ export interface IEmojisContextState {
   hidePicker: () => void;
 }
 
-const EmojisContext = createContext<IEmojisContextState>(
+export const EmojisContext = createContext<IEmojisContextState>(
   {} as IEmojisContextState
 );
 

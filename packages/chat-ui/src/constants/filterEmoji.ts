@@ -5,7 +5,7 @@ export type Emoji = {
   symbol: string,
   keywords: string
 }
-export default function filterEmoji(searchText: string, maxResults: number): Emoji[] {
+export function filterEmoji(searchText: string, maxResults: number): Emoji[] {
   return emojiList
     .filter((emoji: Emoji) => {
       if (emoji.title.toLowerCase().includes(searchText.toLowerCase())) {

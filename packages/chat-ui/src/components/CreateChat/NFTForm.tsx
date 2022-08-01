@@ -2,7 +2,7 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { FormControlWithError } from "../form";
+import { FormControlWithError } from "../form/FormControlWithError";
 import { Stack, Text, Input, ButtonGroup, Button } from "@chakra-ui/react";
 
 export interface INFTFormValues {

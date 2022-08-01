@@ -8,7 +8,7 @@ import {
   SearchContextManager, // the context manager, includes the Context.Provider
   SuggestionBar, // an optional UI component that displays trending searches and channel / username results
 } from "@giphy/react-components";
-import { GIPHY_API_KEY } from "../constants";
+import { GIPHY_API_KEY } from "../constants/globals";
 
 
 export function GifSearch({ onSelect }: { onSelect: (gifyId: string) => void }) {

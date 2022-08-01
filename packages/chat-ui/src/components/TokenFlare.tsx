@@ -1,9 +1,10 @@
+import { useChatPermissionsFromChat } from "../hooks/useChatPermissionsFromChat";
 import { Avatar, HStack, Text, useColorModeValue } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
 import { roundToDecimals, useTokenMetadata } from "@strata-foundation/react";
 import { numberWithCommas } from "@strata-foundation/spl-utils";
 import React, { Fragment, useMemo } from "react";
-import { useChatOwnedAmounts, useChatPermissionsFromChat } from "../hooks";
+import { useChatOwnedAmounts } from "../hooks/useChatOwnedAmounts";
 
 function IndividualTokenFlare({
   token,

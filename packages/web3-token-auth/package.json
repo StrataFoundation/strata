@@ -11,8 +11,9 @@
     "url": "https://github.com/StrataFoundation/strata"
   },
   "main": "dist/index.umd.js",
-  "module": "dist/index.es.js",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
+  "sideEffects": false,
   "files": ["dist"],
   "files": [
     "dist/lib/**/*"

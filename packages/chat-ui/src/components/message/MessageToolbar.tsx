@@ -1,9 +1,16 @@
-import { useEmojis, useReply } from "../../contexts";
+import { useReply } from "../../contexts/reply";
+import { useEmojis } from "../../contexts/emojis";
 import React, { useCallback, useMemo } from "react";
-import { ButtonGroup, Flex, Icon, IconButton, useColorModeValue } from "@chakra-ui/react";
+import {
+  ButtonGroup,
+  Flex,
+  Icon,
+  IconButton,
+  useColorModeValue,
+} from "@chakra-ui/react";
 import { MdOutlineAddReaction } from "react-icons/md";
 import { MdReply } from "react-icons/md";
-import { IMessageWithPendingAndReacts } from "../../hooks";
+import { IMessageWithPendingAndReacts } from "../../hooks/useMessages";
 
 export const MessageToolbar = ({
   id: messageId,

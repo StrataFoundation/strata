@@ -2,16 +2,14 @@ import { Avatar, Button, Flex, HStack, Icon, Text } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
 import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import { ITokenWithMetaAndAccount } from "@strata-foundation/spl-token-collective";
+import { useOwnedAmount } from "../../hooks/bondingPricing";
+import { useErrorHandler } from "../../hooks/useErrorHandler";
+import { usePriceInUsd } from "../../hooks/usePriceInUsd";
+import { useStrataSdks } from "../../hooks/useStrataSdks";
+import { useTwWrappedSolMint } from "../../hooks/useTwWrappedSolMint";
 import React from "react";
 import { useAsyncCallback } from "react-async-hook";
 import { RiCoinLine } from "react-icons/ri";
-import {
-  useErrorHandler,
-  useOwnedAmount,
-  usePriceInUsd,
-  useStrataSdks,
-  useTwWrappedSolMint
-} from "../../hooks";
 
 async function unwrapTwSol(
   tokenBondingSdk: SplTokenBonding | undefined,

@@ -3,7 +3,7 @@ import {
   useCollectionOwnedAmount,
   useUserOwnedAmount,
 } from "@strata-foundation/react";
-import { useChatPermissionsFromChat } from ".";
+import { useChatPermissionsFromChat } from "./useChatPermissionsFromChat";
 
 export const useChatOwnedAmounts = (
   wallet: PublicKey | undefined,

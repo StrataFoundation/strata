@@ -34,17 +34,16 @@ import toast from "react-hot-toast";
 import { AiOutlineGif, AiOutlineSend } from "react-icons/ai";
 import { IoMdAttach } from "react-icons/io";
 import { Converter } from "showdown";
-import { useReply, useSendMessage } from "../../contexts";
-import {
-  IMessageWithPending,
-  useAnalyticsEventTracker,
-  useEmojiSearch,
-} from "../../hooks";
+import { useSendMessage } from "../../contexts/sendMessage";
+import { useReply } from "../../contexts/reply";
+import { useEmojiSearch } from "../../hooks/useEmojiSearch";
 import { Files } from "../Files";
 import { GifSearch } from "../GifSearch";
 import { LongPromiseNotification } from "../LongPromiseNotification";
 import { ChatInput } from "./ChatInput";
 import { ReplyBar } from "./ReplyBar";
+import { IMessageWithPending } from "../../hooks/useMessages";
+import { useAnalyticsEventTracker } from "../../hooks/useAnalyticsEventTracker";
 
 const converter = new Converter({
   simpleLineBreaks: true,

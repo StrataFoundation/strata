@@ -4,7 +4,7 @@ import { useConnection } from "@solana/wallet-adapter-react";
 import { Connection, PublicKey } from "@solana/web3.js";
 import { ChatSdk } from "@strata-foundation/chat";
 import { useTokenAccount } from "@strata-foundation/react";
-import { useChatSdk } from "../contexts";
+import { useChatSdk } from "../contexts/chatSdk";
 import { useCaseInsensitiveMarker } from "./useCaseInsensitiveMarker";
 
 export const useWalletFromChatIdentifier = (

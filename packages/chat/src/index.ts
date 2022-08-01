@@ -509,6 +509,9 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       this.litAuthSig = cachedAuthSig;
       return;
     }
+    if (!this.wallet) {
+      return
+    }
     try {
       // @ts-ignore
       if (!this.wallet.signMessage) {

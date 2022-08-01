@@ -1,11 +1,14 @@
 import { useState, useEffect, useMemo } from "react";
 import { PublicKey } from "@solana/web3.js";
-import { solMetadata, toMetadata, useAccount, useStrataSdks, useWalletTokenAccounts } from "./";
 import { ITokenWithMetaAndAccount } from "@strata-foundation/spl-token-collective";
 import { useTokenList } from "./useTokenList";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { NATIVE_MINT } from "@solana/spl-token";
 import { SplTokenMetadata } from "@strata-foundation/spl-utils";
+import { useStrataSdks } from "./useStrataSdks";
+import { useAccount } from "./useAccount";
+import { useWalletTokenAccounts } from "./useWalletTokenAccounts";
+import { solMetadata, toMetadata } from "./useMetaplexMetadata";
 
 export const useUserTokensWithMeta = (
   owner?: PublicKey,

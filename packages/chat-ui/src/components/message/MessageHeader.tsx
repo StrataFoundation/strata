@@ -3,12 +3,10 @@ import { PublicKey } from "@solana/web3.js";
 import React, { useMemo } from "react";
 import { TokenFlare } from "../TokenFlare";
 import moment from "moment";
-import {
-  useChatPermissionsFromChat,
-  useUsernameFromIdentifierCertificate,
-  useWalletProfile,
-} from "../../hooks";
+import { useWalletProfile } from "../../hooks/useWalletProfile";
+import { useUsernameFromIdentifierCertificate } from "../../hooks/useUsernameFromIdentifierCertificate";
 import { truncatePubkey, truthy } from "@strata-foundation/react";
+import { useChatPermissionsFromChat } from "../../hooks/useChatPermissionsFromChat";
 
 export function MessageHeader({
   chatKey,

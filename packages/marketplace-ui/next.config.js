@@ -1,7 +1,9 @@
 const path = require("path");
+const withBundleAnalyzer = require("@next/bundle-analyzer");
+const withPlugins = require("next-compose-plugins");
 
 /** @type {import('next').NextConfig} */
-module.exports = {
+const config = {
   reactStrictMode: false,
   webpack5: true,
   webpack: (config) => {
@@ -10,39 +12,21 @@ module.exports = {
       fs: false,
       os: false,
     };
-    config.module.rules.push({
-      test: /\.mjs$/,
-      include: /node_modules/,
-      type: "javascript/auto",
-    });
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      "@solana/wallet-adapter-base": path.resolve(
-        "../../node_modules/@solana/wallet-adapter-base"
-      ),
-      "@solana/wallet-adapter-react": path.resolve(
-        "../../node_modules/@solana/wallet-adapter-react"
-      ),
-      "@chakra-ui/react": path.resolve("../../node_modules/@chakra-ui/react"),
-      "@chakra-ui/color-mode": path.resolve(
-        "../../node_modules/@chakra-ui/color-mode"
-      ),
-      "react-hot-toast": path.resolve("../../node_modules/react-hot-toast"),
-    };
+            config.module.rules = [
+              ...config.module.rules,
+              // ensure our libs barrel files don't constitute imports
+              {
+                test: /packages\/.*src\/index.ts/i,
+                sideEffects: false,
+              },
+            ];
     return config;
   },
-  async redirects() {
-    return [
-      {
-        source: "/",
-        destination: "/launchpad",
-        permanent: false,
-      },
-      {
-        source: "/lbcs/new",
-        destination: "/launchpad/lbcs/new",
-        permanent: false,
-      },
-    ];
-  },
 };
+
+module.exports = withPlugins(
+  [
+    withBundleAnalyzer({ enabled: process.env.ANALYZE === "true" }),
+  ],
+  config
+);

@@ -1,7 +1,7 @@
 import React from "react";
 import NextDocument, { Html, Head, Main, NextScript } from "next/document";
 import { ColorModeScript } from "@chakra-ui/react";
-import { GA_TRACKING_ID, IS_PRODUCTION } from "@/constants";
+import { GA_TRACKING_ID, IS_PRODUCTION } from "@/constants/globals";
 
 export default class Document extends NextDocument {
   render() {

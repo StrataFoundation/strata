@@ -15,8 +15,8 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 
 import { useStrataSdks } from "@strata-foundation/react";
-import { useChatSdk } from "../../contexts";
-import { useDelegateWallet, useLoadDelegate } from "../../hooks";
+import { useChatSdk } from "../../contexts/chatSdk";
+import { useDelegateWallet } from "../../hooks/useDelegateWallet";
 import { ProgressStep } from "./ProgressStep";
 import { BasicInfo } from "./BasicInfo";
 import { PermissionType as PermissionTypeSelect } from "./PermissionType";
@@ -86,8 +86,8 @@ export const initialState: ICreateChatModalState = {
     readType: undefined,
     postType: undefined,
     postIsSameAsRead: false,
-    readForm: { isExisting: true },
-    postForm: { isExisting: true },
+    readForm: { isExisting: false },
+    postForm: { isExisting: false },
   },
 };
 

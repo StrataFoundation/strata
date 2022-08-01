@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { PublicKey, AccountInfo } from "@solana/web3.js";
-import { useAccountFetchCache } from "../hooks";
+import { useAccountFetchCache } from "../hooks/useAccountFetchCache";
 import { TypedAccountParser } from "@strata-foundation/spl-utils";
 
 export interface ParsedAccountBase {

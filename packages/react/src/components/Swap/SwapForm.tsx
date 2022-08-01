@@ -20,26 +20,29 @@ import {
   Text,
   Tooltip,
   useColorModeValue,
-  VStack,
+  VStack
 } from "@chakra-ui/react";
-import { Spinner } from "../Spinner";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { NATIVE_MINT } from "@solana/spl-token";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
-import { BondingHierarchy, ITokenBonding, toNumber } from "@strata-foundation/spl-token-bonding";
-import { BondingPricing } from "@strata-foundation/spl-token-bonding";
+import { BondingHierarchy, BondingPricing } from "@strata-foundation/spl-token-bonding";
 import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { BsChevronDown } from "react-icons/bs";
 import { RiArrowUpDownFill, RiInformationLine } from "react-icons/ri";
 import * as yup from "yup";
-import { useFtxPayLink, useMint, useProvider, useSolanaUnixTime, useTokenMetadata, useTokenSwapFromId } from "../../hooks";
+import { useFtxPayLink } from "../../hooks/useFtxPayLink";
+import { useMint } from "../../hooks/useMint";
+import { useProvider } from "../../hooks/useProvider";
+import { useSolanaUnixTime } from "../../hooks/useSolanaUnixTime";
+import { useTokenMetadata } from "../../hooks/useTokenMetadata";
+import { useTokenSwapFromId } from "../../hooks/useTokenSwapFromId";
+import { useTwWrappedSolMint } from "../../hooks/useTwWrappedSolMint";
+import { roundToDecimals } from "../../utils/roundToDecimals";
+import { Spinner } from "../Spinner";
 import { Royalties } from "./Royalties";
 import { TransactionInfo, TransactionInfoArgs } from "./TransactionInfo";
-import { useTwWrappedSolMint } from "../../hooks/useTwWrappedSolMint";
-import { NATIVE_MINT } from "@solana/spl-token";
-import { roundToDecimals } from "../../utils";
-import BN from "bn.js";
 
 export interface ISwapFormValues {
   topAmount: number;

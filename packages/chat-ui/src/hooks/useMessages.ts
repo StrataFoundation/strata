@@ -7,7 +7,7 @@ import {
   useTransactions,
 } from "@strata-foundation/react";
 import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
-import { useChatSdk } from "../contexts";
+import { useChatSdk } from "../contexts/chatSdk";
 
 export interface IMessageWithPending extends IMessage {
   pending?: boolean;

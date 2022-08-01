@@ -1,4 +1,4 @@
-import { useQueryString } from ".";
+import { useQueryString } from "./useQueryString";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { clusterApiUrl } from "@solana/web3.js";
 import { useMemo } from "react";

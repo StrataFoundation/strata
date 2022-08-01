@@ -27,14 +27,14 @@ import React, { useCallback, useMemo } from "react";
 import { useAsync } from "react-async-hook";
 import { BsLockFill } from "react-icons/bs";
 import { DisplayReply, MessageHeader, MessageStatus, Reacts } from ".";
-import { BuyMoreButton } from "..";
-import { useEmojis, useReply, useSendMessage } from "../../contexts";
-import {
-  IMessageWithPendingAndReacts,
-  useChatOwnedAmounts,
-  useChatPermissionsFromChat,
-  useWalletProfile,
-} from "../../hooks";
+import { BuyMoreButton } from "../BuyMoreButton";
+import { useEmojis } from "../../contexts/emojis";
+import { useSendMessage } from "../../contexts/sendMessage";
+import { useReply } from "../../contexts/reply";
+import { IMessageWithPendingAndReacts } from "../../hooks/useMessages";
+import { useWalletProfile } from "../../hooks/useWalletProfile";
+import { useChatOwnedAmounts } from "../../hooks/useChatOwnedAmounts";
+import { useChatPermissionsFromChat } from "../../hooks/useChatPermissionsFromChat";
 import { MessageBody } from "./MessageBody";
 import { MessageToolbar } from "./MessageToolbar";
 

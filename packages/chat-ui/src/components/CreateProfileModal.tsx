@@ -41,14 +41,12 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useAsyncCallback } from "react-async-hook";
 import { FormProvider, useForm } from "react-hook-form";
 import * as yup from "yup";
-import { useChatSdk } from "../contexts";
-import {
-  useChatStorageAccountKey,
-  useLoadDelegate,
-  useUsernameFromIdentifierCertificate,
-  useWalletProfile,
-  useAnalyticsEventTracker,
-} from "../hooks";
+import { useChatSdk } from "../contexts/chatSdk";
+import { useChatStorageAccountKey } from "../hooks/useChatStorageAccountKey";
+import { useLoadDelegate } from "../hooks/useLoadDelegate";
+import { useUsernameFromIdentifierCertificate } from "../hooks/useUsernameFromIdentifierCertificate";
+import { useWalletProfile } from "../hooks/useWalletProfile";
+import { useAnalyticsEventTracker } from "../hooks/useAnalyticsEventTracker";
 import { useWalletFromUsernameIdentifier } from "../hooks/useWalletFromUsernameIdentifier";
 import { FormControlWithError } from "./form/FormControlWithError";
 import toast from "react-hot-toast";

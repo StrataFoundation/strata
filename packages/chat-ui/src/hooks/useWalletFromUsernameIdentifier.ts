@@ -4,7 +4,7 @@ import { ChatSdk } from "@strata-foundation/chat";
 import { useTokenAccount } from "@strata-foundation/react";
 import { useMemo } from "react";
 import { useAsync } from "react-async-hook";
-import { useChatSdk } from "../contexts";
+import { useChatSdk } from "../contexts/chatSdk";
 import { useCaseInsensitiveMarker } from "./useCaseInsensitiveMarker";
 
 export function useWalletFromUsernameIdentifier(identifier?: string): {

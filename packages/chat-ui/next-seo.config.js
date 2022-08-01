@@ -1,4 +1,4 @@
-import { SITE_URL } from "@/constants";
+import { SITE_URL } from "@/constants/globals";
 
 const defaultSeo = {
   title: "Strata Chat",

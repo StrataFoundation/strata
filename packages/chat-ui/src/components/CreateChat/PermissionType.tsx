@@ -11,7 +11,7 @@ import {
   Switch,
   HStack,
 } from "@chakra-ui/react";
-import { RadioCardWithAffordance } from "../form";
+import { RadioCardWithAffordance } from "../form/RadioCard";
 import {
   CreateChatStep,
   ICreateChatModalState,
@@ -93,10 +93,10 @@ export const PermissionType: React.FC<IPermissionTypeProps> = ({
     <VStack w="full" alignItems="start" gap={6} spacing={0}>
       <Box>
         <Text fontWeight="bold" fontSize="md">
-          What kind of {permissionType} messages do you want
+          Set your {permissionType} permissions.
         </Text>
         <Text fontSize="xs" fontWeight="normal">
-          How do you want to gate the ability to {permissionType} messages in
+          How do you want to gate {permissionType}ing messages in
           your chat?
         </Text>
       </Box>

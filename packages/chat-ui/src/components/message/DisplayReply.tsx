@@ -3,11 +3,9 @@ import { MessageType } from "@strata-foundation/chat";
 import { truncatePubkey } from "@strata-foundation/react";
 import React, { useMemo } from "react";
 import { useAsync } from "react-async-hook";
-import {
-  IMessageWithPending,
-  useUsernameFromIdentifierCertificate,
-  useWalletProfile,
-} from "../../hooks";
+import { IMessageWithPending } from "../../hooks/useMessages";
+import { useUsernameFromIdentifierCertificate } from "../../hooks/useUsernameFromIdentifierCertificate";
+import { useWalletProfile } from "../../hooks/useWalletProfile";
 
 const STYLE = {
   color: "gray.500",
