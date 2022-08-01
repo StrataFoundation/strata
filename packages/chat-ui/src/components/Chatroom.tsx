@@ -18,7 +18,6 @@ const DARK_BG = {
 };
 
 export const Chatroom: React.FC<{ chatKey?: PublicKey }> = ({ chatKey }) => {
-  const scrollRef = useRef(null);
   const { handleErrors } = useErrorHandler();
   const [files, setFiles] = useState<{ name: string; file: File }[]>([]);
   const [pendingMessages, setPendingMessages] = useState<IMessageWithPending[]>(
@@ -126,13 +125,11 @@ export const Chatroom: React.FC<{ chatKey?: PublicKey }> = ({ chatKey }) => {
       <ChatMessages
         isLoading={loadingInitial}
         isLoadingMore={loadingMore}
-        scrollRef={scrollRef}
         messages={messagesWithPending}
         hasMore={hasMore}
         fetchMore={fetchMore}
       />
       <ChatboxWithGuards
-        scrollRef={scrollRef}
         chatKey={chatKey}
         onAddPendingMessage={onAddPendingMessage}
         files={files}
