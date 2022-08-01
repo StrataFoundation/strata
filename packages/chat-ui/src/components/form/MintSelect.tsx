@@ -10,7 +10,7 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { TokenSearch } from "@strata-foundation/react";
+import { TokenSearch, usePrimaryClaimedTokenRef } from "@strata-foundation/react";
 import { useCallback, useEffect } from "react";
 import { AiOutlineSearch } from "react-icons/ai";
 
@@ -30,6 +30,7 @@ export const MintSelect = ({
       onClose();
     }
   }, []);
+  const { info: tokenRef } = usePrimaryClaimedTokenRef(publicKey);
 
   const inputBg = { bg: "gray.200", _dark: { bg: "gray.800" } };
   const backgroundColor = useColorModeValue("gray.200", "gray.800");
@@ -43,25 +44,35 @@ export const MintSelect = ({
   }, []);
 
   return !isOpen ? (
-    <InputGroup size="md" variant="filled">
-      <Input
-        value={value || ""}
-        onChange={(e) => onChange(e.target.value)}
-        fontSize="sm"
-        {...inputBg}
-      />
-      <InputRightElement width="5.5rem">
+    <>
+      {tokenRef && (
         <Button
-          isDisabled={!publicKey}
-          h="1.75rem"
-          size="sm"
-          onClick={() => (isOpen ? onClose() : onOpen())}
+          variant="link"
+          onClick={() => onChange(tokenRef.mint.toBase58())}
         >
-          <Icon as={AiOutlineSearch} />
-          {publicKey ? "Wallet" : "No Wallet"}
+          Use my Social Token
         </Button>
-      </InputRightElement>
-    </InputGroup>
+      )}
+      <InputGroup size="md" variant="filled">
+        <Input
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          fontSize="sm"
+          {...inputBg}
+        />
+        <InputRightElement width="5.5rem">
+          <Button
+            isDisabled={!publicKey}
+            h="1.75rem"
+            size="sm"
+            onClick={() => (isOpen ? onClose() : onOpen())}
+          >
+            <Icon as={AiOutlineSearch} />
+            {publicKey ? "Wallet" : "No Wallet"}
+          </Button>
+        </InputRightElement>
+      </InputGroup>
+    </>
   ) : (
     <Box {...inputBg}>
       <TokenSearch
