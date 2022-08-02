@@ -44,7 +44,7 @@ export type {
 
 export { ErrorHandlerContext, ErrorHandlerProvider } from "./contexts/errorHandlerContext";
 
-export { HolaplexGraphqlProvider } from "./contexts/HolaplexGraphqlProvider";
+export { GraphqlProvider } from "./contexts/GraphqlProvider";
 
 export { ProviderContext, ProviderContextProvider } from "./contexts/providerContext";
 
@@ -144,6 +144,7 @@ export { useSolanaUnixTime } from "./hooks/useSolanaUnixTime";
 export { useTokenSwapFromFungibleEntangler } from "./hooks/useTokenSwapFromFungibleEntangler";
 export { useTokenSwapFromId } from "./hooks/useTokenSwapFromId";
 export { useCollectionOwnedAmount } from "./hooks/useCollectionOwnedAmount";
+export { useTokenAuthorities } from "./hooks/useTokenAuthorities";
 
 export {
   deserializeAccount,

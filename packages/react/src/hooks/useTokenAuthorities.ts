@@ -1,5 +1,5 @@
 import { PublicKey } from "@solana/web3.js";
-import { IUseMetaplexTokenMetadataResult, useMetaplexTokenMetadata } from ".";
+import { IUseMetaplexTokenMetadataResult, useMetaplexTokenMetadata } from "./useMetaplexMetadata";
 
 export interface IUseTokenAuthoritiesResult extends IUseMetaplexTokenMetadataResult {
   hasMintAuth: boolean;
