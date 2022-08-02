@@ -78,7 +78,7 @@ export const Chatroom: React.FC<{
       [
         ...(messages || []),
         ...pendingMessages.filter((p) => !msgWeHave.has(p.id)),
-      ].sort((a, b) => a.startBlockTime - b.startBlockTime),
+      ].sort((a, b) => b.startBlockTime - a.startBlockTime),
     [msgWeHave, messages, pendingMessages]
   );
 

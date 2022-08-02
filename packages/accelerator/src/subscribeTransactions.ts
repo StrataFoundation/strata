@@ -49,7 +49,7 @@ export async function hydrateTransactions(
 
   return txs
     .filter(truthy)
-    .sort((a, b) => (b.blockTime || 0) - (a.blockTime || 0));
+    .sort((a, b) => (.blockTime || 0) - (a.blockTime || 0));
 }
 
 // Returns a dispose funciton
