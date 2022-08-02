@@ -5999,7 +5999,7 @@
   dependencies:
     lodash.debounce "^4.0.8"
 
-"@shadow-drive/sdk@^3.0.6":
+"@shadow-drive/sdk@^3.0.4":
   version "3.0.6"
   resolved "https://registry.yarnpkg.com/@shadow-drive/sdk/-/sdk-3.0.6.tgz#26d8181d575017cb0a60ae3496cfb3582b465ff9"
   integrity sha512-5UsNab85B3YfY7I5OtYI4P9MMncfZj+S5KFYgYXRn972qEduZmxhuSMnoW5KyH0jMOxH1GrNHym46bzQTmmpfQ==
