@@ -304,7 +304,7 @@ export function useMessages({
   const vybeMessageParts = useMemo(
     () =>
       vybeData?.strata_strata[0].pid_chatGL6yNgZT2Z3BeMYGcgdMpcBKdmxko4C5UhEX4To.message_parts_message_part_event_v_0.map(
-        (d: any) =>
+        (d: any) => 
           ({
             ...d,
             readPermissionAmount: new BN(d.readPermissionAmount),
@@ -432,8 +432,8 @@ export function useMessages({
       ? messages.length > 0 && vybeMessageParts && vybeMessageParts.length >= numTransactions
       : rest.hasMore,
     fetchMore: useVybe
-      ? (num) =>
-          loadVybe({
+      ? async(num) => {
+          await loadVybe({
             variables: {
               ...variables,
               limit: num,
@@ -442,10 +442,11 @@ export function useMessages({
                 vybeMessageParts[vybeMessageParts.length - 1].blockTime,
             },
           })
+      }
       : rest.fetchMore,
     fetchNew: useVybe
-      ? (num) => {
-          loadVybe({
+      ? async (num) => {
+          await loadVybe({
             variables: {
               ...variables,
               limit: num,
