@@ -45,8 +45,9 @@ interface TokenPreviewProps {
   image: string | undefined;
 }
 
-function unique(arr: any[]) {
-  return [...new Set(arr)];
+function unique(arr: PublicKey[]): PublicKey[] {
+  const strs = arr.map((x) => x.toString())
+  return [...new Set(strs)].map((x) => new PublicKey(x));
 }
 
 export const TokenLaunches = ({ mintKey, name, image }: TokenPreviewProps) => {
