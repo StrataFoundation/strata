@@ -6,7 +6,8 @@ import {
   TOKEN_PROGRAM_ID,
   u64
 } from "@solana/spl-token";
-import { PublicKey } from "@solana/web3.js";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { PublicKey, TransactionInstruction, Signer } from "@solana/web3.js";
 import {
   BondingHierarchy, IPostInstructionArgs, IPreInstructionArgs, ISwapArgs,
   toNumber
@@ -184,6 +185,8 @@ export const useSwapDriver = ({
 
   const childMint = useMint(childEntangler?.childMint);
 
+  const { publicKey: owner } = useWallet();
+
   const base = baseMint && {
     name: baseMeta?.data.name || "",
     ticker: baseMeta?.data.symbol || "",
@@ -287,18 +290,49 @@ export const useSwapDriver = ({
             });
           },
           async postInstructions({isLast, amount, isBuy}: IPostInstructionArgs): Promise<InstructionResult<null>> {
-            if (!isLast || !childEntangler || !parentEntangler || !isBuy || !fungibleEntanglerSdk) {
+            if (!isLast || !childEntangler || !parentEntangler || !fungibleEntanglerSdk) {
               return {
                 instructions: [],
                 signers: [],
                 output: null,
               }
             }
-            return await fungibleEntanglerSdk?.swapChildForParentInstructions({
-              parentEntangler: parentEntangler.publicKey,
-              childEntangler: childEntangler.publicKey,
-              all: true,
-            })
+            const instructions: TransactionInstruction[]  = [];
+            const signers: Signer[] = [];
+            let associatedAccountKey = await Token.getAssociatedTokenAddress(
+              ASSOCIATED_TOKEN_PROGRAM_ID,
+              TOKEN_PROGRAM_ID,
+              entangledBase!,
+              owner!,
+            )
+            if (isBuy) {
+              const { instructions: i1, signers: s1 } = await fungibleEntanglerSdk?.swapChildForParentInstructions({
+                parentEntangler: parentEntangler.publicKey,
+                childEntangler: childEntangler.publicKey,
+                all: true,
+              })
+              instructions.push(...i1);
+              signers.push(...s1);
+              associatedAccountKey = await Token.getAssociatedTokenAddress(
+                ASSOCIATED_TOKEN_PROGRAM_ID,
+                TOKEN_PROGRAM_ID,
+                entangledTarget!,
+                owner!
+              )
+            }
+            instructions.push(Token.createCloseAccountInstruction(
+              TOKEN_PROGRAM_ID,
+              associatedAccountKey,
+              owner!,
+              owner!,
+              []
+            ))
+
+            return {
+              instructions,
+              signers,
+              output: null,
+            }
           },
         });
       } catch (e: any) {

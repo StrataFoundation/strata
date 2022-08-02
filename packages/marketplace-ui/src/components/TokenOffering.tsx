@@ -13,6 +13,9 @@ import {
   roundToDecimals,
 } from "@strata-foundation/react";
 import { useAsyncCallback } from "react-async-hook";
+import { Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { ASSOCIATED_PROGRAM_ID } from "@project-serum/anchor/dist/cjs/utils/token";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 const identity = () => {};
 export const TokenOffering = ({
@@ -48,6 +51,7 @@ export const TokenOffering = ({
     parentEntangler,
   } = useTokenSwapFromId(id);
   const supplyMint = useMint(retrievalTokenBonding?.baseMint);
+  const { publicKey: owner } = useWallet();
   const {
     execute: onSubmit,
     loading: submitting,
@@ -76,6 +80,19 @@ export const TokenOffering = ({
         });
       instructions.push(...i2);
       signers.push(...s2);
+      const associatedAccountKey = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        tokenBonding?.targetMint!,
+        owner!,
+      )
+      instructions.push(Token.createCloseAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        associatedAccountKey,
+        owner!,
+        owner!,
+        []
+      ));
     } else if (retrievalTokenBonding) {
       const { instructions: i2, signers: s2 } =
         await tokenBondingSdk!.sellInstructions({
