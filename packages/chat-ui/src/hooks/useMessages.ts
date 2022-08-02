@@ -39,8 +39,8 @@ export interface IUseMessages {
   loadingInitial: boolean;
   loadingMore: boolean;
   messages: IMessageWithPendingAndReacts[] | undefined;
-  fetchMore(num: number): void;
-  fetchNew(num: number): void;
+  fetchMore(num: number): Promise<void>;
+  fetchNew(num: number): Promise<void>;
 }
 
 const txToMessages: Record<string, IMessagePart[]> = {};
@@ -58,9 +58,9 @@ async function getMessagesFromTxs(
       await Promise.all(
         txs.map(
           async ({ signature: sig, transaction, pending, meta, blockTime }) => {
-            // @ts-ignore
             if (
               !txToMessages[sig] ||
+              // @ts-ignore
               (txToMessages[sig][0].pending && !pending)
             ) {
               try {
@@ -319,7 +319,7 @@ export function useMessages({
       ),
     [vybeData]
   );
-
+  
   useEffect(() => {
     if (chatSdk && vybeMessageParts) {
       setRawMessages((rawMessages) => {
@@ -429,7 +429,7 @@ export function useMessages({
   return {
     ...rest,
     hasMore: useVybe
-      ? vybeMessageParts && vybeMessageParts.length >= numTransactions
+      ? messages.length > 0 && vybeMessageParts && vybeMessageParts.length >= numTransactions
       : rest.hasMore,
     fetchMore: useVybe
       ? (num) =>
@@ -451,12 +451,12 @@ export function useMessages({
               limit: num,
               maxBlockTime: new Date().valueOf() / 1000,
               minBlockTime:
-                vybeMessageParts[0] && vybeMessageParts[0].blockTime,
+                vybeMessageParts[0] ? vybeMessageParts[0].blockTime : 0,
             },
           });
         }
       : rest.fetchNew,
-    loadingInitial: loadingInitial,
+    loadingInitial: loadingInitial || (useVybe && !vybeData && !loadingVybe),
     loadingMore: loading || loadingVybe || rest.loadingMore,
     error: rest.error || error,
     messages: messagesWithReactsAndReplies,

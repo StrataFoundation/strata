@@ -1,25 +1,17 @@
 import {
-  Box,
   Flex,
   Icon,
   Skeleton,
   SkeletonCircle,
   Stack,
-  Text,
-  usePrevious
+  Text
 } from "@chakra-ui/react";
 import { sleep } from "@strata-foundation/spl-utils";
 import { css } from "emotion";
-import {
-  useCallback, useEffect, useMemo, useState
-} from "react";
+import { useEffect, useMemo } from "react";
 import { useAsyncCallback } from "react-async-hook";
 import ScrollToBottom, {
-  useAtBottom,
-  useAtTop,
-  useObserveScrollPosition,
-  useScrollTo,
-  useScrollToTop
+  useAtTop, useScrollToTop
 } from "react-scroll-to-bottom";
 import {
   IMessageWithPending,
@@ -130,8 +122,7 @@ export const ChatMessagesRaw = ({
       {(isLoading || isLoadingMore) && loaders}
       {!isLoading &&
         messages &&
-        Array.from(messages)
-          .reverse()
+        messages
           .map((msg, index) => (
             <MemodMessage
               scrollToMessage={scrollToMessage}
@@ -139,9 +130,9 @@ export const ChatMessagesRaw = ({
               {...msg}
               showUser={
                 !(
-                  messages[index + 1] &&
-                  messages[index + 1].sender.equals(msg.sender) &&
-                  messages[index + 1].endBlockTime >=
+                  messages[index - 1] &&
+                  messages[index - 1].sender.equals(msg.sender) &&
+                  messages[index - 1].endBlockTime >=
                     (msg.startBlockTime || new Date().valueOf() / 1000) -
                       INACTIVE_TIME
                 ) || !!(msg as any).reply

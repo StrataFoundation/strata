@@ -33,7 +33,7 @@ export async function hydrateTransactions(
   );
 
   // Some were null. Try again
-  if (rawTxs.some((t) => !t) && tries < 3) {
+  if (rawTxs.some((t) => !t) && tries < 5) {
     await sleep(500);
     return hydrateTransactions(connection, signatures, tries + 1);
   }

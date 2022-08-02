@@ -41,7 +41,7 @@ export const Chatroom: React.FC<{
     chat: chatKey,
     accelerated,
     vybeQuery,
-    useVybe: true,
+    useVybe,
     numTransactions: 50,
   });
   handleErrors(error);
@@ -78,7 +78,7 @@ export const Chatroom: React.FC<{
       [
         ...(messages || []),
         ...pendingMessages.filter((p) => !msgWeHave.has(p.id)),
-      ].sort((a, b) => b.startBlockTime - a.startBlockTime),
+      ].sort((a, b) => a.startBlockTime - b.startBlockTime),
     [msgWeHave, messages, pendingMessages]
   );
 

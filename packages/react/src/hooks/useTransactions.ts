@@ -60,8 +60,8 @@ interface ITransactions {
   loadingInitial: boolean;
   loadingMore: boolean;
   transactions: TransactionResponseWithSig[];
-  fetchMore(num: number): void;
-  fetchNew(num: number): void;
+  fetchMore(num: number): Promise<void>;
+  fetchNew(num: number): Promise<void>;
 }
 
 function removeDups(
@@ -131,7 +131,7 @@ export const useTransactions = ({
         cluster: cluster as Cluster,
         accelerator,
         callback: (newTx) => {
-          console.log("tx", newTx)
+          console.log("tx", newTx);
           setTransactions((txns) => removeDups([newTx, ...txns]));
         },
       });
@@ -145,10 +145,10 @@ export const useTransactions = ({
   }, [connection, subscribe, address, cluster]);
 
   useEffect(() => {
+    setTransactions([]);
     (async () => {
       if (!lazy) {
         setLoadingInitial(true);
-        setTransactions([]);
         try {
           const signatures = await getSignatures(
             connection,
