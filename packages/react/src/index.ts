@@ -32,6 +32,7 @@ export {
 
 export type { IAccountProviderProps } from "./contexts/accountContext";
 
+export { HolaplexAndVybeGraphqlProvider } from "./contexts/HolaplexAndVybeGraphqlProvider"
 export {
   AccountContext,
   AccountProvider,
@@ -138,7 +139,6 @@ export { useManyToOneSwapDriver } from "./hooks/useManyToOneSwapDriver";
 export { useFungibleChildEntangler } from "./hooks/useFungibleChildEntangler";
 export { useFungibleParentEntangler } from "./hooks/useFungibleParentEntangler";
 export { useEndpoint, getClusterAndEndpoint } from "./hooks/useEndpoint";
-export type { TransactionResponseWithSig  } from "./hooks/useTransactions";
 export { useTransactions } from "./hooks/useTransactions";
 export { useSolanaUnixTime } from "./hooks/useSolanaUnixTime";
 export { useTokenSwapFromFungibleEntangler } from "./hooks/useTokenSwapFromFungibleEntangler";

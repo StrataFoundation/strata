@@ -1,6 +1,12 @@
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { v4 as uuid } from "uuid";
 
+export {
+  subscribeTransactions,
+  hydrateTransactions,
+} from "./subscribeTransactions";
+export type { TransactionResponseWithSig } from "./subscribeTransactions";
+
 export enum Cluster {
   Devnet = "devnet",
   Mainnet = "mainnet-beta",

@@ -297,6 +297,7 @@ export interface IMessagePart extends MessagePartV0 {
 
 export interface IMessage {
   type: MessageType;
+  complete: boolean;
   id: string;
   txids: string[];
   startBlockTime: number;
@@ -789,20 +790,18 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
    * @param ignorePartial
    * @returns
    */
-  async getMessagesFromParts(
+  getMessagesFromParts(
     parts: IMessagePart[],
     ignorePartial: boolean = true
-  ): Promise<IMessage[]> {
+  ): IMessage[] {
     const partsById = parts.reduce((acc, part) => {
       acc[part.id] = acc[part.id] || [];
       acc[part.id].push(part);
       return acc;
     }, {} as Record<string, IMessagePart[]>);
 
-    const messages = await Promise.all(
-      Object.values(partsById).map((parts) =>
-        this.getMessageFromParts(parts, ignorePartial)
-      )
+    const messages = Object.values(partsById).map((parts) =>
+      this.getMessageFromParts(parts, ignorePartial)
     );
 
     return messages
@@ -858,14 +857,15 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
    * @param ignorePartial
    * @returns
    */
-  async getMessageFromParts(
+  getMessageFromParts(
     parts: IMessagePart[],
     ignorePartial: boolean = true
-  ): Promise<IMessage | undefined> {
+  ): IMessage | undefined {
     if (parts.length == 0) {
       return undefined;
     }
-    if (ignorePartial && parts.length !== parts[0].totalParts) {
+    const incomplete = parts.length !== parts[0].totalParts
+    if (ignorePartial && incomplete) {
       return undefined;
     }
 
@@ -888,6 +888,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     let decodedMessage: any;
     return {
       ...rest,
+      complete: !incomplete,
       referenceMessageId,
       type: messageType && (Object.keys(messageType as any)[0] as MessageType),
       encryptedSymmetricKey,

@@ -5,7 +5,8 @@ import {
   Skeleton,
   SkeletonCircle,
   Stack,
-  Text
+  Text,
+  usePrevious
 } from "@chakra-ui/react";
 import { sleep } from "@strata-foundation/spl-utils";
 import { css } from "emotion";
@@ -74,11 +75,11 @@ export const ChatMessagesRaw = ({
 
   const [atTop] = useAtTop();
 
-  useEffect(()=> {
+  useEffect(() => {
     if (atTop && !isLoadingMore && hasMore && !isLoading) {
-        fetchMore(FETCH_COUNT);
+      fetchMore(FETCH_COUNT);
     }
-  }, [atTop, hasMore, fetchMore, isLoadingMore, isLoading])
+  }, [atTop, hasMore, fetchMore, isLoadingMore, isLoading]);
 
   const scrollToTop = useScrollToTop();
 
@@ -92,10 +93,9 @@ export const ChatMessagesRaw = ({
     );
   }, [messages.length]);
 
-  const scrollTo = useScrollTo();
-
   const { execute: scrollToMessage } = useAsyncCallback(async function (
-    id: string
+    id: string,
+    behavior: ScrollBehavior = "smooth"
   ) {
     // listen to escape key press to break loop
     let breakLoop = false;
@@ -107,12 +107,12 @@ export const ChatMessagesRaw = ({
     function scrollIfExists() {
       let findElem = document.getElementById(id as string);
       if (findElem) {
-        findElem.scrollIntoView({ behavior: "smooth", block: "center" });
+        findElem.scrollIntoView({ behavior, block: "center" });
         return true;
       }
-      return false
+      return false;
     }
-    scrollIfExists()
+    scrollIfExists();
     document.addEventListener("keypress", keyPress);
     while (!breakLoop && hasMore) {
       if (!scrollIfExists()) {
@@ -151,7 +151,7 @@ export const ChatMessagesRaw = ({
       {!(isLoading || isLoadingMore) && !hasMessages && (
         <Stack
           w="full"
-          h="full"
+          h="100vh"
           justifyContent="center"
           alignItems="center"
           gap={0}
@@ -160,7 +160,7 @@ export const ChatMessagesRaw = ({
           lineHeight={9}
         >
           <Text fontSize="3xl" zIndex="1">
-            Its Quiet In Here
+            It{"'"}s Quiet In Here
           </Text>
           <Text fontSize="3xl" color="primary.500" zIndex="1">
             Say Something

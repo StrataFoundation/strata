@@ -17,7 +17,12 @@ const DARK_BG = {
   bg: "gray.900",
 };
 
-export const Chatroom: React.FC<{ chatKey?: PublicKey }> = ({ chatKey }) => {
+export const Chatroom: React.FC<{
+  chatKey?: PublicKey;
+  useVybe?: boolean;
+  vybeQuery?: any;
+  accelerated?: boolean;
+}> = ({ chatKey, accelerated, useVybe, vybeQuery }) => {
   const { handleErrors } = useErrorHandler();
   const [files, setFiles] = useState<{ name: string; file: File }[]>([]);
   const [pendingMessages, setPendingMessages] = useState<IMessageWithPending[]>(
@@ -32,7 +37,13 @@ export const Chatroom: React.FC<{ chatKey?: PublicKey }> = ({ chatKey }) => {
     hasMore,
     fetchMore,
     fetchNew,
-  } = useMessages(chatKey, true, 50);
+  } = useMessages({
+    chat: chatKey,
+    accelerated,
+    vybeQuery,
+    useVybe: true,
+    numTransactions: 50,
+  });
   handleErrors(error);
 
   const { execute: onFocus } = useAsyncCallback(async function () {

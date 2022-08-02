@@ -5,7 +5,12 @@ import {
   PublicKey,
   TransactionResponse,
 } from "@solana/web3.js";
-import { Cluster } from "@strata-foundation/accelerator";
+import {
+  Cluster,
+  subscribeTransactions,
+  TransactionResponseWithSig,
+  hydrateTransactions,
+} from "@strata-foundation/accelerator";
 import { sleep } from "@strata-foundation/spl-utils";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAccelerator } from "../contexts/acceleratorContext";
@@ -47,45 +52,6 @@ async function getSignatures(
   }
 
   return withinTime;
-}
-
-// Pending when coming from the accelerator
-export type TransactionResponseWithSig = Partial<TransactionResponse> & {
-  signature: string;
-  pending?: boolean;
-};
-
-async function hydrateTransactions(
-  connection: Connection | undefined,
-  signatures: ConfirmedSignatureInfo[],
-  tries: number = 0
-): Promise<TransactionResponseWithSig[]> {
-  if (!connection) {
-    return [];
-  }
-
-  const rawTxs = await connection.getTransactions(
-    signatures.map((sig) => sig.signature)
-  );
-
-  // Some were null. Try again
-  if (rawTxs.some((t) => !t) && tries < 3) {
-    await sleep(500);
-    return hydrateTransactions(connection, signatures, tries + 1);
-  }
-
-  const txs = rawTxs.map((t, index) => {
-    // @ts-ignore
-    t.signature = signatures[index].signature;
-    // @ts-ignore
-    t.pending = false;
-
-    return t as TransactionResponseWithSig;
-  });
-
-  return txs
-    .filter(truthy)
-    .sort((a, b) => (b.blockTime || 0) - (a.blockTime || 0));
 }
 
 interface ITransactions {
@@ -132,6 +98,7 @@ export const useTransactions = ({
   address,
   subscribe = false,
   accelerated = false,
+  lazy = false,
 }: {
   numTransactions: number;
   until?: Date;
@@ -140,11 +107,13 @@ export const useTransactions = ({
   subscribe?: boolean;
   /** Use the Strata accelerator service to see transacions before they are confirmed (if the user also sends to the accelerator) */
   accelerated?: boolean;
+  /** If lazy, don't fetch until fetchNew called */
+  lazy?: boolean;
 }): ITransactions => {
   const { accelerator } = useAccelerator();
   const { cluster } = useEndpoint();
   const { connection } = useConnection();
-  const [loadingInitial, setLoadingInitial] = useState(true);
+  const [loadingInitial, setLoadingInitial] = useState(!lazy);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<Error | undefined>();
   const [hasMore, setHasMore] = useState(false);
@@ -154,100 +123,49 @@ export const useTransactions = ({
   const addrStr = useMemo(() => address?.toBase58(), [address]);
 
   useEffect(() => {
-    let subId: number;
-    if (subscribe && address) {
-      subId = connection.onLogs(
+    let dispose: () => void | undefined;
+    if (connection && subscribe && address && cluster) {
+      dispose = subscribeTransactions({
+        connection,
         address,
-        async ({ signature, err }, { slot }) => {
-          try {
-            const newTxns = await hydrateTransactions(connection, [
-              {
-                slot,
-                signature,
-                blockTime: new Date().valueOf() / 1000,
-                memo: "",
-                err,
-              },
-            ]);
-            setTransactions((txns) => removeDups([...newTxns, ...txns]));
-          } catch (e: any) {
-            console.error("Error while fetching new tx", e);
-          }
+        cluster: cluster as Cluster,
+        accelerator,
+        callback: (newTx) => {
+          console.log("tx", newTx)
+          setTransactions((txns) => removeDups([newTx, ...txns]));
         },
-        "confirmed"
-      );
+      });
     }
-    return () => {
-      if (subId) {
-        connection.removeOnLogsListener(subId);
-      }
-    };
-  }, [subscribe, connection, addrStr, setTransactions]);
-
-  useEffect(() => {
-    let subId: string;
-    let promise = (async () => {
-      if (subscribe && address && accelerated && accelerator) {
-        subId = await accelerator.onTransaction(
-          cluster as Cluster,
-          address,
-          ({ transaction, txid, blockTime }) => {
-            setTransactions((txns) => {
-              try {
-                return removeDups([
-                  {
-                    signature: txid,
-                    transaction: {
-                      message: transaction.compileMessage(),
-                      signatures: transaction.signatures.map((sig) =>
-                        sig.publicKey.toBase58()
-                      ),
-                    },
-                    blockTime,
-                    pending: true,
-                  },
-                  ...txns,
-                ]);
-              } catch (e: any) {
-                console.error(e);
-                throw e;
-              }
-            });
-          }
-        );
-      }
-    })();
 
     return () => {
-      (async () => {
-        await promise;
-        if (subId && accelerator) {
-          accelerator.unsubscribeTransaction(subId);
-        }
-      })();
+      if (dispose) {
+        dispose();
+      }
     };
-  }, [subscribe, accelerated, accelerator, addrStr, setTransactions]);
+  }, [connection, subscribe, address, cluster]);
 
   useEffect(() => {
     (async () => {
-      setLoadingInitial(true);
-      setTransactions([]);
-      try {
-        const signatures = await getSignatures(
-          connection,
-          address,
-          until,
-          undefined,
-          numTransactions
-        );
+      if (!lazy) {
+        setLoadingInitial(true);
+        setTransactions([]);
+        try {
+          const signatures = await getSignatures(
+            connection,
+            address,
+            until,
+            undefined,
+            numTransactions
+          );
 
-        setHasMore(signatures.length === numTransactions);
+          setHasMore(signatures.length === numTransactions);
 
-        setTransactions(await hydrateTransactions(connection, signatures));
-      } catch (e: any) {
-        setError(e);
-      } finally {
-        setLoadingInitial(false);
+          setTransactions(await hydrateTransactions(connection, signatures));
+        } catch (e: any) {
+          setError(e);
+        } finally {
+          setLoadingInitial(false);
+        }
       }
     })();
   }, [connection, addrStr, until, setTransactions, numTransactions]);
