@@ -135,6 +135,8 @@ export function Message(
         : "initial",
     [highlightedBg, emojiReferenceMessageId, messageId, replyMessage?.id]
   );
+
+  const isReferenceMessage = messageId === emojiReferenceMessageId;
   const hover = useMemo(() => ({ bg: highlightedBg }), [highlightedBg]);
 
   const textColor = useColorModeValue("black", "white");
