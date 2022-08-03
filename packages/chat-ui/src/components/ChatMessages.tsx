@@ -1,43 +1,23 @@
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
-  Box,
   Flex,
   Icon,
   Skeleton,
   SkeletonCircle,
   Stack,
-  Text
+  Text,
 } from "@chakra-ui/react";
 import { sleep } from "@strata-foundation/spl-utils";
-import { css } from "emotion";
-import {
-  useCallback, useEffect, useMemo, useState
-} from "react";
+import throttle from "lodash/throttle";
 import { useAsyncCallback } from "react-async-hook";
-import ScrollToBottom, {
-  useAtBottom,
-  useAtTop,
-  useObserveScrollPosition,
-  useScrollTo,
-  useScrollToTop
-} from "react-scroll-to-bottom";
 import {
   IMessageWithPending,
-  IMessageWithPendingAndReacts
+  IMessageWithPendingAndReacts,
 } from "../hooks/useMessages";
 import { MemodMessage } from "./message";
 
-const ROOT_CSS = css({
-  width: "100%",
-  maxHeight: "100%",
-});
-
-const SCROLL_CSS = css({
-  width: "100%",
-  maxHeight: "100%",
-  overflowY: "auto",
-});
-
 const INACTIVE_TIME = 60; // After 1 minute, new grouping
+const INFINITE_SCROLL_THRESHOLD = 300;
 const FETCH_COUNT = 50;
 
 export const ChatMessageSkeleton = () => (
@@ -56,31 +36,57 @@ export const ChatMessageSkeleton = () => (
   </Flex>
 );
 
-type ChatProps = {
-  isLoading: boolean;
-  isLoadingMore: boolean;
-  hasMore: boolean;
-  fetchMore: (num: number) => void;
-  messages?: (IMessageWithPendingAndReacts | IMessageWithPending)[];
-};
-export const ChatMessagesRaw = ({
+const canUseDOM = typeof window !== "undefined";
+const useIsomorphicLayoutEffect = canUseDOM ? useLayoutEffect : useEffect;
+
+
+export const ChatMessages = ({
   isLoading,
   isLoadingMore,
   hasMore,
   fetchMore = () => null,
+  scrollRef,
   messages = [],
-}: ChatProps) => {
+}: {
+  isLoading: boolean;
+  isLoadingMore: boolean;
+  hasMore: boolean;
+  fetchMore: (num: number) => void;
+  scrollRef?: any;
+  messages?: (IMessageWithPendingAndReacts | IMessageWithPending)[];
+}) => {
+  const myScrollRef = useRef(null);
+  if (!scrollRef) scrollRef = myScrollRef;
   const hasMessages = messages.length > 0;
+  const [isSticky, setIsSticky] = useState(true);
 
-  const [atTop] = useAtTop();
-
-  useEffect(()=> {
-    if (atTop && !isLoadingMore && hasMore && !isLoading) {
-        fetchMore(FETCH_COUNT);
+  // On render if we dont have a scroll bar
+  // and we have hasMore then fetch initialMore
+  useEffect(() => {
+    if (
+      scrollRef.current.scrollHeight == scrollRef.current.offsetHeight &&
+      hasMore &&
+      !isLoading
+    ) {
+      fetchMore(FETCH_COUNT);
     }
-  }, [atTop, hasMore, fetchMore, isLoadingMore, isLoading])
+  }, [scrollRef, hasMore, isLoading, fetchMore]);
 
-  const scrollToTop = useScrollToTop();
+  const handleOnScroll = useCallback(
+    throttle((e: any) => {
+      const scrollOffset = e.target.scrollHeight + e.target.scrollTop;
+
+      if (
+        scrollOffset <= e.target.offsetHeight + INFINITE_SCROLL_THRESHOLD &&
+        !isLoadingMore &&
+        hasMore
+      ) {
+        fetchMore(FETCH_COUNT);
+      }
+      setIsSticky(e.target.scrollTop > -50);
+    }, 300),
+    [isLoadingMore, fetchMore, hasMore, setIsSticky]
+  );
 
   const loaders = useMemo(() => {
     return !messages.length ? (
@@ -92,8 +98,6 @@ export const ChatMessagesRaw = ({
     );
   }, [messages.length]);
 
-  const scrollTo = useScrollTo();
-
   const { execute: scrollToMessage } = useAsyncCallback(async function (
     id: string
   ) {
@@ -104,50 +108,57 @@ export const ChatMessagesRaw = ({
         breakLoop = true;
       }
     }
-    function scrollIfExists() {
+    document.addEventListener("keypress", keyPress);
+    while (!breakLoop && hasMore && scrollRef.current) {
       let findElem = document.getElementById(id as string);
       if (findElem) {
         findElem.scrollIntoView({ behavior: "smooth", block: "center" });
-        return true;
+        return;
       }
-      return false
-    }
-    scrollIfExists()
-    document.addEventListener("keypress", keyPress);
-    while (!breakLoop && hasMore) {
-      if (!scrollIfExists()) {
-        // scroll to the top which should load more messages
-        scrollToTop();
-      }
-
+      // scroll to the top which should load more messages
+      scrollRef.current.scroll({
+        top: -scrollRef.current.scrollHeight,
+        behavior: "smooth",
+      });
       await sleep(300);
     }
     document.removeEventListener("keypress", keyPress);
   });
 
+  const scrollAnchorRef = useRef<HTMLDivElement>(null);
+  useIsomorphicLayoutEffect(() => {
+    if (isSticky)
+      scrollAnchorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [messages, isSticky]);
+
   return (
-    <>
-      {(isLoading || isLoadingMore) && loaders}
+    <Flex
+      grow={1}
+      overflowY="auto"
+      direction="column-reverse"
+      ref={scrollRef}
+      onScroll={handleOnScroll}
+    >
+      <div ref={scrollAnchorRef} style={{ height: "0px" }} id="scroll-anchor" />
+
       {!isLoading &&
-        messages &&
-        Array.from(messages)
-          .reverse()
-          .map((msg, index) => (
-            <MemodMessage
-              scrollToMessage={scrollToMessage}
-              key={msg?.id}
-              {...msg}
-              showUser={
-                !(
-                  messages[index + 1] &&
-                  messages[index + 1].sender.equals(msg.sender) &&
-                  messages[index + 1].endBlockTime >=
-                    (msg.startBlockTime || new Date().valueOf() / 1000) -
-                      INACTIVE_TIME
-                ) || !!(msg as any).reply
-              }
-            />
-          ))}
+        messages?.map((msg, index) => (
+          <MemodMessage
+            scrollToMessage={scrollToMessage}
+            key={msg?.id}
+            {...msg}
+            showUser={
+              !(
+                messages[index + 1] &&
+                messages[index + 1].sender.equals(msg.sender) &&
+                messages[index + 1].endBlockTime >=
+                  (msg.startBlockTime || new Date().valueOf() / 1000) -
+                    INACTIVE_TIME
+              ) || !!(msg as any).reply
+            }
+          />
+        ))}
+      {(isLoading || isLoadingMore) && loaders}
       {!(isLoading || isLoadingMore) && !hasMessages && (
         <Stack
           w="full"
@@ -183,16 +194,6 @@ export const ChatMessagesRaw = ({
           </Icon>
         </Stack>
       )}
-    </>
-  );
-};
-
-export const ChatMessages = (props: ChatProps) => {
-  return (
-    <Flex flexDir="column" flexGrow={1} justify="flex-end" overflow="hidden">
-      <ScrollToBottom className={ROOT_CSS} scrollViewClassName={SCROLL_CSS}>
-        <ChatMessagesRaw {...props} />
-      </ScrollToBottom>
     </Flex>
   );
 };
