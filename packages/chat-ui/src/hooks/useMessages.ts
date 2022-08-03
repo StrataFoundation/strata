@@ -203,6 +203,7 @@ const lambdaFetcher = async (args: FetchArgs) => {
     (d: any) =>
       ({
         ...d,
+        blockTime: Number(d.blocktime),
         readPermissionAmount: new BN(d.readPermissionAmount),
         readPermissionKey: new PublicKey(d.readPermissionKey),
         sender: new PublicKey(d.sender),
@@ -423,28 +424,4 @@ export function useMessages({
     error: rest.error || error || fetchError,
     messages: messagesWithReactsAndReplies,
   };
-}
-
-function getMessageType(d: any): RawMessageType | undefined {
-  if (d.isReact) {
-    return RawMessageType.React;
-  } else if (d.isHtml) {
-    return RawMessageType.Html;
-  } else if (d.isGify) {
-    return RawMessageType.Gify;
-  } else if (d.isImage) {
-    return RawMessageType.Image;
-  } else if (d.isText) {
-    return RawMessageType.Text;
-  }
-}
-
-function getPermissionType(type: string, d: any): PermissionType | undefined {
-  if (d[type + "PermissionTypeIsNft"]) {
-    return PermissionType.NFT;
-  } else if (d[type + "PermissionTypeIsNative"]) {
-    return PermissionType.Native;
-  } else if (d[type + "PermissionTypeIsToken"]) {
-    return PermissionType.Token;
-  }
 }
