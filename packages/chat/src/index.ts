@@ -1998,7 +1998,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   }
 
   async sendMessageInstructions({
-    payer = this.wallet.publicKey,
     sender = this.wallet.publicKey,
     chat,
     message: rawMessage,
@@ -2022,7 +2021,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       chatPermissions
     ))!;
 
-    const chatAcc = (await this.getChat(chat))!;
     let readAmount;
     try {
       const readMint = await getMintInfo(
