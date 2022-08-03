@@ -150,8 +150,6 @@ export const useTransactions = ({
       if (!lazy) {
         setLoadingInitial(true);
         try {
-        console.log("initial");
-
           const signatures = await getSignatures(
             connection,
             address,
@@ -176,7 +174,6 @@ export const useTransactions = ({
     async (num: number) => {
       setLoadingMore(true);
       try {
-        console.log("fetch more");
         const lastTx = transactions[transactions.length - 1];
         const signatures = await getSignatures(
           connection,
@@ -220,7 +217,6 @@ export const useTransactions = ({
           date.setUTCSeconds(earlyBlockTime);
           lastDate = date;
         }
-        console.log("fetch new");
         const signatures = await getSignatures(
           connection,
           address,
