@@ -1,14 +1,17 @@
 import * as anchor from "@project-serum/anchor";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
-import { useSolanaUnixTime } from "@strata-foundation/react";
+import { useMetaplexTokenMetadata, useSolanaUnixTime } from "@strata-foundation/react";
 import BN from "bn.js";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   getAtaForMint,
   toDate
 } from "../components";
-import { ICandyMachine, useCandyMachine } from "./useCandyMachine";
+import { ICandyMachine, useCandyMachine, CANDY_MACHINE_PROGRAM } from "./useCandyMachine";
+import { CollectionPDA } from "@metaplex-foundation/mpl-candy-machine";
+import { useAsync } from "react-async-hook";
+
 
 export interface ICandyMachineState {
   candyMachine: ICandyMachine | undefined;
@@ -18,6 +21,9 @@ export interface ICandyMachineState {
   isWhitelistUser: boolean;
   isPresale: boolean;
   discountPrice: BN | undefined;
+  name: string | undefined;
+  description: string | undefined;
+  image: string | undefined;
 }
 
 export function useCandyMachineInfo(
@@ -36,6 +42,23 @@ export function useCandyMachineInfo(
 
   const { info: cndy } = useCandyMachine(candyMachineId);
   const unixTime = useSolanaUnixTime();
+
+  const { result: collectionMint, error } = useAsync(async () => {
+    if (!candyMachineId) {
+      return null
+    }
+    const [collectionPda, _] = await PublicKey.findProgramAddress(
+      [
+        Buffer.from("collection", "utf-8"),
+        candyMachineId.toBuffer(),
+      ],
+      CANDY_MACHINE_PROGRAM
+    );
+    const pda = await CollectionPDA.fromAccountAddress(connection, collectionPda);
+    return pda.mint;
+  }, [candyMachineId]);
+
+  const { description, image, displayName } = useMetaplexTokenMetadata(collectionMint);
 
   useEffect(() => {
     (async () => {
@@ -139,5 +162,8 @@ export function useCandyMachineInfo(
     isWhitelistUser,
     isPresale,
     discountPrice,
+    description,
+    image,
+    name: displayName,
   };
 }
