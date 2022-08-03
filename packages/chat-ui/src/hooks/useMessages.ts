@@ -1,13 +1,23 @@
-import { usePrevious } from "@chakra-ui/react";
+import { gql, useLazyQuery } from "@apollo/client";
 import { PublicKey } from "@solana/web3.js";
-import { ChatSdk, IMessage, MessageType } from "@strata-foundation/chat";
+import { TransactionResponseWithSig } from "@strata-foundation/accelerator";
 import {
-  TransactionResponseWithSig,
+  ChatSdk,
+  IMessage,
+  IMessagePart,
+  MessageType, PermissionType, RawMessageType
+} from "@strata-foundation/chat";
+import {
   truthy,
-  useTransactions,
+  useEndpoint,
+  usePublicKey,
+  useTransactions
 } from "@strata-foundation/react";
-import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
+import BN from "bn.js";
+import { useEffect, useMemo, useState } from "react";
+import { useAsync } from "react-async-hook";
 import { useChatSdk } from "../contexts/chatSdk";
+import { useChat } from "./useChat";
 
 export interface IMessageWithPending extends IMessage {
   pending?: boolean;
@@ -30,44 +40,32 @@ export interface IUseMessages {
   loadingInitial: boolean;
   loadingMore: boolean;
   messages: IMessageWithPendingAndReacts[] | undefined;
-  fetchMore(num: number): void;
-  fetchNew(num: number): void;
+  fetchMore(num: number): Promise<void>;
+  fetchNew(num: number): Promise<void>;
 }
 
-const emptyTx = new Set<string>();
+const txToMessages: Record<string, IMessagePart[]> = {};
 
-async function getMessages(
-  chat: PublicKey,
+async function getMessagesFromTxs(
+  chat?: PublicKey,
   chatSdk?: ChatSdk,
-  txs?: TransactionResponseWithSig[],
-  prevMessages?: IMessageWithPending[]
+  txs: TransactionResponseWithSig[] = []
 ): Promise<IMessageWithPending[]> {
-  if (chatSdk && txs) {
-    const completedMessages = (prevMessages || []).filter(
-      (msg) => !msg.pending
-    );
+  if (chat && chatSdk) {
     const failedTx = new Set(
       Array.from(txs.filter((tx) => tx.meta?.err).map((tx) => tx.signature))
     );
-    const completedTxs = new Set([
-      ...Array.from((completedMessages || []).map((msg) => msg.txids).flat()),
-      ...emptyTx,
-    ]);
-    const newTxs = txs.filter((tx) => !completedTxs.has(tx.signature));
-    if (newTxs.length > 0) {
-      const newParts = (
-        await Promise.all(
-          newTxs.map(
-            async ({
-              signature: sig,
-              transaction,
-              pending,
-              meta,
-              blockTime,
-            }) => {
-              let found;
+    const newParts = (
+      await Promise.all(
+        txs.map(
+          async ({ signature: sig, transaction, pending, meta, blockTime }) => {
+            if (
+              !txToMessages[sig] ||
+              // @ts-ignore
+              (txToMessages[sig][0].pending && !pending)
+            ) {
               try {
-                found = (
+                const found = (
                   await chatSdk.getMessagePartsFromInflatedTx({
                     transaction: transaction!,
                     txid: sig,
@@ -76,35 +74,27 @@ async function getMessages(
                     chat,
                   })
                 ).map((f) => ({ ...f, pending }));
+                txToMessages[sig] = found;
               } catch (e: any) {
                 console.warn("Failed to decode message", e);
               }
-
-              if (!found || (found && found.length == 0)) {
-                emptyTx.add(sig);
-              }
-
-              return found;
             }
-          )
+
+            return txToMessages[sig];
+          }
         )
       )
-        .flat()
-        .filter(truthy);
-      return [
-        ...(completedMessages || []),
-        ...(await chatSdk.getMessagesFromParts(newParts)),
-      ]
-        .filter((msg) => msg.txids.every((txid) => !failedTx.has(txid)))
-        .sort((a, b) => b.startBlockTime - a.startBlockTime)
-        .map((message) => {
-          // @ts-ignore
-          message.pending = message.parts.some((p) => p.pending);
-          return message;
-        });
-    } else {
-      return prevMessages || [];
-    }
+    )
+      .flat()
+      .filter(truthy);
+
+    return [...(await chatSdk.getMessagesFromParts(newParts))]
+      .filter((msg) => msg.txids.every((txid) => !failedTx.has(txid)))
+      .map((message) => {
+        // @ts-ignore
+        message.pending = message.parts.some((p) => p.pending);
+        return message;
+      });
   }
 
   return [];
@@ -114,69 +104,280 @@ async function getMessages(
 // chat -> message id -> number of reacts
 let cachedReacts: Record<string, Record<string, IMessageWithPending[]>> = {};
 
-export function useMessages(
-  chat: PublicKey | undefined,
-  accelerated: boolean = true,
-  numTransactions: number = 50
-): IUseMessages {
+function setDifference(a: Set<string>, b: Set<string>): Set<string> {
+  return new Set(Array.from(a).filter((item) => !b.has(item)));
+}
+const mergeMessages = (
+  chatSdk: ChatSdk,
+  message1: IMessageWithPending,
+  message2: IMessageWithPending
+) => {
+  const pending = message1.pending && message2.pending;
+  if (message2.complete) {
+    if (message2.pending != pending) {
+      return { ...message2, pending };
+    }
+    return message2;
+  }
+
+  if (message1.complete) {
+    message1.pending = pending;
+    if (message1.pending != pending) {
+      return { ...message1, pending };
+    }
+
+    return message1;
+  }
+
+  // If new parts not found
+  if (
+    setDifference(new Set(message1.txids), new Set(message2.txids)).size == 0
+  ) {
+    if (message1.pending) {
+      return message2;
+    }
+
+    return message2;
+  }
+
+  const set = new Set();
+  const allParts = message1.parts.concat(...message2.parts);
+  const nonPendingParts = new Set(
+    // @ts-ignore
+    allParts.filter((p) => !p.pending).map((p) => p.txid)
+  );
+
+  return chatSdk.getMessageFromParts(
+    allParts.filter((part) => {
+      // Prefer non pending complete ones over pending incompletes
+      // @ts-ignore
+      if (part.pending && nonPendingParts.has(part.txid)) {
+        return false;
+      }
+
+      if (set.has(part.txid)) {
+        return false;
+      }
+      set.add(part.txid);
+      return true;
+    })
+  );
+};
+
+const reduceMessages = (
+  chatSdk: ChatSdk,
+  messageState: Record<string, IMessageWithPending>,
+  messages: IMessageWithPending[]
+): Record<string, IMessageWithPending> => {
+  return messages.reduce(
+    (acc, message) => {
+      const existing = acc[message.id];
+      if (existing) {
+        acc[message.id] = mergeMessages(chatSdk, message, existing)!;
+      } else {
+        acc[message.id] = message;
+      }
+
+      return acc;
+    },
+    { ...messageState }
+  );
+};
+
+export function useMessages({
+  chat,
+  accelerated,
+  numTransactions = 50,
+  useVybe,
+  vybeQuery,
+}: {
+  chat: PublicKey | undefined;
+  accelerated?: boolean;
+  numTransactions?: number;
+  useVybe?: boolean;
+  vybeQuery?: any;
+}): IUseMessages {
   const { chatSdk } = useChatSdk();
+  if (typeof accelerated === "undefined") {
+    accelerated = true;
+  }
+  const { info: chatAcc } = useChat(chat);
+  const { cluster } = useEndpoint();
+  const canUseVybe = cluster === "mainnet-beta" && (chatAcc?.postMessageProgramId.equals(ChatSdk.ID) || vybeQuery);
+  if (!canUseVybe) {
+    useVybe = false
+  }
+  if (typeof useVybe === "undefined") {
+    useVybe = true;
+  }
+
+  const [rawMessages, setRawMessages] = useState<
+    Record<string, IMessageWithPending>
+  >({});
+
+  if (!vybeQuery) {
+    vybeQuery = gql`
+      query GetMessageParts(
+        $chat: String!
+        $maxBlockTime: numeric!
+        $minBlockTime: numeric!
+        $offset: Int!
+        $limit: Int!
+      ) {
+        strata_strata {
+          pid_chatGL6yNgZT2Z3BeMYGcgdMpcBKdmxko4C5UhEX4To {
+            message_parts_message_part_event_v_0(
+              order_by: { blocktime: desc }
+              where: {
+                blocktime: { _lt: $maxBlockTime, _gt: $minBlockTime }
+                chat: { _eq: $chat }
+              }
+              offset: $offset
+              limit: $limit
+            ) {
+              blockTime: blocktime
+              id: id_1
+              isReact: messageType(path: "react")
+              isText: messageType(path: "text")
+              isGify: messageType(path: "gify")
+              isImage: messageType(path: "image")
+              isHtml: messageType(path: "html")
+              readPermissionAmount
+              readPermissionKey
+              referenceMessageId
+              sender
+              txid: signature
+              totalParts
+              signer
+              readPermissionTypeIsNative: readPermissionType(path: "native")
+              readPermissionTypeIsToken: readPermissionType(path: "token")
+              readPermissionTypeIsNft: readPermissionType(path: "nft")
+              postPermissionTypeIsNative: readPermissionType(path: "native")
+              postPermissionTypeIsToken: readPermissionType(path: "token")
+              postPermissionTypeIsNft: readPermissionType(path: "nft")
+              currentPart
+              encryptedSymmetricKey
+              conditionVersion
+              content
+              chat
+              blocktime
+            }
+          }
+        }
+      }
+    `;
+  }
   const { transactions, loadingInitial, ...rest } = useTransactions({
     address: chat,
     numTransactions,
     subscribe: true,
+    lazy: true,
     accelerated,
   });
 
-  const [state, setState] = useReducer(
-    (state: IUseMessagesState, newState: Partial<IUseMessagesState>) => ({
-      ...state,
-      ...newState,
-    }),
-    {
-      error: undefined,
-      messages: undefined,
-      loading: true,
-    } as IUseMessagesState
-  );
-
-  const chatB58 = chat?.toBase58();
-  const { loading, error, messages } = state;
-
+  const stablePubkey = usePublicKey(chat?.toBase58());
+  // Clear messages when chat changes
   useEffect(() => {
-    setState({
-      loading: true,
-      messages: undefined,
-      error: undefined,
-    });
-  }, [chatB58]);
-
-  useEffect(() => {
-    if (messages != undefined) {
-      setState({ loading: false });
+    if (stablePubkey) {
+      setRawMessages((messages) => {
+        return Object.fromEntries(
+          Object.entries(messages).filter((entry) => {
+            return entry[1].chatKey && entry[1].chatKey.equals(stablePubkey);
+          })
+        );
+      });
     }
-  }, [messages]);
+  }, [stablePubkey]);
+
+  const currentTime = useMemo(() => Date.now() / 1000, []);
+  const variables = useMemo(() => {
+    if (chat) {
+      return {
+        chat: chat.toBase58(),
+        minBlockTime: 0,
+        maxBlockTime: currentTime,
+        offset: 0,
+        limit: numTransactions,
+      };
+    }
+  }, [currentTime, chat, numTransactions]);
+  const [loadVybe, { loading: loadingVybe, data: vybeData }] =
+    useLazyQuery<any>(vybeQuery, {
+      variables,
+      context: {
+        clientName: "vybe",
+      },
+    });
+  const vybeMessageParts = useMemo(
+    () =>
+      vybeData?.strata_strata[0].pid_chatGL6yNgZT2Z3BeMYGcgdMpcBKdmxko4C5UhEX4To.message_parts_message_part_event_v_0.map(
+        (d: any) => 
+          ({
+            ...d,
+            readPermissionAmount: new BN(d.readPermissionAmount),
+            readPermissionKey: new PublicKey(d.readPermissionKey),
+            sender: new PublicKey(d.sender),
+            signer: new PublicKey(d.signer),
+            chat: new PublicKey(d.chat),
+            pending: false,
+            messageType: getMessageType(d),
+            readPermissionType: getPermissionType("read", d),
+          } as IMessagePart[])
+      ),
+    [vybeData]
+  );
+  
+  useEffect(() => {
+    if (chatSdk && vybeMessageParts) {
+      setRawMessages((rawMessages) => {
+        const messages = chatSdk.getMessagesFromParts(vybeMessageParts);
+        return reduceMessages(chatSdk, rawMessages, messages);
+      });
+    }
+  }, [vybeMessageParts, chatSdk]);
+
+  const {
+    result: txMessages,
+    loading,
+    error,
+  } = useAsync(getMessagesFromTxs, [stablePubkey, chatSdk, transactions]);
 
   useEffect(() => {
-    (async () => {
-      if (!loadingInitial && chat && chatSdk && transactions.length) {
-        try {
-          const newMessages = await getMessages(
-            chat,
-            chatSdk,
-            transactions,
-            messages
-          );
-          setState({
-            messages: newMessages.filter(msg => msg.chatKey.equals(chat)),
-            error: undefined,
-          });
-        } catch (e: any) {
-          setState({ error: e, loading: false, messages: [] });
-        }
-      }
-    })();
-  }, [chatSdk, transactions, loadingInitial]);
+    if (chatSdk && txMessages) {
+      setRawMessages((rawMessages) => {
+        return reduceMessages(chatSdk, rawMessages, txMessages);
+      });
+    }
+  }, [txMessages, chatSdk]);
 
+  useEffect(() => {
+    if (variables && useVybe) {
+      loadVybe({
+        variables,
+        context: {
+          clientName: "vybe",
+        },
+      });
+    } else if (stablePubkey && !useVybe) {
+      rest.fetchMore(numTransactions);
+    }
+  }, [
+    numTransactions,
+    useVybe,
+    rest.fetchMore,
+    loadVybe,
+    variables,
+    rest.fetchMore,
+    stablePubkey,
+  ]);
+
+  const messages = useMemo(
+    () =>
+      Object.values(rawMessages).sort(
+        (a, b) => b.startBlockTime - a.startBlockTime
+      ),
+    [rawMessages]
+  );
   // Group by and pull off reaction and reply messages
   const messagesWithReactsAndReplies = useMemo(() => {
     if (!messages) {
@@ -230,12 +431,66 @@ export function useMessages(
             : null,
         };
       });
-  }, [chat, messages]);
+  }, [stablePubkey, messages]);
 
   return {
     ...rest,
-    loadingInitial: loadingInitial || loading,
+    hasMore: useVybe
+      ? messages.length > 0 && vybeMessageParts && vybeMessageParts.length >= numTransactions
+      : rest.hasMore,
+    fetchMore: useVybe
+      ? async(num) => {
+          await loadVybe({
+            variables: {
+              ...variables,
+              limit: num,
+              maxBlockTime:
+                vybeMessageParts[vybeMessageParts.length - 1] &&
+                vybeMessageParts[vybeMessageParts.length - 1].blockTime,
+            },
+          })
+      }
+      : rest.fetchMore,
+    fetchNew: useVybe
+      ? async (num) => {
+          await loadVybe({
+            variables: {
+              ...variables,
+              limit: num,
+              maxBlockTime: new Date().valueOf() / 1000,
+              minBlockTime:
+                vybeMessageParts[0] ? vybeMessageParts[0].blockTime : 0,
+            },
+          });
+        }
+      : rest.fetchNew,
+    loadingInitial: loadingInitial || (useVybe && !vybeData && !loadingVybe),
+    loadingMore: loading || loadingVybe || rest.loadingMore,
     error: rest.error || error,
     messages: messagesWithReactsAndReplies,
   };
+}
+
+function getMessageType(d: any): RawMessageType | undefined {
+  if (d.isReact) {
+    return RawMessageType.React;
+  } else if (d.isHtml) {
+    return RawMessageType.Html;
+  } else if (d.isGify) {
+    return RawMessageType.Gify;
+  } else if (d.isImage) {
+    return RawMessageType.Image;
+  } else if (d.isText) {
+    return RawMessageType.Text;
+  }
+}
+
+function getPermissionType(type: string, d: any): PermissionType | undefined {
+  if (d[type + "PermissionTypeIsNft"]) {
+    return PermissionType.NFT;
+  } else if (d[type + "PermissionTypeIsNative"]) {
+    return PermissionType.Native;
+  } else if (d[type + "PermissionTypeIsToken"]) {
+    return PermissionType.Token;
+  }
 }

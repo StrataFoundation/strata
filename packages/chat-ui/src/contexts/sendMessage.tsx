@@ -125,6 +125,7 @@ async function sendMessage({
       const content = { ...rest, decryptedAttachments: fileAttachments };
 
       onAddPendingMessage({
+        complete: true,
         type: content.type,
         sender: chatSdk.wallet.publicKey,
         id: messageId,
