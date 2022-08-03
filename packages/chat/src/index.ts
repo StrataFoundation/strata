@@ -504,15 +504,15 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     const cached = storage.get("lit-auth-sol-signature");
     const cachedDate = storage.get("lit-auth-sol-signature-date") || 0;
     const cachedAuthSig = JSON.parse(cached as string);
+    if (!this.wallet) {
+      return;
+    }
     if (
       Number(cachedDate) >= new Date().valueOf() - 24 * 60 * 60 * 1000 &&
       this.wallet.publicKey.toBase58() === cachedAuthSig?.address
     ) {
       this.litAuthSig = cachedAuthSig;
       return;
-    }
-    if (!this.wallet) {
-      return
     }
     try {
       // @ts-ignore
