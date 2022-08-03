@@ -32,7 +32,6 @@ export {
 
 export type { IAccountProviderProps } from "./contexts/accountContext";
 
-export { HolaplexAndVybeGraphqlProvider } from "./contexts/HolaplexAndVybeGraphqlProvider"
 export {
   AccountContext,
   AccountProvider,
