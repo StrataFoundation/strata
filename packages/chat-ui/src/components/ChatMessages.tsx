@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   Flex,
   Icon,
@@ -36,6 +36,10 @@ export const ChatMessageSkeleton = () => (
   </Flex>
 );
 
+const canUseDOM = typeof window !== "undefined";
+const useIsomorphicLayoutEffect = canUseDOM ? useLayoutEffect : useEffect;
+
+
 export const ChatMessages = ({
   isLoading,
   isLoadingMore,
@@ -54,6 +58,7 @@ export const ChatMessages = ({
   const myScrollRef = useRef(null);
   if (!scrollRef) scrollRef = myScrollRef;
   const hasMessages = messages.length > 0;
+  const [isSticky, setIsSticky] = useState(true);
 
   // On render if we dont have a scroll bar
   // and we have hasMore then fetch initialMore
@@ -78,8 +83,9 @@ export const ChatMessages = ({
       ) {
         fetchMore(FETCH_COUNT);
       }
+      setIsSticky(e.target.scrollTop > -50);
     }, 300),
-    [isLoadingMore, fetchMore, hasMore]
+    [isLoadingMore, fetchMore, hasMore, setIsSticky]
   );
 
   const loaders = useMemo(() => {
@@ -119,6 +125,12 @@ export const ChatMessages = ({
     document.removeEventListener("keypress", keyPress);
   });
 
+  const scrollAnchorRef = useRef<HTMLDivElement>(null);
+  useIsomorphicLayoutEffect(() => {
+    if (isSticky)
+      scrollAnchorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [messages, isSticky]);
+
   return (
     <Flex
       grow={1}
@@ -127,6 +139,8 @@ export const ChatMessages = ({
       ref={scrollRef}
       onScroll={handleOnScroll}
     >
+      <div ref={scrollAnchorRef} style={{ height: "0px" }} id="scroll-anchor" />
+
       {!isLoading &&
         messages?.map((msg, index) => (
           <MemodMessage

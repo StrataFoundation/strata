@@ -76,6 +76,7 @@ import { uploadFiles } from "./shdw";
 
 const MESSAGE_MAX_CHARACTERS = 352; // TODO: This changes with optional accounts in the future
 
+export { RawMessageType };
 export * from "./generated/chat";
 export * from "./shdw";
 export * from "./lit";

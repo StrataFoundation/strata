@@ -1,22 +1,23 @@
 import { gql, useLazyQuery } from "@apollo/client";
 import { PublicKey } from "@solana/web3.js";
+import { TransactionResponseWithSig } from "@strata-foundation/accelerator";
 import {
   ChatSdk,
   IMessage,
   IMessagePart,
-  MessageType,
-  PermissionType,
+  MessageType, PermissionType, RawMessageType
 } from "@strata-foundation/chat";
-import { TransactionResponseWithSig } from "@strata-foundation/accelerator";
 import {
   truthy,
+  useEndpoint,
   usePublicKey,
-  useTransactions,
+  useTransactions
 } from "@strata-foundation/react";
 import BN from "bn.js";
 import { useEffect, useMemo, useState } from "react";
 import { useAsync } from "react-async-hook";
 import { useChatSdk } from "../contexts/chatSdk";
+import { useChat } from "./useChat";
 
 export interface IMessageWithPending extends IMessage {
   pending?: boolean;
@@ -199,6 +200,12 @@ export function useMessages({
   const { chatSdk } = useChatSdk();
   if (typeof accelerated === "undefined") {
     accelerated = true;
+  }
+  const { info: chatAcc } = useChat(chat);
+  const { cluster } = useEndpoint();
+  const canUseVybe = cluster === "mainnet-beta" && (chatAcc?.postMessageProgramId.equals(ChatSdk.ID) || vybeQuery);
+  if (!canUseVybe) {
+    useVybe = false
   }
   if (typeof useVybe === "undefined") {
     useVybe = true;
@@ -464,17 +471,17 @@ export function useMessages({
   };
 }
 
-function getMessageType(d: any): MessageType | undefined {
+function getMessageType(d: any): RawMessageType | undefined {
   if (d.isReact) {
-    return MessageType.React;
+    return RawMessageType.React;
   } else if (d.isHtml) {
-    return MessageType.Html;
+    return RawMessageType.Html;
   } else if (d.isGify) {
-    return MessageType.Gify;
+    return RawMessageType.Gify;
   } else if (d.isImage) {
-    return MessageType.Image;
+    return RawMessageType.Image;
   } else if (d.isText) {
-    return MessageType.Text;
+    return RawMessageType.Text;
   }
 }
 
