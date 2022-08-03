@@ -358,10 +358,11 @@ export function useMessages({
           clientName: "vybe",
         },
       });
-    } else if (stablePubkey && !useVybe) {
+    } else if (stablePubkey && !useVybe && chatAcc) {
       rest.fetchMore(numTransactions);
     }
   }, [
+    chatAcc,
     numTransactions,
     useVybe,
     rest.fetchMore,
