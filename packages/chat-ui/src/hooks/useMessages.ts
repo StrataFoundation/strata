@@ -1,4 +1,3 @@
-import { gql, useLazyQuery } from "@apollo/client";
 import { PublicKey } from "@solana/web3.js";
 import { TransactionResponseWithSig } from "@strata-foundation/accelerator";
 import {
@@ -14,8 +13,8 @@ import {
   useTransactions
 } from "@strata-foundation/react";
 import BN from "bn.js";
-import { useEffect, useMemo, useState } from "react";
-import { useAsync } from "react-async-hook";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useAsync, useAsyncCallback } from "react-async-hook";
 import { useChatSdk } from "../contexts/chatSdk";
 import { useChat } from "./useChat";
 
@@ -184,18 +183,49 @@ const reduceMessages = (
   );
 };
 
+export type FetchArgs = { minBlockTime: number; maxBlockTime: number; chat: PublicKey, limit: number, offset: number };
+export type Fetcher = (args: FetchArgs) => Promise<IMessagePart[]>;
+
+function capitalizeFirstLetter(string: string): string {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+export const MESSAGE_LAMBDA =
+  "https://32spxe7tmbte5systjnrfkzhhy0yealb.lambda-url.us-east-2.on.aws/";
+const lambdaFetcher = async (args: FetchArgs) => {
+  const res = await fetch(`${MESSAGE_LAMBDA}`, {
+    body: JSON.stringify(args),
+    method: "POST",
+  });
+  const rows = await res.json();
+
+  return rows.map(
+    (d: any) =>
+      ({
+        ...d,
+        blockTime: Number(d.blocktime),
+        readPermissionAmount: new BN(d.readPermissionAmount),
+        readPermissionKey: new PublicKey(d.readPermissionKey),
+        sender: new PublicKey(d.sender),
+        signer: new PublicKey(d.signer),
+        chat: new PublicKey(d.chat),
+        pending: false,
+        totalParts: Number(d.totalParts),
+        currentPart: Number(d.currentPart),
+      } as IMessagePart[])
+  );
+};
+
 export function useMessages({
   chat,
   accelerated,
   numTransactions = 50,
-  useVybe,
-  vybeQuery,
+  fetcher,
 }: {
   chat: PublicKey | undefined;
   accelerated?: boolean;
   numTransactions?: number;
-  useVybe?: boolean;
-  vybeQuery?: any;
+  fetcher?: Fetcher | null;
 }): IUseMessages {
   const { chatSdk } = useChatSdk();
   if (typeof accelerated === "undefined") {
@@ -203,70 +233,17 @@ export function useMessages({
   }
   const { info: chatAcc } = useChat(chat);
   const { cluster } = useEndpoint();
-  const canUseVybe = cluster === "mainnet-beta" && (chatAcc?.postMessageProgramId.equals(ChatSdk.ID) || vybeQuery);
-  if (!canUseVybe) {
-    useVybe = false
-  }
-  if (typeof useVybe === "undefined") {
-    useVybe = true;
+  let useFetcher = !!fetcher;
+  const canUseFetcher = cluster === "mainnet-beta" && (chatAcc?.postMessageProgramId.equals(ChatSdk.ID) || fetcher);
+  if (canUseFetcher && typeof fetcher === "undefined") {
+    useFetcher = true;
+    fetcher = lambdaFetcher
   }
 
   const [rawMessages, setRawMessages] = useState<
     Record<string, IMessageWithPending>
   >({});
 
-  if (!vybeQuery) {
-    vybeQuery = gql`
-      query GetMessageParts(
-        $chat: String!
-        $maxBlockTime: numeric!
-        $minBlockTime: numeric!
-        $offset: Int!
-        $limit: Int!
-      ) {
-        strata_strata {
-          pid_chatGL6yNgZT2Z3BeMYGcgdMpcBKdmxko4C5UhEX4To {
-            message_parts_message_part_event_v_0(
-              order_by: { blocktime: desc }
-              where: {
-                blocktime: { _lt: $maxBlockTime, _gt: $minBlockTime }
-                chat: { _eq: $chat }
-              }
-              offset: $offset
-              limit: $limit
-            ) {
-              blockTime: blocktime
-              id: id_1
-              isReact: messageType(path: "react")
-              isText: messageType(path: "text")
-              isGify: messageType(path: "gify")
-              isImage: messageType(path: "image")
-              isHtml: messageType(path: "html")
-              readPermissionAmount
-              readPermissionKey
-              referenceMessageId
-              sender
-              txid: signature
-              totalParts
-              signer
-              readPermissionTypeIsNative: readPermissionType(path: "native")
-              readPermissionTypeIsToken: readPermissionType(path: "token")
-              readPermissionTypeIsNft: readPermissionType(path: "nft")
-              postPermissionTypeIsNative: readPermissionType(path: "native")
-              postPermissionTypeIsToken: readPermissionType(path: "token")
-              postPermissionTypeIsNft: readPermissionType(path: "nft")
-              currentPart
-              encryptedSymmetricKey
-              conditionVersion
-              content
-              chat
-              blocktime
-            }
-          }
-        }
-      }
-    `;
-  }
   const { transactions, loadingInitial, ...rest } = useTransactions({
     address: chat,
     numTransactions,
@@ -301,40 +278,19 @@ export function useMessages({
       };
     }
   }, [currentTime, chat, numTransactions]);
-  const [loadVybe, { loading: loadingVybe, data: vybeData }] =
-    useLazyQuery<any>(vybeQuery, {
-      variables,
-      context: {
-        clientName: "vybe",
-      },
-    });
-  const vybeMessageParts = useMemo(
-    () =>
-      vybeData?.strata_strata[0].pid_chatGL6yNgZT2Z3BeMYGcgdMpcBKdmxko4C5UhEX4To.message_parts_message_part_event_v_0.map(
-        (d: any) => 
-          ({
-            ...d,
-            readPermissionAmount: new BN(d.readPermissionAmount),
-            readPermissionKey: new PublicKey(d.readPermissionKey),
-            sender: new PublicKey(d.sender),
-            signer: new PublicKey(d.signer),
-            chat: new PublicKey(d.chat),
-            pending: false,
-            messageType: getMessageType(d),
-            readPermissionType: getPermissionType("read", d),
-          } as IMessagePart[])
-      ),
-    [vybeData]
-  );
+
+  const fetchFn = useCallback(async (args) => fetcher ? fetcher(args) : Promise.resolve([]), [fetcher])
+  const { loading: fetchLoading, result: fetchedMessageParts, error: fetchError, execute: runFetch  } = useAsyncCallback(fetchFn)
+  
   
   useEffect(() => {
-    if (chatSdk && vybeMessageParts) {
+    if (chatSdk && fetchedMessageParts) {
       setRawMessages((rawMessages) => {
-        const messages = chatSdk.getMessagesFromParts(vybeMessageParts);
+        const messages = chatSdk.getMessagesFromParts(fetchedMessageParts);
         return reduceMessages(chatSdk, rawMessages, messages);
       });
     }
-  }, [vybeMessageParts, chatSdk]);
+  }, [fetchedMessageParts, chatSdk]);
 
   const {
     result: txMessages,
@@ -351,22 +307,16 @@ export function useMessages({
   }, [txMessages, chatSdk]);
 
   useEffect(() => {
-    if (variables && useVybe) {
-      loadVybe({
-        variables,
-        context: {
-          clientName: "vybe",
-        },
-      });
-    } else if (stablePubkey && !useVybe && chatAcc) {
+    if (variables && useFetcher) {
+      runFetch(variables)
+    } else if (stablePubkey && !useFetcher && chatAcc) {
       rest.fetchMore(numTransactions);
     }
   }, [
     chatAcc,
     numTransactions,
-    useVybe,
-    rest.fetchMore,
-    loadVybe,
+    useFetcher,
+    runFetch,
     variables,
     rest.fetchMore,
     stablePubkey,
@@ -436,62 +386,42 @@ export function useMessages({
 
   return {
     ...rest,
-    hasMore: useVybe
-      ? messages.length > 0 && vybeMessageParts && vybeMessageParts.length >= numTransactions
-      : rest.hasMore,
-    fetchMore: useVybe
-      ? async(num) => {
-          await loadVybe({
-            variables: {
-              ...variables,
-              limit: num,
-              maxBlockTime:
-                vybeMessageParts[vybeMessageParts.length - 1] &&
-                vybeMessageParts[vybeMessageParts.length - 1].blockTime,
-            },
-          })
-      }
-      : rest.fetchMore,
-    fetchNew: useVybe
+    hasMore: Boolean(
+      useFetcher
+        ? messages.length > 0 &&
+            fetchedMessageParts &&
+            fetchedMessageParts.length >= numTransactions
+        : rest.hasMore
+    ),
+    fetchMore: useFetcher
       ? async (num) => {
-          await loadVybe({
-            variables: {
-              ...variables,
-              limit: num,
-              maxBlockTime: new Date().valueOf() / 1000,
-              minBlockTime:
-                vybeMessageParts[0] ? vybeMessageParts[0].blockTime : 0,
-            },
+          await runFetch({
+            ...variables,
+            limit: num,
+            maxBlockTime:
+              fetchedMessageParts &&
+              fetchedMessageParts[fetchedMessageParts.length - 1] &&
+              fetchedMessageParts[fetchedMessageParts.length - 1].blockTime,
+          });
+        }
+      : rest.fetchMore,
+    fetchNew: useFetcher
+      ? async (num) => {
+          await runFetch({
+            ...variables,
+            limit: num,
+            maxBlockTime: new Date().valueOf() / 1000,
+            minBlockTime:
+              fetchedMessageParts && fetchedMessageParts[0]
+                ? fetchedMessageParts[0].blockTime
+                : 0,
           });
         }
       : rest.fetchNew,
-    loadingInitial: loadingInitial || (useVybe && !vybeData && !loadingVybe),
-    loadingMore: loading || loadingVybe || rest.loadingMore,
-    error: rest.error || error,
+    loadingInitial:
+      loadingInitial || (useFetcher && !fetchedMessageParts && !fetchLoading),
+    loadingMore: loading || fetchLoading || rest.loadingMore,
+    error: rest.error || error || fetchError,
     messages: messagesWithReactsAndReplies,
   };
-}
-
-function getMessageType(d: any): RawMessageType | undefined {
-  if (d.isReact) {
-    return RawMessageType.React;
-  } else if (d.isHtml) {
-    return RawMessageType.Html;
-  } else if (d.isGify) {
-    return RawMessageType.Gify;
-  } else if (d.isImage) {
-    return RawMessageType.Image;
-  } else if (d.isText) {
-    return RawMessageType.Text;
-  }
-}
-
-function getPermissionType(type: string, d: any): PermissionType | undefined {
-  if (d[type + "PermissionTypeIsNft"]) {
-    return PermissionType.NFT;
-  } else if (d[type + "PermissionTypeIsNative"]) {
-    return PermissionType.Native;
-  } else if (d[type + "PermissionTypeIsToken"]) {
-    return PermissionType.Token;
-  }
 }
