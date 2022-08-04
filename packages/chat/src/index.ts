@@ -504,7 +504,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     const cached = storage.get("lit-auth-sol-signature");
     const cachedDate = storage.get("lit-auth-sol-signature-date") || 0;
     const cachedAuthSig = JSON.parse(cached as string);
-    if (!this.wallet) {
+    if (!this.wallet || !this.wallet.publicKey) {
       return;
     }
     if (
