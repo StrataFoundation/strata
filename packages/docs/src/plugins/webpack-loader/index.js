@@ -35,6 +35,12 @@ module.exports = function (context, options) {
             "@toruslabs/solana-embed": path.resolve(
               "../../node_modules/@toruslabs/solana-embed"
             ),
+            "bn.js": path.resolve("../../node_modules/bn.js"),
+            "@solana/web3.js": path.resolve(
+              "../../node_modules/@solana/web3.js"
+            ),
+            borsh: path.resolve("../../node_modules/borsh"),
+            buffer: path.resolve("../../node_modules/buffer"),
           },
         },
         module: {

@@ -32,9 +32,7 @@ import { randomizeFileName, uploadFiles } from "@strata-foundation/chat";
 import { useErrorHandler } from "@strata-foundation/react";
 import { ICreateChatModalState } from "./CreateChatModal";
 import { useChatSdk } from "../../contexts/chatSdk";
-import {
-  useChatStorageAccountKey
-} from "../../hooks/useChatStorageAccountKey";
+import { useChatStorageAccountKey } from "../../hooks/useChatStorageAccountKey";
 import { useLoadDelegate } from "../../hooks/useLoadDelegate";
 import { useWalletFromChatIdentifier } from "../../hooks/useWalletFromChatIdentifier";
 import { FormControlWithError } from "../form/FormControlWithError";
@@ -198,8 +196,9 @@ export const BasicInfo: React.FC<IBasicInfoProps> = ({
               setError("image", {
                 message: "Image failed to upload, please try again",
               });
-              // @ts-ignore
-              hiddenFileInput.current?.value = "";
+              if (hiddenFileInput.current) {
+                hiddenFileInput.current.value = "";
+              }
             }
           }
         }
@@ -261,7 +260,7 @@ export const BasicInfo: React.FC<IBasicInfoProps> = ({
                   <Box>Chat identifier is available!</Box>
                 </Flex>
               ) : (
-                "The shortlink for the chat, i.e \"solana\" for solana.chat. You will receive an NFT representing ownership of the chat domain."
+                'The shortlink for the chat, i.e "solana" for solana.chat. You will receive an NFT representing ownership of the chat domain.'
               )}
             </FormHelperText>
           ) : (
