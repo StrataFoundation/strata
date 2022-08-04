@@ -138,7 +138,7 @@ export const Sidebar = (props: any) => {
         />
         <Divider />
         <Flex align="center" justifyContent="space-evenly" w="full">
-          <ProfileButton />
+          <ProfileButton size="lg" />
         </Flex>
       </VStack>
     </VStack>

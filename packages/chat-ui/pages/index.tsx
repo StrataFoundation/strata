@@ -1,8 +1,16 @@
 import React from "react";
-import { Stack, Text, Image, Button, useDisclosure } from "@chakra-ui/react";
+import {
+  Stack,
+  Text,
+  Image,
+  Button,
+  useDisclosure,
+  Flex,
+} from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import { Layout } from "@/components/Layout";
 import { Header } from "@/components/Header";
+import { ProfileButton } from "@/components/ProfileButton";
 import { route, routes } from "../src/routes";
 
 const Home = () => {
@@ -46,6 +54,7 @@ const Home = () => {
           </Stack>
           <Button
             colorScheme="primary"
+            size="lg"
             onClick={() =>
               router.push(
                 route(routes.chat, {
@@ -58,6 +67,19 @@ const Home = () => {
           >
             Start Chatting
           </Button>
+          <Flex
+            align="center"
+            justifyContent="space-evenly"
+            w="full"
+            borderColor="primary.500"
+            borderWidth="1px"
+            borderRadius="md"
+            overflow="hidden"
+          >
+            <ProfileButton size="lg" bypassIntermediaryStage="true">
+              Create Profile
+            </ProfileButton>
+          </Flex>
         </Stack>
       </Stack>
     </Layout>

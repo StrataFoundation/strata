@@ -21,14 +21,19 @@ import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useEndpoint } from "@strata-foundation/react";
-import React, { FC, MouseEvent, useCallback } from "react";
+import React, { FC, MouseEvent, useCallback, useEffect } from "react";
 import { BsCaretDownFill, BsFillPersonFill } from "react-icons/bs";
 import { useWalletProfile } from "../hooks/useWalletProfile";
 import { useUsernameFromIdentifierCertificate } from "../hooks/useUsernameFromIdentifierCertificate";
 import { CreateProfileModal } from "./CreateProfileModal";
 
-export const ProfileButton: FC<ButtonProps> = ({
+interface IProfileButton extends ButtonProps {
+  bypassIntermediaryStage?: boolean;
+}
+
+export const ProfileButton: FC<IProfileButton> = ({
   children = "Select Wallet",
+  bypassIntermediaryStage = false,
   onClick,
   ...props
 }) => {
@@ -59,8 +64,13 @@ export const ProfileButton: FC<ButtonProps> = ({
     [onClick, visible, setVisible, connected, onOpen]
   );
 
+  useEffect(() => {
+    if (connected && !profile && bypassIntermediaryStage) {
+      onOpen();
+    }
+  }, [connected, profile, onOpen, bypassIntermediaryStage]);
+
   const { cluster, setClusterOrEndpoint } = useEndpoint();
-  const py = 9;
 
   return (
     <>
@@ -69,11 +79,11 @@ export const ProfileButton: FC<ButtonProps> = ({
         <Button
           w="full"
           m={0}
-          py={py}
           variant="ghost"
           justifyContent="start"
           color={useColorModeValue("black", "white")}
           borderColor="gray.500"
+          size={props.size || "lg"}
           {...props}
           onClick={handleClick}
           borderTopRadius={0}
@@ -91,7 +101,7 @@ export const ProfileButton: FC<ButtonProps> = ({
               alt=""
               m={1}
               borderRadius="full"
-              boxSize="46px"
+              boxSize="36px"
               src={profile.imageUrl}
             />
           ) : (
@@ -104,7 +114,7 @@ export const ProfileButton: FC<ButtonProps> = ({
         <Menu isLazy>
           <MenuButton
             w={20}
-            py={py}
+            size={props.size || "lg"}
             as={IconButton}
             color={useColorModeValue("black", "white")}
             variant="ghost"
