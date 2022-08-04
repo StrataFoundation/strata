@@ -20,7 +20,7 @@ const defaultSeo = {
   },
   twitter: {
     handle: "@StrataProtocol",
-    site: SITE_URL,
+    site: CHAT_URL,
     cardType: "summary_large_image",
   },
 };
