@@ -3,7 +3,7 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-## [Unreleased]
+# [3.10.0](https://github.com/StrataFoundation/strata/compare/v3.9.12...v3.10.0) (2022-08-04)
 
 # Changed
   * Massively reduce bundle size by bundling everything with rollup, using proper side effect free esm.

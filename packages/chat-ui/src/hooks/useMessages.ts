@@ -186,11 +186,15 @@ const reduceMessages = (
 export type FetchArgs = { minBlockTime: number; maxBlockTime: number; chat: PublicKey, limit: number, offset: number };
 export type Fetcher = (args: FetchArgs) => Promise<IMessagePart[]>;
 
-export const MESSAGE_LAMBDA = "https://prod-api.teamwumbo.com/messages";
+export const MESSAGE_LAMBDA = "http://localhost:8080/messages";
 const lambdaFetcher = async (args: FetchArgs) => {
   const res = await fetch(`${MESSAGE_LAMBDA}`, {
     body: JSON.stringify(args),
     method: "POST",
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    }
   });
   const rows = await res.json();
 
