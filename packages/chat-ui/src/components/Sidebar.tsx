@@ -114,7 +114,7 @@ export const Sidebar = (props: any) => {
               identifier={identifier}
               onClick={() => {
                 setInput("");
-                props.onClose();
+                props.onClose && props.onClose();
               }}
             />
           ))}

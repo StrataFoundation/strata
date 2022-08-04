@@ -196,17 +196,16 @@ export function Message(
       onMouseEnter={() => setIsActive(true)}
       onMouseLeave={() => setIsActive(false)}
       onClick={() => setIsActive(true)}
-      marginTop={isActive ? -4 : 0}
+      position="relative"
     >
       {isActive && (
         <Flex
-          position="relative"
-          w="full"
-          paddingRight={{
+          position="absolute"
+          right={{
             base: 8,
             md: 28,
           }}
-          marginBottom={-4}
+          top={-4}
           zIndex={1}
           justifyContent="flex-end"
           alignItems="flex-end"

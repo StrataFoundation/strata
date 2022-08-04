@@ -24,7 +24,6 @@ export const EmojiPicker: FC<any> = (props) => {
           } as any)
       );
     }
-    console.log(divEl);
   };
 
   useEffect(() => {
