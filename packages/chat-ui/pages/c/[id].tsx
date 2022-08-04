@@ -110,9 +110,9 @@ export const getStaticProps: GetStaticProps = async (context) => {
       props: {
         name: context.params?.id || null + ".chat",
         description: `${context.params?.id}.chat - A decentralized chatroom powered by Strata Protocol on Solana`,
-        image: `"https://nft.cardinal.so/img/${entry?.mint.toBase58()}?name=${
+        image: `https://nft.cardinal.so/img/${entry?.mint.toBase58()}?name=${
           context.params?.id
-        }"`,
+        }`,
         chatKey: entry && (await ChatSdk.chatKey(entry.mint))[0].toBase58(),
       },
     };
