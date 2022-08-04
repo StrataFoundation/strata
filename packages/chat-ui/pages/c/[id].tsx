@@ -158,10 +158,10 @@ export default function ChatroomPage({
         description={description}
         openGraph={{
           url: `chat.strataprotocol.com/c/${id as string}`,
-          title: name,
+          title: `strata.im - ${name}`,
           description: description,
           images: [{ url: image }],
-          site_name: "StrataChat",
+          site_name: "strata.im",
         }}
         twitter={{
           handle: "@StrataProtocol",
