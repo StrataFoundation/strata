@@ -6,6 +6,9 @@ export {
   hydrateTransactions,
 } from "./subscribeTransactions";
 export type { TransactionResponseWithSig } from "./subscribeTransactions";
+import AsyncLock from "async-lock";
+
+const lock = new AsyncLock();
 
 export enum Cluster {
   Devnet = "devnet",
@@ -73,7 +76,7 @@ export class Accelerator {
     this.transactionListeners = {};
   }
 
-  private send(payload: any) {
+  private async send(payload: any) {
     this.ws.send(JSON.stringify(payload));
   }
 
@@ -81,8 +84,8 @@ export class Accelerator {
     this.send({
       type: RequestType.Transaction,
       transactionBytes: tx.serialize().toJSON().data,
-      cluster
-    })
+      cluster,
+    });
   }
 
   async unsubscribeTransaction(listenerId: string): Promise<void> {
@@ -101,14 +104,32 @@ export class Accelerator {
   async onTransaction(
     cluster: Cluster,
     account: PublicKey,
-    callback: (resp: { txid: string; transaction: Transaction, blockTime: number }) => void
+    callback: (resp: {
+      txid: string;
+      transaction: Transaction;
+      blockTime: number;
+    }) => void
+  ): Promise<string> {
+    return lock.acquire("onTransaction", async () => {
+      return this._onTransaction(cluster, account, callback);
+    })
+  }
+
+  async _onTransaction(
+    cluster: Cluster,
+    account: PublicKey,
+    callback: (resp: {
+      txid: string;
+      transaction: Transaction;
+      blockTime: number;
+    }) => void
   ): Promise<string> {
     const sub = {
       type: RequestType.Subscribe,
       cluster,
       account: account.toBase58(),
     };
-    this.send(sub);
+    await this.send(sub);
 
     const response: any = await this.listenOnce(
       (resp) => resp.type === ResponseType.Subscribe
@@ -118,7 +139,9 @@ export class Accelerator {
 
     const listenerId = await this.listen((resp) => {
       if (resp.type === ResponseType.Transaction) {
-        const tx = Transaction.from(new Uint8Array((resp as any).transactionBytes));
+        const tx = Transaction.from(
+          new Uint8Array((resp as any).transactionBytes)
+        );
         if (
           tx.compileMessage().accountKeys.some((key) => key.equals(account))
         ) {
@@ -146,25 +169,27 @@ export class Accelerator {
   }
 
   async listenOnce(matcher: (resp: Response) => boolean): Promise<Response> {
-    return new Promise((resolve, reject) => {
-      let resolved = false;
-      let id: string;
-      const listener = (resp: Response) => {
-        if (matcher(resp)) {
-          resolved = true;
-          this.unlisten(id);
-          resolve(resp);
-        }
-      };
-      id = this.listen(listener);
+    return lock.acquire("listenOnce", () => {
+      return new Promise((resolve, reject) => {
+        let resolved = false;
+        let id: string;
+        const listener = (resp: Response) => {
+          if (matcher(resp)) {
+            resolved = true;
+            this.unlisten(id);
+            resolve(resp);
+          }
+        };
+        id = this.listen(listener);
 
-      setTimeout(() => {
-        if (!resolved) {
-          this.unlisten(id);
-          reject(new Error("Failed to match matcher in 60 seconds"));
-        }
-      }, 60 * 1000);
-    });
+        setTimeout(() => {
+          if (!resolved) {
+            this.unlisten(id);
+            reject(new Error("Failed to match matcher in 60 seconds"));
+          }
+        }, 60 * 1000);
+      });
+    })
   }
 
   initSocket(ws: WebSocket) {
@@ -183,6 +208,8 @@ export class Accelerator {
 
   onMessage(message: MessageEvent<any>) {
     const parsed: Response = JSON.parse(message.data) as Response;
-    Object.values(this.listeners).map((listener) => listener && listener(parsed));
+    Object.values(this.listeners).map(
+      (listener) => listener && listener(parsed)
+    );
   }
 }
