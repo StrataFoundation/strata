@@ -1,15 +1,15 @@
-import { SITE_URL } from "@/constants/globals";
+import { CHAT_URL } from "@/constants/globals";
 
 const defaultSeo = {
   title: "strata.im",
   description: "strata.im enables fully decentralized, token gated chatrooms",
   openGraph: {
-    url: SITE_URL,
+    url: CHAT_URL,
     title: "strata.im",
     description: "Token gated decentralized chatrooms on Solana",
     images: [
       {
-        url: `${SITE_URL}/seoDefaultCardImage.jpg`,
+        url: `${CHAT_URL}/seoDefaultCardImage.jpg`,
         width: 800,
         height: 600,
         alt: "Og Image Alt",

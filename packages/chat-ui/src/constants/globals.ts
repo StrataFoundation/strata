@@ -9,3 +9,4 @@ export const GIPHY_API_KEY = process.env.NEXT_PUBLIC_GIPHY_API_KEY!;
 export const VISIBLE_CHATS = ["solana", "open"];
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
 export const DOCS_URL = process.env.NEXT_PUBLIC_DOCS_URL;
+export const CHAT_URL = process.env.NEXT_PUBLIC_CHAT_URL;
