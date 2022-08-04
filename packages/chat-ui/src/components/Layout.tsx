@@ -1,6 +1,7 @@
 import React from "react";
 import {
-  Flex, Drawer,
+  Flex,
+  Drawer,
   DrawerOverlay,
   DrawerContent,
   useBreakpointValue,
@@ -33,19 +34,15 @@ export const Layout: React.FC<ILayoutProps> = ({
     md: "unset",
   });
   return (
-    <Flex
-      as="section"
-      bg="gray.50"
-      _dark={DARK_BG}
-      h={height}
-      w={width}
-    >
+    <Flex as="section" bg="gray.50" _dark={DARK_BG} h={height} w={width}>
       {breakpointDisplay === "unset" && <Sidebar />}
       <Drawer isOpen={isSidebarOpen} onClose={onSidebarClose} placement="left">
         <DrawerOverlay />
         <DrawerContent>
           {/* Lazy load this sidebar */}
-          {isSidebarOpen && <Sidebar w="full" borderRight="none" />}
+          {isSidebarOpen && (
+            <Sidebar w="full" borderRight="none" onClose={onSidebarClose} />
+          )}
         </DrawerContent>
       </Drawer>
       <Flex ml={ML} transition=".3s ease" direction="column" h="full" w="full">

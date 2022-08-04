@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, FC, useRef } from "react";
-import { Fade, SlideFade, Flex, useColorModeValue } from "@chakra-ui/react";
+import { Fade, Flex, useColorModeValue } from "@chakra-ui/react";
 import data from "@emoji-mart/data";
 import { PublicKey } from "@solana/web3.js";
 import { useErrorHandler } from "@strata-foundation/react";
@@ -9,43 +9,39 @@ import { useEmojis } from "../contexts/emojis";
 import { useSendMessage } from "../contexts/sendMessage";
 
 export const EmojiPicker: FC<any> = (props) => {
-  const ref = useRef<any>();
-  const showEmojis = useRef(true);
+  const pickerRef = useRef<any>();
+  const moduleRef = useRef<any>();
+
+  const handleDivRef = (divEl: any) => {
+    pickerRef.current = divEl;
+    if (!moduleRef.current) {
+      moduleRef.current = import("emoji-mart").then(
+        (m) =>
+          new m.Picker({
+            ...props,
+            ref: pickerRef,
+            data,
+          } as any)
+      );
+    }
+    console.log(divEl);
+  };
 
   useEffect(() => {
-    if (showEmojis.current) {
-      showEmojis.current = false;
-      // @ts-ignore
-      import("emoji-mart").then((EmojiMart) => {
-        new EmojiMart.Picker({
-          ...props,
-          // @ts-ignore
-          data,
-          ref,
-        });
-      });
-    }
+    if (pickerRef.current && pickerRef.current.firstChild) {
+      if (props.noBoxShadow) {
+        pickerRef.current.firstChild.style.boxShadow = "none";
+      }
 
-    if (props.hidePreview) {
-      setTimeout(() => {
-        ref.current.children[0] &&
-          ref.current.children[0].shadowRoot
-            .querySelector("#preview")
-            ?.remove();
-      }, 1);
+      if (props.autoFocus) {
+        pickerRef.current.firstChild.shadowRoot
+          .querySelector('input[type="search"]')
+          ?.focus();
+      }
     }
+  }, [props]);
 
-    if (props.autoFocus) {
-      setTimeout(() => {
-        ref.current.children[0] &&
-          ref.current.children[0].shadowRoot
-            .querySelector('input[type="search"]')
-            ?.focus();
-      }, 1);
-    }
-  }, [props, ref]);
-
-  return <div ref={ref} />;
+  return <div ref={handleDivRef} />;
 };
 
 interface IEmojiPickerPopover {
@@ -110,12 +106,16 @@ export const EmojiPickerPopover: FC<IEmojiPickerPopover> = ({ chatKey }) => {
                 "--color-border": colorBorder,
               }}
             >
-              <EmojiPicker
-                // @ts-ignore
-                onEmojiSelect={setEmoji}
-                autoFocus
-                hidePreview
-              />
+              <Flex bg={`rgb(${rgbBackground})`}>
+                <EmojiPicker
+                  // @ts-ignore
+                  onEmojiSelect={setEmoji}
+                  previewPosition="none"
+                  searchPosition="top"
+                  navPosition="bottom"
+                  autoFocus={true}
+                />
+              </Flex>
             </Flex>
           </Fade>
         </Flex>
@@ -129,7 +129,7 @@ export const EmojiPickerPopover: FC<IEmojiPickerPopover> = ({ chatKey }) => {
           zIndex="15"
           justifyContent="center"
         >
-          <SlideFade in={!!referenceMessageId} offsetY="30px">
+          <Fade in={!!referenceMessageId} style={{ width: "100%" }}>
             <Flex
               display={!!referenceMessageId ? "flex" : "none"}
               onClick={reset}
@@ -139,6 +139,8 @@ export const EmojiPickerPopover: FC<IEmojiPickerPopover> = ({ chatKey }) => {
               justifyContent="flex-end"
               alignItems="end"
               flexDirection="column"
+              position="absolute"
+              left="0"
               sx={{
                 "--rgb-color": rgbColor,
                 "--rgb-background": rgbBackground,
@@ -152,15 +154,21 @@ export const EmojiPickerPopover: FC<IEmojiPickerPopover> = ({ chatKey }) => {
                 onClick={preventClickBehavior}
                 flexGrow={0}
                 justifyContent="center"
+                position="absolute"
+                left="0"
+                bg={`rgb(${rgbBackground})`}
               >
                 <EmojiPicker
                   // @ts-ignore
                   onEmojiSelect={setEmoji}
-                  hidePreview
+                  previewPosition="none"
+                  searchPosition="top"
+                  navPosition="bottom"
+                  noBoxShadow
                 />
               </Flex>
             </Flex>
-          </SlideFade>
+          </Fade>
         </Flex>
       </MobileView>
     </>
