@@ -36,13 +36,7 @@ export const MessageToolbar = ({
   }, [showReply, messageId]);
 
   return (
-    <Flex
-      direction="row"
-      top={2}
-      right={20}
-      justifyContent="end"
-      position="absolute"
-    >
+    <Flex direction="row" justifyContent="end">
       <ButtonGroup size="lg" isAttached variant="outline">
         <IconButton
           borderRight="none"

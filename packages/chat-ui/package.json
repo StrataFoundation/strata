@@ -65,7 +65,8 @@
     "sanitize-html": "^2.7.0",
     "showdown": "^2.1.0",
     "yarn": "^1.22.18",
-    "yup": "^0.32.11"
+    "yup": "^0.32.11",
+    "react-device-detect": "^2.1.2"
   },
   "peerDependencies": {
     "@chakra-ui/react": "^1 || ^2",

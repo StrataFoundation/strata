@@ -3,7 +3,11 @@ import { ChatboxWithGuards } from "./chatbox/ChatboxWithGuards";
 import { ChatMessages } from "./ChatMessages";
 import { EmojiPickerPopover } from "./EmojiPicker";
 import { FileUploadMask } from "./FileUploadMask";
-import { Fetcher, IMessageWithPending, useMessages } from "../hooks/useMessages";
+import {
+  Fetcher,
+  IMessageWithPending,
+  useMessages,
+} from "../hooks/useMessages";
 import { Flex } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
 import { randomizeFileName } from "@strata-foundation/chat";

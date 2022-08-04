@@ -39,6 +39,7 @@ export default {
     "next/app",
     "next/router",
     "next/document",
+    "next/head",
     "react-icons",
     "react",
     "react-dom",
