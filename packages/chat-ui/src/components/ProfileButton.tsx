@@ -33,7 +33,6 @@ interface IProfileButton extends ButtonProps {
 
 export const ProfileButton: FC<IProfileButton> = ({
   children = "Select Wallet",
-  bypassIntermediaryStage = false,
   onClick,
   ...props
 }) => {
@@ -63,12 +62,6 @@ export const ProfileButton: FC<IProfileButton> = ({
     },
     [onClick, visible, setVisible, connected, onOpen]
   );
-
-  useEffect(() => {
-    if (connected && !profile && bypassIntermediaryStage) {
-      onOpen();
-    }
-  }, [connected, profile, onOpen, bypassIntermediaryStage]);
 
   const { cluster, setClusterOrEndpoint } = useEndpoint();
 

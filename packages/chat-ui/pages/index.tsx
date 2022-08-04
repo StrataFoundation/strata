@@ -76,7 +76,7 @@ const Home = () => {
             borderRadius="md"
             overflow="hidden"
           >
-            <ProfileButton size="lg" bypassIntermediaryStage={true}>
+            <ProfileButton size="lg" >
               Create Profile
             </ProfileButton>
           </Flex>
