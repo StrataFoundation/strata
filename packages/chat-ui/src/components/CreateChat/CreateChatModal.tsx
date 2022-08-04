@@ -26,6 +26,7 @@ import { ITokenFormValues } from "./TokenForm";
 import { INFTFormValues } from "./NFTForm";
 import { wizardSubmit } from "./wizardSubmit";
 import { useRouter } from "next/router";
+import { route, routes } from "src/routes";
 
 interface ICreateChatModalProps {
   isOpen: boolean;
@@ -173,10 +174,13 @@ export const CreateChatModal: React.FC<ICreateChatModalProps> = ({
 
   useEffect(() => {
     if (state.status === "success") {
-      router.push({
-        pathname: `/c/${state.wizardData.identifier}`,
-        query: router.query,
-      });
+      router.push(
+        route(routes.chat, {
+          id: state.wizardData.identifier,
+        }),
+        undefined,
+        { shallow: true }
+      );
       handleClose();
     }
   }, [state.status]);
