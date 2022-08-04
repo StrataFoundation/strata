@@ -7,9 +7,11 @@ import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { AppProps } from "next/app";
 import { useRouter } from "next/router";
 import Head from "next/head";
+import { DefaultSeo } from "next-seo";
 import React, { useEffect } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { pageview } from "../src/utils/gtag";
+import SEO from "../next-seo.config";
 
 require("@solana/wallet-adapter-react-ui/styles.css");
 
@@ -63,6 +65,7 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   return (
     <>
+      <DefaultSeo {...SEO} />
       <Head>
         <meta
           name="viewport"

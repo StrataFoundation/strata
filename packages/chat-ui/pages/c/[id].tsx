@@ -45,7 +45,7 @@ const QUICK_PROPS: Record<string, any> = {
     description:
       "solana.chat - A decentralized chatroom powered by Strata Protocol on Solana",
     image:
-      'https://nft.cardinal.so/img/9497kTCD3ct7JaRTzCzQvS5N5iwbzxaK8Sci6gDZTq8C?name=solana',
+      "https://nft.cardinal.so/img/9497kTCD3ct7JaRTzCzQvS5N5iwbzxaK8Sci6gDZTq8C?name=solana",
     chatKey: "EzNMGtFA62nvDfCybZi4vhfeJUoMJyMijcKoC8heoyHK",
   },
   open: {
@@ -53,7 +53,7 @@ const QUICK_PROPS: Record<string, any> = {
     description:
       "open.chat - A decentralized chatroom powered by Strata Protocol on Solana",
     image:
-      'https://nft.cardinal.so/img/5tjEoagtGJrMoywNHg5UXqXyVxkcfZr78Zeu7RmaCuDJ?name=open',
+      "https://nft.cardinal.so/img/5tjEoagtGJrMoywNHg5UXqXyVxkcfZr78Zeu7RmaCuDJ?name=open",
     chatKey: "HN8GF8nKHLnymPUwn4cfNmtSwAcErRweDDDGzyhj6wKH",
   },
 };
@@ -95,10 +95,12 @@ export const getStaticProps: GetStaticProps = async (context) => {
       )
     )[0];
     const entryAcc = (await connection.getAccountInfo(entryKey))!;
-    const entry = entryAcc && await namespacesProgram.coder.accounts.decode<IEntry>(
-      "entry",
-      entryAcc.data
-    );
+    const entry =
+      entryAcc &&
+      (await namespacesProgram.coder.accounts.decode<IEntry>(
+        "entry",
+        entryAcc.data
+      ));
 
     // // Valid for a week
     // context.res.setHeader(
