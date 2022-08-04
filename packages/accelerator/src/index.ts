@@ -15,8 +15,7 @@ export enum Cluster {
   Mainnet = "mainnet-beta",
   Testnet = "testnet",
   Localnet = "localnet",
-};
-
+}
 
 enum ResponseType {
   Error = "error",
@@ -32,12 +31,12 @@ enum RequestType {
 }
 
 interface Response {
-  type: ResponseType
+  type: ResponseType;
 }
 
 interface TransactionResponse extends Response {
-  cluster: Cluster,
-  transactionBytes: number[]
+  cluster: Cluster;
+  transactionBytes: number[];
 }
 
 export class Accelerator {
@@ -112,7 +111,7 @@ export class Accelerator {
   ): Promise<string> {
     return lock.acquire("onTransaction", async () => {
       return this._onTransaction(cluster, account, callback);
-    })
+    });
   }
 
   async _onTransaction(
@@ -169,27 +168,25 @@ export class Accelerator {
   }
 
   async listenOnce(matcher: (resp: Response) => boolean): Promise<Response> {
-    return lock.acquire("listenOnce", () => {
-      return new Promise((resolve, reject) => {
-        let resolved = false;
-        let id: string;
-        const listener = (resp: Response) => {
-          if (matcher(resp)) {
-            resolved = true;
-            this.unlisten(id);
-            resolve(resp);
-          }
-        };
-        id = this.listen(listener);
+    return new Promise((resolve, reject) => {
+      let resolved = false;
+      let id: string;
+      const listener = (resp: Response) => {
+        if (matcher(resp)) {
+          resolved = true;
+          this.unlisten(id);
+          resolve(resp);
+        }
+      };
+      id = this.listen(listener);
 
-        setTimeout(() => {
-          if (!resolved) {
-            this.unlisten(id);
-            reject(new Error("Failed to match matcher in 60 seconds"));
-          }
-        }, 60 * 1000);
-      });
-    })
+      setTimeout(() => {
+        if (!resolved) {
+          this.unlisten(id);
+          reject(new Error("Failed to match matcher in 60 seconds"));
+        }
+      }, 60 * 1000);
+    });
   }
 
   initSocket(ws: WebSocket) {
