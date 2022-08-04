@@ -26,7 +26,6 @@ import moment from "moment";
 import React, { useCallback, useMemo } from "react";
 import { useAsync } from "react-async-hook";
 import { BsLockFill } from "react-icons/bs";
-import { DisplayReply, MessageHeader, MessageStatus, Reacts } from ".";
 import { BuyMoreButton } from "../BuyMoreButton";
 import { useEmojis } from "../../contexts/emojis";
 import { useSendMessage } from "../../contexts/sendMessage";
@@ -37,6 +36,10 @@ import { useChatOwnedAmounts } from "../../hooks/useChatOwnedAmounts";
 import { useChatPermissionsFromChat } from "../../hooks/useChatPermissionsFromChat";
 import { MessageBody } from "./MessageBody";
 import { MessageToolbar } from "./MessageToolbar";
+import { DisplayReply } from "./DisplayReply";
+import { MessageHeader } from "./MessageHeader";
+import { Reacts } from "./Reacts";
+import { MessageStatus } from "./MessageStatus";
 
 const defaultOptions = {
   allowedTags: ["b", "i", "em", "strong", "a", "code", "ul", "li", "p"],

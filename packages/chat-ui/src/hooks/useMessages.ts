@@ -186,16 +186,15 @@ const reduceMessages = (
 export type FetchArgs = { minBlockTime: number; maxBlockTime: number; chat: PublicKey, limit: number, offset: number };
 export type Fetcher = (args: FetchArgs) => Promise<IMessagePart[]>;
 
-function capitalizeFirstLetter(string: string): string {
-  return string.charAt(0).toUpperCase() + string.slice(1);
-}
-
-export const MESSAGE_LAMBDA =
-  "https://32spxe7tmbte5systjnrfkzhhy0yealb.lambda-url.us-east-2.on.aws/";
+export const MESSAGE_LAMBDA = "http://localhost:8080/messages";
 const lambdaFetcher = async (args: FetchArgs) => {
   const res = await fetch(`${MESSAGE_LAMBDA}`, {
     body: JSON.stringify(args),
     method: "POST",
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    }
   });
   const rows = await res.json();
 
