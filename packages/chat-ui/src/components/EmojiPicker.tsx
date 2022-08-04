@@ -4,34 +4,44 @@ import data from "@emoji-mart/data";
 import { PublicKey } from "@solana/web3.js";
 import { useErrorHandler } from "@strata-foundation/react";
 import { MessageType } from "@strata-foundation/chat";
+import { BrowserView, MobileView } from "react-device-detect";
 import { useEmojis } from "../contexts/emojis";
-import {  useSendMessage } from "../contexts/sendMessage";
+import { useSendMessage } from "../contexts/sendMessage";
 
 export const EmojiPicker: FC<any> = (props) => {
-  const ref = useRef<any>();
-  const showEmojis = useRef(true);
+  const pickerRef = useRef<any>();
+  const moduleRef = useRef<any>();
+
+  const handleDivRef = (divEl: any) => {
+    pickerRef.current = divEl;
+    if (!moduleRef.current) {
+      moduleRef.current = import("emoji-mart").then(
+        (m) =>
+          new m.Picker({
+            ...props,
+            ref: pickerRef,
+            data,
+          } as any)
+      );
+    }
+    console.log(divEl);
+  };
 
   useEffect(() => {
-    if (showEmojis.current) {
-      showEmojis.current = false;
-      // @ts-ignore
-      import("emoji-mart").then((EmojiMart) => {
-        new EmojiMart.Picker({
-          ...props,
-          // @ts-ignore
-          data,
-          ref,
-        });
-      });
+    if (pickerRef.current && pickerRef.current.firstChild) {
+      if (props.noBoxShadow) {
+        pickerRef.current.firstChild.style.boxShadow = "none";
+      }
+
+      if (props.autoFocus) {
+        pickerRef.current.firstChild.shadowRoot
+          .querySelector('input[type="search"]')
+          ?.focus();
+      }
     }
+  }, [props]);
 
-    ref.current.children[0] &&
-      ref.current.children[0].shadowRoot
-        .querySelector('input[type="search"]')
-        .focus();
-  }, [props, ref]);
-
-  return <div ref={ref} />;
+  return <div ref={handleDivRef} />;
 };
 
 interface IEmojiPickerPopover {
@@ -73,33 +83,94 @@ export const EmojiPickerPopover: FC<IEmojiPickerPopover> = ({ chatKey }) => {
   }, [emoji, referenceMessageId, reset, sendMessage]);
 
   return (
-    <Flex
-      w={!!referenceMessageId ? "full" : "none"}
-      h={!!referenceMessageId ? "full" : "none"}
-      position="absolute"
-      top="0"
-      right="0"
-      zIndex="1"
-      justifyContent="end"
-      onClick={reset}
-    >
-      <Fade in={!!referenceMessageId}>
+    <>
+      <BrowserView>
         <Flex
-          display={!!referenceMessageId ? "flex" : "none"}
-          onClick={preventClickBehavior}
-          sx={{
-            "--rgb-color": rgbColor,
-            "--rgb-background": rgbBackground,
-            "--rgb-input": rgbInput,
-            "--color-border": colorBorder,
-          }}
+          w={!!referenceMessageId ? "full" : "none"}
+          h={!!referenceMessageId ? "full" : "none"}
+          position="absolute"
+          top="0"
+          right="0"
+          zIndex="1"
+          justifyContent="end"
+          onClick={reset}
         >
-          <EmojiPicker
-            // @ts-ignore
-            onEmojiSelect={setEmoji}
-          />
+          <Fade in={!!referenceMessageId}>
+            <Flex
+              display={!!referenceMessageId ? "flex" : "none"}
+              onClick={preventClickBehavior}
+              sx={{
+                "--rgb-color": rgbColor,
+                "--rgb-background": rgbBackground,
+                "--rgb-input": rgbInput,
+                "--color-border": colorBorder,
+              }}
+            >
+              <Flex bg={`rgb(${rgbBackground})`}>
+                <EmojiPicker
+                  // @ts-ignore
+                  onEmojiSelect={setEmoji}
+                  previewPosition="none"
+                  searchPosition="top"
+                  navPosition="bottom"
+                  autoFocus={true}
+                />
+              </Flex>
+            </Flex>
+          </Fade>
         </Flex>
-      </Fade>
-    </Flex>
+      </BrowserView>
+      <MobileView>
+        <Flex
+          w={!!referenceMessageId ? "full" : "none"}
+          h={!!referenceMessageId ? "full" : "none"}
+          position="fixed"
+          top="0"
+          zIndex="15"
+          justifyContent="center"
+        >
+          <Fade in={!!referenceMessageId} style={{ width: "100%" }}>
+            <Flex
+              display={!!referenceMessageId ? "flex" : "none"}
+              onClick={reset}
+              zIndex="15"
+              w="full"
+              h="full"
+              justifyContent="flex-end"
+              alignItems="end"
+              flexDirection="column"
+              position="absolute"
+              left="0"
+              sx={{
+                "--rgb-color": rgbColor,
+                "--rgb-background": rgbBackground,
+                "--rgb-input": rgbInput,
+                "--color-border": colorBorder,
+              }}
+            >
+              <Flex flexGrow={2} />
+              <Flex
+                w="full"
+                onClick={preventClickBehavior}
+                flexGrow={0}
+                justifyContent="center"
+                position="absolute"
+                left="0"
+                bg={`rgb(${rgbBackground})`}
+              >
+                <EmojiPicker
+                  // @ts-ignore
+                  onEmojiSelect={setEmoji}
+                  previewPosition="none"
+                  searchPosition="top"
+                  navPosition="bottom"
+                  noBoxShadow
+                />
+              </Flex>
+            </Flex>
+          </Fade>
+        </Flex>
+      </MobileView>
+    </>
   );
 };

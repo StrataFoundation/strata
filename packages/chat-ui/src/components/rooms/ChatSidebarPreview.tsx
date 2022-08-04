@@ -30,11 +30,11 @@ export function ChatSidebarPreview({ identifier, onClick }: chatRoomProps) {
   const subtext = useColorModeValue("gray.500", "gray.400");
 
   //push to url for specific chat
-  const handleClick = () => {
-    onClick && onClick();
-    router.push(route(routes.chat, { id: identifier }), undefined, {
+  const handleClick = async () => {
+    await router.push(route(routes.chat, { id: identifier }), undefined, {
       shallow: true,
     });
+    onClick && onClick();
   };
 
   return (

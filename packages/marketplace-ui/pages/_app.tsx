@@ -9,7 +9,7 @@ import { Footer } from "../src/components/Footer";
 import { Providers } from "../src/components/Providers";
 import { BrowserView, MobileView } from "react-device-detect";
 import { IS_PRODUCTION } from "../src/constants";
-import {pageview} from "../src/utils/gtag";
+import { pageview } from "../src/utils/gtag";
 import SEO from "../next-seo.config";
 
 // Use require instead of import since order matters
