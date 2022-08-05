@@ -75,8 +75,20 @@ export function Reacts({
                 </HStack>
               </Button>
             </PopoverTrigger>
-            <PopoverContent width="fit-content">
-              <PopoverArrow />
+            <PopoverContent
+              width="fit-content"
+              fontSize="xs"
+              borderRadius="md"
+              bg="gray.200"
+              border={0}
+              color="black"
+              py={0}
+              px={0}
+              _dark={{
+                bg: "gray.700",
+                color: "white",
+              }}
+            >
               <PopoverBody>
                 <HStack spacing={1}>
                   {messages
