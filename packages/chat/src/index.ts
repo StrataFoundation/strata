@@ -508,7 +508,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       return;
     }
     if (
-      Number(cachedDate) >= new Date().valueOf() - 24 * 60 * 60 * 1000 &&
+      // TODO: When sigs expire enable this again
+      // Number(cachedDate) >= new Date().valueOf() - 24 * 60 * 60 * 1000 &&
       this.wallet.publicKey.toBase58() === cachedAuthSig?.address
     ) {
       this.litAuthSig = cachedAuthSig;
