@@ -168,7 +168,7 @@ export async function initStorageIfNeeded(
       const quote = await orcaSolPool.getQuote(
         shdwToken,
         // Add 5% more than we need, at least need 1 shade
-        new Decimal(shdwNeeded * 1.05)
+        new Decimal(shdwNeeded * 1.5)
       );
       console.log(
         `Not enough SHDW, buying ${shdwNeeded} SHDW for ~${quote
