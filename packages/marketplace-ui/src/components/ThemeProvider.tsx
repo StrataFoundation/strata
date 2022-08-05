@@ -6,6 +6,7 @@ import { theme } from "@strata-foundation/react";
 
 export const ThemeProvider: FC = ({ children }) => (
   <ChakraProvider resetCSS theme={theme}>
+    {/* @ts-ignore */}
     {children}
   </ChakraProvider>
 );

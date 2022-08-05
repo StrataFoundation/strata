@@ -7,7 +7,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2, Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, Signer, TransactionInstruction } from "@solana/web3.js";
 import {
   useMint,
   useProvider,
@@ -55,8 +55,8 @@ async function editMetadata(
     externalUrl: values.externalUrl,
   });
 
-  const instructions = [];
-  const signers = [];
+  const instructions: TransactionInstruction[] = [];
+  const signers: Signer[] = [];
   const metadata = await Metadata.getPDA(mintKey);
   const data = new DataV2({
     // Max name len 32

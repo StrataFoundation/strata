@@ -712,7 +712,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       );
 
     const instructions: TransactionInstruction[] = [];
-    const signers = [];
+    const signers: Signer[] = [];
     signers.push(mintKeypair);
 
     instructions.push(
@@ -971,7 +971,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     }
 
     const instructions: TransactionInstruction[] = [];
-    const signers = [];
+    const signers: Signer[] = [];
     let shouldCreateMint = false;
     if (!targetMint) {
       signers.push(targetMintKeypair);
@@ -1283,6 +1283,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     const acc = await this.provider.connection.getAccountInfo(
       SYSVAR_CLOCK_PUBKEY
     );
+    //@ts-ignore
     return Number(acc!.data.readBigInt64LE(8 * 4));
   }
 
@@ -1321,7 +1322,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       buyFrozen
     );
     const reserveAuthorityChanges = anyDefined(reserveAuthority);
-    const instructions = [];
+    const instructions: TransactionInstruction[] = [];
     if (generalChanges) {
       if (!tokenBondingAcct.generalAuthority) {
         throw new Error(
@@ -1461,7 +1462,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       );
       usedAta = true;
     }
-    const instructions = [];
+    const instructions: TransactionInstruction[] = [];
 
     if (usedAta && !(await this.accountExists(destination))) {
       instructions.push(
@@ -1553,7 +1554,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       );
     }
 
-    const instructions = [];
+    const instructions: TransactionInstruction[] = [];
 
     instructions.push(
       await this.instruction.sellWrappedSolV0(
@@ -1668,8 +1669,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       tokenBondingAcct.goLiveUnixTime.toNumber()
     );
 
-    const instructions = [];
-    const signers = [];
+    const instructions: TransactionInstruction[] = [];
     // let req = ComputeBudgetProgram.setComputeUnitLimit({units: 400000});
     // instructions.push(req);
 
@@ -1697,8 +1697,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       }
     }
 
-    let buyTargetAmount = null;
-    let buyWithBase = null;
+    let buyTargetAmount: any = null;
+    let buyWithBase: any = null;
     let maxPrice: number = 0;
 
     const unixTime = await this.getUnixTime();
@@ -1922,7 +1922,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     let currAmount = baseAmount ? toBN(baseAmount, baseMintInfo) : undefined;
 
     const hierarchyToTraverse = isBuy ? arrHierarchy.reverse() : arrHierarchy;
-    const processedMints = [];
+    const processedMints: any[] = [];
     for (const [index, subHierarchy] of hierarchyToTraverse.entries()) {
       const isLastHop = index === arrHierarchy.length - 1;
       const tokenBonding = subHierarchy.tokenBonding;
@@ -2173,7 +2173,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       tokenBondingAcct.goLiveUnixTime.toNumber()
     );
 
-    const instructions = [];
+    const instructions: TransactionInstruction[] = [];
     // let req = ComputeBudgetProgram.setComputeUnitLimit({units: 350000});
     // instructions.push(req);
     if (!source) {
@@ -2372,7 +2372,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       this.provider,
       tokenBondingAcct.baseMint
     );
-    const instructions = [];
+    const instructions: TransactionInstruction[] = [];
 
     if (!tokenBondingAcct.reserveAuthority) {
       throw new Error(

@@ -17,7 +17,7 @@
     "write-heading-ids": "docusaurus write-heading-ids",
     "typecheck": "tsc",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
-    "precommit": "git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' .",
+    "precommit": "npx git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' .",
     "vercel-install": "pushd ../../ && yarn install && npx lerna run build --ignore @strata-foundation/chat-ui --ignore @strata-foundation/site --ignore @strata-foundation/marketplace-ui --ignore @strata-foundation/docs && npx lerna run build-lib --scope @strata-foundation/marketplace-ui --scope @strata-foundation/chat-ui && popd",
     "clean": "npx shx mkdir -p lib && npx shx rm -rf lib",
     "package": "npx shx mkdir -p lib/cjs lib/esm && echo '{\"type\":\"commonjs\"}' | npx json > ./lib/cjs/package.json && echo '{\"type\":\"module\"} ' | npx json > ./lib/esm/package.json",

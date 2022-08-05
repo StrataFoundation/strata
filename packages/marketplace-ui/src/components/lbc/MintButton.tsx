@@ -164,6 +164,7 @@ export const MintButton = ({
           </InputGroup>
         </Flex>
       </VStack>
+      {/* @ts-ignore */}
       <LightMode>
         <Button
           onClick={() =>

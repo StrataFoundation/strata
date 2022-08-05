@@ -158,6 +158,7 @@ export const LbcInfo = ({
               </Box>
             </HStack>
             {isLive ? (
+              // @ts-ignore
               <ReactCountdown
                 date={endDate}
                 now={() => (unixTime ? unixTime * 1000 : new Date().valueOf())}

@@ -160,6 +160,7 @@ export const ThemeProvider: FC<{ resetCSS?: boolean }> = ({
   resetCSS = false,
 }) => (
   <ChakraProvider resetCSS={resetCSS} theme={theme}>
+    {/* @ts-ignore */}
     {children}
   </ChakraProvider>
 );

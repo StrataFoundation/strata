@@ -49,6 +49,7 @@ export const LaunchpadLayout: FC<LaunchpadLayoutProps> = ({
       </Center>
       <Box w="full" py={12} bgColor="gray.100">
         <Container maxW="container.lg">
+          {/* @ts-ignore */}
           <Stack spacing={8} justifyContent="center">
             <Stack
               alignItems="center"
