@@ -197,7 +197,7 @@ export const Summary: React.FC<ISummaryProps> = ({ state, onBack, onNext }) => {
               </Button>
             </Heading>
             <LabelCodeValue label="name" value={name} />
-            <LabelCodeValue label="identifier" value={identifier} />
+            <LabelCodeValue label="domain" value={identifier + ".chat"} />
             <LabelCodeValue label="image">
               <Image
                 alt={`${identifier}-chat-image`}

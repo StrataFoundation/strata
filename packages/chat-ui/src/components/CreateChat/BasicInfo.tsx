@@ -233,7 +233,7 @@ export const BasicInfo: React.FC<IBasicInfoProps> = ({
           />
         </FormControlWithError>
         <FormControl isInvalid={!!errors.identifier?.message}>
-          <FormLabel htmlFor="identifier">Identifier</FormLabel>
+          <FormLabel htmlFor="identifier">.chat Domain</FormLabel>
           <InputGroup>
             <Input
               id="identifier"
