@@ -50,7 +50,6 @@ const validationSchema = yup
     identifier: yup
       .string()
       .required()
-      .min(6)
       .max(28)
       .matches(
         /^[a-zA-Z0-9\_]+$/g,
@@ -127,7 +126,7 @@ export const BasicInfo: React.FC<IBasicInfoProps> = ({
           } else {
             setIsValidIdentifier(false);
             setError("identifier", {
-              message: "Chat identifier is already taken!",
+              message: ".chat domain is already taken!",
             });
           }
         }
@@ -141,6 +140,13 @@ export const BasicInfo: React.FC<IBasicInfoProps> = ({
   }, [identifier, identifierOwner]);
 
   const onSubmit = (data: any) => {
+    if (data.identifier.length < 6 && !identifierOwner?.equals(connectedWallet!)) {
+      setError("identifier", {
+        message: "Domain must be at least 6 characters.",
+      });
+      return;
+    }
+
     setState({
       ...state,
       wizardData: {
@@ -257,7 +263,7 @@ export const BasicInfo: React.FC<IBasicInfoProps> = ({
               {isValidIdentifier ? (
                 <Flex alignItems="center" color="green.500">
                   <Icon as={RiCheckboxCircleFill} mr={1} fontSize="1.3rem" />
-                  <Box>Chat identifier is available!</Box>
+                  <Box>.chat domain is available!</Box>
                 </Flex>
               ) : (
                 'The shortlink for the chat, i.e "solana" for solana.chat. You will receive an NFT representing ownership of the chat domain.'
