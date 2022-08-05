@@ -1,7 +1,7 @@
 import { useConnection } from "@solana/wallet-adapter-react";
 import { Commitment } from "@solana/web3.js";
 import { AccountFetchCache } from "@strata-foundation/spl-utils";
-import { createContext, FC, ReactNode, useEffect, useState } from "react";
+import React, { createContext, FC, ReactNode, useEffect, useState } from "react";
 import { DEFAULT_COMMITMENT } from "../constants/globals";
 
 export interface IAccountProviderProps {

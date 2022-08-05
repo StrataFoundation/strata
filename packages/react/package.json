@@ -14,10 +14,11 @@
     "registry": "https://registry.npmjs.org/"
   },
   "scripts": {
-    "watch": "npx rollup --config  --watch",
-    "build": "npx rollup --config",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
-    "precommit": "git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' ."
+    "precommit": "git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' .",
+    "clean": "npx shx mkdir -p lib && npx shx rm -rf lib",
+    "package": "npx shx mkdir -p lib/cjs lib/esm && echo '{\"type\":\"commonjs\"}' | npx json > ./lib/cjs/package.json && echo '{\"type\":\"module\"} ' | npx json > ./lib/esm/package.json",
+    "prebuild": "pnpm run clean && pnpm run package"
   },
   "dependencies": {
     "@apollo/client": "^3.6.9",

@@ -15,6 +15,8 @@
     "@types/chai": "^4.2.21",
     "@types/chai-as-promised": "^7.1.4",
     "@types/mocha": "^9.0.0",
+    "@types/bn.js": "^5.1.0",
+    "@types/bs58": "^4.0.1",
     "camelcase": "^6.2.0",
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
@@ -25,7 +27,8 @@
     "ts-mocha": "^8.0.0",
     "ts-node": "^10.5.0",
     "typescript": "^4.4.3",
-    "vite": "^3.0.4"
+    "vite": "^3.0.4",
+    "pnpm": "^7.8.0"
   },
   "scripts": {
     "versionup": "lerna version --conventional-commits --no-git-tag-version",
@@ -39,13 +42,18 @@
     "commit-version": "git add . && git commit -m \"chore(release): publish `node -p 'require(\"./lerna.json\").version'`\"",
     "release": "lerna publish from-package --no-verify-access",
     "release:canary": "lerna publish --canary --preid next --dist-tag next --force-publish='*' --no-push --no-git-tag-version --no-verify-access --yes",
-    "watch": "npx lerna run --parallel watch",
-    "build": "npx lerna run build",
-    "build-sdks": "npx lerna run build --ignore @strata-foundation/marketplace-ui --ignore @strata-foundation/docs --ignore @strata-foundation/chat-ui --ignore @strata-foundation/site",
     "build-programs": "anchor build && npx lerna run build --scope @strata-foundation/spl-utils --scope @strata-foundation/spl-token-bonding --scope @strata-foundation/spl-token-collective --scope @strata-foundation/fungible-entangler",
     "bootstrap": "lerna run bootstrap --scope @strata-foundation/cli",
     "test": "ts-mocha -p ./tsconfig.json -t 1000000 \"tests/**/*.ts\"",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "clean": "pnpm --recursive run clean",
+    "build": "pnpm --recursive run prebuild && tsc --build",
+    "watch": "pnpm --recursive run prebuild && tsc --build --watch",
+    "fmt": "prettier --write '{*,**/*}.{ts,tsx,js,jsx,json}'",
+    "lint": "prettier --check '{*,**/*}.{ts,tsx,js,jsx,json}' && eslint",
+    "lint:fix": "yarn fmt && eslint --fix",
+    "nuke": "npx shx rm -rf {.,packages/*/*}/{node_modules,yarn.lock}",
+    "reinstall": "pnpm nuke && pnpm install --ignore-scripts"
   },
   "dependencies": {
     "@bonfida/spl-name-service": "^0.1.22",

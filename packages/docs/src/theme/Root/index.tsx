@@ -20,7 +20,7 @@ import { ChatSdkProvider, EmojisProvider, ReplyProvider } from "@strata-foundati
 // Default styles that can be overridden by your app
 require("@solana/wallet-adapter-react-ui/styles.css");
 
-export default ({ children }) => {
+export default ({ children }: {children: any}) => {
   const onError = React.useCallback(
     (error: Error) => {
       console.error(error);
@@ -60,6 +60,7 @@ export default ({ children }) => {
     <>
       <ThemeProvider>
         <ErrorHandlerProvider onError={onError}>
+          {/* @ts-ignore */}
           <Wallet>
             <ProviderContextProvider>
               <WalletModalProvider>
@@ -71,6 +72,7 @@ export default ({ children }) => {
                           <EmojisProvider>
                             <ReplyProvider>
                               <AcceleratorProvider url="wss://prod-api.teamwumbo.com/accelerator">
+                                {/* @ts-ignore */}
                                 <VariablesProvider>
                                   {children}
                                   <Toaster

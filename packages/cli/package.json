@@ -17,7 +17,10 @@
     "watch": "yarn run copy-files && node src/idlToTs",
     "bootstrap": "tsc && node dist/lib/bootstrap",
     "bounty-dist": "tsc && node dist/lib/bounty-dist",
-    "create-governance-token": "tsc && node dist/lib/createGovernanceToken"
+    "create-governance-token": "tsc && node dist/lib/createGovernanceToken",
+    "clean": "npx shx mkdir -p lib && npx shx rm -rf lib",
+    "package": "npx shx mkdir -p lib/cjs lib/esm && echo '{\"type\":\"commonjs\"}' | npx json > ./lib/cjs/package.json && echo '{\"type\":\"module\"} ' | npx json > ./lib/esm/package.json",
+    "prebuild": "pnpm run clean && pnpm run package"
   },
   "dependencies": {
     "@solana/web3.js": "^1.43.4",

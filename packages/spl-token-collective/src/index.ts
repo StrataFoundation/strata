@@ -690,8 +690,8 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       );
     }
 
-    const instructions2 = [];
-    const signers2 = [];
+    const instructions2: TransactionInstruction[] = [];
+    const signers2: Signer[] = [];
     let tokenBonding: PublicKey | undefined;
     if (bonding) {
       tokenBonding = (
@@ -784,7 +784,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       })
     )[0];
     const name = tokenRefAcct.name! as PublicKey;
-    const instructions0 = [];
+    const instructions0: TransactionInstruction[] = [];
 
     if (
       !ignoreMissingName &&
@@ -866,7 +866,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       this.programId
     );
 
-    const instructions1 = [];
+    const instructions1: TransactionInstruction[] = [];
     instructions1.push(
       await this.instruction.claimSocialTokenV0(
         {
@@ -930,7 +930,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       instructions1.push(...updateInstructions);
     }
 
-    const instructions2 = [];
+    const instructions2: TransactionInstruction[] = [];
     if (isPrimary) {
       const { instructions: setAsPrimaryInstrs } =
         await this.setAsPrimaryInstructions({
@@ -1770,7 +1770,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       mint: tokenBondingAcct?.baseMint,
     });
 
-    const instructions = [];
+    const instructions: TransactionInstruction[] = [];
     if (!tokenRefAcct.isClaimed && !handle) {
       throw new Error(
         "Handle must be provided for opting out of unclaimed tokens"

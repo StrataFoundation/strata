@@ -15,15 +15,15 @@
   ],
   "scripts": {
     "build:analyze": "ANALYZE=true yarn build",
-    "clean": "npx shx rm -rf .next",
     "dev": "NODE_OPTIONS='--inspect' next dev",
-    "watch": "npx rollup --config --watch",
-    "build-lib": "npx rollup --config",
     "build": "yarn clean && next build",
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
-    "precommit": "git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' ."
+    "precommit": "git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' .",
+    "clean": "shx mkdir -p lib && shx rm -rf lib && shx rm -rf .next",
+    "package": "npx shx mkdir -p lib/cjs lib/esm && echo '{\"type\":\"commonjs\"}' | npx json > ./lib/cjs/package.json && echo '{\"type\":\"module\"} ' | npx json > ./lib/esm/package.json",
+    "prebuild": "pnpm run clean && pnpm run package"
   },
   "dependencies": {
     "@apollo/client": "^3.5.10",
@@ -92,7 +92,6 @@
     "@rollup/plugin-node-resolve": "^13.3.0",
     "@rollup/plugin-replace": "^4.0.0",
     "@rollup/plugin-typescript": "^8.3.4",
-    "@types/bn.js": "^5.1.0",
     "@types/escape-html": "^1.0.2",
     "@types/gtag.js": "^0.0.10",
     "@types/node": "17.0.8",

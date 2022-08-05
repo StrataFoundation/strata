@@ -1,4 +1,4 @@
-import { FC } from "react";
+import React, { FC } from "react";
 import { AccountProvider } from "../contexts/accountContext";
 import { ErrorHandlerProvider } from "../contexts/errorHandlerContext";
 import { ProviderContextProvider } from "../contexts/providerContext";
