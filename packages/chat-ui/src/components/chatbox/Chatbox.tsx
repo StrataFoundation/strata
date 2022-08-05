@@ -26,6 +26,7 @@ import {
   InputRightAddon,
   InputGroup,
   CloseButton,
+  ModalCloseButton,
 } from "@chakra-ui/react";
 import { AiFillLock } from "react-icons/ai";
 
@@ -392,6 +393,7 @@ export function Chatbox({
         <ModalOverlay />
         <ModalContent borderRadius="xl" shadow="xl">
           <ModalHeader>Select GIF</ModalHeader>
+          <ModalCloseButton />
           <ModalBody>
             <GifSearch
               onSelect={(gifyId) => {
