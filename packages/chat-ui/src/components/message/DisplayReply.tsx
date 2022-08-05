@@ -76,7 +76,6 @@ export function DisplayReply({
         }}
       />
       <HStack
-        flexGrow={1}
         gap={0}
         spacing={1}
         onClick={() => scrollToMessage(reply.id)}
