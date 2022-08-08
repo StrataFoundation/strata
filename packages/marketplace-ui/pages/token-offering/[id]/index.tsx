@@ -1,8 +1,8 @@
-import { Disclaimer } from "@/components/Disclaimer";
-import { MetadataMeta } from "@/components/MetadataMeta";
-import { TokenOffering } from "@/components/TokenOffering";
-import { SITE_URL } from "@/constants";
-import { mintMetadataServerSideProps } from "@/utils/tokenMetadataServerProps";
+import { Disclaimer } from "../../../src/components/Disclaimer";
+import { MetadataMeta } from "../../../src/components/MetadataMeta";
+import { TokenOffering } from "../../../src/components/TokenOffering";
+import { SITE_URL } from "../../../src/constants";
+import { mintMetadataServerSideProps } from "../../../src/utils/tokenMetadataServerProps";
 import { Box, Container, Heading } from "@chakra-ui/react";
 import {
   usePublicKey

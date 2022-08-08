@@ -1,5 +1,5 @@
-import { BountyDetail } from "@/components/bounties/BountyDetail";
-import { MetadataMeta } from "@/components/MetadataMeta";
+import { BountyDetail } from "../../../src/components/bounties/BountyDetail";
+import { MetadataMeta } from "../../../src/components/MetadataMeta";
 import { Box, Container, Image } from "@chakra-ui/react";
 import { NextSeo } from "next-seo";
 import {
@@ -15,9 +15,9 @@ import {
 } from "next";
 import { useRouter } from "next/router";
 import React from "react";
-import { mintMetadataServerSideProps } from "@/utils/tokenMetadataServerProps";
-import { route, routes } from "@/utils/routes";
-import { SITE_URL } from "@/constants";
+import { mintMetadataServerSideProps } from "../../../src/utils/tokenMetadataServerProps";
+import { route, routes } from "../../../src/utils/routes";
+import { SITE_URL } from "../../../src/constants";
 import { PublicKey } from "@solana/web3.js";
 import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 

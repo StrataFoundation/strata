@@ -1,4 +1,4 @@
-import { MetadataMeta } from "@/components/MetadataMeta";
+import { MetadataMeta } from "../../../src/components/MetadataMeta";
 import { Box, Center, Container, Heading, Spinner } from "@chakra-ui/react";
 import {
   Swap,
@@ -12,8 +12,8 @@ import {
 } from "next";
 import { useRouter } from "next/router";
 import React from "react";
-import { mintMetadataServerSideProps } from "@/utils/tokenMetadataServerProps";
-import { SITE_URL } from "@/constants";
+import { mintMetadataServerSideProps } from "../../../src/utils/tokenMetadataServerProps";
+import { SITE_URL } from "../../../src/constants";
 
 export const getServerSideProps: GetServerSideProps =
   mintMetadataServerSideProps;

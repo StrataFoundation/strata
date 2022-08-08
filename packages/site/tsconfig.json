@@ -1,6 +1,11 @@
 {
   "extends": "../../tsconfig.base.json",
-  "include": ["pages", "utils", "constants", "components"],
+  "include": [
+    "pages",
+    "utils",
+    "constants",
+    "components"
+  ],
   "references": [
     {
       "path": "../react"
@@ -11,5 +16,16 @@
     {
       "path": "./tsconfig.esm.json"
     }
+  ],
+  "compilerOptions": {
+    "allowJs": true,
+    "noEmit": true,
+    "incremental": true,
+    "module": "esnext",
+    "isolatedModules": true,
+    "jsx": "preserve"
+  },
+  "exclude": [
+    "node_modules"
   ]
 }

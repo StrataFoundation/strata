@@ -34,7 +34,5 @@
     "isolatedModules": true,
     "jsx": "preserve"
   },
-  "exclude": [
-    "node_modules"
-  ]
+  "exclude": ["./lib/**/*", "node_modules"]
 }

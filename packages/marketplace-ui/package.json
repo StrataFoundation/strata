@@ -34,6 +34,7 @@
   "dependencies": {
     "@apollo/client": "^3.5.10",
     "@chakra-ui/icons": "^1.1.7",
+    "@chakra-ui/system": "^2.2.4",
     "@civic/solana-gateway-react": "^0.4.14-beta.1",
     "@hookform/resolvers": "^2.8.8",
     "@metaplex-foundation/mpl-token-metadata": "^1.2.5",
@@ -72,7 +73,7 @@
     "react-hook-form": "^7.25.1",
     "react-hot-toast": "^2.2.0",
     "react-icons": "^4.3.1",
-    "recharts": "^2.1.9",
+    "recharts": "2.1.9",
     "yup": "^0.32.11"
   },
   "peerDependencies": {

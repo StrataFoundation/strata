@@ -1,5 +1,5 @@
-import { ManualForm } from "@/components/form/ManualForm";
-import { FormContainer } from "@/components/FormContainer";
+import { ManualForm } from "../../../src/components/form/ManualForm";
+import { FormContainer } from "../../../src/components/FormContainer";
 import { NextPage } from "next";
 
 export const NewFullymanaged: NextPage = () => {
