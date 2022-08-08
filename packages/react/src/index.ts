@@ -45,6 +45,7 @@ export type {
 export { ErrorHandlerContext, ErrorHandlerProvider } from "./contexts/errorHandlerContext";
 
 export { HolaplexGraphqlProvider } from "./contexts/HolaplexGraphqlProvider";
+export { GraphqlProvider } from "./contexts/GraphqlProvider";
 
 export { ProviderContext, ProviderContextProvider } from "./contexts/providerContext";
 
