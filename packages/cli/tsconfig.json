@@ -2,6 +2,15 @@
   "extends": "../../tsconfig.base.json",
   "references": [
     {
+      "path": "../spl-token-bonding"
+    },
+    {
+      "path": "../spl-token-collective"
+    },
+    {
+      "path": "../spl-utils"
+    },
+    {
       "path": "./tsconfig.cjs.json"
     },
     {

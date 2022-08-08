@@ -10,6 +10,7 @@ export const BountyList: React.FC = ({ children }) => {
       backgroundColor="white"
       divider={<StackDivider borderColor="gray.200" />}
     >
+      {/* @ts-ignore */}
       {children}
     </VStack>
   );

@@ -3,6 +3,9 @@
   "include": ["pages", "utils", "constants", "components"],
   "references": [
     {
+      "path": "../react"
+    },
+    {
       "path": "./tsconfig.cjs.json"
     },
     {

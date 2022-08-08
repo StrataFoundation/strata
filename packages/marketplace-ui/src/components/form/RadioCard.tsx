@@ -41,6 +41,7 @@ export const RadioCard: FC<RadioCardProps> = ({
             borderColor: "orange.600",
           }}
         >
+          {/* @ts-ignore */}
           {children}
         </Box>
       </Box>
@@ -74,6 +75,7 @@ export const RadioCardWithAffordance: FC<RadioCardProps> = ({
     >
       <Box as="label" textAlign="center">
         <input {...input} />
+        {/* @ts-ignore */}
         <Stack
           {...checkbox}
           cursor={disabled ? "inherit" : "pointer"}
