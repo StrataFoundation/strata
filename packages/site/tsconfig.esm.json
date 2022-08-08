@@ -1,6 +1,6 @@
 {
   "extends": "../../tsconfig.esm.json",
-  "include": ["src"],
+  "include": ["pages", "utils", "constants", "components"],
   "compilerOptions": {
     "outDir": "lib/esm"
   }

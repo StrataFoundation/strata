@@ -3,6 +3,7 @@ import { useCandyMachine } from "@strata-foundation/marketplace-ui";
 import { Spinner } from "@chakra-ui/react";
 import { useVariables, useVariablesContext, VariablesProvider } from "../../theme/Root/variables";
 import { recursiveTransformBN } from "../../theme/ReactLiveScope/AsyncButton";
+//@ts-ignore
 import BrowserOnly from "@docusaurus/BrowserOnly";
 import { usePublicKey } from "@strata-foundation/react";
 

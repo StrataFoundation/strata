@@ -55,6 +55,7 @@ export const Wallet = ({
       config={config}
     >
       <WalletProvider wallets={wallets} autoConnect>
+        {/* @ts-ignore */}
         {children}
       </WalletProvider>
     </ConnectionProvider>

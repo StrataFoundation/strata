@@ -16,6 +16,7 @@ export type RadioCardProps = {
 } & UseRadioProps;
 
 export const RadioCard: FC<RadioCardProps> = ({
+  //@ts-ignore
   children,
   disabled = false,
   ...props
@@ -36,6 +37,7 @@ export const RadioCard: FC<RadioCardProps> = ({
       }}
     >
       <Box as="label">
+        {/* @ts-ignore */}
         <input {...input} />
         <Box
           {...checkbox}
@@ -59,6 +61,7 @@ export const RadioCard: FC<RadioCardProps> = ({
 };
 
 export const RadioCardWithAffordance: FC<RadioCardProps> = ({
+  //@ts-ignore
   children,
   disabled = false,
   containerProps = {},
@@ -86,6 +89,7 @@ export const RadioCardWithAffordance: FC<RadioCardProps> = ({
       }}
     >
       <Box as="label" textAlign="center">
+        {/* @ts-ignore */}
         <input {...input} />
         <Stack
           {...checkbox}

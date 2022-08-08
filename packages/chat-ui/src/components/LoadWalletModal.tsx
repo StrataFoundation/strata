@@ -144,6 +144,7 @@ export const LoadWalletModal = (
                   });
 
                   return (
+                    //@ts-ignore
                     <RadioCardWithAffordance key={value} {...radio}>
                       <Flex
                         h="full"

@@ -8,9 +8,9 @@ import {
   Flex,
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
-import { Layout } from "@/components/Layout";
-import { Header } from "@/components/Header";
-import { ProfileButton } from "@/components/ProfileButton";
+import { Layout } from "../src/components/Layout";
+import { Header } from "../src/components/Header";
+import { ProfileButton } from "../src/components/ProfileButton";
 import { route, routes } from "../src/routes";
 
 const Home = () => {
@@ -18,6 +18,7 @@ const Home = () => {
   const sidebar = useDisclosure();
 
   return (
+    //@ts-ignore
     <Layout
       isSidebarOpen={sidebar.isOpen}
       onSidebarClose={sidebar.onClose}

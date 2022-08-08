@@ -34,7 +34,7 @@ async function getSdk(
 
   return tryProm(ChatSdk.init(provider));
 }
-
+//@ts-ignore
 export const ChatSdkProviderRaw: React.FC = ({ children }) => {
   const { provider } = useProvider();
   const { result, loading, error } = useAsync(getSdk, [provider]);
@@ -54,7 +54,9 @@ export const ChatSdkProviderRaw: React.FC = ({ children }) => {
   );
 };
 
+//@ts-ignore
 export const ChatSdkProvider: React.FC = ({ children }) => {
+  //@ts-ignore
   return <ChatSdkProviderRaw>{children}</ChatSdkProviderRaw>;
 };
 

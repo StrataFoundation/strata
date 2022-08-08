@@ -117,6 +117,7 @@ async function sendMessage({
       (await chatSdk.provider.connection.getAccountInfo(
         SYSVAR_CLOCK_PUBKEY,
         "processed"
+        //@ts-ignore
       ))!.data.readBigInt64LE(8 * 4)
     );
 
@@ -206,6 +207,7 @@ export const SendMessageContext = createContext<IUseSendMessageReturn>(
 );
 
 export const SendMessageProvider: FC<IUseSendMessageArgs> = ({
+  //@ts-ignore
   children,
   ...rest
 }) => {

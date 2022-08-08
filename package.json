@@ -52,7 +52,7 @@
     "fmt": "prettier --write '{*,**/*}.{ts,tsx,js,jsx,json}'",
     "lint": "prettier --check '{*,**/*}.{ts,tsx,js,jsx,json}' && eslint",
     "lint:fix": "yarn fmt && eslint --fix",
-    "nuke": "npx shx rm -rf {.,packages/*/*}/{node_modules,yarn.lock}",
+    "nuke": "npx shx rm -rf {.,packages/*}/{node_modules,lib,yarn.lock,dist}",
     "reinstall": "pnpm nuke && pnpm install --ignore-scripts"
   },
   "dependencies": {

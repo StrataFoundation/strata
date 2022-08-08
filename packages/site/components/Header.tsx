@@ -12,7 +12,7 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import { HamburgerIcon, CloseIcon } from "@chakra-ui/icons";
-import { DOCS_URL, MARKETPLACE_URL, BLOG_URL } from "@/constants";
+import { DOCS_URL, MARKETPLACE_URL, BLOG_URL } from "../constants";
 
 const Links = [
   { link: "Docs", href: DOCS_URL },

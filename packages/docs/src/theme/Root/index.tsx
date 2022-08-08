@@ -67,6 +67,7 @@ export default ({ children }: {children: any}) => {
                 <AccountProvider commitment="confirmed">
                   <StrataSdksProvider>
                     <MarketplaceSdkProvider>
+                      {/* @ts-ignore */}
                       <ChatSdkProvider>
                         <HolaplexGraphqlProvider>
                           <EmojisProvider>

@@ -12,9 +12,10 @@ export const VariablesContext = React.createContext<IVariablesContext>({
   variables: null,
   setVariables: (i: any) => null,
   register: () => null,
-  execWithDeps: () => Promise.resolve(null),
+  execWithDeps: () => Promise.resolve(),
 });
 
+//@ts-ignore
 export const VariablesProvider: React.FC = ({ children }) => {
   const [variables, setVariables] = useState<any>(null);
   const [dependencies, setDependencies] = useState<

@@ -24,6 +24,7 @@ const ML = {
   md: 80,
 };
 export const Layout: React.FC<ILayoutProps> = ({
+  //@ts-ignore
   children,
   isSidebarOpen,
   onSidebarClose,

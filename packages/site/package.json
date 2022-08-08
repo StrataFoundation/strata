@@ -12,8 +12,12 @@
     "package": "npx shx mkdir -p lib/cjs lib/esm && echo '{\"type\":\"commonjs\"}' | npx json > ./lib/cjs/package.json && echo '{\"type\":\"module\"} ' | npx json > ./lib/esm/package.json",
     "prebuild": "pnpm run clean && pnpm run package"
   },
+  "exports": {
+    "./*": "./*"
+  },
   "dependencies": {
     "@bonfida/spl-name-service": "0.1.22",
+    "@chakra-ui/css-reset": "^2.0.3",
     "@chakra-ui/icons": "^1.1.7",
     "@chakra-ui/react": "^1.8.1",
     "@solana/spl-token": "0.1.8",
@@ -22,6 +26,7 @@
     "next-seo": "^5.1.0",
     "react": "17.0.2",
     "react-dom": "17.0.2",
+    "react-hot-toast": "^2.3.0",
     "react-icons": "^4.3.1",
     "react-text-transition": "^1.3.0"
   },

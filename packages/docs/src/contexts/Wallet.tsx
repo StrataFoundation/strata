@@ -21,6 +21,7 @@ const config: any = {
   commitment: "confirmed",
 };
 
+//@ts-ignore
 export const Wallet: FC = ({ children }) => {
   // You can also provide a custom RPC endpoint
   const { endpoint, cluster } = useEndpoint();

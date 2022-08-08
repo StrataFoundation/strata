@@ -6,13 +6,17 @@
   },
   "version": "3.10.0",
   "license": "Apache-2.0",
-  "main": "dist/index.umd.js",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./lib/esm/src/index.js",
+  "module": "./lib/esm/src/index.js",
+  "types": "./lib/esm/src/index.d.ts",
   "sideEffects": false,
   "files": [
-    "dist"
+    "lib"
   ],
+  "exports": {
+    "import": "./lib/esm/src/index.js",
+    "require": "./lib/cjs/src/index.js"
+  },
   "scripts": {
     "build:analyze": "ANALYZE=true yarn build",
     "dev": "NODE_OPTIONS='--inspect' next dev",
@@ -59,7 +63,7 @@
     "graphql": "^16.4.0",
     "js-base64": "^3.7.2",
     "moment": "^2.29.1",
-    "next": "12.0.7",
+    "next": "12.2.4",
     "next-seo": "^5.2.0",
     "react-async-hook": "^4.0.0",
     "react-circular-progressbar": "^2.0.4",
@@ -89,7 +93,7 @@
     "@rollup/plugin-replace": "^4.0.0",
     "@rollup/plugin-typescript": "^8.3.4",
     "@types/node": "17.0.8",
-    "@types/react": "^17.0.38",
+    "@types/react": "^17.0.48",
     "@types/rollup-plugin-auto-external": "^2.0.2",
     "eslint": "^8.6.0",
     "eslint-config-next": "^12.0.7",

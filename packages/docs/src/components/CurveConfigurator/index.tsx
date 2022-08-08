@@ -111,6 +111,7 @@ export const PriceVsSupplyDisplay = ({
     <VStack justify="stretch">
       <Box w="full" h="500px">
         <ResponsiveContainer width="100%" height="100%">
+          {/* @ts-ignore */}
           <LineChart
             width={500}
             height={300}
@@ -123,6 +124,7 @@ export const PriceVsSupplyDisplay = ({
             }}
           >
             <ReferenceLine x={Number(supply)} stroke="orange" />
+            {/* @ts-ignore */}
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis
               tickFormatter={(amount) =>
@@ -143,9 +145,12 @@ export const PriceVsSupplyDisplay = ({
                 dy: 0,
               }}
             />
+            {/* @ts-ignore */}
             <Tooltip />
+            {/* @ts-ignore */}
             <Legend />
 
+            {/* @ts-ignore */}
             <Line
               activeDot={{
                 onClick: (e, payload) => {
@@ -219,6 +224,7 @@ export const RateVsTimeDisplay = ({
     <VStack justify="stretch">
       <Box w="full" h="500px">
         <ResponsiveContainer width="100%" height="100%">
+          {/* @ts-ignore */}
           <LineChart
             width={500}
             height={300}
@@ -231,6 +237,7 @@ export const RateVsTimeDisplay = ({
             }}
           >
             <ReferenceLine x={Number(timeOffset)} stroke="orange" />
+            {/* @ts-ignore */}
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis
               tickCount={10}
@@ -249,9 +256,11 @@ export const RateVsTimeDisplay = ({
                 dy: 0,
               }}
             />
+            {/* @ts-ignore */}
             <Tooltip />
+            {/* @ts-ignore */}
             <Legend />
-
+            {/* @ts-ignore */}
             <Line
               activeDot={{
                 onClick: (e, payload) => {
@@ -328,6 +337,7 @@ export const EstimatedSalesVsTime = ({
     <VStack justify="stretch">
       <Box w="full" h="500px">
         <ResponsiveContainer width="100%" height="100%">
+          {/* @ts-ignore */}
           <LineChart
             width={500}
             height={300}
@@ -340,6 +350,7 @@ export const EstimatedSalesVsTime = ({
             }}
           >
             <ReferenceLine x={Number(timeOffset)} stroke="orange" />
+            {/* @ts-ignore */}
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis
               tickCount={10}
@@ -360,9 +371,12 @@ export const EstimatedSalesVsTime = ({
                 dy: 0,
               }}
             />
+            {/* @ts-ignore */}
             <Tooltip />
+            {/* @ts-ignore */}
             <Legend />
 
+            {/* @ts-ignore */}
             <Line
               activeDot={{
                 onClick: (e, payload) => {
@@ -422,6 +436,7 @@ export const PriceVsTimeDisplay = ({
     <VStack justify="stretch">
       <Box w="full" h="500px">
         <ResponsiveContainer width="100%" height="100%">
+          {/* @ts-ignore */}
           <LineChart
             width={500}
             height={300}
@@ -434,6 +449,7 @@ export const PriceVsTimeDisplay = ({
             }}
           >
             <ReferenceLine x={Number(timeOffset)} stroke="orange" />
+            {/* @ts-ignore */}
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis
               tickCount={10}
@@ -454,9 +470,11 @@ export const PriceVsTimeDisplay = ({
                 dy: 0,
               }}
             />
+            {/* @ts-ignore */}
             <Tooltip />
+            {/* @ts-ignore */}
             <Legend />
-
+            {/* @ts-ignore */}
             <Line
               activeDot={{
                 onClick: (e, payload) => {

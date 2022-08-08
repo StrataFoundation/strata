@@ -234,6 +234,7 @@ export function Chatbox({
           autoFocus={false}
           closeOnBlur={false}
         >
+          {/* @ts-ignore */}
           <PopoverTrigger>
             <Flex w="full" />
           </PopoverTrigger>

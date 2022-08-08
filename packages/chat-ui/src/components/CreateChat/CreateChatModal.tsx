@@ -26,7 +26,7 @@ import { ITokenFormValues } from "./TokenForm";
 import { INFTFormValues } from "./NFTForm";
 import { wizardSubmit } from "./wizardSubmit";
 import { useRouter } from "next/router";
-import { route, routes } from "src/routes";
+import { route, routes } from "../../routes";
 
 interface ICreateChatModalProps {
   isOpen: boolean;

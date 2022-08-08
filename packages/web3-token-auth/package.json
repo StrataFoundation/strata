@@ -23,8 +23,7 @@
     "watch": "yarn run copy-files && tsc --watch --project tsconfig.json",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
     "bootstrap": "tsc && node dist/lib/bootstrap",
-    "precommit": "npx git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' .",
-    "prepare": "yarn run build"
+    "precommit": "npx git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' ."
   },
   "dependencies": {
     "@solana/web3.js": "^1.43.4",

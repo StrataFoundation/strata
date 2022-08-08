@@ -7,5 +7,16 @@
     {
       "path": "./tsconfig.esm.json"
     }
+  ],
+  "compilerOptions": {
+    "allowJs": true,
+    "noEmit": true,
+    "incremental": true,
+    "module": "esnext",
+    "isolatedModules": true,
+    "jsx": "preserve"
+  },
+  "exclude": [
+    "node_modules"
   ]
 }

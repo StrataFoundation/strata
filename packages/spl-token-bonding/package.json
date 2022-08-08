@@ -10,13 +10,17 @@
     "type": "git",
     "url": "https://github.com/StrataFoundation/strata"
   },
-  "main": "dist/index.umd.js",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./lib/esm/src/index.js",
+  "module": "./lib/esm/src/index.js",
+  "types": "./lib/esm/src/index.d.ts",
   "sideEffects": false,
   "files": [
-    "dist"
+    "lib"
   ],
+  "exports": {
+    "import": "./lib/esm/src/index.js",
+    "require": "./lib/cjs/src/index.js"
+  },
   "scripts": {
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
     "precommit": "npx git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' .",

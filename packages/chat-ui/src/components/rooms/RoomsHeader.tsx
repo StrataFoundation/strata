@@ -135,6 +135,7 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
       </Heading>
       {chat?.name && (
         <Popover placement="top-end">
+          {/* @ts-ignore */}
           <PopoverTrigger>
             <Box
               color={colorMode === "light" ? "black" : "white"}

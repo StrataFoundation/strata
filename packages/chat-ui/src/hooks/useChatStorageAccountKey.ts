@@ -21,7 +21,7 @@ function getStorageAccount(
   );
 }
 
-export function useChatStorageAccountKey() {
+export function useChatStorageAccountKey(): any {
   const { keypair: delegateWallet } = useDelegateWallet();
   return useAsync(
     async (wallet: string | undefined) =>
