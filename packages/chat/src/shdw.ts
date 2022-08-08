@@ -156,11 +156,11 @@ export async function initStorageIfNeeded(
 
     const shdwOwnedAmount = await getOwnedAmount(localProvider, pubKey, SHDW);
     const solOwnedAmount = (await connection.getAccountInfo(pubKey))?.lamports;
-    if (!solOwnedAmount) {
-      throw new Error("Not enough sol");
-    }
 
     if (shdwOwnedAmount < shdwNeeded) {
+      if (!solOwnedAmount) {
+        throw new Error("Not enough sol in wallet " + pubKey.toBase58());
+      }
       const orca = getOrca(localProvider.connection);
       const orcaSolPool = orca.getPool(OrcaPoolConfig.SHDW_SOL);
       const solToken = orcaSolPool.getTokenB();
@@ -168,7 +168,7 @@ export async function initStorageIfNeeded(
       const quote = await orcaSolPool.getQuote(
         shdwToken,
         // Add 5% more than we need, at least need 1 shade
-        new Decimal(shdwNeeded * 1.05)
+        new Decimal(shdwNeeded * 1.5)
       );
       console.log(
         `Not enough SHDW, buying ${shdwNeeded} SHDW for ~${quote
