@@ -52,5 +52,6 @@ export const GraphqlProvider = ({
 }: {
   children: ReactNode | ReactNode[];
 }) => {
+  // @ts-ignore
   return <ApolloProvider client={client}>{children}</ApolloProvider>;
 };

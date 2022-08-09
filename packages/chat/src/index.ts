@@ -191,6 +191,7 @@ async function generateSymmetricKey(): Promise<CryptoKey> {
 export async function importSymmetricKey(
   symmKey: BufferSource
 ): Promise<CryptoKey> {
+  // @ts-ignore
   const importedSymmKey = await crypto.subtle.importKey(
     "raw",
     symmKey,

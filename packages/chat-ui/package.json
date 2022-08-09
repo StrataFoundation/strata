@@ -88,7 +88,7 @@
     "rollup-plugin-terser": "^7.0.2"
   },
   "devDependencies": {
-    "@chakra-ui/react": "^1.8.1",
+    "@chakra-ui/react": "^2.2.6",
     "@emotion/react": "^11.6.0",
     "@emotion/styled": "^11.6.0",
     "@next/bundle-analyzer": "^12.2.3",
@@ -107,8 +107,8 @@
     "eslint": "^8.6.0",
     "eslint-config-next": "^12.0.7",
     "next-compose-plugins": "^2.2.1",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "rollup": "^2.77.2",
     "rollup-plugin-auto-external": "^2.0.0",
     "rollup-plugin-terser": "^7.0.2",

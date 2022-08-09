@@ -632,7 +632,7 @@ export const SwapForm = ({
               >
                 {passedMintCap && (
                   <Text>
-                    {numRemaining > 0
+                    {(numRemaining || 0) > 0
                       ? `Only ${numRemaining} left`
                       : "Sold Out"}
                   </Text>

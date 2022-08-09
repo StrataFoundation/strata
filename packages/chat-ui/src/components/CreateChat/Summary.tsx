@@ -49,7 +49,7 @@ const LabelCodeValue: React.FC<React.PropsWithChildren<{ label: string; value?: 
       {label}:
     </Code>
     {value && (
-      <Text fontSize="lg" isTruncated w="auto">
+      <Text fontSize="lg" noOfLines={1} w="auto">
         {value}
       </Text>
     )}

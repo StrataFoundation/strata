@@ -1,7 +1,7 @@
 import React from "react";
-import { createIcon } from "@chakra-ui/react";
+import { ComponentWithAs, createIcon, IconProps } from "@chakra-ui/react";
 
-export const MetaplexIcon = createIcon({
+export const MetaplexIcon: ComponentWithAs<"svg", IconProps> = createIcon({
   displayName: "Metaplex",
   viewBox: "0 0 200 23",
   path: [
