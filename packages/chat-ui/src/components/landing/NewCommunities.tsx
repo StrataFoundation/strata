@@ -55,7 +55,7 @@ const Community = ({
               align="left"
               color={useColorModeValue("gray.600", "gray.200")}
             >
-              A community of foxes building cool shit
+              {description}
             </Text> */}
         </VStack>
         <HStack spacing={2}>
