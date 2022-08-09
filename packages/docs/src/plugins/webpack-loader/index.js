@@ -52,6 +52,11 @@ module.exports = function (context, options) {
                 fullySpecified: false,
               },
             },
+            // ensure our libs barrel files don't constitute imports
+            {
+              test: /packages\/.*src\/index.ts/i,
+              sideEffects: false,
+            },
           ],
         },
         plugins: [
