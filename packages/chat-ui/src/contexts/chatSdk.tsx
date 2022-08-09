@@ -34,8 +34,7 @@ async function getSdk(
 
   return tryProm(ChatSdk.init(provider));
 }
-//@ts-ignore
-export const ChatSdkProviderRaw: React.FC = ({ children }) => {
+export const ChatSdkProviderRaw: React.FC<React.PropsWithChildren> = ({ children }) => {
   const { provider } = useProvider();
   const { result, loading, error } = useAsync(getSdk, [provider]);
   const sdks = useMemo(

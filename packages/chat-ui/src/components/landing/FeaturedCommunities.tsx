@@ -170,6 +170,7 @@ export const FeaturedCommunities = () => {
   );
 
   return (
+    // @ts-ignore
     <Carousel interval={10000} swipeable emulateTouch infiniteLoop autoPlay>
       {chatsWithDescription.map((chat) => (
         <Community key={chat.publicKey} {...chat} />

@@ -32,6 +32,7 @@
     "jsx": "preserve"
   },
   "exclude": [
+    "./lib/**/*",
     "node_modules"
   ]
 }

@@ -37,7 +37,7 @@ async function getSdk(
   return tryProm(MarketplaceSdk.init(provider));
 }
 
-export const MarketplaceSdkProviderRaw: React.FC = ({ children }) => {
+export const MarketplaceSdkProviderRaw: React.FC<React.PropsWithChildren<{}>> = ({ children }) => {
   const { provider } = useProvider();
   const { result, loading, error } = useAsync(getSdk, [provider]);
   const sdks = useMemo(
@@ -56,7 +56,7 @@ export const MarketplaceSdkProviderRaw: React.FC = ({ children }) => {
   );
 };
 
-export const MarketplaceSdkProvider: React.FC = ({ children }) => {
+export const MarketplaceSdkProvider: React.FC<React.PropsWithChildren<{}>> = ({ children }) => {
   return (
     <MarketplaceSdkProviderRaw>{children}</MarketplaceSdkProviderRaw>
   );

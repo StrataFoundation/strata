@@ -61,7 +61,7 @@ async function getSdks(
   };
 }
 
-export const StrataSdksProvider: React.FC = ({ children }) => {
+export const StrataSdksProvider: React.FC<React.PropsWithChildren<{}>> = ({ children }) => {
   const { provider } = useProvider();
   const { result, loading, error } = useAsync(getSdks, [provider]);
   const sdks = useMemo(

@@ -30,10 +30,9 @@ interface ISummaryProps {
   onNext: () => void;
 }
 
-const LabelCodeValue: React.FC<{ label: string; value?: string | number }> = ({
+const LabelCodeValue: React.FC<React.PropsWithChildren<{ label: string; value?: string | number }>> = ({
   label,
   value,
-  //@ts-ignore
   children,
 }) => (
   <Flex gap="2">

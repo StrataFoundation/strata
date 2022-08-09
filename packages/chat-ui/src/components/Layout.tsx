@@ -23,8 +23,7 @@ const ML = {
   base: 0,
   md: 80,
 };
-export const Layout: React.FC<ILayoutProps> = ({
-  //@ts-ignore
+export const Layout: React.FC<React.PropsWithChildren<ILayoutProps>> = ({
   children,
   isSidebarOpen,
   onSidebarClose,

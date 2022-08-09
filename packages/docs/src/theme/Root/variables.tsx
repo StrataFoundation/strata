@@ -16,7 +16,7 @@ export const VariablesContext = React.createContext<IVariablesContext>({
 });
 
 //@ts-ignore
-export const VariablesProvider: React.FC = ({ children }) => {
+export const VariablesProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const [variables, setVariables] = useState<any>(null);
   const [dependencies, setDependencies] = useState<
     Record<string, { deps: string[]; exec: CodeExec }>
