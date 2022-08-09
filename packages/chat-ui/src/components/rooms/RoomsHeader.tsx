@@ -56,6 +56,7 @@ interface ISettings {
 export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
   const { info: chat } = useChat(chatKey);
   const { info: chatPermissions } = useChatPermissionsFromChat(chatKey);
+  console.log(chatPermissions?.readPermissionKey.toBase58())
   const readMintKey = chatPermissions?.readPermissionKey;
   const postMintKey = chatPermissions?.postPermissionKey;
   const [isMobile] = useMediaQuery("(max-width: 680px)");

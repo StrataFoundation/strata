@@ -57,7 +57,7 @@ import { ReplyBar } from "./ReplyBar";
 import { IMessageWithPending } from "../../hooks/useMessages";
 import { useAnalyticsEventTracker } from "../../hooks/useAnalyticsEventTracker";
 import { useChatPermissions } from "../../hooks/useChatPermissions";
-import { useChatPermissionsFromChat } from "@/hooks/useChatPermissionsFromChat";
+import { useChatPermissionsFromChat } from "../../hooks/useChatPermissionsFromChat";
 import { toBN, toNumber } from "@strata-foundation/spl-utils";
 
 const converter = new Converter({
