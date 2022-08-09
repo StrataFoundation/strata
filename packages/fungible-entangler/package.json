@@ -1,6 +1,6 @@
 {
   "name": "@strata-foundation/fungible-entangler",
-  "version": "3.10.0",
+  "version": "3.10.1",
   "description": "Interface to the strata fungible entangler",
   "publishConfig": {
     "access": "public",
