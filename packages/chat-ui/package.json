@@ -67,6 +67,7 @@
     "react-hook-form": "^7.25.1",
     "react-hot-toast": "^2.2.0",
     "react-icons": "^4.3.1",
+    "react-responsive-carousel": "^3.2.23",
     "sanitize-html": "^2.7.0",
     "showdown": "^2.1.0",
     "yarn": "^1.22.18",

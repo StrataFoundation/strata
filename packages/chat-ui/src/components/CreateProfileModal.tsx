@@ -1,57 +1,46 @@
 import {
-  Alert,
-  ModalProps,
-  Box,
+  Alert, Box,
   Button,
   FormControl,
   FormHelperText,
   FormLabel,
-  HStack,
-  Input,
+  HStack, Icon,
+  Image, Input,
   Link,
   Modal,
   ModalBody,
   ModalContent,
-  ModalOverlay,
-  Text,
-  VStack,
-  Icon,
-  Image,
-  Divider,
-  useDisclosure,
-  Flex,
-  Progress,
+  ModalOverlay, ModalProps, Progress, Text, useDisclosure, VStack
 } from "@chakra-ui/react";
-import { LoadWalletModal } from "./LoadWalletModal";
-import { RiCheckFill } from "react-icons/ri";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useWallet } from "@solana/wallet-adapter-react";
 import {
   ChatSdk,
   IdentifierType,
   randomizeFileName,
-  uploadFiles,
+  uploadFiles
 } from "@strata-foundation/chat";
 import {
   truncatePubkey,
   useErrorHandler,
-  useProvider,
+  useProvider
 } from "@strata-foundation/react";
 import { sendMultipleInstructions } from "@strata-foundation/spl-utils";
 import React, { useCallback, useEffect, useState } from "react";
 import { useAsyncCallback } from "react-async-hook";
 import { FormProvider, useForm } from "react-hook-form";
+import { RiCheckFill } from "react-icons/ri";
 import * as yup from "yup";
+import { STRATA_KEY } from "../constants/globals";
 import { useChatSdk } from "../contexts/chatSdk";
+import { useAnalyticsEventTracker } from "../hooks/useAnalyticsEventTracker";
 import { useChatStorageAccountKey } from "../hooks/useChatStorageAccountKey";
 import { useLoadDelegate } from "../hooks/useLoadDelegate";
 import { useUsernameFromIdentifierCertificate } from "../hooks/useUsernameFromIdentifierCertificate";
-import { useWalletProfile } from "../hooks/useWalletProfile";
-import { useAnalyticsEventTracker } from "../hooks/useAnalyticsEventTracker";
 import { useWalletFromUsernameIdentifier } from "../hooks/useWalletFromUsernameIdentifier";
+import { useWalletProfile } from "../hooks/useWalletProfile";
 import { FormControlWithError } from "./form/FormControlWithError";
-import toast from "react-hot-toast";
-import { LongPromiseNotification } from "./LongPromiseNotification";
+import { LoadWalletModal } from "./LoadWalletModal";
 
 interface IProfileProps {
   username: string;
@@ -179,7 +168,7 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
   handleErrors(error, delegateError);
 
   async function onSubmit(args: IProfileProps): Promise<void> {
-    if (args.username.length < 6 && !wallet) {
+    if (!publicKey?.equals(STRATA_KEY) && args.username.length < 6 && !wallet) {
       setError("username", {
         message: "Username must be at least 6 characters.",
       });

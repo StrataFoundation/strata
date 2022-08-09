@@ -12,6 +12,14 @@ const config = {
       fs: false,
       os: false,
     };
+    config.module.rules = [
+      ...config.module.rules,
+      // ensure our libs barrel files don't constitute imports
+      {
+        test: /packages\/.*src\/index.ts/i,
+        sideEffects: false,
+      },
+    ];
     config.resolve.alias = {
       ...config.resolve.alias,
       "@solana/wallet-adapter-react": path.resolve(

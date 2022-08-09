@@ -1,3 +1,4 @@
+import React from "react";
 import { Chatroom } from "../../src/components/Chatroom";
 import { Header } from "../../src/components/Header";
 import { Layout } from "../../src/components/Layout";
@@ -16,7 +17,7 @@ import { AnchorProvider, Program } from "@project-serum/anchor";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import { ChatSdk, IEntry } from "@strata-foundation/chat";
-import { getClusterAndEndpoint, usePublicKey } from "@strata-foundation/react";
+import { getClusterAndEndpoint, TokenListProvider, usePublicKey } from "@strata-foundation/react";
 // @ts-ignore
 import LitNodeJsSdk from "lit-js-sdk/build/index.node.js";
 import {
@@ -171,13 +172,15 @@ export default function ChatroomPage({
           cardType: "summary",
         }}
       />
+      <TokenListProvider>
+        <SendMessageProvider chatKey={chatKey}>
+          <Header onSidebarOpen={sidebar.onOpen}>
+            <RoomsHeader chatKey={chatKey} />
+          </Header>
+          <Chatroom chatKey={chatKey} />
+        </SendMessageProvider>
+      </TokenListProvider>
       <LegacyWalletMigrationModal />
-      <SendMessageProvider chatKey={chatKey}>
-        <Header onSidebarOpen={sidebar.onOpen}>
-          <RoomsHeader chatKey={chatKey} />
-        </Header>
-        <Chatroom chatKey={chatKey} />
-      </SendMessageProvider>
     </Layout>
   );
 }

@@ -137,7 +137,7 @@ export const Sidebar = (props: any) => {
           onClick={toggleColorMode}
         />
         <Divider />
-        <Flex align="center" justifyContent="space-evenly" w="full">
+        <Flex pt={3.5} pb={3.5} align="center" justifyContent="space-evenly" w="full">
           <ProfileButton size="lg" />
         </Flex>
       </VStack>
