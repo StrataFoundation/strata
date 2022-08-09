@@ -24,6 +24,7 @@ const Links = [
 
 const NavLink = ({ href, children }: { href: string; children: ReactNode }) => (
   <Link px={2} py={1} href={href} fontSize="sm">
+    {/* @ts-ignore */}
     {children}
   </Link>
 );
