@@ -6,7 +6,11 @@ export interface IRoute {
 }
 
 export const routes: Record<string, IRoute> = {
-  chats: { path: "/", params: [] },
+  landing: { path: "/", params: [] },
+  chats: {
+    path: "/c",
+    params: []
+  },
   chat: {
     path: "/c/:id",
     params: ["id"],

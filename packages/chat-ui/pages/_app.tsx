@@ -13,6 +13,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { pageview } from "../src/utils/gtag";
 import SEO from "../next-seo.config";
 
+require("./app.css");
 require("@solana/wallet-adapter-react-ui/styles.css");
 
 function MyApp({ Component, pageProps }: AppProps) {

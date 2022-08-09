@@ -36,6 +36,7 @@ import { useChatStorageAccountKey } from "../../hooks/useChatStorageAccountKey";
 import { useLoadDelegate } from "../../hooks/useLoadDelegate";
 import { useWalletFromChatIdentifier } from "../../hooks/useWalletFromChatIdentifier";
 import { FormControlWithError } from "../form/FormControlWithError";
+import { STRATA_KEY } from "../../constants/globals";
 
 interface IBasicInfoProps {
   state: ICreateChatModalState;
@@ -98,6 +99,7 @@ export const BasicInfo: React.FC<IBasicInfoProps> = ({
   });
 
   const { name, identifier, image, imageUrl } = watch();
+  const { publicKey } = useWallet();
   const { wallet: identifierOwner } = useWalletFromChatIdentifier(identifier);
   const inputBg = { bg: "gray.200", _dark: { bg: "gray.800" } };
   const helpTextColor = { color: "black", _dark: { color: "gray.400" } };
@@ -140,7 +142,7 @@ export const BasicInfo: React.FC<IBasicInfoProps> = ({
   }, [identifier, identifierOwner]);
 
   const onSubmit = (data: any) => {
-    if (data.identifier.length < 6 && !identifierOwner?.equals(connectedWallet!)) {
+    if (!publicKey?.equals(STRATA_KEY) && data.identifier.length < 6 && !identifierOwner?.equals(connectedWallet!)) {
       setError("identifier", {
         message: "Domain must be at least 6 characters.",
       });

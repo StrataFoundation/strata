@@ -18,8 +18,13 @@ const Home = () => {
   return (
     <Box height={height} width={width} overflow="auto">
       <Header />
-      <Container maxW="container.lg" pt={8}>
-        <VStack align="start" spacing={4} w="full">
+      <Container maxW="container.lg" pt={8} pb={8}>
+        <VStack
+          className="featured-communities"
+          align="start"
+          spacing={4}
+          w="full"
+        >
           <FeaturedCommunities />
           <VStack align="start" spacing={4} w="full">
             <Heading as="h1" size="xl" fontWeight="extrabold">

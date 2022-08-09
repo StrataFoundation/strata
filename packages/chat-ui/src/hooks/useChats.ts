@@ -1,5 +1,6 @@
 import { gql, useQuery } from "@apollo/client";
 import { PublicKey } from "@solana/web3.js";
+import { useMemo } from "react";
 
 export interface GraphChat {
   name: string;
@@ -9,10 +10,9 @@ export interface GraphChat {
   dailyActiveUsers: number;
 }
 
-
 const CHAT_QUERY = gql`
-  query Chats($publicKeys: [String]) {
-    chats(pubkeys: $publicKeys) {
+  query Chats($publicKeys: [String], $minActiveUsers: Int) {
+    chats(pubkeys: $publicKeys, minActiveUsers: $minActiveUsers) {
       name
       publicKey
       imageUrl
@@ -22,9 +22,8 @@ const CHAT_QUERY = gql`
   }
 `;
 
-
-
-export const useChats = (publicKeys?: PublicKey[]) => {
+export const useChats = (publicKeys?: PublicKey[], { minActiveUsers = 2}: { minActiveUsers?: number } = {}) => {
+  const strPublicKeys = useMemo(() => publicKeys?.map((p) => p.toBase58()), [publicKeys]);
   const {
     data: { chats = [] } = {},
     error,
@@ -33,7 +32,8 @@ export const useChats = (publicKeys?: PublicKey[]) => {
     chats?: GraphChat[];
   }>(CHAT_QUERY, {
     variables: {
-      publicKeys,
+      publicKeys: strPublicKeys,
+      minActiveUsers
     },
     context: {
       clientName: "strata",

@@ -5,6 +5,7 @@ import { usePublicKey } from "@strata-foundation/react";
 import { useRouter } from "next/router";
 import { route, routes } from "../../routes";
 import { ActiveUsers } from "./ActiveUsers";
+import { FEATURED_COMMUNITIES } from "./FeaturedCommunities";
 
 const Community = ({
   imageUrl,
@@ -28,6 +29,7 @@ const Community = ({
         roundedTop="2xl"
         style={{ height: "60%" }}
         objectFit="cover"
+        w="full"
         alt={name}
         src={imageUrl}
       />
@@ -84,12 +86,13 @@ const Community = ({
 };
 
 
+const featuredKeys = new Set(FEATURED_COMMUNITIES.map(c => c.publicKey))
 export const NewCommunities = () => {
   const { chats } = useChats()
 
   return (
     <SimpleGrid columns={{ sm: 2, md: 3, lg: 4 }} spacing={4}>
-      {chats.map((chat: GraphChat) => (
+      {chats.filter(chat => !featuredKeys.has(chat.publicKey)).map((chat: GraphChat) => (
         <Community key={chat.publicKey} {...chat} />
       ))}
     </SimpleGrid>

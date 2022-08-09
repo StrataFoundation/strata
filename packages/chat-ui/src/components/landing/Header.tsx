@@ -7,13 +7,16 @@ import {
   DarkMode,
   Flex,
   HStack,
+  Icon,
   IconButton,
   Image,
-  Link, useDisclosure
+  Link, useColorMode, useDisclosure, VStack
 } from "@chakra-ui/react";
+import { RiMoonLine, RiSunLine } from "react-icons/ri";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { ProfileButton } from "@/components/ProfileButton";
 import React, { ReactNode } from "react";
+import { route, routes } from "../../routes";
 
 const NavLink = ({ href, children }: { href: string; children: ReactNode }) => (
   <Link px={2} py={1} href={href} fontSize="sm">
@@ -22,12 +25,25 @@ const NavLink = ({ href, children }: { href: string; children: ReactNode }) => (
 );
 
 export const Header: React.FC = () => {
-  const { disconnect, connected } = useWallet();
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const { colorMode, toggleColorMode } = useColorMode();
+
+  const Links = [
+    { link: "Chats", href: route(routes.chats) },
+    { link: "Launchpad", href: "https://app.strataprotocol.com/launchpad" },
+    { link: "Blog", href: "https://blog.strataprotocol.com" },
+  ];
 
   return (
     <>
-      <Box zIndex={100} color="white" bg="black.300" w="full" borderBottom="1px" borderBottomColor="black.500">
+      <Box
+        zIndex={100}
+        color="white"
+        bg="black.300"
+        w="full"
+        borderBottom="1px"
+        borderBottomColor="black.500"
+      >
         <Center w="full" height="56px" alignItems="center">
           <Container
             maxW="container.lg"
@@ -53,6 +69,17 @@ export const Header: React.FC = () => {
               <Link href={"/"}>
                 <Image alt="strata.im" src="/logo.svg" />
               </Link>
+              <HStack
+                as={"nav"}
+                spacing={4}
+                display={{ base: "none", md: "flex" }}
+              >
+                {Links.map((link) => (
+                  <NavLink key={link.link} href={link.href}>
+                    {link.link}
+                  </NavLink>
+                ))}
+              </HStack>
             </HStack>
             <HStack
               align="center"
@@ -66,6 +93,20 @@ export const Header: React.FC = () => {
                 display={{ base: "none", md: "flex" }}
               >
                 <DarkMode>
+                  <IconButton
+                    isRound
+                    colorScheme="gray"
+                    variant="outline"
+                    aria-label="Toggle Dark Mode"
+                    icon={
+                      colorMode === "light" ? (
+                        <Icon as={RiMoonLine} />
+                      ) : (
+                        <Icon as={RiSunLine} />
+                      )
+                    }
+                    onClick={toggleColorMode}
+                  />
                   <ProfileButton />
                 </DarkMode>
               </Flex>
@@ -77,6 +118,17 @@ export const Header: React.FC = () => {
             </HStack>
           </Container>
         </Center>
+        {isOpen ? (
+          <Box pb={4} display={{ md: "none" }}>
+            <VStack as={"nav"} spacing={4}>
+              {Links.map((link) => (
+                <NavLink key={link.link} href={link.href}>
+                  {link.link}
+                </NavLink>
+              ))}
+            </VStack>
+          </Box>
+        ) : null}
       </Box>
     </>
   );

@@ -123,7 +123,7 @@ export const wizardSubmit = async ({
     readPermissionType = getPermissionType(readForm.type);
     readPermissionAmount = readForm.amount;
     readPermissionKey =
-      readForm.type === "native"
+      (readForm.type === "native" || readForm.type === "token")
         ? new PublicKey(readForm.mint!)
         : readForm.type === "nft"
         ? new PublicKey(readForm.collectionKey!)
@@ -132,7 +132,7 @@ export const wizardSubmit = async ({
     postPermissionType = getPermissionType(postForm.type);
     postPermissionAmount = postForm.amount;
     postPermissionKey =
-      postForm.type === "native"
+      (postForm.type === "native" || postForm.type === "token")
         ? new PublicKey(postForm.mint!)
         : postForm.type === "nft"
         ? new PublicKey(postForm.collectionKey!)
