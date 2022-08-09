@@ -5,7 +5,7 @@ import {
   HttpLink,
   InMemoryCache,
 } from "@apollo/client";
-import React from "react";
+import React, { ReactNode } from "react";
 
 const holaplex = new HttpLink({
   uri: "https://graph.holaplex.com/v1",
@@ -50,7 +50,7 @@ const client = new ApolloClient({
 export const GraphqlProvider = ({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode | ReactNode[];
 }) => {
   return <ApolloProvider client={client}>{children}</ApolloProvider>;
 };
