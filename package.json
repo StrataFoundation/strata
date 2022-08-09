@@ -42,6 +42,7 @@
     "commit-version": "git add . && git commit -m \"chore(release): publish `node -p 'require(\"./lerna.json\").version'`\"",
     "release": "lerna publish from-package --no-verify-access",
     "release:canary": "lerna publish --canary --preid next --dist-tag next --force-publish='*' --no-push --no-git-tag-version --no-verify-access --yes",
+    "build-sdks": "pnpm --recursive run prebuild && tsc --build",
     "build-programs": "anchor build && npx lerna run build --scope @strata-foundation/spl-utils --scope @strata-foundation/spl-token-bonding --scope @strata-foundation/spl-token-collective --scope @strata-foundation/fungible-entangler",
     "bootstrap": "lerna run bootstrap --scope @strata-foundation/cli",
     "test": "ts-mocha -p ./tsconfig.json -t 1000000 \"tests/**/*.ts\"",
