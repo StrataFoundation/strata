@@ -23,17 +23,8 @@ module.exports = function (context, options) {
             https: require.resolve("https-browserify"),
           },
           alias: {
-            "@chakra-ui/react": path.resolve(
-              "../../node_modules/@chakra-ui/react"
-            ),
             "@solana/wallet-adapter-react": path.resolve(
               "../../node_modules/@solana/wallet-adapter-react"
-            ),
-            "@solana/wallet-adapter-react-ui": path.resolve(
-              "../../node_modules/@solana/wallet-adapter-react-ui"
-            ),
-            "@toruslabs/solana-embed": path.resolve(
-              "../../node_modules/@toruslabs/solana-embed"
             ),
             "bn.js": path.resolve("../../node_modules/bn.js"),
             "@solana/web3.js": path.resolve(
