@@ -35,7 +35,7 @@
     "@solana/buffer-layout": "^4.0.0",
     "@solana/spl-token": "0.1.8",
     "@solana/web3.js": "^1.43.4",
-    "@strata-foundation/spl-utils": "workspace:^3.10.0",
+    "@strata-foundation/spl-utils": "^3.10.0",
     "bn.js": "^5.2.0",
     "copyfiles": "^2.4.1"
   },
