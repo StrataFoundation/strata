@@ -27,6 +27,7 @@ export async function getAuthSig(
   const data = new NodeAndWebTextEncoder().encode(body);
   let signed: Uint8Array;
   if (signer instanceof Uint8Array) {
+    // @ts-ignore
     signed = nacl.sign.detached(data, signer);
   } else {
     try {
