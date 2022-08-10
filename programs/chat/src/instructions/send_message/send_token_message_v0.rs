@@ -14,8 +14,6 @@ pub struct SendTokenMessageV0<'info> {
     has_one = chat
   )]
   pub chat_permissions: Box<Account<'info, ChatPermissionsV0>>,
-  /// CHECK: Either delegate wallet passed into additional accounts or this is a signer
-  pub sender: UncheckedAccount<'info>,
   pub signer: Signer<'info>, // Wallet signing for this transaction, may be the same as sender. May be a delegate
   #[account(
     mut,
@@ -81,22 +79,26 @@ pub fn handler(ctx: Context<SendTokenMessageV0>, message: MessagePartV0) -> Resu
     PermissionType::NFT => rm_acc_length == 2,
     _ => return Err(error!(ErrorCode::InvalidPermissionType)),
   };
+  let mut sender = ctx.accounts.signer.key();
   if has_delegate {
     let rm_acc_length = &ctx.remaining_accounts.len();
     let delegate_acc = &ctx.remaining_accounts[rm_acc_length - 1]; // delegate wallet is always the last optional account
     let delegate: Account<DelegateWalletV0> = Account::try_from(delegate_acc)?;
-    if delegate.delegate_wallet != ctx.accounts.signer.key()
-      || delegate.owner_wallet != ctx.accounts.sender.key()
-    {
+    if delegate.delegate_wallet != ctx.accounts.signer.key() {
       return Err(error!(ErrorCode::IncorrectSender));
     }
-  } else if ctx.accounts.signer.key() != ctx.accounts.sender.key() {
-    return Err(error!(ErrorCode::IncorrectSender));
+
+    if !(ctx.accounts.post_permission_account.owner == ctx.accounts.signer.key()
+      || ctx.accounts.post_permission_account.owner == delegate.owner_wallet.key())
+    {
+      return Err(error!(ErrorCode::PermissionDenied));
+    }
+    sender = delegate.owner_wallet;
   }
 
   emit!(MessagePartEventV0 {
     chat: ctx.accounts.chat.key(),
-    sender: ctx.accounts.sender.key(),
+    sender,
     signer: ctx.accounts.signer.key(),
     message
   });

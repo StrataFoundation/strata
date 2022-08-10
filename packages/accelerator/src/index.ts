@@ -105,6 +105,7 @@ export class Accelerator {
     account: PublicKey,
     callback: (resp: {
       txid: string;
+      logs: string[] | null;
       transaction: Transaction;
       blockTime: number;
     }) => void
@@ -121,6 +122,7 @@ export class Accelerator {
       txid: string;
       transaction: Transaction;
       blockTime: number;
+      logs: string[] | null;
     }) => void
   ): Promise<string> {
     const sub = {
@@ -148,6 +150,7 @@ export class Accelerator {
             transaction: tx,
             txid: (resp as any).txid,
             blockTime: (resp as any).blockTime,
+            logs: (resp as any).logs,
           });
         }
       }

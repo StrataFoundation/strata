@@ -88,7 +88,10 @@ function getEndpoint(connection: Connection) {
   const endpoint = connection._rpcEndpoint;
 
   // Gengo only works on mainnet
-  if (endpoint.includes("dev")) {
+  if (
+    endpoint.includes("dev") ||
+    endpoint.includes("localhost")
+  ) {
     return "https://ssc-dao.genesysgo.net";
   }
 
@@ -317,7 +320,7 @@ function maybeUseDevnetWallet(
   delegateWallet: Keypair | undefined
 ): Keypair | undefined {
   // @ts-ignore
-  if (connection._rpcEndpoint.includes("dev")) {
+  if (connection._rpcEndpoint.includes("dev") || connection._rpcEndpoint.includes("localhost")) {
     return DEVNET_WALLET;
   }
   return delegateWallet;

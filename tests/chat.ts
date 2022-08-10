@@ -309,7 +309,17 @@ describe("chat", () => {
         10,
         profileKeypair.publicKey
       );
-      await createAtaAndMint(provider, readPermissionMint, 10, me);
+      await createAtaAndMint(
+        provider,
+        readPermissionMint,
+        10,
+        profileKeypair.publicKey
+      );
+      await createAtaAndMint(
+        provider,
+        readPermissionMint,
+        10
+      );
       chat = await initializeChat(
         chatSdk,
         identifier,

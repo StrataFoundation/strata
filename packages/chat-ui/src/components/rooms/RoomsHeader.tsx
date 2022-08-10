@@ -56,7 +56,6 @@ interface ISettings {
 export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
   const { info: chat } = useChat(chatKey);
   const { info: chatPermissions } = useChatPermissionsFromChat(chatKey);
-  console.log(chatPermissions?.readPermissionKey.toBase58())
   const readMintKey = chatPermissions?.readPermissionKey;
   const postMintKey = chatPermissions?.postPermissionKey;
   const [isMobile] = useMediaQuery("(max-width: 680px)");
@@ -96,11 +95,12 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
         const subId = await accelerator.onTransaction(
           cluster as Cluster,
           chatKey,
-          async ({ transaction, txid, blockTime }) => {
+          async ({ logs, transaction, txid, blockTime }) => {
             const parts = await chatSdk.getMessagePartsFromInflatedTx({
               chat: chatKey,
               txid,
               blockTime,
+              logs,
               transaction: {
                 signatures: [txid],
                 message: transaction.compileMessage(),
