@@ -17,11 +17,6 @@
   "files": [
     "lib"
   ],
-  "exports": {
-    "import": "./lib/esm/src/index.js",
-    "require": "./lib/cjs/index.js",
-    "types": "./lib/types/src/index.d.ts"
-  },
   "scripts": {
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
     "precommit": "npx git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' .",
