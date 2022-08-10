@@ -12,7 +12,10 @@ import {
 import { Connection, Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import {
   getMintInfo,
-  sendAndConfirmWithRetry, sleep, toNumber, truthy
+  sendAndConfirmWithRetry,
+  sleep,
+  toNumber,
+  truthy,
 } from "@strata-foundation/spl-utils";
 import BN from "bn.js";
 import Decimal from "decimal.js";
@@ -289,17 +292,26 @@ function randomIdentifier(): string {
   return Math.random().toString(32).slice(2);
 }
 
+// docusaurus SSR has issues with Keypair.fromSecretKey running, not sure why.
+const getDevnetWallet = () => {
+  try {
+    return Keypair.fromSecretKey(
+      new Uint8Array([
+        17, 83, 103, 136, 230, 98, 37, 214, 218, 31, 168, 218, 184, 30, 163, 18,
+        164, 101, 117, 232, 151, 205, 200, 74, 198, 52, 31, 21, 234, 238, 220,
+        182, 9, 99, 203, 242, 226, 192, 165, 246, 188, 184, 61, 204, 50, 228,
+        30, 89, 215, 145, 146, 206, 179, 116, 224, 158, 180, 176, 27, 221, 238,
+        77, 69, 207,
+      ])
+    );
+  } catch (e: any) {
+    //ignore
+  }
+};
 // A devnet wallet loaded with 1 SHDW for testing in devnet. Yes, anyone can mess with this wallet.
 // If they do, devnet shdw things will not continue working. That's life. If you find this,
 // please don't be an asshole.
-const DEVNET_WALLET = Keypair.fromSecretKey(
-  new Uint8Array([
-    17, 83, 103, 136, 230, 98, 37, 214, 218, 31, 168, 218, 184, 30, 163, 18,
-    164, 101, 117, 232, 151, 205, 200, 74, 198, 52, 31, 21, 234, 238, 220, 182,
-    9, 99, 203, 242, 226, 192, 165, 246, 188, 184, 61, 204, 50, 228, 30, 89,
-    215, 145, 146, 206, 179, 116, 224, 158, 180, 176, 27, 221, 238, 77, 69, 207,
-  ])
-);
+const DEVNET_WALLET = getDevnetWallet();
 function maybeUseDevnetWallet(
   connection: Connection,
   delegateWallet: Keypair | undefined
