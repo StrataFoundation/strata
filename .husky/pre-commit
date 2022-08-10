@@ -1,2 +1,2 @@
 #!/bin/sh
-pnpm --recursive run precommit
+lerna run --parallel precommit

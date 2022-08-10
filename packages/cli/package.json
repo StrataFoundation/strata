@@ -20,7 +20,7 @@
     "create-governance-token": "tsc && node dist/lib/createGovernanceToken",
     "clean": "npx shx mkdir -p lib && npx shx rm -rf lib",
     "package": "npx shx mkdir -p lib/cjs lib/esm",
-    "prebuild": "pnpm run clean && pnpm run package"
+    "prebuild": "npm run clean && npm run package"
   },
   "dependencies": {
     "@solana/web3.js": "^1.43.4",

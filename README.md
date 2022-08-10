@@ -23,10 +23,10 @@ git submodule update
 
 ## Workspace Setup
 
-Strata uses pnpm to make it easier to develope on our JS SDKs.
+Strata uses lerna to make it easier to develope on our JS SDKs.
 
 ```
-pnpm install
+lerna bootstrap
 ```
 
 ## Build the deps
@@ -38,7 +38,7 @@ anchor run build-deps
 ## Build the Strata packages
 
 ```
-pnpm build-sdks
+lerna run build-sdks
 ```
 
 ## Test

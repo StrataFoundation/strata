@@ -21,7 +21,7 @@
     "vercel-install": "pushd ../../ && yarn install && npx lerna run build --ignore @strata-foundation/chat-ui --ignore @strata-foundation/site --ignore @strata-foundation/marketplace-ui --ignore @strata-foundation/docs && npx lerna run build-lib --scope @strata-foundation/marketplace-ui --scope @strata-foundation/chat-ui && popd",
     "clean": "npx shx mkdir -p lib && npx shx rm -rf lib",
     "package": "npx shx mkdir -p lib/cjs lib/esm",
-    "prebuild": "pnpm run clean && pnpm run package"
+    "prebuild": "npm run clean && npm run package"
   },
   "dependencies": {
     "@akebifiky/remark-simple-plantuml": "^1.0.2",

@@ -28,7 +28,7 @@
     "precommit": "npx git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' .",
     "clean": "shx mkdir -p lib && shx rm -rf lib && shx rm -rf .next",
     "package": "npx shx mkdir -p lib/cjs lib/esm",
-    "prebuild": "pnpm run clean && pnpm run package"
+    "prebuild": "npm run clean && npm run package"
   },
   "dependencies": {
     "@apollo/client": "^3.5.10",

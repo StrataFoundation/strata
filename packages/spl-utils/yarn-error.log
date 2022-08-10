@@ -41,7 +41,7 @@ npm manifest:
       "precommit": "npx git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' .",
       "clean": "npx shx mkdir -p lib && npx shx rm -rf lib",
       "package": "npx shx mkdir -p lib/cjs lib/esm",
-      "prebuild": "pnpm run clean && pnpm run package"
+      "prebuild": "npm run clean && npm run package"
     },
     "dependencies": {
       "@metaplex-foundation/mpl-token-metadata": "^1.2.5",
