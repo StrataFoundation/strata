@@ -2220,6 +2220,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
               chatPermissions,
               sender,
               signer: delegateWallet || sender,
+              // @ts-ignore
               postPermissionAccount,
               postPermissionMint: nftMint
                 ? nftMint

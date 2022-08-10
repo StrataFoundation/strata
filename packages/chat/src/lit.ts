@@ -31,6 +31,7 @@ export async function getAuthSig(
     signed = nacl.sign.detached(data, signer);
   } else {
     try {
+      // @ts-ignore
       signed = await signer.signMessage(data, "utf8");
     } catch (e: any) {
       throw new Error(`Error signing lit message. This may be because you are using a Ledger, which does not support signMessage. ${e}`);

@@ -19,6 +19,7 @@ export const Permission: React.FC<IPermissionProps> = ({
   onBack,
   onNext,
 }) => {
+  // @ts-ignore
   const nftOrToken = state.wizardData[`${permissionType}Type`];
   const isNFT = nftOrToken === ReadPostType.NFT;
   const isToken = nftOrToken === ReadPostType.Token;

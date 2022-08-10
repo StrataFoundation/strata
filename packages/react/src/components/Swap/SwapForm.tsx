@@ -166,6 +166,7 @@ export const SwapForm = ({
       bottomAmount: undefined,
       slippage: 1,
     },
+    // @ts-ignore
     resolver: yupResolver(validationSchema),
   });
   const wrappedSolMint = useTwWrappedSolMint();

@@ -88,7 +88,7 @@
     "@docusaurus/module-type-aliases": "2.0.0-beta.8",
     "@tsconfig/docusaurus": "^1.0.4",
     "@types/lru-cache": "^7.6.1",
-    "@types/react": "^18.0.2",
+    "@types/react": "^18.0.16",
     "@welldone-software/why-did-you-render": "^6.2.3",
     "docusaurus": "^1.14.7",
     "docusaurus-plugin-typedoc": "^0.16.3",

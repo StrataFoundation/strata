@@ -2,16 +2,17 @@
   "name": "@strata-foundation/react",
   "version": "3.10.1",
   "description": "React utils for strata foundation",
-  "main": "./lib/esm/src/index.js",
+  "main": "./lib/cjs/index.js",
   "module": "./lib/esm/src/index.js",
-  "types": "./lib/esm/src/index.d.ts",
+  "types": "./lib/types/src/index.d.ts",
   "sideEffects": false,
   "files": [
     "lib"
   ],
   "exports": {
     "import": "./lib/esm/src/index.js",
-    "require": "./lib/cjs/src/index.js"
+    "require": "./lib/cjs/index.js",
+    "types": "./lib/types/src/index.d.ts"
   },
   "publishConfig": {
     "access": "public",
@@ -76,8 +77,8 @@
     "@rollup/plugin-typescript": "^8.3.4",
     "@types/lru-cache": "^7.6.1",
     "@types/node": "^16.11.6",
-    "@types/react": "^17.0.33",
-    "@types/react-dom": "^17.0.10",
+    "@types/react": "^18.0.16",
+    "@types/react-dom": "^18.0.6",
     "@types/styled-components": "^5.1.21",
     "acorn-jsx": "^5.3.2",
     "babel-loader": "^8.2.3",

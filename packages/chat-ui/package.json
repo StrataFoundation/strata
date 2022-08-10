@@ -6,16 +6,17 @@
   },
   "version": "3.10.1",
   "license": "Apache-2.0",
-  "main": "./lib/esm/src/index.js",
+  "main": "./lib/cjs/index.js",
   "module": "./lib/esm/src/index.js",
-  "types": "./lib/esm/src/index.d.ts",
+  "types": "./lib/types/src/index.d.ts",
   "sideEffects": false,
   "files": [
     "lib"
   ],
   "exports": {
     "import": "./lib/esm/src/index.js",
-    "require": "./lib/cjs/src/index.js"
+    "require": "./lib/cjs/index.js",
+    "types": "./lib/types/src/index.d.ts"
   },
   "scripts": {
     "build:analyze": "ANALYZE=true yarn build",

@@ -11,7 +11,7 @@ export type LaunchpadLayoutProps = {
   onNext?: () => Promise<void>;
 };
 
-export const LaunchpadLayout: FC<LaunchpadLayoutProps> = ({
+export const LaunchpadLayout: FC<React.PropsWithChildren<LaunchpadLayoutProps>> = ({
   heading,
   subHeading,
   backVisible,

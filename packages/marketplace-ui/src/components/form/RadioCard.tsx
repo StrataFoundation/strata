@@ -1,10 +1,10 @@
 import React, { FC } from "react";
 import { Box, Flex, Stack, useRadio, UseRadioProps } from "@chakra-ui/react";
 
-export type RadioCardProps = {
+export type RadioCardProps = React.PropsWithChildren<{
   helpText?: string;
   disabled?: boolean;
-} & UseRadioProps;
+} & UseRadioProps>;
 
 export const RadioCard: FC<RadioCardProps> = ({
   children,

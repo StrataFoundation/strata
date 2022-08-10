@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "../../tsconfig.root.json",
   "references": [
     {
       "path": "../accelerator"
@@ -22,17 +22,5 @@
     {
       "path": "./tsconfig.esm.json"
     }
-  ],
-  "compilerOptions": {
-    "allowJs": true,
-    "noEmit": true,
-    "incremental": true,
-    "module": "esnext",
-    "isolatedModules": true,
-    "jsx": "preserve"
-  },
-  "exclude": [
-    "./lib/**/*",
-    "node_modules"
   ]
 }

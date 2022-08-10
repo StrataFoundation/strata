@@ -278,7 +278,7 @@ export function useMessages({
     }
   }, [currentTime, chat, numTransactions]);
 
-  const fetchFn = useCallback(async (args) => fetcher ? fetcher(args) : Promise.resolve([]), [fetcher])
+  const fetchFn = useCallback(async (args: any) => fetcher ? fetcher(args) : Promise.resolve([]), [fetcher])
   const { loading: fetchLoading, result: fetchedMessageParts, error: fetchError, execute: runFetch  } = useAsyncCallback(fetchFn)
   
   

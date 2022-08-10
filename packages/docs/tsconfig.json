@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "../../tsconfig.root.json",
   "references": [
     {
       "path": "../chat"
@@ -34,6 +34,5 @@
     {
       "path": "./tsconfig.esm.json"
     }
-  ],
-  "exclude": ["./node_modules", "../../node_modules"]
+  ]
 }

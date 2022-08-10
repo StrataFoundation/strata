@@ -1,29 +1,17 @@
 {
   "include": [],
   "compilerOptions": {
-    "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
-    "allowSyntheticDefaultImports": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "composite": true,
-    "forceConsistentCasingInFileNames": true,
-    "isolatedModules": false,
+    "lib": ["ES2021.String"],
+    "target": "ESNext",
+    "module": "ESNext",
     "moduleResolution": "Node",
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "noEmitOnError": true,
+    "resolveJsonModule": true,
+    "strict": false,
+    "stripInternal": true,
     "skipLibCheck": true,
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "baseUrl": ".",
-    "jsx": "react",
-    "typeRoots": ["node_modules/@types"],
-    "strict": true,
-    "target": "es6",
-    "paths": {
-      "@/*": ["*"]
-    },
-    "noImplicitAny": false,
-  },
-  "exclude": ["./dist/**/*", "./node_modules"],
+    "allowSyntheticDefaultImports": true
+  }
 }

@@ -161,7 +161,7 @@ export function Message(
   }, [messageId, lockedColor]);
 
   const buyMoreTrigger = useCallback(
-    (props) => {
+    (props: any) => {
       return (
         <Tooltip
           label={`You need ${tokenAmount} ${metadata?.data.symbol} to read this message`}

@@ -6,6 +6,7 @@
     "components"
   ],
   "compilerOptions": {
-    "outDir": "lib/cjs"
+    "outDir": "lib/cjs",
+    "jsx": "react"
   }
 }

@@ -6,6 +6,8 @@
     "components"
   ],
   "compilerOptions": {
-    "outDir": "lib/esm"
+    "outDir": "lib/esm",
+    "declarationDir": "lib/types",
+    "jsx": "react"
   }
 }

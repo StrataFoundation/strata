@@ -15,7 +15,7 @@ export type RadioCardProps = {
   containerProps?: BoxProps;
 } & UseRadioProps;
 
-export const RadioCard: FC<RadioCardProps> = ({
+export const RadioCard: FC<React.PropsWithChildren<RadioCardProps>> = ({
   //@ts-ignore
   children,
   disabled = false,

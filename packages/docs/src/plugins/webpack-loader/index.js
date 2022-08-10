@@ -12,6 +12,7 @@ module.exports = function (context, options) {
         node: {
           __dirname: true,
         },
+        stats: 'verbose',
         resolve: {
           fallback: {
             fs: false,

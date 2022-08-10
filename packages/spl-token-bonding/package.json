@@ -10,16 +10,17 @@
     "type": "git",
     "url": "https://github.com/StrataFoundation/strata"
   },
-  "main": "./lib/esm/src/index.js",
+  "main": "./lib/cjs/index.js",
   "module": "./lib/esm/src/index.js",
-  "types": "./lib/esm/src/index.d.ts",
+  "types": "./lib/types/src/index.d.ts",
   "sideEffects": false,
   "files": [
     "lib"
   ],
   "exports": {
     "import": "./lib/esm/src/index.js",
-    "require": "./lib/cjs/src/index.js"
+    "require": "./lib/cjs/index.js",
+    "types": "./lib/types/src/index.d.ts"
   },
   "scripts": {
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
