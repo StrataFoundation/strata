@@ -60,13 +60,14 @@ async function getMessagesFromTxs(
           async ({ signature: sig, transaction, pending, meta, blockTime }) => {
             if (
               !txToMessages[sig] ||
-              // @ts-ignore
-              (txToMessages[sig][0].pending && !pending)
+              txToMessages[sig].length == 0 ||
+                // @ts-ignore
+                txToMessages[sig][0].pending && !pending
             ) {
               try {
                 const found = (
                   await chatSdk.getMessagePartsFromInflatedTx({
-                    transaction: transaction!,
+                    transaction,
                     txid: sig,
                     meta,
                     blockTime,

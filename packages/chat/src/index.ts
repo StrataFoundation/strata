@@ -17,6 +17,7 @@ import { LocalStorageLRU } from "@cocalc/local-storage-lru";
 import {
   AnchorProvider,
   BN as AnchorBN,
+  EventParser,
   IdlTypes,
   Program,
   utils,
@@ -252,6 +253,12 @@ export interface IMessageContent
   type: MessageType;
   referenceMessageId?: string;
 }
+
+const PROGRAM_LOG = "Program log: ";
+const PROGRAM_DATA = "Program data: ";
+const PROGRAM_LOG_START_INDEX = PROGRAM_LOG.length;
+const PROGRAM_DATA_START_INDEX = PROGRAM_DATA.length;
+
 
 export interface IDecryptedMessageContent extends IMessageContent {
   decryptedAttachments?: { name: string; file: Blob }[];
@@ -868,7 +875,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     if (parts.length == 0) {
       return undefined;
     }
-    const incomplete = parts.length !== parts[0].totalParts
+    const incomplete = parts.length !== parts[0].totalParts;
     if (ignorePartial && incomplete) {
       return undefined;
     }
@@ -983,14 +990,16 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
    */
   async getMessagePartsFromInflatedTx({
     chat,
-    transaction,
     txid,
     meta,
     blockTime,
+    transaction,
     idl,
+    logs = meta!.logMessages
   }: {
+    logs?: string[],
+    transaction?:  { message: Message; signatures: string[] };
     chat: PublicKey;
-    transaction: { message: Message; signatures: string[] };
     txid: string;
     meta?: ConfirmedTransactionMeta | null;
     blockTime?: number | null;
@@ -1000,11 +1009,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       return [];
     }
 
-    const instructions = transaction.message.instructions.filter((ix) =>
-      ensurePubkey(transaction.message.accountKeys[ix.programIdIndex]).equals(
-        this.programId
-      )
-    );
     const chatAcc = (await this.getChat(chat))!;
     if (!idl) {
       idl = await Program.fetchIdl(chatAcc.postMessageProgramId, this.provider);
@@ -1014,82 +1018,47 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       throw new Error("Chat only supports programs with published IDLs.");
     }
 
+    // ensure all instructions are from the chat program id
+    const rightProgram = !transaction || transaction.message.instructions.every((ix) =>
+      ensurePubkey(transaction.message.accountKeys[ix.programIdIndex]).equals(
+        chatAcc.postMessageProgramId
+      )
+    );
+    if (!rightProgram) {
+      return []
+    }
+
     const program = new Program(
       idl,
       chatAcc.postMessageProgramId,
       this.provider
     );
-    const coder = program.coder.instruction;
-
-    const decoded = instructions
-      .filter((ix) =>
-        ensurePubkey(transaction.message.accountKeys[ix.programIdIndex]).equals(
-          chatAcc.postMessageProgramId
-        )
-      )
-      .map((ix) => {
-        // Just make the buff bigger so we can add stuff later
-        const buf = Buffer.concat([bs58.decode(ix.data), Buffer.alloc(1000)]);
-        // @ts-ignore
-        const { name, data } = coder.decode(buf);
-        const sendMessageIdl = idl.instructions.find(
-          (ix: any) => ix.name == name
-        )!;
-        const senderAccountIndex = sendMessageIdl.accounts.findIndex(
-          (account: any) => account.name === "sender"
-        );
-        // LEGACY: This only exists on old messages
-        const profileAccountIndex = 2;
-        const chatAccountIndex = sendMessageIdl.accounts.findIndex(
-          (account: any) => account.name === "chat"
-        );
-
-        return {
-          // @ts-ignore
-          data,
-          sender: ensurePubkey(
-            transaction.message.accountKeys[ix.accounts[senderAccountIndex]]
-          ),
-          chat: ensurePubkey(
-            transaction.message.accountKeys[ix.accounts[chatAccountIndex]]
-          ),
-          profile: ensurePubkey(
-            transaction.message.accountKeys[ix.accounts[profileAccountIndex]]
-          ),
-        };
-      })
-      .filter(truthy);
+    const coder = program.coder;
+    const messages = logs.map((log) => {
+      const logStr = log.startsWith(PROGRAM_LOG)
+        ? log.slice(PROGRAM_LOG_START_INDEX)
+        : log.slice(PROGRAM_DATA_START_INDEX);
+      const event = coder.events.decode(logStr);
+      return event;
+    }).filter(truthy);
 
     return Promise.all(
-      decoded.map(async (decoded) => {
-        const args = decoded.data.args;
+      messages
+        .filter((d) => d.name === "MessagePartEventV0")
+        .map(async (msg) => {
+          const decoded: any = msg.data;
 
-        let sender = decoded.sender;
-        // Time of the switchover. Didn't feel like this was worthy of a major version bump so early on
-        if (blockTime && blockTime < 1657043710) {
-          const profileAcc = await this.getProfile(decoded.profile);
-          sender = profileAcc!.ownerWallet;
-        }
+          let sender = decoded.sender;
 
-        if (!args.readPermissionKey) {
-          const chatPermissions = (
-            await ChatSdk.chatPermissionsKey(decoded.chat, this.programId)
-          )[0];
-          const chatPermissionsAcc = await this.getChatPermissions(
-            chatPermissions
-          );
-          args.readPermissionKey = chatPermissionsAcc?.readPermissionKey;
-          args.readPermissionType = chatPermissionsAcc?.readPermissionType;
-        }
-
-        return {
-          ...args,
-          blockTime,
-          txid,
-          chatKey: decoded.chat,
-          sender,
-        };
-      })
+          return {
+            ...decoded,
+            ...decoded.message,
+            blockTime,
+            txid,
+            chatKey: decoded.chat,
+            sender,
+          };
+        })
     );
   }
 
@@ -1123,7 +1092,6 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
     return this.getMessagePartsFromInflatedTx({
       chat,
-      transaction: tx.transaction,
       txid,
       meta: tx.meta,
       blockTime: tx.blockTime,
