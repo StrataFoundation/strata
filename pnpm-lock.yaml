@@ -199,6 +199,7 @@ importers:
       '@solana/wallet-adapter-exodus': ^0.1.6
       '@solana/wallet-adapter-glow': ^0.1.6
       '@solana/wallet-adapter-ledger': ^0.9.14
+      '@solana/wallet-adapter-phantom': ^0.9.9
       '@solana/wallet-adapter-react': ^0.15.9
       '@solana/wallet-adapter-react-ui': ^0.9.5
       '@solana/wallet-adapter-solflare': ^0.6.11
@@ -264,6 +265,7 @@ importers:
       '@solana/wallet-adapter-exodus': 0.1.6_@solana+web3.js@1.50.1
       '@solana/wallet-adapter-glow': 0.1.6_@solana+web3.js@1.50.1
       '@solana/wallet-adapter-ledger': 0.9.14_@solana+web3.js@1.50.1
+      '@solana/wallet-adapter-phantom': 0.9.9_@solana+web3.js@1.50.1
       '@solana/wallet-adapter-react': 0.15.9_5kk52p2hvrcumvhygmgvg7gomi
       '@solana/wallet-adapter-react-ui': 0.9.12_xpumc6y4t2hpfiahml5wsbckum
       '@solana/wallet-adapter-solflare': 0.6.11_@solana+web3.js@1.50.1
@@ -289,7 +291,7 @@ importers:
       react-device-detect: 2.2.2_biqbaboplfbrettd7655fr4n2y
       react-dropzone: 14.2.2_react@18.2.0
       react-hook-form: 7.34.0_react@18.2.0
-      react-hot-toast: 2.3.0_vt6aeitzauirmcdhimiad2yjxy
+      react-hot-toast: 2.3.0_biqbaboplfbrettd7655fr4n2y
       react-icons: 4.4.0_react@18.2.0
       react-responsive-carousel: 3.2.23
       sanitize-html: 2.7.1
@@ -297,7 +299,7 @@ importers:
       yarn: 1.22.19
       yup: 0.32.11
     devDependencies:
-      '@chakra-ui/react': 2.2.6_h5ubyehjhl5eur6lycaqn6gmgm
+      '@chakra-ui/react': 2.2.6_rnhuzzr22km3nlivuzieqdej6q
       '@emotion/react': 11.10.0_msmmgljd7hl2w2irtggflhmema
       '@emotion/styled': 11.10.0_5sec57kzpgkzooe4crua5kfcly
       '@next/bundle-analyzer': 12.2.4
@@ -370,6 +372,7 @@ importers:
       '@solana/wallet-adapter-exodus': ^0.1.6
       '@solana/wallet-adapter-glow': ^0.1.6
       '@solana/wallet-adapter-ledger': ^0.9.14
+      '@solana/wallet-adapter-phantom': ^0.9.9
       '@solana/wallet-adapter-react': ^0.15.4
       '@solana/wallet-adapter-react-ui': ^0.9.5
       '@solana/wallet-adapter-solflare': ^0.6.11
@@ -439,6 +442,7 @@ importers:
       '@solana/wallet-adapter-exodus': 0.1.6_@solana+web3.js@1.50.1
       '@solana/wallet-adapter-glow': 0.1.6_@solana+web3.js@1.50.1
       '@solana/wallet-adapter-ledger': 0.9.14_@solana+web3.js@1.50.1
+      '@solana/wallet-adapter-phantom': 0.9.9_@solana+web3.js@1.50.1
       '@solana/wallet-adapter-react': 0.15.9_5kk52p2hvrcumvhygmgvg7gomi
       '@solana/wallet-adapter-react-ui': 0.9.12_xpumc6y4t2hpfiahml5wsbckum
       '@solana/wallet-adapter-solflare': 0.6.11_@solana+web3.js@1.50.1
@@ -619,6 +623,7 @@ importers:
       '@solana/wallet-adapter-exodus': ^0.1.6
       '@solana/wallet-adapter-glow': ^0.1.6
       '@solana/wallet-adapter-ledger': ^0.9.14
+      '@solana/wallet-adapter-phantom': ^0.9.9
       '@solana/wallet-adapter-react': ^0.15.4
       '@solana/wallet-adapter-react-ui': ^0.9.5
       '@solana/wallet-adapter-solflare': ^0.6.11
@@ -679,6 +684,7 @@ importers:
       '@solana/wallet-adapter-exodus': 0.1.6_@solana+web3.js@1.50.1
       '@solana/wallet-adapter-glow': 0.1.6_@solana+web3.js@1.50.1
       '@solana/wallet-adapter-ledger': 0.9.14_@solana+web3.js@1.50.1
+      '@solana/wallet-adapter-phantom': 0.9.9_@solana+web3.js@1.50.1
       '@solana/wallet-adapter-react': 0.15.9_5kk52p2hvrcumvhygmgvg7gomi
       '@solana/wallet-adapter-react-ui': 0.9.12_xpumc6y4t2hpfiahml5wsbckum
       '@solana/wallet-adapter-solflare': 0.6.11_@solana+web3.js@1.50.1
@@ -822,12 +828,12 @@ importers:
       query-string: 7.1.1
       react-async-hook: 4.0.0_react@18.2.0
       react-hook-form: 7.34.0_react@18.2.0
-      react-hot-toast: 2.3.0_biqbaboplfbrettd7655fr4n2y
+      react-hot-toast: 2.3.0_vt6aeitzauirmcdhimiad2yjxy
       react-icons: 4.4.0_react@18.2.0
       yup: 0.32.11
     devDependencies:
       '@babel/core': 7.18.10
-      '@chakra-ui/react': 2.2.6_qkan3xompp3xyfvj5shpxvczwe
+      '@chakra-ui/react': 2.2.6_jy5g34nwhvypkz46axmvvyos4i
       '@emotion/react': 11.10.0_xoehpqdwuur6opriibtqbjfmpi
       '@emotion/styled': 11.10.0_6e7moex6e6mfra3gg5il3cdtni
       '@rollup/plugin-commonjs': 22.0.2_rollup@2.77.2
@@ -3486,8 +3492,8 @@ packages:
       '@chakra-ui/react-env': 2.0.6_react@18.2.0
       '@chakra-ui/system': 2.2.4_rq3l25qc4qpq3j4w6o4x7hatzy
       '@chakra-ui/utils': 2.0.6
-      '@emotion/react': 11.10.0_msmmgljd7hl2w2irtggflhmema
-      '@emotion/styled': 11.10.0_5sec57kzpgkzooe4crua5kfcly
+      '@emotion/react': 11.10.0_xoehpqdwuur6opriibtqbjfmpi
+      '@emotion/styled': 11.10.0_6e7moex6e6mfra3gg5il3cdtni
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
 
@@ -3522,7 +3528,7 @@ packages:
       '@chakra-ui/utils': 2.0.6
       react: 18.2.0
 
-  /@chakra-ui/react/2.2.6_h5ubyehjhl5eur6lycaqn6gmgm:
+  /@chakra-ui/react/2.2.6_jy5g34nwhvypkz46axmvvyos4i:
     resolution: {integrity: sha512-WKzSqc6VTOKEPBabZnGzBf1SYcO/b5/an0+LT4icuPddlraXHvgYM5SmwYI0z5N/jNqbspWlyDda6zoLW6JVxA==}
     peerDependencies:
       '@emotion/react': ^11.0.0
@@ -3551,7 +3557,7 @@ packages:
       '@chakra-ui/live-region': 2.0.6_react@18.2.0
       '@chakra-ui/media-query': 3.2.2_kkuqvtmz3jcfsircm63ulfo47a
       '@chakra-ui/menu': 2.0.8_ymja25p22v7ybzcqzeajd5gmcm
-      '@chakra-ui/modal': 2.1.4_vm75yob3blt76szqw2q4xyhtpi
+      '@chakra-ui/modal': 2.1.4_4kqw776zvx6ou7ohwkyb4wnwvi
       '@chakra-ui/number-input': 2.0.6_2ceav2ty4h5gkpnoesr62job6y
       '@chakra-ui/pin-input': 2.0.8_2ceav2ty4h5gkpnoesr62job6y
       '@chakra-ui/popover': 2.0.6_ymja25p22v7ybzcqzeajd5gmcm
@@ -3578,8 +3584,8 @@ packages:
       '@chakra-ui/transition': 2.0.6_wnpnyvcbug5bd7nvevxn3q7qaq
       '@chakra-ui/utils': 2.0.6
       '@chakra-ui/visually-hidden': 2.0.6_2ceav2ty4h5gkpnoesr62job6y
-      '@emotion/react': 11.10.0_msmmgljd7hl2w2irtggflhmema
-      '@emotion/styled': 11.10.0_5sec57kzpgkzooe4crua5kfcly
+      '@emotion/react': 11.10.0_xoehpqdwuur6opriibtqbjfmpi
+      '@emotion/styled': 11.10.0_6e7moex6e6mfra3gg5il3cdtni
       framer-motion: 5.6.0_biqbaboplfbrettd7655fr4n2y
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
@@ -3784,7 +3790,6 @@ packages:
     transitivePeerDependencies:
       - '@chakra-ui/styled-system'
       - '@types/react'
-    dev: false
 
   /@chakra-ui/select/2.0.6_2ceav2ty4h5gkpnoesr62job6y:
     resolution: {integrity: sha512-aBsJiFSrv3sWMKCc0Jv8DyoKB0uNMRAjkGmoiyRKoZcPvZyU3oRu09VwIHwJTmE340UO385oSVif2x8DOlWyOg==}
@@ -3810,8 +3815,8 @@ packages:
       '@chakra-ui/system': 2.2.4_rq3l25qc4qpq3j4w6o4x7hatzy
       '@chakra-ui/theme': 2.1.5_r56oxewql32lblvauqybun6z4e
       '@chakra-ui/utils': 2.0.6
-      '@emotion/react': 11.10.0_msmmgljd7hl2w2irtggflhmema
-      '@emotion/styled': 11.10.0_5sec57kzpgkzooe4crua5kfcly
+      '@emotion/react': 11.10.0_xoehpqdwuur6opriibtqbjfmpi
+      '@emotion/styled': 11.10.0_6e7moex6e6mfra3gg5il3cdtni
       react: 18.2.0
 
   /@chakra-ui/slider/2.0.6_2ceav2ty4h5gkpnoesr62job6y:
@@ -3880,8 +3885,8 @@ packages:
       '@chakra-ui/react-utils': 2.0.3_react@18.2.0
       '@chakra-ui/styled-system': 2.2.5
       '@chakra-ui/utils': 2.0.6
-      '@emotion/react': 11.10.0_msmmgljd7hl2w2irtggflhmema
-      '@emotion/styled': 11.10.0_5sec57kzpgkzooe4crua5kfcly
+      '@emotion/react': 11.10.0_xoehpqdwuur6opriibtqbjfmpi
+      '@emotion/styled': 11.10.0_6e7moex6e6mfra3gg5il3cdtni
       react: 18.2.0
       react-fast-compare: 3.2.0
 
@@ -5709,7 +5714,6 @@ packages:
       '@types/react': 17.0.48
       hoist-non-react-statics: 3.3.2
       react: 18.2.0
-    dev: true
 
   /@emotion/react/11.9.3_msmmgljd7hl2w2irtggflhmema:
     resolution: {integrity: sha512-g9Q1GcTOlzOEjqwuLF/Zd9LC+4FljjPjDfxSM7KmEakm+hsHXk+bYZ2q+/hTJzr0OUNkujo72pXLQvXj6H+GJQ==}
@@ -5806,7 +5810,6 @@ packages:
       '@emotion/utils': 1.2.0
       '@types/react': 17.0.48
       react: 18.2.0
-    dev: true
 
   /@emotion/styled/11.10.0_mf7pilyfko2mvqgnfvuy6e2hza:
     resolution: {integrity: sha512-V9oaEH6V4KePeQpgUE83i8ht+4Ri3E8Djp/ZPJ4DQlqWhSKITvgzlR3/YQE2hdfP4Jw3qVRkANJz01LLqK9/TA==}
@@ -9795,6 +9798,15 @@ packages:
       '@solana/wallet-adapter-base': 0.9.10_@solana+web3.js@1.50.1
       '@solana/web3.js': 1.50.1
       buffer: 6.0.3
+    dev: false
+
+  /@solana/wallet-adapter-phantom/0.9.9_@solana+web3.js@1.50.1:
+    resolution: {integrity: sha512-wX0MyCzZCvkrDz4nvRQ7zXnywO8VRnua6I9JnHzl7SxaCzPROw03J5eKeSM6WQtcFqqn+KnfEep2tbnHE/zNNA==}
+    peerDependencies:
+      '@solana/web3.js': ^1.50.1
+    dependencies:
+      '@solana/wallet-adapter-base': 0.9.10_@solana+web3.js@1.50.1
+      '@solana/web3.js': 1.50.1
     dev: false
 
   /@solana/wallet-adapter-react-ui/0.9.12_xpumc6y4t2hpfiahml5wsbckum:
