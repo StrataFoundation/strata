@@ -12,7 +12,7 @@
     "start": "tsc && node bin/createProposal.js",
     "close-buffers": "tsc && node bin/closeBuffersProposal.js",
     "clean": "npx shx mkdir -p lib && npx shx rm -rf lib",
-    "package": "npx shx mkdir -p lib/cjs lib/esm && echo '{\"type\":\"commonjs\"}' | npx json > ./lib/cjs/package.json && echo '{\"type\":\"module\"} ' | npx json > ./lib/esm/package.json",
+    "package": "npx shx mkdir -p lib/cjs lib/esm",
     "prebuild": "pnpm run clean && pnpm run package"
   },
   "dependencies": {
