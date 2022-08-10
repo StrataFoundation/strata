@@ -1,17 +1,17 @@
 import "../styles/globals.css";
-import { FC, useEffect } from "react";
-import "@/utils/bufferFill";
+import React, { FC, useEffect } from "react";
+import "../utils/bufferFill";
 import { DefaultSeo } from "next-seo";
 import { AppProps } from "next/app";
 import { useRouter } from "next/router";
-import * as gtag from "@/utils/gtag";
+import * as gtag from "../utils/gtag";
 import { Toaster } from "react-hot-toast";
 
 import SEO from "../next-seo.config";
-import { Providers } from "@/components/Providers";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import { IS_PRODUCTION } from "@/constants";
+import { Providers } from "../components/Providers";
+import { Header } from "../components/Header";
+import { Footer } from "../components/Footer";
+import { IS_PRODUCTION } from "../constants";
 
 const App: FC<AppProps> = ({ Component, pageProps }) => {
   const router = useRouter();
@@ -31,6 +31,7 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
     <Providers>
       <DefaultSeo {...SEO} />
       <Header />
+      {/* @ts-ignore */}
       <Component {...pageProps} />
       <Toaster
         position="bottom-center"

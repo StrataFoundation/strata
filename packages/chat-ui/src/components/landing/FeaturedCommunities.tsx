@@ -1,9 +1,17 @@
-import { useChatIdFromIdentifierCertificate } from "@/hooks/useChatIdFromIdentifierCertificate";
-import { useChats } from "@/hooks/useChats";
+import React from "react";
+
+import { useChatIdFromIdentifierCertificate } from "../../../src/hooks/useChatIdFromIdentifierCertificate";
+import { useChats } from "../../../src/hooks/useChats";
 import {
   Button,
-  Center, HStack, Image,
-  Stack, Text, useBreakpoint, useColorModeValue, VStack
+  Center,
+  HStack,
+  Image,
+  Stack,
+  Text,
+  useBreakpoint,
+  useColorModeValue,
+  VStack,
 } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
 import { usePublicKey } from "@strata-foundation/react";
@@ -137,7 +145,7 @@ const Community = ({
               ? "100%"
               : "60%",
         }}
-        objectFit={{ base:"cover", md: "scale-down" }}
+        objectFit={{ base: "cover", md: "scale-down" }}
         alt={name}
         src={image}
       />
@@ -145,23 +153,24 @@ const Community = ({
   );
 };
 
-const chatKeys = FEATURED_COMMUNITIES.map(({ publicKey }) => new PublicKey(publicKey))
+const chatKeys = FEATURED_COMMUNITIES.map(
+  ({ publicKey }) => new PublicKey(publicKey)
+);
 export const FeaturedCommunities = () => {
   const { chats } = useChats(chatKeys, {
-    minActiveUsers: 0
+    minActiveUsers: 0,
   });
   const chatsWithDescription = useMemo(
     () =>
       FEATURED_COMMUNITIES.map((community) => ({
         ...community,
-        ...chats.find(
-          (chat) => chat.publicKey === community.publicKey
-        ),
+        ...chats.find((chat) => chat.publicKey === community.publicKey),
       })),
     [chats]
   );
 
   return (
+    // @ts-ignore
     <Carousel interval={10000} swipeable emulateTouch infiniteLoop autoPlay>
       {chatsWithDescription.map((chat) => (
         <Community key={chat.publicKey} {...chat} />

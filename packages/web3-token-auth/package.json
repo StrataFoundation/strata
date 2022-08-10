@@ -4,7 +4,7 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
-  "version": "3.10.0",
+  "version": "3.10.2-alpha.0",
   "description": "React components and helpers to auth to GenesysGo RPC",
   "repository": {
     "type": "git",
@@ -23,8 +23,7 @@
     "watch": "yarn run copy-files && tsc --watch --project tsconfig.json",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
     "bootstrap": "tsc && node dist/lib/bootstrap",
-    "precommit": "git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' .",
-    "prepare": "yarn run build"
+    "precommit": "npx git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' ."
   },
   "dependencies": {
     "@solana/web3.js": "^1.43.4",

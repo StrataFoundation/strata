@@ -10,7 +10,7 @@ export const ProviderContext = React.createContext<{
   awaitingApproval: false,
 });
 
-export const ProviderContextProvider: React.FC = ({ children }) => {
+export const ProviderContextProvider: React.FC<React.PropsWithChildren<{}>> = ({ children }) => {
   const { connection } = useConnection();
   const { wallet } = useWallet();
   const [awaitingApproval, setAwaitingApproval] = React.useState(false);

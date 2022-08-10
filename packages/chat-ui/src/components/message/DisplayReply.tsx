@@ -94,11 +94,11 @@ export function DisplayReply({
           // successfully decoded
           <>
             {reply.type === MessageType.Text ? (
-              <Text maxW={{ base: "150px", md: "600px" }} isTruncated>
+              <Text maxW={{ base: "150px", md: "600px" }} noOfLines={1}>
                 {decodedMessage.text}
               </Text>
             ) : reply.type === MessageType.Html ? (
-              <Text maxW={{ base: "150px", md: "600px" }} isTruncated>
+              <Text maxW={{ base: "150px", md: "600px" }} noOfLines={1}>
                 {decodedMessage.html?.replace(/<[^>]*>?/gm, "")}
               </Text>
             ) : (

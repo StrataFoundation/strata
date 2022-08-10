@@ -1,3 +1,4 @@
+//@ts-ignore
 import BrowserOnly from "@docusaurus/BrowserOnly";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
@@ -18,6 +19,7 @@ import { parse } from "esprima";
 import React, { useEffect, useMemo, useState } from "react";
 import { FaPlay } from "react-icons/fa";
 import { useVariablesContext } from "../Root/variables";
+//@ts-ignore
 import styles from "./styles.module.css";
 import { clusterApiUrl } from "@solana/web3.js";
 import { useMarketplaceSdk } from "@strata-foundation/marketplace-ui";

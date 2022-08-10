@@ -155,11 +155,12 @@ export const theme: any = extendTheme({
   },
 });
 
-export const ThemeProvider: FC<{ resetCSS?: boolean }> = ({
+export const ThemeProvider: FC<React.PropsWithChildren<{ resetCSS?: boolean }>> = ({
   children,
   resetCSS = false,
 }) => (
   <ChakraProvider resetCSS={resetCSS} theme={theme}>
+    {/* @ts-ignore */}
     {children}
   </ChakraProvider>
 );

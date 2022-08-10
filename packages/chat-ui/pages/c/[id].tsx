@@ -1,10 +1,11 @@
-import { Chatroom } from "@/components/Chatroom";
-import { Header } from "@/components/Header";
-import { Layout } from "@/components/Layout";
-import { LegacyWalletMigrationModal } from "@/components/LegacyWalletMigrationModal";
-import { RoomsHeader } from "@/components/rooms/RoomsHeader";
-import { SendMessageProvider } from "@/contexts/sendMessage";
-import { useChatKeyFromIdentifier } from "@/hooks/useChatKeyFromIdentifier";
+import React from "react";
+import { Chatroom } from "../../src/components/Chatroom";
+import { Header } from "../../src/components/Header";
+import { Layout } from "../../src/components/Layout";
+import { LegacyWalletMigrationModal } from "../../src/components/LegacyWalletMigrationModal";
+import { RoomsHeader } from "../../src/components/rooms/RoomsHeader";
+import { SendMessageProvider } from "../../src/contexts/sendMessage";
+import { useChatKeyFromIdentifier } from "../../src/hooks/useChatKeyFromIdentifier";
 import { ApolloClient, InMemoryCache } from "@apollo/client";
 import {
   NAMESPACES_IDL,

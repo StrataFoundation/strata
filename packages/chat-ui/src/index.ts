@@ -36,6 +36,8 @@ export type { Emoji } from "./constants/filterEmoji";
 export { filterEmoji } from "./constants/filterEmoji";
 
 export type { IChatSdkReactState } from "./contexts/chatSdk";
+export { useChatSdk } from "./contexts/chatSdk";
+
 export {
   ChatSdkProviderRaw,
   ChatSdkContext,

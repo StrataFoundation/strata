@@ -10,11 +10,14 @@ import {
   Icon,
   IconButton,
   Image,
-  Link, useColorMode, useDisclosure, VStack
+  Link,
+  useColorMode,
+  useDisclosure,
+  VStack,
 } from "@chakra-ui/react";
 import { RiMoonLine, RiSunLine } from "react-icons/ri";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { ProfileButton } from "@/components/ProfileButton";
+import { ProfileButton } from "../../../src/components/ProfileButton";
 import React, { ReactNode } from "react";
 import { route, routes } from "../../routes";
 
@@ -92,6 +95,7 @@ export const Header: React.FC = () => {
                 align="center"
                 display={{ base: "none", md: "flex" }}
               >
+                {/* @ts-ignore */}
                 <DarkMode>
                   <IconButton
                     isRound
@@ -111,6 +115,7 @@ export const Header: React.FC = () => {
                 </DarkMode>
               </Flex>
               <Flex justify="center" display={{ base: "flex", md: "none" }}>
+                {/* @ts-ignore */}
                 <DarkMode>
                   <ProfileButton size="sm" />
                 </DarkMode>

@@ -1,24 +1,45 @@
 {
-  "compilerOptions": {
-    "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
-    "allowSyntheticDefaultImports": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "composite": true,
-    "forceConsistentCasingInFileNames": true,
-    "isolatedModules": false,
-    "moduleResolution": "Node",
-    "skipLibCheck": true,
-    "baseUrl": ".",
-    "typeRoots": ["node_modules/@types"],
-    "strict": true,
-    "target": "es6",
-    "paths": {
-      "@/*": ["*"]
-    }
-  }
+  "extends": "./tsconfig.root.json",
+  "references": [
+    {
+      "path": "./packages/accelerator"
+    },
+    {
+      "path": "./packages/chat"
+    },
+    {
+      "path": "./packages/chat-ui"
+    },
+    {
+      "path": "./packages/docs"
+    },
+    {
+      "path": "./packages/fungible-entangler"
+    },
+    {
+      "path": "./packages/governance-cli"
+    },
+    {
+      "path": "./packages/marketplace-sdk"
+    },
+    {
+      "path": "./packages/marketplace-ui"
+    },
+    {
+      "path": "./packages/react"
+    },
+    {
+      "path": "./packages/site"
+    },
+    {
+      "path": "./packages/spl-token-bonding"
+    },
+    {
+      "path": "./packages/spl-token-collective"
+    },
+    {
+      "path": "./packages/spl-utils"
+    },
+    
+  ]
 }

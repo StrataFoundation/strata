@@ -2,15 +2,11 @@ import {
   ConnectionProvider,
   WalletProvider,
 } from "@solana/wallet-adapter-react";
-import {
-  LedgerWalletAdapter,
-  PhantomWalletAdapter,
-  SlopeWalletAdapter,
-  SolflareWalletAdapter,
-  GlowWalletAdapter,
-  TorusWalletAdapter,
-  ExodusWalletAdapter,
-} from "@solana/wallet-adapter-wallets";
+import { LedgerWalletAdapter } from "@solana/wallet-adapter-ledger";
+import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
+import { SolflareWalletAdapter } from "@solana/wallet-adapter-solflare";
+import { GlowWalletAdapter } from "@solana/wallet-adapter-glow";
+import { ExodusWalletAdapter } from "@solana/wallet-adapter-exodus";
 import React, { useMemo } from "react";
 import { SOLANA_URL } from "../constants";
 import { useEndpoint } from "@strata-foundation/react";
@@ -36,11 +32,9 @@ export const Wallet = ({
   const wallets = useMemo(
     () => [
       new PhantomWalletAdapter(),
-      new GlowWalletAdapter(),
       // @ts-ignore
-      new SolflareWalletAdapter({ network: clusterFromUseEndpoint }),
-      new SlopeWalletAdapter(),
-      new TorusWalletAdapter(),
+      new SolflareWalletAdapter({ network: cluster }),
+      new GlowWalletAdapter(),
       new LedgerWalletAdapter(),
       new ExodusWalletAdapter(),
     ],
@@ -53,6 +47,7 @@ export const Wallet = ({
       config={config}
     >
       <WalletProvider wallets={wallets} autoConnect>
+        {/* @ts-ignore */}
         {children}
       </WalletProvider>
     </ConnectionProvider>

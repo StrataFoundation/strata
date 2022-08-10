@@ -1,6 +1,16 @@
-import { useChatIdFromIdentifierCertificate } from "@/hooks/useChatIdFromIdentifierCertificate";
-import { GraphChat, useChats } from "@/hooks/useChats";
-import { Button, Center, HStack, Image, SimpleGrid, Text, useColorModeValue, VStack } from "@chakra-ui/react";
+import React from "react";
+import { useChatIdFromIdentifierCertificate } from "../../../src/hooks/useChatIdFromIdentifierCertificate";
+import { GraphChat, useChats } from "../../../src/hooks/useChats";
+import {
+  Button,
+  Center,
+  HStack,
+  Image,
+  SimpleGrid,
+  Text,
+  useColorModeValue,
+  VStack,
+} from "@chakra-ui/react";
 import { usePublicKey } from "@strata-foundation/react";
 import { useRouter } from "next/router";
 import { route, routes } from "../../routes";
@@ -72,7 +82,7 @@ const Community = ({
               }),
               undefined,
               {
-                shallow: true
+                shallow: true,
               }
             )
           }
@@ -85,16 +95,17 @@ const Community = ({
   );
 };
 
-
-const featuredKeys = new Set(FEATURED_COMMUNITIES.map(c => c.publicKey))
+const featuredKeys = new Set(FEATURED_COMMUNITIES.map((c) => c.publicKey));
 export const NewCommunities = () => {
-  const { chats } = useChats()
+  const { chats } = useChats();
 
   return (
     <SimpleGrid columns={{ sm: 2, md: 3, lg: 4 }} spacing={4}>
-      {chats.filter(chat => !featuredKeys.has(chat.publicKey)).map((chat: GraphChat) => (
-        <Community key={chat.publicKey} {...chat} />
-      ))}
+      {chats
+        .filter((chat) => !featuredKeys.has(chat.publicKey))
+        .map((chat: GraphChat) => (
+          <Community key={chat.publicKey} {...chat} />
+        ))}
     </SimpleGrid>
   );
-}
+};

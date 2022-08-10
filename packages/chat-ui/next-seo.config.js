@@ -1,4 +1,4 @@
-import { CHAT_URL } from "@/constants/globals";
+import { CHAT_URL } from "./src/constants/globals";
 
 const defaultSeo = {
   title: "strata.im",

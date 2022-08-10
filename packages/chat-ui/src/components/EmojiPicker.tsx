@@ -83,6 +83,7 @@ export const EmojiPickerPopover: FC<IEmojiPickerPopover> = ({ chatKey }) => {
 
   return (
     <>
+      {/* @ts-ignore */}
       <BrowserView>
         <Flex
           w={!!referenceMessageId ? "full" : "none"}
@@ -119,6 +120,7 @@ export const EmojiPickerPopover: FC<IEmojiPickerPopover> = ({ chatKey }) => {
           </Fade>
         </Flex>
       </BrowserView>
+      {/* @ts-ignore */}
       <MobileView>
         <Flex
           w={!!referenceMessageId ? "full" : "none"}

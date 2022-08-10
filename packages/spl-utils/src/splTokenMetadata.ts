@@ -184,7 +184,8 @@ const imageFromJson = (newUri: string, extended: any) => {
   }
 };
 
-const localStorage = global.localStorage || localStorageMemory;
+//@ts-ignore
+const localStorage = (typeof global !== "undefined" && global.localStorage) || localStorageMemory;
 
 export class SplTokenMetadata {
   provider: AnchorProvider;

@@ -38,6 +38,7 @@ import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   Transaction,
+  TransactionInstruction,
 } from "@solana/web3.js";
 import {
   AnchorSdk,
@@ -190,6 +191,7 @@ async function generateSymmetricKey(): Promise<CryptoKey> {
 export async function importSymmetricKey(
   symmKey: BufferSource
 ): Promise<CryptoKey> {
+  // @ts-ignore
   const importedSymmKey = await crypto.subtle.importKey(
     "raw",
     symmKey,
@@ -1250,7 +1252,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
         NAMESPACES_PROGRAM_ID
       );
 
-    const instructions = [];
+    const instructions: TransactionInstruction[] = [];
     instructions.push(
       await this.program.instruction.initializeNamespacesV0(
         {
@@ -1324,7 +1326,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
   > {
     const transaction = new Transaction();
     const certificateMintKeypair = Keypair.generate();
-    let signers = [];
+    let signers: Signer[] = [];
     let certificateMint = certificateMintKeypair.publicKey;
     const namespaces = await this.getNamespaces();
 
@@ -1519,7 +1521,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     chat,
     admin = this.wallet.publicKey,
   }: CloseChatArgs): Promise<InstructionResult<null>> {
-    const instructions = [];
+    const instructions: TransactionInstruction[] = [];
 
     instructions.push(
       ...(
@@ -1590,7 +1592,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       identifierCertificateMint?: PublicKey;
     }>
   > {
-    const instructions = [];
+    const instructions: TransactionInstruction[][] = [];
     const signers: Signer[][] = [];
 
     if (identifier) {
@@ -1605,8 +1607,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       signers.push(...identifierInsts.signers);
     }
 
-    const initChatInstructions = [];
-    const initChatSigners = [];
+    const initChatInstructions: TransactionInstruction[] = [];
+    const initChatSigners: Signer[] = [];
     let chat: PublicKey;
     if (identifierCertificateMint) {
       chat = (
@@ -1790,7 +1792,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       walletProfile: PublicKey;
     }>
   > {
-    const instructions = [];
+    const instructions: TransactionInstruction[] = [];
 
     const walletProfile = (
       await ChatSdk.profileKey(ownerWallet, this.programId)
@@ -1873,7 +1875,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       settings: PublicKey;
     }>
   > {
-    const instructions = [];
+    const instructions: TransactionInstruction[] = [];
 
     const settingsKey = (
       await ChatSdk.settingsKey(ownerWallet, this.programId)
@@ -1959,7 +1961,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     const delegateWalletAcc = (
       await ChatSdk.delegateWalletKey(delegateWallet)
     )[0];
-    const instructions = [];
+    const instructions: TransactionInstruction[] = [];
     const signers = [delegateWalletKeypair].filter(truthy);
 
     instructions.push(
@@ -2158,7 +2160,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
       true
     );
 
-    const remainingAccounts = [];
+    const remainingAccounts: any[] = [];
     if (nftMint) {
       remainingAccounts.push({
         pubkey: await Metadata.getPDA(nftMint),
@@ -2182,14 +2184,14 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
 
     const contentLength = encryptedString.length;
     const numGroups = Math.ceil(contentLength / MESSAGE_MAX_CHARACTERS);
-    const instructionGroups = [];
-    const signerGroups = [];
+    const instructionGroups: TransactionInstruction[][] = [];
+    const signerGroups: Signer[][] = [];
     const messageId = uuid();
     const ix = chatPermissionsAcc?.postPermissionKey.equals(NATIVE_MINT)
       ? this.instruction.sendNativeMessageV0
       : this.instruction.sendTokenMessageV0;
     for (let i = 0; i < numGroups; i++) {
-      const instructions = [];
+      const instructions: TransactionInstruction[] = [];
       instructions.push(
         await ix(
           {
@@ -2218,6 +2220,7 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
               chatPermissions,
               sender,
               signer: delegateWallet || sender,
+              // @ts-ignore
               postPermissionAccount,
               postPermissionMint: nftMint
                 ? nftMint
@@ -2262,8 +2265,8 @@ export class ChatSdk extends AnchorSdk<ChatIDL> {
     InstructionResult<{ metadata: PublicKey; mint: PublicKey }>
   > {
     const targetMint = targetMintKeypair.publicKey;
-    const instructions = [];
-    const signers = [];
+    const instructions: TransactionInstruction[] = [];
+    const signers: Signer[] = [];
 
     instructions.push(
       ...(await createMintInstructions(

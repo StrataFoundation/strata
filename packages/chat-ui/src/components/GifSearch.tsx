@@ -22,6 +22,7 @@ export function GifSearch({ onSelect }: { onSelect: (gifyId: string) => void }) 
 // define the components in a separate function so we can
 // use the context hook. You could also use the render props pattern
 const Components = ({ onSelect }: { onSelect: (gifyId: string) => void }) => {
+  //@ts-ignore
   const { fetchGifs, searchKey } = useContext(SearchContext);
   return (
     <>
@@ -36,6 +37,7 @@ const Components = ({ onSelect }: { onSelect: (gifyId: string) => void }) => {
                 you want to restart the gifs from the beginning and changing a component's key does that 
             **/}
       <Box maxH="500px" overflow="auto" mt={4}>
+        {/* @ts-ignore */}
         <Grid
           key={searchKey}
           columns={3}

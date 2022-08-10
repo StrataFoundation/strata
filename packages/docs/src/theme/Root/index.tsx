@@ -1,26 +1,19 @@
-import "./bufferFill";
-import { Wallet } from "../../contexts/Wallet";
+import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
+import { ChatSdkProvider, EmojisProvider, ReplyProvider } from "@strata-foundation/chat-ui";
 import { MarketplaceSdkProvider } from "@strata-foundation/marketplace-ui";
 import {
-  AccountProvider,
-  StrataSdksProvider,
-  Notification,
-  ErrorHandlerProvider,
-  ProviderContextProvider,
-  ThemeProvider,
-  HolaplexGraphqlProvider,
-  AcceleratorProvider,
+  AcceleratorProvider, AccountProvider, ErrorHandlerProvider, GraphqlProvider, Notification, ProviderContextProvider, StrataSdksProvider, ThemeProvider
 } from "@strata-foundation/react";
-import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import React from "react";
-import { VariablesProvider } from "./variables";
 import toast, { Toaster } from "react-hot-toast";
-import { ChatSdkProvider, EmojisProvider, ReplyProvider } from "@strata-foundation/chat-ui";
+import { Wallet } from "../../contexts/Wallet";
+import "./bufferFill";
+import { VariablesProvider } from "./variables";
 
 // Default styles that can be overridden by your app
 require("@solana/wallet-adapter-react-ui/styles.css");
 
-export default ({ children }) => {
+export default ({ children }: {children: any}) => {
   const onError = React.useCallback(
     (error: Error) => {
       console.error(error);
@@ -60,17 +53,20 @@ export default ({ children }) => {
     <>
       <ThemeProvider>
         <ErrorHandlerProvider onError={onError}>
+          {/* @ts-ignore */}
           <Wallet>
             <ProviderContextProvider>
               <WalletModalProvider>
                 <AccountProvider commitment="confirmed">
                   <StrataSdksProvider>
                     <MarketplaceSdkProvider>
+                      {/* @ts-ignore */}
                       <ChatSdkProvider>
-                        <HolaplexGraphqlProvider>
+                        <GraphqlProvider>
                           <EmojisProvider>
                             <ReplyProvider>
                               <AcceleratorProvider url="wss://prod-api.teamwumbo.com/accelerator">
+                                {/* @ts-ignore */}
                                 <VariablesProvider>
                                   {children}
                                   <Toaster
@@ -84,7 +80,7 @@ export default ({ children }) => {
                               </AcceleratorProvider>
                             </ReplyProvider>
                           </EmojisProvider>
-                        </HolaplexGraphqlProvider>
+                        </GraphqlProvider>
                       </ChatSdkProvider>
                     </MarketplaceSdkProvider>
                   </StrataSdksProvider>

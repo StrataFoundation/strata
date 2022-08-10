@@ -1,31 +1,24 @@
 {
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules"],
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@/contexts": ["contexts/index"],
-      "@/utils": ["utils/index"],
-      "@/utils/*": ["utils/*"],
-      "@/hooks": ["hooks/index"],
-      "@/components": ["components/index"],
-      "@/components/*": ["components/*"],
-      "@/constants": ["constants/index"]
+  "extends": "../../tsconfig.root.json",
+  "references": [
+    {
+      "path": "../react"
     },
-    "outDir": "./dist",
-    "target": "es6",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    {
+      "path": "./tsconfig.cjs.json"
+    },
+    {
+      "path": "./tsconfig.esm.json"
+    }
+  ],
+  "compilerOptions": {
     "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
+    "noEmit": true,
     "incremental": true,
-    "noEmit": true
-  }
+    "jsx": "preserve"
+  },
+  "exclude": [
+    "node_modules"
+  ]
 }

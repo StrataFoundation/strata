@@ -1,10 +1,10 @@
 import React, { FC } from "react";
 import { Box, Flex, Stack, useRadio, UseRadioProps } from "@chakra-ui/react";
 
-export type RadioCardProps = {
+export type RadioCardProps = React.PropsWithChildren<{
   helpText?: string;
   disabled?: boolean;
-} & UseRadioProps;
+} & UseRadioProps>;
 
 export const RadioCard: FC<RadioCardProps> = ({
   children,
@@ -41,6 +41,7 @@ export const RadioCard: FC<RadioCardProps> = ({
             borderColor: "orange.600",
           }}
         >
+          {/* @ts-ignore */}
           {children}
         </Box>
       </Box>
@@ -74,6 +75,7 @@ export const RadioCardWithAffordance: FC<RadioCardProps> = ({
     >
       <Box as="label" textAlign="center">
         <input {...input} />
+        {/* @ts-ignore */}
         <Stack
           {...checkbox}
           cursor={disabled ? "inherit" : "pointer"}

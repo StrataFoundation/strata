@@ -11,7 +11,7 @@ import {
   TOKEN_PROGRAM_ID,
   u64,
 } from "@solana/spl-token";
-import { Finality, Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
+import { Finality, Keypair, PublicKey, Signer, SystemProgram, TransactionInstruction } from "@solana/web3.js";
 import {
   ExponentialCurveConfig,
   ICreateTokenBondingArgs,
@@ -350,7 +350,7 @@ export class MarketplaceSdk {
   }: ICreateManualTokenArgs): Promise<InstructionResult<{ mint: PublicKey }>> {
     const publicKey = this.provider.wallet.publicKey;
     var mint = mintKeypair.publicKey;
-    var instructions = [];
+    var instructions: TransactionInstruction[] = [];
     var ata = await Token.getAssociatedTokenAddress(
       ASSOCIATED_TOKEN_PROGRAM_ID,
       TOKEN_PROGRAM_ID,
@@ -456,8 +456,8 @@ export class MarketplaceSdk {
     childEntangler,
     closeEntangler,
   }: IDisburseCurveArgs): Promise<InstructionResult<null>> {
-    const instructions = [];
-    const signers = [];
+    const instructions: TransactionInstruction[] = [];
+    const signers: Signer[] = [];
     const tokenBondingAcct = (await this.tokenBondingSdk.getTokenBonding(
       tokenBonding
     ))!;
@@ -730,8 +730,8 @@ export class MarketplaceSdk {
     InstructionResult<{ metadata: PublicKey; mint: PublicKey }>
   > {
     const targetMint = targetMintKeypair.publicKey;
-    const instructions = [];
-    const signers = [];
+    const instructions: TransactionInstruction[] = [];
+    const signers: Signer[] = [];
 
     instructions.push(
       ...(await createMintInstructions(
@@ -807,8 +807,8 @@ export class MarketplaceSdk {
       throw new Error("Must either pass price or bondingArgs.curve");
     }
 
-    const instructions = [];
-    const signers = [];
+    const instructions: TransactionInstruction[] = [];
+    const signers: Signer[] = [];
 
     metadataUpdateAuthority = metadataUpdateAuthority || seller;
 
@@ -945,8 +945,8 @@ export class MarketplaceSdk {
       bondingArgs?.curve || new PublicKey(MarketplaceSdk.FIXED_CURVE);
     const baseMintAcct = await getMintInfo(this.provider, baseMint);
 
-    const instructions = [];
-    const signers = [];
+    const instructions: TransactionInstruction[] = [];
+    const signers: Signer[] = [];
 
     metadataUpdateAuthority = metadataUpdateAuthority || authority;
 
@@ -1079,8 +1079,8 @@ export class MarketplaceSdk {
         "Must use `iAmAFreeloader` flag when setting protocolFee"
       );
     }
-    const instructions = [];
-    const signers = [];
+    const instructions: TransactionInstruction[] = [];
+    const signers: Signer[] = [];
     const feeModifier = iAmAFreeloader ? 1 : 1 - roundPercent(protocolFee);
     const {
       reserves: initialReservesPad,

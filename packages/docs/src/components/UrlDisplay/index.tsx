@@ -1,5 +1,6 @@
 import { useVariables } from "../../theme/Root/variables";
 import React from "react";
+//@ts-ignore
 import CodeBlock from "@theme-init/CodeBlock";
 
 export const UrlDisplay = ({ subs, value }: { value: string, subs: string[] }) => {

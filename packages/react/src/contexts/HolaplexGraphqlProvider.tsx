@@ -13,5 +13,6 @@ export const HolaplexGraphqlProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
+  //@ts-ignore
   return <ApolloProvider client={client}>{children}</ApolloProvider>;
 };

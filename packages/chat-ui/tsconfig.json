@@ -1,29 +1,36 @@
 {
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules"],
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@/components/*": ["src/components/*"],
-      "@/contexts/*": ["src/contexts/*"],
-      "@/constants/*": ["src/constants/*"],
-      "@/utils/*": ["src/utils/*"],
-      "@/hooks/*": ["src/hooks/*"]
+  "extends": "../../tsconfig.root.json",
+  "references": [
+    {
+      "path": "../accelerator"
     },
-    "outDir": "./dist",
-    "target": "es6",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    {
+      "path": "../chat"
+    },
+    {
+      "path": "../react"
+    },
+    {
+      "path": "../spl-token-bonding"
+    },
+    {
+      "path": "../spl-utils"
+    },
+    {
+      "path": "./tsconfig.cjs.json"
+    },
+    {
+      "path": "./tsconfig.esm.json"
+    }
+  ],
+  "compilerOptions": {
     "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
+    "noEmit": true,
     "incremental": true,
-    "noEmit": true
-  }
+    "jsx": "preserve"
+  },
+  "exclude": [
+    "node_modules"
+  ]
 }

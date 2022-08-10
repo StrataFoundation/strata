@@ -4,25 +4,30 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
-  "version": "3.10.1",
+  "version": "3.10.2-alpha.0",
   "description": "Interface to the spl-token-bonding smart contract",
   "repository": {
     "type": "git",
     "url": "https://github.com/StrataFoundation/strata"
   },
-  "main": "dist/index.umd.js",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./lib/cjs/index.js",
+  "module": "./lib/esm/src/index.js",
+  "types": "./lib/types/src/index.d.ts",
   "sideEffects": false,
   "files": [
-    "dist"
+    "lib"
   ],
+  "exports": {
+    "import": "./lib/esm/src/index.js",
+    "require": "./lib/cjs/index.js",
+    "types": "./lib/types/src/index.d.ts"
+  },
   "scripts": {
-    "watch": "npx rollup --config --watch",
-    "build": "npx rollup --config",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
-    "precommit": "git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' .",
-    "prepare": "yarn run build"
+    "precommit": "npx git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' .",
+    "clean": "npx shx mkdir -p lib && npx shx rm -rf lib",
+    "package": "npx shx mkdir -p lib/cjs lib/esm",
+    "prebuild": "npm run clean && npm run package"
   },
   "dependencies": {
     "@metaplex-foundation/mpl-token-metadata": "^1.2.5",
@@ -30,7 +35,7 @@
     "@solana/buffer-layout": "^4.0.0",
     "@solana/spl-token": "0.1.8",
     "@solana/web3.js": "^1.43.4",
-    "@strata-foundation/spl-utils": "^3.10.0",
+    "@strata-foundation/spl-utils": "^3.10.2-alpha.0",
     "bn.js": "^5.2.0",
     "copyfiles": "^2.4.1"
   },

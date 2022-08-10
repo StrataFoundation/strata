@@ -1,28 +1,11 @@
 {
-  "compilerOptions": {
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "baseUrl": "src",
-    "forceConsistentCasingInFileNames": true,
-    "isolatedModules": false,
-    "jsx": "react",
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "module": "ESNext",
-    "moduleResolution": "Node",
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "declaration": true,
-    "declarationMap": true,
-    "outDir": "./dist/lib",
-    "rootDir": "./src",
-    "sourceMap": true,
-    "strict": true,
-    "target": "es6",
-    "typeRoots": ["node_modules/@types"],
-    "paths": {
-      "@/*": ["*"]
+  "extends": "../../tsconfig.root.json",
+  "references": [
+    {
+      "path": "./tsconfig.cjs.json"
+    },
+    {
+      "path": "./tsconfig.esm.json"
     }
-  },
-  "include": ["src"],
-  "exclude": ["dist", "node_modules"]
+  ]
 }

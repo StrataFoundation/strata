@@ -5,7 +5,7 @@ export const TokenListContext = React.createContext<
   Map<string, TokenInfo> | undefined
 >(undefined);
 
-export const TokenListProvider: React.FC = ({ children }) => {
+export const TokenListProvider: React.FC<React.PropsWithChildren<{}>> = ({ children }) => {
   const [tokenMap, setTokenMap] = useState<Map<string, TokenInfo>>(new Map());
 
   useEffect(() => {

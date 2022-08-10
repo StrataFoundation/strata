@@ -1,6 +1,6 @@
-import { FormContainer } from "@/components/FormContainer";
+import { FormContainer } from "../../../src/components/FormContainer";
 import { NextPage } from "next";
-import { LbcForm } from "@/components/form/LbcForm";
+import { LbcForm } from "../../../src/components/form/LbcForm";
 
 export const NewLBC: NextPage = () => {
   return (

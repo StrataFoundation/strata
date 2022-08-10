@@ -1,5 +1,5 @@
-import { FixedPriceForm } from "@/components/form/FixedPriceForm";
-import { FormContainer } from "@/components/FormContainer";
+import { FixedPriceForm } from "../../../src/components/form/FixedPriceForm";
+import { FormContainer } from "../../../src/components/FormContainer";
 import { NextPage } from "next";
 
 export const NewSale: NextPage = () => {

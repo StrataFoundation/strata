@@ -8,10 +8,9 @@ import { Wallet } from "./Wallet";
 export const Providers = ({
   children,
   cluster,
-}: {
+}: React.PropsWithChildren<{
   cluster?: string;
-  children: React.ReactNode;
-}) => {
+}>) => {
   const onError = React.useCallback(
     (error: Error) => {
       console.error(error);

@@ -54,6 +54,7 @@ export function Reacts({
       <HStack mt={2} pt={1}>
         {inflatedReacts.map(({ emoji, messages, mine }) => (
           <Popover matchWidth trigger="hover" key={emoji}>
+            {/* @ts-ignore */}
             <PopoverTrigger>
               <Button
                 onClick={() => onReact(emoji, mine)}

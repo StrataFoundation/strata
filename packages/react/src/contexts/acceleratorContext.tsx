@@ -26,7 +26,7 @@ async function getSdk(url: string): Promise<Accelerator | undefined> {
   return tryProm(Accelerator.init(url));
 }
 
-export const AcceleratorProviderRaw: React.FC<{ url: string }> = ({
+export const AcceleratorProviderRaw: React.FC<React.PropsWithChildren<{ url: string }>> = ({
   children,
   url,
 }) => {
@@ -47,7 +47,7 @@ export const AcceleratorProviderRaw: React.FC<{ url: string }> = ({
   );
 };
 
-export const AcceleratorProvider: React.FC<{ url: string }> = ({
+export const AcceleratorProvider: React.FC<React.PropsWithChildren<{ url: string }>> = ({
   children,
   url,
 }) => {

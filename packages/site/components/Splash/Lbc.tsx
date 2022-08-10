@@ -9,7 +9,7 @@ import {
   Button,
   Link,
 } from "@chakra-ui/react";
-import { DOCS_URL, MARKETPLACE_URL } from "@/constants";
+import { DOCS_URL, MARKETPLACE_URL } from "../../constants";
 
 export const Lbc = () => (
   <Box w="full" bg="gray.900" color="white">

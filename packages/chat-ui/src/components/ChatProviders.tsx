@@ -12,9 +12,11 @@ const defaultOnError = (error: Error) => console.log(error);
 export const ChatProviders: FC<{
   onError?: (error: Error) => void;
   resetCSS?: boolean;
+  //@ts-ignore
 }> = ({ children, onError = defaultOnError, resetCSS = false }) => (
   <StrataProviders resetCSS onError={onError}>
     <AcceleratorProvider url="wss://prod-api.teamwumbo.com/accelerator">
+      {/* @ts-ignore */}
       <ChatSdkProvider>
         <GraphqlProvider>
           <EmojisProvider>

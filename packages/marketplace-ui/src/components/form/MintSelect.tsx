@@ -23,7 +23,7 @@ export const MintSelect = ({
 }) => {
   const { isOpen, onClose, onOpen } = useDisclosure();
   const { publicKey } = useWallet();
-  const escFunction = useCallback((event) => {
+  const escFunction = useCallback((event: any) => {
     if (event.key === "Escape") {
       onClose();
     }

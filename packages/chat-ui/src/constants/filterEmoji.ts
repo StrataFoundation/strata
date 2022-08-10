@@ -1,3 +1,4 @@
+//@ts-ignore
 import emojiList from "./emojiList.json";
 
 export type Emoji = {

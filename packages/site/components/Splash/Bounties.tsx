@@ -10,7 +10,7 @@ import {
   Image,
   Divider,
 } from "@chakra-ui/react";
-import { MARKETPLACE_URL, DOCS_URL } from "@/constants";
+import { MARKETPLACE_URL, DOCS_URL } from "../../constants";
 
 export const Bounties = () => (
   <Box w="full" bg="gray.900" color="white">

@@ -30,7 +30,7 @@ interface ISummaryProps {
   onNext: () => void;
 }
 
-const LabelCodeValue: React.FC<{ label: string; value?: string | number }> = ({
+const LabelCodeValue: React.FC<React.PropsWithChildren<{ label: string; value?: string | number }>> = ({
   label,
   value,
   children,
@@ -49,7 +49,7 @@ const LabelCodeValue: React.FC<{ label: string; value?: string | number }> = ({
       {label}:
     </Code>
     {value && (
-      <Text fontSize="lg" isTruncated w="auto">
+      <Text fontSize="lg" noOfLines={1} w="auto">
         {value}
       </Text>
     )}
@@ -138,6 +138,7 @@ const TokenSummary: React.FC<{
 );
 
 export const Summary: React.FC<ISummaryProps> = ({ state, onBack, onNext }) => {
+  //@ts-ignore
   const [imgUrl, setImgUrl] = useState<string>();
   const { handleSubmit } = useForm();
   const onSubmit = (data: any) => onNext();
@@ -161,6 +162,7 @@ export const Summary: React.FC<ISummaryProps> = ({ state, onBack, onNext }) => {
 
   useEffect(() => {
     if (image) {
+      //@ts-ignore
       const reader = new FileReader();
       reader.onload = (event) => {
         setImgUrl((event.target?.result as string) || "");
@@ -197,7 +199,9 @@ export const Summary: React.FC<ISummaryProps> = ({ state, onBack, onNext }) => {
               </Button>
             </Heading>
             <LabelCodeValue label="name" value={name} />
+            {/* @ts-ignore */}
             <LabelCodeValue label="domain" value={identifier + ".chat"} />
+            {/* @ts-ignore */}
             <LabelCodeValue label="image">
               <Image
                 alt={`${identifier}-chat-image`}

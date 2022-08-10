@@ -1,7 +1,7 @@
 import { Notification } from "@strata-foundation/react";
-import { ChatProviders } from "@/components/ChatProviders";
-import { Wallet } from "@/components/Wallet";
-import { IS_PRODUCTION } from "@/constants/globals";
+import { ChatProviders } from "../src/components/ChatProviders";
+import { Wallet } from "../src/components/Wallet";
+import { IS_PRODUCTION } from "../src/constants/globals";
 import { useMediaQuery } from "@chakra-ui/react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { AppProps } from "next/app";

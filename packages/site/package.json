@@ -1,32 +1,39 @@
 {
   "name": "@strata-foundation/site",
-  "version": "3.10.1",
+  "version": "3.10.2-alpha.0",
   "scripts": {
-    "clean": "shx rm -rf .next",
     "dev": "NODE_OPTIONS='--inspect' next dev",
     "build": "yarn clean && next build",
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
-    "precommit": "git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' ."
+    "precommit": "npx git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' .",
+    "clean": "shx mkdir -p lib && shx rm -rf lib && shx rm -rf .next",
+    "package": "npx shx mkdir -p lib/cjs lib/esm",
+    "prebuild": "npm run clean && npm run package"
+  },
+  "exports": {
+    "./*": "./*"
   },
   "dependencies": {
     "@bonfida/spl-name-service": "0.1.22",
+    "@chakra-ui/css-reset": "^2.0.3",
     "@chakra-ui/icons": "^1.1.7",
-    "@chakra-ui/react": "^1.8.1",
+    "@chakra-ui/react": "^2.2.6",
     "@solana/spl-token": "0.1.8",
-    "@strata-foundation/react": "^3.10.1",
-    "next": "12.0.7",
-    "next-seo": "^5.1.0",
-    "react": "17.0.2",
-    "react-dom": "17.0.2",
+    "@strata-foundation/react": "^3.10.2-alpha.0",
+    "next": "^12.2.4",
+    "next-seo": "^5.4.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hot-toast": "^2.3.0",
     "react-icons": "^4.3.1",
     "react-text-transition": "^1.3.0"
   },
   "devDependencies": {
     "@types/gtag.js": "^0.0.10",
     "@types/node": "17.0.8",
-    "@types/react": "17.0.38",
+    "@types/react": "^18.0.17",
     "eslint": "^8.6.0",
     "eslint-config-next": "^12.0.7",
     "git-format-staged": "^2.1.3",

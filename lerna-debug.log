@@ -5,13 +5,12 @@
 0 silly argv }
 1 notice cli v4.0.0
 2 verbose rootPath /Users/nprince/source/strata
-3 error Error: Invalid package name "chakra-ui/react": name can only contain URL-friendly characters
-3 error     at invalidPackageName (/Users/nprince/source/strata/node_modules/npm-package-arg/npa.js:84:15)
-3 error     at Result.setName (/Users/nprince/source/strata/node_modules/npm-package-arg/npa.js:119:11)
-3 error     at new Result (/Users/nprince/source/strata/node_modules/npm-package-arg/npa.js:110:10)
-3 error     at Function.resolve (/Users/nprince/source/strata/node_modules/npm-package-arg/npa.js:54:15)
-3 error     at /Users/nprince/source/strata/node_modules/@lerna/package-graph/index.js:66:30
+3 error Error: Unsupported URL Type "workspace:": workspace:^3.10.1
+3 error     at unsupportedURLType (/Users/nprince/.config/yarn/global/node_modules/npm-package-arg/npa.js:246:15)
+3 error     at fromURL (/Users/nprince/.config/yarn/global/node_modules/npm-package-arg/npa.js:306:13)
+3 error     at Function.resolve (/Users/nprince/.config/yarn/global/node_modules/npm-package-arg/npa.js:76:12)
+3 error     at /Users/nprince/.config/yarn/global/node_modules/@lerna/package-graph/index.js:66:30
 3 error     at Array.forEach (<anonymous>)
-3 error     at /Users/nprince/source/strata/node_modules/@lerna/package-graph/index.js:60:38
+3 error     at /Users/nprince/.config/yarn/global/node_modules/@lerna/package-graph/index.js:60:38
 3 error     at Map.forEach (<anonymous>)
-3 error     at new PackageGraph (/Users/nprince/source/strata/node_modules/@lerna/package-graph/index.js:49:10)
+3 error     at new PackageGraph (/Users/nprince/.config/yarn/global/node_modules/@lerna/package-graph/index.js:49:10)

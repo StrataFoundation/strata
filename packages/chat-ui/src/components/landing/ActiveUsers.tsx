@@ -1,11 +1,15 @@
-import {
-  Badge,
-  Circle, HStack, Text
-} from "@chakra-ui/react";
+import React from "react";
+import { Badge, Circle, HStack, Text } from "@chakra-ui/react";
 
 import "react-responsive-carousel/lib/styles/carousel.min.css"; // requires a loader
 
-export const ActiveUsers = ({ num, fontSize = "15px" }: { num: number; fontSize?: string }) => (
+export const ActiveUsers = ({
+  num,
+  fontSize = "15px",
+}: {
+  num: number;
+  fontSize?: string;
+}) => (
   <Badge
     color="white"
     position="absolute"
