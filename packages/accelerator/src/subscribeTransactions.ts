@@ -9,6 +9,7 @@ import { Accelerator, Cluster } from ".";
 export type TransactionResponseWithSig = Partial<TransactionResponse> & {
   signature: string;
   pending?: boolean;
+  logs: string[] | null;
 };
 
 function sleep(ms: number): Promise<any> {
@@ -68,7 +69,7 @@ export function subscribeTransactions({
 }): () => void {
   const connSubId = connection.onLogs(
     address,
-    async ({ signature, err }, { slot }) => {
+    async ({ signature, err, logs }, { slot }) => {
       try {
         const newTxns = await hydrateTransactions(connection, [
           {
@@ -79,7 +80,7 @@ export function subscribeTransactions({
             err,
           },
         ]);
-        if (newTxns[0]) callback(newTxns[0]);
+        if (newTxns[0]) callback({ ...newTxns[0], logs });
       } catch (e: any) {
         console.error("Error while fetching new tx", e);
       }
@@ -92,7 +93,7 @@ export function subscribeTransactions({
       subId = await accelerator.onTransaction(
         cluster,
         address,
-        ({ transaction, txid, blockTime }) => {
+        ({ logs, transaction, txid, blockTime }) => {
           callback({
             signature: txid,
             transaction: {
@@ -101,6 +102,7 @@ export function subscribeTransactions({
                 sig.publicKey.toBase58()
               ),
             },
+            logs,
             blockTime,
             pending: true,
           });
