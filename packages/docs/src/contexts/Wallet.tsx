@@ -3,15 +3,11 @@ import {
   ConnectionProvider,
   WalletProvider,
 } from "@solana/wallet-adapter-react";
-import {
-  LedgerWalletAdapter,
-  PhantomWalletAdapter,
-  SlopeWalletAdapter,
-  SolflareWalletAdapter,
-  GlowWalletAdapter,
-  ExodusWalletAdapter,
-  TorusWalletAdapter,
-} from "@solana/wallet-adapter-wallets";
+import { LedgerWalletAdapter } from "@solana/wallet-adapter-ledger";
+import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
+import { SolflareWalletAdapter } from "@solana/wallet-adapter-solflare";
+import { GlowWalletAdapter } from "@solana/wallet-adapter-glow";
+import { ExodusWalletAdapter } from "@solana/wallet-adapter-exodus";
 import { useEndpoint } from "@strata-foundation/react";
 
 // Default styles that can be overridden by your app
@@ -35,8 +31,6 @@ export const Wallet: FC = ({ children }) => {
       // @ts-ignore
       new SolflareWalletAdapter({ network: cluster }),
       new GlowWalletAdapter(),
-      new SlopeWalletAdapter(),
-      new TorusWalletAdapter(),
       new LedgerWalletAdapter(),
       new ExodusWalletAdapter(),
     ],
