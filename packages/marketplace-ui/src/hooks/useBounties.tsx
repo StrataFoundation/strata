@@ -119,7 +119,7 @@ export function useBounties({
   sortType?: SortType;
   sortDirection?: SortDirection;
   limit?: number;
-}) {
+}): any {
   const { tokenMetadataSdk } = useStrataSdks();
   const { marketplaceSdk } = useMarketplaceSdk();
   const { result: bounties, ...rest } = useAsync(getBounties, [

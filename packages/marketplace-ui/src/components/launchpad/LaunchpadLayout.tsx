@@ -11,7 +11,7 @@ export type LaunchpadLayoutProps = {
   onNext?: () => Promise<void>;
 };
 
-export const LaunchpadLayout: FC<LaunchpadLayoutProps> = ({
+export const LaunchpadLayout: FC<React.PropsWithChildren<LaunchpadLayoutProps>> = ({
   heading,
   subHeading,
   backVisible,
@@ -49,6 +49,7 @@ export const LaunchpadLayout: FC<LaunchpadLayoutProps> = ({
       </Center>
       <Box w="full" py={12} bgColor="gray.100">
         <Container maxW="container.lg">
+          {/* @ts-ignore */}
           <Stack spacing={8} justifyContent="center">
             <Stack
               alignItems="center"

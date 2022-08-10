@@ -144,7 +144,8 @@ export async function createReverseTwitterRegistry(
       reverseRegistryKey,
       new Numberu32(0),
       Buffer.from(reverseTwitterRegistryStateBuff),
-      twitterVerificationAuthority
+      twitterVerificationAuthority,
+      undefined
     ),
   ];
 }

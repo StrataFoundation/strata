@@ -1,15 +1,19 @@
 import { Notification } from "@strata-foundation/react";
-import { ChatProviders } from "@/components/ChatProviders";
-import { Wallet } from "@/components/Wallet";
-import { IS_PRODUCTION } from "@/constants/globals";
+import { ChatProviders } from "../src/components/ChatProviders";
+import { Wallet } from "../src/components/Wallet";
+import { IS_PRODUCTION } from "../src/constants/globals";
 import { useMediaQuery } from "@chakra-ui/react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { AppProps } from "next/app";
 import { useRouter } from "next/router";
+import Head from "next/head";
+import { DefaultSeo } from "next-seo";
 import React, { useEffect } from "react";
 import toast, { Toaster } from "react-hot-toast";
-import {pageview} from "../src/utils/gtag";
+import { pageview } from "../src/utils/gtag";
+import SEO from "../next-seo.config";
 
+require("./app.css");
 require("@solana/wallet-adapter-react-ui/styles.css");
 
 function MyApp({ Component, pageProps }: AppProps) {
@@ -61,30 +65,39 @@ function MyApp({ Component, pageProps }: AppProps) {
   const [isMobile] = useMediaQuery("(max-width: 680px)");
 
   return (
-    <Wallet>
-      <WalletModalProvider>
-        <ChatProviders onError={onError}>
-          <Component {...pageProps} />
-          {isMobile ? (
-            <Toaster
-              position="top-center"
-              containerStyle={{
-                margin: "60px auto",
-                width: "90%",
-                maxWidth: "420px",
-              }}
-            />
-          ) : (
-            <Toaster
-              position="bottom-left"
-              containerStyle={{
-                width: "420px",
-              }}
-            />
-          )}
-        </ChatProviders>
-      </WalletModalProvider>
-    </Wallet>
+    <>
+      <DefaultSeo {...SEO} />
+      <Head>
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"
+        />
+      </Head>
+      <Wallet>
+        <WalletModalProvider>
+          <ChatProviders onError={onError}>
+            <Component {...pageProps} />
+            {isMobile ? (
+              <Toaster
+                position="top-center"
+                containerStyle={{
+                  margin: "60px auto",
+                  width: "90%",
+                  maxWidth: "420px",
+                }}
+              />
+            ) : (
+              <Toaster
+                position="bottom-left"
+                containerStyle={{
+                  width: "420px",
+                }}
+              />
+            )}
+          </ChatProviders>
+        </WalletModalProvider>
+      </Wallet>
+    </>
   );
 }
 

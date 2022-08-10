@@ -21,6 +21,7 @@ export function VariableDisburseFunds({
   }
 
   return (
+    // @ts-ignore
     <ReactShadow.div>
       <Box mb="16px">
         <CSSReset />

@@ -15,7 +15,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2, Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { NATIVE_MINT } from "@solana/spl-token";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { Keypair, PublicKey } from "@solana/web3.js";
+import { Keypair, PublicKey, Signer, TransactionInstruction } from "@solana/web3.js";
 import {
   FIXED_CURVE_FEES,
   MarketplaceSdk,
@@ -145,8 +145,8 @@ async function createMarket(
     });
   }
 
-  const instructions = [];
-  const signers = [];
+  const instructions: TransactionInstruction[][] = [];
+  const signers: Signer[][] = [];
   const marketItemInstrs = await marketplaceSdk.createMarketItemInstructions({
     targetMintKeypair,
     metadata,

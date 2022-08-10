@@ -36,6 +36,8 @@ export type { Emoji } from "./constants/filterEmoji";
 export { filterEmoji } from "./constants/filterEmoji";
 
 export type { IChatSdkReactState } from "./contexts/chatSdk";
+export { useChatSdk } from "./contexts/chatSdk";
+
 export {
   ChatSdkProviderRaw,
   ChatSdkContext,
@@ -67,6 +69,7 @@ export { useChat } from "./hooks/useChat";
 export { useProfileKey } from "./hooks/useProfileKey";
 export { useWalletProfile } from "./hooks/useWalletProfile";
 export { useProfile } from "./hooks/useProfile";
+export type { Fetcher } from "./hooks/useMessages";
 export { useMessages } from "./hooks/useMessages";
 export { useDelegateWallet } from "./hooks/useDelegateWallet";
 export { useChatKeyFromIdentifier } from "./hooks/useChatKeyFromIdentifier";

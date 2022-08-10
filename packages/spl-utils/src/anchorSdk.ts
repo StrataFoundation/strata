@@ -9,7 +9,7 @@ import {
 import { AllInstructions } from "@project-serum/anchor/dist/cjs/program/namespace/types";
 import { Wallet } from "@project-serum/anchor/dist/cjs/provider";
 import { PublicKey, Signer, TransactionInstruction, Commitment, Finality } from "@solana/web3.js";
-import { TypedAccountParser } from ".";
+import { TypedAccountParser } from "./accountFetchCache";
 import { BigInstructionResult, InstructionResult, sendInstructions, sendMultipleInstructions } from "./transaction";
 
 export abstract class AnchorSdk<IDL extends Idl> {

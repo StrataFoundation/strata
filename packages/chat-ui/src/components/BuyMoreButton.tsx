@@ -68,7 +68,11 @@ export function BuyMoreButton({
   function onClick() {
     if (!connected) setVisible(true);
     else {
-      onToggle();
+      if (!account && !loadingBonding) {
+        window.open(`https://jup.ag/swap/SOL-${metadata?.data.symbol.toUpperCase()}`);
+      } else {
+        onToggle();
+      }
     }
   }
 
@@ -81,7 +85,9 @@ export function BuyMoreButton({
           <ModalHeader>Buy More {metadata?.data.symbol}</ModalHeader>
           <ModalBody minH="500px">
             {!account && !loadingBonding && (
-              <Alert status="info">Buy is not yet supported for this token</Alert>
+              <Alert status="info">
+                Buy is not yet supported for this token
+              </Alert>
             )}
             {account && !loadingBonding && tokenBondingKey && (
               <Swap

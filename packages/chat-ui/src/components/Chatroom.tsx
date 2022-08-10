@@ -3,7 +3,11 @@ import { ChatboxWithGuards } from "./chatbox/ChatboxWithGuards";
 import { ChatMessages } from "./ChatMessages";
 import { EmojiPickerPopover } from "./EmojiPicker";
 import { FileUploadMask } from "./FileUploadMask";
-import { IMessageWithPending, useMessages } from "../hooks/useMessages";
+import {
+  Fetcher,
+  IMessageWithPending,
+  useMessages,
+} from "../hooks/useMessages";
 import { Flex } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
 import { randomizeFileName } from "@strata-foundation/chat";
@@ -19,10 +23,9 @@ const DARK_BG = {
 
 export const Chatroom: React.FC<{
   chatKey?: PublicKey;
-  useVybe?: boolean;
-  vybeQuery?: any;
+  fetcher?: Fetcher | null;
   accelerated?: boolean;
-}> = ({ chatKey, accelerated, useVybe, vybeQuery }) => {
+}> = ({ chatKey, accelerated, fetcher }) => {
   const { handleErrors } = useErrorHandler();
   const [files, setFiles] = useState<{ name: string; file: File }[]>([]);
   const [pendingMessages, setPendingMessages] = useState<IMessageWithPending[]>(
@@ -40,8 +43,7 @@ export const Chatroom: React.FC<{
   } = useMessages({
     chat: chatKey,
     accelerated,
-    vybeQuery,
-    useVybe,
+    fetcher,
     numTransactions: 50,
   });
   handleErrors(error);

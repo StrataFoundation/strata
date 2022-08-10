@@ -183,6 +183,7 @@ export const DynamicPricingCandyMachine = (
                     candyMachine?.gatekeeper &&
                     publicKey &&
                     signTransaction ? (
+                      // @ts-ignore
                       <GatewayProvider
                         wallet={{
                           publicKey:

@@ -45,9 +45,11 @@ export const Countdown = ({ date, children }: { date: Date, children?: React.Rea
   }
 
   return (
+    // @ts-ignore
     <ReactCountdown
       now={() => unixTime * 1000}
       date={date}
+      // @ts-ignore
       renderer={renderer}
     />
   );

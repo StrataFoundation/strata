@@ -1,6 +1,6 @@
 import {
   AcceleratorProvider,
-  HolaplexAndVybeGraphqlProvider,
+  GraphqlProvider,
   StrataProviders,
 } from "@strata-foundation/react";
 import React, { FC } from "react";
@@ -12,15 +12,17 @@ const defaultOnError = (error: Error) => console.log(error);
 export const ChatProviders: FC<{
   onError?: (error: Error) => void;
   resetCSS?: boolean;
+  //@ts-ignore
 }> = ({ children, onError = defaultOnError, resetCSS = false }) => (
   <StrataProviders resetCSS onError={onError}>
     <AcceleratorProvider url="wss://prod-api.teamwumbo.com/accelerator">
+      {/* @ts-ignore */}
       <ChatSdkProvider>
-        <HolaplexAndVybeGraphqlProvider>
+        <GraphqlProvider>
           <EmojisProvider>
             <ReplyProvider>{children}</ReplyProvider>
           </EmojisProvider>
-        </HolaplexAndVybeGraphqlProvider>
+        </GraphqlProvider>
       </ChatSdkProvider>
     </AcceleratorProvider>
   </StrataProviders>

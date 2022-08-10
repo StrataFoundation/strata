@@ -1,5 +1,5 @@
-import { SaleItem } from "@/components/sales/SaleItem";
-import { MetadataMeta } from "@/components/MetadataMeta";
+import { SaleItem } from "../../../src/components/sales/SaleItem";
+import { MetadataMeta } from "../../../src/components/MetadataMeta";
 import { Box, Container } from "@chakra-ui/react";
 import { usePublicKey } from "@strata-foundation/react";
 import {
@@ -9,8 +9,8 @@ import {
 } from "next";
 import { useRouter } from "next/router";
 import React from "react";
-import { mintMetadataServerSideProps } from "@/utils/tokenMetadataServerProps";
-import { SITE_URL } from "@/constants";
+import { mintMetadataServerSideProps } from "../../../src/utils/tokenMetadataServerProps";
+import { SITE_URL } from "../../../src/constants";
 
 export const getServerSideProps: GetServerSideProps =
   mintMetadataServerSideProps;

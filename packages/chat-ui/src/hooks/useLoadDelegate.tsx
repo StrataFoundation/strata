@@ -1,4 +1,4 @@
-import { Keypair, SystemProgram } from "@solana/web3.js";
+import { Keypair, Signer, SystemProgram, TransactionInstruction } from "@solana/web3.js";
 import { ChatSdk } from "@strata-foundation/chat";
 import { useSolOwnedAmount } from "@strata-foundation/react";
 import { sendInstructions } from "@strata-foundation/spl-utils";
@@ -22,8 +22,8 @@ async function runLoadDelegate(
       structKey &&
       (await chatSdk.provider.connection.getAccountInfo(structKey));
 
-    const instructions = [];
-    const signers = [];
+    const instructions: TransactionInstruction[] = [];
+    const signers: Signer[] = [];
     if (!structExists) {
       if (!delegateWalletKeypair) {
         const mnemonic = generateMnemonic();

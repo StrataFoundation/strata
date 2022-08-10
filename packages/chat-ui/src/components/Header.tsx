@@ -5,7 +5,7 @@ import { FiMenu } from "react-icons/fi";
 interface IHeaderProps {
   onSidebarOpen(): void;
 }
-
+//@ts-ignore
 export const Header: React.FC<IHeaderProps> = ({ children, onSidebarOpen }) => (
   <Flex
     as="header"

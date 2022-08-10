@@ -12,7 +12,7 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import { HamburgerIcon, CloseIcon } from "@chakra-ui/icons";
-import { DOCS_URL, MARKETPLACE_URL, BLOG_URL } from "@/constants";
+import { DOCS_URL, MARKETPLACE_URL, BLOG_URL } from "../constants";
 
 const Links = [
   { link: "Docs", href: DOCS_URL },
@@ -24,6 +24,7 @@ const Links = [
 
 const NavLink = ({ href, children }: { href: string; children: ReactNode }) => (
   <Link px={2} py={1} href={href} fontSize="sm">
+    {/* @ts-ignore */}
     {children}
   </Link>
 );

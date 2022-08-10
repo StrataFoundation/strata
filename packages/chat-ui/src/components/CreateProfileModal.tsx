@@ -1,56 +1,46 @@
 import {
-  Alert,
-  ModalProps,
-  Box,
+  Alert, Box,
   Button,
   FormControl,
   FormHelperText,
   FormLabel,
-  HStack,
-  Input,
+  HStack, Icon,
+  Image, Input,
   Link,
   Modal,
   ModalBody,
   ModalContent,
-  ModalOverlay,
-  Text,
-  VStack,
-  Icon,
-  Image,
-  Divider,
-  useDisclosure,
-  Flex,
+  ModalOverlay, ModalProps, Progress, Text, useDisclosure, VStack
 } from "@chakra-ui/react";
-import { LoadWalletModal } from "./LoadWalletModal";
-import { RiCheckFill } from "react-icons/ri";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useWallet } from "@solana/wallet-adapter-react";
 import {
   ChatSdk,
   IdentifierType,
   randomizeFileName,
-  uploadFiles,
+  uploadFiles
 } from "@strata-foundation/chat";
 import {
   truncatePubkey,
   useErrorHandler,
-  useProvider,
+  useProvider
 } from "@strata-foundation/react";
 import { sendMultipleInstructions } from "@strata-foundation/spl-utils";
 import React, { useCallback, useEffect, useState } from "react";
 import { useAsyncCallback } from "react-async-hook";
 import { FormProvider, useForm } from "react-hook-form";
+import { RiCheckFill } from "react-icons/ri";
 import * as yup from "yup";
+import { STRATA_KEY } from "../constants/globals";
 import { useChatSdk } from "../contexts/chatSdk";
+import { useAnalyticsEventTracker } from "../hooks/useAnalyticsEventTracker";
 import { useChatStorageAccountKey } from "../hooks/useChatStorageAccountKey";
 import { useLoadDelegate } from "../hooks/useLoadDelegate";
 import { useUsernameFromIdentifierCertificate } from "../hooks/useUsernameFromIdentifierCertificate";
-import { useWalletProfile } from "../hooks/useWalletProfile";
-import { useAnalyticsEventTracker } from "../hooks/useAnalyticsEventTracker";
 import { useWalletFromUsernameIdentifier } from "../hooks/useWalletFromUsernameIdentifier";
+import { useWalletProfile } from "../hooks/useWalletProfile";
 import { FormControlWithError } from "./form/FormControlWithError";
-import toast from "react-hot-toast";
-import { LongPromiseNotification } from "./LongPromiseNotification";
+import { LoadWalletModal } from "./LoadWalletModal";
 
 interface IProfileProps {
   username: string;
@@ -154,6 +144,7 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
     profile?.identifierCertificateMint,
     profile?.ownerWallet
   );
+  const [isUploading, setIsUploading] = useState<boolean>(false);
 
   useEffect(() => {
     if (profile) {
@@ -177,7 +168,7 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
   handleErrors(error, delegateError);
 
   async function onSubmit(args: IProfileProps): Promise<void> {
-    if (args.username.length < 6 && !wallet) {
+    if (!publicKey?.equals(STRATA_KEY) && args.username.length < 6 && !wallet) {
       setError("username", {
         message: "Username must be at least 6 characters.",
       });
@@ -210,49 +201,56 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
     // @ts-ignore
     clearErrors("image");
   };
+  
+
   const [imgUrl, setImgUrl] = useState<string>();
   useEffect(() => {
-    if (image) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setImgUrl((event.target?.result as string) || "");
-      };
+    (async () => {
+      if (image) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          setImgUrl((event.target?.result as string) || "");
+        };
 
-      const text = `Uploading ${image.name} to SHDW Drive...`;
-      reader.readAsDataURL(image);
-      randomizeFileName(image);
-      const url = `https://shdw-drive.genesysgo.net/${chatStorage}/${image.name}`;
-      setValue("imageUrl", url);
-      toast.custom(
-        (t) => (
-          <LongPromiseNotification
-            estTimeMillis={2 * 60 * 1000}
-            text={text}
-            onError={(e) => {
-              handleErrors(e);
-              toast.dismiss(t.id);
-            }}
-            exec={async () => {
-              await uploadFiles(chatSdk!.provider, [image], delegateWallet);
-              return true;
-            }}
-            onComplete={async () => {
-              const images = document.querySelectorAll(`img[src*="${url}"]`);
-              images.forEach((image) => {
-                // @ts-ignore
-                image.src = url;
+        reader.readAsDataURL(image);
+
+        if (!imgUrl) {
+          setIsUploading(true);
+          randomizeFileName(image);
+          let innerImageUploaded = false;
+
+          try {
+            const uri = await uploadFiles(
+              chatSdk!.provider,
+              [image],
+              delegateWallet
+            );
+
+            if (uri && uri.length > 0) {
+              setValue("imageUrl", uri[0]);
+              innerImageUploaded = true;
+            }
+          } catch (e) {
+            handleErrors(e as Error);
+          } finally {
+            setIsUploading(false);
+            if (!innerImageUploaded) {
+              setValue("imageUrl", undefined);
+              setValue("image", undefined);
+              setImgUrl(undefined);
+              setError("image", {
+                message: "Image failed to upload, please try again",
               });
-              toast.dismiss(t.id);
-            }}
-          />
-        ),
-        {
-          duration: Infinity,
+              if (hiddenFileInput.current) {
+                hiddenFileInput.current.value = "";
+              }
+            }
+          }
         }
-      );
-    } else {
-      setImgUrl(undefined);
-    }
+      } else {
+        setImgUrl(undefined);
+      }
+    })();
   }, [image]);
 
   if (props.isOpen && loadWalletIsOpen) {
@@ -308,6 +306,7 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
                         colorScheme="primary"
                         variant="outline"
                         onClick={() => hiddenFileInput.current!.click()}
+                        disabled={isUploading}
                       >
                         Choose Image
                       </Button>
@@ -343,28 +342,23 @@ export function CreateProfileModal(props: Partial<ModalProps>) {
                       {errors.image?.message ||
                         `The image that will be displayed as your pfp. Note that your first upload to SHDW can take up to 3 minutes depending on Solana confirmation times.`}
                     </FormHelperText>
+                    {isUploading && (
+                      <Progress
+                        size="xs"
+                        isIndeterminate
+                        colorScheme="orange"
+                        mt={2}
+                      />
+                    )}
                   </FormControl>
-                  <Flex align="center" w="full">
-                    <Divider borderColor="gray.500" />
-                    <Text padding="2">OR</Text>
-                    <Divider borderColor="gray.500" />
-                  </Flex>
-                  <FormControlWithError
-                    id="imageUrl"
-                    help="A url to the image to use for your profile (ex: right click your PFP on twitter and copy image URL)"
-                    label="Image URL"
-                    errors={errors}
-                  >
-                    <Input {...register("imageUrl")} />
-                  </FormControlWithError>
                   <Button
                     isDisabled={!!userError}
-                    isLoading={loading}
+                    isLoading={loading || isUploading}
                     colorScheme="primary"
                     alignSelf="flex-end"
                     mr={3}
                     type="submit"
-                    loadingText={awaitingApproval ? "Awaiting Approval" : step}
+                    loadingText={isUploading ? "Uploading" : awaitingApproval ? "Awaiting Approval" : step}
                   >
                     Save
                   </Button>

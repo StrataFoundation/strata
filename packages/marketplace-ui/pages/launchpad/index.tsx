@@ -1,6 +1,6 @@
-import { RadioCardWithAffordance } from "@/components/form";
-import { LaunchpadLayout } from "@/components/launchpad";
-import { route, routes } from "@/utils/routes";
+import { RadioCardWithAffordance } from "../../src/components/form";
+import { LaunchpadLayout } from "../../src/components/launchpad";
+import { route, routes } from "../../src/utils/routes";
 import {
   Box,
   Flex,

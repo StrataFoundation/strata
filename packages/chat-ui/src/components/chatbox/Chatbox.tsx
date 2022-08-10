@@ -13,15 +13,27 @@ import {
   Popover,
   PopoverBody,
   PopoverContent,
+  Input,
   PopoverTrigger,
   Text,
   useColorModeValue,
   useDisclosure,
   VStack,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  InputRightAddon,
+  InputGroup,
+  CloseButton,
+  ModalCloseButton,
 } from "@chakra-ui/react";
+import { AiFillLock } from "react-icons/ai";
+
+import { AiOutlinePlus } from "react-icons/ai";
 import { PublicKey } from "@solana/web3.js";
 import { ISendMessageContent, MessageType } from "@strata-foundation/chat";
-import { useErrorHandler } from "@strata-foundation/react";
+import { useErrorHandler, useMint, useTokenMetadata } from "@strata-foundation/react";
 import React, {
   KeyboardEventHandler,
   useCallback,
@@ -44,6 +56,9 @@ import { ChatInput } from "./ChatInput";
 import { ReplyBar } from "./ReplyBar";
 import { IMessageWithPending } from "../../hooks/useMessages";
 import { useAnalyticsEventTracker } from "../../hooks/useAnalyticsEventTracker";
+import { useChatPermissions } from "../../hooks/useChatPermissions";
+import { useChatPermissionsFromChat } from "../../hooks/useChatPermissionsFromChat";
+import { toBN, toNumber } from "@strata-foundation/spl-utils";
 
 const converter = new Converter({
   simpleLineBreaks: true,
@@ -85,9 +100,24 @@ export function Chatbox({
     onClose: onCloseGify,
   } = useDisclosure();
   const gaEventTracker = useAnalyticsEventTracker();
+  const { info: chatPermissions } = useChatPermissionsFromChat(chatKey);
+  const { metadata } = useTokenMetadata(chatPermissions?.readPermissionKey);
+  const readMint = useMint(chatPermissions?.readPermissionKey);
 
   const chatBg = useColorModeValue("gray.100", "gray.800");
   const { handleErrors } = useErrorHandler();
+  const { isOpen: isPermissionModalOpen, onClose: onPermissionsClose, onOpen: onPermissionsOpen } = useDisclosure();
+  const [readPermissionInputAmount, setReadPermissionInputAmount] = useState<string>();
+
+  useEffect(() => {
+    if (readMint && chatPermissions) {
+      setReadPermissionInputAmount(
+        toNumber(chatPermissions.defaultReadPermissionAmount, readMint).toString()
+      );
+    }
+  }, [readMint, chatPermissions]);
+
+  const [readPermissionAmount, setReadPermissionAmount] = useState<number>();
 
   const [loading, setLoading] = useState(false);
   const { sendMessage: sendMessageImpl, error } = useSendMessage();
@@ -121,6 +151,11 @@ export function Chatbox({
 
       try {
         if (replyMessage?.id) m.referenceMessageId = replyMessage?.id;
+        const msgArgs: any = { message: m, onAddPendingMessage };
+        if (readPermissionAmount) {
+          msgArgs.readPermissionAmount = toBN(readPermissionAmount, readMint);
+          setReadPermissionAmount(undefined)
+        }
         // Show toast if uploading files
         if (m.fileAttachments && m.fileAttachments.length > 0) {
           const text = `Uploading ${m.fileAttachments.map(
@@ -136,7 +171,7 @@ export function Chatbox({
                   toast.dismiss(t.id);
                 }}
                 exec={async () => {
-                  await sendMessageImpl({ message: m, onAddPendingMessage });
+                  await sendMessageImpl(msgArgs);
                   return true;
                 }}
                 onComplete={async () => {
@@ -150,7 +185,7 @@ export function Chatbox({
           );
           setFiles([]);
         } else {
-          await sendMessageImpl({ message: m, onAddPendingMessage });
+          await sendMessageImpl(msgArgs);
         }
       } finally {
         setLoading(false);
@@ -234,6 +269,7 @@ export function Chatbox({
           autoFocus={false}
           closeOnBlur={false}
         >
+          {/* @ts-ignore */}
           <PopoverTrigger>
             <Flex w="full" />
           </PopoverTrigger>
@@ -284,6 +320,20 @@ export function Chatbox({
           rounded="lg"
         >
           <Files files={files} onCancelFile={onCancelFile} />
+
+          {readPermissionAmount && (
+            <HStack spacing={1} alignItems="center">
+              <Icon as={AiFillLock} />
+              <Text>
+                {readPermissionAmount} {metadata?.data.symbol}
+              </Text>
+              <CloseButton
+                color="gray.400"
+                _hover={{ color: "gray.600", cursor: "pointer" }}
+                onClick={() => setReadPermissionAmount(undefined)}
+              />
+            </HStack>
+          )}
           <ReplyBar />
           <HStack w="full" alignItems="flex-end">
             <ChatInput
@@ -292,19 +342,36 @@ export function Chatbox({
               value={input}
               onKeyDown={handleKeyDown}
             />
+            <Menu isLazy>
+              <MenuButton
+                as={IconButton}
+                isLoading={loading}
+                variant="outline"
+                aria-label="Attachment"
+                icon={<Icon w="24px" h="24px" as={AiOutlinePlus} />}
+              />
+              <MenuList>
+                <MenuItem
+                  icon={<Icon mt="3px" h="16px" w="16px" as={IoMdAttach} />}
+                  onClick={onUploadFile}
+                >
+                  Upload File
+                </MenuItem>
+                <MenuItem
+                  icon={<Icon mt="3px" h="16px" w="16px" as={AiOutlineGif} />}
+                  onClick={onToggleGify}
+                >
+                  GIF
+                </MenuItem>
+              </MenuList>
+            </Menu>
             <IconButton
-              isLoading={loading}
-              aria-label="Select Image"
               variant="outline"
-              onClick={onUploadFile}
-              icon={<Icon w="24px" h="24px" as={IoMdAttach} />}
+              aria-label="Additional Message Locking"
+              onClick={onPermissionsOpen}
+              icon={<Icon w="24px" h="24px" as={AiFillLock} />}
             />
-            <IconButton
-              aria-label="Select GIF"
-              variant="outline"
-              onClick={onToggleGify}
-              icon={<Icon w="24px" h="24px" as={AiOutlineGif} />}
-            />
+
             <Button
               isLoading={loading}
               colorScheme="primary"
@@ -327,6 +394,7 @@ export function Chatbox({
         <ModalOverlay />
         <ModalContent borderRadius="xl" shadow="xl">
           <ModalHeader>Select GIF</ModalHeader>
+          <ModalCloseButton />
           <ModalBody>
             <GifSearch
               onSelect={(gifyId) => {
@@ -337,6 +405,55 @@ export function Chatbox({
                 });
               }}
             />
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+      <Modal
+        isOpen={isPermissionModalOpen}
+        onClose={onPermissionsClose}
+        isCentered
+      >
+        <ModalContent p={4} borderRadius="xl">
+          <ModalHeader pb={0}>Change Read Amount</ModalHeader>
+          <ModalBody>
+            <VStack spacing={8}>
+              <Text>
+                Holders in the chat will need this amount of{" "}
+                {metadata?.data.symbol} to read this message.
+              </Text>
+              <InputGroup>
+                <Input
+                  borderRight="none"
+                  value={readPermissionInputAmount}
+                  onChange={(e) => setReadPermissionInputAmount(e.target.value)}
+                  type="number"
+                  step={Math.pow(10, -(readMint?.decimals || 0))}
+                />
+                <InputRightAddon>{metadata?.data.symbol}</InputRightAddon>
+              </InputGroup>
+              <HStack w="full" spacing={2}>
+                <Button
+                  w="full"
+                  variant="outline"
+                  onClick={() => onPermissionsClose()}
+                >
+                  Close
+                </Button>
+                <Button
+                  w="full"
+                  colorScheme="primary"
+                  onClick={() => {
+                    readPermissionInputAmount &&
+                      setReadPermissionAmount(
+                        Number(readPermissionInputAmount)
+                      );
+                    onPermissionsClose();
+                  }}
+                >
+                  Set Amount
+                </Button>
+              </HStack>
+            </VStack>
           </ModalBody>
         </ModalContent>
       </Modal>

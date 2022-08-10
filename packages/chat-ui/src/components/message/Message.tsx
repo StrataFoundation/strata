@@ -1,18 +1,17 @@
+import React, { useCallback, useMemo, useState, useRef } from "react";
 import {
   Avatar,
   Box,
   Hide,
   HStack,
   Icon,
-  Popover,
-  PopoverBody,
-  PopoverContent,
-  PopoverTrigger,
   Skeleton,
   Text,
   Tooltip,
   useColorModeValue,
   VStack,
+  useOutsideClick,
+  Flex,
 } from "@chakra-ui/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { MessageType } from "@strata-foundation/chat";
@@ -23,10 +22,8 @@ import {
 } from "@strata-foundation/react";
 import { humanReadable, toNumber } from "@strata-foundation/spl-utils";
 import moment from "moment";
-import React, { useCallback, useMemo } from "react";
 import { useAsync } from "react-async-hook";
 import { BsLockFill } from "react-icons/bs";
-import { DisplayReply, MessageHeader, MessageStatus, Reacts } from ".";
 import { BuyMoreButton } from "../BuyMoreButton";
 import { useEmojis } from "../../contexts/emojis";
 import { useSendMessage } from "../../contexts/sendMessage";
@@ -37,6 +34,10 @@ import { useChatOwnedAmounts } from "../../hooks/useChatOwnedAmounts";
 import { useChatPermissionsFromChat } from "../../hooks/useChatPermissionsFromChat";
 import { MessageBody } from "./MessageBody";
 import { MessageToolbar } from "./MessageToolbar";
+import { DisplayReply } from "./DisplayReply";
+import { MessageHeader } from "./MessageHeader";
+import { Reacts } from "./Reacts";
+import { MessageStatus } from "./MessageStatus";
 
 const defaultOptions = {
   allowedTags: ["b", "i", "em", "strong", "a", "code", "ul", "li", "p"],
@@ -53,6 +54,12 @@ export function Message(
     scrollToMessage: (id: string) => void;
   }
 ) {
+  const ref = useRef<any>();
+  const [isActive, setIsActive] = useState(false);
+  useOutsideClick({
+    ref: ref,
+    handler: () => setIsActive(false),
+  });
   const {
     id: messageId,
     getDecodedMessage,
@@ -130,12 +137,19 @@ export function Message(
 
   const bg = useMemo(
     () =>
-      messageId === emojiReferenceMessageId || messageId === replyMessage?.id
+      messageId === emojiReferenceMessageId ||
+      messageId === replyMessage?.id ||
+      isActive
         ? highlightedBg
         : "initial",
-    [highlightedBg, emojiReferenceMessageId, messageId, replyMessage?.id]
+    [
+      highlightedBg,
+      emojiReferenceMessageId,
+      messageId,
+      replyMessage?.id,
+      isActive,
+    ]
   );
-  const hover = useMemo(() => ({ bg: highlightedBg }), [highlightedBg]);
 
   const textColor = useColorModeValue("black", "white");
   const loadingSkeleton = useMemo(() => {
@@ -147,7 +161,7 @@ export function Message(
   }, [messageId, lockedColor]);
 
   const buyMoreTrigger = useCallback(
-    (props) => {
+    (props: any) => {
       return (
         <Tooltip
           label={`You need ${tokenAmount} ${metadata?.data.symbol} to read this message`}
@@ -177,110 +191,125 @@ export function Message(
   }
 
   return (
-    <Box position="relative" _hover={hover} bg={bg}>
-      <Popover matchWidth trigger="hover" placement="top-end" isLazy>
-        <PopoverContent w="full" bg="transparent" border="none">
-          <PopoverBody>
-            <MessageToolbar {...props} />
-          </PopoverBody>
-        </PopoverContent>
-        <PopoverTrigger>
-          <VStack spacing={0} gap={0} w="full">
-            {reply && (
-              <DisplayReply reply={reply} scrollToMessage={scrollToMessage} />
+    <Box
+      ref={ref}
+      onMouseEnter={() => setIsActive(true)}
+      onMouseLeave={() => setIsActive(false)}
+      onClick={() => setIsActive(true)}
+      position="relative"
+    >
+      {isActive && (
+        <Flex
+          position="absolute"
+          right={{
+            base: 8,
+            md: 28,
+          }}
+          top={-4}
+          zIndex={1}
+          justifyContent="flex-end"
+          alignItems="flex-end"
+          onClick={(e) => e.preventDefault()}
+        >
+          <MessageToolbar {...props} />
+        </Flex>
+      )}
+      <Box bg={bg}>
+        <VStack spacing={0} gap={0} w="full">
+          {reply && (
+            <DisplayReply reply={reply} scrollToMessage={scrollToMessage} />
+          )}
+          <HStack
+            pl={2}
+            pr={2}
+            pb={1}
+            pt={reply ? 0 : 1}
+            w="full"
+            align="start"
+            spacing={2}
+            className="strata-message"
+          >
+            {showUser ? (
+              <Avatar mt="6px" size="sm" src={profile?.imageUrl} />
+            ) : (
+              <Box w="34px" />
             )}
-            <HStack
-              pl={2}
-              pr={2}
-              pb={1}
-              pt={reply ? 0 : 1}
-              w="full"
-              align="start"
-              spacing={2}
-              className="strata-message"
-            >
-              {showUser ? (
-                <Avatar mt="6px" size="sm" src={profile?.imageUrl} />
-              ) : (
-                <Box w="34px" />
+            <VStack w="full" align="start" spacing={0}>
+              {showUser && (
+                <MessageHeader
+                  chatKey={chatKey}
+                  sender={sender}
+                  startBlockTime={startBlockTime}
+                />
               )}
-              <VStack w="full" align="start" spacing={0}>
-                {showUser && (
-                  <MessageHeader
-                    chatKey={chatKey}
-                    sender={sender}
-                    startBlockTime={startBlockTime}
-                  />
-                )}
 
-                <Box
-                  w="fit-content"
-                  position="relative"
-                  textAlign={"left"}
-                  wordBreak="break-word"
-                  color={textColor}
-                  id={messageId}
-                >
-                  {!notEnoughTokens && message && messageType ? (
-                    <MessageBody
-                      htmlAllowlist={htmlAllowlist}
-                      message={message}
-                      messageType={messageType}
-                    />
-                  ) : decoding ? (
-                    loadingSkeleton
-                  ) : notEnoughTokens ? (
-                    <BuyMoreButton mint={readMint} trigger={buyMoreTrigger} />
-                  ) : (
-                    <Tooltip label={`Failed to decode message`}>
-                      <Skeleton
-                        startColor={lockedColor}
-                        height="20px"
-                        speed={100000}
-                      >
-                        {Array.from(
-                          { length: genLength(messageId || "") },
-                          () => "."
-                        ).join()}
-                      </Skeleton>
-                    </Tooltip>
-                  )}
-                </Box>
-                {reacts && reacts.length > 0 && (
-                  <Reacts
-                    onAddReaction={handleOnReaction}
-                    reacts={reacts}
-                    onReact={(emoji, mine) => {
-                      if (!mine)
-                        sendMessage({
-                          message: {
-                            type: MessageType.React,
-                            emoji: emoji,
-                            referenceMessageId: messageId,
-                          },
-                        });
-                    }}
+              <Box
+                w="fit-content"
+                position="relative"
+                textAlign={"left"}
+                wordBreak="break-word"
+                color={textColor}
+                id={messageId}
+              >
+                {!notEnoughTokens && message && messageType ? (
+                  <MessageBody
+                    htmlAllowlist={htmlAllowlist}
+                    message={message}
+                    messageType={messageType}
                   />
-                )}
-              </VStack>
-              <HStack alignItems="center" flexShrink={0}>
-                {showUser && (
-                  <Hide below="md">
-                    <Text
-                      fontSize="xs"
-                      color="gray.500"
-                      _dark={{ color: "gray.400" }}
+                ) : decoding ? (
+                  loadingSkeleton
+                ) : notEnoughTokens ? (
+                  <BuyMoreButton mint={readMint} trigger={buyMoreTrigger} />
+                ) : (
+                  <Tooltip label={`Failed to decode message`}>
+                    <Skeleton
+                      startColor={lockedColor}
+                      height="20px"
+                      speed={100000}
                     >
-                      {moment(time).format("LT")}
-                    </Text>
-                  </Hide>
+                      {Array.from(
+                        { length: genLength(messageId || "") },
+                        () => "."
+                      ).join()}
+                    </Skeleton>
+                  </Tooltip>
                 )}
-                <MessageStatus txids={txids} pending={pending} />
-              </HStack>
+              </Box>
+              {reacts && reacts.length > 0 && (
+                <Reacts
+                  onAddReaction={handleOnReaction}
+                  reacts={reacts}
+                  onReact={(emoji, mine) => {
+                    if (!mine)
+                      sendMessage({
+                        message: {
+                          type: MessageType.React,
+                          emoji: emoji,
+                          referenceMessageId: messageId,
+                        },
+                      });
+                  }}
+                />
+              )}
+            </VStack>
+            <HStack alignItems="center" flexShrink={0}>
+              {showUser && (
+                <Hide below="md">
+                  <Text
+                    fontSize="xs"
+                    color="gray.500"
+                    _dark={{ color: "gray.400" }}
+                  >
+                    {moment(time).format("LT")}
+                  </Text>
+                </Hide>
+              )}
+              <MessageStatus txids={txids} pending={pending} />
             </HStack>
-          </VStack>
-        </PopoverTrigger>
-      </Popover>
+          </HStack>
+        </VStack>
+      </Box>
     </Box>
   );
 }

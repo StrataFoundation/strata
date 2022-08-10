@@ -121,7 +121,6 @@ export const ConvertCMIfNeeded = () => {
       colorScheme="primary"
       isDisabled={isConverted}
       isLoading={loading}
-      disabledText={"Already using LBC"}
       onClick={() => convert(provider, bonding?.targetMint, cm)}
     >
       {isConverted ? "Already using LBC" : "Convert back to LBC"}

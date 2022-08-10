@@ -1,7 +1,7 @@
 import React from "react";
-import { createIcon } from "@chakra-ui/react";
+import { ComponentWithAs, createIcon, IconProps } from "@chakra-ui/react";
 
-export const StrataIcon = createIcon({
+export const StrataIcon: ComponentWithAs<"svg", IconProps> = createIcon({
   displayName: "Strata",
   viewBox: "0 0 41 16",
   path: [

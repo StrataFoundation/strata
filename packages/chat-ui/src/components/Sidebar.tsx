@@ -6,7 +6,6 @@ import {
   Input,
   InputGroup,
   InputLeftElement,
-  InputRightElement,
   useColorMode,
   VStack,
   Flex,
@@ -88,7 +87,12 @@ export const Sidebar = (props: any) => {
             onChange={handleSearch}
           />
         </InputGroup>
-        <CreateChatButton colorScheme="gray" rounded="full" variant="outline" aria-label="Create Chat Button" />
+        <CreateChatButton
+          colorScheme="gray"
+          rounded="full"
+          variant="outline"
+          aria-label="Create Chat Button"
+        />
       </Flex>
       <Flex
         direction="column"
@@ -100,6 +104,7 @@ export const Sidebar = (props: any) => {
         aria-label="Main Navigation"
         grow={1}
         gap={2}
+        overflowY="scroll"
       >
         {chats
           .filter((identifier) => identifier.includes(input))
@@ -107,7 +112,10 @@ export const Sidebar = (props: any) => {
             <ChatSidebarPreview
               key={identifier}
               identifier={identifier}
-              onClick={() => setInput("")}
+              onClick={() => {
+                setInput("");
+                props.onClose && props.onClose();
+              }}
             />
           ))}
       </Flex>
@@ -129,8 +137,8 @@ export const Sidebar = (props: any) => {
           onClick={toggleColorMode}
         />
         <Divider />
-        <Flex align="center" justifyContent="space-evenly" w="full">
-          <ProfileButton />
+        <Flex pt={3.5} pb={3.5} align="center" justifyContent="space-evenly" w="full">
+          <ProfileButton size="lg" />
         </Flex>
       </VStack>
     </VStack>

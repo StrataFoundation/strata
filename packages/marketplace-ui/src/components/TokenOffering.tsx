@@ -1,4 +1,4 @@
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, Signer, TransactionInstruction } from "@solana/web3.js";
 import React, { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import {
@@ -57,8 +57,8 @@ export const TokenOffering = ({
     loading: submitting,
     error: submitError,
   } = useAsyncCallback(async function (values: ISwapFormValues) {
-    const instructions = [];
-    const signers = [];
+    const instructions: TransactionInstruction[] = [];
+    const signers: Signer[] = [];
 
     // buy the first bonding curve
     const { instructions: i1, signers: s1 } =

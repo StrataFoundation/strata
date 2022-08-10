@@ -1,0 +1,14 @@
+.featured-communities .carousel-root {
+  max-width: 100%;
+}
+
+.featured-communities .carousel-status {
+  top: 16px!important;
+  right: 16px!important;
+}
+
+@media only screen and (max-width: 600px) {
+  .featured-communities .control-arrow {
+    display: none!important;
+  }
+}

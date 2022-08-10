@@ -1,7 +1,7 @@
-import { BountyCard } from "@/components/bounties/BountyCard";
-import { BountyList } from "@/components/bounties/BountyList";
-import { MintSelectModal } from "@/components/bounties/MintSelectModal";
-import { route, routes } from "@/utils/routes";
+import { BountyCard } from "../../src/components/bounties/BountyCard";
+import { BountyList } from "../../src/components/bounties/BountyList";
+import { MintSelectModal } from "../../src/components/bounties/MintSelectModal";
+import { route, routes } from "../../src/utils/routes";
 import {
   Box,
   Button,
@@ -24,14 +24,14 @@ import {
   usePublicKey,
   useQueryString,
 } from "@strata-foundation/react";
-import { useBounties } from "@/hooks/useBounties";
+import { useBounties } from "../../src/hooks/useBounties";
 import { NextPage } from "next";
 import { NextSeo } from "next-seo";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { AiOutlineSearch } from "react-icons/ai";
 import { BsChevronDown } from "react-icons/bs";
-import { SITE_URL } from "@/constants";
+import { SITE_URL } from "../../src/constants";
 
 const PAGE_SIZE = 20;
 export const Bounties: NextPage = () => {

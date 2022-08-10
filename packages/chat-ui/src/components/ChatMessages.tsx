@@ -14,7 +14,7 @@ import {
   IMessageWithPending,
   IMessageWithPendingAndReacts,
 } from "../hooks/useMessages";
-import { MemodMessage } from "./message";
+import { MemodMessage } from "./message/Message";
 
 const INACTIVE_TIME = 60; // After 1 minute, new grouping
 const INFINITE_SCROLL_THRESHOLD = 300;

@@ -17,13 +17,16 @@
     "watch": "yarn run copy-files && node src/idlToTs",
     "bootstrap": "tsc && node dist/lib/bootstrap",
     "bounty-dist": "tsc && node dist/lib/bounty-dist",
-    "create-governance-token": "tsc && node dist/lib/createGovernanceToken"
+    "create-governance-token": "tsc && node dist/lib/createGovernanceToken",
+    "clean": "npx shx mkdir -p lib && npx shx rm -rf lib",
+    "package": "npx shx mkdir -p lib/cjs lib/esm",
+    "prebuild": "npm run clean && npm run package"
   },
   "dependencies": {
     "@solana/web3.js": "^1.43.4",
-    "@strata-foundation/spl-token-bonding": "^3.9.7",
-    "@strata-foundation/spl-token-collective": "^3.9.7",
-    "@strata-foundation/spl-utils": "^3.9.7",
+    "@strata-foundation/spl-token-bonding": "^3.10.2",
+    "@strata-foundation/spl-token-collective": "^3.10.2",
+    "@strata-foundation/spl-utils": "^3.10.2",
     "bn.js": "^5.2.0",
     "commander": "^9.2.0",
     "copyfiles": "^2.4.1",
@@ -35,5 +38,5 @@
     "typescript": "^4.3.4"
   },
   "gitHead": "4623c709db43b3503af871ddbdf325da202e0e62",
-  "version": "3.9.7"
+  "version": "3.10.2"
 }

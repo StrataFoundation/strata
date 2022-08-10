@@ -1,17 +1,15 @@
-import { SITE_URL } from "@/constants/globals";
+import { CHAT_URL } from "./src/constants/globals";
 
 const defaultSeo = {
-  title: "Strata Chat",
-  description:
-    "Strata Chat enables token gated chatrooms",
+  title: "strata.im",
+  description: "strata.im enables fully decentralized, token gated chatrooms",
   openGraph: {
-    url: SITE_URL,
-    title: "Strata Chat",
-    description:
-      "Token gated chatrooms on Solana",
+    url: CHAT_URL,
+    title: "strata.im",
+    description: "Token gated decentralized chatrooms on Solana",
     images: [
       {
-        url: `${SITE_URL}/seoDefaultCardImage.jpg`,
+        url: `${CHAT_URL}/seoDefaultCardImage.jpg`,
         width: 800,
         height: 600,
         alt: "Og Image Alt",
@@ -22,7 +20,7 @@ const defaultSeo = {
   },
   twitter: {
     handle: "@StrataProtocol",
-    site: SITE_URL,
+    site: CHAT_URL,
     cardType: "summary_large_image",
   },
 };

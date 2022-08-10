@@ -5,7 +5,7 @@ import {
   HttpLink,
   InMemoryCache,
 } from "@apollo/client";
-import React from "react";
+import React, { ReactNode } from "react";
 
 const holaplex = new HttpLink({
   uri: "https://graph.holaplex.com/v1",
@@ -13,9 +13,12 @@ const holaplex = new HttpLink({
 const vybe = new HttpLink({
   uri: "https://api.vybenetwork.com/v1/graphql",
 });
+const strata = new HttpLink({
+  uri: "https://prod-api.teamwumbo.com/graphql",
+});
 
-
-const VYBE_TOKEN = process.env.NEXT_PUBLIC_VYBE_TOKEN || process.env.REACT_APP_VYBE_TOKEN;
+const VYBE_TOKEN =
+  process.env.NEXT_PUBLIC_VYBE_TOKEN || process.env.REACT_APP_VYBE_TOKEN;
 
 const client = new ApolloClient({
   cache: new InMemoryCache({
@@ -35,7 +38,11 @@ const client = new ApolloClient({
     ApolloLink.split(
       (operation) => operation.getContext().clientName === "vybe",
       vybe, //if above
-      holaplex
+      ApolloLink.split(
+        (operation) => operation.getContext().clientName === "strata",
+        strata,
+        holaplex
+      )
     )
   ),
 });
@@ -43,7 +50,8 @@ const client = new ApolloClient({
 export const GraphqlProvider = ({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode | ReactNode[];
 }) => {
+  // @ts-ignore
   return <ApolloProvider client={client}>{children}</ApolloProvider>;
 };

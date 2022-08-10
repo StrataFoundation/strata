@@ -56,6 +56,7 @@ interface ISettings {
 export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
   const { info: chat } = useChat(chatKey);
   const { info: chatPermissions } = useChatPermissionsFromChat(chatKey);
+  console.log(chatPermissions?.readPermissionKey.toBase58())
   const readMintKey = chatPermissions?.readPermissionKey;
   const postMintKey = chatPermissions?.postPermissionKey;
   const [isMobile] = useMediaQuery("(max-width: 680px)");
@@ -130,11 +131,12 @@ export const RoomsHeader = ({ chatKey }: { chatKey?: PublicKey }) => {
 
   return (
     <Flex align="center" justify="space-between" width="100%" direction="row">
-      <Heading size={isMobile ? "md" : "md"} isTruncated>
+      <Heading size={isMobile ? "md" : "md"} noOfLines={1}>
         {chat?.name}
       </Heading>
       {chat?.name && (
         <Popover placement="top-end">
+          {/* @ts-ignore */}
           <PopoverTrigger>
             <Box
               color={colorMode === "light" ? "black" : "white"}

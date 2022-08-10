@@ -9,7 +9,7 @@ The Strata Protocol lets you effortlessly create and price tokens and token coll
 
 Looking to launch a token? Check out our launchpad at [app.strataprotocol.com](https://app.strataprotocol.com). The documentation behind the launchpad can be found under the "Launchpad" section of these docs.
 
-Looking to learn more about chat? [Chat Docs](./chat/getting_started)
+Looking to learn more about chat? [Chat Docs](./im/getting_started)
 
 Looking to learn more about tokens, systems of tokens, and bonding curves? Read on.
 

@@ -1,10 +1,11 @@
-import { Chatroom } from "@/components/Chatroom";
-import { Header } from "@/components/Header";
-import { Layout } from "@/components/Layout";
-import { LegacyWalletMigrationModal } from "@/components/LegacyWalletMigrationModal";
-import { RoomsHeader } from "@/components/rooms/RoomsHeader";
-import { SendMessageProvider } from "@/contexts/sendMessage";
-import { useChatKeyFromIdentifier } from "@/hooks/useChatKeyFromIdentifier";
+import React from "react";
+import { Chatroom } from "../../src/components/Chatroom";
+import { Header } from "../../src/components/Header";
+import { Layout } from "../../src/components/Layout";
+import { LegacyWalletMigrationModal } from "../../src/components/LegacyWalletMigrationModal";
+import { RoomsHeader } from "../../src/components/rooms/RoomsHeader";
+import { SendMessageProvider } from "../../src/contexts/sendMessage";
+import { useChatKeyFromIdentifier } from "../../src/hooks/useChatKeyFromIdentifier";
 import { ApolloClient, InMemoryCache } from "@apollo/client";
 import {
   NAMESPACES_IDL,
@@ -16,7 +17,7 @@ import { AnchorProvider, Program } from "@project-serum/anchor";
 import NodeWallet from "@project-serum/anchor/dist/cjs/nodewallet";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import { ChatSdk, IEntry } from "@strata-foundation/chat";
-import { getClusterAndEndpoint, usePublicKey } from "@strata-foundation/react";
+import { getClusterAndEndpoint, TokenListProvider, usePublicKey } from "@strata-foundation/react";
 // @ts-ignore
 import LitNodeJsSdk from "lit-js-sdk/build/index.node.js";
 import {
@@ -45,7 +46,7 @@ const QUICK_PROPS: Record<string, any> = {
     description:
       "solana.chat - A decentralized chatroom powered by Strata Protocol on Solana",
     image:
-      '"https://nft.cardinal.so/img/9497kTCD3ct7JaRTzCzQvS5N5iwbzxaK8Sci6gDZTq8C?name=solana"',
+      "https://nft.cardinal.so/img/9497kTCD3ct7JaRTzCzQvS5N5iwbzxaK8Sci6gDZTq8C?name=solana",
     chatKey: "EzNMGtFA62nvDfCybZi4vhfeJUoMJyMijcKoC8heoyHK",
   },
   open: {
@@ -53,7 +54,7 @@ const QUICK_PROPS: Record<string, any> = {
     description:
       "open.chat - A decentralized chatroom powered by Strata Protocol on Solana",
     image:
-      '"https://nft.cardinal.so/img/5tjEoagtGJrMoywNHg5UXqXyVxkcfZr78Zeu7RmaCuDJ?name=open"',
+      "https://nft.cardinal.so/img/5tjEoagtGJrMoywNHg5UXqXyVxkcfZr78Zeu7RmaCuDJ?name=open",
     chatKey: "HN8GF8nKHLnymPUwn4cfNmtSwAcErRweDDDGzyhj6wKH",
   },
 };
@@ -95,10 +96,12 @@ export const getStaticProps: GetStaticProps = async (context) => {
       )
     )[0];
     const entryAcc = (await connection.getAccountInfo(entryKey))!;
-    const entry = entryAcc && await namespacesProgram.coder.accounts.decode<IEntry>(
-      "entry",
-      entryAcc.data
-    );
+    const entry =
+      entryAcc &&
+      (await namespacesProgram.coder.accounts.decode<IEntry>(
+        "entry",
+        entryAcc.data
+      ));
 
     // // Valid for a week
     // context.res.setHeader(
@@ -110,9 +113,9 @@ export const getStaticProps: GetStaticProps = async (context) => {
       props: {
         name: context.params?.id || null + ".chat",
         description: `${context.params?.id}.chat - A decentralized chatroom powered by Strata Protocol on Solana`,
-        image: `"https://nft.cardinal.so/img/${entry?.mint.toBase58()}?name=${
+        image: `https://nft.cardinal.so/img/${entry?.mint.toBase58()}?name=${
           context.params?.id
-        }"`,
+        }`,
         chatKey: entry && (await ChatSdk.chatKey(entry.mint))[0].toBase58(),
       },
     };
@@ -158,10 +161,10 @@ export default function ChatroomPage({
         description={description}
         openGraph={{
           url: `chat.strataprotocol.com/c/${id as string}`,
-          title: name,
+          title: `strata.im - ${name}`,
           description: description,
           images: [{ url: image }],
-          site_name: "StrataChat",
+          site_name: "strata.im",
         }}
         twitter={{
           handle: "@StrataProtocol",
@@ -169,13 +172,15 @@ export default function ChatroomPage({
           cardType: "summary",
         }}
       />
+      <TokenListProvider>
+        <SendMessageProvider chatKey={chatKey}>
+          <Header onSidebarOpen={sidebar.onOpen}>
+            <RoomsHeader chatKey={chatKey} />
+          </Header>
+          <Chatroom chatKey={chatKey} />
+        </SendMessageProvider>
+      </TokenListProvider>
       <LegacyWalletMigrationModal />
-      <SendMessageProvider chatKey={chatKey}>
-        <Header onSidebarOpen={sidebar.onOpen}>
-          <RoomsHeader chatKey={chatKey} />
-        </Header>
-        <Chatroom chatKey={chatKey} />
-      </SendMessageProvider>
     </Layout>
   );
 }

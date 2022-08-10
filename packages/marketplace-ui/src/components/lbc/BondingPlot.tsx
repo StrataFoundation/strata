@@ -85,7 +85,7 @@ export const BondingPlot = ({
       const changes = [...enrichedBondingChanges].sort((a, b) => a.insertTs - b.insertTs);
       const startTime = tokenBonding?.goLiveUnixTime?.toNumber() + 1; // shake off huge drops
       const step = (stopTime - startTime!) / numDataPoints;
-      const result = [];
+      const result: any[] = [];
 
       let pointer = 0;
       let currReserve = toNumber(tokenBonding.reserveBalanceFromBonding, baseMint);

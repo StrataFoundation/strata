@@ -9,7 +9,7 @@ import {
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DataV2, Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, Signer, TransactionInstruction } from "@solana/web3.js";
 import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
 import {
   truthy,
@@ -67,8 +67,8 @@ async function editBounty(
     }),
   });
 
-  const instructions = [];
-  const signers = [];
+  const instructions: TransactionInstruction[] = [];
+  const signers: Signer[] = [];
   const { instructions: metaInstrs, signers: metaSigners } =
     await tokenMetadataSdk.updateMetadataInstructions({
       metadata: await Metadata.getPDA(mintKey),

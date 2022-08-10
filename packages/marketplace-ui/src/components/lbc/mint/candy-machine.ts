@@ -212,8 +212,8 @@ export const mintOneToken = async (
     : payer
 
   const candyMachineAddress = candyMachine.publicKey
-  const remainingAccounts = []
-  const instructions = []
+  const remainingAccounts: any[] = []
+  const instructions: TransactionInstruction[] = []
   const signers: Signer[] = [mint]
   const ataBalance = candyMachine.tokenMint ? (
     await tokenBondingSdk.getTokenAccountBalance(userPayingAccountAddress)

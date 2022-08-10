@@ -2,9 +2,9 @@ import React, { FC, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { Flex, Stack, Text, useRadioGroup } from "@chakra-ui/react";
-import { LaunchpadLayout } from "@/components/launchpad";
-import { RadioCardWithAffordance } from "@/components/form/RadioCard";
-import { route, routes } from "@/utils/routes";
+import { LaunchpadLayout } from "../../src/components/launchpad";
+import { RadioCardWithAffordance } from "../../src/components/form/RadioCard";
+import { route, routes } from "../../src/utils/routes";
 
 export enum CreateTokenOption {
   FullyManaged = "FullyManaged",
@@ -13,6 +13,7 @@ export enum CreateTokenOption {
 
 export const CreateToken: FC = () => {
   const router = useRouter();
+  //@ts-ignore
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
   const options: {

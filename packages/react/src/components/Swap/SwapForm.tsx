@@ -166,6 +166,7 @@ export const SwapForm = ({
       bottomAmount: undefined,
       slippage: 1,
     },
+    // @ts-ignore
     resolver: yupResolver(validationSchema),
   });
   const wrappedSolMint = useTwWrappedSolMint();
@@ -632,7 +633,7 @@ export const SwapForm = ({
               >
                 {passedMintCap && (
                   <Text>
-                    {numRemaining > 0
+                    {(numRemaining || 0) > 0
                       ? `Only ${numRemaining} left`
                       : "Sold Out"}
                   </Text>

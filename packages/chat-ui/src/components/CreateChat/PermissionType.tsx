@@ -122,6 +122,7 @@ export const PermissionType: React.FC<IPermissionTypeProps> = ({
           const radio = getRadioProps({ value });
 
           return (
+            //@ts-ignore
             <RadioCardWithAffordance
               key={value}
               {...radio}

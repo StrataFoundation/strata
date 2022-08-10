@@ -11,7 +11,7 @@ pub struct InitializeChatV0<'info> {
   #[account(mut)]
   pub payer: Signer<'info>,
   #[account(
-    init,
+    init_if_needed,
     payer = payer,
     space = std::cmp::max(8 + std::mem::size_of::<ChatV0>(), chat.data.borrow_mut().len()),
     seeds = ["identified-chat".as_bytes(), identifier_certificate_mint.key().as_ref()],
