@@ -1,5 +1,5 @@
 import { NextPage } from "next";
-import { TokenAdmin } from "@/components/admin/TokenAdmin";
+import { TokenAdmin } from "../../../../src/components/admin/TokenAdmin";
 
 export const TokenAdminPage: NextPage = () => {
   return (

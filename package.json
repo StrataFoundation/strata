@@ -47,13 +47,13 @@
     "test": "ts-mocha -p ./tsconfig.test.json -t 1000000 \"tests/**/*.ts\"",
     "prepare": "husky install",
     "clean": "lerna run clean",
-    "build": "lerna run --parallel prebuild && tsc --build",
+    "build": "lerna run --parallel prebuild && tsc --build && lerna run build --scope @strata-foundation/marketplace-ui --scope @strata-foundation/chat-ui --scope @strata-foundation/site",
     "watch": "lerna run --parallel prebuild && tsc --build --watch",
     "fmt": "prettier --write '{*,**/*}.{ts,tsx,js,jsx,json}'",
     "lint": "prettier --check '{*,**/*}.{ts,tsx,js,jsx,json}' && eslint",
     "lint:fix": "yarn fmt && eslint --fix",
-    "nuke": "npx shx rm -rf {.,packages/*}/{node_modules,lib,yarn.lock,dist}",
-    "reinstall": "lerna nuke && lerna bootstrap --ignore-scripts"
+    "nuke": "npx shx rm -rf {.,packages/*}/{node_modules,lib,yarn.lock,dist,lib}",
+    "reinstall": "yarn nuke && lerna bootstrap --ignore-scripts"
   },
   "dependencies": {
     "@bonfida/spl-name-service": "^0.1.22",

@@ -26,4 +26,14 @@
       "path": "./tsconfig.esm.json"
     }
   ],
+  "compilerOptions": {
+    "allowJs": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "incremental": true,
+    "jsx": "preserve"
+  },
+  "exclude": [
+    "node_modules"
+  ]
 }

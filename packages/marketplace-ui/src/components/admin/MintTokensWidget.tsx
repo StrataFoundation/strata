@@ -18,6 +18,7 @@ import React from "react";
 import { createAtaAndMint } from "@strata-foundation/spl-utils"; 
 import { MintInfo } from "@solana/spl-token";
 import { useMemo } from "react";
+import BN from "bn.js";
 
 interface IMintTokensWidgetProps {
   number: string;
@@ -55,7 +56,9 @@ export const MintTokensWidget = ({
   const { publicKey } = useWallet();
 
   const { execute, loading, error } = useAsyncCallback(async (values: IMintTokensWidgetProps) => {
-    await createAtaAndMint(provider!, mintKey!, Number(values.number) * Math.pow(10, mint!.decimals), publicKey!)
+    // await createAtaAndMint(provider!, mintKey!, Number(values.number) * Math.pow(10, mint!.decimals), publicKey!)
+    const factor = (new BN(10).pow(new BN(mint!.decimals)));
+    await createAtaAndMint(provider!, mintKey!, (new BN(Number(values.number))).mul(factor));
   });
 
   const hasAuthority = publicKey && mint && mint.mintAuthority && mint.mintAuthority.equals(publicKey);

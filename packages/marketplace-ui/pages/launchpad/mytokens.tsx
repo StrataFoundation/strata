@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MyTokens } from "@/components/MyTokens";
+import { MyTokens } from "../../src/components/MyTokens";
 
 
 const MyTokensPage = () => {
