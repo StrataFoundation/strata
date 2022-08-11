@@ -48,7 +48,7 @@ export const FEATURED_COMMUNITIES: Community[] = [
   {
     name: "Open Collective Chat",
     description:
-      "A truly decentralized community of creators on Solana. Open Collective is the starting point for many social tokens on Solana",
+      "Solana’s first decentralized art collective. Share, discover, and support 1:1 artists.",
     publicKey: "HN8GF8nKHLnymPUwn4cfNmtSwAcErRweDDDGzyhj6wKH",
     image: "/OC.jpg",
   },
