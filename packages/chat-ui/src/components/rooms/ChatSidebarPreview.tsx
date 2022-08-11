@@ -7,9 +7,10 @@ import {
   useColorModeValue,
   VStack,
   Flex,
+  CloseButton,
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
-import React from "react";
+import React, { useState } from "react";
 import { useChat } from "../../hooks/useChat";
 import { useChatKeyFromIdentifier } from "../../hooks/useChatKeyFromIdentifier";
 import { route, routes } from "../../routes";
@@ -17,9 +18,10 @@ import { route, routes } from "../../routes";
 export type chatRoomProps = {
   identifier?: string;
   onClick?: () => void;
+  onClose?: () => void;
 };
 
-export function ChatSidebarPreview({ identifier, onClick }: chatRoomProps) {
+export function ChatSidebarPreview({ identifier, onClick, onClose }: chatRoomProps) {
   const { chatKey, loading: loadingId } = useChatKeyFromIdentifier(identifier);
   const { info: chat, loading: loadingChat } = useChat(chatKey);
   const loading = loadingId || loadingChat;
@@ -28,7 +30,7 @@ export function ChatSidebarPreview({ identifier, onClick }: chatRoomProps) {
   const { id } = router.query;
   const highlightedBg = useColorModeValue("gray.200", "gray.800");
   const subtext = useColorModeValue("gray.500", "gray.400");
-
+  const [closeVisible, setCloseVisible] = useState(false);
   //push to url for specific chat
   const handleClick = async () => {
     await router.push(route(routes.chat, { id: identifier }), undefined, {
@@ -39,6 +41,9 @@ export function ChatSidebarPreview({ identifier, onClick }: chatRoomProps) {
 
   return (
     <Flex
+      onMouseEnter={() => setCloseVisible(true)}
+      onMouseLeave={() => setCloseVisible(false)}
+      position="relative"
       overflow="none"
       minW="200px"
       align="center"
@@ -50,6 +55,19 @@ export function ChatSidebarPreview({ identifier, onClick }: chatRoomProps) {
       _hover={{ bg: colorMode === "light" ? "gray.200" : "gray.700" }}
       onClick={handleClick}
     >
+      <CloseButton
+        color={useColorModeValue("gray.600", "gray.400")}
+        _hover={{ color: "gray.600", cursor: "pointer" }}
+        display={closeVisible ? "block" : "none"}
+        position="absolute"
+        right="0px"
+        top="0px"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose()
+        }}
+      />
       {loading ? (
         <SkeletonCircle mr={2} />
       ) : (

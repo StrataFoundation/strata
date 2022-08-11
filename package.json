@@ -48,6 +48,7 @@
     "prepare": "husky install",
     "clean": "lerna run clean",
     "build": "lerna run --parallel prebuild && tsc --build",
+    "idl": "lerna run watch --scope @strata-foundation/cli",
     "watch": "lerna run --parallel prebuild && tsc --build --watch",
     "fmt": "prettier --write '{*,**/*}.{ts,tsx,js,jsx,json}'",
     "lint": "prettier --check '{*,**/*}.{ts,tsx,js,jsx,json}' && eslint",
