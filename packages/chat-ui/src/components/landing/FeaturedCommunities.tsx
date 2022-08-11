@@ -43,15 +43,14 @@ export const FEATURED_COMMUNITIES: Community[] = [
       '"Trying out some innovative sh*t that may one day lead to web3 discord. What you’ve all cried about for so long!" - Tom',
     publicKey: "ExLKWwbRGzE8Cy2z1bWPCk7iKE9iFZeVYFUgxhVUe98h",
     image:
-      "https://pbs.twimg.com/profile_banners/1458130160696401925/1650686913/1500x500",
+      "/Taiyo.jpg",
   },
   {
     name: "Open Collective Chat",
     description:
       "A truly decentralized community of creators on Solana. Open Collective is the starting point for many social tokens on Solana",
     publicKey: "HN8GF8nKHLnymPUwn4cfNmtSwAcErRweDDDGzyhj6wKH",
-    image:
-      "https://blog.strataprotocol.com/assets/images/OpenSplash-a0b19b6eb641e0077c193888fbdb17fe.png",
+    image: "/OC.jpg",
   },
 ];
 
