@@ -26,7 +26,7 @@ export const TokenItem = ({mint, isIntermediateToken}: {
 
   return (
     <>
-      { hasAnyAuth && shouldDisplay ? (
+      { shouldDisplay && (
         <Flex bgColor="white" borderRadius="8px" w="full" h="7em" alignItems="center" mb="10px !important">
           <Flex
             onClick={() => {
@@ -81,7 +81,7 @@ export const TokenItem = ({mint, isIntermediateToken}: {
             />
           </Flex>
         </Flex>
-      ) : null}
+      )}
     </>
   )
 };
