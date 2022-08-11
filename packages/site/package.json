@@ -16,7 +16,7 @@
     "./*": "./*"
   },
   "dependencies": {
-    "@bonfida/spl-name-service": "0.1.22",
+    "@solana/spl-name-service": "^0.1.3",
     "@chakra-ui/css-reset": "^2.0.3",
     "@chakra-ui/icons": "^1.1.7",
     "@chakra-ui/react": "^2.2.6",

@@ -1,4 +1,4 @@
-import { NameRegistryState } from "@bonfida/spl-name-service";
+import { NameRegistryState } from "@solana/spl-name-service";
 import { useConnection } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import {

@@ -3,7 +3,7 @@ import {
   getHashedName,
   getNameAccountKey,
   NameRegistryState,
-} from "@bonfida/spl-name-service";
+} from "@solana/spl-name-service";
 import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import * as anchor from "@project-serum/anchor";
 import { AnchorProvider, BN } from "@project-serum/anchor";
