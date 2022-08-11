@@ -194,7 +194,8 @@ const lambdaFetcher = async (args: FetchArgs) => {
     method: "POST",
     headers: {
       'Accept': 'application/json',
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache'
     }
   });
   const rows = await res.json();
