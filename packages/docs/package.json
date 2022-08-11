@@ -26,7 +26,6 @@
   "dependencies": {
     "@akebifiky/remark-simple-plantuml": "^1.0.2",
     "@babel/plugin-transform-modules-commonjs": "^7.16.8",
-    "@bonfida/spl-name-service": "^0.1.22",
     "@chakra-ui/react": "^2.2.6",
     "@docusaurus/core": "2.0.0-beta.8",
     "@docusaurus/plugin-client-redirects": "2.0.0-beta.8",

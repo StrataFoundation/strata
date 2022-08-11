@@ -3,7 +3,7 @@ import {
   getNameAccountKey,
   NameRegistryState,
   ReverseTwitterRegistryState,
-} from "@bonfida/spl-name-service";
+} from "@solana/spl-name-service";
 import { useConnection } from "@solana/wallet-adapter-react";
 import { Connection, PublicKey } from "@solana/web3.js";
 import { useAccount } from "./useAccount";
