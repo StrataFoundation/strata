@@ -85,17 +85,13 @@ export function UpdateRoyalties() {
     .claimedTokenBondingSettings as ITokenBondingSettings | undefined;
   
   const {
-    metadata: baseMetadata,
-    error: baseMetadataError,
-    loading: baseMetadataLoading,
+    metadata: targetMetadata,
   } = useTokenMetadata(id);
 
-  // const {
-  //   metadata: baseMetadata,
-  //   error: baseMetadataError,
-  //   loading: baseMetadataLoading,
-  // } = useTokenMetadata(id);
-  console.log(baseMetadata?.data.symbol);
+  const {
+    metadata: baseMetadata,
+  } = useTokenMetadata(tokenBonding?.baseMint);
+
   const onSubmit = async (values: IUpdateRoyaltiesForm) => {
     await execute(provider, values, tokenBonding!.publicKey);
   };
@@ -121,8 +117,8 @@ export function UpdateRoyalties() {
         <FormProvider {...formProps}>
           <form onSubmit={handleSubmit(onSubmit)}>
             <RoyaltiesInputs 
-              symbol={"SOL"}
-              baseSymbol={baseMetadata?.data.symbol}
+              symbol={baseMetadata?.data?.symbol}
+              baseSymbol={targetMetadata?.data?.symbol}
               register={register}
               minBuyTargetRoyaltyPercentage={tokenBondingSettings?.minBuyTargetRoyaltyPercentage}
               maxBuyTargetRoyaltyPercentage={tokenBondingSettings?.maxBuyTargetRoyaltyPercentage}

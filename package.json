@@ -47,7 +47,7 @@
     "test": "ts-mocha -p ./tsconfig.test.json -t 1000000 \"tests/**/*.ts\"",
     "prepare": "husky install",
     "clean": "lerna run clean",
-    "build": "lerna run --parallel prebuild && tsc --build && lerna run build --scope @strata-foundation/marketplace-ui --scope @strata-foundation/chat-ui --scope @strata-foundation/site",
+    "build": "lerna run --parallel prebuild && tsc --build",
     "watch": "lerna run --parallel prebuild && tsc --build --watch",
     "fmt": "prettier --write '{*,**/*}.{ts,tsx,js,jsx,json}'",
     "lint": "prettier --check '{*,**/*}.{ts,tsx,js,jsx,json}' && eslint",

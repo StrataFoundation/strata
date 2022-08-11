@@ -97,6 +97,7 @@ async function createProfile(
 
 export function CreateProfileModal(props: Partial<ModalProps>) {
   const formProps = useForm<IProfileProps>({
+    //@ts-ignore
     resolver: yupResolver(validationSchema),
     defaultValues: {},
   });

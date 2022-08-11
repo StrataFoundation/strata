@@ -56,9 +56,8 @@ export const MintTokensWidget = ({
   const { publicKey } = useWallet();
 
   const { execute, loading, error } = useAsyncCallback(async (values: IMintTokensWidgetProps) => {
-    // await createAtaAndMint(provider!, mintKey!, Number(values.number) * Math.pow(10, mint!.decimals), publicKey!)
     const factor = (new BN(10).pow(new BN(mint!.decimals)));
-    await createAtaAndMint(provider!, mintKey!, (new BN(Number(values.number))).mul(factor));
+    await createAtaAndMint(provider!, mintKey!, ((new BN(Number(values.number))).mul(factor)).toNumber());
   });
 
   const hasAuthority = publicKey && mint && mint.mintAuthority && mint.mintAuthority.equals(publicKey);
