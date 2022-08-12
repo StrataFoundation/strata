@@ -31,7 +31,7 @@ export const MessageToolbar = ({
     }),
     [highlightedBg]
   );
-  const { showReply, replyMessage } = useReply();
+  const { showReply } = useReply();
   const handleOnReply = useCallback(() => {
     showReply({ id: messageId, ...rest });
   }, [showReply, messageId]);
