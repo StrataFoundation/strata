@@ -57,7 +57,7 @@ async function getMessagesFromTxs(
     const newParts = (
       await Promise.all(
         txs.map(
-          async ({ signature: sig, transaction, pending, meta, blockTime }) => {
+          async ({  logs, signature: sig, transaction, pending, meta, blockTime }) => {
             if (
               !txToMessages[sig] ||
               txToMessages[sig].length == 0 ||
@@ -67,6 +67,7 @@ async function getMessagesFromTxs(
               try {
                 const found = (
                   await chatSdk.getMessagePartsFromInflatedTx({
+                    logs,
                     transaction,
                     txid: sig,
                     meta,
