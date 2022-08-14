@@ -47,7 +47,7 @@ export function useQueryString<A>(
     }
   }, 500)
   const onSetValue = useCallback(
-    (newValue) => {
+    (newValue: any) => {
       setValue(newValue);
       setQueryStringValue(key, newValue);
     },

@@ -116,6 +116,26 @@ const config = {
       "docusaurus-plugin-typedoc",
       // Plugin / TypeDoc options
       {
+        id: "chat",
+        entryPoints: ["../chat/src/index.ts"],
+        tsconfig: "../chat/tsconfig.json",
+        out: "api/chat",
+      },
+    ],
+    [
+      "docusaurus-plugin-typedoc",
+      // Plugin / TypeDoc options
+      {
+        id: "chat-ui",
+        entryPoints: ["../chat-ui/src/index.ts"],
+        tsconfig: "../chat-ui/tsconfig.json",
+        out: "api/chat-ui",
+      },
+    ],
+    [
+      "docusaurus-plugin-typedoc",
+      // Plugin / TypeDoc options
+      {
         id: "fungible-entangler",
         entryPoints: ["../fungible-entangler/src/index.ts"],
         tsconfig: "../fungible-entangler/tsconfig.json",
@@ -161,10 +181,6 @@ const config = {
     ({
       ...(process.env.GOOGLE_ANALYTICS
         ? {
-            googleAnalytics: {
-              trackingID: process.env.GOOGLE_ANALYTICS,
-              anonymizeIP: true,
-            },
             gtag: {
               trackingID: process.env.GOOGLE_ANALYTICS,
               anonymizeIP: true,

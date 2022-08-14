@@ -1,0 +1,85 @@
+---
+sidebar_position: 2
+---
+
+# Fungible Entangler
+
+Strata has another primitive called Fungible Entangler. This is a tool for swapping a fungible token 1-to-1 for a different token. This primitive is used to enable token offerings where
+the sale is optionally reversible, i.e. after purchasing tokens through a token offering, they can be swapped back for the coins they were purchased with.
+
+An entangler consists of two token stores, a parent and a child. Swaps can be done either from the parent to the child or vice versa. A swap consists of depositing a token to one store
+and withdrawing an equal amount from the other store.
+
+## Configuration
+
+To configure a fungible entangler, you need:
+
+- **amount** - The amount of tokens you'd like to initially deposit to the parent for swap liquidity.
+- **parentMint** - The mint of the parent token.
+- **childMint** - The mint of the child token.
+
+Let's create a fungible entangler to allow users to swap an old token for a new token.
+
+Start by creating two tokens to use:
+```jsx async
+var { mint: newMint } = await marketplaceSdk.createManualToken({
+  metadata: new DataV2({
+    // Max name len 32
+    name: "New Token",
+    symbol: "NTOKEN",
+    uri: "",
+    sellerFeeBasisPoints: 0,
+    creators: null,
+    collection: null,
+    uses: null,
+  }),
+  decimals: 0,
+  amount: 1000,
+})
+
+var { mint: oldMint } = await marketplaceSdk.createManualToken({
+  metadata: new DataV2({
+    // Max name len 32
+    name: "Old Token",
+    symbol: "OTOKEN",
+    uri: "",
+    sellerFeeBasisPoints: 0,
+    creators: null,
+    collection: null,
+    uses: null,
+  }),
+  decimals: 0,
+  amount: 50,
+});
+```
+
+## Create a Fungible Entangler
+
+Let's create a fungible entangler to offer swaps between the old token and new token
+
+```js async name=fe
+var { childEntangler, parentEntangler } = await fungibleEntanglerSdk.createFungibleEntangler({
+    amount: 1000,
+    parentMint: newMint,
+    childMint: oldMint,
+  })
+```
+
+
+## Swaps
+
+Swaps can be done in either direction by any user, provided there is enough liquidity on the other side.
+
+```js async deps=fe
+await fungibleEntanglerSdk.swapChildForParent({
+  childEntangler,
+  parentEntangler,
+  amount: 50,
+})
+
+await fungibleEntanglerSdk.swapParentForChild({
+  childEntangler,
+  parentEntangler,
+  amount: 50,
+})
+```

@@ -1,7 +1,7 @@
 import { useConnection } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { useAsync } from "react-async-hook";
-import { getWalletTokenAccounts } from "../utils";
+import { getWalletTokenAccounts } from "../utils/getWalletTokenAccounts";
 
 /**
  * Get all token accounts associated with this wallet

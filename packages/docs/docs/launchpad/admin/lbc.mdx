@@ -1,0 +1,120 @@
+---
+sidebar_position: 3
+slug: lbc
+title: LBC Token Offering
+description: Manage an Existing LBC Token Offering
+keywords: [Solana, Dynamic Pricing, LBP, LBC, Manage, Token, Token Offering]
+---
+:::success Congratulations
+
+Your token offering is live! You can visit it at the following url:
+
+<UrlDisplay subs={["id", "cluster"]} value="https://app.strataprotocol.com/lbcs/token-offering/:id?cluster=:cluster" />
+:::
+
+import { QueryStringSetter } from "@site/src/components/QueryStringSetter";
+import { UrlDisplay } from "@site/src/components/UrlDisplay";
+import { PublicKey } from "@solana/web3.js";
+import { NetworkSelect } from "@site/src/components/NetworkSelect";
+
+<NetworkSelect />
+
+<QueryStringSetter label="Token Offering ID" name="id" conv={(v) => new PublicKey(v)} />
+
+## Bookmark These Links
+
+You’ll need these important links to access your token offering.
+
+This admin page:
+
+<UrlDisplay subs={["id", "cluster"]} value="https://docs.strataprotocol.com/launchpad/admin/lbc?id=:id&cluster=:cluster" />
+
+The url for the offering:
+
+<UrlDisplay subs={["id", "cluster"]} value="https://app.strataprotocol.com/lbcs/token-offering/:id?cluster=:cluster" />
+
+## Collect Funds
+
+When the token offering is over, if you are the beneficiary (admin), you should see a disburse funds option here:
+
+import { VariableDisburseFunds } from "@site/src/components/VariableDisburseFunds";
+
+<VariableDisburseFunds />
+
+
+
+If you would like to disburse funds, retrieve unsold tokens, and recover rent from the bonding curve (this will render the UI unusable):
+
+<VariableDisburseFunds closeBonding closeEntangler />
+
+## Embed the swap to your site
+
+```bash
+yarn add @strata-foundation/react @strata-foundation/marketplace-ui react-shadow
+```
+
+```js
+import { MarketplaceProviders, Lbc } from "@strata-foundation/marketplace-ui";
+import { usePublicKey } from "@strata-foundation/react";
+import { CSSReset } from "@chakra-ui/react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import ReactShadow from "react-shadow/emotion";
+```
+
+Dark Mode:
+```js
+import { DarkMode } from "@chakra-ui/react";
+```
+```jsx live allowMainnet
+function SwapComponent() {
+  const { id: idRaw } = useVariables();
+  const { setVisible } = useWalletModal();
+  const id = usePublicKey(idRaw);
+
+  // Shadow div and css reset are not required, but will make sure our styles do not conflict with yours
+  return <ReactShadow.div>
+    <CSSReset />
+      <MarketplaceProviders resetCSS onError={(err) => console.error(err)}>
+        <DarkMode>
+          <div style={{ color: "white", backgroundColor: "black" }}>
+            <Lbc
+              id={id}
+              onConnectWallet={() => setVisible(true)} 
+              onSuccess={console.log} // Omit this if you want to use our default react-hot-toast toaster
+            />
+          </div>
+        </DarkMode>
+    </MarketplaceProviders>
+  </ReactShadow.div>
+}
+```
+
+Light Mode:
+
+```jsx live allowMainnet
+function SwapComponent() {
+  const { id: idRaw } = useVariables();
+  const { setVisible } = useWalletModal();
+  const id = usePublicKey(idRaw);
+
+  // Shadow div and css reset are not required, but will make sure our styles do not conflict with yours
+  return <ReactShadow.div>
+    <MarketplaceProviders resetCSS onError={(err) => console.error(err)}>
+      <Lbc
+        id={id}
+        onConnectWallet={() => setVisible(true)} 
+        onSuccess={console.log} // Omit this if you want to use our default react-hot-toast toaster
+      />
+    </MarketplaceProviders>
+  </ReactShadow.div>
+}
+```
+
+## Live Pricing Plots
+
+The following will show you both the current price volatility and the projected changes over time and supply. You can click the dots on
+either plot to simulate purchases or the passage of time.
+
+import { CurveConfiguratorFromBonding } from "@site/src/components/CurveConfiguratorFromBonding";
+
+<CurveConfiguratorFromBonding />

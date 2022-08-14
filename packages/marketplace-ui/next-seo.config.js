@@ -1,4 +1,4 @@
-import { SITE_URL } from "@/constants";
+import { SITE_URL } from "./src/constants";
 
 const defaultSeo = {
   title: "Strata Launchpad",

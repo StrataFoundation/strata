@@ -10,7 +10,7 @@ import {
 import React from "react";
 import toast from "react-hot-toast";
 
-export const Providers: React.FC = ({ children }) => {
+export const Providers: React.FC<React.PropsWithChildren<{}>> = ({ children }) => {
   const onError = React.useCallback((error: Error) => {
     console.error(error);
     if (

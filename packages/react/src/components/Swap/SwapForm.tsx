@@ -20,32 +20,29 @@ import {
   Text,
   Tooltip,
   useColorModeValue,
-  VStack,
+  VStack
 } from "@chakra-ui/react";
-import { Spinner } from "../Spinner";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { NATIVE_MINT } from "@solana/spl-token";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
-import { ITokenBonding, toNumber } from "@strata-foundation/spl-token-bonding";
-import { BondingPricing } from "@strata-foundation/spl-token-bonding/dist/lib/pricing";
+import { BondingHierarchy, BondingPricing } from "@strata-foundation/spl-token-bonding";
 import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { BsChevronDown } from "react-icons/bs";
 import { RiArrowUpDownFill, RiInformationLine } from "react-icons/ri";
 import * as yup from "yup";
-import {
-  useFtxPayLink,
-  useMint,
-  useProvider,
-  useSolanaUnixTime,
-  useTokenMetadata,
-} from "../../hooks";
+import { useFtxPayLink } from "../../hooks/useFtxPayLink";
+import { useMint } from "../../hooks/useMint";
+import { useProvider } from "../../hooks/useProvider";
+import { useSolanaUnixTime } from "../../hooks/useSolanaUnixTime";
+import { useTokenMetadata } from "../../hooks/useTokenMetadata";
+import { useTokenSwapFromId } from "../../hooks/useTokenSwapFromId";
+import { useTwWrappedSolMint } from "../../hooks/useTwWrappedSolMint";
+import { roundToDecimals } from "../../utils/roundToDecimals";
+import { Spinner } from "../Spinner";
 import { Royalties } from "./Royalties";
 import { TransactionInfo, TransactionInfoArgs } from "./TransactionInfo";
-import { useTwWrappedSolMint } from "../../hooks/useTwWrappedSolMint";
-import { NATIVE_MINT } from "@solana/spl-token";
-import { roundToDecimals } from "../../utils";
-import BN from "bn.js";
 
 export interface ISwapFormValues {
   topAmount: number;
@@ -65,11 +62,13 @@ const validationSchema = yup
 export interface ISwapFormProps {
   isLoading?: boolean;
   isSubmitting: boolean;
+  isBuying: boolean;
   onConnectWallet: () => void;
   onTradingMintsChange: (args: { base: PublicKey; target: PublicKey }) => void;
   onBuyBase?: (tokenBonding: PublicKey) => void;
   onSubmit: (values: ISwapFormValues) => Promise<void>;
-  tokenBonding: ITokenBonding | undefined;
+  goLiveDate: Date | undefined;
+  id: PublicKey | undefined;
   pricing: BondingPricing | undefined;
   baseOptions: PublicKey[];
   targetOptions: PublicKey[];
@@ -130,7 +129,7 @@ export const SwapForm = ({
   onTradingMintsChange,
   onBuyBase,
   onSubmit,
-  tokenBonding,
+  id,
   pricing,
   base,
   target,
@@ -140,6 +139,8 @@ export const SwapForm = ({
   baseOptions,
   targetOptions,
   mintCap,
+  isBuying,
+  goLiveDate,
   numRemaining,
   showAttribution = true,
   swapBaseWithTargetEnabled = true,
@@ -151,6 +152,7 @@ export const SwapForm = ({
   const [insufficientLiq, setInsufficientLiq] = useState<boolean>(false);
   const [rate, setRate] = useState<string>("--");
   const [fee, setFee] = useState<string>("--");
+  const notLive = goLiveDate && (new Date() < goLiveDate)
   const {
     register,
     handleSubmit,
@@ -164,6 +166,7 @@ export const SwapForm = ({
       bottomAmount: undefined,
       slippage: 1,
     },
+    // @ts-ignore
     resolver: yupResolver(validationSchema),
   });
   const wrappedSolMint = useTwWrappedSolMint();
@@ -178,21 +181,14 @@ export const SwapForm = ({
   const moreThanSpendCap = +(topAmount || 0) > spendCap;
   const unixTime = useSolanaUnixTime();
 
-  const lowMint =
-    base &&
-    target &&
-    pricing?.hierarchy.lowest(base.publicKey, target.publicKey);
-  const isBuying = lowMint && lowMint.equals(target?.publicKey!);
-  const targetBonding = lowMint && pricing?.hierarchy.findTarget(lowMint);
+  const { tokenBonding, childEntangler, parentEntangler } =
+    useTokenSwapFromId(id);
+
   const passedMintCap =
     typeof numRemaining !== "undefined" && numRemaining < bottomAmount;
 
   const targetMintAcc = useMint(target?.publicKey);
   const baseMintAcc = useMint(base?.publicKey);
-
-  const notLive =
-    targetBonding &&
-    targetBonding.goLiveUnixTime.toNumber() > new Date().valueOf() / 1000;
 
   const handleConnectWallet = () => onConnectWallet();
   const manualResetForm = () => {
@@ -602,7 +598,7 @@ export const SwapForm = ({
               target &&
               pricing?.hierarchy
                 .path(base.publicKey, target.publicKey)
-                .map((h, idx) => (
+                .map((h: BondingHierarchy, idx: number) => (
                   <Royalties
                     key={`royalties-${idx}`}
                     formRef={formRef}
@@ -637,7 +633,7 @@ export const SwapForm = ({
               >
                 {passedMintCap && (
                   <Text>
-                    {numRemaining > 0
+                    {(numRemaining || 0) > 0
                       ? `Only ${numRemaining} left`
                       : "Sold Out"}
                   </Text>
@@ -649,11 +645,7 @@ export const SwapForm = ({
                 )}
                 {notLive && (
                   <Text>
-                    Goes live at{" "}
-                    {targetBonding &&
-                      new Date(
-                        targetBonding.goLiveUnixTime.toNumber() * 1000
-                      ).toLocaleString()}
+                    Goes live at {goLiveDate && goLiveDate.toLocaleString()}
                   </Text>
                 )}
                 {!hasBaseAmount && (
@@ -728,3 +720,5 @@ export const SwapForm = ({
     </Box>
   );
 };
+
+export const MemodSwapForm = React.memo(SwapForm);

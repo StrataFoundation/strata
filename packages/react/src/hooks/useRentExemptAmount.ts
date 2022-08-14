@@ -10,7 +10,7 @@ export const useRentExemptAmount = (
   error: Error | undefined;
 } => {
   const { connection } = useConnection();
-  const { loading, error, result } = useAsync(
+  const { loading, error, result } = useAsync<number, number[]>(
     connection.getMinimumBalanceForRentExemption.bind(connection),
     [size]
   );

@@ -3,20 +3,21 @@ import {
   ConnectionProvider,
   WalletProvider,
 } from "@solana/wallet-adapter-react";
-import {
-  LedgerWalletAdapter,
-  PhantomWalletAdapter,
-  SlopeWalletAdapter,
-  SolflareWalletAdapter,
-  GlowWalletAdapter,
-  ExodusWalletAdapter,
-  TorusWalletAdapter,
-} from "@solana/wallet-adapter-wallets";
-import { useEndpoint } from "@strata-foundation/marketplace-ui";
+import { LedgerWalletAdapter } from "@solana/wallet-adapter-ledger";
+import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
+import { SolflareWalletAdapter } from "@solana/wallet-adapter-solflare";
+import { GlowWalletAdapter } from "@solana/wallet-adapter-glow";
+import { ExodusWalletAdapter } from "@solana/wallet-adapter-exodus";
+import { useEndpoint } from "@strata-foundation/react";
 
 // Default styles that can be overridden by your app
 require("@solana/wallet-adapter-react-ui/styles.css");
 
+const config: any = {
+  commitment: "confirmed",
+};
+
+//@ts-ignore
 export const Wallet: FC = ({ children }) => {
   // You can also provide a custom RPC endpoint
   const { endpoint, cluster } = useEndpoint();
@@ -30,8 +31,6 @@ export const Wallet: FC = ({ children }) => {
       // @ts-ignore
       new SolflareWalletAdapter({ network: cluster }),
       new GlowWalletAdapter(),
-      new SlopeWalletAdapter(),
-      new TorusWalletAdapter(),
       new LedgerWalletAdapter(),
       new ExodusWalletAdapter(),
     ],
@@ -41,9 +40,7 @@ export const Wallet: FC = ({ children }) => {
   return (
     <ConnectionProvider
       endpoint={endpoint}
-      config={{
-        commitment: "confirmed",
-      }}
+      config={config}
     >
       <WalletProvider wallets={wallets} autoConnect>
         {children}

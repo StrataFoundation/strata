@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.cjs.json",
+  "include": [
+    "utils",
+    "constants",
+    "components"
+  ],
+  "compilerOptions": {
+    "outDir": "lib/cjs",
+    "jsx": "react"
+  }
+}

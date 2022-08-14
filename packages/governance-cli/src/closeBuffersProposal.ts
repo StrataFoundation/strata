@@ -33,7 +33,7 @@ const GOVERNANCE_PROGRAM_ID = new PublicKey(
 );
 
 export const chunks = <T>(array: T[], size: number): T[][] =>
-  Array.apply<number, T[], T[][]>(
+  Array.apply(
     0,
     new Array(Math.ceil(array.length / size))
   ).map((_, index) => array.slice(index * size, (index + 1) * size));

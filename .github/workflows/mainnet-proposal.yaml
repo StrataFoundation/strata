@@ -5,7 +5,7 @@ on:
     types: [published]
 
 env:
-  SOLANA_CLI_VERSION: 1.9.14
+  SOLANA_CLI_VERSION: 1.10.29
   NODE_VERSION: 17.0.1
 
 jobs:
@@ -58,7 +58,7 @@ jobs:
         id: deploy
         with:
           program: fungible_entangler
-          program-id: Ae6wbxtjpoKGCuSdHGQXRudmdpSfGpu6KHtjDcWEDjP8
+          program-id: fent99TYZcj9PGbeooaZXEMQzMd7rz8vYFiudd8HevB
           network: https://ssc-dao.genesysgo.net
           keypair: ${{ secrets.DEPLOY_KEYPAIR }}
           governance: C2QmGPr3qFHUXYZdBJn8NEoNz2kcxBm9mwMoGMn2QFdq

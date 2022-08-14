@@ -25,7 +25,7 @@ export function useBondedTokenPrice(
     if (pricing && priceMint) {
       if (pricing.hierarchy.contains(priceMint)) {
         setPrice(pricing?.current(priceMint));
-      } else if (lowestMintPriceJup) {
+      } else if (lowestMintPriceJup && lowestMint) {
         setPrice(pricing?.current(lowestMint) * lowestMintPriceJup);
       }
     }

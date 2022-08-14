@@ -9,9 +9,9 @@ import {
   useRadioGroup,
   useClipboard,
 } from "@chakra-ui/react";
-import { LaunchpadLayout } from "@/components/launchpad";
-import { RadioCardWithAffordance } from "@/components/form/RadioCard";
-import { route, routes } from "@/utils/routes";
+import { LaunchpadLayout } from "../../src/components/launchpad";
+import { RadioCardWithAffordance } from "../../src/components/form/RadioCard";
+import { route, routes } from "../../src/utils/routes";
 
 export enum SellTokenOption {
   PriceDiscovery = "PriceDiscovery",
@@ -57,7 +57,7 @@ export const SellToken: FC = () => {
       router.push(route(routes.newLbc, { mint }), undefined, { shallow: true });
 
     if (selectedOption === SellTokenOption.FixedPrice)
-      router.push(route(routes.newSale, { mint }), undefined, {
+      router.push(route(routes.newFixedPrice, { mint }), undefined, {
         shallow: true,
       });
   };

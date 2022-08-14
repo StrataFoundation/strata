@@ -72,6 +72,30 @@ export class BondingHierarchy {
     return found;
   }
 
+  highestOrUndefined(one: PublicKey, two: PublicKey): PublicKey | undefined {
+    return this.toArray().find(
+      (hierarchy) =>
+        hierarchy.tokenBonding.baseMint.equals(
+          sanitizeSolMint(one, this.wrappedSolMint)
+        ) ||
+        hierarchy.tokenBonding.baseMint.equals(
+          sanitizeSolMint(two, this.wrappedSolMint)
+        )
+    )?.tokenBonding?.baseMint;
+  }
+
+  highest(one: PublicKey, two: PublicKey): PublicKey {
+    const found = this.highestOrUndefined(one, two);
+
+    if (!found) {
+      throw new Error(
+        `No bonding found with target mint ${one.toBase58()} or ${two.toBase58()}`
+      );
+    }
+
+    return found;
+  }
+
   /**
    * Get the path from one token to another.
    *

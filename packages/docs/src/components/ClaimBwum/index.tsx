@@ -1,3 +1,4 @@
+//@ts-ignore
 import BrowserOnly from "@docusaurus/BrowserOnly";
 import { useWallet } from "@solana/wallet-adapter-react";
 import {
@@ -15,7 +16,8 @@ import {
 } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
 import React from "react";
-import { useEndpoint } from "@strata-foundation/marketplace-ui";
+import { useEndpoint } from "@strata-foundation/react";
+//@ts-ignore
 import styles from "./styles.module.css";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 

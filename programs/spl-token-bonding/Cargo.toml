@@ -1,6 +1,6 @@
 [package]
 name = "spl-token-bonding"
-version = "3.2.5"
+version = "3.9.2"
 description = "Created with Anchor"
 edition = "2018"
 license = "AGPL-3.0-or-later"
@@ -16,9 +16,9 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = "0.22.0"
-anchor-spl = "0.22.0"
-uint = "0.9"
+anchor-lang = "0.24.2"
+anchor-spl = "0.24.2"
+uint = "=0.9.1"
 spl-token = "3.2.0"
 
 [dev-dependencies]

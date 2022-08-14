@@ -48,11 +48,11 @@ npm manifest:
       "watch": "yarn run copy-files && tsc --watch --project tsconfig.json",
       "format": "prettier --write \"src/**/*.{ts,tsx}\"",
       "bootstrap": "tsc && node dist/lib/bootstrap",
-      "precommit": "git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' .",
+      "precommit": "npx git-format-staged -f 'prettier --ignore-unknown --stdin --stdin-filepath \"{}\"' .",
       "prepare": "yarn run build"
     },
     "dependencies": {
-      "@solana/web3.js": "^1.32.0"a
+      "@solana/web3.js": "^1.43.4"
     },
     "devDependencies": {
       "git-format-staged": "^2.1.3",

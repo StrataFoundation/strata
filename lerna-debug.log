@@ -1,6 +1,16 @@
-70 error Error: Command failed with exit code 128: git tag v1.2.4 -m v1.2.4
-70 error fatal: tag 'v1.2.4' already exists
-70 error     at makeError (/Users/nprince/.config/yarn/global/node_modules/execa/lib/error.js:60:11)
-70 error     at handlePromise (/Users/nprince/.config/yarn/global/node_modules/execa/index.js:118:26)
-70 error     at processTicksAndRejections (node:internal/process/task_queues:96:5)
-70 error     at async Promise.all (index 0)
+0 silly argv {
+0 silly argv   _: [ 'bootstrap' ],
+0 silly argv   lernaVersion: '4.0.0',
+0 silly argv   '$0': '/usr/local/bin/lerna'
+0 silly argv }
+1 notice cli v4.0.0
+2 verbose rootPath /Users/nprince/source/strata
+3 error Error: Unsupported URL Type "workspace:": workspace:^3.10.1
+3 error     at unsupportedURLType (/Users/nprince/.config/yarn/global/node_modules/npm-package-arg/npa.js:246:15)
+3 error     at fromURL (/Users/nprince/.config/yarn/global/node_modules/npm-package-arg/npa.js:306:13)
+3 error     at Function.resolve (/Users/nprince/.config/yarn/global/node_modules/npm-package-arg/npa.js:76:12)
+3 error     at /Users/nprince/.config/yarn/global/node_modules/@lerna/package-graph/index.js:66:30
+3 error     at Array.forEach (<anonymous>)
+3 error     at /Users/nprince/.config/yarn/global/node_modules/@lerna/package-graph/index.js:60:38
+3 error     at Map.forEach (<anonymous>)
+3 error     at new PackageGraph (/Users/nprince/.config/yarn/global/node_modules/@lerna/package-graph/index.js:49:10)

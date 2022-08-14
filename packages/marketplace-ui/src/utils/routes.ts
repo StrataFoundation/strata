@@ -16,13 +16,16 @@ export const routes: Record<string, IRoute> = {
     path: "/bounties/:mintKey/edit",
     params: ["mintKey"],
   },
+  editMetadata: {
+    path: "/edit-metadata",
+    params: [],
+  },
   sales: { path: "/sales", params: [] },
-  newSale: { path: "/launchpad/sales/new", params: [] },
-  sale: { path: "/sales/:mintKey", params: ["mintKey"] },
+  newFixedPrice: { path: "/launchpad/fixed-price/new", params: [] },
   newLbc: { path: "/launchpad/lbcs/new", params: [] },
   tokenLbc: {
-    path: "/lbcs/token-offering/:mintKey",
-    params: ["mintKey"],
+    path: "/lbcs/token-offering/:id", // key is expected to be either a mint or child entangler
+    params: ["id"],
   },
   mintLbc: {
     path: "/lbcs/mint/:candyMachineId",
@@ -30,9 +33,12 @@ export const routes: Record<string, IRoute> = {
   },
   tokenLbcAdmin: {
     path:
-      process.env.NEXT_PUBLIC_DOCS_URL +
-      "/launchpad/admin/lbc?tokenBondingKey=:tokenBondingKey",
-    params: ["tokenBondingKey"],
+      process.env.NEXT_PUBLIC_DOCS_URL + "/launchpad/admin/lbc",
+    params: [],
+  },
+  fixedPriceAdmin: {
+    path: process.env.NEXT_PUBLIC_DOCS_URL + "/launchpad/admin/fixed-price",
+    params: [],
   },
   mintLbcAdmin: {
     path:
@@ -41,10 +47,10 @@ export const routes: Record<string, IRoute> = {
     params: [],
   },
   tokenOffering: {
-    path: "/token-offering/:mintKey",
-    params: ["mintKey"],
+    path: "/token-offering/:id",
+    params: ["id"],
   },
-  swap: { path: "/swap/:mintKey", params: ["mintKey"] },
+  swap: { path: "/swap/:id", params: ["id"] },
   newFullyManaged: { path: "/launchpad/fully-managed/new", params: [] },
   newManual: { path: "/launchpad/manual/new", params: [] },
   launchpad: { path: "/launchpad", params: [] },

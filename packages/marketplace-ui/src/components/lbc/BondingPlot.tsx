@@ -15,7 +15,7 @@ import {
 } from "recharts";
 import { numberWithCommas } from "../../utils/numberWithCommas";
 import { gql, useQuery } from "@apollo/client";
-import { fromCurve, asDecimal } from "@strata-foundation/spl-token-bonding";
+import { fromCurve, asDecimal, toNumber } from "@strata-foundation/spl-token-bonding";
 
 const GET_BONDING_CHANGES = gql`
   query GetBondingChanges(
@@ -47,7 +47,7 @@ export const BondingPlot = ({
   tokenBondingKey,
   numDataPoints=500,
 }: {
-  tokenBondingKey: PublicKey;
+  tokenBondingKey?: PublicKey;
   numDataPoints?: number;
 }) => {
   const { info: tokenBonding, loading: loadingBonding } =
@@ -72,24 +72,25 @@ export const BondingPlot = ({
     variables: {
       address: tokenBondingKey,
       startUnixTime: Math.max(
-        stopTime - 60 * 60 * 24,
+        stopTime - 3 * 60 * 60 * 24,
         tokenBonding?.goLiveUnixTime?.toNumber() || 0
       ), // 24 hours
       stopUnixTime: stopTime,
       offset: 0,
-      limit: 1000,
+      limit: 100000,
     },
   });
   const data = useMemo(() => {
     if (enrichedBondingChanges && tokenBonding && baseMint && targetMint && curve) {
       const changes = [...enrichedBondingChanges].sort((a, b) => a.insertTs - b.insertTs);
-      const startTime = tokenBonding?.goLiveUnixTime?.toNumber();
+      const startTime = tokenBonding?.goLiveUnixTime?.toNumber() + 1; // shake off huge drops
       const step = (stopTime - startTime!) / numDataPoints;
-      const result = [];
+      const result: any[] = [];
 
       let pointer = 0;
-      let currReserve = tokenBonding.reserveBalanceFromBonding.toNumber() / Math.pow(10, baseMint.decimals);
-      let currSupply = tokenBonding.supplyFromBonding.toNumber() / Math.pow(10, targetMint.decimals);
+      let currReserve = toNumber(tokenBonding.reserveBalanceFromBonding, baseMint);
+      let currSupply =
+        toNumber(tokenBonding.supplyFromBonding, targetMint);
 
       let buyBaseRoyalty = asDecimal(tokenBonding.buyBaseRoyaltyPercentage);
 

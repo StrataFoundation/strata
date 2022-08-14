@@ -2,7 +2,7 @@ import * as anchor from "@project-serum/anchor";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
-import { createMint } from "@strata-foundation/spl-utils";
+import { createMint, createAtaAndMint } from "@strata-foundation/spl-utils";
 import {
   FungibleEntangler,
   IFungibleParentEntangler,
@@ -10,13 +10,14 @@ import {
 } from "../packages/fungible-entangler/src";
 import { TokenUtils } from "./utils/token";
 import { waitForUnixTime } from "./utils/clock";
+import { AnchorProvider } from "@project-serum/anchor";
 use(ChaiAsPromised);
 const tB58 = (p: PublicKey | null) => p?.toBase58();
 
 describe("fungible-entangler", () => {
   // Configure the client to use the local cluster.
-  anchor.setProvider(anchor.Provider.local());
-  const provider = anchor.getProvider();
+  anchor.setProvider(anchor.AnchorProvider.local("http://127.0.0.1:8899"));
+  const provider = anchor.getProvider() as AnchorProvider;
 
   const program = anchor.workspace.FungibleEntangler;
   const tokenUtils = new TokenUtils(provider);
@@ -26,7 +27,7 @@ describe("fungible-entangler", () => {
   it("allows creation of a parent entangler", async () => {
     const dynamicSeed = Keypair.generate().publicKey;
     const parentMint = await createMint(provider, me, 0);
-    await tokenUtils.createAtaAndMint(provider, parentMint, 100);
+    await createAtaAndMint(provider, parentMint, 100);
 
     const { entangler: parentEntanglerOut } =
       await fungibleEntanglerProgram.createFungibleParentEntangler({
@@ -50,7 +51,7 @@ describe("fungible-entangler", () => {
     const dynamicSeed = Keypair.generate().publicKey;
     const parentMint = await createMint(provider, me, 0);
     const childMint = await createMint(provider, me);
-    await tokenUtils.createAtaAndMint(provider, parentMint, 100);
+    await createAtaAndMint(provider, parentMint, 100);
 
     const { entangler: parentEntanglerOut } =
       await fungibleEntanglerProgram.createFungibleParentEntangler({
@@ -71,7 +72,6 @@ describe("fungible-entangler", () => {
       (await fungibleEntanglerProgram.getChildEntangler(childEntanglerOut))!;
 
     expect(tB58(childEntanglerAcct.childMint)).to.eq(tB58(childMint));
-    expect(tB58(childEntanglerAcct.authority)).to.eq(tB58(me));
 
     await tokenUtils.expectBalance(childEntanglerAcct.childStorage, 0);
   });
@@ -80,7 +80,7 @@ describe("fungible-entangler", () => {
     const dynamicSeed = Keypair.generate().publicKey;
     const parentMint = await createMint(provider, me, 0);
     const childMint = await createMint(provider, me, 0);
-    await tokenUtils.createAtaAndMint(provider, parentMint, 100);
+    await createAtaAndMint(provider, parentMint, 100);
 
     const {
       parentEntangler: parentEntanglerOut,
@@ -104,7 +104,6 @@ describe("fungible-entangler", () => {
     await tokenUtils.expectAtaBalance(me, parentEntanglerAcct.parentMint, 0);
     await tokenUtils.expectBalance(parentEntanglerAcct.parentStorage, 100);
     expect(tB58(childEntanglerAcct.childMint)).to.eq(tB58(childMint));
-    expect(tB58(childEntanglerAcct.authority)).to.eq(tB58(me));
     await tokenUtils.expectBalance(childEntanglerAcct.childStorage, 0);
   });
 
@@ -120,8 +119,8 @@ describe("fungible-entangler", () => {
       const dynamicSeed = Keypair.generate().publicKey;
       parentMint = await createMint(provider, me, 0);
       childMint = await createMint(provider, me, 0);
-      await tokenUtils.createAtaAndMint(provider, parentMint, 100);
-      await tokenUtils.createAtaAndMint(provider, childMint, 50);
+      await createAtaAndMint(provider, parentMint, 100);
+      await createAtaAndMint(provider, childMint, 50);
 
       const {
         parentEntangler: parentEntanglerOut,
@@ -147,6 +146,7 @@ describe("fungible-entangler", () => {
         childEntanglerOut
       ))!;
     });
+
 
     it("swaps amount from the parent to a child", async () => {
       await waitForUnixTime(
@@ -201,8 +201,8 @@ describe("fungible-entangler", () => {
       const dynamicSeed = Keypair.generate().publicKey;
       parentMint = await createMint(provider, me, 0);
       childMint = await createMint(provider, me, 0);
-      await tokenUtils.createAtaAndMint(provider, parentMint, 100);
-      await tokenUtils.createAtaAndMint(provider, childMint, 50);
+      await createAtaAndMint(provider, parentMint, 100);
+      await createAtaAndMint(provider, childMint, 50);
 
       const {
         parentEntangler: parentEntanglerOut,
@@ -273,6 +273,146 @@ describe("fungible-entangler", () => {
     });
   });
 
+  describe("transfer and close", () => {
+    let parentMint,
+      childMint,
+      parentEntangler: PublicKey,
+      childEntangler: PublicKey,
+      parentEntanglerAcct: IFungibleParentEntangler | null,
+      childEntanglerAcct: IFungibleChildEntangler | null;
+
+    beforeEach(async () => {
+      const dynamicSeed = Keypair.generate().publicKey;
+      parentMint = await createMint(provider, me, 0);
+      childMint = await createMint(provider, me, 0);
+      await createAtaAndMint(provider, parentMint, 100);
+      await createAtaAndMint(provider, childMint, 50);
+
+      const {
+        parentEntangler: parentEntanglerOut,
+        childEntangler: childEntanglerOut,
+        childStorage: childStorageOut,
+      } = await fungibleEntanglerProgram.createFungibleEntangler({
+        authority: me,
+        parentMint,
+        childMint,
+        amount: 50,
+        dynamicSeed: dynamicSeed.toBuffer(),
+      });
+
+      parentEntangler = parentEntanglerOut;
+      childEntangler = childEntanglerOut;
+
+      parentEntanglerAcct =
+        (await fungibleEntanglerProgram.getParentEntangler(
+          parentEntanglerOut
+        ))!;
+
+      childEntanglerAcct =
+        (await fungibleEntanglerProgram.getChildEntangler(
+          childEntanglerOut
+        ))!;
+    });
+
+    it("transfers from the child back to the admin", async () => {
+      await waitForUnixTime(
+        provider.connection,
+        BigInt(parentEntanglerAcct!.goLiveUnixTime.toNumber() + 1)
+      );
+
+      await fungibleEntanglerProgram.swapChildForParent({
+        parentEntangler,
+        childEntangler,
+        amount: 30,
+      });
+
+      await fungibleEntanglerProgram.transfer({
+        childEntangler,
+        amount: 15
+      })
+
+      await tokenUtils.expectBalance(parentEntanglerAcct!.parentStorage, 20);
+      await tokenUtils.expectBalance(childEntanglerAcct!.childStorage, 15);
+      await tokenUtils.expectAtaBalance(
+        me,
+        parentEntanglerAcct!.parentMint,
+        80
+      );
+      await tokenUtils.expectAtaBalance(me, childEntanglerAcct!.childMint, 35);
+    });
+
+    it("closes the child entangler", async () => {
+      await waitForUnixTime(
+        provider.connection,
+        BigInt(parentEntanglerAcct!.goLiveUnixTime.toNumber() + 1)
+      );
+
+      await fungibleEntanglerProgram.close({
+        childEntangler,
+      });
+      const childEntanglerAcct =
+        (await fungibleEntanglerProgram.getChildEntangler(
+          childEntangler
+        ));
+      expect(childEntanglerAcct).to.be.null;
+    });
+
+    it("transfers from the parent back to the admin", async () => {
+      await waitForUnixTime(
+        provider.connection,
+        BigInt(parentEntanglerAcct!.goLiveUnixTime.toNumber() + 1)
+      );
+
+      await fungibleEntanglerProgram.swapChildForParent({
+        parentEntangler,
+        childEntangler,
+        amount: 30,
+      });
+
+      await fungibleEntanglerProgram.transfer({
+        parentEntangler,
+        amount: 15,
+      });
+
+      await tokenUtils.expectBalance(
+        parentEntanglerAcct!.parentStorage,
+        5
+      );
+      await tokenUtils.expectBalance(childEntanglerAcct!.childStorage, 30);
+      await tokenUtils.expectAtaBalance(
+        me,
+        parentEntanglerAcct!.parentMint,
+        95
+      );
+      await tokenUtils.expectAtaBalance(
+        me,
+        childEntanglerAcct!.childMint,
+        20
+      );
+    });
+
+    it("closes the parent entangler", async () => {
+      await waitForUnixTime(
+        provider.connection,
+        BigInt(parentEntanglerAcct!.goLiveUnixTime.toNumber() + 1)
+      );
+
+      await fungibleEntanglerProgram.transfer({
+        parentEntangler,
+        amount: 50
+      });
+      await fungibleEntanglerProgram.close({
+        childEntangler,
+      });
+      await fungibleEntanglerProgram.close({
+        parentEntangler,
+      });
+      const parentEntanglerAcct2 =
+        await fungibleEntanglerProgram.getParentEntangler(parentEntangler);
+      expect(parentEntanglerAcct2).to.be.null;
+    });
+  });
+
   describe("top off", () => {
     let parentMint,
       childMint,
@@ -285,8 +425,8 @@ describe("fungible-entangler", () => {
       const dynamicSeed = Keypair.generate().publicKey;
       parentMint = await createMint(provider, me, 0);
       childMint = await createMint(provider, me, 0);
-      await tokenUtils.createAtaAndMint(provider, parentMint, 100);
-      await tokenUtils.createAtaAndMint(provider, childMint, 100);
+      await createAtaAndMint(provider, parentMint, 100);
+      await createAtaAndMint(provider, childMint, 100);
 
       const {
         parentEntangler: parentEntanglerOut,

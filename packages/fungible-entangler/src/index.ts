@@ -1,5 +1,5 @@
 import * as anchor from "@project-serum/anchor";
-import { IdlTypes, Program, Provider } from "@project-serum/anchor";
+import { IdlTypes, Program, AnchorProvider } from "@project-serum/anchor";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   Token,
@@ -63,9 +63,9 @@ interface ICreateFungibleParentEntanglerArgs {
   amount: BN | number;
   /**
    * General authority to change things like freeze swap.
-   * **Default:** Wallet public key. Pass null to explicitly not set this authority.
+   * **Default:** Wallet public key
    */
-  authority?: PublicKey | null;
+  authority?: PublicKey;
   /** The date this entangler will go live. Before this date, {@link FungibleEntangler.swap} is disabled. **Default:** 1 second ago */
   goLiveDate?: Date | number;
   /** The date this entangler will shut down. After this date, {@link FungibleEntangler.swap} is disabled. **Default:** null */
@@ -86,9 +86,9 @@ interface ICreateFungibleChildEntanglerArgs {
   mint: PublicKey;
   /**
    * General authority to change things like freeze swap.
-   * **Default:** Wallet public key. Pass null to explicitly not set this authority.
+   * **Default:** Wallet public key
    */
-  authority?: PublicKey | null;
+  authority?: PublicKey;
   /** The date this entangler will go live. Before this date, {@link FungibleEntangler.swap} is disabled. **Default:** 1 second ago */
   goLiveDate?: Date | number;
   /** The date this entangler will shut down. After this date, {@link FungibleEntangler.swap} is disabled. **Default:** null */
@@ -115,9 +115,9 @@ export interface ICreateFungibleEntanglerArgs {
   childMint: PublicKey;
   /**
    * General authority to change things like freeze swap.
-   * **Default:** Wallet public key. Pass null to explicitly not set this authority.
+   * **Default:** Wallet public key
    */
-  authority?: PublicKey | null;
+  authority?: PublicKey;
   /** The date this entangler will go live. Before this date, {@link FungibleEntangler.swap} is disabled. **Default:** 1 second ago */
   parentGoLiveDate?: Date | number;
   /** The date this entangler will shut down. After this date, {@link FungibleEntangler.swap} is disabled. **Default:** null */
@@ -148,6 +148,41 @@ interface ISwapArgs {
   /** The source destination to purchase to. (**Default:** ata of `sourceAuthority`) */
   destination?: PublicKey;
 }
+
+interface ICloseArgs {
+  refund?: PublicKey;
+}
+
+interface ICloseArgsParent extends ICloseArgs {
+  parentEntangler: PublicKey;
+}
+
+interface ICloseArgsChild extends ICloseArgs {
+  childEntangler: PublicKey;
+}
+
+type CloseArgs = ICloseArgsParent | ICloseArgsChild;
+
+interface ITransferArgs {
+  payer?: PublicKey;
+  /** The amount of tokens */
+  amount: number | BN;
+
+  /** The destination wallet. **Default:** this wallet */
+  destinationWallet?: PublicKey;
+  /** The destination ata acct. **Default:** this wallet ata */
+  destination?: PublicKey;
+}
+
+interface ITransferArgsParent extends ITransferArgs {
+  parentEntangler: PublicKey;
+}
+
+interface ITransferArgsChild extends ITransferArgs {
+  childEntangler: PublicKey;
+}
+
+type TransferArgs = ITransferArgsChild | ITransferArgsParent;
 
 interface ISwapArgsAll extends ISwapArgs {
   all: boolean;
@@ -181,11 +216,11 @@ interface ITopOffArgsChild extends ITopOffArgs {
 
 type TopOffArgs = ITopOffArgsParent | ITopOffArgsChild;
 
-export class FungibleEntangler extends AnchorSdk<any> {
+export class FungibleEntangler extends AnchorSdk<FungibleEntanglerIDL> {
   static ID = new PublicKey("fent99TYZcj9PGbeooaZXEMQzMd7rz8vYFiudd8HevB");
 
   static async init(
-    provider: Provider,
+    provider: AnchorProvider,
     fungibleEntanglerProgramId: PublicKey = FungibleEntangler.ID
   ): Promise<FungibleEntangler> {
     const FungibleEntanglerIDLJson = await anchor.Program.fetchIdl(
@@ -202,7 +237,10 @@ export class FungibleEntangler extends AnchorSdk<any> {
     return new this(provider, fungibleEntangler);
   }
 
-  constructor(provider: Provider, program: Program<FungibleEntanglerIDL>) {
+  constructor(
+    provider: AnchorProvider,
+    program: Program<FungibleEntanglerIDL>
+  ) {
     super({ provider, program });
   }
 
@@ -291,24 +329,26 @@ export class FungibleEntangler extends AnchorSdk<any> {
     return this.getAccount(entanglerKey, this.parentEntanglerDecoder);
   }
 
-  childEntanglerDecoder: TypedAccountParser<IFungibleChildEntangler> = (
-    pubkey,
-    account
-  ) => {
-    const coded = this.program.coder.accounts.decode<IFungibleChildEntangler>(
-      "FungibleChildEntanglerV0",
-      account.data
-    );
-
-    return {
-      ...coded,
-      publicKey: pubkey,
-    };
+  childEntanglerDecoder: TypedAccountParser<
+    IFungibleChildEntangler | undefined
+  > = (pubkey, account) => {
+    try {
+      const coded = this.program.coder.accounts.decode<IFungibleChildEntangler>(
+        "FungibleChildEntanglerV0",
+        account.data
+      );
+      return {
+        ...coded,
+        publicKey: pubkey,
+      };
+    } catch (err) {
+      return undefined;
+    }
   };
 
   getChildEntangler(
     entanglerKey: PublicKey
-  ): Promise<IFungibleChildEntangler | null> {
+  ): Promise<IFungibleChildEntangler | null | undefined> {
     return this.getAccount(entanglerKey, this.childEntanglerDecoder);
   }
 
@@ -458,7 +498,6 @@ export class FungibleEntangler extends AnchorSdk<any> {
     instructions.push(
       await this.instruction.initializeFungibleChildEntanglerV0(
         {
-          authority,
           goLiveUnixTime: new BN(Math.floor(goLiveDate.valueOf() / 1000)),
           freezeSwapUnixTime: freezeSwapDate
             ? new BN(Math.floor(freezeSwapDate.valueOf() / 1000))
@@ -469,6 +508,7 @@ export class FungibleEntangler extends AnchorSdk<any> {
             payer,
             parentEntangler,
             entangler,
+            authority: authority!,
             childStorage: storage,
             childMint: mint,
             tokenProgram: TOKEN_PROGRAM_ID,
@@ -506,7 +546,7 @@ export class FungibleEntangler extends AnchorSdk<any> {
     authority = this.provider.wallet.publicKey,
     payer = this.provider.wallet.publicKey,
     source = this.provider.wallet.publicKey,
-    dynamicSeed,
+    dynamicSeed = Keypair.generate().publicKey.toBuffer(),
     amount,
     parentMint,
     childMint,
@@ -659,10 +699,8 @@ export class FungibleEntangler extends AnchorSdk<any> {
         accounts: {
           common: {
             parentEntangler,
-            parentMint: parentAcct.parentMint,
             parentStorage: parentAcct.parentStorage,
             childEntangler,
-            childMint: childAcct.childMint,
             childStorage: childAcct.childStorage,
             source,
             sourceAuthority,
@@ -766,10 +804,8 @@ export class FungibleEntangler extends AnchorSdk<any> {
         accounts: {
           common: {
             parentEntangler,
-            parentMint: parentAcct.parentMint,
             parentStorage: parentAcct.parentStorage,
             childEntangler,
-            childMint: childAcct.childMint,
             childStorage: childAcct.childStorage,
             source,
             sourceAuthority,
@@ -875,5 +911,181 @@ export class FungibleEntangler extends AnchorSdk<any> {
     commitment: Commitment = "confirmed"
   ): Promise<void> {
     await this.execute(this.topOffInstructions(args), args.payer, commitment);
+  }
+
+  async transferInstructions({
+    payer = this.wallet.publicKey,
+    amount,
+    destination,
+    destinationWallet = this.wallet.publicKey,
+    ...rest
+  }: TransferArgs): Promise<InstructionResult<null>> {
+    let { parentEntangler, childEntangler } = {
+      parentEntangler: null,
+      childEntangler: null,
+      ...rest,
+    };
+    const isTransferChild = childEntangler !== null;
+
+    const childEntanglerAcct = childEntangler
+      ? await this.getChildEntangler(childEntangler)
+      : null;
+    parentEntangler = (parentEntangler ||
+      (childEntanglerAcct && childEntanglerAcct.parentEntangler))!;
+    const parentEntanglerAcct = await this.getParentEntangler(parentEntangler);
+
+    const mint = isTransferChild
+      ? childEntanglerAcct!.childMint
+      : parentEntanglerAcct!.parentMint;
+
+    const mintAcct = await getMintInfo(this.provider, mint);
+
+    const instructions: TransactionInstruction[] = [];
+    const signers: Keypair[] = [];
+
+    const destAcct =
+      destination &&
+      (await this.provider.connection.getAccountInfo(destination));
+
+    // Destination is a wallet, need to get the ATA
+    if (!destAcct || destAcct.owner.equals(SystemProgram.programId)) {
+      const ataDestination = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        mint,
+        destinationWallet,
+        false // Explicitly don't allow owner off curve. You need to pass destination as an already created thing to do this
+      );
+      if (!(await this.accountExists(ataDestination))) {
+        instructions.push(
+          Token.createAssociatedTokenAccountInstruction(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            mint,
+            ataDestination,
+            destinationWallet,
+            payer
+          )
+        );
+      }
+
+      destination = ataDestination;
+    }
+
+    if (isTransferChild) {
+      instructions.push(
+        await this.instruction.transferChildStorageV0(
+          {
+            amount: toBN(amount, mintAcct),
+          },
+          {
+            accounts: {
+              authority: parentEntanglerAcct!.authority!,
+              parentEntangler,
+              entangler: childEntangler!,
+              childStorage: childEntanglerAcct!.childStorage,
+              destination: destination!,
+              tokenProgram: TOKEN_PROGRAM_ID,
+            },
+          }
+        )
+      );
+    } else {
+      instructions.push(
+        await this.instruction.transferParentStorageV0(
+          {
+            amount: toBN(amount, mintAcct),
+          },
+          {
+            accounts: {
+              authority: parentEntanglerAcct!.authority!,
+              parentEntangler,
+              parentStorage: parentEntanglerAcct!.parentStorage,
+              destination: destination!,
+              tokenProgram: TOKEN_PROGRAM_ID,
+            },
+          }
+        )
+      );
+    }
+
+    return {
+      instructions,
+      signers,
+      output: null,
+    };
+  }
+
+  async transfer(
+    args: TransferArgs,
+    commitment: Commitment = "confirmed"
+  ): Promise<void> {
+    await this.execute(this.transferInstructions(args), args.payer, commitment);
+  }
+
+  async closeInstructions({
+    refund = this.wallet.publicKey,
+    ...rest
+  }: CloseArgs): Promise<InstructionResult<null>> {
+    let { parentEntangler, childEntangler } = {
+      parentEntangler: null,
+      childEntangler: null,
+      ...rest,
+    };
+    const isCloseChild = childEntangler !== null;
+
+    const childEntanglerAcct = childEntangler
+      ? await this.getChildEntangler(childEntangler)
+      : null;
+    parentEntangler = (parentEntangler ||
+      (childEntanglerAcct && childEntanglerAcct.parentEntangler))!;
+    const parentEntanglerAcct = await this.getParentEntangler(parentEntangler);
+
+    const mint = isCloseChild
+      ? childEntanglerAcct!.childMint
+      : parentEntanglerAcct!.parentMint;
+
+    const instructions: TransactionInstruction[] = [];
+    const signers: Keypair[] = [];
+
+    if (isCloseChild) {
+      instructions.push(
+        await this.instruction.closeFungibleChildEntanglerV0({
+          accounts: {
+            refund,
+            authority: parentEntanglerAcct!.authority!,
+            parentEntangler,
+            entangler: childEntangler!,
+            childStorage: childEntanglerAcct!.childStorage,
+            tokenProgram: TOKEN_PROGRAM_ID,
+          },
+        })
+      );
+    } else {
+      instructions.push(
+        await this.instruction.closeFungibleParentEntanglerV0({
+          accounts: {
+            refund,
+            authority: parentEntanglerAcct!.authority!,
+            parentEntangler,
+            parentStorage: parentEntanglerAcct!.parentStorage,
+            tokenProgram: TOKEN_PROGRAM_ID,
+          },
+        })
+      );
+    }
+
+    return {
+      instructions,
+      signers,
+      output: null,
+    };
+  }
+
+  async close(
+    args: CloseArgs,
+    commitment: Commitment = "confirmed"
+  ): Promise<void> {
+    await this.execute(this.closeInstructions(args), args.refund, commitment);
   }
 }

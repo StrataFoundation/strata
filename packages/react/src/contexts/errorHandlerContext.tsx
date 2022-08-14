@@ -1,12 +1,8 @@
+import { truthy } from "@strata-foundation/spl-utils";
 import React, {
-  FC,
-  ReactNode,
-  createContext,
-  useState,
-  useEffect,
-  useCallback,
+  createContext, FC,
+  ReactNode, useCallback
 } from "react";
-import { truthy } from "../utils";
 
 export interface IErrorHandlerProviderProps {
   children: ReactNode;

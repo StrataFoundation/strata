@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
-import { useEndpoint } from "@strata-foundation/marketplace-ui";
+import { useEndpoint } from "@strata-foundation/react";
 
 type CodeExec = (vars: any) => Promise<void>;
 interface IVariablesContext {
@@ -12,10 +12,11 @@ export const VariablesContext = React.createContext<IVariablesContext>({
   variables: null,
   setVariables: (i: any) => null,
   register: () => null,
-  execWithDeps: () => Promise.resolve(null),
+  execWithDeps: () => Promise.resolve(),
 });
 
-export const VariablesProvider: React.FC = ({ children }) => {
+//@ts-ignore
+export const VariablesProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const [variables, setVariables] = useState<any>(null);
   const [dependencies, setDependencies] = useState<
     Record<string, { deps: string[]; exec: CodeExec }>

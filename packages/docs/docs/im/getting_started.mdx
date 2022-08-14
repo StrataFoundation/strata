@@ -1,0 +1,115 @@
+---
+sidebar_position: 1
+---
+
+# Getting Started
+
+Strata chat is a fully decentralized, embeddable, token gated chat solution. You can use our public interface
+at https://chat.strataprotocol.com. Or follow the docs here to embed chat anywhere you'd like!
+
+The code for this chatroom is entirely open source [here](https://github.com/StrataFoundation/strata/tree/master/packages/chat-ui)
+
+The program code behind it is [here](https://github.com/StrataFoundation/strata/tree/master/programs/chat)
+
+You can view the chat-ui and chat sdk documentation in the sidebar, under "API".
+
+## Initializing the SDK
+
+Let's get started by installing the sdk
+
+```bash
+yarn add @strata-foundation/chat
+```
+
+Now, we can initialize the sdk:
+
+```jsx
+import { PublicKey } from "@solana/web3.js"
+import * as anchor from "@project-serum/anchor";
+import { BN } from "bn.js";
+import { ChatSdk } from "@strata-foundation/chat";
+
+const provider = anchor.getProvider();
+
+const chatSdk = await ChatSdk.init(provider);
+```
+
+## Creating a Chatroom
+
+There are two kinds of chats in Strata. Identified chats, and unidentified chat. Identified chats are publically accessible via their identifier
+at https://chat.strataprotocol.com/c/:identifier
+
+Identifiers are managed via Cardinal NFTs. Holding the NFT gives you admin access to control the chat. To avoid conflicts,
+lets create an unidentified chat.
+
+:::info Live Code
+You can run and edit all of the code blocks in this tutorial against Solana devnet! The above block contains all of the needed imports.
+
+Use `var` instead of `let` or `const` so that these blocks can be re-run
+:::
+
+Let's create a chat that requires 0.01 sol to post and read:
+
+
+```jsx async name=create_chat
+var { chat } =
+  await chatSdk.initializeChat({
+      name,
+      permissions: {
+        readPermissionKey: NATIVE_MINT,
+        postPermissionKey: NATIVE_MINT,
+        readPermissionAmount: 0.01,
+        postPermissionAmount: 0.01,
+      },
+    });
+```
+
+Now, let's send a message
+
+```jsx async name=send deps=create_chat
+var { txids } = await chatSdk.sendMessage({
+  chat,
+  message: { type: MessageType.Text, text: "Hello!" },
+  encrypted: true,
+});
+```
+
+### Display Chatbox with React
+
+First, make sure to setup our providers. You may also want to use ReactShadow to ensure
+our styles do not conflict with yours:
+
+```jsx
+import { ChatProviders } from "@strata-foundation/chat-ui";
+
+export function BaseComponent({ children }) {
+  return <ReactShadow.div>
+    <ChatProviders resetCss onError={err => console.error(err)}>
+      { children }
+    </ChatProviders>
+  </ReactShadow.div>
+```
+
+
+Now we can display the messages in the chat:
+```js
+import { useMessages, Chatroom } from "@strata-foundation/chat-ui";
+```
+```jsx live
+function MessagesDisplay() {
+  const { chat } = useVariables(); // Getting chat from above code;
+
+  return <div style={{height: "300px"}}>
+    <SendMessageProvider chatKey={chat}>
+      <Chatroom
+        chatKey={chat}
+      />
+    </SendMessageProvider>
+  </div>;
+}
+```
+
+## Next Steps
+
+Interested in customizing the chat? Head over to the [Composability](./composability) docs!
+

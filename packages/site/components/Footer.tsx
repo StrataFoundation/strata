@@ -10,7 +10,7 @@ import {
 } from "@chakra-ui/react";
 import React from "react";
 import { RiExternalLinkLine } from "react-icons/ri";
-import { BLOG_URL, DISCORD_INVITE_URL, DOCS_URL } from "@/constants";
+import { BLOG_URL, DISCORD_INVITE_URL, DOCS_URL } from "../constants";
 
 const sections = [
   {

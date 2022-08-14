@@ -18,4 +18,6 @@ pub enum ErrorCode {
   ParentSwapFrozen,
   #[msg("Swap is frozen on the child entangler, swapping not allowed")]
   ChildSwapFrozen,
+  #[msg("This entangler has no authority on it")]
+  NoAuthority,
 }

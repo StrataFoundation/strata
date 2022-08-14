@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Text, Stack, Container, Button, Link } from "@chakra-ui/react";
-import { DISCORD_INVITE_URL, DOCS_URL } from "@/constants";
+import { DISCORD_INVITE_URL, DOCS_URL } from "../../constants";
 
 export const GetStarted = () => (
   <Box w="full" bg="gray.900" color="white">

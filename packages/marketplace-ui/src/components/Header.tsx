@@ -25,6 +25,7 @@ import { route, routes } from "../utils/routes";
 
 const NavLink = ({ href, children }: { href: string; children: ReactNode }) => (
   <Link px={2} py={1} href={href} fontSize="sm">
+    {/* @ts-ignore */}
     {children}
   </Link>
 );
@@ -62,7 +63,7 @@ export const Header: React.FC = () => {
               onClick={isOpen ? onClose : onOpen}
             />
             <HStack spacing={8} alignItems={"center"}>
-              <Link href="/">
+              <Link href={route(routes.launchpad)}>
                 <Image alt="Strata Launchpad" src="/logo-launchpad.svg" />
               </Link>
               <HStack
@@ -99,11 +100,13 @@ export const Header: React.FC = () => {
                     Disconnect
                   </Button>
                 )}
+                {/* @ts-ignore */}
                 <DarkMode>
                   <WalletModalButton />
                 </DarkMode>
               </Flex>
               <Flex justify="center" display={{ base: "flex", md: "none" }}>
+                {/* @ts-ignore */}
                 <DarkMode>
                   <WalletModalButton size="sm" />
                 </DarkMode>

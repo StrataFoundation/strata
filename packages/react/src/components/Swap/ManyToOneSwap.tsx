@@ -2,21 +2,17 @@ import { PublicKey } from "@solana/web3.js";
 import { useSwapDriver } from "../../hooks/useSwapDriver";
 import React, { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import {
-  IManyToOneSwapDriverArgs,
-  useCapInfo,
-  useErrorHandler,
-  useManyToOneSwapDriver,
-  useMint,
-  useStrataSdks,
-  useSwap,
-  useTokenBonding,
-  useTokenMetadata,
-} from "../../hooks";
 import { Notification } from "../Notification";
 import { SwapForm } from "./SwapForm";
 import { SplTokenBonding, toNumber } from "@strata-foundation/spl-token-bonding";
-import { roundToDecimals } from "../../utils";
+import { IManyToOneSwapDriverArgs, useManyToOneSwapDriver } from "../../hooks/useManyToOneSwapDriver";
+import { useSwap } from "../../hooks/useSwap";
+import { useErrorHandler } from "../../hooks/useErrorHandler";
+import { useStrataSdks } from "../../hooks/useStrataSdks";
+import { useTokenMetadata } from "../../hooks/useTokenMetadata";
+import { useMint } from "../../hooks/useMint";
+import { useCapInfo } from "../../hooks/useCapInfo";
+import { roundToDecimals } from "@strata-foundation/spl-utils";
 
 interface IManyToOneSwapProps
   extends Pick<
@@ -54,18 +50,6 @@ export const ManyToOneSwap = ({
         await execute({
           ...args,
           balanceCheckTries: 0,
-          extraInstructions: async ({
-            tokenBonding,
-          }) => {
-            const burnBondingKey = (
-              await SplTokenBonding.tokenBondingKey(tokenBonding.targetMint, 1)
-            )[0];
-            return tokenBondingSdk!.sellInstructions({
-              tokenBonding: burnBondingKey,
-              targetAmount: amount!,
-              slippage: 0,
-            });
-          },
         });
         toast.custom((t) => (
           <Notification

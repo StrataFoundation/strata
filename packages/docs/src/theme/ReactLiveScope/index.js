@@ -9,8 +9,16 @@ import {
   Numberu32,
   Numberu64,
 } from "@solana/spl-name-service";
+import { Toaster } from "react-hot-toast";
 import { Program } from "@project-serum/anchor";
 import { DarkMode, CSSReset } from "@chakra-ui/react";
+import { ChatSdk, MessageType, PermissionType } from "@strata-foundation/chat";
+import {
+  Chatroom,
+  ChatMessages,
+  useMessages,
+  SendMessageProvider,
+} from "@strata-foundation/chat-ui";
 import {
   AccountLayout,
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -92,6 +100,17 @@ function Swap(props) {
   );
 }
 
+function Lbc(props) {
+  return (
+    <BrowserOnly fallback={<div>...</div>}>
+      {() => {
+        const Component = require("@strata-foundation/marketplace-ui").Lbc;
+        return <Component {...props} />;
+      }}
+    </BrowserOnly>
+  );
+}
+
 function StrataProviders(props) {
   return (
     <BrowserOnly fallback={<div>...</div>}>
@@ -109,6 +128,18 @@ function MarketplaceProviders(props) {
       {() => {
         const Component =
           require("@strata-foundation/marketplace-ui").MarketplaceProviders;
+        return <Component {...props} />;
+      }}
+    </BrowserOnly>
+  );
+}
+
+function ChatProviders(props) {
+  return (
+    <BrowserOnly fallback={<div>...</div>}>
+      {() => {
+        const Component =
+          require("@strata-foundation/chat-ui").ChatProviders;
         return <Component {...props} />;
       }}
     </BrowserOnly>
@@ -164,6 +195,7 @@ const ReactLiveScope = {
   useBondingPricing,
   useTokenRef,
   useTokenBonding,
+  Chatroom,
   useVariablesContext,
   useVariables,
   useTokenMetadata,
@@ -193,7 +225,16 @@ const ReactLiveScope = {
   ReactShadow,
   CSSReset,
   MarketplaceProviders,
+  SendMessageProvider,
+  ChatProviders,
+  useMessages,
+  ChatMessages,
+  Toaster,
   usePublicKey,
+  ChatSdk,
+  MessageType,
+  PermissionType,
+  Lbc,
   ...React,
 };
 

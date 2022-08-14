@@ -93,7 +93,11 @@ function CandyMachine() {
   // Shadow div and css reset are not required, but will make sure our styles do not conflict with yours
   return <ReactShadow.div>
     <MarketplaceProviders resetCSS onError={(err) => console.error(err)}>
-      <DynamicPricingCandyMachine candyMachineId={candyMachineIdPubkey} onConnectWallet={() => setVisible(true)} />
+      <DynamicPricingCandyMachine 
+        candyMachineId={candyMachineIdPubkey} 
+        onConnectWallet={() => setVisible(true)} 
+        onSuccess={console.log} // Omit this if you want to use our default react-hot-toast mint preview toaster
+      />
     </MarketplaceProviders>
   </ReactShadow.div>
 }
@@ -115,10 +119,23 @@ function CandyMachine() {
       <MarketplaceProviders resetCSS onError={(err) => console.error(err)}>
         <DarkMode>
           <div style={{ color: "white", backgroundColor: "black" }}>
-            <DynamicPricingCandyMachine candyMachineId={candyMachineIdPubkey} onConnectWallet={() => setVisible(true)} />
+            <DynamicPricingCandyMachine
+              candyMachineId={candyMachineIdPubkey}
+              onConnectWallet={() => setVisible(true)} 
+              onSuccess={console.log} // Omit this if you want to use our default react-hot-toast mint preview toaster
+            />
           </div>
         </DarkMode>
     </MarketplaceProviders>
   </ReactShadow.div>
 }
 ```
+
+## Live Pricing Plots
+
+The following will show you both the current price volatility and the projected changes over time and supply. You can click the dots on
+either plot to simulate purchases or the passage of time.
+
+import { CurveConfiguratorFromBonding } from "@site/src/components/CurveConfiguratorFromBonding";
+
+<CurveConfiguratorFromBonding />

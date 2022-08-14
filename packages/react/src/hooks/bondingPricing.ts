@@ -3,17 +3,19 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import {
   BondingPricing,
+  IBondingPricing,
   ITokenBonding,
   SplTokenBonding,
 } from "@strata-foundation/spl-token-bonding";
-import { useTokenAccount, useTokenBonding } from "./index";
 import React, { useEffect, useMemo, useState } from "react";
 import { useAsync } from "react-async-hook";
-import { useStrataSdks } from "./index";
+import { useStrataSdks } from "./useStrataSdks";
 import { useAccount } from "./useAccount";
 import { useAssociatedAccount } from "./useAssociatedAccount";
 import { useMint } from "./useMint";
 import { useTwWrappedSolMint } from "./useTwWrappedSolMint";
+import { useTokenBonding } from "./useTokenBonding";
+import { useTokenAccount } from "./useTokenAccount";
 
 export function supplyAsNum(mint: MintInfo): number {
   return amountAsNum(mint.supply, mint);
@@ -29,10 +31,6 @@ export function useSolOwnedAmount(ownerPublicKey?: PublicKey): {
   amount: number;
   loading: boolean;
 } {
-  const { publicKey } = useWallet();
-  if (!ownerPublicKey) {
-    ownerPublicKey = publicKey || undefined;
-  }
   const { info: lamports, loading } = useAccount<number>(
     ownerPublicKey,
     (_, account) => account.lamports
@@ -84,7 +82,7 @@ export function useOwnedAmount(
 export interface PricingState {
   loading: boolean;
   tokenBonding?: ITokenBonding;
-  pricing?: BondingPricing;
+  pricing?: IBondingPricing;
   error?: Error;
 }
 /**
@@ -104,10 +102,13 @@ export function useBondingPricing(
   const getPricing = async (
     tokenBondingSdk: SplTokenBonding | undefined,
     key: PublicKey | null | undefined,
+    tokenBondingAcct: any, // Make the pricing be re-fetched whenever the bonding changes.
     reserves: any, // Make the pricing be re-fetched whenever the reserves change.
     mint: any // Make the pricing be re-fetched whenever the supply change. This doesn't account for
     // collective changes, but will due for now. TODO: Account for collective changes too
-  ) => tokenBondingSdk && key && tokenBondingSdk.getPricing(key);
+  ) => {
+    return tokenBondingSdk && key && tokenBondingSdk.getPricing(key)
+  }
 
   const {
     result: pricing,
@@ -116,6 +117,7 @@ export function useBondingPricing(
   } = useAsync(getPricing, [
     tokenBondingSdk,
     tokenBonding,
+    tokenBondingAcct,
     reserves,
     targetMint,
   ]);

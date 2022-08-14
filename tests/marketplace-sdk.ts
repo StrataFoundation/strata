@@ -3,13 +3,22 @@ import { Keypair } from "@solana/web3.js";
 import { expect, use } from "chai";
 import ChaiAsPromised from "chai-as-promised";
 import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
-import { ExponentialCurveConfig, SplTokenBonding } from "@strata-foundation/spl-token-bonding";
+import {
+  ExponentialCurveConfig,
+  SplTokenBonding,
+} from "@strata-foundation/spl-token-bonding";
 import { TokenUtils } from "./utils/token";
-import { createMint, SplTokenMetadata } from "@strata-foundation/spl-utils";
+import {
+  createMint,
+  SplTokenMetadata,
+  createAtaAndMint,
+} from "@strata-foundation/spl-utils";
 import { DataV2 } from "@metaplex-foundation/mpl-token-metadata";
 import { NATIVE_MINT } from "@solana/spl-token";
 import { waitForUnixTime } from "./utils/clock";
 import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
+import { AnchorProvider } from "@project-serum/anchor";
+import { FungibleEntangler } from "@strata-foundation/fungible-entangler";
 
 use(ChaiAsPromised);
 
@@ -19,13 +28,17 @@ function percent(percent: number): number {
 
 describe("marketplace-sdk", () => {
   // Configure the client to use the local cluster.
-  anchor.setProvider(anchor.Provider.local());
-  const provider = anchor.getProvider();
+  anchor.setProvider(anchor.AnchorProvider.local("http://127.0.0.1:8899"));
+  const provider = anchor.getProvider() as AnchorProvider;
 
   const program = anchor.workspace.SplTokenBonding;
   const tokenUtils = new TokenUtils(provider);
   const tokenBondingProgram = new SplTokenBonding(provider, program);
   const splTokenMetadata = new SplTokenMetadata({ provider });
+  const fungibleEntangler = new FungibleEntangler(
+    provider,
+    anchor.workspace.FungibleEntangler
+  );
   const tokenCollectiveProgram = new SplTokenCollective({
     provider,
     program,
@@ -36,6 +49,7 @@ describe("marketplace-sdk", () => {
     provider,
     tokenBondingProgram,
     tokenCollectiveProgram,
+    fungibleEntangler,
     splTokenMetadata
   );
   const me = tokenBondingProgram.wallet.publicKey;
@@ -46,7 +60,7 @@ describe("marketplace-sdk", () => {
     });
   });
 
-  it("allows creation of an lbp", async () => {
+  it("allows creation of an lbc", async () => {
     const { targetMint, tokenBonding } =
       await marketplaceSdk.createLiquidityBootstrapper({
         authority: me,
@@ -118,7 +132,7 @@ describe("marketplace-sdk", () => {
       provider.connection,
       BigInt(tokenBondingAcct.goLiveUnixTime.toNumber() + 2)
     );
-    for(let i = 0; i < 25; i++) {
+    for (let i = 0; i < 25; i++) {
       await tokenBondingProgram.buy({
         tokenBonding,
         desiredTargetAmount: 1,
@@ -133,34 +147,35 @@ describe("marketplace-sdk", () => {
         b: 1,
         c: 0,
         pow: 0,
-        frac: 1
-      })
-    })
-    const mint = await createMint(provider, me, 0);
-    await tokenUtils.createAtaAndMint(provider, mint, 50);
-    const { offer, retrieval } = await marketplaceSdk.createTokenBondingForSetSupply({
-      fixedCurve: curve,
-      curve,
-      supplyMint: mint,
-      supplyAmount: 50,
-      baseMint: NATIVE_MINT,
-      buyBaseRoyaltyPercentage: 0,
-      sellBaseRoyaltyPercentage: 0,
-      buyTargetRoyaltyPercentage: 0,
-      sellTargetRoyaltyPercentage: 0,
+        frac: 1,
+      }),
     });
+    const mint = await createMint(provider, me, 0);
+    await createAtaAndMint(provider, mint, 50);
+    const { offer, retrieval } =
+      await marketplaceSdk.createTokenBondingForSetSupply({
+        fixedCurve: curve,
+        curve,
+        supplyMint: mint,
+        supplyAmount: 50,
+        baseMint: NATIVE_MINT,
+        buyBaseRoyaltyPercentage: 0,
+        sellBaseRoyaltyPercentage: 0,
+        buyTargetRoyaltyPercentage: 0,
+        sellTargetRoyaltyPercentage: 0,
+      });
 
     await tokenUtils.expectAtaBalance(me, mint, 0);
 
     await tokenBondingProgram.buy({
       desiredTargetAmount: 25,
       tokenBonding: offer.tokenBonding,
-      slippage: 0.05
-    });
-    await tokenBondingProgram.sell({
-      targetAmount: 25,
-      tokenBonding: retrieval.tokenBonding,
       slippage: 0.05,
+    });
+    await marketplaceSdk.fungibleEntanglerSdk.swapChildForParent({
+      amount: 25,
+      parentEntangler: retrieval.parentEntangler,
+      childEntangler: retrieval.childEntangler,
     });
 
     await tokenUtils.expectAtaBalance(me, mint, 25);
@@ -170,12 +185,12 @@ describe("marketplace-sdk", () => {
       tokenBonding: offer.tokenBonding,
       slippage: 0.05,
     });
-    await tokenBondingProgram.sell({
-      targetAmount: 25,
-      tokenBonding: retrieval.tokenBonding,
-      slippage: 0.05,
+    await marketplaceSdk.fungibleEntanglerSdk.swapChildForParent({
+      amount: 25,
+      parentEntangler: retrieval.parentEntangler,
+      childEntangler: retrieval.childEntangler,
     });
 
     await tokenUtils.expectAtaBalance(me, mint, 50);
-  })
+  });
 });

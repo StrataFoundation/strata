@@ -1,0 +1,41 @@
+---
+sidebar_position: 2
+---
+
+# Composability
+
+strata.im is built for composability. As we saw in [Getting Started](./getting_started),
+you can easily create token gated chatrooms and embed them anywhere.
+
+strata.im goes one step further. Because a chatroom is just transaction history
+on a given account, you can customize the logic and requirements to send a message.
+
+Want to require 2 DeGods and 100 $DUST to post a message? Write your own custom program!
+
+Want to tax advertizers for sending messages? This is also possible.
+
+## Creating a Custom Send Message
+
+To create a custom send message function, first you must implement an anchor program that takes
+a Chat Message as args:
+
+https://github.com/StrataFoundation/strata/tree/master/programs/chat/src/instructions/send_message/send_token_message_v0.rs
+
+If your chat requires any custom permissions, it is recommended you implement those as a PDA on chat, similar to `ChatPermissions` in the Strata chat contract:
+
+https://github.com/StrataFoundation/strata/tree/master/programs/chat/src/instructions/initialize_chat_permissions_v0.rs
+
+Once you have created a custom program, you can create a chat that uses that program via:
+
+```jsx async name=create_chat
+var { chat } =
+  await chatSdk.initializeChat({
+      name,
+      postMessageProgramId = new PublicKey("... your program id ..."),
+    });
+```
+
+If you would like to use our chat components, you will need to override the `SendMessageContext`.
+
+This will allow you to implement custom sendMessage logic.
+

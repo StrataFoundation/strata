@@ -3,6 +3,101 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.10.2](https://github.com/StrataFoundation/strata/compare/v3.10.1...v3.10.2) (2022-08-10)
+
+Upgrade to tsc as our build system from rollup. Should fix most of the build issues we've been having
+
+
+# [3.10.0](https://github.com/StrataFoundation/strata/compare/v3.9.12...v3.10.0) (2022-08-04)
+
+# Changed
+  * Massively reduce bundle size by bundling everything with rollup, using proper side effect free esm.
+  * Remove barrel style exports to help with tree shaking
+
+# Breaking
+
+  * StrataProviders no longer includes TokenListProvider. Manually include this if you would like token list fallback.
+
+## [3.9.5](https://github.com/StrataFoundation/strata/compare/v3.9.4...v3.9.5) (2022-07-26)
+
+**Note:** Version bump only for package @strata-foundation/strata
+
+### Fixed
+
+  * Bug in submitting multiple transactions with empty transaction groups
+
+
+## [3.9.4](https://github.com/StrataFoundation/strata/compare/v3.9.3...v3.9.4) (2022-07-26)
+
+**Note:** Version bump only for package @strata-foundation/strata
+
+### Fixed
+
+  * Make react a peer dep in chat-ui and marketplace-ui packages
+
+
+## [3.9.3](https://github.com/StrataFoundation/strata/compare/v3.9.2...v3.9.3) (2022-07-25)
+
+### Changed
+
+  * Better light mode for MintedNftNotification
+  * Remove "NFTs" as symbol from intermediary tokens on candymachine mints.
+
+
+## [3.9.2](https://github.com/StrataFoundation/strata/compare/v3.9.1...v3.9.2) (2022-07-12)
+
+### Fixed
+ 
+  * Disburse funds and transfer on both token bonding and fungible entangler could, under some circumstances, transer to an ata of an ata
+
+## [3.9.1](https://github.com/StrataFoundation/strata/compare/v3.9.0...v3.9.1) (2022-07-12)
+
+## Fixed
+
+  * Remove compute budget changes that cause bonding tx not to run
+
+
+# [3.9.0](https://github.com/StrataFoundation/strata/compare/v3.8.2...v3.9.0) (2022-07-11)
+
+## Breaking
+
+  * Move `HolaplexGraphqlProvider` to `react` package
+  * Move `useEndpoint` from `marketplace-ui` to `react` package
+  * Switch to fungible entangler for token offerings (selling a token without giving mint authority)
+    * Legacy implementations (system of two bonding curves, one sell only) are still supported. But deprecated
+  * `Swap` component now takes `id=` `mint` or `child entangler` public key
+
+## Added
+
+  * Fungible entangler is now officially in use. Pre-release instructions have changed.
+  * Chat packages now published for experimentation. These interfaces are subject to change, and `chat` program is not yet under governance.
+
+
+## [3.8.2](https://github.com/StrataFoundation/strata/compare/v3.8.1...v3.8.2) (2022-06-19)
+
+### Fixed
+
+  * Multiple account fetch caches floating around causing updates not to propegate
+
+## [3.8.1](https://github.com/StrataFoundation/strata/compare/v3.8.0...v3.8.1) (2022-06-18)
+
+### Fixed
+
+   * Not passing commitment to connection constructor could cause issues with accountFetchCache
+   * BigNumber overflow on BondingPlot
+
+### Changed
+
+  * DEFAULT_COMMITMENT to "confirmed"
+
+
+# [3.8.0](https://github.com/StrataFoundation/strata/compare/v3.7.1...v3.8.0) (2022-06-17)
+
+### Added
+
+   * marketplace-ui bonding plots now show price changes over time that weren't from buys, but rather the curve characteristics.
+
+
 ## [3.7.1](https://github.com/StrataFoundation/strata/compare/v3.7.0...v3.7.1) (2022-06-14)
 
 **Note:** Version bump only for package @strata-foundation/strata
@@ -34,6 +129,8 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 
 
+## Breaking
+  * Stop defaulting to my wallet in `useSolOwnedAmount`, causes issues with params that were not originally passed but are passed later
 
 
 # [3.6.0](https://github.com/StrataFoundation/strata/compare/v3.5.7...v3.6.0) (2022-05-13)

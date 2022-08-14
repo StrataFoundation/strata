@@ -15,6 +15,7 @@ export const FormContainer = ({
           {title}
         </Heading>
         <Box padding={8} backgroundColor="white" rounded="lg">
+          {/* @ts-ignore */}
           {children}
         </Box>
       </Container>

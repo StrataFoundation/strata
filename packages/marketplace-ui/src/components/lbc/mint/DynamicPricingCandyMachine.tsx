@@ -1,5 +1,3 @@
-import { mintOneToken } from "./candy-machine";
-import { MintedNftNotification } from "./MintedNftNotification";
 import {
   Box,
   Button,
@@ -21,33 +19,38 @@ import {
   Notification,
   useTokenBondingFromMint,
 } from "@strata-foundation/react";
+import BN from "bn.js";
 import React from "react";
 import toast from "react-hot-toast";
 import {
   CANDY_MACHINE_PROGRAM,
-  ICandyMachine,
-  useCandyMachineInfo,
-  useLivePrice,
+  ICandyMachine, useCandyMachineInfo,
+  useLivePrice
 } from "../../../hooks";
-import { toDate } from "./utils";
-import { IMintArgs, MintButton } from "../MintButton";
-import { LbcStatus } from "../LbcStatus";
-import { Branding } from "../Branding";
 import { BondingPlot } from "../BondingPlot";
-import { TransactionHistory } from "../TransactionHistory";
-import { CandyMachineInfo } from "./CandyMachineInfo";
+import { Branding } from "../Branding";
 import { LbcInfo } from "../LbcInfo";
+import { LbcStatus } from "../LbcStatus";
+import { IMintArgs, MintButton } from "../MintButton";
+import { TransactionHistory } from "../TransactionHistory";
+import {
+  mintOneToken
+} from "./candy-machine";
+import { CandyMachineInfo } from "./CandyMachineInfo";
+import { MintedNftNotification } from "./MintedNftNotification";
+import { toDate } from "./utils";
 
 export interface DynamicPricingCandyMachineProps {
   candyMachineId?: anchor.web3.PublicKey;
   onConnectWallet: () => void;
+  onSuccess?: (mint: PublicKey) => void;
 }
 
 export const DynamicPricingCandyMachine = (
   props: DynamicPricingCandyMachineProps
 ) => {
   const { connection } = useConnection();
-  const { publicKey, connected, signTransaction } = useWallet();
+  const { publicKey, connected, signTransaction, wallet } = useWallet();
 
   const cmState = useCandyMachineInfo(props.candyMachineId);
   const { candyMachine, isWhitelistUser, isActive, isPresale } = cmState;
@@ -71,17 +74,21 @@ export const DynamicPricingCandyMachine = (
         props.candyMachineId
       ) {
         const mint = await mintOneToken(candyMachine, publicKey, args);
-        toast.custom(
-          (t) => (
-            <MintedNftNotification
-              mint={mint}
-              onDismiss={() => toast.dismiss(t.id)}
-            />
-          ),
-          {
-            duration: Infinity,
-          }
-        );
+        if (props.onSuccess) {
+          props.onSuccess(mint)
+        } else {
+          toast.custom(
+            (t) => (
+              <MintedNftNotification
+                mint={mint}
+                onDismiss={() => toast.dismiss(t.id)}
+              />
+            ),
+            {
+              duration: Infinity,
+            }
+          );  
+        }
       }
     } catch (error: any) {
       let message =
@@ -147,7 +154,7 @@ export const DynamicPricingCandyMachine = (
       </TabList>
       <TabPanels>
         <TabPanel p={0} pt={4}>
-          <LbcStatus tokenBondingKey={tokenBonding?.publicKey} />
+          { typeof window !== "undefined" && <LbcStatus tokenBondingKey={tokenBonding?.publicKey} /> }
           <Box
             zIndex={1}
             shadow="xl"
@@ -159,18 +166,15 @@ export const DynamicPricingCandyMachine = (
           >
             {connected && (
               <>
-                {(loading || !candyMachine) && (
+                {!candyMachine && (
                   <Center>
                     <Spinner />
                   </Center>
                 )}
-                {!(loading || !candyMachine) && (
+                {candyMachine && (
                   <VStack align="stretch" spacing={8}>
                     {tokenBonding && (
-                      <LbcInfo
-                        price={price}
-                        tokenBondingKey={tokenBonding.publicKey}
-                      />
+                      <LbcInfo price={price} id={tokenBonding.targetMint} />
                     )}
 
                     {!tokenBonding && <CandyMachineInfo {...cmState} />}
@@ -179,6 +183,7 @@ export const DynamicPricingCandyMachine = (
                     candyMachine?.gatekeeper &&
                     publicKey &&
                     signTransaction ? (
+                      // @ts-ignore
                       <GatewayProvider
                         wallet={{
                           publicKey:
@@ -198,11 +203,16 @@ export const DynamicPricingCandyMachine = (
                           onMint={onMint}
                           tokenBondingKey={tokenBonding?.publicKey}
                           isDisabled={
-                            !isActive && (!isPresale || !isWhitelistUser)
+                            (!isActive && (!isPresale || !isWhitelistUser)) ||
+                            (candyMachine.isWhitelistOnly && !isWhitelistUser)
                           }
-                          disabledText={`Mint launches ${getCountdownDate(
-                            candyMachine
-                          )?.toLocaleTimeString()}`}
+                          disabledText={
+                            candyMachine.isWhitelistOnly && !isWhitelistUser
+                              ? "No Whitelist Token"
+                              : `Mint launches ${getCountdownDate(
+                                  candyMachine
+                                )?.toLocaleTimeString()}`
+                          }
                         />
                       </GatewayProvider>
                     ) : (
@@ -211,13 +221,15 @@ export const DynamicPricingCandyMachine = (
                         onMint={onMint}
                         tokenBondingKey={tokenBonding?.publicKey}
                         isDisabled={
-                          !isActive && (!isPresale || !isWhitelistUser)
+                          (!isActive && (!isPresale || !isWhitelistUser)) ||
+                          (candyMachine.isWhitelistOnly && !isWhitelistUser)
                         }
                         disabledText={
-                          candyMachine &&
-                          `Mint launches ${getCountdownDate(
-                            candyMachine
-                          )?.toLocaleTimeString()}`
+                          candyMachine.isWhitelistOnly && !isWhitelistUser
+                            ? "No Whitelist Token"
+                            : `Mint launches ${getCountdownDate(
+                                candyMachine
+                              )?.toLocaleTimeString()}`
                         }
                       />
                     )}
@@ -249,17 +261,10 @@ export const DynamicPricingCandyMachine = (
             minH="300px"
             bg={background}
           >
-            {loading && (
-              <Center>
-                <Spinner />
-              </Center>
-            )}
-            {!loading && tokenBonding && (
-              <VStack align="stretch" spacing={8}>
-                <BondingPlot tokenBondingKey={tokenBonding.publicKey} />
-                <TransactionHistory tokenBondingKey={tokenBonding.publicKey} />
-              </VStack>
-            )}
+            <VStack align="stretch" spacing={8}>
+              <BondingPlot tokenBondingKey={tokenBonding?.publicKey} />
+              <TransactionHistory tokenBondingKey={tokenBonding?.publicKey} />
+            </VStack>
           </Box>
         </TabPanel>
       </TabPanels>
@@ -276,7 +281,7 @@ const getCountdownDate = (candyMachine: ICandyMachine): Date | undefined => {
     candyMachine.goLiveDate
       ? candyMachine.goLiveDate
       : candyMachine.isPresale
-      ? new anchor.BN(new Date().getTime() / 1000)
+      ? new BN(new Date().getTime() / 1000)
       : undefined
   );
 };

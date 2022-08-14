@@ -9,7 +9,7 @@ import { Footer } from "../src/components/Footer";
 import { Providers } from "../src/components/Providers";
 import { BrowserView, MobileView } from "react-device-detect";
 import { IS_PRODUCTION } from "../src/constants";
-import * as gtag from "../src/utils/gtag";
+import { pageview } from "../src/utils/gtag";
 import SEO from "../next-seo.config";
 
 // Use require instead of import since order matters
@@ -23,7 +23,7 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
   useEffect(() => {
     const handleRouteChange = (url: URL) => {
       /* invoke analytics function only for production */
-      if (IS_PRODUCTION) gtag.pageview(url);
+      if (IS_PRODUCTION) pageview(url);
     };
     router.events.on("routeChangeComplete", handleRouteChange);
     return () => {

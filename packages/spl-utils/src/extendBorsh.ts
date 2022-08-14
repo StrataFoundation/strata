@@ -1,5 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import { BinaryReader, BinaryWriter } from 'borsh';
+// @ts-ignore
 import base58 from 'bs58';
 
 export type StringPublicKey = string;

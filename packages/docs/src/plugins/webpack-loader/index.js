@@ -12,6 +12,7 @@ module.exports = function (context, options) {
         node: {
           __dirname: true,
         },
+        stats: 'verbose',
         resolve: {
           fallback: {
             fs: false,
@@ -19,20 +20,19 @@ module.exports = function (context, options) {
             path: require.resolve("path-browserify"),
             crypto: require.resolve("crypto-browserify"),
             stream: require.resolve("stream-browserify"),
+            http: require.resolve("stream-http"),
+            https: require.resolve("https-browserify"),
           },
           alias: {
-            "@chakra-ui/react": path.resolve(
-              "../../node_modules/@chakra-ui/react"
-            ),
             "@solana/wallet-adapter-react": path.resolve(
               "../../node_modules/@solana/wallet-adapter-react"
             ),
-            "@solana/wallet-adapter-react-ui": path.resolve(
-              "../../node_modules/@solana/wallet-adapter-react-ui"
+            "bn.js": path.resolve("../../node_modules/bn.js"),
+            "@solana/web3.js": path.resolve(
+              "../../node_modules/@solana/web3.js"
             ),
-            "@toruslabs/solana-embed": path.resolve(
-              "../../node_modules/@toruslabs/solana-embed"
-            ),
+            borsh: path.resolve("../../node_modules/borsh"),
+            buffer: path.resolve("../../node_modules/buffer"),
           },
         },
         module: {
@@ -43,6 +43,11 @@ module.exports = function (context, options) {
               resolve: {
                 fullySpecified: false,
               },
+            },
+            // ensure our libs barrel files don't constitute imports
+            {
+              test: /packages\/.*src\/index.ts/i,
+              sideEffects: false,
             },
           ],
         },

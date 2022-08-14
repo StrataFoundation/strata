@@ -9,6 +9,7 @@ import { NATIVE_MINT } from "@solana/spl-token";
 
 const lru = new LRU({
   ttl: 1000 * 60 * 2,
+  ttlAutopurge: true
 });
 
 export async function getJupiterPriceCached(

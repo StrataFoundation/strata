@@ -4,7 +4,7 @@ import {
   Metadata,
 } from "@metaplex-foundation/mpl-token-metadata";
 import * as anchor from "@project-serum/anchor";
-import { IdlTypes, Program, Provider } from "@project-serum/anchor";
+import { IdlTypes, Program, AnchorProvider } from "@project-serum/anchor";
 import {
   AccountLayout,
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -22,6 +22,7 @@ import {
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
+  ComputeBudgetProgram,
 } from "@solana/web3.js";
 import {
   AnchorSdk,
@@ -412,7 +413,7 @@ export interface ICreateTokenBondingArgs {
      * Initial padding is an advanced feature, incorrect use could lead to insufficient reserves to cover sells
      *
      * Start the curve off at a given reserve and supply synthetically. This means price can start nonzero. The current use case
-     * for this is LBPs. Note that a curve cannot be adaptive. ignoreExternalReserveChanges and ignoreExternalSupplyChanges
+     * for this is LBCs. Note that a curve cannot be adaptive. ignoreExternalReserveChanges and ignoreExternalSupplyChanges
      * must be true
      * */
     initialSupplyPad: BN | number;
@@ -470,6 +471,27 @@ export interface IBuyArgs {
   slippage: number;
 }
 
+/** DEPRECATED. Will be removed in a future version */
+export interface IExtraInstructionArgs {
+  tokenBonding: ITokenBonding;
+  isBuy: boolean;
+  amount: BN | undefined;
+}
+
+export interface IPreInstructionArgs {
+  tokenBonding: ITokenBonding;
+  isBuy: boolean;
+  amount: BN | undefined;
+  desiredTargetAmount?: BN | number;
+  isFirst: boolean;
+}
+
+export interface IPostInstructionArgs {
+  isBuy: boolean;
+  amount: number | BN | undefined;
+  isLast: boolean; // is this the last swap transaction
+}
+
 export interface ISwapArgs {
   baseMint: PublicKey;
   targetMint: PublicKey;
@@ -492,13 +514,16 @@ export interface ISwapArgs {
   desiredTargetAmount?: BN | number;
   /** The slippage PER TRANSACTION */
   slippage: number;
+
+  /** DEPRECATED. Will be removed in a future version. Please use preInstructions instead */
+  extraInstructions?: (args: IExtraInstructionArgs) => Promise<InstructionResult<null>>;
   /** Optionally inject extra instructions before each trade. Usefull for adding txn fees */
-  extraInstructions?: (args: {
-    tokenBonding: ITokenBonding;
-    isBuy: boolean;
-    amount: BN | undefined;
-    desiredTargetAmount?: BN | number;
-  }) => Promise<InstructionResult<null>>;
+  preInstructions?: (args: IPreInstructionArgs) => Promise<InstructionResult<null>>;
+  /** Optionally inject extra instructions after each transaction */
+  postInstructions?: (args: IPostInstructionArgs) => Promise<InstructionResult<null>>;
+
+  /** If the token is entangled, this is the mint of the entangled token */
+  entangled?: PublicKey | null;
 
   /**
    * Number of times to retry the checks for a change in balance. Default: 5
@@ -539,9 +564,13 @@ export interface ITransferReservesArgs {
   tokenBonding: PublicKey;
   amount: BN | number;
   /**
-   * The destination for the reserves **Default:** ata of wallet
+   * The destination for the reserves **Default:** ata of destinationWallet
    */
   destination?: PublicKey;
+  /**
+   * The destination wallet for the reserves **Default:** 
+   */
+  destinationWallet?: PublicKey;
   /**
    * Optional (**Default**: Reserve authority on the token bonding). This parameter is only needed when updating the reserve
    * authority in the same txn as ruunning transfer
@@ -593,7 +622,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
   static ID = new PublicKey("TBondmkCYxaPCKG4CHYfVTcwQ8on31xnJrPzk8F8WsS");
 
   static async init(
-    provider: Provider,
+    provider: AnchorProvider,
     splTokenBondingProgramId: PublicKey = SplTokenBonding.ID
   ): Promise<SplTokenBonding> {
     const SplTokenBondingIDLJson = await anchor.Program.fetchIdl(
@@ -609,7 +638,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     return new this(provider, splTokenBonding);
   }
 
-  constructor(provider: Provider, program: Program<SplTokenBondingIDL>) {
+  constructor(provider: AnchorProvider, program: Program<SplTokenBondingIDL>) {
     super({ provider, program });
   }
 
@@ -683,7 +712,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       );
 
     const instructions: TransactionInstruction[] = [];
-    const signers = [];
+    const signers: Signer[] = [];
     signers.push(mintKeypair);
 
     instructions.push(
@@ -916,7 +945,6 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
   }: ICreateTokenBondingArgs): Promise<
     InstructionResult<ICreateTokenBondingOutput>
   > {
-
     if (!targetMint) {
       if (sellTargetRoyalties || buyTargetRoyalties) {
         throw new Error(
@@ -943,7 +971,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     }
 
     const instructions: TransactionInstruction[] = [];
-    const signers = [];
+    const signers: Signer[] = [];
     let shouldCreateMint = false;
     if (!targetMint) {
       signers.push(targetMintKeypair);
@@ -1252,8 +1280,11 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
   }
 
   async getUnixTime(): Promise<number> {
-    const acc = await this.provider.connection.getAccountInfo(SYSVAR_CLOCK_PUBKEY);
-    return Number(acc!.data.readBigInt64LE(8 * 4))
+    const acc = await this.provider.connection.getAccountInfo(
+      SYSVAR_CLOCK_PUBKEY
+    );
+    //@ts-ignore
+    return Number(acc!.data.readBigInt64LE(8 * 4));
   }
 
   /**
@@ -1291,7 +1322,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       buyFrozen
     );
     const reserveAuthorityChanges = anyDefined(reserveAuthority);
-    const instructions = [];
+    const instructions: TransactionInstruction[] = [];
     if (generalChanges) {
       if (!tokenBondingAcct.generalAuthority) {
         throw new Error(
@@ -1431,7 +1462,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       );
       usedAta = true;
     }
-    const instructions = [];
+    const instructions: TransactionInstruction[] = [];
 
     if (usedAta && !(await this.accountExists(destination))) {
       instructions.push(
@@ -1523,7 +1554,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       );
     }
 
-    const instructions = [];
+    const instructions: TransactionInstruction[] = [];
 
     instructions.push(
       await this.instruction.sellWrappedSolV0(
@@ -1638,8 +1669,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       tokenBondingAcct.goLiveUnixTime.toNumber()
     );
 
-    const instructions = [];
-    const signers = [];
+    const instructions: TransactionInstruction[] = [];
+    // let req = ComputeBudgetProgram.setComputeUnitLimit({units: 400000});
+    // instructions.push(req);
 
     if (!destination) {
       destination = await Token.getAssociatedTokenAddress(
@@ -1665,8 +1697,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       }
     }
 
-    let buyTargetAmount = null;
-    let buyWithBase = null;
+    let buyTargetAmount: any = null;
+    let buyWithBase: any = null;
     let maxPrice: number = 0;
 
     const unixTime = await this.getUnixTime();
@@ -1845,6 +1877,20 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         signers: [],
         output: null,
       }),
+    preInstructions = async () => {
+      return {
+        instructions: [],
+        signers: [],
+        output: null,
+      }
+    },
+    postInstructions = () =>
+      Promise.resolve({
+        instructions: [],
+        signers: [],
+        output: null,
+      }),
+    entangled = null,
   }: ISwapArgs): Promise<{ targetAmount: number }> {
     const hierarchyFromTarget = await this.getBondingHierarchy(
       (
@@ -1876,7 +1922,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     let currAmount = baseAmount ? toBN(baseAmount, baseMintInfo) : undefined;
 
     const hierarchyToTraverse = isBuy ? arrHierarchy.reverse() : arrHierarchy;
-    const processedMints = [];
+    const processedMints: any[] = [];
     for (const [index, subHierarchy] of hierarchyToTraverse.entries()) {
       const isLastHop = index === arrHierarchy.length - 1;
       const tokenBonding = subHierarchy.tokenBonding;
@@ -1884,10 +1930,11 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         (await this.getState())?.wrappedSolMint!
       );
 
+      const ataMint = entangled && isBuy ? entangled : isBuy ? tokenBonding.targetMint : tokenBonding.baseMint;
       const ata = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
-        isBuy ? tokenBonding.targetMint : tokenBonding.baseMint,
+        ataMint,
         sourceAuthority,
         true
       );
@@ -1947,18 +1994,33 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         currMint = tokenBonding.baseMint;
       }
 
-      const { instructions: extraInstrs, signers: extaSigners } =
+      const { instructions: extraInstrs, signers: extraSigners } =
         await extraInstructions({
           tokenBonding,
           amount: currAmount,
+          isBuy,
+        });
+
+      const { instructions: preInstrs, signers: preSigners } =
+        await preInstructions({
+          tokenBonding,
+          amount: currAmount,
           desiredTargetAmount,
+          isBuy,
+          isFirst: index == 0,
+        });
+
+      const { instructions: postInstrs, signers: postSigners } = 
+        await postInstructions({
+          isLast: isLastHop,
+          amount: expectedOutputAmount,
           isBuy,
         });
 
       try {
         await this.sendInstructions(
-          [...instructions, ...extraInstrs],
-          [...signers, ...extaSigners],
+          [...extraInstrs, ...preInstrs, ...instructions, ...postInstrs],
+          [...extraSigners, ...preSigners, ...signers, ...postSigners],
           payer
         );
       } catch (e: any) {
@@ -2111,7 +2173,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       tokenBondingAcct.goLiveUnixTime.toNumber()
     );
 
-    const instructions = [];
+    const instructions: TransactionInstruction[] = [];
+    // let req = ComputeBudgetProgram.setComputeUnitLimit({units: 350000});
+    // instructions.push(req);
     if (!source) {
       source = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -2296,6 +2360,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     destination,
     amount,
     reserveAuthority,
+    destinationWallet = this.wallet.publicKey,
     payer = this.wallet.publicKey,
   }: ITransferReservesArgs): Promise<InstructionResult<null>> {
     const tokenBondingAcct = (await this.getTokenBonding(tokenBonding))!;
@@ -2307,7 +2372,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       this.provider,
       tokenBondingAcct.baseMint
     );
-    const instructions = [];
+    const instructions: TransactionInstruction[] = [];
 
     if (!tokenBondingAcct.reserveAuthority) {
       throw new Error(
@@ -2315,21 +2380,11 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       );
     }
 
-    if (!destination) {
-      if (isNative) {
-        destination = this.wallet.publicKey;
-      } else {
-        destination = await Token.getAssociatedTokenAddress(
-          ASSOCIATED_TOKEN_PROGRAM_ID,
-          TOKEN_PROGRAM_ID,
-          tokenBondingAcct.baseMint,
-          this.wallet.publicKey,
-          true
-        );
-      }
+    if (!destination && isNative) {
+      destination = destinationWallet;
     }
 
-    const destAcct = await this.provider.connection.getAccountInfo(destination);
+    const destAcct = destination && await this.provider.connection.getAccountInfo(destination);
 
     // Destination is a wallet, need to get the ATA
     if (
@@ -2340,8 +2395,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         tokenBondingAcct.baseMint,
-        destination,
-        true
+        destinationWallet,
+        false // Explicitly don't allow owner off curve. You need to pass destination as an already created thing to do this
       );
       if (!(await this.accountExists(ataDestination))) {
         instructions.push(
@@ -2350,7 +2405,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
             TOKEN_PROGRAM_ID,
             tokenBondingAcct.baseMint,
             ataDestination,
-            destination,
+            destinationWallet,
             payer
           )
         );
@@ -2375,7 +2430,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         await this.instruction.transferReservesNativeV0(args, {
           accounts: {
             common,
-            destination,
+            destination: destination!,
             state: state.publicKey,
             wrappedSolMint: state.wrappedSolMint,
             mintAuthority: (
@@ -2391,7 +2446,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         await this.instruction.transferReservesV0(args, {
           accounts: {
             common,
-            destination,
+            destination: destination!,
           },
         })
       );

@@ -9,7 +9,7 @@ import {
   Button,
   Link,
 } from "@chakra-ui/react";
-import { DOCS_URL, MARKETPLACE_URL } from "@/constants";
+import { DOCS_URL, MARKETPLACE_URL } from "../../constants";
 import TextTransition, { presets } from "react-text-transition";
 
 const callouts = [

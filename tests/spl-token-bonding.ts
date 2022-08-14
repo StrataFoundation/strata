@@ -1,8 +1,8 @@
 import * as anchor from "@project-serum/anchor";
-import { BN } from "@project-serum/anchor";
+import { AnchorProvider, BN } from "@project-serum/anchor";
 import {
   createMint,
-  getAssociatedAccountBalance,
+  createAtaAndMint,
 } from "@strata-foundation/spl-utils";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -34,8 +34,8 @@ function percent(percent: number): number {
 
 describe("spl-token-bonding", () => {
   // Configure the client to use the local cluster.
-  anchor.setProvider(anchor.Provider.local());
-  const provider = anchor.getProvider();
+  anchor.setProvider(anchor.AnchorProvider.local("http://127.0.0.1:8899"));
+  const provider = anchor.getProvider() as AnchorProvider;
 
   const program = anchor.workspace.SplTokenBonding;
   const tokenUtils = new TokenUtils(provider);
@@ -101,7 +101,7 @@ describe("spl-token-bonding", () => {
     const DECIMALS = 2;
     beforeEach(async () => {
       baseMint = await createMint(provider, me, DECIMALS);
-      await tokenUtils.createAtaAndMint(provider, baseMint, INITIAL_BALANCE);
+      await createAtaAndMint(provider, baseMint, INITIAL_BALANCE);
       curve = await tokenBondingProgram.initializeCurve({
         config: new ExponentialCurveConfig({
           c: 1,
@@ -260,7 +260,7 @@ describe("spl-token-bonding", () => {
     const DECIMALS = 2;
     beforeEach(async () => {
       baseMint = await createMint(provider, me, DECIMALS);
-      await tokenUtils.createAtaAndMint(provider, baseMint, INITIAL_BALANCE);
+      await createAtaAndMint(provider, baseMint, INITIAL_BALANCE);
       curve = await tokenBondingProgram.initializeCurve({
         config: new ExponentialCurveConfig({
           c: 1,
@@ -372,7 +372,7 @@ describe("spl-token-bonding", () => {
 
     before(async () => {
       const baseMint = await createMint(provider, me, DECIMALS);
-      await tokenUtils.createAtaAndMint(provider, baseMint, INITIAL_BALANCE);
+      await createAtaAndMint(provider, baseMint, INITIAL_BALANCE);
       curve = await tokenBondingProgram.initializeCurve({
         config: new TimeCurveConfig()
           .addCurve(
@@ -450,7 +450,7 @@ describe("spl-token-bonding", () => {
 
     before(async () => {
       const baseMint = await createMint(provider, me, DECIMALS);
-      await tokenUtils.createAtaAndMint(provider, baseMint, INITIAL_BALANCE);
+      await createAtaAndMint(provider, baseMint, INITIAL_BALANCE);
       curve = await tokenBondingProgram.initializeCurve({
         config: new TimeDecayExponentialCurveConfig({
           c: 1,
@@ -513,7 +513,7 @@ describe("spl-token-bonding", () => {
     const DECIMALS = 2;
     beforeEach(async () => {
       baseMint = await createMint(provider, me, DECIMALS);
-      await tokenUtils.createAtaAndMint(
+      await createAtaAndMint(
         provider,
         baseMint,
         INITIAL_BALANCE,
@@ -606,8 +606,8 @@ describe("spl-token-bonding", () => {
     const DECIMALS = 2;
     beforeEach(async () => {
       baseMint = await createMint(provider, me, DECIMALS);
-      await tokenUtils.createAtaAndMint(provider, baseMint, INITIAL_BALANCE);
-      await tokenUtils.createAtaAndMint(
+      await createAtaAndMint(provider, baseMint, INITIAL_BALANCE);
+      await createAtaAndMint(
         provider,
         baseMint,
         INITIAL_BALANCE,
@@ -658,7 +658,7 @@ describe("spl-token-bonding", () => {
 
       const tx = new Transaction();
       tx.add(...instructions);
-      await provider.send(tx, [...signers, newWallet]);
+      await provider.sendAndConfirm(tx, [...signers, newWallet]);
 
       await tokenUtils.expectAtaBalance(
         newWallet.publicKey,
@@ -685,7 +685,7 @@ describe("spl-token-bonding", () => {
 
       const tx = new Transaction();
       tx.add(...instructions);
-      await provider.send(tx, [...signers, newWallet]);
+      await provider.sendAndConfirm(tx, [...signers, newWallet]);
 
       await tokenUtils.expectAtaBalance(
         newWallet.publicKey,
@@ -701,7 +701,7 @@ describe("spl-token-bonding", () => {
     initialBalance: number = 100_00
   ): Promise<{ tokenBonding: PublicKey; baseMint: PublicKey }> {
     const baseMint = await createMint(provider, me, 2);
-    await tokenUtils.createAtaAndMint(provider, baseMint, initialBalance);
+    await createAtaAndMint(provider, baseMint, initialBalance);
     const curve = await tokenBondingProgram.initializeCurve(c);
 
     const { tokenBonding } = await tokenBondingProgram.createTokenBonding({
@@ -1047,7 +1047,7 @@ describe("spl-token-bonding", () => {
     curves.forEach((curveSpec, index) => {
       it(`is zero sum with curve ${index}`, async () => {
         baseMint = await createMint(provider, me, DECIMALS);
-        await tokenUtils.createAtaAndMint(provider, baseMint, INITIAL_BALANCE);
+        await createAtaAndMint(provider, baseMint, INITIAL_BALANCE);
         // @ts-ignore
         curve = await tokenBondingProgram.initializeCurve(curveSpec);
 
@@ -1180,7 +1180,7 @@ describe("spl-token-bonding", () => {
 
     before(async () => {
       baseMint = await createMint(provider, me, DECIMALS);
-      await tokenUtils.createAtaAndMint(provider, baseMint, INITIAL_BALANCE);
+      await createAtaAndMint(provider, baseMint, INITIAL_BALANCE);
 
       let currentBaseMint = baseMint;
       for (const curveSpec of curves) {

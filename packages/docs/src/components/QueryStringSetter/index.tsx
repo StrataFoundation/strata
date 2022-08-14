@@ -5,10 +5,12 @@ import { useVariablesContext } from "../../theme/Root/variables";
 
 export function QueryStringSetter({
   name,
-  label
+  label,
+  conv = (v) => v,
 }: {
   label: string;
   name: string;
+  conv: (input: any) => any;
 }) {
   const [passedValue, setPassedValue] = useQueryString(name, "");
   const { setVariables, variables } = useVariablesContext();
@@ -17,7 +19,8 @@ export function QueryStringSetter({
       try {
         return {
           ...vars,
-          [name]: passedValue,
+          [name]: conv(passedValue),
+          [name + "Raw"]: passedValue,
         };
       } catch (e: any) {
         console.error(e);

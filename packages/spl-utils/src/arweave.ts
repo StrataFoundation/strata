@@ -88,11 +88,12 @@ export const prePayForFilesInstructions = async (
   const sizes = files.map((f) => f.size);
   const result = await calculate(sizes);
 
+  const lamports = Math.ceil(LAMPORTS_PER_SOL * result.solana);
   instructions.push(
     SystemProgram.transfer({
       fromPubkey: payer,
       toPubkey: AR_SOL_HOLDER_ID,
-      lamports: LAMPORTS_PER_SOL * result.solana,
+      lamports,
     })
   );
 

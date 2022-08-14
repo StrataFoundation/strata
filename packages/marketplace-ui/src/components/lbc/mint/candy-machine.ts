@@ -1,29 +1,26 @@
 import * as anchor from "anchor-17";
 
 import {
-  MintLayout,
-  TOKEN_PROGRAM_ID,
-  Token,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
+  MintLayout, Token, TOKEN_PROGRAM_ID
 } from "@solana/spl-token";
 import {
   PublicKey,
   Signer,
   SystemProgram,
   SYSVAR_SLOT_HASHES_PUBKEY,
-  TransactionInstruction,
+  TransactionInstruction
 } from "@solana/web3.js";
-import { IMintArgs } from "../MintButton";
 import { sendMultipleInstructions } from "@strata-foundation/spl-utils";
+import { IMintArgs } from "../MintButton";
 
+import { CANDY_MACHINE_PROGRAM, ICandyMachine } from "../../../hooks";
 import {
   CIVIC,
   getAtaForMint,
   getNetworkExpire,
   getNetworkToken,
-  SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
+  SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
 } from "./utils";
-import { CANDY_MACHINE_PROGRAM, ICandyMachine } from "../../../hooks";
 
 const TOKEN_METADATA_PROGRAM_ID = new anchor.web3.PublicKey(
   "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
@@ -204,10 +201,6 @@ export const mintOneToken = async (
     throw new Error("No bonding sdk")
   }
 
-  if (isNaN(maxPrice)) {
-    throw new Error("Invalid slippage")
-  }
-
   const mint = anchor.web3.Keypair.generate()
 
   const userTokenAccountAddress = (
@@ -219,17 +212,20 @@ export const mintOneToken = async (
     : payer
 
   const candyMachineAddress = candyMachine.publicKey
-  const remainingAccounts = []
-  const instructions = []
+  const remainingAccounts: any[] = []
+  const instructions: TransactionInstruction[] = []
   const signers: Signer[] = [mint]
-  const ataBalance = (
+  const ataBalance = candyMachine.tokenMint ? (
     await tokenBondingSdk.getTokenAccountBalance(userPayingAccountAddress)
-  ).toNumber()
+  ).toNumber() : (await candyMachine.program.provider.connection.getAccountInfo(payer))?.lamports
 
   let bondingInstructions: TransactionInstruction[] = []
   let bondingSigners: Signer[] = []
-  if (tokenBonding && ataBalance < 1) {
+  if (tokenBonding && (ataBalance || 0) < 1) {
     console.log("Buying bonding curve...", ataBalance)
+    if (isNaN(maxPrice)) {
+      throw new Error("Invalid slippage");
+    }
     const { instructions: bondInstrs, signers: bondSigners } = await tokenBondingSdk.buyInstructions({
       tokenBonding,
       desiredTargetAmount: 1,
@@ -383,9 +379,10 @@ export const mintOneToken = async (
   if (collectionPDAAccount && candyMachine.retainAuthority) {
     try {
       const collectionData =
+        // @ts-ignore
         (await candyMachine.program.account.collectionPda.fetch(
           collectionPDA
-        )) as CollectionData
+        )) as CollectionData;
       console.log(collectionData)
       const collectionMint = collectionData.mint
       const collectionAuthorityRecord = await getCollectionAuthorityRecordPDA(
@@ -421,10 +418,24 @@ export const mintOneToken = async (
     }
   }
 
+  // Close intermediary account, if it exists and doesn't hold more than 0 tokens
+  const cleanupInstructions: TransactionInstruction[] = [];
+  if (tokenBonding && (ataBalance || 0) == 1) {
+    cleanupInstructions.push(
+      Token.createCloseAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        userPayingAccountAddress,
+        payer,
+        payer,
+        []
+      )
+    );
+  }
+
   await sendMultipleInstructions(
     tokenBondingSdk.errors || new Map(),
     tokenBondingSdk.provider,
-    [bondingInstructions, instructions],
+    [bondingInstructions, instructions, cleanupInstructions],
     [bondingSigners, signers, []],
     payer,
     "confirmed"

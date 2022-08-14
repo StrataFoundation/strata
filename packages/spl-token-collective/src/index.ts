@@ -1,3 +1,4 @@
+//@ts-nocheck
 import {
   Metadata,
   Creator,
@@ -5,7 +6,7 @@ import {
   MetadataProgram,
 } from "@metaplex-foundation/mpl-token-metadata";
 import * as anchor from "@project-serum/anchor";
-import { IdlTypes, Program, Provider } from "@project-serum/anchor";
+import { AnchorProvider, IdlTypes, Program, Provider } from "@project-serum/anchor";
 import { getHashedName, NameRegistryState } from "@solana/spl-name-service";
 import {
   AccountInfo as TokenAccountInfo,
@@ -473,7 +474,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
   );
 
   static async init(
-    provider: Provider,
+    provider: AnchorProvider,
     splCollectiveProgramId: PublicKey = SplTokenCollective.ID,
     splTokenBondingProgramId: PublicKey = SplTokenBonding.ID
   ): Promise<SplTokenCollective> {
@@ -503,7 +504,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
   }
 
   constructor(opts: {
-    provider: Provider;
+    provider: AnchorProvider;
     program: Program<SplTokenCollectiveIDL>;
     splTokenBondingProgram: SplTokenBonding;
     splTokenMetadata: SplTokenMetadata;
@@ -642,10 +643,10 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       throw new Error("Collective already exists");
     }
 
-    const [mintTokenRef] = await SplTokenCollective.mintTokenRefKey(
-      mint
-    );
-    const tokenRefExists = !!(await this.provider.connection.getAccountInfo(mintTokenRef));
+    const [mintTokenRef] = await SplTokenCollective.mintTokenRefKey(mint);
+    const tokenRefExists = !!(await this.provider.connection.getAccountInfo(
+      mintTokenRef
+    ));
 
     if (tokenRef || tokenRefExists) {
       instructions.push(
@@ -690,8 +691,8 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       );
     }
 
-    const instructions2 = [];
-    const signers2 = [];
+    const instructions2: TransactionInstruction[] = [];
+    const signers2: Signer[] = [];
     let tokenBonding: PublicKey | undefined;
     if (bonding) {
       tokenBonding = (
@@ -784,7 +785,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       })
     )[0];
     const name = tokenRefAcct.name! as PublicKey;
-    const instructions0 = [];
+    const instructions0: TransactionInstruction[] = [];
 
     if (
       !ignoreMissingName &&
@@ -866,7 +867,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       this.programId
     );
 
-    const instructions1 = [];
+    const instructions1: TransactionInstruction[] = [];
     instructions1.push(
       await this.instruction.claimSocialTokenV0(
         {
@@ -930,7 +931,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       instructions1.push(...updateInstructions);
     }
 
-    const instructions2 = [];
+    const instructions2: TransactionInstruction[] = [];
     if (isPrimary) {
       const { instructions: setAsPrimaryInstrs } =
         await this.setAsPrimaryInstructions({
@@ -1344,14 +1345,18 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
         .ownedByName
         ? mintTokenRef
         : undefined,
-      // @ts-ignore
-      buyBaseRoyalties: tokenBondingSettings?.buyBaseRoyalties?.address || undefined,
-      // @ts-ignore
-      sellBaseRoyalties: tokenBondingSettings?.sellBaseRoyalties?.address || undefined,
-      // @ts-ignore
-      buyTargetRoyalties: tokenBondingSettings?.buyTargetRoyalties?.address || undefined,
-      // @ts-ignore
-      sellTargetRoyalties: tokenBondingSettings?.sellTargetRoyalties?.address || undefined,
+      buyBaseRoyalties:
+        // @ts-ignore
+        tokenBondingSettings?.buyBaseRoyalties?.address || undefined,
+      sellBaseRoyalties:
+        // @ts-ignore
+        tokenBondingSettings?.sellBaseRoyalties?.address || undefined,
+      buyTargetRoyalties:
+        // @ts-ignore
+        tokenBondingSettings?.buyTargetRoyalties?.address || undefined,
+      sellTargetRoyalties:
+        // @ts-ignore
+        tokenBondingSettings?.sellTargetRoyalties?.address || undefined,
       ...tokenBondingParams,
     });
     instructions2.push(...bondingInstructions);
@@ -1766,7 +1771,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       mint: tokenBondingAcct?.baseMint,
     });
 
-    const instructions = [];
+    const instructions: TransactionInstruction[] = [];
     if (!tokenRefAcct.isClaimed && !handle) {
       throw new Error(
         "Handle must be provided for opting out of unclaimed tokens"

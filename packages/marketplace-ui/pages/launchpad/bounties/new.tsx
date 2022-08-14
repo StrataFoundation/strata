@@ -1,6 +1,6 @@
-import { BountyForm } from "@/components/form/BountyForm";
-import { FormContainer } from "@/components/FormContainer";
-import { routes, route } from "@/utils/routes";
+import { BountyForm } from "../../../src/components/form/BountyForm";
+import { FormContainer } from "../../../src/components/FormContainer";
+import { routes, route } from "../../../src/utils/routes";
 import { NextPage } from "next";
 import { useRouter } from "next/router";
 

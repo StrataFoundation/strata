@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { PublicKey, AccountInfo } from "@solana/web3.js";
-import { useAccountFetchCache } from "../hooks";
+import { useAccountFetchCache } from "../hooks/useAccountFetchCache";
 import { TypedAccountParser } from "@strata-foundation/spl-utils";
 
 export interface ParsedAccountBase {
@@ -73,6 +73,7 @@ export function useAccount<T>(
       setState({ loading: true });
     }
 
+    let prevInfo = state.info;
     cache
       .searchAndWatch(
         id,
@@ -86,25 +87,25 @@ export function useAccount<T>(
         }
         disposeWatch = dispose;
         if (acc) {
-          setState(({ info }) => {
-            try {
-              return {
-                loading: false,
-                info: mergePublicKeys(
-                  info,
-                  (parser && parser(acc.pubkey, acc!.account)) as any
-                ),
-                account: acc.account,
-              };
-            } catch (e: any) {
-              console.error("Error while parsing", e);
-              return {
-                loading: false,
-                info: undefined,
-                account: acc.account,
-              }
-            }
-          });
+          try {
+            const nextInfo = mergePublicKeys(
+              prevInfo,
+              (parser && parser(acc.pubkey, acc!.account)) as any
+            );
+            prevInfo = nextInfo;
+            setState({
+              loading: false,
+              info: nextInfo,
+              account: acc.account,
+            });
+          } catch (e: any) {
+            console.error("Error while parsing", e);
+            setState({
+              loading: false,
+              info: undefined,
+              account: acc.account,
+            });
+          }
         } else {
           setState({ loading: false });
         }
@@ -126,7 +127,7 @@ export function useAccount<T>(
                   loading: false,
                   info: mergePublicKeys(
                     state.info,
-                    parser && parser(acc.pubkey, acc!.account) as any
+                    parser && (parser(acc.pubkey, acc!.account) as any)
                   ),
                   account: acc!.account,
                 });

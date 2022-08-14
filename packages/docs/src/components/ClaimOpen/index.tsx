@@ -1,5 +1,6 @@
+//@ts-ignore
 import BrowserOnly from "@docusaurus/BrowserOnly";
-import { useEndpoint } from "@strata-foundation/marketplace-ui";
+import { useEndpoint } from "@strata-foundation/react";
 import { u64 } from "@solana/spl-token";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -17,6 +18,7 @@ import {
 import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
 import React, { useEffect, useState } from "react";
 import { useAsyncCallback } from "react-async-hook";
+//@ts-ignore
 import styles from "./styles.module.css";
 
 const TOKEN_BONDING = "BBZ6tFH5b6tWxWebUe7xyWLZ3PHVCLAdRArAEACuJKHe";

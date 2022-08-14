@@ -44,6 +44,10 @@ const sections = [
         title: "GitHub",
         href: "https://github.com/StrataFoundation/strata",
       },
+      {
+        title: "Strata.im",
+        href: "https://strata.im",
+      },
     ],
   },
 ];

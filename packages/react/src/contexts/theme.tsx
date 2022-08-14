@@ -7,7 +7,7 @@ import {
 import { runIfFn, mergeWith } from "@chakra-ui/utils";
 
 const primary = {
-  50: "#fdefe7",
+  50: "rgba(238, 111, 46, 0.1)",
   100: "#fbd6c2",
   200: "#f8bb99",
   300: "#f5a070",
@@ -22,20 +22,64 @@ const primary = {
 function primaryAlwaysLightMode(componentConfig: any): any {
   return {
     ...componentConfig,
-    variants: Object.entries(componentConfig.variants || {}).reduce((acc, entry) => {
-      acc[entry[0]] = ({ colorMode, colorScheme, ...rest }: any) =>
-        runIfFn(entry[1], { ...rest, colorScheme, colorMode: colorScheme === "primary" ? "light" : colorMode });
+    variants: Object.entries(componentConfig.variants || {}).reduce(
+      (acc, entry) => {
+        acc[entry[0]] = ({ colorMode, colorScheme, ...rest }: any) =>
+          runIfFn(entry[1], {
+            ...rest,
+            colorScheme,
+            colorMode: colorScheme === "primary" ? "light" : colorMode,
+          });
 
-      return acc;
-    }, {} as Record<string, any>),
+        return acc;
+      },
+      {} as Record<string, any>
+    ),
     baseStyle: ({ colorMode, colorScheme, ...rest }: any) =>
-      runIfFn(componentConfig.baseStyle, { ...rest, colorScheme, colorMode: colorScheme === "primary" ? "light" : colorMode }),
+      runIfFn(componentConfig.baseStyle, {
+        ...rest,
+        colorScheme,
+        colorMode: colorScheme === "primary" ? "light" : colorMode,
+      }),
   };
 }
 
 export const theme: any = extendTheme({
   shadows: {
     outline: "none",
+  },
+  styles: {
+    // CSS reset gets rid of some things we do want
+    global: {
+      li: {
+        display: "list-item",
+        textAlign: "-webkit-match-parent",
+      },
+      ul: {
+        paddingInlineStart: "20px",
+      },
+      ol: {
+        display: "block",
+        listStyleType: "decimal",
+        marginBlockStart: "1em",
+        marginBlockEnd: "1em",
+        marginInlineStart: "0px",
+        marginInlineEnd: "0px",
+        paddingInlineStart: "40px",
+      },
+      blockquote: {
+        display: "block",
+        marginBlockStart: "1em",
+        marginBlockEnd: "1em",
+        marginInlineStart: "40px",
+        marginInlineEnd: "40px",
+
+        borderLeft: "5px solid #ccc",
+        margin: "1.5em 10px",
+        padding: "0.5em 10px 0.5em 10px",
+      },
+      code: { fontFamily: "monospace" },
+    },
   },
   initialColorMode: "light",
   useSystemColorMode: false,
@@ -46,13 +90,13 @@ export const theme: any = extendTheme({
   },
   components: {
     Button: primaryAlwaysLightMode(
-    mergeWith(
-      {
-        baseStyle: { _focus: { boxShadow: "none" } },
-      },
-      chakraTheme.components.Button
-    )
-  ),
+      mergeWith(
+        {
+          baseStyle: { _focus: { boxShadow: "none" } },
+        },
+        chakraTheme.components.Button
+      )
+    ),
     Progress: primaryAlwaysLightMode(chakraTheme.components.Progress),
     Input: {
       variants: {
@@ -111,8 +155,12 @@ export const theme: any = extendTheme({
   },
 });
 
-export const ThemeProvider: FC<{resetCSS?: boolean}> = ({ children, resetCSS = false }) => (
+export const ThemeProvider: FC<React.PropsWithChildren<{ resetCSS?: boolean }>> = ({
+  children,
+  resetCSS = false,
+}) => (
   <ChakraProvider resetCSS={resetCSS} theme={theme}>
+    {/* @ts-ignore */}
     {children}
   </ChakraProvider>
 );

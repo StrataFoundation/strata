@@ -89,7 +89,7 @@ export const App: FC = ({ children }) => (
 Let's create a simple social token for testing, then display it:
 
 ```jsx async name=create_social
-var { ownerTokenRef, tokenBonding } =
+var { ownerTokenRef, tokenBonding, targetMint } =
   await tokenCollectiveSdk.createSocialToken({
     ignoreIfExists: true, // If a Social Token already exists for this wallet, ignore.
     metadata: {
@@ -116,13 +116,13 @@ import { CSSReset } from "@chakra-ui/react";
 
 ```jsx live
 function TokenDisplay() {
-  const { tokenBonding } = useVariables(); // Getting token bonding from above code;
+  const { targetMint } = useVariables(); // Getting token bonding from above code;
 
   if (tokenBonding) {
     // Shadow div and css reset are not required, but will make sure our styles do not conflict with yours
     return <ReactShadow.div>
       <StrataProviders resetCSS onError={e => console.error(e)}>
-        <Swap tokenBondingKey={tokenBonding} />
+        <Swap id={targetMint} />
       </StrataProviders>
     </ReactShadow.div>
   }

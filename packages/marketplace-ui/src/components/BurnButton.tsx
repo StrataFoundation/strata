@@ -36,7 +36,7 @@ export const BurnButton = ({ mintKey }: { mintKey: PublicKey }) => {
               []
             )
           );
-          await provider.send(tx);
+          await provider.sendAndConfirm(tx);
         }
       }}
     >

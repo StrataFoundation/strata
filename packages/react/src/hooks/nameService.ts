@@ -3,10 +3,12 @@ import {
   getNameAccountKey,
   NameRegistryState,
   ReverseTwitterRegistryState,
-} from "@bonfida/spl-name-service";
+} from "@solana/spl-name-service";
 import { useConnection } from "@solana/wallet-adapter-react";
 import { Connection, PublicKey } from "@solana/web3.js";
-import { getOwnerForName, useAccount, useAccountFetchCache } from ".";
+import { useAccount } from "./useAccount";
+import { getOwnerForName } from "./tokenRef";
+import { useAccountFetchCache } from "./useAccountFetchCache";
 import { deserialize } from "borsh";
 import { useAsync } from "react-async-hook";
 

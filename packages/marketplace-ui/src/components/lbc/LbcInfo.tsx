@@ -1,13 +1,9 @@
 import {
   Box,
   BoxProps,
-  Button,
   Center,
-  Collapse,
   HStack,
   Icon,
-  LightMode,
-  Link,
   Progress,
   Spinner,
   Stack,
@@ -16,20 +12,18 @@ import {
   Tooltip,
   useColorModeValue,
   useDisclosure,
-  useInterval,
-  VStack
+  VStack,
 } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
 import {
-  useCapInfo, useCurve,
+  useCapInfo,
+  useCurve,
   useSolanaUnixTime,
-  useTokenBonding,
-  useTokenMetadata
+  useTokenSwapFromId,
+  useMetaplexTokenMetadata,
 } from "@strata-foundation/react";
-import moment from "moment";
 import React, { useEffect, useState } from "react";
 import { buildStyles, CircularProgressbar } from "react-circular-progressbar";
-import { BsChevronDown, BsChevronUp } from "react-icons/bs";
 import { useLivePrice } from "../..//hooks/useLivePrice";
 import { numberWithCommas } from "../../utils/numberWithCommas";
 import { RiInformationFill } from "react-icons/ri";
@@ -57,22 +51,27 @@ export const BigText = ({ children, ...other }: TextProps) => {
 };
 
 export const LbcInfo = ({
-  tokenBondingKey,
+  id,
   useTokenOfferingCurve = false,
   price: inputPrice,
 }: {
-  tokenBondingKey: PublicKey;
+  id: PublicKey;
   useTokenOfferingCurve?: boolean;
   price?: number;
 }) => {
   const { isOpen, onToggle } = useDisclosure({
     defaultIsOpen: false,
   });
-  const { info: tokenBonding, loading: loadingBonding } =
-    useTokenBonding(tokenBondingKey);
-  const { price, loading: loadingPricing } = useLivePrice(tokenBondingKey);
-  const { numRemaining, mintCap } = useCapInfo(
-    tokenBondingKey,
+  const {
+    tokenBonding,
+    numRemaining,
+    loading: loadingBonding,
+  } = useTokenSwapFromId(id);
+  const { price, loading: loadingPricing } = useLivePrice(
+    tokenBonding?.publicKey
+  );
+  const { mintCap } = useCapInfo(
+    tokenBonding?.publicKey,
     useTokenOfferingCurve
   );
 
@@ -88,7 +87,8 @@ export const LbcInfo = ({
   useEffect(() => {
     setElapsedTime(
       tokenBonding
-        ? (unixTime || (new Date().valueOf() / 1000)) - tokenBonding.goLiveUnixTime.toNumber()
+        ? (unixTime || new Date().valueOf() / 1000) -
+            tokenBonding.goLiveUnixTime.toNumber()
         : undefined
     );
   }, [unixTime]);
@@ -98,10 +98,15 @@ export const LbcInfo = ({
     (tokenBonding?.goLiveUnixTime.toNumber() || 0) + (maxTime || 0)
   );
 
-  const isLive = (tokenBonding && unixTime) ? tokenBonding.goLiveUnixTime.toNumber() < unixTime : false;
+  const isLive =
+    tokenBonding && unixTime
+      ? tokenBonding.goLiveUnixTime.toNumber() < unixTime
+      : false;
 
-  const { metadata } = useTokenMetadata(tokenBonding?.baseMint);
-  const { metadata: targetMeta } = useTokenMetadata(tokenBonding?.targetMint);
+  const { metadata } = useMetaplexTokenMetadata(tokenBonding?.baseMint);
+  const { metadata: targetMeta } = useMetaplexTokenMetadata(
+    tokenBonding?.targetMint
+  );
 
   const renderer = ({
     days,
@@ -153,6 +158,7 @@ export const LbcInfo = ({
               </Box>
             </HStack>
             {isLive ? (
+              // @ts-ignore
               <ReactCountdown
                 date={endDate}
                 now={() => (unixTime ? unixTime * 1000 : new Date().valueOf())}
@@ -186,6 +192,8 @@ export const LbcInfo = ({
                 <BigText>
                   {isNaN(priceToUse)
                     ? "Not Started"
+                    : metadata?.data.symbol === "USDC"
+                    ? `$${numberWithCommas(priceToUse, 2)}`
                     : `${numberWithCommas(priceToUse, 4)} ${
                         metadata?.data.symbol
                       }`}

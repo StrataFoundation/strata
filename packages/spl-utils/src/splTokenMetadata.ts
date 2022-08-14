@@ -10,8 +10,10 @@ import {
   MetadataData,
   MetadataKey,
   UpdateMetadataV2,
+  VerifyCollection,
+  CreateMasterEditionV3
 } from "@metaplex-foundation/mpl-token-metadata";
-import { Provider } from "@project-serum/anchor";
+import { AnchorProvider, BN } from "@project-serum/anchor";
 import { AccountInfo as TokenAccountInfo, MintInfo } from "@solana/spl-token";
 import { PublicKey, Signer, TransactionInstruction } from "@solana/web3.js";
 import { getMintInfo, InstructionResult, sendInstructions, truthy } from ".";
@@ -100,6 +102,18 @@ export interface IMetadataExtension {
   };
 }
 
+export interface ICreateMasterEditionInstructionsArgs {
+  mint: PublicKey;
+  mintAuthority?: PublicKey;
+  payer?: PublicKey;
+}
+
+export interface IVerifyCollectionInstructionsArgs {
+  collectionMint: PublicKey;
+  nftMint: PublicKey;
+  payer?: PublicKey;
+}
+
 export interface ICreateMetadataInstructionsArgs {
   data: DataV2;
   authority?: PublicKey;
@@ -170,18 +184,19 @@ const imageFromJson = (newUri: string, extended: any) => {
   }
 };
 
-const localStorage = global.localStorage || localStorageMemory;
+//@ts-ignore
+const localStorage = (typeof global !== "undefined" && global.localStorage) || localStorageMemory;
 
 export class SplTokenMetadata {
-  provider: Provider;
+  provider: AnchorProvider;
 
-  static async init(provider: Provider): Promise<SplTokenMetadata> {
+  static async init(provider: AnchorProvider): Promise<SplTokenMetadata> {
     return new this({
       provider,
     });
   }
 
-  constructor(opts: { provider: Provider }) {
+  constructor(opts: { provider: AnchorProvider }) {
     this.provider = opts.provider;
   }
 
@@ -461,6 +476,90 @@ export class SplTokenMetadata {
 
     // Use the uploaded arweave files in token metadata
     return `https://arweave.net/${metadataFile.transactionId}`;
+  }
+
+  async createMasterEditionInstructions({
+    mint,
+    mintAuthority = this.provider.wallet.publicKey,
+    payer = this.provider.wallet.publicKey,
+  }: ICreateMasterEditionInstructionsArgs): Promise<
+    InstructionResult<{ metadata: PublicKey }>
+  > {
+    const metadataPubkey = await Metadata.getPDA(mint);
+    const masterEditionPubkey = await MasterEdition.getPDA(mint);
+    const instructions: TransactionInstruction[] = new CreateMasterEditionV3(
+      {
+        feePayer: payer,
+      },
+      {
+        edition: masterEditionPubkey,
+        metadata: metadataPubkey,
+        mint,
+        mintAuthority,
+        updateAuthority: mintAuthority,
+        maxSupply: new BN(0),
+      },
+    ).instructions;
+
+    return {
+      instructions,
+      signers: [],
+      output: {
+        metadata: metadataPubkey,
+      }
+    };
+  }
+
+  async createMasterEdition(
+    args: ICreateMasterEditionInstructionsArgs
+  ): Promise<{ metadata: PublicKey }> {
+    const { instructions, signers, output } =
+      await this.createMasterEditionInstructions(args);
+
+    await this.sendInstructions(instructions, signers, args.payer);
+
+    return output
+  }
+
+  async verifyCollectionInstructions({
+    nftMint,
+    collectionMint,
+    payer = this.provider.wallet.publicKey,
+  }: IVerifyCollectionInstructionsArgs): Promise<
+    InstructionResult<{ metadata: PublicKey }>
+  > {
+      const metadataAccount = await Metadata.getPDA(nftMint);
+      const collectionMetadataAccount = await Metadata.getPDA(collectionMint);
+      const collectionMasterEdition = await MasterEdition.getPDA(collectionMint);
+      const instructions: TransactionInstruction[] = new VerifyCollection(
+        { feePayer: payer },
+        {
+          metadata: metadataAccount,
+          collectionAuthority: this.provider.wallet.publicKey,
+          collectionMint: collectionMint,
+          collectionMetadata: collectionMetadataAccount,
+          collectionMasterEdition: collectionMasterEdition,
+        },
+      ).instructions;
+      
+      return {
+        instructions,
+        signers: [],
+        output: {
+          metadata: metadataAccount,
+        }
+      };
+  }
+
+  async verifyCollection(
+    args: IVerifyCollectionInstructionsArgs
+  ): Promise<{ metadata: PublicKey }> {
+    const { instructions, signers, output } =
+      await this.verifyCollectionInstructions(args);
+
+    await this.sendInstructions(instructions, signers, args.payer);
+
+    return output
   }
 
   async createMetadataInstructions({
