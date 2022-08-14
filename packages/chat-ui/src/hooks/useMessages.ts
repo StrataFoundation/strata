@@ -367,7 +367,7 @@ export function useMessages({
     }
 
     return messages
-      .filter((msg) => msg.type !== MessageType.React)
+      .filter((msg) => msg.type !== MessageType.React && msg.chatKey.equals(chat))
       .map((message) => {
         cachedReactsLocal[message.id] = cachedReactsLocal[message.id] || [];
         if (
