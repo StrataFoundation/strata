@@ -211,6 +211,7 @@ const lambdaFetcher = async (args: FetchArgs) => {
         sender: new PublicKey(d.sender),
         signer: new PublicKey(d.signer),
         chat: new PublicKey(d.chat),
+        chatKey: new PublicKey(d.chat),
         pending: false,
         totalParts: Number(d.totalParts),
         currentPart: Number(d.currentPart),
