@@ -60,7 +60,7 @@
     "bip39": "^3.0.4",
     "bn.js": "^5.2.0",
     "emoji-mart": "^5.1.0",
-    "lit-js-sdk": "^1.1.179",
+    "lit-js-sdk": "^1.1.211",
     "localstorage-memory": "^1.0.3",
     "lodash": "^4.17.21",
     "moment": "^2.29.3",
