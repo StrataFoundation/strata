@@ -34,6 +34,19 @@ const sections = [
     ],
   },
   {
+    title: "Policies",
+    items: [
+      {
+        title: "Terms of Service",
+        href: "/terms-of-service.pdf",
+      },
+      {
+        title: "Privacy Policy",
+        href: "/privacy-policy.pdf",
+      },
+    ],
+  },
+  {
     title: "More",
     items: [
       {
