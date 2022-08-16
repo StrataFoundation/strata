@@ -1,2 +1,2 @@
 #!/bin/sh
-lerna run --parallel precommit
+npx lerna run --parallel precommit
