@@ -2317,9 +2317,6 @@ function collectionAccessPermissions(
     method: "balanceOfMetaplexCollection",
     params: [permittedCollection.toBase58()],
     chain,
-    pdaParams: [],
-    pdaInterface: { offset: 0, fields: {} },
-    pdaKey: "",
     returnValueTest: {
       key: "",
       comparator: ">=",
@@ -2336,9 +2333,6 @@ function tokenAccessPermissions(
   return {
     method: "balanceOfToken",
     params: [readPermissionMint.toBase58()],
-    pdaParams: [],
-    pdaInterface: { offset: 0, fields: {} },
-    pdaKey: "",
     chain,
     returnValueTest: {
       key: `$.amount`,
@@ -2352,9 +2346,6 @@ function myWalletPermissions(wallet: PublicKey) {
   return {
     method: "",
     params: [":userAddress"],
-    pdaParams: [],
-    pdaInterface: { offset: 0, fields: {} },
-    pdaKey: "",
     chain: "solana",
     returnValueTest: {
       key: "",
@@ -2368,9 +2359,6 @@ function nativePermissions(wallet: PublicKey, threshold: BN, chain: string) {
   return {
     method: "getBalance",
     params: [wallet.toBase58()],
-    pdaParams: [],
-    pdaInterface: { offset: 0, fields: {} },
-    pdaKey: "",
     chain,
     returnValueTest: {
       key: "",
