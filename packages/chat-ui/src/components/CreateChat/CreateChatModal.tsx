@@ -61,6 +61,7 @@ export interface ICreateChatModalState {
   wizardData: {
     name: string;
     identifier: string;
+    description: string;
     image: undefined | File;
     imageUrl: undefined | string;
     imageUploaded: boolean;
@@ -81,6 +82,7 @@ export const initialState: ICreateChatModalState = {
   wizardData: {
     name: "",
     identifier: "",
+    description: "",
     image: undefined,
     imageUrl: undefined,
     imageUploaded: false,

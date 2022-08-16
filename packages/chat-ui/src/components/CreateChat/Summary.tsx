@@ -149,6 +149,7 @@ export const Summary: React.FC<ISummaryProps> = ({ state, onBack, onNext }) => {
     wizardData: {
       name,
       identifier,
+      description,
       readType,
       readForm,
       postType,
@@ -201,6 +202,7 @@ export const Summary: React.FC<ISummaryProps> = ({ state, onBack, onNext }) => {
             <LabelCodeValue label="name" value={name} />
             {/* @ts-ignore */}
             <LabelCodeValue label="domain" value={identifier + ".chat"} />
+            <LabelCodeValue label="description" value={description} />
             {/* @ts-ignore */}
             <LabelCodeValue label="image">
               <Image

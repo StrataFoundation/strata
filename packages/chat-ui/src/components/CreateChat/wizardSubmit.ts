@@ -237,7 +237,34 @@ export const wizardSubmit = async ({
       ? new PublicKey(postForm.collectionKey!)
       : undefined;
 
-  if (!readPermissionKey) {
+  let chatMetadataUri = "";
+  // Upload chat metadata json
+  if (wizardData.description && wizardData.description != "") {
+    try {
+      setState({
+        subStatus: "Uploading read token metadata to SHDW drive...",
+      });
+
+      const file = getJsonFile({
+        description: wizardData.description
+      });
+      randomizeFileName(file);
+
+      chatMetadataUri = (await uploadFiles(
+        chatSdk!.provider,
+        [file],
+        delegateWallet
+      ))[0];
+    } catch(err) {
+      innerError = err as Error;
+      setState({
+        error: err as Error,
+      });
+    }
+  }
+
+  // Create read token if needed
+  if (!readPermissionKey && !innerError) {
     readPermissionAmount = toBN(
       readForm.amount!,
       defaultBondingOpts.targetMintDecimals
@@ -250,6 +277,7 @@ export const wizardSubmit = async ({
     innerError = readToken.innerError;
   }
 
+  // Create post token if needed
   const needsPostPermissionToken = !postPermissionKey && !innerError;
   if (needsPostPermissionToken && !postIsSameAsRead) {
     postPermissionAmount = toBN(
@@ -262,57 +290,58 @@ export const wizardSubmit = async ({
     readPermissionInstructions = postToken.tokenPermissionInstructions;
     readPermissionSigners = postToken.tokenPermissionSigners;
     innerError = postToken.innerError;
-    
+
   } else if (needsPostPermissionToken && postIsSameAsRead) {
     postPermissionKey = readPermissionKey;
     postPermissionAmount = readPermissionAmount;
     postPermissionType = readPermissionType;
   }
-
-  if (!innerError) {
-    const chatOut = await chatSdk.initializeChatInstructions({
-      name,
-      identifier,
-      imageUrl,
-      permissions: {
-        readPermissionKey: readPermissionKey!,
-        defaultReadPermissionAmount: readPermissionAmount,
-        readPermissionType,
-        postPermissionKey: postPermissionKey!,
-        postPermissionAmount,
-        postPermissionType,
-      },
-    });
-
-    setState({
-      subStatus: `Creating ${identifier} chat...`,
-    });
-
-    try {
-      await sendMultipleInstructions(
-        chatSdk.errors || tokenBondingSdk.errors || new Map(),
-        chatSdk.provider,
-        [
-          ...readPermissionInstructions,
-          ...postPermissionInstructions,
-          ...chatOut.instructions,
-        ],
-        [
-          ...readPermissionSigners,
-          ...postPermissionSigners,
-          ...chatOut.signers,
-        ]
-      );
-
-      setState({ status: "success", subStatus: undefined });
-    } catch (e) {
-      setState({
-        status: undefined,
-        subStatus: undefined,
-        error: e as Error,
-      });
-    }
-  } else {
+  if (innerError) {
     setState({ status: undefined, subStatus: undefined });
+    return;
   }
+  const chatOut = await chatSdk.initializeChatInstructions({
+    name,
+    identifier,
+    imageUrl,
+    permissions: {
+      readPermissionKey: readPermissionKey!,
+      defaultReadPermissionAmount: readPermissionAmount,
+      readPermissionType,
+      postPermissionKey: postPermissionKey!,
+      postPermissionAmount,
+      postPermissionType,
+    },
+    metadataUrl: chatMetadataUri,
+  });
+
+  setState({
+    subStatus: `Creating ${identifier} chat...`,
+  });
+
+  try {
+    await sendMultipleInstructions(
+      chatSdk.errors || tokenBondingSdk.errors || new Map(),
+      chatSdk.provider,
+      [
+        ...readPermissionInstructions,
+        ...postPermissionInstructions,
+        ...chatOut.instructions,
+      ],
+      [
+        ...readPermissionSigners,
+        ...postPermissionSigners,
+        ...chatOut.signers,
+      ]
+    );
+
+    setState({ status: "success", subStatus: undefined });
+  } catch (e) {
+    setState({
+      status: undefined,
+      subStatus: undefined,
+      error: e as Error,
+    });
+  }
+
 };

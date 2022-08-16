@@ -56,6 +56,7 @@ const validationSchema = yup
         /^[a-zA-Z0-9\_]+$/g,
         "must be alphanumeric and not have any spaces"
       ),
+    description: yup.string(),
     image: yup.mixed(),
     imageUrl: yup.string(),
   })
@@ -280,6 +281,19 @@ export const BasicInfo: React.FC<IBasicInfoProps> = ({
             </FormErrorMessage>
           )}
         </FormControl>
+        <FormControlWithError
+          id="description"
+          label="Description"
+          errors={errors}
+          help="The description of your chat (optional)"
+        >
+          <Input
+            id="description"
+            variant="filled"
+            {...inputBg}
+            {...register("description")}
+          />
+        </FormControlWithError>
         <FormControl isInvalid={!!errors.image?.message}>
           <FormLabel>Upload Picture</FormLabel>
           <HStack w="full" spacing={4}>
