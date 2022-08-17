@@ -99,19 +99,9 @@ const Home = () => {
                 />
               </Flex>
             </Stack>
+            <Divider />
           </Stack>
-          <Stack
-            direction="column"
-            align="start"
-            spacing={4}
-            w="full"
-            pb="100px"
-          >
-            <Heading as="h1" size="xl" fontWeight="extrabold">
-              New Communites
-            </Heading>
-            <NewCommunities />
-          </Stack>
+          <NewCommunities />
         </Stack>
       </Container>
       <Footer />

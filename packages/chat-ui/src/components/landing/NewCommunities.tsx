@@ -4,9 +4,11 @@ import { GraphChat, useChats } from "../../../src/hooks/useChats";
 import {
   Button,
   Center,
+  Heading,
   HStack,
   Image,
   SimpleGrid,
+  Stack,
   Text,
   useColorModeValue,
   VStack,
@@ -99,13 +101,20 @@ const featuredKeys = new Set(FEATURED_COMMUNITIES.map((c) => c.publicKey));
 export const NewCommunities = () => {
   const { chats } = useChats();
 
+  if (chats.length == 0) return null;
+
   return (
-    <SimpleGrid columns={{ sm: 2, md: 3, lg: 4 }} spacing={4}>
-      {chats
-        .filter((chat) => !featuredKeys.has(chat.publicKey))
-        .map((chat: GraphChat) => (
-          <Community key={chat.publicKey} {...chat} />
-        ))}
-    </SimpleGrid>
+    <Stack direction="column" align="start" spacing={4} w="full" pb="100px">
+      <Heading as="h1" size="xl" fontWeight="extrabold">
+        New Communities
+      </Heading>
+      <SimpleGrid columns={{ sm: 2, md: 3, lg: 4 }} spacing={4}>
+        {chats
+          .filter((chat) => !featuredKeys.has(chat.publicKey))
+          .map((chat: GraphChat) => (
+            <Community key={chat.publicKey} {...chat} />
+          ))}
+      </SimpleGrid>
+    </Stack>
   );
 };
