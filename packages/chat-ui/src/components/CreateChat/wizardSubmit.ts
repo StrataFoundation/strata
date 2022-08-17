@@ -123,8 +123,9 @@ async function createPermissionToken({
   const tokenForm = isRead ? readForm : postForm;
   randomizeFileName(file);
 
-  let tokenPermissionKey, tokenPermissionInstructions, tokenPermissionSigners, innerError;
-
+  let tokenPermissionKey, innerError;
+  let tokenPermissionInstructions: TransactionInstruction[][] = [];
+  let tokenPermissionSigners: Signer[][] = [];
   try {
     setState({
       subStatus: "Uploading read token metadata to SHDW drive...",
@@ -286,9 +287,9 @@ export const wizardSubmit = async ({
     );
 
     const postToken = await createPermissionToken({sdks, data, delegateWallet, setState, isRead: false});
-    readPermissionKey = postToken.tokenPermissionKey;
-    readPermissionInstructions = postToken.tokenPermissionInstructions;
-    readPermissionSigners = postToken.tokenPermissionSigners;
+    postPermissionKey = postToken.tokenPermissionKey;
+    postPermissionInstructions = postToken.tokenPermissionInstructions;
+    postPermissionSigners = postToken.tokenPermissionSigners;
     innerError = postToken.innerError;
 
   } else if (needsPostPermissionToken && postIsSameAsRead) {
