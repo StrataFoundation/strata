@@ -216,7 +216,7 @@ export class SplTokenMetadata {
   static async getArweaveMetadata(
     uri: string | undefined
   ): Promise<IMetadataExtension | undefined> {
-    if (uri) {
+    if (uri && uri.length > 0) {
       const newUri = routeCDN(uri);
 
       const cached = localStorage.getItem(newUri);

@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useMemo} from "react";
 import { useChatIdFromIdentifierCertificate } from "../../../src/hooks/useChatIdFromIdentifierCertificate";
 import { GraphChat, useChats } from "../../../src/hooks/useChats";
 import {
@@ -16,10 +16,13 @@ import { useRouter } from "next/router";
 import { route, routes } from "../../routes";
 import { ActiveUsers } from "./ActiveUsers";
 import { FEATURED_COMMUNITIES } from "./FeaturedCommunities";
+import { useAsync } from "react-async-hook";
+import { IMetadataExtension, SplTokenMetadata } from "@strata-foundation/spl-utils";
 
 const Community = ({
   imageUrl,
   name,
+  metadataUrl,
   identifierCertificateMint,
   dailyActiveUsers,
 }: GraphChat) => {
@@ -27,6 +30,18 @@ const Community = ({
   const { chatId: id } = useChatIdFromIdentifierCertificate(mintKey);
   const router = useRouter();
 
+  const {
+    result: data,
+  }: {result: IMetadataExtension | undefined} = useAsync(SplTokenMetadata.getArweaveMetadata, [metadataUrl]);
+  const description = useMemo(() => {
+    const truncateLength = 100;
+    if (!data?.description) return undefined;
+
+    if (data.description.length > truncateLength) {
+      return data.description.slice(0, truncateLength) + "...";
+    }
+    return data.description;
+  }, [data])
   return (
     <VStack
       position="relative"
@@ -61,12 +76,12 @@ const Community = ({
           >
             {id}.chat
           </Text>
-          {/* <Text
+          <Text
               align="left"
               color={useColorModeValue("gray.600", "gray.200")}
             >
               {description}
-            </Text> */}
+            </Text>
         </VStack>
         <HStack spacing={2}>
           {typeof dailyActiveUsers !== "undefined" && (

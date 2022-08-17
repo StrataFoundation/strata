@@ -7,6 +7,7 @@ export interface GraphChat {
   publicKey: string;
   identifierCertificateMint: string;
   imageUrl: string;
+  metadataUrl: string;
   dailyActiveUsers: number;
 }
 
@@ -16,7 +17,8 @@ const CHAT_QUERY = gql`
       name
       publicKey
       imageUrl
-      identifierCertificateMint,
+      metadataUrl
+      identifierCertificateMint
       dailyActiveUsers
     }
   }
