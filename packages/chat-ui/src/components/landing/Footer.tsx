@@ -66,7 +66,7 @@ const sections = [
 ];
 export const Footer = () => {
   return (
-    <VStack backgroundColor="#303846" padding="29px">
+    <VStack bg="#191C2A" pt="60px" pb="120px">
       <Container maxW="container.lg">
         <Stack spacing={16} direction={["column", "row"]}>
           {sections.map(({ title, items }) => (

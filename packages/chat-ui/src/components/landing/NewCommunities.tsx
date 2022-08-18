@@ -3,8 +3,6 @@ import { useChatIdFromIdentifierCertificate } from "../../../src/hooks/useChatId
 import { GraphChat, useChats } from "../../../src/hooks/useChats";
 import {
   Button,
-  Center,
-  Heading,
   HStack,
   Image,
   SimpleGrid,
@@ -104,10 +102,26 @@ export const NewCommunities = () => {
   if (chats.length == 0) return null;
 
   return (
-    <Stack direction="column" align="start" spacing={4} w="full" pb="100px">
-      <Heading as="h1" size="xl" fontWeight="extrabold">
-        New Communities
-      </Heading>
+    <Stack
+      direction="column"
+      align="start"
+      spacing={4}
+      w="full"
+      pb="100px"
+      pt={8}
+    >
+      <Stack gap={2}>
+        <Text fontSize="sm" fontWeight="semibold" color="cyan.500">
+          BE A PART OF SOMETHING
+        </Text>
+        <Text fontSize="3xl" fontWeight="bold">
+          New Communities
+        </Text>
+        <Text w="400px">
+          Join one of the already existing communities and begin chatting with
+          your peers!
+        </Text>
+      </Stack>
       <SimpleGrid columns={{ sm: 2, md: 3, lg: 4 }} spacing={4}>
         {chats
           .filter((chat) => !featuredKeys.has(chat.publicKey))
