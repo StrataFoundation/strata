@@ -128,7 +128,7 @@ async function createPermissionToken({
   let tokenPermissionSigners: Signer[][] = [];
   try {
     setState({
-      subStatus: "Uploading read token metadata to SHDW drive...",
+      subStatus: `Uploading ${isRead ? 'read' : 'post'} token metadata to SHDW drive...`,
     });
 
     const uri = await uploadFiles(
@@ -243,7 +243,7 @@ export const wizardSubmit = async ({
   if (wizardData.description && wizardData.description != "") {
     try {
       setState({
-        subStatus: "Uploading read token metadata to SHDW drive...",
+        subStatus: "Uploading chat metadata to SHDW drive...",
       });
 
       const file = getJsonFile({
