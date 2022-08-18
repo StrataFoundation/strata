@@ -103,7 +103,7 @@ export function useLoadDelegate() {
       !loadingDelegate &&
       delegateWallet &&
       !loadingBalance &&
-      balance < 0.00001,
+      balance < 0.001,
     loadDelegate: (sol: number) => {
       return loadDelegate(delegateWallet, chatSdk, sol);
     },

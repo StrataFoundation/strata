@@ -35,13 +35,6 @@ export const Sidebar = (props: any) => {
   );
   const { info: chat } = useChat(chatKey);
 
-  // Make sure all VISIBLE_CHATS are in the chats list
-  useEffect(() => {
-    if (VISIBLE_CHATS.some((c) => chats.indexOf(c) === -1)) {
-      setChats([...new Set([...chats, ...VISIBLE_CHATS])]);
-    }
-  }, [chats, setChats]);
-
   useEffect(() => {
     if (chat && id && chats.indexOf(id as string) === -1) {
       setChats([...new Set([...chats, id as string])]);
@@ -110,6 +103,9 @@ export const Sidebar = (props: any) => {
           .filter((identifier) => identifier.includes(input))
           .map((identifier) => (
             <ChatSidebarPreview
+              onClose={() => {
+                setChats([...chats.filter((c) => c !== identifier)]);
+              }}
               key={identifier}
               identifier={identifier}
               onClick={() => {
@@ -137,7 +133,13 @@ export const Sidebar = (props: any) => {
           onClick={toggleColorMode}
         />
         <Divider />
-        <Flex pt={3.5} pb={3.5} align="center" justifyContent="space-evenly" w="full">
+        <Flex
+          pt={3.5}
+          pb={3.5}
+          align="center"
+          justifyContent="space-evenly"
+          w="full"
+        >
           <ProfileButton size="lg" />
         </Flex>
       </VStack>

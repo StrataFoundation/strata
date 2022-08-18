@@ -232,7 +232,7 @@ export const BasicInfo: React.FC<IBasicInfoProps> = ({
           id="name"
           label="Name"
           errors={errors}
-          help="The name that will apper in the sidebar."
+          help="The name that will appear in the sidebar."
         >
           <Input
             id="name"

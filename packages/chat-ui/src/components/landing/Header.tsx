@@ -9,6 +9,7 @@ import {
   HStack,
   Icon,
   IconButton,
+  Text,
   Image,
   Link,
   useColorMode,
@@ -20,6 +21,8 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { ProfileButton } from "../../../src/components/ProfileButton";
 import React, { ReactNode } from "react";
 import { route, routes } from "../../routes";
+import { CreateChatModal } from "../CreateChat/CreateChatModal";
+import { RiMenuAddLine } from "react-icons/ri";
 
 const NavLink = ({ href, children }: { href: string; children: ReactNode }) => (
   <Link px={2} py={1} href={href} fontSize="sm">
@@ -29,16 +32,36 @@ const NavLink = ({ href, children }: { href: string; children: ReactNode }) => (
 
 export const Header: React.FC = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const { colorMode, toggleColorMode } = useColorMode();
+  const {
+    isOpen: isChatOpen,
+    onOpen: onChatOpen,
+    onClose: onChatClose,
+  } = useDisclosure();
 
   const Links = [
-    { link: "Chats", href: route(routes.chats) },
-    { link: "Launchpad", href: "https://app.strataprotocol.com/launchpad" },
-    { link: "Blog", href: "https://blog.strataprotocol.com" },
+    { link: "My Chats", href: route(routes.chats) },
+    {
+      link: "Developer Docs",
+      href: "https://docs.strataprotocol.com/im/getting_started",
+    },
   ];
+
+  const CreateChat = (
+    <Button
+      onClick={() => onChatOpen()}
+      colorScheme="primary"
+      variant={isOpen ? "ghost" : "outline" }
+      leftIcon={<Icon color="white" as={RiMenuAddLine} />}
+      px={8}
+    >
+      <Text color="white">Create Chat</Text>
+    </Button>
+  );
+
 
   return (
     <>
+      <CreateChatModal isOpen={isChatOpen} onClose={onChatClose} />
       <Box
         zIndex={100}
         color="white"
@@ -97,21 +120,10 @@ export const Header: React.FC = () => {
               >
                 {/* @ts-ignore */}
                 <DarkMode>
-                  <IconButton
-                    isRound
-                    colorScheme="gray"
-                    variant="outline"
-                    aria-label="Toggle Dark Mode"
-                    icon={
-                      colorMode === "light" ? (
-                        <Icon as={RiMoonLine} />
-                      ) : (
-                        <Icon as={RiSunLine} />
-                      )
-                    }
-                    onClick={toggleColorMode}
-                  />
-                  <ProfileButton />
+                  <HStack>
+                    {CreateChat}
+                    <ProfileButton />
+                  </HStack>
                 </DarkMode>
               </Flex>
               <Flex justify="center" display={{ base: "flex", md: "none" }}>
@@ -126,6 +138,7 @@ export const Header: React.FC = () => {
         {isOpen ? (
           <Box pb={4} display={{ md: "none" }}>
             <VStack as={"nav"} spacing={4}>
+              {CreateChat}
               {Links.map((link) => (
                 <NavLink key={link.link} href={link.href}>
                   {link.link}

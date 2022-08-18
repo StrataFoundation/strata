@@ -343,7 +343,7 @@ export const SwapForm = ({
                 fontSize="2xl"
                 fontWeight="semibold"
                 step={
-                  1 * Math.pow(10, baseMintAcc ? -baseMintAcc.decimals : -9)
+                  getStep(baseMintAcc ? baseMintAcc.decimals : 9)
                 }
                 min={0}
                 _placeholder={{ color: "gray.200" }}
@@ -461,7 +461,7 @@ export const SwapForm = ({
                 fontSize="2xl"
                 fontWeight="semibold"
                 step={
-                  1 * Math.pow(10, targetMintAcc ? -targetMintAcc.decimals : -9)
+                  getStep(targetMintAcc ? targetMintAcc.decimals : 9)
                 }
                 min={0}
                 _placeholder={{ color: "gray.200" }}
@@ -722,3 +722,7 @@ export const SwapForm = ({
 };
 
 export const MemodSwapForm = React.memo(SwapForm);
+
+function getStep(arg0: number): string {
+  return arg0 == 0 ? "1" : ("0." + "0".repeat(Math.abs(arg0) - 1) + "1");
+}

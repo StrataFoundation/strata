@@ -57,7 +57,7 @@ async function getMessagesFromTxs(
     const newParts = (
       await Promise.all(
         txs.map(
-          async ({ signature: sig, transaction, pending, meta, blockTime }) => {
+          async ({  logs, signature: sig, transaction, pending, meta, blockTime }) => {
             if (
               !txToMessages[sig] ||
               txToMessages[sig].length == 0 ||
@@ -67,6 +67,7 @@ async function getMessagesFromTxs(
               try {
                 const found = (
                   await chatSdk.getMessagePartsFromInflatedTx({
+                    logs,
                     transaction,
                     txid: sig,
                     meta,
@@ -194,7 +195,8 @@ const lambdaFetcher = async (args: FetchArgs) => {
     method: "POST",
     headers: {
       'Accept': 'application/json',
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache'
     }
   });
   const rows = await res.json();
@@ -209,6 +211,7 @@ const lambdaFetcher = async (args: FetchArgs) => {
         sender: new PublicKey(d.sender),
         signer: new PublicKey(d.signer),
         chat: new PublicKey(d.chat),
+        chatKey: new PublicKey(d.chat),
         pending: false,
         totalParts: Number(d.totalParts),
         currentPart: Number(d.currentPart),
@@ -365,7 +368,7 @@ export function useMessages({
     }
 
     return messages
-      .filter((msg) => msg.type !== MessageType.React)
+      .filter((msg) => msg.type !== MessageType.React && msg.chatKey.equals(chat))
       .map((message) => {
         cachedReactsLocal[message.id] = cachedReactsLocal[message.id] || [];
         if (

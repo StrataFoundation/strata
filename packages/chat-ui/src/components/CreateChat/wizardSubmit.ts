@@ -123,8 +123,10 @@ export const wizardSubmit = async ({
     readPermissionType = getPermissionType(readForm.type);
     readPermissionAmount = readForm.amount;
     readPermissionKey =
-      (readForm.type === "native" || readForm.type === "token")
-        ? new PublicKey(readForm.mint!)
+      readForm.type === "native" || readForm.type === "token"
+        ? readForm.mint
+          ? new PublicKey(readForm.mint)
+          : undefined
         : readForm.type === "nft"
         ? new PublicKey(readForm.collectionKey!)
         : undefined;
@@ -132,8 +134,10 @@ export const wizardSubmit = async ({
     postPermissionType = getPermissionType(postForm.type);
     postPermissionAmount = postForm.amount;
     postPermissionKey =
-      (postForm.type === "native" || postForm.type === "token")
-        ? new PublicKey(postForm.mint!)
+      postForm.type === "native" || postForm.type === "token"
+        ? postForm.mint
+          ? new PublicKey(postForm.mint)
+          : undefined
         : postForm.type === "nft"
         ? new PublicKey(postForm.collectionKey!)
         : undefined;
@@ -197,6 +201,7 @@ export const wizardSubmit = async ({
           const bondingOut =
             await tokenBondingSdk.createTokenBondingInstructions(bondingOpts);
 
+          readPermissionKey = bondingOut.output.targetMint;
           readPermissionInstructions.push(
             [...curveOut!.instructions!, ...metaOut!.instructions],
             bondingOut!.instructions
@@ -277,6 +282,7 @@ export const wizardSubmit = async ({
             const bondingOut =
               await tokenBondingSdk.createTokenBondingInstructions(bondingOpts);
 
+            postPermissionKey = bondingOut.output.targetMint;
             postPermissionInstructions.push(
               [...curveOut!.instructions!, ...metaOut!.instructions],
               bondingOut!.instructions

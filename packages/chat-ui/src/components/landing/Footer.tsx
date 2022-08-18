@@ -16,7 +16,7 @@ const sections = [
     items: [
       {
         title: "Tutorial",
-        href: "https://docs.strataprotocol.com",
+        href: "https://docs.strataprotocol.com/im/getting_started",
       },
     ],
   },
@@ -34,6 +34,19 @@ const sections = [
     ],
   },
   {
+    title: "Policies",
+    items: [
+      {
+        title: "Terms of Service",
+        href: "/terms-of-service.pdf",
+      },
+      {
+        title: "Privacy Policy",
+        href: "/privacy-policy.pdf",
+      },
+    ],
+  },
+  {
     title: "More",
     items: [
       {
@@ -45,8 +58,8 @@ const sections = [
         href: "https://github.com/StrataFoundation/strata",
       },
       {
-        title: "Strata.im",
-        href: "https://strata.im",
+        title: "Launchpad",
+        href: "https://app.strataprotocol.com",
       },
     ],
   },

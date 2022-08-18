@@ -220,7 +220,7 @@ export const TokenForm: React.FC<ITokenFormProps> = ({
             <FormControl
               display="flex"
               flexDirection="column"
-              alignItems="center"
+              alignItems="flex-start"
               isInvalid={!!errors.legalDisclosure?.message}
             >
               <Flex alignItems="center">
@@ -235,9 +235,10 @@ export const TokenForm: React.FC<ITokenFormProps> = ({
                   ml="4"
                   fontSize="xs"
                 >
-                  I represent that I have undertaken sufficient legal analysis
-                  to determine that the token does not constitute a security
-                  under U.S. law.
+                  I have read and agree to the{" "}
+                  <Link color="primary.500" isExternal href="/terms-of-service.pdf">
+                    strata.im Terms of Service
+                  </Link>
                 </FormLabel>
               </Flex>
               {errors.legalDisclosure?.message && (
