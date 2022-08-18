@@ -3,10 +3,10 @@ import { useChatIdFromIdentifierCertificate } from "../../../src/hooks/useChatId
 import { GraphChat, useChats } from "../../../src/hooks/useChats";
 import {
   Button,
-  Center,
   HStack,
   Image,
   SimpleGrid,
+  Stack,
   Text,
   useColorModeValue,
   VStack,
@@ -99,13 +99,36 @@ const featuredKeys = new Set(FEATURED_COMMUNITIES.map((c) => c.publicKey));
 export const NewCommunities = () => {
   const { chats } = useChats();
 
+  if (chats.length == 0) return null;
+
   return (
-    <SimpleGrid columns={{ sm: 2, md: 3, lg: 4 }} spacing={4}>
-      {chats
-        .filter((chat) => !featuredKeys.has(chat.publicKey))
-        .map((chat: GraphChat) => (
-          <Community key={chat.publicKey} {...chat} />
-        ))}
-    </SimpleGrid>
+    <Stack
+      direction="column"
+      align="start"
+      spacing={4}
+      w="full"
+      pb="100px"
+      pt={8}
+    >
+      <Stack gap={2}>
+        <Text fontSize="sm" fontWeight="semibold" color="cyan.500">
+          BE A PART OF SOMETHING
+        </Text>
+        <Text fontSize="3xl" fontWeight="bold">
+          New Communities
+        </Text>
+        <Text w="400px">
+          Join one of the already existing communities and begin chatting with
+          your peers!
+        </Text>
+      </Stack>
+      <SimpleGrid columns={{ sm: 2, md: 3, lg: 4 }} spacing={4}>
+        {chats
+          .filter((chat) => !featuredKeys.has(chat.publicKey))
+          .map((chat: GraphChat) => (
+            <Community key={chat.publicKey} {...chat} />
+          ))}
+      </SimpleGrid>
+    </Stack>
   );
 };

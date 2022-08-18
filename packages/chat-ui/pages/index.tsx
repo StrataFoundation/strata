@@ -22,7 +22,7 @@ const Home = () => {
   const [width, height] = useWindowSize();
 
   return (
-    <Box height={height} width={width} overflow="auto">
+    <Box height={height} width={width} overflow="auto" bg="gray.900">
       <Header />
       <Container maxW="container.lg" pt={8} pb={8}>
         <Stack
@@ -35,11 +35,16 @@ const Home = () => {
           <FeaturedCommunities />
           <Stack w="full" gap={9}>
             <Stack direction="row" justify="center" align="center" gap={4}>
-              <Divider />
-              <Text flexShrink={0} fontWeight="bold">
+              <Divider bg="white" />
+              <Text
+                flexShrink={0}
+                fontWeight="bold"
+                bg="linear-gradient(273.71deg, #E4873E 14.63%, #FBC00E 100.31%);"
+                bgClip="text"
+              >
                 POWERED BY
               </Text>
-              <Divider />
+              <Divider bg="white" />
             </Stack>
             <Stack
               direction="row"
@@ -99,19 +104,9 @@ const Home = () => {
                 />
               </Flex>
             </Stack>
+            <Divider bg="white" />
           </Stack>
-          <Stack
-            direction="column"
-            align="start"
-            spacing={4}
-            w="full"
-            pb="100px"
-          >
-            <Heading as="h1" size="xl" fontWeight="extrabold">
-              New Communites
-            </Heading>
-            <NewCommunities />
-          </Stack>
+          <NewCommunities />
         </Stack>
       </Container>
       <Footer />

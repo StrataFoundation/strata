@@ -12,12 +12,9 @@ import {
   Text,
   Image,
   Link,
-  useColorMode,
   useDisclosure,
   VStack,
 } from "@chakra-ui/react";
-import { RiMoonLine, RiSunLine } from "react-icons/ri";
-import { useWallet } from "@solana/wallet-adapter-react";
 import { ProfileButton } from "../../../src/components/ProfileButton";
 import React, { ReactNode } from "react";
 import { route, routes } from "../../routes";
@@ -50,7 +47,7 @@ export const Header: React.FC = () => {
     <Button
       onClick={() => onChatOpen()}
       colorScheme="primary"
-      variant={isOpen ? "ghost" : "outline" }
+      variant={isOpen ? "ghost" : "outline"}
       leftIcon={<Icon color="white" as={RiMenuAddLine} />}
       px={8}
     >
@@ -58,24 +55,17 @@ export const Header: React.FC = () => {
     </Button>
   );
 
-
   return (
     <>
       <CreateChatModal isOpen={isChatOpen} onClose={onChatClose} />
-      <Box
-        zIndex={100}
-        color="white"
-        bg="black.300"
-        w="full"
-        borderBottom="1px"
-        borderBottomColor="black.500"
-      >
+      <Box zIndex={100} color="white" bg="black.300" w="full">
         <Center w="full" height="56px" alignItems="center">
           <Container
             maxW="container.lg"
             w="full"
             display="flex"
             justifyContent="space-between"
+            alignItems="center"
           >
             <IconButton
               size={"md"}

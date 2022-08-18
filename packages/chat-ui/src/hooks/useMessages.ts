@@ -4,13 +4,13 @@ import {
   ChatSdk,
   IMessage,
   IMessagePart,
-  MessageType, PermissionType, RawMessageType
+  MessageType,
 } from "@strata-foundation/chat";
 import {
   truthy,
   useEndpoint,
   usePublicKey,
-  useTransactions
+  useTransactions,
 } from "@strata-foundation/react";
 import BN from "bn.js";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -57,12 +57,19 @@ async function getMessagesFromTxs(
     const newParts = (
       await Promise.all(
         txs.map(
-          async ({  logs, signature: sig, transaction, pending, meta, blockTime }) => {
+          async ({
+            logs,
+            signature: sig,
+            transaction,
+            pending,
+            meta,
+            blockTime,
+          }) => {
             if (
               !txToMessages[sig] ||
               txToMessages[sig].length == 0 ||
-                // @ts-ignore
-                txToMessages[sig][0].pending && !pending
+              // @ts-ignore
+              (txToMessages[sig][0].pending && !pending)
             ) {
               try {
                 const found = (
@@ -185,7 +192,13 @@ const reduceMessages = (
   );
 };
 
-export type FetchArgs = { minBlockTime: number; maxBlockTime: number; chat: PublicKey, limit: number, offset: number };
+export type FetchArgs = {
+  minBlockTime: number;
+  maxBlockTime: number;
+  chat: PublicKey;
+  limit: number;
+  offset: number;
+};
 export type Fetcher = (args: FetchArgs) => Promise<IMessagePart[]>;
 
 export const MESSAGE_LAMBDA = "https://prod-api.teamwumbo.com/messages";
@@ -194,10 +207,10 @@ const lambdaFetcher = async (args: FetchArgs) => {
     body: JSON.stringify(args),
     method: "POST",
     headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'Cache-Control': 'no-cache'
-    }
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "Cache-Control": "no-cache",
+    },
   });
   const rows = await res.json();
 
@@ -237,10 +250,12 @@ export function useMessages({
   const { info: chatAcc } = useChat(chat);
   const { cluster } = useEndpoint();
   let useFetcher = !!fetcher;
-  const canUseFetcher = cluster === "mainnet-beta" && (chatAcc?.postMessageProgramId.equals(ChatSdk.ID) || fetcher);
+  const canUseFetcher =
+    cluster === "mainnet-beta" &&
+    (chatAcc?.postMessageProgramId.equals(ChatSdk.ID) || fetcher);
   if (canUseFetcher && typeof fetcher === "undefined") {
     useFetcher = true;
-    fetcher = lambdaFetcher
+    fetcher = lambdaFetcher;
   }
 
   const [rawMessages, setRawMessages] = useState<
@@ -282,10 +297,17 @@ export function useMessages({
     }
   }, [currentTime, chat, numTransactions]);
 
-  const fetchFn = useCallback(async (args: any) => fetcher ? fetcher(args) : Promise.resolve([]), [fetcher])
-  const { loading: fetchLoading, result: fetchedMessageParts, error: fetchError, execute: runFetch  } = useAsyncCallback(fetchFn)
-  
-  
+  const fetchFn = useCallback(
+    async (args: any) => (fetcher ? fetcher(args) : Promise.resolve([])),
+    [fetcher]
+  );
+  const {
+    loading: fetchLoading,
+    result: fetchedMessageParts,
+    error: fetchError,
+    execute: runFetch,
+  } = useAsyncCallback(fetchFn);
+
   useEffect(() => {
     if (chatSdk && fetchedMessageParts) {
       setRawMessages((rawMessages) => {
@@ -311,7 +333,7 @@ export function useMessages({
 
   useEffect(() => {
     if (variables && useFetcher) {
-      runFetch(variables)
+      runFetch(variables);
     } else if (stablePubkey && !useFetcher && chatAcc) {
       rest.fetchMore(numTransactions);
     }
@@ -368,7 +390,9 @@ export function useMessages({
     }
 
     return messages
-      .filter((msg) => msg.type !== MessageType.React && msg.chatKey.equals(chat))
+      .filter(
+        (msg) => msg.type !== MessageType.React && msg.chatKey.equals(chat)
+      )
       .map((message) => {
         cachedReactsLocal[message.id] = cachedReactsLocal[message.id] || [];
         if (
