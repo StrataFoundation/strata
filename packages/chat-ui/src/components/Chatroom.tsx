@@ -13,7 +13,7 @@ import { PublicKey } from "@solana/web3.js";
 import { randomizeFileName } from "@strata-foundation/chat";
 import { useErrorHandler } from "@strata-foundation/react";
 // @ts-ignore
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAsyncCallback } from "react-async-hook";
 import { useDropzone } from "react-dropzone";
 
@@ -46,6 +46,7 @@ export const Chatroom: React.FC<{
     fetcher,
     numTransactions: 50,
   });
+
   handleErrors(error);
 
   const { execute: onFocus } = useAsyncCallback(async function () {
@@ -81,7 +82,7 @@ export const Chatroom: React.FC<{
         ...(messages || []),
         ...pendingMessages.filter((p) => !msgWeHave.has(p.id)),
       ].sort((a, b) => b.startBlockTime - a.startBlockTime),
-    [msgWeHave, messages, pendingMessages]
+    [messages, msgWeHave, pendingMessages]
   );
 
   const onAddPendingMessage = useCallback(
@@ -114,6 +115,7 @@ export const Chatroom: React.FC<{
       noKeyboard: true,
       onDrop: onUpload,
     });
+
   const rootProps = useMemo(
     () => getRootProps({ className: "dropzone" }),
     [getRootProps]

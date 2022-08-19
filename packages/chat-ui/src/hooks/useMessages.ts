@@ -284,9 +284,10 @@ export function useMessages({
     }
   }, [stablePubkey]);
 
-  const currentTime = useMemo(() => Date.now() / 1000, []);
   const variables = useMemo(() => {
     if (chat) {
+      const currentTime = Date.now() / 1000;
+
       return {
         chat: chat.toBase58(),
         minBlockTime: 0,
@@ -295,7 +296,7 @@ export function useMessages({
         limit: numTransactions,
       };
     }
-  }, [currentTime, chat, numTransactions]);
+  }, [chat, numTransactions]);
 
   const fetchFn = useCallback(
     async (args: any) => (fetcher ? fetcher(args) : Promise.resolve([])),
