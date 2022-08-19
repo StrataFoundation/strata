@@ -1,4 +1,11 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Flex,
   Icon,
@@ -38,7 +45,6 @@ export const ChatMessageSkeleton = () => (
 
 const canUseDOM = typeof window !== "undefined";
 const useIsomorphicLayoutEffect = canUseDOM ? useLayoutEffect : useEffect;
-
 
 export const ChatMessages = ({
   isLoading,
@@ -128,7 +134,10 @@ export const ChatMessages = ({
   const scrollAnchorRef = useRef<HTMLDivElement>(null);
   useIsomorphicLayoutEffect(() => {
     if (isSticky)
-      scrollAnchorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      scrollAnchorRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
   }, [messages, isSticky]);
 
   return (
@@ -140,7 +149,6 @@ export const ChatMessages = ({
       onScroll={handleOnScroll}
     >
       <div ref={scrollAnchorRef} style={{ height: "0px" }} id="scroll-anchor" />
-
       {!isLoading &&
         messages?.map((msg, index) => (
           <MemodMessage
