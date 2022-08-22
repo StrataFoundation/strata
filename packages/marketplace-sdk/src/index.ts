@@ -390,7 +390,7 @@ export class MarketplaceSdk {
         ata,
         publicKey,
         [],
-        1000
+        amount,
       )
     );
     return {
