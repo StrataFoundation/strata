@@ -9,6 +9,7 @@ use crate::{token_metadata, token_metadata::Metadata};
 use anchor_lang::{prelude::*, solana_program, solana_program::system_program};
 use anchor_spl::token::{Mint, Token, TokenAccount};
 use spl_token_bonding::state::TokenBondingV0;
+use spl_token_bonding::state::CurveV0;
 
 #[derive(Accounts)]
 pub struct CloseTokenAccount<'info> {
@@ -641,4 +642,45 @@ pub struct ClaimBondingAuthorityV0<'info> {
   /// CHECK: Checked with constraints
   #[account(address = spl_token_bonding::id())]
   pub token_bonding_program: AccountInfo<'info>,
+}
+
+
+#[derive(Accounts)]
+pub struct UpdateCurveV0Wrapper<'info> {
+  pub collective: Box<Account<'info, CollectiveV0>>,
+  /// CHECK: Checked via constraints
+  #[account(
+    address = collective.authority.unwrap_or(Pubkey::default()),
+    constraint = collective.config.is_open || authority.is_signer
+  )]
+  pub authority: AccountInfo<'info>,
+  #[account(
+    // For now, social tokens without a bonding curve are not supported. We may support them later
+    constraint = mint_token_ref.token_bonding.ok_or(error!(ErrorCode::NoBonding))? == token_bonding.key(),
+    constraint = mint_token_ref.collective.is_none() || collective.key() == mint_token_ref.collective.unwrap() @ ErrorCode::InvalidCollective,
+    constraint = token_ref_authority.key() == mint_token_ref.authority.ok_or(error!(ErrorCode::IncorrectOwner))?,
+  )]
+  pub mint_token_ref: Box<Account<'info, TokenRefV0>>,
+  #[account(
+    mut,
+    has_one = base_mint,
+    has_one = target_mint
+  )]
+  pub token_bonding: Box<Account<'info, TokenBondingV0>>,
+  pub token_ref_authority: Signer<'info>,
+  pub curve: Box<Account<'info, CurveV0>>,
+
+  /// CHECK: Checked with constraint
+  #[account(address = spl_token_bonding::id())]
+  pub token_bonding_program: AccountInfo<'info>,
+
+  #[account(
+    constraint = *base_mint.to_account_info().owner == spl_token::ID
+  )]
+  pub base_mint: Box<Account<'info, Mint>>,
+  #[account(
+    constraint = target_mint.is_initialized,
+    constraint = *target_mint.to_account_info().owner == *base_mint.to_account_info().owner
+  )]
+  pub target_mint: Box<Account<'info, Mint>>,
 }
