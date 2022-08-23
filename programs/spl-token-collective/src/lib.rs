@@ -453,7 +453,7 @@ pub mod spl_token_collective {
     Ok(())
   }
 
-  pub fn update_curve(
+  pub fn update_curve_v0(
     ctx: Context<UpdateCurveV0Wrapper>,
   ) -> Result<()> {
     let seeds: &[&[&[u8]]] = &[&[

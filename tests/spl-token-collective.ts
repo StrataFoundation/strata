@@ -371,6 +371,37 @@ describe("spl-token-collective", () => {
       );
     });
 
+    it("Allows updating token bonding curve", async() => {
+      const mintTokenRef = (await tokenCollectiveProgram.getTokenRef(
+        claimedReverseTokenRef
+      ))!;
+
+      const curve = await splTokenBondingProgram.initializeCurve({
+        config: new ExponentialCurveConfig({
+          c: 0,
+          pow: 0,
+          frac: 1,
+          b: 1,
+        }),
+      });
+
+      await tokenCollectiveProgram.updateCurve({
+        tokenRef: mintTokenRef.publicKey,
+        curve,
+      });
+
+      let newTokenBonding = (await splTokenBondingProgram.getTokenBonding(
+        mintTokenRef.tokenBonding!
+      ))!;
+      const c = await splTokenBondingProgram.getCurve(newTokenBonding?.curve);
+      //@ts-ignore
+      const curveConfig = c?.definition?.timeV0?.curves[0]?.curve?.exponentialCurveV0;
+      expect(curveConfig.c.toNumber()).to.equal(0);
+      expect(curveConfig.pow).to.equal(0);
+      expect(curveConfig.frac).to.equal(1);
+      expect(curveConfig.b.toNumber()).to.equal(1000000000000);
+    })
+
     it("Allows updating token bonding", async () => {
       const mintTokenRef = (await tokenCollectiveProgram.getTokenRef(
         claimedReverseTokenRef

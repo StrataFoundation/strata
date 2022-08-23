@@ -331,6 +331,11 @@ export interface IUpdateTokenBondingViaCollectiveArgs
   tokenRef: PublicKey;
 }
 
+export interface IUpdateCurveViaCollectiveArgs {
+  tokenRef: PublicKey,
+  curve: PublicKey,
+}
+
 export interface IClaimBondingAuthorityArgs {
   tokenBonding: PublicKey;
 }
@@ -1699,6 +1704,81 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
   ): Promise<void> {
     await this.execute(
       this.updateTokenBondingInstructions(args),
+      this.wallet.publicKey,
+      commitment
+    );
+  }
+
+  async updateCurveInstructions({
+    tokenRef,
+    curve,
+  }: IUpdateCurveViaCollectiveArgs): Promise<InstructionResult<null>> {
+    const tokenRefAcct = (await this.getTokenRef(tokenRef))!;
+    if (!tokenRefAcct.tokenBonding) {
+      throw new Error(
+        "Cannot update curve on a token ref that has no token bonding"
+      );
+    }
+
+    if (!tokenRefAcct.authority) {
+      throw new Error(
+        "No authority on this token. Cannot update token bonding."
+      );
+    }
+
+    const collectiveAcct =
+      tokenRefAcct.collective &&
+      (await this.getCollective(tokenRefAcct.collective))!;
+    const tokenBondingAcct = (await this.splTokenBondingProgram.getTokenBonding(
+      tokenRefAcct.tokenBonding
+    ))!;
+
+    if (!tokenBondingAcct.generalAuthority) {
+      throw new Error(
+        "Cannot update a token bonding account that has no authority"
+      );
+    }
+
+    const [mintTokenRef] = await SplTokenCollective.mintTokenRefKey(
+      tokenBondingAcct.targetMint
+    );
+
+    return {
+      output: null,
+      signers: [],
+      instructions: [
+        await this.instruction.updateCurveV0({
+          accounts: {
+            tokenRefAuthority: tokenRefAcct.authority as PublicKey,
+            collective: tokenRefAcct.collective || PublicKey.default,
+            authority:
+              (collectiveAcct &&
+                (collectiveAcct.authority as PublicKey | undefined)) ||
+              PublicKey.default,
+            mintTokenRef: mintTokenRef,
+            tokenBonding: tokenRefAcct.tokenBonding,
+            tokenBondingProgram: this.splTokenBondingProgram.programId,
+            baseMint: tokenBondingAcct.baseMint,
+            targetMint: tokenBondingAcct.targetMint,
+            curve,
+          },
+        }),
+      ],
+    };
+  }
+
+  /**
+   * Runs {@link `updateCurveInstructions`}
+   *
+   * @param args
+   * @retruns
+   */
+  async updateCurve(
+    args: IUpdateCurveViaCollectiveArgs,
+    commitment: Commitment = "confirmed"
+  ): Promise<void> {
+    await this.execute(
+      this.updateCurveInstructions(args),
       this.wallet.publicKey,
       commitment
     );
