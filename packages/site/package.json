@@ -1,6 +1,6 @@
 {
   "name": "@strata-foundation/site",
-  "version": "3.10.2",
+  "version": "3.10.3",
   "scripts": {
     "dev": "NODE_OPTIONS='--inspect' next dev",
     "build": "yarn clean && next build",
@@ -16,12 +16,12 @@
     "./*": "./*"
   },
   "dependencies": {
-    "@solana/spl-name-service": "^0.1.3",
     "@chakra-ui/css-reset": "^2.0.3",
     "@chakra-ui/icons": "^1.1.7",
     "@chakra-ui/react": "^1.8.1",
+    "@solana/spl-name-service": "^0.1.3",
     "@solana/spl-token": "0.1.8",
-    "@strata-foundation/react": "^3.10.2",
+    "@strata-foundation/react": "^3.10.3",
     "next": "^12.2.4",
     "next-seo": "^5.4.0",
     "react": "^17.0.2",
