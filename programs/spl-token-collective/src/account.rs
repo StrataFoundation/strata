@@ -648,8 +648,9 @@ pub struct ClaimBondingAuthorityV0<'info> {
 #[derive(Accounts)]
 pub struct UpdateCurveV0Wrapper<'info> {
   pub collective: Box<Account<'info, CollectiveV0>>,
+  /// CHECK: Just used for sol refund  
   #[account(mut)]
-  pub refund: AccountInfo<'info>,  
+  pub refund: UncheckedAccount<'info>,
   /// CHECK: Checked via constraints
   #[account(
     // must be either admin or collective authority

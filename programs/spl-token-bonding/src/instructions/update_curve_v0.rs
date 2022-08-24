@@ -9,20 +9,22 @@ pub struct UpdateCurveV0Args {
 #[derive(Accounts)]
 #[instruction(args: UpdateCurveV0Args)]
 pub struct UpdateCurveV0<'info> {
+  /// CHECK: Just used for sol refund  
   #[account(mut)]
-  pub refund: AccountInfo<'info>,
+  pub refund: UncheckedAccount<'info>,
   #[account(
     mut,
     constraint = token_bonding.curve_authority.ok_or(error!(ErrorCode::NoAuthority))? == curve_authority.key(),
+    has_one = curve
   )]
   pub token_bonding: Box<Account<'info, TokenBondingV0>>,
   pub curve_authority: Signer<'info>,
   #[account(
     mut,
     close = refund,
-    constraint = current_curve.to_account_info().owner.key() == token_bonding.key()
+    constraint = curve.to_account_info().owner.key() == token_bonding.key()
   )]
-  pub current_curve: Box<Account<'info, CurveV0>>,
+  pub curve: Box<Account<'info, CurveV0>>,
   pub new_curve: Box<Account<'info, CurveV0>>,
 }
 
