@@ -99,6 +99,12 @@ pub struct UpdateTokenBondingV0ArgsWrapper {
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
+pub struct UpdateCurveV0ArgsWrapper {
+  pub curve_authority: Option<Pubkey>,
+}
+
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct ChangeOptStatusUnclaimedV0Args {
   pub hashed_name: Vec<u8>,
   pub is_opted_out: bool,

@@ -6,7 +6,12 @@ import {
   MetadataProgram,
 } from "@metaplex-foundation/mpl-token-metadata";
 import * as anchor from "@project-serum/anchor";
-import { AnchorProvider, IdlTypes, Program, Provider } from "@project-serum/anchor";
+import {
+  AnchorProvider,
+  IdlTypes,
+  Program,
+  Provider,
+} from "@project-serum/anchor";
 import { getHashedName, NameRegistryState } from "@solana/spl-name-service";
 import {
   AccountInfo as TokenAccountInfo,
@@ -94,7 +99,7 @@ export interface ICreateCollectiveArgs {
   /** The configs around what is and isn't allowed in the collective */
   config: ICollectiveConfig;
   /** Only required if the mint is already initialised as a social token */
-  tokenRef?: PublicKey
+  tokenRef?: PublicKey;
 }
 
 // Taken from token bonding initialize
@@ -332,9 +337,9 @@ export interface IUpdateTokenBondingViaCollectiveArgs
 }
 
 export interface IUpdateCurveViaCollectiveArgs {
-  tokenRef: PublicKey,
-  curve: PublicKey,
-  adminKey?: PublicKey | undefined,
+  tokenRef: PublicKey;
+  curve: PublicKey;
+  adminKey?: PublicKey | undefined;
 }
 
 export interface IClaimBondingAuthorityArgs {
@@ -1577,6 +1582,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
    */
   async updateTokenBondingInstructions({
     tokenRef,
+    curve,
     buyBaseRoyaltyPercentage,
     buyTargetRoyaltyPercentage,
     sellBaseRoyaltyPercentage,
@@ -1603,6 +1609,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     const collectiveAcct =
       tokenRefAcct.collective &&
       (await this.getCollective(tokenRefAcct.collective))!;
+
     const tokenBondingAcct = (await this.splTokenBondingProgram.getTokenBonding(
       tokenRefAcct.tokenBonding
     ))!;
@@ -1610,6 +1617,12 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     if (!tokenBondingAcct.generalAuthority) {
       throw new Error(
         "Cannot update a token bonding account that has no authority"
+      );
+    }
+
+    if (curve && !tokenBondingAcct.curveAuthority) {
+      throw new Error(
+        "Cannot update a token bonding curve that has no curve authority"
       );
     }
 
@@ -1735,7 +1748,10 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       tokenRefAcct.tokenBonding
     ))!;
 
-    if (!tokenBondingAcct.generalAuthority || !tokenBondingAcct.curveAuthority) {
+    if (
+      !tokenBondingAcct.generalAuthority ||
+      !tokenBondingAcct.curveAuthority
+    ) {
       throw new Error(
         "Cannot update a token bonding account that has no authority"
       );
@@ -1745,9 +1761,14 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       tokenBondingAcct.targetMint
     );
 
-    const auth = adminKey ? adminKey : (collectiveAcct &&
-      (collectiveAcct.authority as PublicKey | undefined)) || PublicKey.default,
-    const tokenRefAuth = adminKey ? adminKey : tokenRefAcct.authority as PublicKey
+    const auth = adminKey
+      ? adminKey
+      : (collectiveAcct &&
+          (collectiveAcct.authority as PublicKey | undefined)) ||
+        PublicKey.default;
+    const tokenRefAuth = adminKey
+      ? adminKey
+      : (tokenRefAcct.authority as PublicKey);
 
     return {
       output: null,

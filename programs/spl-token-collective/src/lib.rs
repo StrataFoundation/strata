@@ -9,6 +9,7 @@ use {
   anchor_spl::token::{transfer, Transfer},
   borsh::{BorshDeserialize, BorshSerialize},
   spl_token_bonding::instructions::update_token_bonding_v0::UpdateTokenBondingV0Args,
+  spl_token_bonding::instructions::update_curve_v0::UpdateCurveV0Args,
 };
 
 pub mod account;
@@ -453,21 +454,32 @@ pub mod spl_token_collective {
     Ok(())
   }
 
-  pub fn update_curve_v0(ctx: Context<UpdateCurveV0Wrapper>) -> Result<()> {
+  pub fn update_curve_v0(
+    ctx: Context<UpdateCurveV0Wrapper>,
+  ) -> Result<()> {
+
+    let token_bonding = ctx.accounts.token_bonding.clone();    
     let seeds: &[&[&[u8]]] = &[&[
       b"mint-token-ref",
       ctx.accounts.target_mint.to_account_info().key.as_ref(),
       &[ctx.accounts.mint_token_ref.bump_seed],
     ]];
-    spl_token_bonding::cpi::update_curve_v0(CpiContext::new_with_signer(
-      ctx.accounts.token_bonding_program.clone(),
-      UpdateCurveV0 {
-        token_bonding: ctx.accounts.token_bonding.to_account_info().clone(),
-        curve_authority: ctx.accounts.mint_token_ref.to_account_info().clone(),
-        curve: ctx.accounts.curve.to_account_info().clone(),
+
+    spl_token_bonding::cpi::update_curve_v0(
+      CpiContext::new_with_signer(
+        ctx.accounts.token_bonding_program.clone(),
+        UpdateCurveV0 {
+          token_bonding: ctx.accounts.token_bonding.to_account_info().clone(),
+          curve_authority: ctx.accounts.mint_token_ref.to_account_info().clone(),
+          curve: ctx.accounts.curve.to_account_info().clone(),
+        },
+        seeds,
+      ),  
+      UpdateCurveV0Args {
+        curve_authority: token_bonding.curve_authority,
       },
-      seeds,
-    ))?;
+    )?;
+
     Ok(())
   }
 

@@ -427,6 +427,8 @@ export interface ICreateTokenBondingArgs {
 export interface IUpdateTokenBondingArgs {
   /** The bonding curve to update */
   tokenBonding: PublicKey;
+  /** The shape of the bonding curve. Must be created using {@link SplTokenBonding.initializeCurve} */
+  curve?: PublicKey;
   /** Number from 0 to 100. **Default:** current */
   buyBaseRoyaltyPercentage?: number;
   /** Number from 0 to 100. **Default:** current */
@@ -445,6 +447,7 @@ export interface IUpdateTokenBondingArgs {
   sellTargetRoyalties?: PublicKey;
   generalAuthority?: PublicKey | null;
   reserveAuthority?: PublicKey | null;
+  curveAuthority?: PublicKey | null;
   /** Should this bonding curve be frozen, disabling buy and sell? It can be unfrozen using {@link SplTokenBonding.updateTokenBonding}. **Default:** current */
   buyFrozen?: boolean;
 }
@@ -516,11 +519,17 @@ export interface ISwapArgs {
   slippage: number;
 
   /** DEPRECATED. Will be removed in a future version. Please use preInstructions instead */
-  extraInstructions?: (args: IExtraInstructionArgs) => Promise<InstructionResult<null>>;
+  extraInstructions?: (
+    args: IExtraInstructionArgs
+  ) => Promise<InstructionResult<null>>;
   /** Optionally inject extra instructions before each trade. Usefull for adding txn fees */
-  preInstructions?: (args: IPreInstructionArgs) => Promise<InstructionResult<null>>;
+  preInstructions?: (
+    args: IPreInstructionArgs
+  ) => Promise<InstructionResult<null>>;
   /** Optionally inject extra instructions after each transaction */
-  postInstructions?: (args: IPostInstructionArgs) => Promise<InstructionResult<null>>;
+  postInstructions?: (
+    args: IPostInstructionArgs
+  ) => Promise<InstructionResult<null>>;
 
   /** If the token is entangled, this is the mint of the entangled token */
   entangled?: PublicKey | null;
@@ -568,7 +577,7 @@ export interface ITransferReservesArgs {
    */
   destination?: PublicKey;
   /**
-   * The destination wallet for the reserves **Default:** 
+   * The destination wallet for the reserves **Default:**
    */
   destinationWallet?: PublicKey;
   /**
@@ -1295,6 +1304,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
    */
   async updateTokenBondingInstructions({
     tokenBonding,
+    curve,
     buyBaseRoyaltyPercentage,
     buyTargetRoyaltyPercentage,
     sellBaseRoyaltyPercentage,
@@ -1305,6 +1315,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     sellTargetRoyalties,
     generalAuthority,
     reserveAuthority,
+    curveAuthority,
     buyFrozen,
   }: IUpdateTokenBondingArgs): Promise<InstructionResult<null>> {
     const tokenBondingAcct = (await this.getTokenBonding(tokenBonding))!;
@@ -1321,8 +1332,38 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       generalAuthority,
       buyFrozen
     );
+
     const reserveAuthorityChanges = anyDefined(reserveAuthority);
+
+    const curveChanges = anyDefined(curve, curveAuthority);
+
     const instructions: TransactionInstruction[] = [];
+
+    if (curveChanges) {
+      if (!tokenBondingAcct.curveAuthority) {
+        throw new Error(
+          "Cannot update a token bonding curve that has no authority"
+        );
+      }
+
+      const args: IdlTypes<SplTokenBondingIDL>["UpdateCurveV0Args"] = {
+        curveAuthority:
+          curveAuthority === null
+            ? null
+            : curveAuthority! || (tokenBondingAcct.curveAuthority as PublicKey),
+      };
+
+      instructions.push(
+        await this.instruction.updateCurveV0(args, {
+          accounts: {
+            tokenBonding,
+            curve,
+            curveAuthority: (tokenBondingAcct.curveAuthority as PublicKey)!,
+          },
+        })
+      );
+    }
+
     if (generalChanges) {
       if (!tokenBondingAcct.generalAuthority) {
         throw new Error(
@@ -1882,7 +1923,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         instructions: [],
         signers: [],
         output: null,
-      }
+      };
     },
     postInstructions = () =>
       Promise.resolve({
@@ -1930,7 +1971,12 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         (await this.getState())?.wrappedSolMint!
       );
 
-      const ataMint = entangled && isBuy ? entangled : isBuy ? tokenBonding.targetMint : tokenBonding.baseMint;
+      const ataMint =
+        entangled && isBuy
+          ? entangled
+          : isBuy
+          ? tokenBonding.targetMint
+          : tokenBonding.baseMint;
       const ata = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
@@ -2010,7 +2056,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           isFirst: index == 0,
         });
 
-      const { instructions: postInstrs, signers: postSigners } = 
+      const { instructions: postInstrs, signers: postSigners } =
         await postInstructions({
           isLast: isLastHop,
           amount: expectedOutputAmount,
@@ -2384,7 +2430,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       destination = destinationWallet;
     }
 
-    const destAcct = destination && await this.provider.connection.getAccountInfo(destination);
+    const destAcct =
+      destination &&
+      (await this.provider.connection.getAccountInfo(destination));
 
     // Destination is a wallet, need to get the ATA
     if (
