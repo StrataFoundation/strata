@@ -473,7 +473,7 @@ pub mod spl_token_collective {
           curve: ctx.accounts.curve.to_account_info().clone(),
         },
         token_ref_seeds,
-      ),  
+      ),
       UpdateCurveV0Args {
         curve_authority: token_bonding.curve_authority,
       },
