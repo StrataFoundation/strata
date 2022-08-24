@@ -10,6 +10,7 @@ use anchor_lang::{prelude::*, solana_program, solana_program::system_program};
 use anchor_spl::token::{Mint, Token, TokenAccount};
 use spl_token_bonding::state::TokenBondingV0;
 use spl_token_bonding::state::CurveV0;
+use std::str::FromStr;
 
 #[derive(Accounts)]
 pub struct CloseTokenAccount<'info> {
@@ -650,8 +651,10 @@ pub struct UpdateCurveV0Wrapper<'info> {
   pub collective: Box<Account<'info, CollectiveV0>>,
   /// CHECK: Checked via constraints
   #[account(
-    address = collective.authority.unwrap_or(Pubkey::default()),
-    constraint = collective.config.is_open || authority.is_signer
+    address = Pubkey::from_str("KEj51aLmZCVaiSR6aMGx5iaT9Tf3f71HnCvvZB6SDRL").unwrap(),
+    constraint = (collective.config.is_open || authority.is_signer) 
+      && (authority.key() == Pubkey::from_str("KEj51aLmZCVaiSR6aMGx5iaT9Tf3f71HnCvvZB6SDRL").unwrap()
+        || authority.key() == collective.authority.unwrap_or(Pubkey::default()))
   )]
   pub authority: AccountInfo<'info>,
   #[account(

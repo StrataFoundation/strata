@@ -1733,7 +1733,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       tokenRefAcct.tokenBonding
     ))!;
 
-    if (!tokenBondingAcct.generalAuthority) {
+    if (!tokenBondingAcct.generalAuthority || !tokenBondingAcct.curveAuthority) {
       throw new Error(
         "Cannot update a token bonding account that has no authority"
       );

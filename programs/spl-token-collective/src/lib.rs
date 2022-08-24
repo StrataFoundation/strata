@@ -466,7 +466,7 @@ pub mod spl_token_collective {
         ctx.accounts.token_bonding_program.clone(),
         UpdateCurveV0 {
           token_bonding: ctx.accounts.token_bonding.to_account_info().clone(),
-          general_authority: ctx.accounts.mint_token_ref.to_account_info().clone(),
+          curve_authority: ctx.accounts.mint_token_ref.to_account_info().clone(),
           curve: ctx.accounts.curve.to_account_info().clone(),
         },
         seeds,

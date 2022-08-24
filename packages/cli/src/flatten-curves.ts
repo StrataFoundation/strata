@@ -116,8 +116,7 @@ async function createToken(tokenCollectiveSdk: SplTokenCollective, collective: a
 }
 
 async function run() {
-  // uncomment the below line to create some social tokens to test this command on for devnet/localnet
-  // await createTestTokens(tokenBondingSdk, tokenCollectiveSdk, provider);
+  
   console.log(`ANCHOR PROVIDER URL: ${process.env.ANCHOR_PROVIDER_URL}`);
   console.log(`ANCHOR WALLET: ${process.env.ANCHOR_WALLET}`)
   const ans = await input("Are you sure you want to run this command at the above network with the above wallet? (y/n) ");
@@ -132,6 +131,9 @@ async function run() {
   const tokenBondingSdk = await SplTokenBonding.init(provider);
   const tokenCollectiveSdk = await SplTokenCollective.init(provider);
 
+  // uncomment the below line to create some social tokens to test this command on for devnet/localnet
+  // await createTestTokens(tokenBondingSdk, tokenCollectiveSdk, provider);
+  // return
 
   const tokenRefs = await tokenCollectiveSdk.program.account.tokenRefV0.all();
   console.log(`There are ${tokenRefs.length} accounts to process`);

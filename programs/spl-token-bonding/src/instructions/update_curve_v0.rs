@@ -5,10 +5,10 @@ use anchor_lang::prelude::*;
 pub struct UpdateCurveV0<'info> {
   #[account(
     mut,
-    constraint = token_bonding.general_authority.ok_or(error!(ErrorCode::NoAuthority))? == general_authority.key(),
+    constraint = token_bonding.curve_authority.ok_or(error!(ErrorCode::NoAuthority))? == curve_authority.key(),
   )]
   pub token_bonding: Box<Account<'info, TokenBondingV0>>,
-  pub general_authority: Signer<'info>,
+  pub curve_authority: Signer<'info>,
   pub curve: Box<Account<'info, CurveV0>>,
 }
 
