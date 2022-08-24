@@ -27,10 +27,12 @@ async function input(query) {
 }
 
 function checkIsFixedPrice(curve: CurveV0): boolean {
-  //@ts-ignore
   const hasOneCurve =
+    //@ts-ignore
     curve.definition?.timeV0?.curves &&
+    //@ts-ignore
     curve.definition.timeV0.curves.length == 1;
+
   if (!hasOneCurve) return false;
 
   //@ts-ignore
@@ -160,6 +162,7 @@ async function run() {
   const ans = await input(
     "Are you sure you want to run this command at the above network with the above wallet? (y/n) "
   );
+
   if (ans != "y") {
     console.log("exiting");
     return;
@@ -173,7 +176,7 @@ async function run() {
 
   // uncomment the below line to create some social tokens to test this command on for devnet/localnet
   // await createTestTokens(tokenBondingSdk, tokenCollectiveSdk, provider);
-  // return
+  // return;
 
   const tokenRefs = await tokenCollectiveSdk.program.account.tokenRefV0.all();
   console.log(`There are ${tokenRefs.length} accounts to process`);
