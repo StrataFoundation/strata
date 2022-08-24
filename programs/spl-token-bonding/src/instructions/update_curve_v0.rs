@@ -9,20 +9,28 @@ pub struct UpdateCurveV0Args {
 #[derive(Accounts)]
 #[instruction(args: UpdateCurveV0Args)]
 pub struct UpdateCurveV0<'info> {
+  #[account(mut)]
+  pub refund: AccountInfo<'info>,
   #[account(
     mut,
     constraint = token_bonding.curve_authority.ok_or(error!(ErrorCode::NoAuthority))? == curve_authority.key(),
   )]
   pub token_bonding: Box<Account<'info, TokenBondingV0>>,
   pub curve_authority: Signer<'info>,
-  pub curve: Box<Account<'info, CurveV0>>,
+  #[account(
+    mut,
+    close = refund,
+    constraint = old_curve.to_account_info().owner.key() == token_bonding.key()
+  )]
+  pub old_curve: Box<Account<'info, CurveV0>>,
+  pub new_curve: Box<Account<'info, CurveV0>>,
 }
 
 pub fn handler(ctx: Context<UpdateCurveV0>, args: UpdateCurveV0Args) -> Result<()> {
   let bonding = &mut ctx.accounts.token_bonding;
 
   bonding.curve_authority = args.curve_authority;
-  bonding.curve = ctx.accounts.curve.key();
+  bonding.curve = ctx.accounts.new_curve.key();
   
   Ok(())
 }
