@@ -84,7 +84,6 @@ async function createTestTokens(tokenBondingSdk: SplTokenBonding,tokenCollective
   await createToken(tokenCollectiveSdk, collective, goLiveDate, curve, provider);
   await createToken(tokenCollectiveSdk, collective, goLiveDate, curve, provider);
   await createToken(tokenCollectiveSdk, collective, goLiveDate, curve, provider);
-
 }
 
 async function createToken(tokenCollectiveSdk: SplTokenCollective, collective: any, goLiveDate: any, curve: any, provider: anchor.AnchorProvider) {
@@ -116,7 +115,6 @@ async function createToken(tokenCollectiveSdk: SplTokenCollective, collective: a
 }
 
 async function run() {
-  
   console.log(`ANCHOR PROVIDER URL: ${process.env.ANCHOR_PROVIDER_URL}`);
   console.log(`ANCHOR WALLET: ${process.env.ANCHOR_WALLET}`)
   const ans = await input("Are you sure you want to run this command at the above network with the above wallet? (y/n) ");

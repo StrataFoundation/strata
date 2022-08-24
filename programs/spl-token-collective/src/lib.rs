@@ -19,8 +19,8 @@ pub mod state;
 pub mod token_metadata;
 pub mod util;
 
-use spl_token_bonding::cpi::accounts::UpdateTokenBondingV0;
 use spl_token_bonding::cpi::accounts::UpdateCurveV0;
+use spl_token_bonding::cpi::accounts::UpdateTokenBondingV0;
 use token_metadata::UpdateMetadataAccount;
 
 use crate::token_metadata::UpdateMetadataAccountArgs;
@@ -453,25 +453,21 @@ pub mod spl_token_collective {
     Ok(())
   }
 
-  pub fn update_curve_v0(
-    ctx: Context<UpdateCurveV0Wrapper>,
-  ) -> Result<()> {
+  pub fn update_curve_v0(ctx: Context<UpdateCurveV0Wrapper>) -> Result<()> {
     let seeds: &[&[&[u8]]] = &[&[
       b"mint-token-ref",
       ctx.accounts.target_mint.to_account_info().key.as_ref(),
       &[ctx.accounts.mint_token_ref.bump_seed],
     ]];
-    spl_token_bonding::cpi::update_curve_v0(
-      CpiContext::new_with_signer(
-        ctx.accounts.token_bonding_program.clone(),
-        UpdateCurveV0 {
-          token_bonding: ctx.accounts.token_bonding.to_account_info().clone(),
-          curve_authority: ctx.accounts.mint_token_ref.to_account_info().clone(),
-          curve: ctx.accounts.curve.to_account_info().clone(),
-        },
-        seeds,
-      )
-    )?;
+    spl_token_bonding::cpi::update_curve_v0(CpiContext::new_with_signer(
+      ctx.accounts.token_bonding_program.clone(),
+      UpdateCurveV0 {
+        token_bonding: ctx.accounts.token_bonding.to_account_info().clone(),
+        curve_authority: ctx.accounts.mint_token_ref.to_account_info().clone(),
+        curve: ctx.accounts.curve.to_account_info().clone(),
+      },
+      seeds,
+    ))?;
     Ok(())
   }
 

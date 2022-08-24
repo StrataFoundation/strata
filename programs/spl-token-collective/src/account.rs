@@ -8,8 +8,8 @@ use crate::util::*;
 use crate::{token_metadata, token_metadata::Metadata};
 use anchor_lang::{prelude::*, solana_program, solana_program::system_program};
 use anchor_spl::token::{Mint, Token, TokenAccount};
-use spl_token_bonding::state::TokenBondingV0;
 use spl_token_bonding::state::CurveV0;
+use spl_token_bonding::state::TokenBondingV0;
 use std::str::FromStr;
 
 #[derive(Accounts)]
@@ -645,22 +645,19 @@ pub struct ClaimBondingAuthorityV0<'info> {
   pub token_bonding_program: AccountInfo<'info>,
 }
 
-
 #[derive(Accounts)]
 pub struct UpdateCurveV0Wrapper<'info> {
   pub collective: Box<Account<'info, CollectiveV0>>,
   /// CHECK: Checked via constraints
   #[account(
-    address = Pubkey::from_str("KEj51aLmZCVaiSR6aMGx5iaT9Tf3f71HnCvvZB6SDRL").unwrap(),
-    constraint = (collective.config.is_open || authority.is_signer) 
-      && (authority.key() == Pubkey::from_str("KEj51aLmZCVaiSR6aMGx5iaT9Tf3f71HnCvvZB6SDRL").unwrap()
-        || authority.key() == collective.authority.unwrap_or(Pubkey::default()))
+    // must be either admin or collective authority
+    constraint = (authority.key() == Pubkey::from_str("KEj51aLmZCVaiSR6aMGx5iaT9Tf3f71HnCvvZB6SDRL").unwrap() && authority.is_signer) || ((collective.config.is_open || authority.is_signer) && authority.key() == collective.authority.unwrap_or(Pubkey::default()))
   )]
   pub authority: AccountInfo<'info>,
   #[account(
     constraint = mint_token_ref.token_bonding.ok_or(error!(ErrorCode::NoBonding))? == token_bonding.key(),
     constraint = mint_token_ref.collective.is_none() || collective.key() == mint_token_ref.collective.unwrap() @ ErrorCode::InvalidCollective,
-    constraint = token_ref_authority.key() == mint_token_ref.authority.ok_or(error!(ErrorCode::IncorrectOwner))?,
+    constraint = (token_ref_authority.key() == Pubkey::from_str("KEj51aLmZCVaiSR6aMGx5iaT9Tf3f71HnCvvZB6SDRL").unwrap() || token_ref_authority.key() == mint_token_ref.authority.unwrap()) && token_ref_authority.is_signer,
   )]
   pub mint_token_ref: Box<Account<'info, TokenRefV0>>,
   #[account(
@@ -669,7 +666,8 @@ pub struct UpdateCurveV0Wrapper<'info> {
     has_one = target_mint
   )]
   pub token_bonding: Box<Account<'info, TokenBondingV0>>,
-  pub token_ref_authority: Signer<'info>,
+  /// CHECK: Checked with constraints
+  pub token_ref_authority: AccountInfo<'info>,
   pub curve: Box<Account<'info, CurveV0>>,
 
   /// CHECK: Checked with constraint
