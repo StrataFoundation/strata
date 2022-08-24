@@ -20,9 +20,9 @@ pub struct UpdateCurveV0<'info> {
   #[account(
     mut,
     close = refund,
-    constraint = old_curve.to_account_info().owner.key() == token_bonding.key()
+    constraint = current_curve.to_account_info().owner.key() == token_bonding.key()
   )]
-  pub old_curve: Box<Account<'info, CurveV0>>,
+  pub current_curve: Box<Account<'info, CurveV0>>,
   pub new_curve: Box<Account<'info, CurveV0>>,
 }
 

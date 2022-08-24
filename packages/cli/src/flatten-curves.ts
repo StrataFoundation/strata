@@ -6,8 +6,11 @@ import {
   SplTokenBonding,
 } from "@strata-foundation/spl-token-bonding";
 import { SplTokenCollective } from "@strata-foundation/spl-token-collective";
-import { createMint, sendMultipleInstructions } from "@strata-foundation/spl-utils";
-import readline from 'readline'
+import {
+  createMint,
+  sendMultipleInstructions,
+} from "@strata-foundation/spl-utils";
+import readline from "readline";
 
 async function input(query) {
   const rl = readline.createInterface({
@@ -15,25 +18,37 @@ async function input(query) {
     output: process.stdout,
   });
 
-  return new Promise(resolve => rl.question(query, ans => {
-    rl.close();
-    resolve(ans);
-  }))
+  return new Promise((resolve) =>
+    rl.question(query, (ans) => {
+      rl.close();
+      resolve(ans);
+    })
+  );
 }
 
 function checkIsFixedPrice(curve: CurveV0): boolean {
   //@ts-ignore
-  const hasOneCurve = curve.definition?.timeV0?.curves && curve.definition.timeV0.curves.length == 1;
+  const hasOneCurve =
+    curve.definition?.timeV0?.curves &&
+    curve.definition.timeV0.curves.length == 1;
   if (!hasOneCurve) return false;
 
   //@ts-ignore
   const expCurve = curve.definition.timeV0.curves[0]?.curve?.exponentialCurveV0;
 
-  const isFixedCurve = expCurve && expCurve.c?.toNumber() === 0 && expCurve.pow === 0 && expCurve.frac === 1;
+  const isFixedCurve =
+    expCurve &&
+    expCurve.c?.toNumber() === 0 &&
+    expCurve.pow === 0 &&
+    expCurve.frac === 1;
   return !!isFixedCurve;
 }
 
-async function createTestTokens(tokenBondingSdk: SplTokenBonding,tokenCollectiveSdk: SplTokenCollective, provider: anchor.AnchorProvider) {
+async function createTestTokens(
+  tokenBondingSdk: SplTokenBonding,
+  tokenCollectiveSdk: SplTokenCollective,
+  provider: anchor.AnchorProvider
+) {
   let config = {
     isOpen: false,
     unclaimedTokenBondingSettings: {
@@ -78,33 +93,58 @@ async function createTestTokens(tokenBondingSdk: SplTokenBonding,tokenCollective
       config,
     });
   const collective = collectiveRet;
-  const goLiveDate = new Date(0)
+  const goLiveDate = new Date(0);
   goLiveDate.setUTCSeconds(1642690800);
 
-  await createToken(tokenCollectiveSdk, collective, goLiveDate, curve, provider);
-  await createToken(tokenCollectiveSdk, collective, goLiveDate, curve, provider);
-  await createToken(tokenCollectiveSdk, collective, goLiveDate, curve, provider);
+  await createToken(
+    tokenCollectiveSdk,
+    collective,
+    goLiveDate,
+    curve,
+    provider
+  );
+  await createToken(
+    tokenCollectiveSdk,
+    collective,
+    goLiveDate,
+    curve,
+    provider
+  );
+  await createToken(
+    tokenCollectiveSdk,
+    collective,
+    goLiveDate,
+    curve,
+    provider
+  );
 }
 
-async function createToken(tokenCollectiveSdk: SplTokenCollective, collective: any, goLiveDate: any, curve: any, provider: anchor.AnchorProvider) {
-  let owner = Keypair.generate()
-  const { instructions, signers } = await tokenCollectiveSdk.createSocialTokenInstructions({
-    collective,
-    owner: owner.publicKey,
-    authority: provider.wallet.publicKey,
-    metadata: {
-      name: "test",
-      symbol: "TEST",
-    },
-    tokenBondingParams: {
-      goLiveDate,
-      curve,
-      buyBaseRoyaltyPercentage: 0,
-      buyTargetRoyaltyPercentage: 0,
-      sellBaseRoyaltyPercentage: 0,
-      sellTargetRoyaltyPercentage: 0,
-    },
-  });
+async function createToken(
+  tokenCollectiveSdk: SplTokenCollective,
+  collective: any,
+  goLiveDate: any,
+  curve: any,
+  provider: anchor.AnchorProvider
+) {
+  let owner = Keypair.generate();
+  const { instructions, signers } =
+    await tokenCollectiveSdk.createSocialTokenInstructions({
+      collective,
+      owner: owner.publicKey,
+      authority: provider.wallet.publicKey,
+      metadata: {
+        name: "test",
+        symbol: "TEST",
+      },
+      tokenBondingParams: {
+        goLiveDate,
+        curve,
+        buyBaseRoyaltyPercentage: 0,
+        buyTargetRoyaltyPercentage: 0,
+        sellBaseRoyaltyPercentage: 0,
+        sellTargetRoyaltyPercentage: 0,
+      },
+    });
 
   await sendMultipleInstructions(
     tokenCollectiveSdk.errors || new Map(),
@@ -116,8 +156,10 @@ async function createToken(tokenCollectiveSdk: SplTokenCollective, collective: a
 
 async function run() {
   console.log(`ANCHOR PROVIDER URL: ${process.env.ANCHOR_PROVIDER_URL}`);
-  console.log(`ANCHOR WALLET: ${process.env.ANCHOR_WALLET}`)
-  const ans = await input("Are you sure you want to run this command at the above network with the above wallet? (y/n) ");
+  console.log(`ANCHOR WALLET: ${process.env.ANCHOR_WALLET}`);
+  const ans = await input(
+    "Are you sure you want to run this command at the above network with the above wallet? (y/n) "
+  );
   if (ans != "y") {
     console.log("exiting");
     return;
@@ -143,6 +185,7 @@ async function run() {
       tokenRef.account.tokenBonding!
     ))!;
     const currentCurve = await tokenBondingSdk.getCurve(tokenBonding?.curve);
+
     // if the curve is already fixed, skip it
     if (checkIsFixedPrice(currentCurve)) {
       fixedCounter += 1;
@@ -154,7 +197,7 @@ async function run() {
     const currentBuyPrice = pricing.buyTargetAmount(1);
 
     // set the current price as the new permanent fixed price
-    const curve = await tokenBondingSdk.initializeCurve({
+    const newCurve = await tokenBondingSdk.initializeCurve({
       config: new ExponentialCurveConfig({
         c: 0,
         pow: 0,
@@ -162,16 +205,19 @@ async function run() {
         b: currentBuyPrice,
       }),
     });
-  
+
     await tokenCollectiveSdk.updateCurve({
       tokenRef: tokenRef.publicKey,
-      curve,
+      currentCurve: currentCurve.publicKey,
+      newCurve,
     });
 
     counter += 1;
   }
   console.log(`There were ${counter} tokens transformed to fixed curves`);
-  console.log(`There were ${fixedCounter} tokens that already had fixed curves`);
+  console.log(
+    `There were ${fixedCounter} tokens that already had fixed curves`
+  );
 }
 
 run().catch((e) => {

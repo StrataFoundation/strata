@@ -337,9 +337,9 @@ export interface IUpdateTokenBondingViaCollectiveArgs
 }
 
 export interface IUpdateCurveViaCollectiveArgs {
-  refund: PublicKey;
+  refund?: PublicKey;
   tokenRef: PublicKey;
-  oldCurve: PublicKey;
+  currentCurve: PublicKey;
   newCurve: PublicKey;
   adminKey?: PublicKey | undefined;
 }
@@ -1784,8 +1784,8 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
             tokenBondingProgram: this.splTokenBondingProgram.programId,
             baseMint: tokenBondingAcct.baseMint,
             targetMint: tokenBondingAcct.targetMint,
-            oldCurve,
-            newCurve
+            currentCurve,
+            newCurve,
           },
         }),
       ],
