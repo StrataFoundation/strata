@@ -330,7 +330,7 @@ export interface ICollectiveConfig {
 export interface IUpdateTokenBondingViaCollectiveArgs
   extends Omit<
     Omit<IUpdateTokenBondingArgs, "generalAuthority">,
-    "tokenBonding"
+    "tokenBonding",
   > {
   /** The token ref of the token we are updating bonding for */
   tokenRef: PublicKey;
@@ -1582,7 +1582,6 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
    */
   async updateTokenBondingInstructions({
     tokenRef,
-    curve,
     buyBaseRoyaltyPercentage,
     buyTargetRoyaltyPercentage,
     sellBaseRoyaltyPercentage,
@@ -1617,12 +1616,6 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     if (!tokenBondingAcct.generalAuthority) {
       throw new Error(
         "Cannot update a token bonding account that has no authority"
-      );
-    }
-
-    if (curve && !tokenBondingAcct.curveAuthority) {
-      throw new Error(
-        "Cannot update a token bonding curve that has no curve authority"
       );
     }
 

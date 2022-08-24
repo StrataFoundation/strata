@@ -427,8 +427,6 @@ export interface ICreateTokenBondingArgs {
 export interface IUpdateTokenBondingArgs {
   /** The bonding curve to update */
   tokenBonding: PublicKey;
-  /** The shape of the bonding curve. Must be created using {@link SplTokenBonding.initializeCurve} */
-  curve?: PublicKey;
   /** Number from 0 to 100. **Default:** current */
   buyBaseRoyaltyPercentage?: number;
   /** Number from 0 to 100. **Default:** current */
@@ -447,7 +445,6 @@ export interface IUpdateTokenBondingArgs {
   sellTargetRoyalties?: PublicKey;
   generalAuthority?: PublicKey | null;
   reserveAuthority?: PublicKey | null;
-  curveAuthority?: PublicKey | null;
   /** Should this bonding curve be frozen, disabling buy and sell? It can be unfrozen using {@link SplTokenBonding.updateTokenBonding}. **Default:** current */
   buyFrozen?: boolean;
 }
@@ -1304,7 +1301,6 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
    */
   async updateTokenBondingInstructions({
     tokenBonding,
-    curve,
     buyBaseRoyaltyPercentage,
     buyTargetRoyaltyPercentage,
     sellBaseRoyaltyPercentage,
@@ -1315,7 +1311,6 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     sellTargetRoyalties,
     generalAuthority,
     reserveAuthority,
-    curveAuthority,
     buyFrozen,
   }: IUpdateTokenBondingArgs): Promise<InstructionResult<null>> {
     const tokenBondingAcct = (await this.getTokenBonding(tokenBonding))!;
@@ -1335,34 +1330,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
 
     const reserveAuthorityChanges = anyDefined(reserveAuthority);
 
-    const curveChanges = anyDefined(curve, curveAuthority);
-
     const instructions: TransactionInstruction[] = [];
-
-    if (curveChanges) {
-      if (!tokenBondingAcct.curveAuthority) {
-        throw new Error(
-          "Cannot update a token bonding curve that has no authority"
-        );
-      }
-
-      const args: IdlTypes<SplTokenBondingIDL>["UpdateCurveV0Args"] = {
-        curveAuthority:
-          curveAuthority === null
-            ? null
-            : curveAuthority! || (tokenBondingAcct.curveAuthority as PublicKey),
-      };
-
-      instructions.push(
-        await this.instruction.updateCurveV0(args, {
-          accounts: {
-            tokenBonding,
-            curve,
-            curveAuthority: (tokenBondingAcct.curveAuthority as PublicKey)!,
-          },
-        })
-      );
-    }
 
     if (generalChanges) {
       if (!tokenBondingAcct.generalAuthority) {

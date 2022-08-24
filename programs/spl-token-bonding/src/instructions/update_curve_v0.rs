@@ -1,6 +1,5 @@
-use crate::{error::ErrorCode, state::*};
+use crate::{ error::ErrorCode, state::* };
 use anchor_lang::prelude::*;
-
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct UpdateCurveV0Args {
