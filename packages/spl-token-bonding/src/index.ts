@@ -516,11 +516,17 @@ export interface ISwapArgs {
   slippage: number;
 
   /** DEPRECATED. Will be removed in a future version. Please use preInstructions instead */
-  extraInstructions?: (args: IExtraInstructionArgs) => Promise<InstructionResult<null>>;
+  extraInstructions?: (
+    args: IExtraInstructionArgs
+  ) => Promise<InstructionResult<null>>;
   /** Optionally inject extra instructions before each trade. Usefull for adding txn fees */
-  preInstructions?: (args: IPreInstructionArgs) => Promise<InstructionResult<null>>;
+  preInstructions?: (
+    args: IPreInstructionArgs
+  ) => Promise<InstructionResult<null>>;
   /** Optionally inject extra instructions after each transaction */
-  postInstructions?: (args: IPostInstructionArgs) => Promise<InstructionResult<null>>;
+  postInstructions?: (
+    args: IPostInstructionArgs
+  ) => Promise<InstructionResult<null>>;
 
   /** If the token is entangled, this is the mint of the entangled token */
   entangled?: PublicKey | null;
@@ -568,7 +574,7 @@ export interface ITransferReservesArgs {
    */
   destination?: PublicKey;
   /**
-   * The destination wallet for the reserves **Default:** 
+   * The destination wallet for the reserves **Default:**
    */
   destinationWallet?: PublicKey;
   /**
@@ -1321,8 +1327,11 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       generalAuthority,
       buyFrozen
     );
+
     const reserveAuthorityChanges = anyDefined(reserveAuthority);
+
     const instructions: TransactionInstruction[] = [];
+
     if (generalChanges) {
       if (!tokenBondingAcct.generalAuthority) {
         throw new Error(
@@ -1882,7 +1891,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         instructions: [],
         signers: [],
         output: null,
-      }
+      };
     },
     postInstructions = () =>
       Promise.resolve({
@@ -1930,7 +1939,12 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         (await this.getState())?.wrappedSolMint!
       );
 
-      const ataMint = entangled && isBuy ? entangled : isBuy ? tokenBonding.targetMint : tokenBonding.baseMint;
+      const ataMint =
+        entangled && isBuy
+          ? entangled
+          : isBuy
+          ? tokenBonding.targetMint
+          : tokenBonding.baseMint;
       const ata = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
@@ -2010,7 +2024,7 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
           isFirst: index == 0,
         });
 
-      const { instructions: postInstrs, signers: postSigners } = 
+      const { instructions: postInstrs, signers: postSigners } =
         await postInstructions({
           isLast: isLastHop,
           amount: expectedOutputAmount,
@@ -2384,7 +2398,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
       destination = destinationWallet;
     }
 
-    const destAcct = destination && await this.provider.connection.getAccountInfo(destination);
+    const destAcct =
+      destination &&
+      (await this.provider.connection.getAccountInfo(destination));
 
     // Destination is a wallet, need to get the ATA
     if (

@@ -74,7 +74,7 @@ describe("spl-token-collective", () => {
 
   before(async () => {
     await splTokenBondingProgram.initializeSolStorage({
-      mintKeypair: Keypair.generate()
+      mintKeypair: Keypair.generate(),
     });
     wumMint = await createMint(
       provider,
@@ -142,7 +142,7 @@ describe("spl-token-collective", () => {
         )
       );
       nameTx.partialSign(nameClass);
-      const goLiveDate = new Date(0)
+      const goLiveDate = new Date(0);
       goLiveDate.setUTCSeconds(1642690800);
       await provider.sendAndConfirm(nameTx);
       const { ownerTokenRef, mintTokenRef } =
@@ -193,13 +193,16 @@ describe("spl-token-collective", () => {
       );
     });
 
-
     it("Allows opting out, which freezes the curve", async () => {
-      const { instructions, signers } = await tokenCollectiveProgram.optOutInstructions({
-        tokenRef: unclaimedTokenRef,
-        handle: tokenName
-      });
-      await tokenCollectiveProgram.sendInstructions(instructions, [...signers, nameClass]);
+      const { instructions, signers } =
+        await tokenCollectiveProgram.optOutInstructions({
+          tokenRef: unclaimedTokenRef,
+          handle: tokenName,
+        });
+      await tokenCollectiveProgram.sendInstructions(instructions, [
+        ...signers,
+        nameClass,
+      ]);
       const ownerTokenRef = (await tokenCollectiveProgram.getTokenRef(
         unclaimedTokenRef
       ))!;
@@ -207,7 +210,9 @@ describe("spl-token-collective", () => {
         ownerTokenRef.tokenBonding!
       ))!;
       const mintTokenRef = (await tokenCollectiveProgram.getTokenRef(
-        (await SplTokenCollective.mintTokenRefKey(tokenBonding.targetMint))[0]
+        (
+          await SplTokenCollective.mintTokenRefKey(tokenBonding.targetMint)
+        )[0]
       ))!;
       expect(tokenBonding.buyFrozen).to.be.true;
       expect(ownerTokenRef.isOptedOut).to.be.true;
@@ -251,30 +256,31 @@ describe("spl-token-collective", () => {
 
   it("should allow creating a social token with no collective", async () => {
     const keypair = Keypair.generate();
-    const { instructions, signers } = await tokenCollectiveProgram.createSocialTokenInstructions({
-      owner: keypair.publicKey,
-      mint: NATIVE_MINT,
-      authority: keypair.publicKey,
-      metadata: {
-        name: "Whaddup",
-        symbol: "WHAD",
-        uri: "https://wumbo-token-metadata.s3.us-east-2.amazonaws.com/open.json",
-      },
-      tokenBondingParams: {
-        curve,
-        buyBaseRoyaltyPercentage: 0,
-        buyTargetRoyaltyPercentage: 0,
-        sellBaseRoyaltyPercentage: 0,
-        sellTargetRoyaltyPercentage: 0,
-      },
-    });
+    const { instructions, signers } =
+      await tokenCollectiveProgram.createSocialTokenInstructions({
+        owner: keypair.publicKey,
+        mint: NATIVE_MINT,
+        authority: keypair.publicKey,
+        metadata: {
+          name: "Whaddup",
+          symbol: "WHAD",
+          uri: "https://wumbo-token-metadata.s3.us-east-2.amazonaws.com/open.json",
+        },
+        tokenBondingParams: {
+          curve,
+          buyBaseRoyaltyPercentage: 0,
+          buyTargetRoyaltyPercentage: 0,
+          sellBaseRoyaltyPercentage: 0,
+          sellTargetRoyaltyPercentage: 0,
+        },
+      });
     await sendMultipleInstructions(
       tokenCollectiveProgram.errors || new Map(),
       provider,
       instructions,
       [signers[0], signers[1], [...signers[2], keypair]]
     );
-  })
+  });
 
   describe("Claimed", () => {
     let claimedTokenRef: PublicKey;
@@ -296,7 +302,7 @@ describe("spl-token-collective", () => {
           config,
         });
       collective = collectiveRet;
-      const goLiveDate = new Date(0)
+      const goLiveDate = new Date(0);
       goLiveDate.setUTCSeconds(1642690800);
       const {
         output: { ownerTokenRef, mintTokenRef },
@@ -340,7 +346,7 @@ describe("spl-token-collective", () => {
         config,
         tokenRef: mintTokenRef.publicKey,
       });
-    })
+    });
 
     it("Creates a claimed social token", async () => {
       const mintTokenRef = (await tokenCollectiveProgram.getTokenRef(
@@ -365,18 +371,25 @@ describe("spl-token-collective", () => {
       const tokenMetadataRaw = await provider.connection.getAccountInfo(
         ownerTokenRef.tokenMetadata
       );
-      const tokenMetadata = new Metadata(ownerTokenRef.tokenMetadata, tokenMetadataRaw!).data;
+      const tokenMetadata = new Metadata(
+        ownerTokenRef.tokenMetadata,
+        tokenMetadataRaw!
+      ).data;
       expect(tokenMetadata.updateAuthority).to.equal(
         ownerKeypair.publicKey.toBase58()
       );
     });
 
-    it("Allows updating token bonding curve", async() => {
+    it("Allows updating token bonding curve", async () => {
       const mintTokenRef = (await tokenCollectiveProgram.getTokenRef(
         claimedReverseTokenRef
       ))!;
 
-      const curve = await splTokenBondingProgram.initializeCurve({
+      let tokenBonding = (await splTokenBondingProgram.getTokenBonding(
+        mintTokenRef.tokenBonding!
+      ))!;
+
+      const newCurve = await splTokenBondingProgram.initializeCurve({
         config: new ExponentialCurveConfig({
           c: 0,
           pow: 0,
@@ -387,20 +400,23 @@ describe("spl-token-collective", () => {
 
       await tokenCollectiveProgram.updateCurve({
         tokenRef: mintTokenRef.publicKey,
-        curve,
+        currentCurve: tokenBonding.curve,
+        newCurve,
       });
 
       let newTokenBonding = (await splTokenBondingProgram.getTokenBonding(
         mintTokenRef.tokenBonding!
       ))!;
       const c = await splTokenBondingProgram.getCurve(newTokenBonding?.curve);
-      //@ts-ignore
-      const curveConfig = c?.definition?.timeV0?.curves[0]?.curve?.exponentialCurveV0;
+
+      const curveConfig =
+        // @ts-ignore
+        c?.definition?.timeV0?.curves[0]?.curve?.exponentialCurveV0;
       expect(curveConfig.c.toNumber()).to.equal(0);
       expect(curveConfig.pow).to.equal(0);
       expect(curveConfig.frac).to.equal(1);
       expect(curveConfig.b.toNumber()).to.equal(1000000000000);
-    })
+    });
 
     it("Allows updating token bonding", async () => {
       const mintTokenRef = (await tokenCollectiveProgram.getTokenRef(
@@ -426,7 +442,6 @@ describe("spl-token-collective", () => {
         buyFrozen: true,
       });
 
-
       tokenBondingNow = (await splTokenBondingProgram.getTokenBonding(
         mintTokenRef.tokenBonding!
       ))!;
@@ -439,10 +454,14 @@ describe("spl-token-collective", () => {
     });
 
     it("Allows opting out, which freezes the curve", async () => {
-      const { instructions, signers } = await tokenCollectiveProgram.optOutInstructions({
-        tokenRef: claimedTokenRef
-      });
-      await tokenCollectiveProgram.sendInstructions(instructions, [...signers, ownerKeypair]);
+      const { instructions, signers } =
+        await tokenCollectiveProgram.optOutInstructions({
+          tokenRef: claimedTokenRef,
+        });
+      await tokenCollectiveProgram.sendInstructions(instructions, [
+        ...signers,
+        ownerKeypair,
+      ]);
       const ownerTokenRef = (await tokenCollectiveProgram.getTokenRef(
         claimedTokenRef
       ))!;
@@ -450,7 +469,9 @@ describe("spl-token-collective", () => {
         ownerTokenRef.tokenBonding!
       ))!;
       const mintTokenRef = (await tokenCollectiveProgram.getTokenRef(
-        (await SplTokenCollective.mintTokenRefKey(tokenBonding.targetMint))[0]
+        (
+          await SplTokenCollective.mintTokenRefKey(tokenBonding.targetMint)
+        )[0]
       ))!;
       expect(tokenBonding.buyFrozen).to.be.true;
       expect(ownerTokenRef.isOptedOut).to.be.true;
@@ -471,43 +492,58 @@ describe("spl-token-collective", () => {
         sellTargetRoyaltyPercentage: 0,
         curve,
         generalAuthority: claimedReverseTokenRef,
-        reserveAuthority: claimedReverseTokenRef
+        reserveAuthority: claimedReverseTokenRef,
       });
 
       await tokenCollectiveProgram.claimBondingAuthority({
         tokenBonding,
       });
       const tokenRefAuthority = tokenRef.authority?.toBase58();
-      const tokenBondingAcct = (await splTokenBondingProgram.getTokenBonding(tokenBonding))!
-      expect((tokenBondingAcct.generalAuthority! as PublicKey).toBase58()).to.eq(
-        tokenRefAuthority
-      );
+      const tokenBondingAcct = (await splTokenBondingProgram.getTokenBonding(
+        tokenBonding
+      ))!;
       expect(
         (tokenBondingAcct.generalAuthority! as PublicKey).toBase58()
       ).to.eq(tokenRefAuthority);
-    })
+      expect(
+        (tokenBondingAcct.generalAuthority! as PublicKey).toBase58()
+      ).to.eq(tokenRefAuthority);
+    });
 
     it("Allows changing the authority", async () => {
       await tokenCollectiveProgram.updateAuthority({
         tokenRef: claimedTokenRef,
-        newAuthority: ownerKeypair.publicKey
+        newAuthority: ownerKeypair.publicKey,
       });
       const ownerTokenRef = (await tokenCollectiveProgram.getTokenRef(
         claimedTokenRef
       ))!;
       const mintTokenRef = (await tokenCollectiveProgram.getTokenRef(
-        (await SplTokenCollective.mintTokenRefKey(ownerTokenRef.mint))[0]
+        (
+          await SplTokenCollective.mintTokenRefKey(ownerTokenRef.mint)
+        )[0]
       ))!;
-      expect((ownerTokenRef.authority! as PublicKey).toBase58()).to.eq(ownerKeypair.publicKey.toBase58())
-      expect((mintTokenRef.authority! as PublicKey).toBase58()).to.eq(ownerKeypair.publicKey.toBase58())
+      expect((ownerTokenRef.authority! as PublicKey).toBase58()).to.eq(
+        ownerKeypair.publicKey.toBase58()
+      );
+      expect((mintTokenRef.authority! as PublicKey).toBase58()).to.eq(
+        ownerKeypair.publicKey.toBase58()
+      );
     });
 
     it("Allows changing the owner", async () => {
-      const { instructions, signers, output: { ownerTokenRef } } = await tokenCollectiveProgram.updateOwnerInstructions({
+      const {
+        instructions,
+        signers,
+        output: { ownerTokenRef },
+      } = await tokenCollectiveProgram.updateOwnerInstructions({
         tokenRef: claimedTokenRef,
-        newOwner: provider.wallet.publicKey
+        newOwner: provider.wallet.publicKey,
       });
-      await tokenCollectiveProgram.sendInstructions(instructions, [...signers, ownerKeypair]);
+      await tokenCollectiveProgram.sendInstructions(instructions, [
+        ...signers,
+        ownerKeypair,
+      ]);
       const oldOwnerTokenRef = (await tokenCollectiveProgram.getTokenRef(
         claimedTokenRef
       ))!;
@@ -516,17 +552,27 @@ describe("spl-token-collective", () => {
         ownerTokenRef
       ))!;
       const mintTokenRef = (await tokenCollectiveProgram.getTokenRef(
-        (await SplTokenCollective.mintTokenRefKey(newOwnerTokenRef.mint))[0]
+        (
+          await SplTokenCollective.mintTokenRefKey(newOwnerTokenRef.mint)
+        )[0]
       ))!;
       const primaryTokenRef = (await tokenCollectiveProgram.getTokenRef(
-        (await SplTokenCollective.ownerTokenRefKey({
-          isPrimary: true,
-          owner: provider.wallet.publicKey
-        }))[0]
+        (
+          await SplTokenCollective.ownerTokenRefKey({
+            isPrimary: true,
+            owner: provider.wallet.publicKey,
+          })
+        )[0]
       ))!;
-      expect(newOwnerTokenRef.owner!.toBase58()).to.eq(provider.wallet.publicKey.toBase58())
-      expect(mintTokenRef.owner!.toBase58()).to.eq(provider.wallet.publicKey.toBase58())
-      expect(primaryTokenRef.owner!.toBase58()).to.eq(provider.wallet.publicKey.toBase58())
+      expect(newOwnerTokenRef.owner!.toBase58()).to.eq(
+        provider.wallet.publicKey.toBase58()
+      );
+      expect(mintTokenRef.owner!.toBase58()).to.eq(
+        provider.wallet.publicKey.toBase58()
+      );
+      expect(primaryTokenRef.owner!.toBase58()).to.eq(
+        provider.wallet.publicKey.toBase58()
+      );
     });
   });
 });
