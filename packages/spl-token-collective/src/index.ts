@@ -330,15 +330,17 @@ export interface ICollectiveConfig {
 export interface IUpdateTokenBondingViaCollectiveArgs
   extends Omit<
     Omit<IUpdateTokenBondingArgs, "generalAuthority">,
-    "tokenBonding",
+    "tokenBonding"
   > {
   /** The token ref of the token we are updating bonding for */
   tokenRef: PublicKey;
 }
 
 export interface IUpdateCurveViaCollectiveArgs {
+  refund: PublicKey;
   tokenRef: PublicKey;
-  curve: PublicKey;
+  oldCurve: PublicKey;
+  newCurve: PublicKey;
   adminKey?: PublicKey | undefined;
 }
 
@@ -1717,8 +1719,10 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
   }
 
   async updateCurveInstructions({
+    refund = this.wallet.publicKey,
     tokenRef,
-    curve,
+    oldCurve,
+    newCurve,
     adminKey,
   }: IUpdateCurveViaCollectiveArgs): Promise<InstructionResult<null>> {
     const tokenRefAcct = (await this.getTokenRef(tokenRef))!;
@@ -1737,6 +1741,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     const collectiveAcct =
       tokenRefAcct.collective &&
       (await this.getCollective(tokenRefAcct.collective))!;
+
     const tokenBondingAcct = (await this.splTokenBondingProgram.getTokenBonding(
       tokenRefAcct.tokenBonding
     ))!;
@@ -1759,6 +1764,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       : (collectiveAcct &&
           (collectiveAcct.authority as PublicKey | undefined)) ||
         PublicKey.default;
+
     const tokenRefAuth = adminKey
       ? adminKey
       : (tokenRefAcct.authority as PublicKey);
@@ -1769,6 +1775,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       instructions: [
         await this.instruction.updateCurveV0({
           accounts: {
+            refund,
             tokenRefAuthority: tokenRefAuth,
             collective: tokenRefAcct.collective || PublicKey.default,
             authority: auth,
@@ -1777,7 +1784,8 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
             tokenBondingProgram: this.splTokenBondingProgram.programId,
             baseMint: tokenBondingAcct.baseMint,
             targetMint: tokenBondingAcct.targetMint,
-            curve,
+            oldCurve,
+            newCurve
           },
         }),
       ],
