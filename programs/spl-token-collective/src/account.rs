@@ -655,7 +655,6 @@ pub struct UpdateCurveV0Wrapper<'info> {
   )]
   pub authority: AccountInfo<'info>,
   #[account(
-    // For now, social tokens without a bonding curve are not supported. We may support them later
     constraint = mint_token_ref.token_bonding.ok_or(error!(ErrorCode::NoBonding))? == token_bonding.key(),
     constraint = mint_token_ref.collective.is_none() || collective.key() == mint_token_ref.collective.unwrap() @ ErrorCode::InvalidCollective,
     constraint = token_ref_authority.key() == mint_token_ref.authority.ok_or(error!(ErrorCode::IncorrectOwner))?,

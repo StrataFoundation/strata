@@ -15,7 +15,8 @@
   "scripts": {
     "copy-files": "copyfiles -u 1 src/**/*.js dist/lib",
     "watch": "yarn run copy-files && node src/idlToTs",
-    "bootstrap": "tsc && node dist/lib/bootstrap",
+    "bootstrap": "tsc --build && node lib/cjs/bootstrap",
+    "flatten-curves": "tsc --build && node lib/cjs/flatten-curves",
     "bounty-dist": "tsc && node dist/lib/bounty-dist",
     "create-governance-token": "tsc && node dist/lib/createGovernanceToken",
     "clean": "npx shx mkdir -p lib && npx shx rm -rf lib",
