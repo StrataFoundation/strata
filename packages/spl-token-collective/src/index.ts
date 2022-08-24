@@ -1721,7 +1721,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
   async updateCurveInstructions({
     refund = this.wallet.publicKey,
     tokenRef,
-    oldCurve,
+    currentCurve,
     newCurve,
     adminKey,
   }: IUpdateCurveViaCollectiveArgs): Promise<InstructionResult<null>> {

@@ -670,7 +670,7 @@ pub struct UpdateCurveV0Wrapper<'info> {
   pub token_bonding: Box<Account<'info, TokenBondingV0>>,
   /// CHECK: Checked with constraints
   pub token_ref_authority: AccountInfo<'info>,
-  pub old_curve: Box<Account<'info, CurveV0>>,
+  pub current_curve: Box<Account<'info, CurveV0>>,
   pub new_curve: Box<Account<'info, CurveV0>>,
 
   /// CHECK: Checked with constraint
