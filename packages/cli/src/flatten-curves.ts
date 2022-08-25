@@ -155,16 +155,10 @@ async function createToken(
     [signers[0], signers[1], [...signers[2], owner]]
   );
 }
-
+// TODO add some timers to account for rate limiting on mainnet or use genesys
 async function run() {
-  console.log(`ANCHOR PROVIDER URL: ${process.env.ANCHOR_PROVIDER_URL}`);
-  console.log(`ANCHOR WALLET: ${process.env.ANCHOR_WALLET}`);
-
-  const adminKeypair = Keypair.fromSecretKey(
-    new Uint8Array(
-      JSON.parse(fs.readFileSync("/home/thornton/.config/solana/curve-admin-keypair.json").toString())
-    )
-  );
+  console.log(`Provider URL: ${process.env.ANCHOR_PROVIDER_URL}`);
+  console.log(`Admin Wallet: ${process.env.ANCHOR_WALLET}`);
   const ans = await input("Are you sure you want to run this command at the above network with the above wallet? (y/n) ");
   if (ans != "y") {
     console.log("exiting");
@@ -182,7 +176,7 @@ async function run() {
   // return;
 
   const tokenRefs = await tokenCollectiveSdk.program.account.tokenRefV0.all();
-  console.log(`There are ${tokenRefs.length} accounts to process`);
+  console.log(`There are ${tokenRefs.length} social tokens to process`);
 
   let counter = 0;
   let fixedCounter = 0;
@@ -216,7 +210,7 @@ async function run() {
       tokenRef: tokenRef.publicKey,
       currentCurve: currentCurve.publicKey,
       newCurve,
-      adminKey: adminKeypair.publicKey,
+      adminKey: provider.wallet.publicKey,
     });
 
     counter += 1;
@@ -225,6 +219,54 @@ async function run() {
   console.log(
     `There were ${fixedCounter} tokens that already had fixed curves`
   );
+
+  const collectives = await tokenCollectiveSdk.program.account.collectiveV0.all();
+  console.log(`There are ${collectives.length} collectives to process`);
+  
+  let fixedCounter2 = 0
+  let counter2 = 0;
+  for (const collective of collectives) {
+    const collectiveMint = collective.account.mint;
+    const [tokenBondingKey, _] = await SplTokenBonding.tokenBondingKey(collective.account.mint);
+    const tokenBonding = await tokenBondingSdk.getTokenBonding(tokenBondingKey);
+    console.log(tokenBonding);
+    if (!tokenBonding) continue;
+    const currentCurve = await tokenBondingSdk.getCurve(tokenBonding?.curve);
+    
+    // if the curve is already fixed, skip it
+    if (checkIsFixedPrice(currentCurve)) {
+      fixedCounter2 += 1;
+      continue;
+    }
+
+    // get the current price of the dynamic curve
+    const pricing = await tokenBondingSdk.getPricing(tokenBonding.publicKey);
+    const currentBuyPrice = pricing.buyTargetAmount(1);
+
+    // set the current price as the new permanent fixed price
+    const newCurve = await tokenBondingSdk.initializeCurve({
+      config: new ExponentialCurveConfig({
+        c: 0,
+        pow: 0,
+        frac: 1,
+        b: currentBuyPrice,
+      }),
+    });
+
+    await tokenBondingSdk.updateCurve({
+      tokenBonding: tokenBondingKey,
+      currentCurve: currentCurve.publicKey,
+      newCurve,
+    });
+
+    counter2 += 1;
+  }
+  console.log(`There were ${counter2} collectives transformed to fixed curves`);
+  console.log(
+    `There were ${fixedCounter2} collectives that already had fixed curves`
+  );
+  console.log(`There were ${collectives.length - counter2 - fixedCounter2} collectives that didn't have bonding curves`)
+  process.exit();
 }
 
 run().catch((e) => {

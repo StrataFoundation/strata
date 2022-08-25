@@ -1746,12 +1746,9 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       tokenRefAcct.tokenBonding
     ))!;
 
-    if (
-      !tokenBondingAcct.generalAuthority ||
-      !tokenBondingAcct.curveAuthority
-    ) {
+    if (!tokenBondingAcct.curveAuthority) {
       throw new Error(
-        "Cannot update a token bonding account that has no authority"
+        "Cannot update curve for a token bonding account that has no curve authority"
       );
     }
 

@@ -424,6 +424,13 @@ export interface ICreateTokenBondingArgs {
   };
 }
 
+export interface IUpdateTokenBondingCurveArgs {
+  tokenBonding: PublicKey;
+  currentCurve: PublicKey;
+  newCurve: PublicKey;
+  refund?: PublicKey;
+}
+
 export interface IUpdateTokenBondingArgs {
   /** The bonding curve to update */
   tokenBonding: PublicKey;
@@ -1291,6 +1298,57 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
     );
     //@ts-ignore
     return Number(acc!.data.readBigInt64LE(8 * 4));
+  }
+
+  async updateCurveInstructions({
+    refund = this.wallet.publicKey,
+    tokenBonding: tokenBondingKey,
+    currentCurve,
+    newCurve,
+  }: IUpdateTokenBondingCurveArgs) {
+    const tokenBonding = (await this.getTokenBonding(tokenBondingKey))!;
+    if (!tokenBonding) {
+      throw new Error(
+        "Token bonding does not exist"
+      );
+    }
+
+    if (!tokenBonding.curveAuthority) {
+      throw new Error(
+        "No curve authority on this bonding curve"
+      );
+    }
+    return {
+      output: null,
+      signers: [],
+      instructions: [
+        await this.instruction.updateCurveV0({curveAuthority: tokenBonding.curveAuthority},
+          {
+          accounts: {
+            refund,
+            tokenBonding: tokenBondingKey,
+            curveAuthority: tokenBonding.curveAuthority,
+            curve: currentCurve,
+            newCurve,
+          },
+        }),
+      ],
+    };
+  }
+
+  /**
+   * Runs {@link updateCurveInstructions}
+   * @param args
+   */
+   async updateCurve(
+    args: IUpdateTokenBondingCurveArgs,
+    commitment: Commitment = "confirmed"
+  ): Promise<void> {
+    await this.execute(
+      this.updateCurveInstructions(args),
+      this.wallet.publicKey,
+      commitment
+    );
   }
 
   /**
