@@ -4,40 +4,12 @@ import {
   Box
 } from "@chakra-ui/react";
 import { PublicKey } from "@solana/web3.js";
-import { useErrorHandler, useTokenBondingFromMint } from "@strata-foundation/react";
+import { truthy, useFungibleChildEntangler, useStrataSdks, useTokenBondingFromMint } from "@strata-foundation/react";
 import { LaunchPreview } from "./LaunchPreview";
 import React, { useEffect, useMemo, useState } from 'react';
 import { useWallet } from "@solana/wallet-adapter-react";
-import { gql, useLazyQuery } from "@apollo/client";
-
-const GET_PARENT_ENTANGLERS = gql`
-  query GetParentEntanglers(
-    $parentMint: String!
-    $authority: String!
-  ) {
-    strata_strata {
-      pid_fent99TYZcj9PGbeooaZXEMQzMd7rz8vYFiudd8HevB {
-        fungible_parent_entangler(where: {parentMint: {_eq: $parentMint}, authority: {_eq: $authority}}) {
-          pubkey
-        }
-      }
-    }
-  }
-`;
-
-const GET_CHILD_ENTANGLERS = gql`
-  query GetChildEntanglers(
-    $parentEntanglers: [String!]
-  ) {
-    strata_strata {
-      pid_fent99TYZcj9PGbeooaZXEMQzMd7rz8vYFiudd8HevB {
-        fungible_child_entangler(where: {parentEntangler: {_in: $parentEntanglers}}) {
-          pubkey
-        }
-      }
-    }
-  }
-`;
+import { useAsync } from "react-async-hook";
+import { FungibleEntangler } from "@strata-foundation/fungible-entangler";
 
 interface TokenPreviewProps {
   mintKey: PublicKey | undefined;
@@ -45,82 +17,55 @@ interface TokenPreviewProps {
   image: string | undefined;
 }
 
-function unique(arr: PublicKey[]): PublicKey[] {
-  const strs = arr.map((x) => x.toString())
-  return [...new Set(strs)].map((x) => new PublicKey(x));
-}
-
 export const TokenLaunches = ({ mintKey, name, image }: TokenPreviewProps) => {
   const { publicKey } = useWallet();
   const [parsed, setParsed] = useState<PublicKey[]>([]);
-
+  const { fungibleEntanglerSdk } = useStrataSdks();
   const { info: tokenBonding } = useTokenBondingFromMint(mintKey);
-  const parentVars = useMemo(() => {
-    if (mintKey && publicKey) {
-      return {
-        parentMint: mintKey.toString(),
-        authority: publicKey.toString()
-      };
-    }
-  }, [mintKey, publicKey]);
-  const [loadParentEntanglers, { data: parentEntanglers, error: getParentsError }] = useLazyQuery<any>(GET_PARENT_ENTANGLERS, {
-    variables: parentVars,
-    context: {
-      clientName: "vybe"
-    }
-  });
-
-  const childVars = useMemo(() => {
-    if (parentEntanglers) {
-      const entanglers = parentEntanglers?.strata_strata[0]?.pid_fent99TYZcj9PGbeooaZXEMQzMd7rz8vYFiudd8HevB?.fungible_parent_entangler;
-      const entanglerKeys = unique(entanglers.map((ent: any) => ent.pubkey));
-      return {
-        parentEntanglers: entanglerKeys,
+  const { info: entangler } = useFungibleChildEntangler(parsed[0]);
+  useAsync(async () => {
+    if (!mintKey || !fungibleEntanglerSdk) return
+    const parentAccounts = await fungibleEntanglerSdk?.provider.connection.getProgramAccounts(FungibleEntangler.ID,
+      {
+        filters: [
+          {
+            memcmp: {
+              offset: 8,
+              bytes: mintKey?.toBase58() || "",
+            },
+          },
+        ]
       }
-    }
-  }, [parentEntanglers])
-
-  const [loadChildEntanglers, { data: childEntanglers, error: getChildError }] = useLazyQuery<any>(GET_CHILD_ENTANGLERS, {
-    variables: childVars,
-    context: {
-      clientName: "vybe"
-    }
-  });
-
-  useEffect(() => {
-    if (mintKey && parentVars) {
-      loadParentEntanglers({
-        variables: parentVars,
-        context: {
-          clientName: "vybe",
-        },
+    );
+    if (parentAccounts && parentAccounts.length) {
+      const parsedParents = parentAccounts.map((acc) => {
+        return fungibleEntanglerSdk?.parentEntanglerDecoder(acc.pubkey, acc.account)!;
+      }).filter((acc) => {
+        return acc?.authority?.equals(publicKey!)
       });
-    }
-  }, [mintKey, parentVars]);
 
-  useEffect(() => {
-    if (parentEntanglers && childVars) {
-      console.log("loading children");
-      loadChildEntanglers({
-        variables: childVars,
-        context: {
-          clientName: "vybe",
-        },
-      });
+      const parsed = await Promise.all(parsedParents.map(async (acc) => {
+        const childEntanglers = await fungibleEntanglerSdk?.provider.connection.getProgramAccounts(FungibleEntangler.ID,
+          {
+            filters: [
+              {
+                memcmp: {
+                  offset: 8,
+                  bytes: acc.publicKey.toString() || "",
+                }
+              }
+            ]
+          }
+        )
+        return childEntanglers?.map((child) => child.pubkey).filter(truthy)
+      }))
+      if (parsed[0]) {
+        setParsed(parsed[0]);
+      }
+      return;
     }
-  }, [parentEntanglers, childVars])
-
-  useEffect(() => {
-    if (childEntanglers) {
-      const entanglers = childEntanglers?.strata_strata[0]?.pid_fent99TYZcj9PGbeooaZXEMQzMd7rz8vYFiudd8HevB?.fungible_child_entangler;
-      const entanglerKeys = unique(entanglers.map((ent: any) => new PublicKey(ent.pubkey)));
-      if (entanglerKeys.length) setParsed(entanglerKeys)
-    }
-  }, [childEntanglers])
-  
-
-  const { handleErrors } = useErrorHandler();
-  handleErrors(getParentsError, getChildError);
+    setParsed([]);
+  }, [mintKey, fungibleEntanglerSdk, entangler]);
   
 
   return (
