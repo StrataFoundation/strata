@@ -226,13 +226,11 @@ async function run() {
   let fixedCounter2 = 0
   let counter2 = 0;
   for (const collective of collectives) {
-    const collectiveMint = collective.account.mint;
     const [tokenBondingKey, _] = await SplTokenBonding.tokenBondingKey(collective.account.mint);
     const tokenBonding = await tokenBondingSdk.getTokenBonding(tokenBondingKey);
-    console.log(tokenBonding);
     if (!tokenBonding) continue;
     const currentCurve = await tokenBondingSdk.getCurve(tokenBonding?.curve);
-    
+
     // if the curve is already fixed, skip it
     if (checkIsFixedPrice(currentCurve)) {
       fixedCounter2 += 1;
