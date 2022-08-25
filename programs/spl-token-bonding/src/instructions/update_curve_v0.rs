@@ -22,7 +22,6 @@ pub struct UpdateCurveV0<'info> {
   #[account(
     mut,
     close = refund,
-    constraint = curve.to_account_info().owner.key() == token_bonding.key()
   )]
   pub curve: Box<Account<'info, CurveV0>>,
   pub new_curve: Box<Account<'info, CurveV0>>,

@@ -1,5 +1,5 @@
 import * as anchor from "@project-serum/anchor";
-import { Keypair } from "@solana/web3.js";
+import { Keypair, PublicKey } from "@solana/web3.js";
 import {
   CurveV0,
   ExponentialCurveConfig,
@@ -11,6 +11,7 @@ import {
   sendMultipleInstructions,
 } from "@strata-foundation/spl-utils";
 import readline from "readline";
+import fs from 'fs';
 
 async function input(query) {
   const rl = readline.createInterface({
@@ -74,15 +75,6 @@ async function createTestTokens(
     },
   };
 
-  let curve = await tokenBondingSdk.initializeCurve({
-    config: new ExponentialCurveConfig({
-      c: 1,
-      b: 0,
-      pow: 1,
-      frac: 1,
-    }),
-  });
-
   const wumMint = await createMint(
     provider,
     tokenCollectiveSdk.wallet.publicKey,
@@ -99,41 +91,49 @@ async function createTestTokens(
   goLiveDate.setUTCSeconds(1642690800);
 
   await createToken(
+    tokenBondingSdk,
     tokenCollectiveSdk,
     collective,
     goLiveDate,
-    curve,
     provider
   );
   await createToken(
+    tokenBondingSdk,
     tokenCollectiveSdk,
     collective,
     goLiveDate,
-    curve,
     provider
   );
   await createToken(
+    tokenBondingSdk,
     tokenCollectiveSdk,
     collective,
     goLiveDate,
-    curve,
     provider
   );
 }
 
 async function createToken(
+  tokenBondingSdk: SplTokenBonding,
   tokenCollectiveSdk: SplTokenCollective,
   collective: any,
   goLiveDate: any,
-  curve: any,
   provider: anchor.AnchorProvider
 ) {
+  let curve = await tokenBondingSdk.initializeCurve({
+    config: new ExponentialCurveConfig({
+      c: 1,
+      b: 0,
+      pow: 1,
+      frac: 1,
+    }),
+  });
   let owner = Keypair.generate();
   const { instructions, signers } =
     await tokenCollectiveSdk.createSocialTokenInstructions({
       collective,
       owner: owner.publicKey,
-      authority: provider.wallet.publicKey,
+      authority: owner.publicKey,
       metadata: {
         name: "test",
         symbol: "TEST",
@@ -159,10 +159,13 @@ async function createToken(
 async function run() {
   console.log(`ANCHOR PROVIDER URL: ${process.env.ANCHOR_PROVIDER_URL}`);
   console.log(`ANCHOR WALLET: ${process.env.ANCHOR_WALLET}`);
-  const ans = await input(
-    "Are you sure you want to run this command at the above network with the above wallet? (y/n) "
-  );
 
+  const adminKeypair = Keypair.fromSecretKey(
+    new Uint8Array(
+      JSON.parse(fs.readFileSync("/home/thornton/.config/solana/curve-admin-keypair.json").toString())
+    )
+  );
+  const ans = await input("Are you sure you want to run this command at the above network with the above wallet? (y/n) ");
   if (ans != "y") {
     console.log("exiting");
     return;
@@ -175,7 +178,7 @@ async function run() {
   const tokenCollectiveSdk = await SplTokenCollective.init(provider);
 
   // uncomment the below line to create some social tokens to test this command on for devnet/localnet
-  // await createTestTokens(tokenBondingSdk, tokenCollectiveSdk, provider);
+  await createTestTokens(tokenBondingSdk, tokenCollectiveSdk, provider);
   // return;
 
   const tokenRefs = await tokenCollectiveSdk.program.account.tokenRefV0.all();
@@ -188,7 +191,7 @@ async function run() {
       tokenRef.account.tokenBonding!
     ))!;
     const currentCurve = await tokenBondingSdk.getCurve(tokenBonding?.curve);
-
+    if (!currentCurve) continue
     // if the curve is already fixed, skip it
     if (checkIsFixedPrice(currentCurve)) {
       fixedCounter += 1;
@@ -213,6 +216,7 @@ async function run() {
       tokenRef: tokenRef.publicKey,
       currentCurve: currentCurve.publicKey,
       newCurve,
+      adminKey: adminKeypair.publicKey,
     });
 
     counter += 1;
