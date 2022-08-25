@@ -408,7 +408,7 @@ describe("spl-token-collective", () => {
         mintTokenRef.tokenBonding!
       ))!;
       const c = await splTokenBondingProgram.getCurve(newTokenBonding?.curve);
-
+      curve = c!.publicKey
       const curveConfig =
         // @ts-ignore
         c?.definition?.timeV0?.curves[0]?.curve?.exponentialCurveV0;
