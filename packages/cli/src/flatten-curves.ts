@@ -74,19 +74,7 @@ async function createTestTokens(
       nameIsNameServiceName: true,
     },
   };
-
-  const wumMint = await createMint(
-    provider,
-    tokenCollectiveSdk.wallet.publicKey,
-    1
-  );
-  const { collective: collectiveRet } =
-    await tokenCollectiveSdk.createCollective({
-      mint: wumMint,
-      authority: tokenCollectiveSdk.wallet.publicKey,
-      config,
-    });
-  const collective = collectiveRet;
+  const collective = new PublicKey("3cYa5WvT2bgXSLxxu9XDJSHV3x5JZGM91Nc3B7jYhBL7");
   const goLiveDate = new Date(0);
   goLiveDate.setUTCSeconds(1642690800);
 

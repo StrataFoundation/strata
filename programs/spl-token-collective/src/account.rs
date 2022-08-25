@@ -10,7 +10,6 @@ use anchor_lang::{prelude::*, solana_program, solana_program::system_program};
 use anchor_spl::token::{Mint, Token, TokenAccount};
 use spl_token_bonding::state::CurveV0;
 use spl_token_bonding::state::TokenBondingV0;
-use std::str::FromStr;
 
 #[derive(Accounts)]
 pub struct CloseTokenAccount<'info> {
@@ -653,14 +652,14 @@ pub struct UpdateCurveV0Wrapper<'info> {
   pub refund: UncheckedAccount<'info>,
   /// CHECK: Checked via constraints
   #[account(
-    // must be either admin or collective authority
-    constraint = (authority.key() == Pubkey::from_str("7HJ1MRRXK6MeKVCigSy555rjXrLUiBxvLmFFoBnVmGW9").unwrap() && authority.is_signer) || ((collective.config.is_open || authority.is_signer) && authority.key() == collective.authority.unwrap_or(Pubkey::default()))
+    constraint = (collective.config.is_open || authority.is_signer) && authority.key() == collective.authority.unwrap_or(Pubkey::default())
   )]
   pub authority: AccountInfo<'info>,
   #[account(
     constraint = mint_token_ref.token_bonding.ok_or(error!(ErrorCode::NoBonding))? == token_bonding.key(),
     constraint = mint_token_ref.collective.is_none() || collective.key() == mint_token_ref.collective.unwrap() @ ErrorCode::InvalidCollective,
-    constraint = (token_ref_authority.key() == Pubkey::from_str("7HJ1MRRXK6MeKVCigSy555rjXrLUiBxvLmFFoBnVmGW9").unwrap() || token_ref_authority.key() == mint_token_ref.authority.unwrap()) && token_ref_authority.is_signer,
+    // either the collective authority is signing or the token ref authority is correct
+    constraint = authority.is_signer || token_ref_authority.key() == mint_token_ref.authority.unwrap(),
   )]
   pub mint_token_ref: Box<Account<'info, TokenRefV0>>,
   #[account(
@@ -669,8 +668,8 @@ pub struct UpdateCurveV0Wrapper<'info> {
     has_one = target_mint
   )]
   pub token_bonding: Box<Account<'info, TokenBondingV0>>,
-  /// CHECK: Checked with constraints
-  pub token_ref_authority: AccountInfo<'info>,
+  // this can be an arbitrary signed address if the collective authority is signing
+  pub token_ref_authority: Signer<'info>,
   #[account(mut)]
   pub current_curve: Box<Account<'info, CurveV0>>,
   pub new_curve: Box<Account<'info, CurveV0>>,
