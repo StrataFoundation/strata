@@ -172,7 +172,7 @@ async function run() {
   const tokenCollectiveSdk = await SplTokenCollective.init(provider);
 
   // uncomment the below line to create some social tokens to test this command on for devnet/localnet
-  await createTestTokens(tokenBondingSdk, tokenCollectiveSdk, provider);
+  // await createTestTokens(tokenBondingSdk, tokenCollectiveSdk, provider);
   // return;
 
   const tokenRefs = await tokenCollectiveSdk.program.account.tokenRefV0.all();
@@ -181,6 +181,10 @@ async function run() {
   let counter = 0;
   let fixedCounter = 0;
   for (const tokenRef of tokenRefs) {
+    // skip social tokens that aren't on the open collective
+    if (!tokenRef.account.collective || !tokenRef.account.collective.equals(new PublicKey("3cYa5WvT2bgXSLxxu9XDJSHV3x5JZGM91Nc3B7jYhBL7"))) {
+      continue;
+    }
     const tokenBonding = (await tokenBondingSdk.getTokenBonding(
       tokenRef.account.tokenBonding!
     ))!;
