@@ -224,13 +224,15 @@ async function run() {
     `There were ${fixedCounter} tokens that already had fixed curves`
   );
 
-  const collectives = await tokenCollectiveSdk.program.account.collectiveV0.all();
+  const collectives = [await tokenCollectiveSdk.program.account.collectiveV0.fetch(
+    new PublicKey("3cYa5WvT2bgXSLxxu9XDJSHV3x5JZGM91Nc3B7jYhBL7")
+  )];
   console.log(`There are ${collectives.length} collectives to process`);
-  
+
   let fixedCounter2 = 0
   let counter2 = 0;
   for (const collective of collectives) {
-    const [tokenBondingKey, _] = await SplTokenBonding.tokenBondingKey(collective.account.mint);
+    const [tokenBondingKey, _] = await SplTokenBonding.tokenBondingKey(collective.mint);
     const tokenBonding = await tokenBondingSdk.getTokenBonding(tokenBondingKey);
     if (!tokenBonding) continue;
     const currentCurve = await tokenBondingSdk.getCurve(tokenBonding?.curve);
