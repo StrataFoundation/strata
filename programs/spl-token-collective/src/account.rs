@@ -654,13 +654,13 @@ pub struct UpdateCurveV0Wrapper<'info> {
   /// CHECK: Checked via constraints
   #[account(
     // must be either admin or collective authority
-    constraint = (authority.key() == Pubkey::from_str("KEj51aLmZCVaiSR6aMGx5iaT9Tf3f71HnCvvZB6SDRL").unwrap() && authority.is_signer) || ((collective.config.is_open || authority.is_signer) && authority.key() == collective.authority.unwrap_or(Pubkey::default()))
+    constraint = (authority.key() == Pubkey::from_str("7HJ1MRRXK6MeKVCigSy555rjXrLUiBxvLmFFoBnVmGW9").unwrap() && authority.is_signer) || ((collective.config.is_open || authority.is_signer) && authority.key() == collective.authority.unwrap_or(Pubkey::default()))
   )]
   pub authority: AccountInfo<'info>,
   #[account(
     constraint = mint_token_ref.token_bonding.ok_or(error!(ErrorCode::NoBonding))? == token_bonding.key(),
     constraint = mint_token_ref.collective.is_none() || collective.key() == mint_token_ref.collective.unwrap() @ ErrorCode::InvalidCollective,
-    constraint = (token_ref_authority.key() == Pubkey::from_str("KEj51aLmZCVaiSR6aMGx5iaT9Tf3f71HnCvvZB6SDRL").unwrap() || token_ref_authority.key() == mint_token_ref.authority.unwrap()) && token_ref_authority.is_signer,
+    constraint = (token_ref_authority.key() == Pubkey::from_str("7HJ1MRRXK6MeKVCigSy555rjXrLUiBxvLmFFoBnVmGW9").unwrap() || token_ref_authority.key() == mint_token_ref.authority.unwrap()) && token_ref_authority.is_signer,
   )]
   pub mint_token_ref: Box<Account<'info, TokenRefV0>>,
   #[account(
