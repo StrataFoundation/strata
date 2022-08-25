@@ -8,8 +8,8 @@ use {
   anchor_lang::prelude::*,
   anchor_spl::token::{transfer, Transfer},
   borsh::{BorshDeserialize, BorshSerialize},
-  spl_token_bonding::instructions::update_token_bonding_v0::UpdateTokenBondingV0Args,
   spl_token_bonding::instructions::update_curve_v0::UpdateCurveV0Args,
+  spl_token_bonding::instructions::update_token_bonding_v0::UpdateTokenBondingV0Args,
 };
 
 pub mod account;
@@ -454,9 +454,7 @@ pub mod spl_token_collective {
     Ok(())
   }
 
-  pub fn update_curve_v0(
-    ctx: Context<UpdateCurveV0Wrapper>,
-  ) -> Result<()> {
+  pub fn update_curve_v0(ctx: Context<UpdateCurveV0Wrapper>) -> Result<()> {
     let token_bonding = ctx.accounts.token_bonding.clone();
     let token_ref_seeds: &[&[&[u8]]] = &[&[
       b"mint-token-ref",

@@ -1,4 +1,4 @@
-use crate::{ error::ErrorCode, state::* };
+use crate::{error::ErrorCode, state::*};
 use anchor_lang::prelude::*;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
@@ -32,6 +32,6 @@ pub fn handler(ctx: Context<UpdateCurveV0>, args: UpdateCurveV0Args) -> Result<(
 
   bonding.curve_authority = args.curve_authority;
   bonding.curve = ctx.accounts.new_curve.key();
-  
+
   Ok(())
 }
