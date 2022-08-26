@@ -20,13 +20,16 @@ import {
   Text,
   Tooltip,
   useColorModeValue,
-  VStack
+  VStack,
 } from "@chakra-ui/react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { NATIVE_MINT } from "@solana/spl-token";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
-import { BondingHierarchy, BondingPricing } from "@strata-foundation/spl-token-bonding";
+import {
+  BondingHierarchy,
+  BondingPricing,
+} from "@strata-foundation/spl-token-bonding";
 import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { BsChevronDown } from "react-icons/bs";
@@ -152,7 +155,7 @@ export const SwapForm = ({
   const [insufficientLiq, setInsufficientLiq] = useState<boolean>(false);
   const [rate, setRate] = useState<string>("--");
   const [fee, setFee] = useState<string>("--");
-  const notLive = goLiveDate && (new Date() < goLiveDate)
+  const notLive = goLiveDate && new Date() < goLiveDate;
   const {
     register,
     handleSubmit,
@@ -342,9 +345,7 @@ export const SwapForm = ({
                 type="number"
                 fontSize="2xl"
                 fontWeight="semibold"
-                step={
-                  getStep(baseMintAcc ? baseMintAcc.decimals : 9)
-                }
+                step={getStep(baseMintAcc ? baseMintAcc.decimals : 9)}
                 min={0}
                 _placeholder={{ color: "gray.200" }}
                 {...register("topAmount", {
@@ -460,9 +461,7 @@ export const SwapForm = ({
                 type="number"
                 fontSize="2xl"
                 fontWeight="semibold"
-                step={
-                  getStep(targetMintAcc ? targetMintAcc.decimals : 9)
-                }
+                step={getStep(targetMintAcc ? targetMintAcc.decimals : 9)}
                 min={0}
                 _placeholder={{ color: "gray.200" }}
                 {...register("bottomAmount", {
@@ -724,5 +723,5 @@ export const SwapForm = ({
 export const MemodSwapForm = React.memo(SwapForm);
 
 function getStep(arg0: number): string {
-  return arg0 == 0 ? "1" : ("0." + "0".repeat(Math.abs(arg0) - 1) + "1");
+  return arg0 == 0 ? "1" : "0." + "0".repeat(Math.abs(arg0) - 1) + "1";
 }
