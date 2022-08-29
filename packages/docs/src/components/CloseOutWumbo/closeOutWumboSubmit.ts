@@ -17,7 +17,7 @@ export const closeOutWumboSubmit = async ({
   expectedOutputAmountByToken,
   setStatus,
 }: ICloseOutWumboSubmitOpts) => {
-  let processedTokens = new Set();
+  let processedTokenCount = 0;
   let innerError: null | Error = null;
 
   if (!tokenBondingSdk) return;
@@ -35,13 +35,19 @@ export const closeOutWumboSubmit = async ({
         baseAmount: toNumber(token.account.amount, token.mint),
         expectedOutputAmount:
           expectedOutputAmountByToken[token.publicKey.toBase58()],
-        slippage: 0.1,
+        slippage: 0.05,
       });
+
+      processedTokenCount += 0;
     } catch (err) {
+      // do nothing with error
       console.log(err);
-      console.log("Do Nothing");
     }
   }
 
-  setStatus("el fin");
+  if (processedTokenCount == tokens.length) {
+    setStatus("successful");
+  } else {
+    setStatus("orphaned");
+  }
 };

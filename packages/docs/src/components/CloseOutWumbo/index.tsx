@@ -178,6 +178,8 @@ export const Recoup = () => {
   const loading = sdkLoading || loading1 || isCalculatingTokens;
   const connectedLoading = connected && publicKey && loading;
   const connectedNotLoading = !loading && connected && publicKey;
+  const isSuccessful = status == "successful";
+  const isOrphaned = status == "orphaned";
 
   return (
     <div className={styles.container}>
@@ -196,7 +198,7 @@ export const Recoup = () => {
           </span>
         )}
       {error && <span style={{ color: "red" }}>{error.toString()}</span>}
-      {connectedNotLoading && status !== "el fin" && (
+      {connectedNotLoading && !isSuccessful && !isOrphaned && (
         <>
           <SimpleGrid columns={{ base: 1, md: 2 }} gap={2}>
             {hasOpenAmount && (
@@ -247,7 +249,7 @@ export const Recoup = () => {
           </Stack>
         </>
       )}
-      {connectedNotLoading && status === "el fin" && (
+      {connectedNotLoading && isSuccessful && (
         <Alert
           status="success"
           variant="subtle"
@@ -264,6 +266,27 @@ export const Recoup = () => {
           <AlertDescription maxWidth="sm">
             Thanks for giving Wumbo a try. Our team greatly appreciated you and
             your early support!
+          </AlertDescription>
+        </Alert>
+      )}
+      {connectedNotLoading && isOrphaned && (
+        <Alert
+          status="warning"
+          variant="subtle"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          textAlign="center"
+          height="200px"
+        >
+          <AlertIcon boxSize="30px" mr={0} />
+          <AlertTitle mt={4} mb={1} fontSize="lg">
+            Something went wrong
+          </AlertTitle>
+          <AlertDescription maxWidth="sm">
+            I looks like we were unable to recoup the full amount of SOL, one or
+            multiple of the transactions may have failed. Please refresh and try
+            again.
           </AlertDescription>
         </Alert>
       )}
