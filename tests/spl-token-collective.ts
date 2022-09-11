@@ -385,10 +385,6 @@ describe("spl-token-collective", () => {
         claimedReverseTokenRef
       ))!;
 
-      let tokenBonding = (await splTokenBondingProgram.getTokenBonding(
-        mintTokenRef.tokenBonding!
-      ))!;
-
       const newCurve = await splTokenBondingProgram.initializeCurve({
         config: new ExponentialCurveConfig({
           c: 0,
@@ -400,8 +396,7 @@ describe("spl-token-collective", () => {
 
       await tokenCollectiveProgram.updateCurve({
         tokenRef: mintTokenRef.publicKey,
-        currentCurve: tokenBonding.curve,
-        newCurve,
+        curve: newCurve,
       });
 
       let newTokenBonding = (await splTokenBondingProgram.getTokenBonding(

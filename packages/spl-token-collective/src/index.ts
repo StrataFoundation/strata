@@ -337,10 +337,8 @@ export interface IUpdateTokenBondingViaCollectiveArgs
 }
 
 export interface IUpdateCurveViaCollectiveArgs {
-  refund?: PublicKey;
   tokenRef: PublicKey;
-  currentCurve: PublicKey;
-  newCurve: PublicKey;
+  curve: PublicKey;
   adminKey?: PublicKey | undefined;
 }
 
@@ -1719,10 +1717,8 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
   }
 
   async updateCurveInstructions({
-    refund = this.wallet.publicKey,
     tokenRef,
-    currentCurve,
-    newCurve,
+    curve,
     adminKey,
   }: IUpdateCurveViaCollectiveArgs): Promise<InstructionResult<null>> {
     const tokenRefAcct = (await this.getTokenRef(tokenRef))!;
@@ -1772,7 +1768,6 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       instructions: [
         await this.instruction.updateCurveV0({
           accounts: {
-            refund,
             tokenRefAuthority: tokenRefAuth,
             collective: tokenRefAcct.collective || PublicKey.default,
             authority: auth,
@@ -1781,8 +1776,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
             tokenBondingProgram: this.splTokenBondingProgram.programId,
             baseMint: tokenBondingAcct.baseMint,
             targetMint: tokenBondingAcct.targetMint,
-            currentCurve,
-            newCurve,
+            curve,
           },
         }),
       ],

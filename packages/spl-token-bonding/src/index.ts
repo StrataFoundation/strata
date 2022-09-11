@@ -426,9 +426,7 @@ export interface ICreateTokenBondingArgs {
 
 export interface IUpdateTokenBondingCurveArgs {
   tokenBonding: PublicKey;
-  currentCurve: PublicKey;
-  newCurve: PublicKey;
-  refund?: PublicKey;
+  curve: PublicKey;
 }
 
 export interface IUpdateTokenBondingArgs {
@@ -1301,10 +1299,8 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
   }
 
   async updateCurveInstructions({
-    refund = this.wallet.publicKey,
     tokenBonding: tokenBondingKey,
-    currentCurve,
-    newCurve,
+    curve
   }: IUpdateTokenBondingCurveArgs) {
     const tokenBonding = (await this.getTokenBonding(tokenBondingKey))!;
     if (!tokenBonding) {
@@ -1325,11 +1321,9 @@ export class SplTokenBonding extends AnchorSdk<SplTokenBondingIDL> {
         await this.instruction.updateCurveV0({curveAuthority: tokenBonding.curveAuthority},
           {
           accounts: {
-            refund,
             tokenBonding: tokenBondingKey,
             curveAuthority: tokenBonding.curveAuthority,
-            curve: currentCurve,
-            newCurve,
+            curve,
           },
         }),
       ],

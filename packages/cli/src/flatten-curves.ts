@@ -147,7 +147,9 @@ async function createToken(
 async function run() {
   console.log(`Provider URL: ${process.env.ANCHOR_PROVIDER_URL}`);
   console.log(`Admin Wallet: ${process.env.ANCHOR_WALLET}`);
-  const ans = await input("Are you sure you want to run this command at the above network with the above wallet? (y/n) ");
+  const ans = await input(
+    "Are you sure you want to run this command at the above network with the above wallet? (y/n) "
+  );
   if (ans != "y") {
     console.log("exiting");
     return;
@@ -165,19 +167,33 @@ async function run() {
 
   const tokenRefs = await tokenCollectiveSdk.program.account.tokenRefV0.all();
   console.log(`There are ${tokenRefs.length} social tokens to process`);
+  // set the current price as the new permanent fixed price
+  const newCurve = await tokenBondingSdk.initializeCurve({
+    config: new ExponentialCurveConfig({
+      c: 1,
+      pow: 0,
+      frac: 1,
+      b: 0,
+    }),
+  });
 
   let counter = 0;
   let fixedCounter = 0;
   for (const tokenRef of tokenRefs) {
     // skip social tokens that aren't on the open collective
-    if (!tokenRef.account.collective || !tokenRef.account.collective.equals(new PublicKey("3cYa5WvT2bgXSLxxu9XDJSHV3x5JZGM91Nc3B7jYhBL7"))) {
+    if (
+      !tokenRef.account.collective ||
+      !tokenRef.account.collective.equals(
+        new PublicKey("3cYa5WvT2bgXSLxxu9XDJSHV3x5JZGM91Nc3B7jYhBL7")
+      )
+    ) {
       continue;
     }
     const tokenBonding = (await tokenBondingSdk.getTokenBonding(
       tokenRef.account.tokenBonding!
     ))!;
     const currentCurve = await tokenBondingSdk.getCurve(tokenBonding?.curve);
-    if (!currentCurve) continue
+    if (!currentCurve) continue;
     // if the curve is already fixed, skip it
     if (checkIsFixedPrice(currentCurve)) {
       fixedCounter += 1;
@@ -188,20 +204,9 @@ async function run() {
     const pricing = await tokenBondingSdk.getPricing(tokenBonding.publicKey);
     const currentBuyPrice = pricing.buyTargetAmount(1);
 
-    // set the current price as the new permanent fixed price
-    const newCurve = await tokenBondingSdk.initializeCurve({
-      config: new ExponentialCurveConfig({
-        c: 0,
-        pow: 0,
-        frac: 1,
-        b: currentBuyPrice,
-      }),
-    });
-
     await tokenCollectiveSdk.updateCurve({
       tokenRef: tokenRef.publicKey,
-      currentCurve: currentCurve.publicKey,
-      newCurve,
+      curve: newCurve,
       adminKey: provider.wallet.publicKey,
     });
 
@@ -212,15 +217,19 @@ async function run() {
     `There were ${fixedCounter} tokens that already had fixed curves`
   );
 
-  const collectives = [await tokenCollectiveSdk.program.account.collectiveV0.fetch(
-    new PublicKey("3cYa5WvT2bgXSLxxu9XDJSHV3x5JZGM91Nc3B7jYhBL7")
-  )];
+  const collectives = [
+    await tokenCollectiveSdk.program.account.collectiveV0.fetch(
+      new PublicKey("3cYa5WvT2bgXSLxxu9XDJSHV3x5JZGM91Nc3B7jYhBL7")
+    ),
+  ];
   console.log(`There are ${collectives.length} collectives to process`);
 
-  let fixedCounter2 = 0
+  let fixedCounter2 = 0;
   let counter2 = 0;
   for (const collective of collectives) {
-    const [tokenBondingKey, _] = await SplTokenBonding.tokenBondingKey(collective.mint);
+    const [tokenBondingKey, _] = await SplTokenBonding.tokenBondingKey(
+      collective.mint
+    );
     const tokenBonding = await tokenBondingSdk.getTokenBonding(tokenBondingKey);
     if (!tokenBonding) continue;
     const currentCurve = await tokenBondingSdk.getCurve(tokenBonding?.curve);
@@ -247,8 +256,7 @@ async function run() {
 
     await tokenBondingSdk.updateCurve({
       tokenBonding: tokenBondingKey,
-      currentCurve: currentCurve.publicKey,
-      newCurve,
+      curve: newCurve,
     });
 
     counter2 += 1;
@@ -257,7 +265,11 @@ async function run() {
   console.log(
     `There were ${fixedCounter2} collectives that already had fixed curves`
   );
-  console.log(`There were ${collectives.length - counter2 - fixedCounter2} collectives that didn't have bonding curves`)
+  console.log(
+    `There were ${
+      collectives.length - counter2 - fixedCounter2
+    } collectives that didn't have bonding curves`
+  );
   process.exit();
 }
 

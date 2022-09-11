@@ -647,9 +647,6 @@ pub struct ClaimBondingAuthorityV0<'info> {
 #[derive(Accounts)]
 pub struct UpdateCurveV0Wrapper<'info> {
   pub collective: Box<Account<'info, CollectiveV0>>,
-  /// CHECK: Just used for sol refund  
-  #[account(mut)]
-  pub refund: UncheckedAccount<'info>,
   /// CHECK: Checked via constraints
   #[account(
     constraint = (collective.config.is_open || authority.is_signer) && authority.key() == collective.authority.unwrap_or(Pubkey::default())
@@ -670,9 +667,7 @@ pub struct UpdateCurveV0Wrapper<'info> {
   pub token_bonding: Box<Account<'info, TokenBondingV0>>,
   // this can be an arbitrary signed address if the collective authority is signing
   pub token_ref_authority: Signer<'info>,
-  #[account(mut)]
-  pub current_curve: Box<Account<'info, CurveV0>>,
-  pub new_curve: Box<Account<'info, CurveV0>>,
+  pub curve: Box<Account<'info, CurveV0>>,
 
   /// CHECK: Checked with constraint
   #[account(address = spl_token_bonding::id())]
