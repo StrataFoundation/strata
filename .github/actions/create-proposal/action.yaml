@@ -59,7 +59,7 @@ runs:
       shell: bash
       env:
         DEPLOY_KEYPAIR: ${{ inputs.keypair }}
-    - run: npm install -g @strata-foundation/governance-cli@3.5.5
+    - run: npm install -g @strata-foundation/governance-cli@3.10.3
       shell: bash
     - name: Create proposal
       uses: nick-invision/retry@v2
