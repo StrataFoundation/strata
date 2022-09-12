@@ -24,8 +24,9 @@ import { NATIVE_MINT } from "@solana/spl-token";
 import { ITokenWithMetaAndAccount } from "@strata-foundation/spl-token-collective";
 import { truthy } from "@strata-foundation/spl-utils";
 import { closeOutWumboSubmit } from "./closeOutWumboSubmit";
-import styles from "./styles.module.css";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
+//@ts-ignore
+import styles from "./styles.module.css";
 
 const OPEN_COLLECTIVE = "3cYa5WvT2bgXSLxxu9XDJSHV3x5JZGM91Nc3B7jYhBL7";
 
