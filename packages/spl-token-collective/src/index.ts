@@ -1728,12 +1728,6 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
       );
     }
 
-    if (!tokenRefAcct.authority) {
-      throw new Error(
-        "No authority on this token. Cannot update token bonding."
-      );
-    }
-
     const collectiveAcct =
       tokenRefAcct.collective &&
       (await this.getCollective(tokenRefAcct.collective))!;

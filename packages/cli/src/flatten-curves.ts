@@ -11,7 +11,7 @@ import {
   sendMultipleInstructions,
 } from "@strata-foundation/spl-utils";
 import readline from "readline";
-import fs from 'fs';
+import fs from "fs";
 
 async function input(query) {
   const rl = readline.createInterface({
@@ -74,7 +74,9 @@ async function createTestTokens(
       nameIsNameServiceName: true,
     },
   };
-  const collective = new PublicKey("3cYa5WvT2bgXSLxxu9XDJSHV3x5JZGM91Nc3B7jYhBL7");
+  const collective = new PublicKey(
+    "3cYa5WvT2bgXSLxxu9XDJSHV3x5JZGM91Nc3B7jYhBL7"
+  );
   const goLiveDate = new Date(0);
   goLiveDate.setUTCSeconds(1642690800);
 
@@ -178,6 +180,7 @@ async function run() {
   });
 
   let counter = 0;
+  let failed = 0;
   let fixedCounter = 0;
   for (const tokenRef of tokenRefs) {
     // skip social tokens that aren't on the open collective
@@ -204,11 +207,16 @@ async function run() {
     const pricing = await tokenBondingSdk.getPricing(tokenBonding.publicKey);
     const currentBuyPrice = pricing.buyTargetAmount(1);
 
-    await tokenCollectiveSdk.updateCurve({
-      tokenRef: tokenRef.publicKey,
-      curve: newCurve,
-      adminKey: provider.wallet.publicKey,
-    });
+    try {
+      await tokenCollectiveSdk.updateCurve({
+        tokenRef: tokenRef.publicKey,
+        curve: newCurve,
+        adminKey: provider.wallet.publicKey,
+      });
+    } catch (e: any) {
+      failed += 1;
+      console.error(`Failed to update ${tokenRef.publicKey.toBase58()}`, e);
+    }
 
     counter += 1;
   }
@@ -217,6 +225,7 @@ async function run() {
     `There were ${fixedCounter} tokens that already had fixed curves`
   );
 
+  console.log(`There were ${failed} failures`);
   const collectives = [
     await tokenCollectiveSdk.program.account.collectiveV0.fetch(
       new PublicKey("3cYa5WvT2bgXSLxxu9XDJSHV3x5JZGM91Nc3B7jYhBL7")
