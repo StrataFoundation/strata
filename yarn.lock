@@ -5587,6 +5587,13 @@
     bigint-buffer "^1.1.5"
     bignumber.js "^9.0.1"
 
+"@solana/buffer-layout@^3.0.0":
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/@solana/buffer-layout/-/buffer-layout-3.0.0.tgz#b9353caeb9a1589cb77a1b145bcb1a9a93114326"
+  integrity sha512-MVdgAKKL39tEs0l8je0hKaXLQFb7Rdfb0Xg2LjFZd8Lfdazkg6xiS98uAZrEKvaoF3i4M95ei9RydkGIDMeo3w==
+  dependencies:
+    buffer "~6.0.3"
+
 "@solana/buffer-layout@^4.0.0":
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/@solana/buffer-layout/-/buffer-layout-4.0.0.tgz#75b1b11adc487234821c81dfae3119b73a5fd734"
@@ -5610,6 +5617,18 @@
   version "0.0.27"
   resolved "https://registry.yarnpkg.com/@solana/spl-governance/-/spl-governance-0.0.27.tgz#cee0cae0aa343762d6fd2d02e60793a79b2c1b73"
   integrity sha512-oHKDJmTXbJAIiw1Edu2aspOWXj3P4wCZz0twdAQsxGHdrjrlFO2xjcWeCeDHBHT3WII0kbDamo6yoIWeXHd8Cw==
+  dependencies:
+    "@solana/web3.js" "^1.22.0"
+    bignumber.js "^9.0.1"
+    bn.js "^5.1.3"
+    borsh "^0.3.1"
+    bs58 "^4.0.1"
+    superstruct "^0.15.2"
+
+"@solana/spl-governance@^0.3.13":
+  version "0.3.13"
+  resolved "https://registry.yarnpkg.com/@solana/spl-governance/-/spl-governance-0.3.13.tgz#8262b9c0439321e5041530b3b832579371f8ad9c"
+  integrity sha512-qoLSXMqHmR99yvMrqLZ/FIlin0wHibMG+lHUqfFFzBLtuaoABSesXplsneSglz2Fx6AAu/LgBRkqca5M8Fc9hA==
   dependencies:
     "@solana/web3.js" "^1.22.0"
     bignumber.js "^9.0.1"
@@ -5751,6 +5770,26 @@
   dependencies:
     "@solana/wallet-adapter-base" "^0.9.10"
     "@solflare-wallet/sdk" "^1.0.11"
+
+"@solana/web3.js@1.22.0":
+  version "1.22.0"
+  resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.22.0.tgz#ded439eb903aff4269a16a7fdfacc6866c6f0c13"
+  integrity sha512-7BQUiR1AIj2L8KJ8LYsI31iPRLytgF8T4hz7xLlvvBfalpUK7qD2om7frlNpXl8ROUpvruNf83QaectJdZJW1w==
+  dependencies:
+    "@babel/runtime" "^7.12.5"
+    "@solana/buffer-layout" "^3.0.0"
+    bn.js "^5.0.0"
+    borsh "^0.4.0"
+    bs58 "^4.0.1"
+    buffer "6.0.1"
+    crypto-hash "^1.2.2"
+    jayson "^3.4.4"
+    js-sha3 "^0.8.0"
+    node-fetch "^2.6.1"
+    rpc-websockets "^7.4.2"
+    secp256k1 "^4.0.2"
+    superstruct "^0.14.2"
+    tweetnacl "^1.0.0"
 
 "@solana/web3.js@1.39.0":
   version "1.39.0"

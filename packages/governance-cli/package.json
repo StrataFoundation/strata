@@ -17,8 +17,8 @@
   },
   "dependencies": {
     "@project-serum/anchor": "^0.24.2",
-    "@solana/spl-governance": "^0.0.27",
-    "@solana/web3.js": "^1.43.4",
+    "@solana/spl-governance": "^0.3.13",
+    "@solana/web3.js": "1.22.0",
     "@strata-foundation/spl-utils": "^3.11.0",
     "axios": "^0.27.2",
     "axois": "0.0.1-security",
