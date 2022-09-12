@@ -154,15 +154,15 @@ export const closeOutWumboSubmit = async ({
   ).blockhash;
   tx.feePayer = tokenBondingSdk.wallet.publicKey;
   tx.add(...instructions);
-  tx.add(
-    await Token.createCloseAccountInstruction(
-      TOKEN_PROGRAM_ID,
-      openAta,
-      tokenBondingSdk.wallet.publicKey,
-      tokenBondingSdk.wallet.publicKey,
-      []
-    )
-  );
+  // tx.add(
+  //   await Token.createCloseAccountInstruction(
+  //     TOKEN_PROGRAM_ID,
+  //     openAta,
+  //     tokenBondingSdk.wallet.publicKey,
+  //     tokenBondingSdk.wallet.publicKey,
+  //     []
+  //   )
+  // );
   const signedTx = await tokenBondingSdk.wallet.signTransaction(tx);
   await sendAndConfirmWithRetry(
     tokenBondingSdk.provider.connection,
