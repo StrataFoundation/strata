@@ -41,7 +41,7 @@ export const closeOutWumboSubmit = async ({
     SplTokenCollective.OPEN_COLLECTIVE_MINT_ID,
     tokenBondingSdk.wallet.publicKey
   );
-  console.log(openAta.toBase58())
+  console.log(openAta.toBase58());
   if (!(await tokenBondingSdk.accountExists(openAta))) {
     setStatus("Setting up");
     const tx = new Transaction();
@@ -49,18 +49,21 @@ export const closeOutWumboSubmit = async ({
       await tokenBondingSdk.provider.connection.getLatestBlockhash()
     ).blockhash;
     tx.feePayer = tokenBondingSdk.wallet.publicKey;
-    tx.add(Token.createAssociatedTokenAccountInstruction(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
-      SplTokenCollective.OPEN_COLLECTIVE_MINT_ID,
-      openAta,
-      tokenBondingSdk.wallet.publicKey,
-      tokenBondingSdk.wallet.publicKey
-    ));
+    tx.add(
+      Token.createAssociatedTokenAccountInstruction(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        SplTokenCollective.OPEN_COLLECTIVE_MINT_ID,
+        openAta,
+        tokenBondingSdk.wallet.publicKey,
+        tokenBondingSdk.wallet.publicKey
+      )
+    );
+    const signed = await tokenBondingSdk.wallet.signTransaction(tx);
 
     await sendAndConfirmWithRetry(
       tokenBondingSdk.provider.connection,
-      tx.serialize(),
+      signed.serialize(),
       {
         skipPreflight: true,
       },
@@ -139,11 +142,35 @@ export const closeOutWumboSubmit = async ({
     );
 
   setStatus("Swapping: $OPEN");
-  await tokenBondingSdk.sell({
+  const { instructions } = await tokenBondingSdk.sellInstructions({
     targetAmount: openBalance.value.uiAmount,
     tokenBonding: SplTokenCollective.OPEN_COLLECTIVE_BONDING_ID,
     slippage: 0.05,
   });
+  const tx = new Transaction();
+  tx.recentBlockhash = (
+    await tokenBondingSdk.provider.connection.getLatestBlockhash()
+  ).blockhash;
+  tx.feePayer = tokenBondingSdk.wallet.publicKey;
+  tx.add(...instructions);
+  tx.add(
+    await Token.createCloseAccountInstruction(
+      TOKEN_PROGRAM_ID,
+      openAta,
+      tokenBondingSdk.wallet.publicKey,
+      tokenBondingSdk.wallet.publicKey,
+      []
+    )
+  );
+  const signedTx = await tokenBondingSdk.wallet.signTransaction(tx);
+  await sendAndConfirmWithRetry(
+    tokenBondingSdk.provider.connection,
+    signedTx.serialize(),
+    {
+      skipPreflight: true,
+    },
+    "confirmed"
+  );
 
   if (processedTokenCount == tokens.length) {
     setStatus("successful");
