@@ -35,8 +35,6 @@ export const closeOutWumboSubmit = async ({
 
   if (!tokenBondingSdk) return;
 
-  if (tokens.length == 0) return;
-
   const openAta = await Token.getAssociatedTokenAddress(
     ASSOCIATED_TOKEN_PROGRAM_ID,
     TOKEN_PROGRAM_ID,
