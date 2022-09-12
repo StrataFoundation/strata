@@ -39,7 +39,7 @@ export const useUserTokensWithMeta = (
         try {
           setLoading(true);
           const tokenAccountsWithMeta =
-            await tokenCollectiveSdk!.getUserTokensWithMeta(tokenAccounts);
+            await tokenCollectiveSdk?.getUserTokensWithMeta(tokenAccounts);
 
           // @ts-ignore
           setData([
@@ -60,7 +60,7 @@ export const useUserTokensWithMeta = (
                   },
                 ]
               : []),
-            ...tokenAccountsWithMeta,
+            ...(tokenAccountsWithMeta || []),
           ]);
         } catch (e: any) {
           setError(e);

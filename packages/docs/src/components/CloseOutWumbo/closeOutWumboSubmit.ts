@@ -1,7 +1,20 @@
-import { NATIVE_MINT } from "@solana/spl-token";
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  NATIVE_MINT,
+  Token,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
+import { Transaction } from "@solana/web3.js";
 import { SplTokenBonding } from "@strata-foundation/spl-token-bonding";
-import { ITokenWithMetaAndAccount } from "@strata-foundation/spl-token-collective";
-import { toNumber } from "@strata-foundation/spl-utils";
+import {
+  ITokenWithMetaAndAccount,
+  SplTokenCollective,
+} from "@strata-foundation/spl-token-collective";
+import {
+  sendAndConfirmWithRetry,
+  sendInstructions,
+  toNumber,
+} from "@strata-foundation/spl-utils";
 import React from "react";
 
 interface ICloseOutWumboSubmitOpts {
@@ -22,28 +35,117 @@ export const closeOutWumboSubmit = async ({
 
   if (!tokenBondingSdk) return;
 
-  setStatus("Recouping SOL");
-  for (let token of tokens) {
-    const { publicKey: tokenBondingKey, targetMint } = token.tokenBonding;
+  if (tokens.length == 0) return;
 
-    setStatus(`Swapping: ${token.metadata?.data?.name}`);
+  const openAta = await Token.getAssociatedTokenAddress(
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    TOKEN_PROGRAM_ID,
+    SplTokenCollective.OPEN_COLLECTIVE_MINT_ID,
+    tokenBondingSdk.wallet.publicKey
+  );
+  console.log(openAta.toBase58())
+  if (!(await tokenBondingSdk.accountExists(openAta))) {
+    setStatus("Setting up");
+    const tx = new Transaction();
+    tx.recentBlockhash = (
+      await tokenBondingSdk.provider.connection.getLatestBlockhash()
+    ).blockhash;
+    tx.feePayer = tokenBondingSdk.wallet.publicKey;
+    tx.add(Token.createAssociatedTokenAccountInstruction(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      SplTokenCollective.OPEN_COLLECTIVE_MINT_ID,
+      openAta,
+      tokenBondingSdk.wallet.publicKey,
+      tokenBondingSdk.wallet.publicKey
+    ));
+
+    await sendAndConfirmWithRetry(
+      tokenBondingSdk.provider.connection,
+      tx.serialize(),
+      {
+        skipPreflight: true,
+      },
+      "confirmed"
+    );
+  }
+
+  setStatus("Recouping SOL");
+  const txs = await Promise.all(
+    tokens.map(async (token) => {
+      const { publicKey: tokenBondingKey, targetMint } = token.tokenBonding;
+
+      const { instructions: sellInstructions } =
+        await tokenBondingSdk.sellInstructions({
+          tokenBonding: tokenBondingKey,
+          targetAmount: toNumber(token.account.amount, token.mint),
+          expectedOutputAmount:
+            expectedOutputAmountByToken[token.publicKey.toBase58()],
+          slippage: 0.05,
+        });
+      const instructions = [
+        ...sellInstructions,
+        await Token.createCloseAccountInstruction(
+          TOKEN_PROGRAM_ID,
+          token.publicKey,
+          tokenBondingSdk.wallet.publicKey,
+          tokenBondingSdk.wallet.publicKey,
+          []
+        ),
+      ];
+
+      console.log(instructions);
+      const tx = new Transaction();
+      tx.recentBlockhash = (
+        await tokenBondingSdk.provider.connection.getLatestBlockhash()
+      ).blockhash;
+      tx.feePayer = tokenBondingSdk.wallet.publicKey;
+      tx.add(...instructions);
+
+      return tx;
+    })
+  );
+
+  const signed = await tokenBondingSdk.wallet.signAllTransactions(txs);
+
+  for (let [index, tx] of signed.entries()) {
+    setStatus(`Swapping: ${tokens[index].metadata?.data?.name}`);
 
     try {
-      await tokenBondingSdk.swap({
-        baseMint: targetMint,
-        targetMint: NATIVE_MINT,
-        baseAmount: toNumber(token.account.amount, token.mint),
-        expectedOutputAmount:
-          expectedOutputAmountByToken[token.publicKey.toBase58()],
-        slippage: 0.05,
-      });
+      await sendAndConfirmWithRetry(
+        tokenBondingSdk.provider.connection,
+        tx.serialize(),
+        {
+          skipPreflight: true,
+        },
+        "confirmed"
+      );
 
-      processedTokenCount += 0;
+      processedTokenCount += 1;
     } catch (err) {
       // do nothing with error
       console.log(err);
     }
   }
+
+  const openAddress = await Token.getAssociatedTokenAddress(
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    TOKEN_PROGRAM_ID,
+    SplTokenCollective.OPEN_COLLECTIVE_MINT_ID,
+    tokenBondingSdk.wallet.publicKey
+  );
+
+  const openBalance =
+    await tokenBondingSdk.provider.connection.getTokenAccountBalance(
+      openAddress
+    );
+
+  setStatus("Swapping: $OPEN");
+  await tokenBondingSdk.sell({
+    targetAmount: openBalance.value.uiAmount,
+    tokenBonding: SplTokenCollective.OPEN_COLLECTIVE_BONDING_ID,
+    slippage: 0.05,
+  });
 
   if (processedTokenCount == tokens.length) {
     setStatus("successful");

@@ -1,61 +1,51 @@
 //@ts-ignore
 import BrowserOnly from "@docusaurus/BrowserOnly";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import {
-  WalletModalProvider,
-  WalletMultiButton,
+  useWalletModal
 } from "@solana/wallet-adapter-react-ui";
 import {
-  useBondingPricing,
-  useCollective,
-  useErrorHandler,
+  truncatePubkey, useBondingPricing,
+  useCollective, useEndpoint, useErrorHandler,
   usePublicKey,
   useSolanaUnixTime,
   useStrataSdks,
   useUserTokensWithMeta,
+  useRentExemptAmount
 } from "@strata-foundation/react";
 import { toNumber } from "@strata-foundation/spl-token-bonding";
-import { useEndpoint } from "@strata-foundation/react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 //@ts-ignore
-import styles from "./styles.module.css";
-import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
-import { ITokenWithMetaAndAccount } from "@strata-foundation/spl-token-collective";
-import { NATIVE_MINT } from "@solana/spl-token";
 import {
-  Box,
-  Avatar,
-  Stack,
-  Text,
-  SimpleGrid,
-  Alert,
-  AlertIcon,
-  AlertDescription,
-  AlertTitle,
-  Button,
+  Alert, AlertDescription, AlertIcon, AlertTitle, Avatar, Box, Button, SimpleGrid, Stack,
+  Text, VStack
 } from "@chakra-ui/react";
+import { NATIVE_MINT } from "@solana/spl-token";
+import { ITokenWithMetaAndAccount } from "@strata-foundation/spl-token-collective";
+import { truthy } from "@strata-foundation/spl-utils";
 import { closeOutWumboSubmit } from "./closeOutWumboSubmit";
+import styles from "./styles.module.css";
 
 const OPEN_COLLECTIVE = "3cYa5WvT2bgXSLxxu9XDJSHV3x5JZGM91Nc3B7jYhBL7";
 
 const MainnetGuard = ({ children = null as any }) => {
   const { endpoint, setClusterOrEndpoint } = useEndpoint();
 
-  if (endpoint.includes("devnet")) {
-    return (
-      <div className={styles.container}>
-        <h3>Recoup SOL from Wumbo</h3>
-        <button
-          onClick={() => {
-            setClusterOrEndpoint(WalletAdapterNetwork.Mainnet);
-          }}
-          className="white button button--primary"
-        >
-          Switch to Mainnet
-        </button>
-      </div>
-    );
-  }
+  // if (endpoint.includes("devnet")) {
+  //   return (
+  //     <div className={styles.container}>
+  //       <h3>Recoup SOL from Wumbo</h3>
+  //       <button
+  //         onClick={() => {
+  //           setClusterOrEndpoint(WalletAdapterNetwork.Mainnet);
+  //         }}
+  //         className="white button button--primary"
+  //       >
+  //         Switch to Mainnet
+  //       </button>
+  //     </div>
+  //   );
+  // }
 
   return children;
 };
@@ -104,14 +94,17 @@ export const TokenHandler = React.memo<ITokenHandlerProps>(
 export const Recoup = () => {
   const { connected, publicKey } = useWallet();
   const { tokenBondingSdk, loading: sdkLoading } = useStrataSdks();
+  const [txError, setError] = useState<Error>();
   const { handleErrors } = useErrorHandler();
   const [amountsByToken, setAmountsByToken] = useState<{
     [key: string]: number;
   }>({});
   const [status, setStatus] = useState<string | null>(null);
   const [isCalculatingTokens, setIsCalculatingTokens] = useState(true);
+  const { setVisible } = useWalletModal();
   const openCollectiveKey = usePublicKey(OPEN_COLLECTIVE);
   const { info: openCollective } = useCollective(openCollectiveKey);
+  const { amount: rentAmount } = useRentExemptAmount(165)
 
   const {
     data: tokens,
@@ -124,7 +117,7 @@ export const Recoup = () => {
       if (token && amount) {
         setAmountsByToken((old) => ({
           ...old,
-          [token.publicKey.toBase58()]: amount,
+          [token.publicKey.toBase58()]: amount + (rentAmount || 0),
         }));
       }
     },
@@ -147,6 +140,7 @@ export const Recoup = () => {
       tokens.filter(
         (token) =>
           !!token.tokenRef &&
+          token.tokenRef.collective &&
           token.tokenRef.collective.equals(openCollectiveKey) &&
           toNumber(token.account.amount, token.mint) > 0
       ),
@@ -162,17 +156,21 @@ export const Recoup = () => {
     }
   }, [amountsByToken, hasOpenAmount, openCollectiveTokens]);
 
-  handleErrors(error);
+  handleErrors(error, txError);
 
-  const handleSubmit = useCallback(() => {
-    closeOutWumboSubmit({
-      tokenBondingSdk,
-      tokens: hasOpenAmount
-        ? [open, ...openCollectiveTokens]
-        : openCollectiveTokens,
-      expectedOutputAmountByToken: amountsByToken,
-      setStatus,
-    });
+  const handleSubmit = useCallback(async () => {
+    try {
+      await closeOutWumboSubmit({
+        tokenBondingSdk,
+        tokens: openCollectiveTokens.filter(truthy),
+        expectedOutputAmountByToken: amountsByToken,
+        setStatus,
+      });
+    } catch (err: any) {
+      console.error(err);
+      setStatus(null);
+      setError(err);
+    }
   }, [open, hasOpenAmount, openCollectiveTokens, amountsByToken]);
 
   const loading = sdkLoading || loading1 || isCalculatingTokens;
@@ -182,115 +180,115 @@ export const Recoup = () => {
   const isOrphaned = status == "orphaned";
 
   return (
-    <div className={styles.container}>
-      <h3>Recoup SOL from Wumbo</h3>
-      {!connected && (
-        <WalletModalProvider>
-          <WalletMultiButton />
-        </WalletModalProvider>
-      )}
-      {connectedLoading && <span>Loading...</span>}
-      {connectedNotLoading &&
-        !(hasOpenAmount || openCollectiveTokens.length) && (
-          <span>
-            No tokens relating to Wumbo/OPEN found. Make sure you have the
-            wallet that you used with Wumbo/OPEN, then refresh this page.
-          </span>
+      <VStack w="full" align="stretch" className={styles.container}>
+        <h3>Recoup SOL from Wumbo</h3>
+
+        {connectedLoading && <span>Loading...</span>}
+        {connectedNotLoading &&
+          !(hasOpenAmount || openCollectiveTokens.length) && (
+            <span>
+              No tokens relating to Wumbo/OPEN found. Make sure you have the
+              wallet that you used with Wumbo/OPEN, then refresh this page.
+            </span>
+          )}
+        {error && <span style={{ color: "red" }}>{error.toString()}</span>}
+        {connectedNotLoading && !isSuccessful && !isOrphaned && (
+          <>
+            <SimpleGrid columns={{ base: 1, md: 2 }} gap={2}>
+              {hasOpenAmount && (
+                <TokenHandler
+                  token={open}
+                  setAmountByToken={setAmountByToken}
+                />
+              )}
+              {openCollectiveTokens.map((token) => (
+                <TokenHandler
+                  key={token.publicKey.toBase58()}
+                  token={token}
+                  setAmountByToken={setAmountByToken}
+                />
+              ))}
+            </SimpleGrid>
+            <Stack mt={4} gap={2}>
+              <Alert
+                status="info"
+                variant="subtle"
+                flexDirection="column"
+                alignItems="center"
+                justifyContent="center"
+                textAlign="center"
+                height="200px"
+              >
+                <AlertIcon boxSize="30px" mr={0} />
+                <AlertTitle mt={4} mb={1} fontSize="lg">
+                  {Object.values(amountsByToken).reduce(
+                    (acc, amount) => acc + amount,
+                    0
+                  )}{" "}
+                  SOL
+                </AlertTitle>
+                <AlertDescription maxWidth="sm">
+                  Ready to be Recouped. Thanks for giving Wumbo a try. Our team
+                  greatly appreciates you and your early support!
+                </AlertDescription>
+              </Alert>
+              <Button
+                size="lg"
+                colorScheme="orange"
+                disabled={loading || status !== null}
+                isLoading={status !== null}
+                loadingText={status}
+                onClick={handleSubmit}
+                _hover={{ cursor: "pointer" }}
+              >
+                Recoup SOL
+              </Button>
+            </Stack>
+          </>
         )}
-      {error && <span style={{ color: "red" }}>{error.toString()}</span>}
-      {connectedNotLoading && !isSuccessful && !isOrphaned && (
-        <>
-          <SimpleGrid columns={{ base: 1, md: 2 }} gap={2}>
-            {hasOpenAmount && (
-              <TokenHandler token={open} setAmountByToken={setAmountByToken} />
-            )}
-            {openCollectiveTokens.map((token) => (
-              <TokenHandler
-                key={token.publicKey.toBase58()}
-                token={token}
-                setAmountByToken={setAmountByToken}
-              />
-            ))}
-          </SimpleGrid>
-          <Stack mt={4} gap={2}>
-            <Alert
-              status="info"
-              variant="subtle"
-              flexDirection="column"
-              alignItems="center"
-              justifyContent="center"
-              textAlign="center"
-              height="200px"
-            >
-              <AlertIcon boxSize="30px" mr={0} />
-              <AlertTitle mt={4} mb={1} fontSize="lg">
-                {Object.values(amountsByToken).reduce(
-                  (acc, amount) => acc + amount,
-                  0
-                )}{" "}
-                SOL
-              </AlertTitle>
-              <AlertDescription maxWidth="sm">
-                Ready to be Recouped. Thanks for giving Wumbo a try. Our team
-                greatly appreciated you and your early support!
-              </AlertDescription>
-            </Alert>
-            <Button
-              size="lg"
-              colorScheme="orange"
-              disabled={loading || status !== null}
-              isLoading={status !== null}
-              loadingText={status}
-              onClick={handleSubmit}
-              _hover={{ cursor: "pointer" }}
-            >
-              Recoup SOL
-            </Button>
-          </Stack>
-        </>
-      )}
-      {connectedNotLoading && isSuccessful && (
-        <Alert
-          status="success"
-          variant="subtle"
-          flexDirection="column"
-          alignItems="center"
-          justifyContent="center"
-          textAlign="center"
-          height="200px"
-        >
-          <AlertIcon boxSize="30px" mr={0} />
-          <AlertTitle mt={4} mb={1} fontSize="lg">
-            SOL Recouped
-          </AlertTitle>
-          <AlertDescription maxWidth="sm">
-            Thanks for giving Wumbo a try. Our team greatly appreciated you and
-            your early support!
-          </AlertDescription>
-        </Alert>
-      )}
-      {connectedNotLoading && isOrphaned && (
-        <Alert
-          status="warning"
-          variant="subtle"
-          flexDirection="column"
-          alignItems="center"
-          justifyContent="center"
-          textAlign="center"
-          height="200px"
-        >
-          <AlertIcon boxSize="30px" mr={0} />
-          <AlertTitle mt={4} mb={1} fontSize="lg">
-            Something went wrong
-          </AlertTitle>
-          <AlertDescription maxWidth="sm">
-            I looks like we were unable to recoup the full amount of SOL, one or
-            multiple of the transactions may have failed. Please refresh and try
-            again.
-          </AlertDescription>
-        </Alert>
-      )}
-    </div>
+        {connectedNotLoading && isSuccessful && (
+          <Alert
+            status="success"
+            variant="subtle"
+            flexDirection="column"
+            alignItems="center"
+            justifyContent="center"
+            textAlign="center"
+            height="200px"
+          >
+            <AlertIcon boxSize="30px" mr={0} />
+            <AlertTitle mt={4} mb={1} fontSize="lg">
+              SOL Recouped
+            </AlertTitle>
+            <AlertDescription maxWidth="sm">
+              Thanks for giving Wumbo a try. Our team greatly appreciates you
+              and your early support!
+            </AlertDescription>
+          </Alert>
+        )}
+        {connectedNotLoading && isOrphaned && (
+          <Alert
+            status="warning"
+            variant="subtle"
+            flexDirection="column"
+            alignItems="center"
+            justifyContent="center"
+            textAlign="center"
+            height="200px"
+          >
+            <AlertIcon boxSize="30px" mr={0} />
+            <AlertTitle mt={4} mb={1} fontSize="lg">
+              Something went wrong
+            </AlertTitle>
+            <AlertDescription maxWidth="sm">
+              I looks like we were unable to recoup the full amount of SOL, one
+              or multiple of the transactions may have failed. Please refresh
+              and try again.
+            </AlertDescription>
+          </Alert>
+        )}
+        <Button onClick={() => setVisible(true)} colorScheme="orange" variant="outline">{ publicKey ? truncatePubkey(publicKey) : "Select Wallet" }</Button>
+      </VStack>
   );
 };
 
