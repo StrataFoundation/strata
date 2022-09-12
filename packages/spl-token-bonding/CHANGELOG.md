@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.11.0](https://github.com/StrataFoundation/strata/compare/v3.10.1...v3.11.0) (2022-09-12)
+
+**Note:** Version bump only for package @strata-foundation/spl-token-bonding
+
+
+
+
+
 ## [3.10.3](https://github.com/StrataFoundation/strata/compare/v3.9.12...v3.10.3) (2022-08-23)
 
 **Note:** Version bump only for package @strata-foundation/spl-token-bonding

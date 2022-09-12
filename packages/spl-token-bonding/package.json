@@ -4,7 +4,7 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
-  "version": "3.10.3",
+  "version": "3.11.0",
   "description": "Interface to the spl-token-bonding smart contract",
   "repository": {
     "type": "git",
@@ -35,7 +35,7 @@
     "@solana/buffer-layout": "^4.0.0",
     "@solana/spl-token": "0.1.8",
     "@solana/web3.js": "^1.43.4",
-    "@strata-foundation/spl-utils": "^3.10.3",
+    "@strata-foundation/spl-utils": "^3.11.0",
     "bn.js": "^5.2.0",
     "copyfiles": "^2.4.1"
   },
