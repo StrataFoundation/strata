@@ -1,4 +1,5 @@
 import {
+  AccountLayout,
   ASSOCIATED_TOKEN_PROGRAM_ID,
   NATIVE_MINT,
   Token,
@@ -79,7 +80,7 @@ export const closeOutWumboSubmit = async ({
       const { instructions: sellInstructions } =
         await tokenBondingSdk.sellInstructions({
           tokenBonding: tokenBondingKey,
-          targetAmount: toNumber(token.account.amount, token.mint),
+          targetAmount: token.account.amount,
           expectedOutputAmount:
             expectedOutputAmountByToken[token.publicKey.toBase58()],
           slippage: 0.05,
