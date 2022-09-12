@@ -331,7 +331,10 @@ export async function sendAndConfirmWithRetry(
       simulateResult = (
         await simulateTransaction(connection, Transaction.from(txn), "single")
       ).value;
-    } catch (e) {}
+    } catch (e) {
+      const tx = await connection.getTransaction(txid);
+      console.error(tx.meta.logMessages.join("\n"))
+    }
     if (simulateResult && simulateResult.err) {
       if (simulateResult.logs) {
         console.error(simulateResult.logs.join("\n"))
