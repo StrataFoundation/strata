@@ -5,6 +5,7 @@ pub mod initialize_sol_storage_v0;
 pub mod initialize_token_bonding_v0;
 pub mod sell;
 pub mod transfer_reserves;
+pub mod update_curve_v0;
 pub mod update_reserve_authority_v0;
 pub mod update_token_bonding_v0;
 
@@ -15,5 +16,6 @@ pub use initialize_sol_storage_v0::*;
 pub use initialize_token_bonding_v0::*;
 pub use sell::*;
 pub use transfer_reserves::*;
+pub use update_curve_v0::*;
 pub use update_reserve_authority_v0::*;
 pub use update_token_bonding_v0::*;

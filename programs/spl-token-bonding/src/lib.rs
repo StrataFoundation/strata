@@ -77,6 +77,10 @@ pub mod spl_token_bonding {
     instructions::update_reserve_authority_v0::handler(ctx, args)
   }
 
+  pub fn update_curve_v0(ctx: Context<UpdateCurveV0>, args: UpdateCurveV0Args) -> Result<()> {
+    instructions::update_curve_v0::handler(ctx, args)
+  }
+
   pub fn update_token_bonding_v0(
     ctx: Context<UpdateTokenBondingV0>,
     args: UpdateTokenBondingV0Args,

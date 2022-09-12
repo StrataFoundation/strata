@@ -6,7 +6,12 @@ import {
   MetadataProgram,
 } from "@metaplex-foundation/mpl-token-metadata";
 import * as anchor from "@project-serum/anchor";
-import { AnchorProvider, IdlTypes, Program, Provider } from "@project-serum/anchor";
+import {
+  AnchorProvider,
+  IdlTypes,
+  Program,
+  Provider,
+} from "@project-serum/anchor";
 import { getHashedName, NameRegistryState } from "@solana/spl-name-service";
 import {
   AccountInfo as TokenAccountInfo,
@@ -94,7 +99,7 @@ export interface ICreateCollectiveArgs {
   /** The configs around what is and isn't allowed in the collective */
   config: ICollectiveConfig;
   /** Only required if the mint is already initialised as a social token */
-  tokenRef?: PublicKey
+  tokenRef?: PublicKey;
 }
 
 // Taken from token bonding initialize
@@ -329,6 +334,12 @@ export interface IUpdateTokenBondingViaCollectiveArgs
   > {
   /** The token ref of the token we are updating bonding for */
   tokenRef: PublicKey;
+}
+
+export interface IUpdateCurveViaCollectiveArgs {
+  tokenRef: PublicKey;
+  curve: PublicKey;
+  adminKey?: PublicKey | undefined;
 }
 
 export interface IClaimBondingAuthorityArgs {
@@ -1597,6 +1608,7 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
     const collectiveAcct =
       tokenRefAcct.collective &&
       (await this.getCollective(tokenRefAcct.collective))!;
+
     const tokenBondingAcct = (await this.splTokenBondingProgram.getTokenBonding(
       tokenRefAcct.tokenBonding
     ))!;
@@ -1699,6 +1711,90 @@ export class SplTokenCollective extends AnchorSdk<SplTokenCollectiveIDL> {
   ): Promise<void> {
     await this.execute(
       this.updateTokenBondingInstructions(args),
+      this.wallet.publicKey,
+      commitment
+    );
+  }
+
+  async updateCurveInstructions({
+    tokenRef,
+    curve,
+    adminKey,
+  }: IUpdateCurveViaCollectiveArgs): Promise<InstructionResult<null>> {
+    const tokenRefAcct = (await this.getTokenRef(tokenRef))!;
+    if (!tokenRefAcct.tokenBonding) {
+      throw new Error(
+        "Cannot update curve on a token ref that has no token bonding"
+      );
+    }
+
+    if (!tokenRefAcct.authority) {
+      throw new Error(
+        "No authority on this token. Cannot update token bonding."
+      );
+    }
+
+    const collectiveAcct =
+      tokenRefAcct.collective &&
+      (await this.getCollective(tokenRefAcct.collective))!;
+
+    const tokenBondingAcct = (await this.splTokenBondingProgram.getTokenBonding(
+      tokenRefAcct.tokenBonding
+    ))!;
+
+    if (!tokenBondingAcct.curveAuthority) {
+      throw new Error(
+        "Cannot update curve for a token bonding account that has no curve authority"
+      );
+    }
+
+    const [mintTokenRef] = await SplTokenCollective.mintTokenRefKey(
+      tokenBondingAcct.targetMint
+    );
+
+    const auth = adminKey
+      ? adminKey
+      : (collectiveAcct &&
+          (collectiveAcct.authority as PublicKey | undefined)) ||
+        PublicKey.default;
+
+    const tokenRefAuth = adminKey
+      ? adminKey
+      : (tokenRefAcct.authority as PublicKey);
+
+    return {
+      output: null,
+      signers: [],
+      instructions: [
+        await this.instruction.updateCurveV0({
+          accounts: {
+            tokenRefAuthority: tokenRefAuth,
+            collective: tokenRefAcct.collective || PublicKey.default,
+            authority: auth,
+            mintTokenRef: mintTokenRef,
+            tokenBonding: tokenRefAcct.tokenBonding,
+            tokenBondingProgram: this.splTokenBondingProgram.programId,
+            baseMint: tokenBondingAcct.baseMint,
+            targetMint: tokenBondingAcct.targetMint,
+            curve,
+          },
+        }),
+      ],
+    };
+  }
+
+  /**
+   * Runs {@link `updateCurveInstructions`}
+   *
+   * @param args
+   * @retruns
+   */
+  async updateCurve(
+    args: IUpdateCurveViaCollectiveArgs,
+    commitment: Commitment = "confirmed"
+  ): Promise<void> {
+    await this.execute(
+      this.updateCurveInstructions(args),
       this.wallet.publicKey,
       commitment
     );
