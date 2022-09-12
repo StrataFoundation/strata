@@ -41,7 +41,7 @@ function checkIsFixedPrice(curve: CurveV0): boolean {
 
   const isFixedCurve =
     expCurve &&
-    expCurve.c?.toNumber() === 0 &&
+    expCurve.c?.toNumber() === 1000000000000 &&
     expCurve.pow === 0 &&
     expCurve.frac === 1;
   return !!isFixedCurve;
@@ -145,6 +145,12 @@ async function createToken(
     [signers[0], signers[1], [...signers[2], owner]]
   );
 }
+
+export const chunks = <T>(array: T[], size: number): T[][] =>
+  Array.apply(0, new Array(Math.ceil(array.length / size))).map((_, index) =>
+    array.slice(index * size, (index + 1) * size)
+  );
+
 // TODO add some timers to account for rate limiting on mainnet or use genesys
 async function run() {
   console.log(`Provider URL: ${process.env.ANCHOR_PROVIDER_URL}`);
@@ -182,43 +188,45 @@ async function run() {
   let counter = 0;
   let failed = 0;
   let fixedCounter = 0;
-  for (const tokenRef of tokenRefs) {
-    // skip social tokens that aren't on the open collective
-    if (
-      !tokenRef.account.collective ||
-      !tokenRef.account.collective.equals(
-        new PublicKey("3cYa5WvT2bgXSLxxu9XDJSHV3x5JZGM91Nc3B7jYhBL7")
-      )
-    ) {
-      continue;
-    }
-    const tokenBonding = (await tokenBondingSdk.getTokenBonding(
-      tokenRef.account.tokenBonding!
-    ))!;
-    const currentCurve = await tokenBondingSdk.getCurve(tokenBonding?.curve);
-    if (!currentCurve) continue;
-    // if the curve is already fixed, skip it
-    if (checkIsFixedPrice(currentCurve)) {
-      fixedCounter += 1;
-      continue;
-    }
+  for (const tokenRefGroup of chunks(tokenRefs, 5)) {
+    await Promise.all(
+      tokenRefGroup.map(async (tokenRef) => {
+        // skip social tokens that aren't on the open collective
+        if (
+          !tokenRef.account.collective ||
+          !tokenRef.account.collective.equals(
+            new PublicKey("3cYa5WvT2bgXSLxxu9XDJSHV3x5JZGM91Nc3B7jYhBL7")
+          )
+        ) {
+          return null
+        }
+        const tokenBonding = (await tokenBondingSdk.getTokenBonding(
+          tokenRef.account.tokenBonding!
+        ))!;
+        const currentCurve = await tokenBondingSdk.getCurve(
+          tokenBonding?.curve
+        );
+        if (!currentCurve) return null;
+        // if the curve is already fixed, skip it
+        if (checkIsFixedPrice(currentCurve)) {
+          fixedCounter += 1;
+          return null;
+        }
 
-    // get the current price of the dynamic curve
-    const pricing = await tokenBondingSdk.getPricing(tokenBonding.publicKey);
-    const currentBuyPrice = pricing.buyTargetAmount(1);
+        try {
+          await tokenCollectiveSdk.updateCurve({
+            tokenRef: tokenRef.publicKey,
+            curve: newCurve,
+            adminKey: provider.wallet.publicKey,
+          });
+        } catch (e: any) {
+          failed += 1;
+          console.error(`Failed to update ${tokenRef.publicKey.toBase58()}`, e);
+        }
 
-    try {
-      await tokenCollectiveSdk.updateCurve({
-        tokenRef: tokenRef.publicKey,
-        curve: newCurve,
-        adminKey: provider.wallet.publicKey,
-      });
-    } catch (e: any) {
-      failed += 1;
-      console.error(`Failed to update ${tokenRef.publicKey.toBase58()}`, e);
-    }
-
-    counter += 1;
+        counter += 1;
+      })
+    );
   }
   console.log(`There were ${counter} tokens transformed to fixed curves`);
   console.log(
