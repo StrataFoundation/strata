@@ -24,7 +24,10 @@ interface ICloseOutWumboSubmitOpts {
   expectedOutputAmountByToken: { [key: string]: number };
   setStatus: React.Dispatch<React.SetStateAction<string>>;
 }
-
+const chunks = <T>(array: T[], size: number): T[][] =>
+  Array.apply(0, new Array(Math.ceil(array.length / size))).map((_, index) =>
+    array.slice(index * size, (index + 1) * size)
+  );
 export const closeOutWumboSubmit = async ({
   tokenBondingSdk,
   tokens,
@@ -73,30 +76,27 @@ export const closeOutWumboSubmit = async ({
   }
 
   setStatus("Recouping SOL");
+  const closeInstrs = [];
   const txs = await Promise.all(
     tokens.map(async (token) => {
       const { publicKey: tokenBondingKey, targetMint } = token.tokenBonding;
 
-      const { instructions: sellInstructions } =
-        await tokenBondingSdk.sellInstructions({
-          tokenBonding: tokenBondingKey,
-          targetAmount: token.account.amount,
-          expectedOutputAmount:
-            expectedOutputAmountByToken[token.publicKey.toBase58()],
-          slippage: 0.05,
-        });
-      const instructions = [
-        ...sellInstructions,
+      const { instructions } = await tokenBondingSdk.sellInstructions({
+        tokenBonding: tokenBondingKey,
+        targetAmount: token.account.amount,
+        expectedOutputAmount:
+          expectedOutputAmountByToken[token.publicKey.toBase58()],
+        slippage: 0.05,
+      });
+      closeInstrs.push(
         await Token.createCloseAccountInstruction(
           TOKEN_PROGRAM_ID,
           token.publicKey,
           tokenBondingSdk.wallet.publicKey,
           tokenBondingSdk.wallet.publicKey,
           []
-        ),
-      ];
-
-      console.log(instructions);
+        )
+      );
       const tx = new Transaction();
       tx.recentBlockhash = (
         await tokenBondingSdk.provider.connection.getLatestBlockhash()
@@ -154,15 +154,15 @@ export const closeOutWumboSubmit = async ({
   ).blockhash;
   tx.feePayer = tokenBondingSdk.wallet.publicKey;
   tx.add(...instructions);
-  // tx.add(
-  //   await Token.createCloseAccountInstruction(
-  //     TOKEN_PROGRAM_ID,
-  //     openAta,
-  //     tokenBondingSdk.wallet.publicKey,
-  //     tokenBondingSdk.wallet.publicKey,
-  //     []
-  //   )
-  // );
+  closeInstrs.push(
+    await Token.createCloseAccountInstruction(
+      TOKEN_PROGRAM_ID,
+      openAta,
+      tokenBondingSdk.wallet.publicKey,
+      tokenBondingSdk.wallet.publicKey,
+      []
+    )
+  );
   const signedTx = await tokenBondingSdk.wallet.signTransaction(tx);
   await sendAndConfirmWithRetry(
     tokenBondingSdk.provider.connection,
@@ -170,7 +170,37 @@ export const closeOutWumboSubmit = async ({
     {
       skipPreflight: true,
     },
-    "confirmed"
+    "max"
+  );
+
+  setStatus("Closing token accounts");
+  await Promise.all(
+    chunks(closeInstrs, 4).map(async (closeGroup) => {
+      const tx = new Transaction();
+      tx.recentBlockhash = (
+        await tokenBondingSdk.provider.connection.getLatestBlockhash()
+      ).blockhash;
+      tx.feePayer = tokenBondingSdk.wallet.publicKey;
+      tx.add(...closeGroup);
+      // tx.add(
+      //   await Token.createCloseAccountInstruction(
+      //     TOKEN_PROGRAM_ID,
+      //     openAta,
+      //     tokenBondingSdk.wallet.publicKey,
+      //     tokenBondingSdk.wallet.publicKey,
+      //     []
+      //   )
+      // );
+      const signedTx = await tokenBondingSdk.wallet.signTransaction(tx);
+      await sendAndConfirmWithRetry(
+        tokenBondingSdk.provider.connection,
+        signedTx.serialize(),
+        {
+          skipPreflight: true,
+        },
+        "confirmed"
+      );
+    })
   );
 
   if (processedTokenCount == tokens.length) {
