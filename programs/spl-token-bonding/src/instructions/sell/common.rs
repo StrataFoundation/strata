@@ -131,7 +131,8 @@ pub fn burn_and_pay_sell_royalties(
     amount.checked_sub(target_royalties).unwrap(),
   )?;
 
-  if target_royalties > 0 {
+  // Do not send if royalties account is closed.
+  if target_royalties > 0 && target_royalties_account.lamports() > 0 {
     msg!("Paying out {} to target royalties", target_royalties);
     token::transfer(
       CpiContext::new(
