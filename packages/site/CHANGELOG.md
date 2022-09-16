@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.11.2](https://github.com/StrataFoundation/strata/compare/v3.11.1...v3.11.2) (2022-09-16)
+
+**Note:** Version bump only for package @strata-foundation/site
+
+
+
+
+
 ## [3.11.1](https://github.com/StrataFoundation/strata/compare/v3.10.1...v3.11.1) (2022-09-12)
 
 **Note:** Version bump only for package @strata-foundation/site
