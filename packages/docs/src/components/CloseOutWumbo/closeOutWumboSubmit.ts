@@ -86,7 +86,7 @@ export const closeOutWumboSubmit = async ({
         targetAmount: token.account.amount,
         expectedOutputAmount:
           expectedOutputAmountByToken[token.publicKey.toBase58()],
-        slippage: 0.05,
+        slippage: 0.5,
       });
       closeInstrs.push(
         await Token.createCloseAccountInstruction(
@@ -146,7 +146,7 @@ export const closeOutWumboSubmit = async ({
   const { instructions } = await tokenBondingSdk.sellInstructions({
     targetAmount: openBalance.value.uiAmount,
     tokenBonding: SplTokenCollective.OPEN_COLLECTIVE_BONDING_ID,
-    slippage: 0.05,
+    slippage: 0.5,
   });
   const tx = new Transaction();
   tx.recentBlockhash = (
