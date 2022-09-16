@@ -82,7 +82,7 @@ pub fn handler(ctx: Context<SellNativeV0>, args: SellV0Args) -> Result<()> {
     Some(bonding_seeds),
   )?;
 
-  if base_royalties > 0 {
+  if base_royalties > 0 && ctx.accounts.common.sell_base_royalties.lamports() > 0 {
     msg!(
       "Paying out {} from base storage to base royalties",
       base_royalties
