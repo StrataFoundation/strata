@@ -44,8 +44,8 @@ import { Buffer } from "buffer";
 export const FEES_WALLET = new PublicKey(
   "989wTE33inEx5k3o8pxSSSU9HEmf9Sj4PSqF6NZbxHkp"
 );
-export const FIXED_CURVE_FEES = 2;
-export const LBC_CURVE_FEES = 3;
+export const FIXED_CURVE_FEES = 0;
+export const LBC_CURVE_FEES = 0;
 
 type Truthy<T> = T extends false | "" | 0 | null | undefined ? never : T; // from lodash
 
