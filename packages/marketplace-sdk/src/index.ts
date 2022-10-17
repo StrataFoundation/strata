@@ -792,17 +792,9 @@ export class MarketplaceSdk {
     bondingArgs,
     baseMint,
     targetMintKeypair = Keypair.generate(),
-    iAmAFreeloader,
-    protocolFee = FIXED_CURVE_FEES,
   }: ICreateMarketItemArgs): Promise<
     BigInstructionResult<{ tokenBonding: PublicKey; targetMint: PublicKey }>
   > {
-    if (protocolFee == 0 && !iAmAFreeloader) {
-      throw new Error(
-        "Must use `iAmAFreeloader` flag when setting protocolFee"
-      );
-    }
-
     if (!price && !bondingArgs?.curve) {
       throw new Error("Must either pass price or bondingArgs.curve");
     }
@@ -828,7 +820,7 @@ export class MarketplaceSdk {
 
     let curve = bondingArgs?.curve;
     if (price) {
-      const feeModifier = iAmAFreeloader ? 1 : 1 - roundPercent(protocolFee);
+      const feeModifier =  1;
       const {
         instructions: curveInstructions,
         signers: curveSigners,
@@ -868,7 +860,7 @@ export class MarketplaceSdk {
       ignoreExternalReserveChanges: true,
       ignoreExternalSupplyChanges: true,
       sellFrozen: true,
-      buyBaseRoyaltyPercentage: iAmAFreeloader ? 0 : protocolFee,
+      buyBaseRoyaltyPercentage:  0,
       buyBaseRoyaltiesOwner: FEES_WALLET,
       sellBaseRoyaltyPercentage: 0,
       sellTargetRoyaltyPercentage: 0,
