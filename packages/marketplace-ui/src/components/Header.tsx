@@ -1,5 +1,4 @@
 import React, { ReactNode } from "react";
-import { useRouter } from "next/router";
 import {
   Box,
   Button,
@@ -11,8 +10,6 @@ import {
   IconButton,
   Image,
   Link,
-  LinkProps,
-  Text,
   useDisclosure,
   VStack,
 } from "@chakra-ui/react";
@@ -21,7 +18,6 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { TwitterLink } from "./TwitterLink";
 import { WalletModalButton } from "./WalletModalButton";
 import { route, routes } from "../utils/routes";
-
 
 const NavLink = ({ href, children }: { href: string; children: ReactNode }) => (
   <Link px={2} py={1} href={href} fontSize="sm">
@@ -95,7 +91,7 @@ export const Header: React.FC = () => {
                     size="sm"
                     _hover={{ backgroundColor: "black.500" }}
                     variant="ghost"
-                    onClick={() => disconnect()}
+                    onClick={disconnect}
                   >
                     Disconnect
                   </Button>
