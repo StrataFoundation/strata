@@ -104,7 +104,6 @@ describe("marketplace-sdk", () => {
   it("can sell the full supply with no issues", async () => {
     const { targetMint, tokenBonding } =
       await marketplaceSdk.createLiquidityBootstrapper({
-        iAmAFreeloader: true,
         authority: me,
         metadata: new DataV2({
           // Max name len 32

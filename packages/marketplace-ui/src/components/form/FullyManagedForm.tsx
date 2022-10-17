@@ -215,11 +215,6 @@ export const FullyManagedForm: React.FC = () => {
   const formProps = useForm<IFullyManagedForm>({
     // @ts-ignore
     resolver: yupResolver(validationSchema),
-    defaultValues: {
-      disclosures: {
-        acceptedFees: true,
-      },
-    },
   });
   const {
     register,
