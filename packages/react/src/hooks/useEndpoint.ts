@@ -17,7 +17,7 @@ const shortnames = new Set([
 const DEFAULT_ENDPOINT =
   process.env.NEXT_PUBLIC_SOLANA_URL ||
   process.env.REACT_APP_SOLANA_URL ||
-  "https://strataprotocol.genesysgo.net";
+  "https://monke4e51355bf2a949daad46e7f4a1a22c4b.xyz2.hyperplane.dev/";
 
 export function getClusterAndEndpoint(clusterOrEndpoint: string): {
   cluster: string;
