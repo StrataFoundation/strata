@@ -7,6 +7,7 @@ import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
 import { SolflareWalletAdapter } from "@solana/wallet-adapter-solflare";
 import { GlowWalletAdapter } from "@solana/wallet-adapter-glow";
 import { ExodusWalletAdapter } from "@solana/wallet-adapter-exodus";
+import { BackpackWalletAdapter } from "@solana/wallet-adapter-backpack";
 import React, { useMemo } from "react";
 import { SOLANA_URL } from "../constants";
 import { useEndpoint } from "@strata-foundation/react";
@@ -34,6 +35,7 @@ export const Wallet = ({
       new PhantomWalletAdapter(),
       // @ts-ignore
       new SolflareWalletAdapter({ network: cluster }),
+      new BackpackWalletAdapter(),
       new GlowWalletAdapter(),
       new LedgerWalletAdapter(),
       new ExodusWalletAdapter(),
@@ -42,10 +44,7 @@ export const Wallet = ({
   );
 
   return (
-    <ConnectionProvider
-      endpoint={cluster || endpoint}
-      config={config}
-    >
+    <ConnectionProvider endpoint={cluster || endpoint} config={config}>
       <WalletProvider wallets={wallets} autoConnect>
         {/* @ts-ignore */}
         {children}
