@@ -9,11 +9,11 @@ keywords: [Strata, Helium, Acquisition]
 
 # Strata is Joining Helium Foundation
 
-### _Protocol Fees Will Be Eliminated, Core Protocol And Smart Contracts Will Be Open Sourced, Engineering Team To Join Helium Foundation to Advance Solana Innovation_
+### _Protocol Fees Have Been Eliminated, Core Protocol And Smart Contracts Have Been Open Sourced, Engineering Team To Join Helium Foundation to Advance Solana Innovation_
 
 We’re excited to announce that Strata Protocol has been acquired by the [Helium Foundation](https://www.helium.foundation/)! 
 
-As part of the acquisition, the Strata brand, launchpad, and core protocol IP will all be open sourced, and all protocol fees have been cut to zero. Strata is now a public good.
+As part of the acquisition, the Strata brand, launchpad, and core protocol IP have all be open sourced, and all protocol fees have been cut to zero. Strata is now a public good.
 
 While Strata is an incredibly useful toolset, it is even more useful as a public good than a monetized product. Strata is most commonly used for ephemeral operations, like pricing an NFT launch. Since its inception, Strata launchpad has minted millions of tokens and helped small and large teams alike get their social tokens off the ground. 
 
