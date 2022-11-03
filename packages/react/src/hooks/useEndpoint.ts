@@ -17,7 +17,7 @@ const shortnames = new Set([
 const DEFAULT_ENDPOINT =
   process.env.NEXT_PUBLIC_SOLANA_URL ||
   process.env.REACT_APP_SOLANA_URL ||
-  "https://monke4e51355bf2a949daad46e7f4a1a22c4b.xyz2.hyperplane.dev/";
+  "https://monke8127d577985245538ac648fe0969201d.xyz2.hyperplane.dev/";
 
 export function getClusterAndEndpoint(clusterOrEndpoint: string): {
   cluster: string;
@@ -28,7 +28,7 @@ export function getClusterAndEndpoint(clusterOrEndpoint: string): {
       if (
         clusterOrEndpoint.includes("dev") &&
         clusterOrEndpoint !=
-          "https://monke4e51355bf2a949daad46e7f4a1a22c4b.xyz2.hyperplane.dev/"
+          "https://monke8127d577985245538ac648fe0969201d.xyz2.hyperplane.dev/"
       ) {
         return { cluster: "devnet", endpoint: clusterOrEndpoint };
       } else {
@@ -49,7 +49,7 @@ export function getClusterAndEndpoint(clusterOrEndpoint: string): {
         return {
           cluster: "mainnet-beta",
           endpoint:
-            "https://monke4e51355bf2a949daad46e7f4a1a22c4b.xyz2.hyperplane.dev/",
+            "https://monke8127d577985245538ac648fe0969201d.xyz2.hyperplane.dev/",
         };
       }
 
