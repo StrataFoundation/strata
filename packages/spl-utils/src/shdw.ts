@@ -187,13 +187,18 @@ export async function initStorageIfNeeded(
         quote.getExpectedOutputAmount(),
         new Decimal(shdwNeeded)
       );
-      const tx = swapPayload.transaction;
+      let tx = swapPayload.transaction;
       tx.recentBlockhash = (
         await localProvider.connection.getRecentBlockhash()
       ).blockhash;
       tx.feePayer = pubKey;
       const signers = [...swapPayload.signers, delegateWallet].filter(truthy);
-      tx.sign(...signers);
+      if (signers.length > 0) {
+        tx.partialSign(...signers);
+      }
+      if (!delegateWallet) {
+        tx = await localProvider.wallet.signTransaction(tx)
+      }
 
       await sendAndConfirmWithRetry(
         localProvider.connection,
