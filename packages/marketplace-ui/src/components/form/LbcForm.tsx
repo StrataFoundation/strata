@@ -315,7 +315,6 @@ async function createLbcNewMint(
   const mint = new PublicKey(values.mint);
 
   const uri = await marketplaceSdk.tokenMetadataSdk.uploadMetadata({
-    provider: values.provider,
     name: values.name!,
     symbol: values.symbol! || "",
     description: values.description,

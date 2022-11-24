@@ -50,7 +50,6 @@ async function createBounty(
 
   const targetMintKeypair = Keypair.generate();
   const uri = await marketplaceSdk.tokenMetadataSdk.uploadMetadata({
-    provider: values.provider,
     name: values.name,
     symbol: values.shortName,
     description: values.description,

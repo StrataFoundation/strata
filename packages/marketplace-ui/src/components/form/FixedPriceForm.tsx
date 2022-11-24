@@ -119,7 +119,6 @@ async function createMarket(
     });
   } else {
     const uri = await marketplaceSdk.tokenMetadataSdk.uploadMetadata({
-      provider: values.provider,
       name: values.name!,
       symbol: "",
       description: values.description,

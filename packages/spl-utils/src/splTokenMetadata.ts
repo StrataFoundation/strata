@@ -26,10 +26,7 @@ import {
 } from "./arweave";
 // @ts-ignore
 import localStorageMemory from "localstorage-memory";
-
-export enum StorageProvider {
-  Arweave = "arweave",
-}
+import { getStorageAccount, uploadFiles } from "./shdw";
 
 export interface IUploadMetadataArgs {
   payer?: PublicKey;
@@ -42,7 +39,6 @@ export interface IUploadMetadataArgs {
   animationUrl?: string;
   externalUrl?: string;
   extraMetadata?: any;
-  provider?: StorageProvider;
   mint?: PublicKey;
 }
 
@@ -344,12 +340,27 @@ export class SplTokenMetadata {
   }
 
   async uploadMetadata(args: IUploadMetadataArgs): Promise<string> {
-    return this.createArweaveMetadata({
-      ...args,
-      image: args.image?.name,
-      files: [args.image].filter(truthy),
-      mint: args.mint!,
-    });
+    const [accountKey] = await getStorageAccount(this.provider.wallet.publicKey, new BN(0));
+
+    const metadata = {
+      name: args.name,
+      symbol: args.symbol,
+      description: args.description,
+      image: `https://shdw-drive.genesysgo.net/${accountKey.toBase58()}/${args.image.name}`,
+      attributes: args.attributes,
+      external_url: args.externalUrl || "",
+      animation_rl: args.animationUrl,
+      creators: args.creators ? args.creators : null,
+      seller_fee_basis_points: 0,
+      ...(args.extraMetadata || {}),
+    };
+    const metadataFile = new File(
+      [JSON.stringify(metadata)],
+      `${args.mint}.json`
+    );
+    const urls = await uploadFiles(this.provider, [metadataFile, args.image], undefined);
+
+    return urls[0];
   }
 
   /**

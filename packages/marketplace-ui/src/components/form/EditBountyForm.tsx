@@ -54,7 +54,6 @@ async function editBounty(
   mintKey: PublicKey
 ): Promise<PublicKey> {
   const uri = await tokenMetadataSdk.uploadMetadata({
-    provider: values.provider,
     name: values.name,
     symbol: values.shortName,
     description: values.description,

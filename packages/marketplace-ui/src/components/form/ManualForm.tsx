@@ -72,7 +72,6 @@ async function createFullyManaged(
   );
   const signers: Signer[] = [targetMintKeypair];
   const uri = await tokenMetadataSdk.uploadMetadata({
-    provider: values.provider,
     name: values.name,
     symbol: values.symbol,
     description: values.description,

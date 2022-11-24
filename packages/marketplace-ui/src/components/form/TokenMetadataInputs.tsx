@@ -13,7 +13,6 @@ import {
   Textarea,
   useRadioGroup,
 } from "@chakra-ui/react";
-import { StorageProvider } from "@strata-foundation/spl-utils";
 import React, { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { RiCheckFill } from "react-icons/ri";
@@ -24,7 +23,6 @@ export interface IMetadataFormProps {
   image: File;
   name: string;
   description: string;
-  provider: StorageProvider;
 }
 
 export function TokenMetadataInputs({
@@ -45,21 +43,6 @@ export function TokenMetadataInputs({
   const [imgUrl, setImgUrl] = useState<string>();
   const hiddenFileInput = React.useRef<HTMLInputElement>(null);
 
-  const { getRootProps, getRadioProps } = useRadioGroup({
-    name: "provider",
-    onChange: (option) => setValue("provider", option as StorageProvider),
-  });
-  const group = getRootProps();
-  const storageOptions = [
-    {
-      value: StorageProvider.Arweave,
-      heading: "Arweave",
-      illustration: "/arweave.png",
-      helpText:
-        "Instant storage for your image and description, but you will need to pay a small fee in Sol for the upload",
-    },
-  ];
-
   useEffect(() => {
     if (image) {
       const reader = new FileReader();
@@ -72,13 +55,6 @@ export function TokenMetadataInputs({
       setImgUrl(undefined);
     }
   }, [image]);
-
-  // Default to Arweave
-  useEffect(() => {
-    setValue("provider", StorageProvider.Arweave);
-  }, [setValue]);
-
-  const provider = watch("provider");
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files![0];

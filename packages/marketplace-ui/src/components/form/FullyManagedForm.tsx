@@ -149,7 +149,6 @@ async function createFullyManaged(
     targetMintDecimals: 9,
   };
   const uri = await tokenCollectiveSdk.splTokenMetadata.uploadMetadata({
-    provider: values.provider,
     name: values.name,
     symbol: values.symbol,
     description: values.description,
