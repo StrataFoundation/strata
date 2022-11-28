@@ -342,6 +342,7 @@ export class SplTokenMetadata {
   async uploadMetadata(args: IUploadMetadataArgs): Promise<string> {
     const [accountKey] = await getStorageAccount(this.provider.wallet.publicKey, new BN(0));
 
+    let randomId = Math.floor(Math.random()*(999-100+1)+100);
     const metadata = {
       name: args.name,
       symbol: args.symbol,
@@ -356,7 +357,7 @@ export class SplTokenMetadata {
     };
     const metadataFile = new File(
       [JSON.stringify(metadata)],
-      `${args.mint}.json`
+      `${args.mint}-${randomId}.json`
     );
     const urls = await uploadFiles(this.provider, [metadataFile, args.image], undefined);
 
