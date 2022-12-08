@@ -89,7 +89,7 @@ function getEndpoint(connection: Connection) {
 
   // Gengo only works on mainnet
   if (endpoint.includes("devnet") || endpoint.includes("localhost")) {
-    return "https://monke8127d577985245538ac648fe0969201d.xyz2.hyperplane.dev/";
+    return "https://distinguished-solemn-arm.solana-mainnet.discover.quiknode.pro/26dcf13bcbd8c3a81f2b7c0cf5808b940b224134/";
   }
 
   return endpoint;
