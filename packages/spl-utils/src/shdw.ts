@@ -89,7 +89,7 @@ function getEndpoint(connection: Connection) {
 
   // Gengo only works on mainnet
   if (endpoint.includes("devnet") || endpoint.includes("localhost")) {
-    return "https://distinguished-solemn-arm.solana-mainnet.discover.quiknode.pro/26dcf13bcbd8c3a81f2b7c0cf5808b940b224134/";
+    return "https://solana-mainnet.g.alchemy.com/v2/Ib9f7u11tv7lONBDceJ5ly84o5KXdeGE";
   }
 
   return endpoint;

@@ -17,7 +17,7 @@ const shortnames = new Set([
 const DEFAULT_ENDPOINT =
   process.env.NEXT_PUBLIC_SOLANA_URL ||
   process.env.REACT_APP_SOLANA_URL ||
-  "https://distinguished-solemn-arm.solana-mainnet.discover.quiknode.pro/26dcf13bcbd8c3a81f2b7c0cf5808b940b224134/";
+  "https://solana-mainnet.g.alchemy.com/v2/Ib9f7u11tv7lONBDceJ5ly84o5KXdeGE";
 
 export function getClusterAndEndpoint(clusterOrEndpoint: string): {
   cluster: string;
@@ -28,7 +28,7 @@ export function getClusterAndEndpoint(clusterOrEndpoint: string): {
       if (
         clusterOrEndpoint.includes("dev") &&
         clusterOrEndpoint !=
-          "https://distinguished-solemn-arm.solana-mainnet.discover.quiknode.pro/26dcf13bcbd8c3a81f2b7c0cf5808b940b224134/"
+          "https://solana-mainnet.g.alchemy.com/v2/Ib9f7u11tv7lONBDceJ5ly84o5KXdeGE"
       ) {
         return { cluster: "devnet", endpoint: clusterOrEndpoint };
       } else {
@@ -49,7 +49,7 @@ export function getClusterAndEndpoint(clusterOrEndpoint: string): {
         return {
           cluster: "mainnet-beta",
           endpoint:
-            "https://distinguished-solemn-arm.solana-mainnet.discover.quiknode.pro/26dcf13bcbd8c3a81f2b7c0cf5808b940b224134/",
+            "https://solana-mainnet.g.alchemy.com/v2/Ib9f7u11tv7lONBDceJ5ly84o5KXdeGE",
         };
       }
 
