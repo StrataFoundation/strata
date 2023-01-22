@@ -53,8 +53,8 @@
     "fmt": "prettier --write '{*,**/*}.{ts,tsx,js,jsx,json}'",
     "lint": "prettier --check '{*,**/*}.{ts,tsx,js,jsx,json}' && eslint",
     "lint:fix": "yarn fmt && eslint --fix",
-    "nuke": "npx shx rm -rf {.,packages/*}/{node_modules,lib,yarn.lock,dist}",
-    "reinstall": "lerna nuke && lerna bootstrap --ignore-scripts"
+    "nuke": "npx shx rm -rf {.,packages/*}/{node_modules,lib,yarn.lock,dist,lib}",
+    "reinstall": "yarn nuke && lerna bootstrap --ignore-scripts"
   },
   "dependencies": {
     "@solana/spl-name-service": "^0.1.3",

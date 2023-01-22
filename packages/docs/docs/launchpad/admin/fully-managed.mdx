@@ -1,9 +1,9 @@
 ---
-sidebar_position: 2
-slug: token-offering
-title: Token Offering
-description: Manage an Existing Token Offering
-keywords: [Solana, Dynamic Pricing, LBP, LBC, Manage, Token, Token Offering]
+sidebar_position: 4
+slug: fully-managed
+title: Fully Managed Token
+description: Manage an Existing Fully Managed Token
+keywords: [Solana, Dynamic Pricing, LBP, LBC, Manage, Token, Token Offering, Fully Managed]
 ---
 :::success Congratulations
 
@@ -11,13 +11,15 @@ Your token offering is live! You can visit it at the following url:
 
 <UrlDisplay subs={["id", "cluster"]} value="https://app.strataprotocol.com/swap/:id?cluster=:cluster" />
 :::
-
+ 
 import { QueryStringSetter } from "@site/src/components/QueryStringSetter";
 import { UrlDisplay } from "@site/src/components/UrlDisplay";
 import { PublicKey } from "@solana/web3.js";
 import { NetworkSelect } from "@site/src/components/NetworkSelect";
+import { UpdateRoyalties } from "@site/src/components/UpdateRoyalties";
 
 <NetworkSelect />
+
 
 <QueryStringSetter label="Token Offering ID" name="id" conv={(v) => new PublicKey(v)} />
 
@@ -27,24 +29,20 @@ You’ll need these important links to access your token offering.
 
 This admin page:
 
-<UrlDisplay subs={["id", "cluster"]} value="https://docs.strataprotocol.com/launchpad/admin/fixed-price?id=:id&cluster=:cluster" />
+<UrlDisplay subs={["id", "cluster"]} value="https://docs.strataprotocol.com/launchpad/admin/lbc?id=:id&cluster=:cluster" />
 
 The url for the offering:
 
 <UrlDisplay subs={["id", "cluster"]} value="https://app.strataprotocol.com/swap/:id?cluster=:cluster" />
 
+## Funds
 
-## Collect Funds
+For fully managed tokens, the bootstrapped liquidity can't be withdrawn by the admin. It can only be returned by selling 
+the tokens that have been bought back to the bonding curve. Funds can be raised by having a royalty set on the bonding curve,
+and you can edit your royalties by connecting your wallet and using the below form.
 
-When the token offering is over, if you are the beneficiary (admin), you should see a disburse funds option here:
+<UpdateRoyalties />
 
-import { VariableDisburseFunds } from "@site/src/components/VariableDisburseFunds";
-
-<VariableDisburseFunds />
-
-If you would like to disburse funds, retrieve unsold tokens, and recover rent from the bonding curve (this will render the UI unusable):
-
-<VariableDisburseFunds closeBonding closeEntangler />
 
 ## Embed the swap to your site
 

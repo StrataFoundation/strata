@@ -2,7 +2,14 @@ import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { ChatSdkProvider, EmojisProvider, ReplyProvider } from "@strata-foundation/chat-ui";
 import { MarketplaceSdkProvider } from "@strata-foundation/marketplace-ui";
 import {
-  AcceleratorProvider, AccountProvider, ErrorHandlerProvider, GraphqlProvider, Notification, ProviderContextProvider, StrataSdksProvider, ThemeProvider
+  AccountProvider,
+  StrataSdksProvider,
+  Notification,
+  ErrorHandlerProvider,
+  ProviderContextProvider,
+  ThemeProvider,
+  GraphqlProvider,
+  AcceleratorProvider,
 } from "@strata-foundation/react";
 import React from "react";
 import toast, { Toaster } from "react-hot-toast";
