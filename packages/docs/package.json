@@ -29,7 +29,7 @@
     "@chakra-ui/react": "^1.8.1",
     "@docusaurus/core": "2.0.0-beta.8",
     "@docusaurus/plugin-client-redirects": "2.0.0-beta.8",
-    "@docusaurus/preset-classic": "2.0.0-beta.8",
+    "@docusaurus/preset-classic": "2.0.0",
     "@docusaurus/theme-live-codeblock": "^2.0.0-beta.8",
     "@mdx-js/react": "^1.6.21",
     "@solana/spl-name-service": "^0.1.3",
