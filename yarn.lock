@@ -11241,10 +11241,10 @@ ecc-jsbn@~0.1.1:
     jsbn "~0.1.0"
     safer-buffer "^2.1.0"
 
-ecdh@^0.1.1:
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/ecdh/-/ecdh-0.1.1.tgz#97f9b0e470409dc9f8ffd93bd67a34cb5c85c613"
-  integrity sha512-b68VGQmarRTtW1uxFpQB8XOLmAi4pJs0AhLcgvMy8fmlp4M2FKLU+qhLXYCDKNnBY3x/paigCKQvGeleAfh0hA==
+ecdh@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/ecdh/-/ecdh-0.2.0.tgz#3b1fbb7ae07350c44fcd44077cf8f45d0f3e34e3"
+  integrity sha512-zrWHbiCRBCe0sc/WUZB8pr/kUXnqn82iuKwTYxwVxrEeCbk6Cq+zfGwiKvY9rnLdlgLAeOVz+JjxgGgfT9HTjw==
   dependencies:
     jsbn "0.1.0"
 
