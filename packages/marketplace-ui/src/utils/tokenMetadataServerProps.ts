@@ -15,11 +15,6 @@ export const mintMetadataServerSideProps: GetServerSideProps = async (
     (context.query.cluster || DEFAULT_ENDPOINT) as string
   );
 
-  const apollo = new ApolloClient({
-    uri: "https://graph.holaplex.com/v1",
-    cache: new InMemoryCache(),
-  });
-
   const connection = new Connection(endpoint, {});
   const provider = new AnchorProvider(
     connection,
@@ -44,22 +39,8 @@ export const mintMetadataServerSideProps: GetServerSideProps = async (
   const address = (
     await Metadata.getPDA(mint)
   ).toBase58();
-  const result = await apollo.query<{ nft: { name: string, description: string, image: string} }>({
-    query: gql`
-      query GetUrl($address: String!) {
-        nft(address: $address) {
-          name
-          description
-          image
-        }
-      }
-    `,
-    variables: {
-      address,
-    },
-  });
 
-  const { name, description, image } = (result.data?.nft || {});
+  const { name, description, image } = {};
 
   return {
     props: {
