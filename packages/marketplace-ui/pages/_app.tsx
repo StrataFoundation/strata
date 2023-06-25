@@ -11,6 +11,7 @@ import { BrowserView, MobileView } from "react-device-detect";
 import { IS_PRODUCTION } from "../src/constants";
 import { pageview } from "../src/utils/gtag";
 import SEO from "../next-seo.config";
+import { SiteDisclaimer } from "../src/components/SiteDisclaimer"
 
 // Use require instead of import since order matters
 require("../styles/globals.css");
@@ -33,6 +34,7 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
 
   return (
     <Providers>
+      <SiteDisclaimer />
       <DefaultSeo {...SEO} />
       <Header />
       {/* @ts-ignore */}

@@ -40,6 +40,10 @@ export const routes: Record<string, IRoute> = {
     path: process.env.NEXT_PUBLIC_DOCS_URL + "/launchpad/admin/fixed-price",
     params: [],
   },
+  fullyManagedAdmin: {
+    path: process.env.NEXT_PUBLIC_DOCS_URL + "/launchpad/admin/fully-managed",
+    params: [],
+  },
   mintLbcAdmin: {
     path:
       process.env.NEXT_PUBLIC_DOCS_URL +
@@ -56,6 +60,14 @@ export const routes: Record<string, IRoute> = {
   launchpad: { path: "/launchpad", params: [] },
   create: { path: "/launchpad/create", params: [] },
   sell: { path: "/launchpad/sell", params: [] },
+  tokenAdmin: {
+    path: "/launchpad/admin/:mintKey",
+    params: ["mintKey"]
+  },
+  myTokens: {
+    path: "/launchpad/mytokens",
+    params: [],
+  }
 };
 
 function rmUndefined(

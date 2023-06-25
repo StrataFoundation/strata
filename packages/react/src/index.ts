@@ -144,6 +144,7 @@ export { useSolanaUnixTime } from "./hooks/useSolanaUnixTime";
 export { useTokenSwapFromFungibleEntangler } from "./hooks/useTokenSwapFromFungibleEntangler";
 export { useTokenSwapFromId } from "./hooks/useTokenSwapFromId";
 export { useCollectionOwnedAmount } from "./hooks/useCollectionOwnedAmount";
+export { useTokenAuthorities } from "./hooks/useTokenAuthorities";
 
 export {
   deserializeAccount,

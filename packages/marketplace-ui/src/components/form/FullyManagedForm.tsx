@@ -23,7 +23,6 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { MarketplaceSdk } from "@strata-foundation/marketplace-sdk";
 import {
-  humanReadablePercentage,
   useCollective,
   useProvider,
   usePublicKey,
@@ -50,6 +49,7 @@ import { MintSelect } from "./MintSelect";
 import { IMetadataFormProps, TokenMetadataInputs } from "./TokenMetadataInputs";
 import { Disclosures, disclosuresSchema, IDisclosures } from "./Disclosures";
 import { RadioCardWithAffordance } from "./RadioCard";
+import { RoyaltiesInputs } from "./RoyaltiesInputs";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 
 type CurveType = "aggressive" | "stable" | "utility";
@@ -229,15 +229,11 @@ export const FullyManagedForm: React.FC = () => {
   const { marketplaceSdk } = useMarketplaceSdk();
   const router = useRouter();
 
-  function percentOr(percentu32: number | undefined, def: number) {
-    return percentu32 ? Number(humanReadablePercentage(percentu32)) : def;
-  }
-
   const onSubmit = async (values: IFullyManagedForm) => {
     const mintKey = await execute(marketplaceSdk!, values);
     router.push(
-      route(routes.swap, {
-        id: mintKey.toBase58(),
+      route(routes.tokenAdmin, {
+        mintKey: mintKey.toBase58(),
       }),
       undefined,
       { shallow: true }
@@ -432,115 +428,20 @@ export const FullyManagedForm: React.FC = () => {
             >
               <Switch {...register("isAntiBot")} />
             </FormControlWithError>
-
-            <VStack align="left" w="full">
-              <Heading fontSize="xl" mb={4}>
-                Royalties
-              </Heading>
-              <HStack>
-                <FormControl
-                  id="buyTargetRoyaltyPercentage"
-                  borderColor="gray.200"
-                >
-                  <FormLabel>{symbol || "Managed Token"} (Buy)</FormLabel>
-                  <Input
-                    isRequired
-                    type="number"
-                    min={percentOr(
-                      tokenBondingSettings?.minBuyTargetRoyaltyPercentage,
-                      0
-                    )}
-                    max={percentOr(
-                      tokenBondingSettings?.maxBuyTargetRoyaltyPercentage,
-                      100
-                    )}
-                    placeholder="5"
-                    defaultValue={5}
-                    step={0.00001}
-                    {...register("buyTargetRoyaltyPercentage")}
-                  />
-                </FormControl>
-                <FormControl
-                  id="sellTargetRoyaltyPercentage"
-                  borderColor="gray.200"
-                >
-                  <FormLabel>{symbol || "Managed Token"} (Sell)</FormLabel>
-                  <Input
-                    isRequired
-                    type="number"
-                    min={percentOr(
-                      tokenBondingSettings?.minSellTargetRoyaltyPercentage,
-                      0
-                    )}
-                    max={percentOr(
-                      tokenBondingSettings?.maxSellTargetRoyaltyPercentage,
-                      100
-                    )}
-                    placeholder="0"
-                    defaultValue={0}
-                    step={0.00001}
-                    {...register("sellTargetRoyaltyPercentage")}
-                  />
-                </FormControl>
-              </HStack>
-              <HStack>
-                <FormControl
-                  id="buyBaseRoyaltyPercentage"
-                  borderColor="gray.200"
-                >
-                  <FormLabel>
-                    {baseMetadata?.data.symbol || "Base Token"} (Buy)
-                  </FormLabel>
-                  <Input
-                    isRequired
-                    type="number"
-                    min={percentOr(
-                      tokenBondingSettings?.minBuyBaseRoyaltyPercentage,
-                      0
-                    )}
-                    max={percentOr(
-                      tokenBondingSettings?.maxBuyBaseRoyaltyPercentage,
-                      100
-                    )}
-                    placeholder="0"
-                    defaultValue={0}
-                    step={0.00001}
-                    {...register("buyBaseRoyaltyPercentage")}
-                  />
-                </FormControl>
-                <FormControl
-                  id="sellBaseRoyaltyPercentage"
-                  borderColor="gray.200"
-                >
-                  <FormLabel>
-                    {baseMetadata?.data.symbol || "Base Token"} (Sell)
-                  </FormLabel>
-                  <Input
-                    isRequired
-                    type="number"
-                    min={percentOr(
-                      tokenBondingSettings?.minSellBaseRoyaltyPercentage,
-                      0
-                    )}
-                    max={percentOr(
-                      tokenBondingSettings?.maxSellBaseRoyaltyPercentage,
-                      100
-                    )}
-                    placeholder="0"
-                    defaultValue={0}
-                    step={0.00001}
-                    {...register("sellBaseRoyaltyPercentage")}
-                  />
-                </FormControl>
-              </HStack>
-              <FormControl>
-                <FormHelperText>
-                  A Percentage of coin buys/sales that will be sent to your
-                  wallet. We recommend to keep this less than a combined 10% for
-                  buys/sales.
-                </FormHelperText>
-              </FormControl>
-            </VStack>
+            
+            <RoyaltiesInputs 
+              symbol={symbol}
+              baseSymbol={baseMetadata?.data.symbol}
+              register={register}
+              minBuyTargetRoyaltyPercentage={tokenBondingSettings?.minBuyTargetRoyaltyPercentage}
+              maxBuyTargetRoyaltyPercentage={tokenBondingSettings?.maxBuyTargetRoyaltyPercentage}
+              minSellTargetRoyaltyPercentage={tokenBondingSettings?.minSellTargetRoyaltyPercentage}
+              maxSellTargetRoyaltyPercentage={tokenBondingSettings?.maxSellTargetRoyaltyPercentage}
+              minBuyBaseRoyaltyPercentage={tokenBondingSettings?.minBuyBaseRoyaltyPercentage}
+              maxBuyBaseRoyaltyPercentage={tokenBondingSettings?.maxBuyBaseRoyaltyPercentage}
+              minSellBaseRoyaltyPercentage={tokenBondingSettings?.minSellBaseRoyaltyPercentage}
+              maxSellBaseRoyaltyPercentage={tokenBondingSettings?.maxSellBaseRoyaltyPercentage}
+            />
 
             <Disclosures fees={0} />
 
