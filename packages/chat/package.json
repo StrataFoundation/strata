@@ -30,7 +30,7 @@
     "prebuild": "npm run clean && npm run package"
   },
   "dependencies": {
-    "@cardinal/namespaces": "^4.1.3",
+    "@cardinal/namespaces": "^5.0.0",
     "@cocalc/local-storage-lru": "^2.3.0",
     "@metaplex-foundation/mpl-token-metadata": "^1.2.5",
     "@orca-so/sdk": "^1.2.24",
