@@ -65,6 +65,6 @@
     "borsh": "^0.7.0",
     "husky": "^7.0.4",
     "lerna": "^4.0.0",
-    "quicktype-core": "^6.0.70"
+    "quicktype-core": "^20.0.14"
   }
 }
