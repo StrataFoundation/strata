@@ -64,7 +64,7 @@
     "localstorage-memory": "^1.0.3",
     "lodash": "^4.17.21",
     "moment": "^2.29.3",
-    "next": "^12.2.4",
+    "next": "^13.5.0",
     "next-seo": "^5.4.0",
     "react-async-hook": "^4.0.0",
     "react-device-detect": "^2.1.2",
