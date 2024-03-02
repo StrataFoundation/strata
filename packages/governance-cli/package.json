@@ -20,7 +20,7 @@
     "@solana/spl-governance": "^0.3.13",
     "@solana/web3.js": "1.22.0",
     "@strata-foundation/spl-utils": "^3.11.2",
-    "axios": "^0.27.2",
+    "axios": "^1.6.0",
     "axois": "0.0.1-security",
     "borsh": "^0.7.0",
     "js-base64": "^3.7.2",
