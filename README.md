@@ -1,9 +1,5 @@
 # Strata
 
-What is strata? Check out our [Hello World](https://blog.strataprotocol.com/welcome)
-
-View the live documentation [here](https://docs.strataprotocol.com)
-
 This series of smart contracts serves to standardizing and indexing all social tokens.
 
 Docs are located in `packages/docs`
